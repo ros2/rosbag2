@@ -1,35 +1,81 @@
 cmake_minimum_required(VERSION 3.5)
-project(rosbag2_storage_evaluation)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
+project(ros2_rosbag_evaluation)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-O3")
+set(BUILD_SHARED_LIBS ON)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+set(common_sources
+  src/common/strings.cpp)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # remove the line when a copyright and license is present in all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # remove the line when this package is a git repo
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+set(profiler_sources
+  src/profiler/profiler.cpp)
 
-ament_package()
+set(sqlite_sources
+  src/writer/sqlite/sqlite.cpp
+  src/writer/sqlite/sqlite_writer.cpp
+  src/writer/sqlite/one_table_sqlite_writer.cpp
+  src/writer/sqlite/separate_topic_table_sqlite_writer.cpp)
+
+set(trivial_writer_benchmark_sources
+  src/benchmark/writer/trivial/trivial_writer_benchmark.cpp
+  src/benchmark/benchmark.cpp
+  src/writer/stream/message_stream_writer.cpp
+  src/generators/message_generator.cpp)
+
+set(sqlite_writer_benchmark_cmd_sources
+  src/benchmark/writer/sqlite/sqlite_writer_benchmark_cmd.cpp
+  src/benchmark/writer/sqlite/sqlite_writer_benchmark.cpp
+  src/benchmark/benchmark.cpp
+  src/generators/message_generator.cpp)
+
+set(small_messages_benchmark_sources
+  src/benchmark/small_messages_benchmark.cpp
+  src/benchmark/writer/sqlite/sqlite_writer_benchmark.cpp
+  src/benchmark/benchmark.cpp
+  src/generators/message_generator.cpp)
+
+set(big_messages_benchmark_sources
+  src/benchmark/big_messages_benchmark.cpp
+  src/benchmark/writer/sqlite/sqlite_writer_benchmark.cpp
+  src/benchmark/benchmark.cpp
+  src/generators/message_generator.cpp)
+
+set(mixed_messages_benchmark_sources
+  src/benchmark/mixed_messages_benchmark.cpp
+  src/benchmark/writer/sqlite/sqlite_writer_benchmark.cpp
+  src/benchmark/benchmark.cpp
+  src/generators/message_generator.cpp)
+
+add_library(common ${common_sources})
+target_include_directories(common PRIVATE src)
+
+add_library(profiler ${profiler_sources})
+target_include_directories(profiler PRIVATE src)
+
+add_library(sqlite ${sqlite_sources})
+target_include_directories(sqlite PRIVATE src)
+target_link_libraries(sqlite sqlite3 common)
+
+add_executable(trivial_writer_benchmark ${trivial_writer_benchmark_sources})
+target_link_libraries(trivial_writer_benchmark profiler sqlite)
+target_include_directories(trivial_writer_benchmark PRIVATE src)
+
+add_executable(sqlite_writer_benchmark_cmd ${sqlite_writer_benchmark_cmd_sources})
+target_link_libraries(sqlite_writer_benchmark_cmd profiler sqlite)
+target_include_directories(sqlite_writer_benchmark_cmd PRIVATE src)
+
+add_executable(small_messages_benchmark ${small_messages_benchmark_sources})
+target_link_libraries(small_messages_benchmark profiler sqlite)
+target_include_directories(small_messages_benchmark PRIVATE src)
+
+add_executable(big_messages_benchmark ${big_messages_benchmark_sources})
+target_link_libraries(big_messages_benchmark profiler sqlite)
+target_include_directories(big_messages_benchmark PRIVATE src)
+
+add_executable(mixed_messages_benchmark ${mixed_messages_benchmark_sources})
+target_link_libraries(mixed_messages_benchmark profiler sqlite)
+target_include_directories(mixed_messages_benchmark PRIVATE src)
