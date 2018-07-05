@@ -13,31 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#include "rosbag2/rosbag2.hpp"
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
-#include "storage/sqlite/sqlite_storage.hpp"
+#include "rosbag2/rosbag2.hpp"
 
-namespace rosbag2
+int main(int argc, const char** argv)
 {
+  rclcpp::init(argc, argv);
+  rosbag2::record("test.bag", "string_topic");
+  rclcpp::shutdown();
 
-void record(const std::string & file_name, const std::string & topic_name)
-{
-  SqliteStorage storage;
-  storage.open(file_name);
-
-  auto node = std::make_shared<rclcpp::Node>("rosbag_node");
-  auto subscription = node->create_subscription<std_msgs::msg::String>(
-    topic_name,
-    [&storage](std_msgs::msg::String::ConstSharedPtr msg) {
-      std::cout << msg->data << std::endl;
-      storage.insertMessage(msg->data);
-    });
-
-  rclcpp::spin(node);
-}
-
+  return 0;
 }
 

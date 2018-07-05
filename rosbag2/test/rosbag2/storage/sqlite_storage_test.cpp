@@ -15,13 +15,14 @@
  */
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;
 using namespace rosbag2;
 
-TEST(SqliteStorage, sqlite_storage_test) {
+TEST(SqliteStorage, write_single_message_to_storage) {
   std::remove("test_database");
   auto storage = std::make_shared<SqliteStorage>();
   storage->open("test_database");
@@ -41,4 +42,3 @@ TEST(SqliteStorage, sqlite_storage_test) {
 
   EXPECT_EQ(text, "test_message");
 }
-
