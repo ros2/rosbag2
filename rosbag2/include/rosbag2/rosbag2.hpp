@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2_ROSBAG2_HPP
-#define ROSBAG2_ROSBAG2_HPP
+#ifndef ROSBAG2__ROSBAG2_HPP_
+#define ROSBAG2__ROSBAG2_HPP_
 
 #include <string>
 
@@ -25,4 +25,4 @@ namespace rosbag2
 void record(const std::string & file_name, const std::string & topic_name);
 
 }
-#endif //ROSBAG2_ROSBAG2_HPP
+#endif  // ROSBAG2__ROSBAG2_HPP_

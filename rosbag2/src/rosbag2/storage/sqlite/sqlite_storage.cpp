@@ -16,6 +16,8 @@
 
 #include "sqlite_storage.hpp"
 
+#include <string>
+
 namespace rosbag2
 {
 

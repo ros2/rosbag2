@@ -14,11 +14,14 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2_SQLITESTORAGE_HPP
-#define ROSBAG2_SQLITESTORAGE_HPP
+#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+#define ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+
+#include <string>
+
+#include "sqlite.hpp"
 
 #include "../storage.hpp"
-#include "sqlite.hpp"
 
 namespace rosbag2
 {
@@ -41,4 +44,4 @@ private:
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2_SQLITESTORAGE_HPP
+#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_

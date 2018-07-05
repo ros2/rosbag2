@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2_STORAGE_HPP
-#define ROSBAG2_STORAGE_HPP
+#ifndef ROSBAG2__STORAGE__STORAGE_HPP_
+#define ROSBAG2__STORAGE__STORAGE_HPP_
 
 #include <string>
 
@@ -32,4 +32,4 @@ class Storage
 
 }  // namespace rosbag2
 
-#endif // ROSBAG2_STORAGE_HPP
+#endif  // ROSBAG2__STORAGE__STORAGE_HPP_

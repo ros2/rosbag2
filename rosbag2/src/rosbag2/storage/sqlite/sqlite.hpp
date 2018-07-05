@@ -14,11 +14,13 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2_SQLITE_HPP
-#define ROSBAG2_SQLITE_HPP
+#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_
+#define ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_
 
 #include <sqlite3.h>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace rosbag2
 {
@@ -39,4 +41,4 @@ std::vector<std::string> getMessages(DBPtr db, std::string table = "messages");
 }  // namespace sqlite
 }  // namespace rosbag2
 
-#endif  // ROSBAG2_SQLITE_HPP
+#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_

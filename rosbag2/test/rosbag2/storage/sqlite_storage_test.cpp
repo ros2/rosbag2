@@ -19,8 +19,8 @@
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
 
-using namespace ::testing;
-using namespace rosbag2;
+using namespace ::testing;  // NOLINT
+using namespace rosbag2;  // NOLINT
 
 TEST(SqliteStorage, write_single_message_to_storage) {
   std::remove("test_database");

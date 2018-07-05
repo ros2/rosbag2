@@ -71,4 +71,4 @@ std::vector<std::string> getMessages(DBPtr db, std::string table)
 }
 
 }  // namespace sqlite
-}  //namespace rosbag2
+}  // namespace rosbag2

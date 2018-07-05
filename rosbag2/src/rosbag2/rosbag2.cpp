@@ -15,6 +15,9 @@
  */
 #include "rosbag2/rosbag2.hpp"
 
+#include <memory>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
@@ -39,4 +42,4 @@ void record(const std::string & file_name, const std::string & topic_name)
   rclcpp::spin(node);
 }
 
-}
+}  // namespace rosbag2
