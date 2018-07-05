@@ -33,6 +33,9 @@ void execute_query(DBPtr db, const std::string & query);
 
 void close(DBPtr db);
 
+std::vector<std::string> getMessages(DBPtr db, std::string table = "messages");
+
+
 }  // namespace sqlite
 }  // namespace rosbag2
 

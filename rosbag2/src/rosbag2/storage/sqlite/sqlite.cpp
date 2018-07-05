@@ -15,6 +15,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "sqlite.hpp"
 
@@ -50,6 +51,23 @@ void execute_query(DBPtr db, const std::string & query)
 void close(DBPtr db)
 {
   sqlite3_close(db);
+}
+
+std::vector<std::string> getMessages(DBPtr db, std::string table)
+{
+  std::vector<std::string> table_msgs;
+  sqlite3_stmt * statement;
+  std::string query = "SELECT * FROM " + table;
+  sqlite3_prepare_v2(db, query.c_str(), -1, &statement, nullptr);
+  int result = sqlite3_step(statement);
+  while (result == SQLITE_ROW) {
+    table_msgs.emplace_back(
+      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1))));
+    result = sqlite3_step(statement);
+  }
+  sqlite3_finalize(statement);
+
+  return table_msgs;
 }
 
 }  // namespace sqlite
