@@ -26,21 +26,29 @@ using namespace rosbag2;  // NOLINT
 class SqliteStorageFixture: public Test
 {
 public:
-  SqliteStorageFixture(): storage_("test_database") {
+  SqliteStorageFixture(): database_name_("test_database"), storage_(database_name_) {
     std::remove("test_database");
   }
 
+  std::string database_name_;
   SqliteStorage storage_;
 };
+
+std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & database_name)
+{
+  sqlite::DBPtr db = sqlite::open(database_name);
+  auto messages = sqlite::getMessages(db);
+  sqlite::close(db);
+  return messages;
+}
+
 
 TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
   storage_.open(true);
   storage_.write("test_message");
   storage_.close();
 
-  sqlite::DBPtr db = sqlite::open("test_database");
-  auto messages = sqlite::getMessages(db);
-  sqlite::close(db);
+  auto messages = getMessagesFromSqliteDatabase(database_name_);
 
   ASSERT_THAT(messages, SizeIs(1));
   ASSERT_THAT(messages[0], Eq("test_message"));
