@@ -23,10 +23,9 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
 TEST(SqliteStorage, write_single_message_to_storage) {
-  std::remove("test_database");
   SqliteStorage storage("test_database");
-  storage.open();
-  storage.insertMessage("test_message");
+  storage.open(true);
+  storage.write("test_message");
   storage.close();
 
   sqlite::DBPtr db = sqlite::open("test_database");

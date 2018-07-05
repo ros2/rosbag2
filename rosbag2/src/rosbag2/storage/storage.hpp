@@ -24,10 +24,10 @@ namespace rosbag2
 
 class Storage
 {
-  virtual void open() = 0;
+  virtual bool open(bool overwrite_existing = false) = 0;
   virtual void close() = 0;
 
-  virtual void insertMessage(std::string data) = 0;
+  virtual bool write(const std::string & data) = 0;
 };
 
 }  // namespace rosbag2

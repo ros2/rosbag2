@@ -16,37 +16,67 @@
 
 #include "sqlite_storage.hpp"
 
+#include <iostream>
 #include <string>
 
 namespace rosbag2
 {
 
-SqliteStorage::SqliteStorage(std::string database_name)
-: database_(), database_name_(database_name)
-{}
+SqliteStorage::SqliteStorage(const std::string & database_name)
+  : database_(), database_name_(database_name) {}
 
 SqliteStorage::~SqliteStorage()
 {
   close();
 }
 
-void SqliteStorage::open()
+bool SqliteStorage::open(bool overwrite_existing)
 {
-  database_ = sqlite::open(database_name_);
+  if (overwrite_existing) {
+    std::remove(database_name_.c_str());
+  }
 
-  std::string create_table = "CREATE TABLE IF NOT EXISTS messages(" \
+  try {
+    database_ = sqlite::open(database_name_);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Could not open database '" << database_name_ << "'." << std::endl;
+    return false;
+  }
+
+  try {
+    std::string create_table = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "data           BLOB    NOT NULL," \
     "timestamp      INT     NOT NULL);";
 
-  sqlite::execute_query(database_, create_table);
+    sqlite::execute_query(database_, create_table);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Database '" << database_name_ << "' already exists." << std::endl;
+    return false;
+  }
+
+  std::cout << "Database '" << database_name_ << "' openend" << std::endl;
+  return true;
 }
 
-void SqliteStorage::insertMessage(std::string data)
+bool SqliteStorage::write(const std::string & data)
 {
-  std::string insert_message =
-    "INSERT INTO messages (data, timestamp) VALUES ('" + data + "', strftime('%s%f','now'))";
-  sqlite::execute_query(database_, insert_message);
+  if (!database_) {
+    std::cerr << "Failed to write message. The database is not open." << std::endl;
+    return false;
+  }
+
+  try {
+    std::string insert_message =
+      "INSERT INTO messages (data, timestamp) VALUES ('" + data + "', strftime('%s%f','now'))";
+    sqlite::execute_query(database_, insert_message);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Failed to write message. Error: " << e.what() << std::endl;
+    return false;
+  }
+
+  std::cout << "Stored message '" << data << "'." << std::endl;
+  return true;
 }
 
 void SqliteStorage::close()

@@ -29,17 +29,18 @@ namespace rosbag2
 void record(const std::string & file_name, const std::string & topic_name)
 {
   SqliteStorage storage(file_name);
-  storage.open();
 
-  auto node = std::make_shared<rclcpp::Node>("rosbag_node");
-  auto subscription = node->create_subscription<std_msgs::msg::String>(
-    topic_name,
-    [&storage](std_msgs::msg::String::ConstSharedPtr msg) {
-      std::cout << msg->data << std::endl;
-      storage.insertMessage(msg->data);
-    });
+  if (storage.open(true)) {
+    auto node = std::make_shared<rclcpp::Node>("rosbag_node");
+    auto subscription = node->create_subscription<std_msgs::msg::String>(
+      topic_name,
+      [&storage](std_msgs::msg::String::ConstSharedPtr msg) {
+        storage.write(msg->data);
+      });
 
-  rclcpp::spin(node);
+    std::cout << "Waiting for messages..." << std::endl;
+    rclcpp::spin(node);
+  }
 }
 
 }  // namespace rosbag2

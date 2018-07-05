@@ -15,6 +15,7 @@
  */
 
 #include <string>
+#include <memory>
 #include <vector>
 
 #include "sqlite.hpp"
@@ -30,7 +31,7 @@ DBPtr open(const std::string & filename)
 
   int rc = sqlite3_open(filename.c_str(), &database);
   if (rc) {
-    throw std::runtime_error("Can't open database: " + std::string(sqlite3_errmsg(database)));
+    throw sql_exception("Can't open database: " + std::string(sqlite3_errmsg(database)));
   }
 
   return database;
@@ -44,7 +45,7 @@ void execute_query(DBPtr db, const std::string & query)
   if (return_code != SQLITE_OK) {
     auto error = "SQL error: " + std::string(error_msg);
     sqlite3_free(error_msg);
-    throw std::runtime_error(error);
+    throw sql_exception(error);
   }
 }
 

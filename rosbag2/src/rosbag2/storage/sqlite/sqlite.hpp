@@ -27,6 +27,11 @@ namespace rosbag2
 namespace sqlite
 {
 
+class sql_exception: public std::runtime_error {
+public:
+  explicit sql_exception(const std::string & message): runtime_error(message) {}
+};
+
 using DBPtr = sqlite3 *;
 
 DBPtr open(const std::string & filename);
