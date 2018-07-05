@@ -24,11 +24,12 @@ using namespace rosbag2;
 
 TEST(SqliteStorage, write_single_message_to_storage) {
   std::remove("test_database");
-  auto storage = std::make_shared<SqliteStorage>();
-  storage->open("test_database");
-  storage->insertMessage("test_message");
 
-  storage.reset();
+  SqliteStorage storage;
+  storage.open("test_database");
+  storage.insertMessage("test_message");
+  storage.close();
+
   sqlite::DBPtr db = sqlite::open("test_database");
   sqlite3_stmt * stmt;
   sqlite3_prepare_v2(db, "SELECT * FROM messages", -1, &stmt, nullptr);

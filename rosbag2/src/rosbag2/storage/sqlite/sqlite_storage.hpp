@@ -30,6 +30,8 @@ public:
   ~SqliteStorage();
 
   void open(std::string filename) override;
+  void close() override;
+
   void insertMessage(std::string data) override;
 
 private:

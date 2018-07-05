@@ -21,6 +21,11 @@ namespace rosbag2
 
 SqliteStorage::SqliteStorage(): database_() {}
 
+SqliteStorage::~SqliteStorage()
+{
+  close();
+}
+
 void SqliteStorage::open(std::string filename)
 {
   database_ = sqlite::open(filename);
@@ -40,7 +45,7 @@ void SqliteStorage::insertMessage(std::string data)
   sqlite::execute_query(database_, insert_message);
 }
 
-SqliteStorage::~SqliteStorage()
+void SqliteStorage::close()
 {
   if (database_) {
     sqlite::close(database_);

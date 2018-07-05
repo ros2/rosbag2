@@ -24,6 +24,8 @@ namespace rosbag2
 
 class Storage {
   virtual void open(std::string filename) = 0;
+  virtual void close() = 0;
+  
   virtual void insertMessage(std::string data) = 0;
 };
 
