@@ -19,7 +19,8 @@
 
 #include <string>
 
-namespace rosbag2 {
+namespace rosbag2
+{
 
 void record(const std::string & file_name, const std::string & topic_name);
 

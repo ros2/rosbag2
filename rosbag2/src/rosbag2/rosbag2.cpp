@@ -40,4 +40,3 @@ void record(const std::string & file_name, const std::string & topic_name)
 }
 
 }
-

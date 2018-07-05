@@ -29,7 +29,7 @@ DBPtr open(const std::string & filename)
   DBPtr database;
 
   int rc = sqlite3_open(filename.c_str(), &database);
-  if(rc) {
+  if (rc) {
     throw std::runtime_error("Can't open database: " + std::string(sqlite3_errmsg(database)));
   }
 
@@ -41,7 +41,7 @@ void execute_query(DBPtr db, const std::string & query)
   char * error_msg = 0;
   int return_code = sqlite3_exec(db, query.c_str(), nullptr, nullptr, &error_msg);
 
-  if(return_code != SQLITE_OK){
+  if (return_code != SQLITE_OK) {
     auto error = "SQL error: " + std::string(error_msg);
     sqlite3_free(error_msg);
     throw std::runtime_error(error);
@@ -72,4 +72,3 @@ std::vector<std::string> getMessages(DBPtr db, std::string table)
 
 }  // namespace sqlite
 }  //namespace rosbag2
-

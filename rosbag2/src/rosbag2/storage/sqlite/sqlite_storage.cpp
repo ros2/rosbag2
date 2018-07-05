@@ -19,7 +19,8 @@
 namespace rosbag2
 {
 
-SqliteStorage::SqliteStorage(std::string database_name): database_(), database_name_(database_name)
+SqliteStorage::SqliteStorage(std::string database_name)
+: database_(), database_name_(database_name)
 {}
 
 SqliteStorage::~SqliteStorage()
@@ -31,10 +32,10 @@ void SqliteStorage::open()
 {
   database_ = sqlite::open(database_name_);
 
-  std::string create_table = "CREATE TABLE IF NOT EXISTS messages("  \
-         "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-         "data           BLOB    NOT NULL," \
-         "timestamp      INT     NOT NULL);";
+  std::string create_table = "CREATE TABLE IF NOT EXISTS messages(" \
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+    "data           BLOB    NOT NULL," \
+    "timestamp      INT     NOT NULL);";
 
   sqlite::execute_query(database_, create_table);
 }

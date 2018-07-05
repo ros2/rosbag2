@@ -18,7 +18,7 @@
 
 #include "rosbag2/rosbag2.hpp"
 
-int main(int argc, const char** argv)
+int main(int argc, const char ** argv)
 {
   rclcpp::init(argc, argv);
   rosbag2::record("test.bag", "string_topic");
@@ -26,4 +26,3 @@ int main(int argc, const char** argv)
 
   return 0;
 }
-

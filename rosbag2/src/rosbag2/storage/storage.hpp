@@ -22,10 +22,11 @@
 namespace rosbag2
 {
 
-class Storage {
+class Storage
+{
   virtual void open() = 0;
   virtual void close() = 0;
-  
+
   virtual void insertMessage(std::string data) = 0;
 };
 
