@@ -41,17 +41,18 @@ bool SqliteStorage::create()
 
   try {
     database_ = sqlite::open(database_name_);
-  } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Could not create database '" << database_name_ << "'." << std::endl;
-    return false;
-  }
-
-  std::string create_table = "CREATE TABLE messages(" \
+    std::string create_table = "CREATE TABLE messages(" \
       "id INTEGER PRIMARY KEY AUTOINCREMENT," \
       "data           BLOB    NOT NULL," \
       "timestamp      INT     NOT NULL);";
 
-  sqlite::execute_query(database_, create_table);
+    sqlite::execute_query(database_, create_table);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Could not create database '" << database_name_ << "'. Error: "
+              << e.what() << std::endl;
+    return false;
+  }
+
   std::cout << "Database '" << database_name_ << "' created" << std::endl;
   return true;
 }
