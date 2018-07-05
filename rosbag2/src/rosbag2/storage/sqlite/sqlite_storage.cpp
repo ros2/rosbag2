@@ -16,6 +16,7 @@
 
 #include "sqlite_storage.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -30,28 +31,43 @@ SqliteStorage::~SqliteStorage()
   close();
 }
 
-bool SqliteStorage::open(bool overwrite_existing)
+bool SqliteStorage::create() 
 {
-  if (overwrite_existing) {
-    std::remove(database_name_.c_str());
+  std::ifstream infile(database_name_);
+  if (infile.good()) {
+    std::cerr << "Database '" << database_name_ << "' already exists." << std::endl;
+    return false;
+  }
+
+  try {
+    database_ = sqlite::open(database_name_);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Could not create database '" << database_name_ << "'." << std::endl;
+    return false;
+  }
+
+  std::string create_table = "CREATE TABLE messages(" \
+      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+      "data           BLOB    NOT NULL," \
+      "timestamp      INT     NOT NULL);";
+
+  sqlite::execute_query(database_, create_table);
+  std::cout << "Database '" << database_name_ << "' created" << std::endl;
+  return true;
+}
+
+bool SqliteStorage::open()
+{
+  std::ifstream infile(database_name_);
+  if (!infile.good()) {
+    std::cerr << "Database '" << database_name_ << "' does not exists." << std::endl;
+    return false;
   }
 
   try {
     database_ = sqlite::open(database_name_);
   } catch (const sqlite::sql_exception & e) {
     std::cerr << "Could not open database '" << database_name_ << "'." << std::endl;
-    return false;
-  }
-
-  try {
-    std::string create_table = "CREATE TABLE messages(" \
-      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-      "data           BLOB    NOT NULL," \
-      "timestamp      INT     NOT NULL);";
-
-    sqlite::execute_query(database_, create_table);
-  } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Database '" << database_name_ << "' already exists." << std::endl;
     return false;
   }
 
@@ -84,6 +100,17 @@ void SqliteStorage::close()
   if (database_) {
     sqlite::close(database_);
   }
+}
+
+sqlite::DBPtr SqliteStorage::getDatabaseHandle()
+{
+  try {
+    database_ = sqlite::open(database_name_);
+  } catch (const sqlite::sql_exception & e) {
+    std::cerr << "Could not open database '" << database_name_ << "'." << std::endl;
+    return nullptr;
+  }
+  return database_;
 }
 
 }  // namespace rosbag2

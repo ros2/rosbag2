@@ -30,7 +30,7 @@ void record(const std::string & file_name, const std::string & topic_name)
 {
   SqliteStorage storage(file_name);
 
-  if (storage.open(true)) {
+  if (storage.create()) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,

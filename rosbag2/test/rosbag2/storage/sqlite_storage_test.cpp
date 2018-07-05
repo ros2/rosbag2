@@ -48,7 +48,7 @@ std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & datab
 
 
 TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
-  storage_.open(true);
+  storage_.create();
   storage_.write("test_message");
   storage_.close();
 
@@ -58,12 +58,12 @@ TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
   ASSERT_THAT(messages[0], Eq("test_message"));
 }
 
-TEST_F(SqliteStorageFixture, open_fails_if_database_already_exists) {
-  storage_.open();
+TEST_F(SqliteStorageFixture, create_fails_if_database_already_exists) {
+  storage_.create();
   storage_.write("test_message");
   storage_.close();
 
-  bool result = storage_.open();
+  bool result = storage_.create();
 
   EXPECT_THAT(result, Eq(false));
 }

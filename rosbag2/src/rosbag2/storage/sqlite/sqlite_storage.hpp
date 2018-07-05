@@ -32,8 +32,10 @@ public:
   explicit SqliteStorage(const std::string & database_name);
   ~SqliteStorage();
 
-  bool open(bool overwrite_existing = false) override;
+  bool create() override;
+  bool open() override;
   void close() override;
+  sqlite::DBPtr getDatabaseHandle();
 
   bool write(const std::string & data) override;
 
