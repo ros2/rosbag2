@@ -22,7 +22,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(${PROJECT_NAME} src/rosbag2/rosbag2.cpp)
+set(source_files
+  src/rosbag2/rosbag2.cpp
+  src/rosbag2/sqlite.hpp
+  src/rosbag2/sqlite.cpp
+  src/rosbag2/storage.hpp
+  src/rosbag2/sqlite_storage.hpp
+  src/rosbag2/sqlite_storage.cpp)
+
+add_executable(${PROJECT_NAME} ${source_files})
 ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs)
 target_link_libraries(${PROJECT_NAME} sqlite3)
 

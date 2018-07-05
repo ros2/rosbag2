@@ -14,31 +14,26 @@
  *  limitations under the License.
  */
 
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#ifndef ROSBAG2_SQLITE_HPP
+#define ROSBAG2_SQLITE_HPP
 
-#include "sqlite_storage.hpp"
+#include <sqlite3.h>
+#include <stdexcept>
 
-using namespace rosbag2;
-
-int main(int argc, const char** argv)
+namespace rosbag2
 {
-  SqliteStorage storage;
-  storage.open("test.db");
+namespace sqlite
+{
 
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("rosbag_node");
-  auto subscription = node->create_subscription<std_msgs::msg::String>(
-    "string_topic",
-    [&storage](std_msgs::msg::String::ConstSharedPtr msg) {
-      std::cout << msg->data << std::endl;
-      storage.insertMessage(msg->data);
-  });
+using DBPtr = sqlite3 *;
 
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-  return 0;
-}
+DBPtr open(const std::string & filename);
 
+void execute_query(DBPtr db, const std::string & query);
 
+void close(DBPtr db);
 
+}  // namespace sqlite
+}  // namespace rosbag2
+
+#endif  // ROSBAG2_SQLITE_HPP
