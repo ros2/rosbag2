@@ -20,22 +20,25 @@
 #include <string>
 #include <vector>
 
-#include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rosbag2/rosbag2.hpp"
+#include "std_msgs/msg/string.hpp"
+
+#include "../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
-class SqliteStorageFixture : public Test
+class Rosbag2TestFixture : public Test
 {
 public:
-  SqliteStorageFixture()
-  : database_name_("test_database"), storage_(database_name_)
+  Rosbag2TestFixture()
+  : database_name_("test_database")
   {
     std::remove("test_database");
   }
 
   std::string database_name_;
-  SqliteStorage storage_;
 };
 
 std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & database_name)
@@ -46,31 +49,34 @@ std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & datab
   return messages;
 }
 
+TEST_F(Rosbag2TestFixture, published_messages_are_recorded)
+{
+  int argc = 0;
+  char ** argv = nullptr;
+  rclcpp::init(argc, argv);
 
-TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
-  storage_.open(true);
-  storage_.write("test_message");
-  storage_.close();
+  std::thread record_thread(
+    [this]() {
+      rosbag2::record(database_name_, "string_topic");
+    });
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  auto node = std::make_shared<rclcpp::Node>("publisher_node");
+  auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
+
+  auto msg = std_msgs::msg::String();
+  msg.data = "Hello world";
+  publisher->publish(msg);
+  rclcpp::spin_some(node);
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  rclcpp::shutdown();
+  record_thread.join();
 
   auto messages = getMessagesFromSqliteDatabase(database_name_);
 
   ASSERT_THAT(messages, SizeIs(1));
-  ASSERT_THAT(messages[0], Eq("test_message"));
-}
-
-TEST_F(SqliteStorageFixture, open_fails_if_database_already_exists) {
-  storage_.open();
-  storage_.write("test_message");
-  storage_.close();
-
-  bool result = storage_.open();
-
-  EXPECT_THAT(result, Eq(false));
-}
-
-
-TEST_F(SqliteStorageFixture, write_fails_if_database_not_opened) {
-  bool result = storage_.write("test_message");
-
-  EXPECT_THAT(result, Eq(false));
+  ASSERT_THAT(messages[0], Eq("Hello world"));
 }

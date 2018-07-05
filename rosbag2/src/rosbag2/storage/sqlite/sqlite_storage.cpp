@@ -23,7 +23,7 @@ namespace rosbag2
 {
 
 SqliteStorage::SqliteStorage(const std::string & database_name)
-  : database_(), database_name_(database_name) {}
+: database_(), database_name_(database_name) {}
 
 SqliteStorage::~SqliteStorage()
 {
@@ -45,9 +45,9 @@ bool SqliteStorage::open(bool overwrite_existing)
 
   try {
     std::string create_table = "CREATE TABLE messages(" \
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-    "data           BLOB    NOT NULL," \
-    "timestamp      INT     NOT NULL);";
+      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+      "data           BLOB    NOT NULL," \
+      "timestamp      INT     NOT NULL);";
 
     sqlite::execute_query(database_, create_table);
   } catch (const sqlite::sql_exception & e) {
