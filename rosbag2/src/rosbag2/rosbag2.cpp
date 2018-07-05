@@ -25,8 +25,8 @@ namespace rosbag2
 
 void record(const std::string & file_name, const std::string & topic_name)
 {
-  SqliteStorage storage;
-  storage.open(file_name);
+  SqliteStorage storage(file_name);
+  storage.open();
 
   auto node = std::make_shared<rclcpp::Node>("rosbag_node");
   auto subscription = node->create_subscription<std_msgs::msg::String>(

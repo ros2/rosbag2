@@ -24,8 +24,8 @@ using namespace rosbag2;
 
 TEST(SqliteStorage, write_single_message_to_storage) {
   std::remove("test_database");
-  SqliteStorage storage;
-  storage.open("test_database");
+  SqliteStorage storage("test_database");
+  storage.open();
   storage.insertMessage("test_message");
   storage.close();
 

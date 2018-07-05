@@ -26,16 +26,17 @@ namespace rosbag2
 class SqliteStorage : public Storage
 {
 public:
-  SqliteStorage();
+  explicit SqliteStorage(std::string database_name);
   ~SqliteStorage();
 
-  void open(std::string filename) override;
+  void open() override;
   void close() override;
 
   void insertMessage(std::string data) override;
 
 private:
   sqlite::DBPtr database_;
+  std::string database_name_;
 };
 
 }  // namespace rosbag2
