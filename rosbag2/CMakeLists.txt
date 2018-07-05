@@ -19,7 +19,12 @@ endif()
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+add_executable(${PROJECT_NAME} src/rosbag2/rosbag2.cpp)
+ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs)
+target_link_libraries(${PROJECT_NAME} sqlite3)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
