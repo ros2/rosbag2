@@ -35,8 +35,6 @@ public:
   bool create() override;
   bool open() override;
   void close() override;
-  sqlite::DBPtr getDatabaseHandle();
-
   bool write(const std::string & data) override;
 
 private:

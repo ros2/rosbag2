@@ -103,15 +103,4 @@ void SqliteStorage::close()
   }
 }
 
-sqlite::DBPtr SqliteStorage::getDatabaseHandle()
-{
-  try {
-    database_ = sqlite::open(database_name_);
-  } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Could not open database '" << database_name_ << "'." << std::endl;
-    return nullptr;
-  }
-  return database_;
-}
-
 }  // namespace rosbag2
