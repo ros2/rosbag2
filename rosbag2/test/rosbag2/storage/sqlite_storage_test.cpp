@@ -23,11 +23,20 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
-TEST(SqliteStorage, write_single_message_to_storage) {
-  SqliteStorage storage("test_database");
-  storage.open(true);
-  storage.write("test_message");
-  storage.close();
+class SqliteStorageFixture: public Test
+{
+public:
+  SqliteStorageFixture(): storage_("test_database") {
+    std::remove("test_database");
+  }
+
+  SqliteStorage storage_;
+};
+
+TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
+  storage_.open(true);
+  storage_.write("test_message");
+  storage_.close();
 
   sqlite::DBPtr db = sqlite::open("test_database");
   auto messages = sqlite::getMessages(db);
@@ -35,4 +44,21 @@ TEST(SqliteStorage, write_single_message_to_storage) {
 
   ASSERT_THAT(messages, SizeIs(1));
   ASSERT_THAT(messages[0], Eq("test_message"));
+}
+
+TEST_F(SqliteStorageFixture, open_fails_if_database_already_exists) {
+  storage_.open();
+  storage_.write("test_message");
+  storage_.close();
+
+  bool result = storage_.open();
+
+  EXPECT_THAT(result, Eq(false));
+}
+
+
+TEST_F(SqliteStorageFixture, write_fails_if_database_not_opened) {
+  bool result = storage_.write("test_message");
+
+  EXPECT_THAT(result, Eq(false));
 }
