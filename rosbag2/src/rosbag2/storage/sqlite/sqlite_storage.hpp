@@ -22,12 +22,13 @@
 
 #include "sqlite_wrapper.hpp"
 
+#include "../readable_storage.hpp"
 #include "../writable_storage.hpp"
 
 namespace rosbag2
 {
 
-class SqliteStorage : public WritableStorage
+class SqliteStorage : public WritableStorage, public ReadableStorage
 {
 public:
   SqliteStorage(const std::string & database_name, bool shouldInitialize);
@@ -36,6 +37,8 @@ public:
   explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
 
   bool write(const std::string & data) override;
+
+  std::vector<std::string> get_messages() override;
 
 private:
   void initialize();

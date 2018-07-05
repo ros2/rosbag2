@@ -57,6 +57,11 @@ bool SqliteStorage::write(const std::string & data)
   return true;
 }
 
+std::vector<std::string> SqliteStorage::get_messages()
+{
+  return database_->get_messages();
+}
+
 void SqliteStorage::initialize()
 {
   std::string create_table = "CREATE TABLE messages(" \

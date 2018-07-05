@@ -27,6 +27,23 @@
 namespace rosbag2
 {
 
+std::unique_ptr<ReadableStorage> StorageFactory::get_for_reading(const std::string & file_name)
+{
+  std::ifstream infile(file_name);
+  if (!infile.good()) {
+    std::cerr << "Bagfile '" << file_name << "' does not exist." << std::endl;
+    return std::unique_ptr<ReadableStorage>();
+  }
+
+  try {
+    return std::move(std::make_unique<SqliteStorage>(file_name, false));
+  } catch (std::exception & e) {
+    std::cerr << "Could not open storage. Error: " << e.what() << std::endl;
+  }
+
+  return std::unique_ptr<ReadableStorage>();
+}
+
 std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::string & file_name)
 {
   std::ifstream infile(file_name);

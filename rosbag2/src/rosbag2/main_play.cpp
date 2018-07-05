@@ -14,24 +14,18 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
-#define ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+#include "rclcpp/rclcpp.hpp"
 
-#include <memory>
-#include <string>
+#include "rosbag2/rosbag2.hpp"
 
-#include "readable_storage.hpp"
-#include "writable_storage.hpp"
-
-namespace rosbag2
+int main(int argc, const char ** argv)
 {
-class StorageFactory
-{
-public:
-  std::unique_ptr<ReadableStorage> get_for_reading(const std::string & file_name);
-  std::unique_ptr<WritableStorage> get_for_writing(const std::string & file_name);
-};
+  rclcpp::init(argc, argv);
 
-}  // namespace rosbag2
+  rosbag2::Rosbag2 rosbag2;
+  rosbag2.play("test.bag", "string_topic");
 
-#endif  // ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+  rclcpp::shutdown();
+
+  return 0;
+}

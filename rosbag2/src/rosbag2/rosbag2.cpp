@@ -51,4 +51,24 @@ void Rosbag2::record(
   }
 }
 
+void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
+{
+  StorageFactory factory;
+  std::unique_ptr<ReadableStorage> storage = factory.get_for_reading(file_name);
+
+  if (storage) {
+    auto messages = storage->get_messages();
+    auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
+    auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
+    for (const auto & message : messages) {
+      auto string_msg = std_msgs::msg::String();
+      string_msg.data = message;
+      // without the sleep_for() many messages are lost.
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      publisher->publish(string_msg);
+    }
+    rclcpp::spin_some(node);
+  }
+}
+
 }  // namespace rosbag2

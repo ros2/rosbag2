@@ -30,6 +30,7 @@ public:
     const std::string & file_name,
     const std::string & topic_name,
     std::function<void(void)> after_write_action = nullptr);
+  void play(const std::string & file_name, const std::string & topic_name);
 };
 
 }  // namespace rosbag2

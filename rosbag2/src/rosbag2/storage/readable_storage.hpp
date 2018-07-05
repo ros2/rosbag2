@@ -14,24 +14,23 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
-#define ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+#ifndef ROSBAG2__STORAGE__READABLE_STORAGE_HPP_
+#define ROSBAG2__STORAGE__READABLE_STORAGE_HPP_
 
-#include <memory>
 #include <string>
-
-#include "readable_storage.hpp"
-#include "writable_storage.hpp"
+#include <vector>
 
 namespace rosbag2
 {
-class StorageFactory
+
+class ReadableStorage
 {
 public:
-  std::unique_ptr<ReadableStorage> get_for_reading(const std::string & file_name);
-  std::unique_ptr<WritableStorage> get_for_writing(const std::string & file_name);
+  virtual ~ReadableStorage() = default;
+
+  virtual std::vector<std::string> get_messages() = 0;
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+#endif  // ROSBAG2__STORAGE__READABLE_STORAGE_HPP_

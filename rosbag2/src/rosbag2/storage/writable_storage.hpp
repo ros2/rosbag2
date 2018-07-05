@@ -18,6 +18,7 @@
 #define ROSBAG2__STORAGE__WRITABLE_STORAGE_HPP_
 
 #include <string>
+#include <vector>
 
 namespace rosbag2
 {
