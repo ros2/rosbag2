@@ -15,6 +15,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <memory>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
@@ -32,6 +33,6 @@ TEST(SqliteStorage, write_single_message_to_storage) {
   auto messages = sqlite::getMessages(db);
   sqlite::close(db);
 
-  ASSERT_EQ(messages.size(), size_t(1));
-  EXPECT_EQ(messages[0], "test_message");
+  ASSERT_THAT(messages, SizeIs(1));
+  ASSERT_THAT(messages[0], Eq("test_message"));
 }
