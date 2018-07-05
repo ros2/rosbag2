@@ -17,7 +17,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "sqlite_storage.hpp"
+#include "storage/sqlite/sqlite_storage.hpp"
 
 using namespace rosbag2;
 

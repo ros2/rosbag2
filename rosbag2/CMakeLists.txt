@@ -22,17 +22,16 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-set(source_files
-  src/rosbag2/rosbag2.cpp
-  src/rosbag2/sqlite.hpp
-  src/rosbag2/sqlite.cpp
-  src/rosbag2/storage.hpp
-  src/rosbag2/sqlite_storage.hpp
-  src/rosbag2/sqlite_storage.cpp)
+add_library(librosbag
+  src/rosbag2/storage/storage.hpp
+  src/rosbag2/storage/sqlite/sqlite.hpp
+  src/rosbag2/storage/sqlite/sqlite.cpp
+  src/rosbag2/storage/sqlite/sqlite_storage.hpp
+  src/rosbag2/storage/sqlite/sqlite_storage.cpp)
 
-add_executable(${PROJECT_NAME} ${source_files})
+add_executable(${PROJECT_NAME} src/rosbag2/rosbag2.cpp)
 ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs)
-target_link_libraries(${PROJECT_NAME} sqlite3)
+target_link_libraries(${PROJECT_NAME} sqlite3 librosbag)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -43,6 +42,13 @@ if(BUILD_TESTING)
   # remove the line when this package is a git repo
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(sqlite_storage_test test/rosbag2/storage/sqlite_storage_test.cpp)
+  if(TARGET sqlite_storage_test)
+    target_link_libraries(sqlite_storage_test sqlite3 librosbag)
+  endif()
+
 endif()
 
 ament_package()

@@ -17,7 +17,7 @@
 #ifndef ROSBAG2_SQLITESTORAGE_HPP
 #define ROSBAG2_SQLITESTORAGE_HPP
 
-#include "storage.hpp"
+#include "../storage.hpp"
 #include "sqlite.hpp"
 
 namespace rosbag2
