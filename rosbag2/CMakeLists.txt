@@ -52,7 +52,8 @@ if(BUILD_TESTING)
   ament_uncrustify()
 
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(sqlite_storage_test test/rosbag2/storage/sqlite_storage_test.cpp)
+  ament_add_gtest(sqlite_storage_test test/rosbag2/storage/sqlite_storage_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
     target_link_libraries(sqlite_storage_test sqlite3 librosbag)
   endif()
