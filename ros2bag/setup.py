@@ -1,0 +1,39 @@
+from setuptools import find_packages
+from setuptools import setup
+
+setup(
+    name='ros2bag',
+    version='0.0.0',
+    packages=find_packages(exclude=['test']),
+    install_requires=['ros2cli'],
+    zip_safe=True,
+    author='Karsten Knese',
+    author_email='karsten@osrfoundation.org',
+    maintainer='Karsten Knese',
+    maintainer_email='karsten@osrfoundation.org',
+    keywords=[],
+    classifiers=[
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+    ],
+    description='Entry point for rosbag in ROS 2',
+    long_description="""\
+The package provides the rosbag command for the ROS 2 command line tools.""",
+    license='Apache License, Version 2.0',
+    tests_require=['pytest'],
+    entry_points={
+        'ros2cli.command': [
+            'bag = ros2bag.command.bag:BagCommand',
+        ],
+        'ros2cli.extension_point': [
+            'ros2bag.verb = ros2bag.verb:VerbExtension',
+        ],
+        'ros2bag.verb': [
+            'info = ros2bag.verb.info:InfoVerb',
+            'play = ros2bag.verb.play:PlayVerb',
+            'record = ros2bag.verb.record:RecordVerb',
+        ],
+    }
+)
