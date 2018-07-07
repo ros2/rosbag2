@@ -13,6 +13,10 @@
 # limitations under the License.
 
 import sys
+import time
+
+from ros2cli.node.strategy import add_arguments
+from ros2cli.node.strategy import NodeStrategy
 
 from ros2bag.verb import VerbExtension
 
@@ -21,6 +25,7 @@ class RecordVerb(VerbExtension):
     """ros2 bag record."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        add_arguments(parser)
         parser.add_argument(
             '-a', '--all', action='store_true', help='recording all topics')
         parser.add_argument(
@@ -31,5 +36,11 @@ class RecordVerb(VerbExtension):
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
-        topics = 'all' if args.all else args.topics
-        print('topics to be recorded:', topics)
+        with NodeStrategy(args) as node:
+            if args.all:
+                t_and_n = node.get_topic_names_and_types()
+                print(t_and_n)
+                topics = [t for t,n in node.get_topic_names_and_types()]
+            if args.topics:
+                topics = args.topics
+            print('topics to be recorded:', topics)
