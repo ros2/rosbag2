@@ -31,7 +31,7 @@ SqliteStorage::~SqliteStorage()
   close();
 }
 
-bool SqliteStorage::create() 
+bool SqliteStorage::create()
 {
   std::ifstream infile(database_name_);
   if (infile.good()) {
@@ -48,8 +48,8 @@ bool SqliteStorage::create()
 
     sqlite::execute_query(database_, create_table);
   } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Could not create database '" << database_name_ << "'. Error: "
-              << e.what() << std::endl;
+    std::cerr << "Could not create database '" << database_name_ << "'. Error: " <<
+      e.what() << std::endl;
     return false;
   }
 
