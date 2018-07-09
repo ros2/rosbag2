@@ -38,6 +38,9 @@ class Rosbag2TestFixture : public Test
 public:
   Rosbag2TestFixture()
   : database_name_("test_database")
+  {}
+
+  ~Rosbag2TestFixture() override 
   {
     std::remove("test_database");
   }
