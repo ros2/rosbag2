@@ -30,7 +30,7 @@ class SqliteStorageFixture : public Test
 {
 public:
   SqliteStorageFixture()
-  : database_name_("test_database")
+  : database_name_(UnitTest::GetInstance()->current_test_info()->name())
   {
     std::remove(database_name_.c_str());
   }

@@ -37,12 +37,12 @@ class Rosbag2TestFixture : public Test
 {
 public:
   Rosbag2TestFixture()
-  : database_name_("test_database")
+  : database_name_(UnitTest::GetInstance()->current_test_info()->name())
   {}
 
   ~Rosbag2TestFixture() override
   {
-    std::remove("test_database");
+    std::remove(database_name_.c_str());
   }
 
   std::vector<std::string> getMessages(sqlite3 * db, std::string table = "messages")
