@@ -22,43 +22,27 @@
 #include <fstream>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
+#include "../rosbag2_test_fixture.cpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
-class SqliteStorageFixture : public Test
-{
-public:
-  SqliteStorageFixture()
-  : database_name_(UnitTest::GetInstance()->current_test_info()->name())
-  {
-    std::remove(database_name_.c_str());
-  }
-
-  std::string database_name_;
-};
-
-std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & database_name)
-{
-  sqlite::DBPtr db = sqlite::open(database_name);
-  auto messages = sqlite::getMessages(db);
-  sqlite::close(db);
-  return messages;
-}
-
-
-TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
+TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
   auto storage = std::make_unique<SqliteStorage>(database_name_, true);
   storage->write("test_message");
   storage.reset();
 
-  auto messages = getMessagesFromSqliteDatabase(database_name_);
+  sqlite3 * database;
+  sqlite3_open(database_name_.c_str(), &database);
+  auto messages = getMessages(database);
+  sqlite3_close(database);
 
   ASSERT_THAT(messages, SizeIs(1));
   ASSERT_THAT(messages[0], Eq("test_message"));
 }
 
-TEST_F(SqliteStorageFixture, create_fails_if_database_already_exists) {
+TEST_F(Rosbag2TestFixture_write_single_message_to_storage_Test,
+  create_fails_if_database_already_exists) {
   std::ofstream file {database_name_};
 
   auto storage = std::make_unique<SqliteStorage>(database_name_, true);
@@ -67,7 +51,7 @@ TEST_F(SqliteStorageFixture, create_fails_if_database_already_exists) {
 }
 
 
-TEST_F(SqliteStorageFixture, write_fails_if_database_not_opened) {
+TEST_F(Rosbag2TestFixture, write_fails_if_database_not_opened) {
   std::ofstream file {database_name_};
   auto storage = std::make_unique<SqliteStorage>(database_name_, true);
   EXPECT_THAT(storage->is_open(), Eq(false));
