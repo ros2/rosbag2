@@ -28,8 +28,8 @@ add_library(librosbag
   src/rosbag2/storage/writable_storage.hpp
   src/rosbag2/storage/storage_factory.hpp
   src/rosbag2/storage/storage_factory.cpp
-  src/rosbag2/storage/sqlite/sqlite.hpp
-  src/rosbag2/storage/sqlite/sqlite.cpp
+  src/rosbag2/storage/sqlite/sqlite_wrapper.hpp
+  src/rosbag2/storage/sqlite/sqlite_wrapper.cpp
   src/rosbag2/storage/sqlite/sqlite_storage.hpp
   src/rosbag2/storage/sqlite/sqlite_storage.cpp)
 ament_target_dependencies(librosbag rclcpp std_msgs)
@@ -61,6 +61,12 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
     target_link_libraries(sqlite_storage_test sqlite3 librosbag)
+  endif()
+
+  ament_add_gmock(storage_factory_test test/rosbag2/storage/storage_factory_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET storage_factory_test)
+    target_link_libraries(storage_factory_test sqlite3 librosbag)
   endif()
 
   ament_add_gmock(rosbag2_integration_test test/rosbag2/rosbag2_integration_test.cpp

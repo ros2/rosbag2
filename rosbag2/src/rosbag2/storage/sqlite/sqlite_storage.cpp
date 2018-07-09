@@ -16,33 +16,25 @@
 
 #include "sqlite_storage.hpp"
 
-#include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 
 namespace rosbag2
 {
 
-SqliteStorage::SqliteStorage(const std::string & database_name, bool open_for_writing)
+SqliteStorage::SqliteStorage(const std::string & database_name, bool shouldInitialize)
 : database_()
 {
-  if (open_for_writing) {
-    create_and_open(database_name);
-  } else {
-    open(database_name);
-  }
-}
-
-SqliteStorage::~SqliteStorage()
-{
-  if (is_open()) {
-    sqlite::close(database_);
+  open(database_name);
+  if (shouldInitialize) {
+    initialize();
   }
 }
 
 bool SqliteStorage::is_open()
 {
-  return static_cast<bool>(database_);
+  return static_cast<bool>(database_.get());
 }
 
 bool SqliteStorage::write(const std::string & data)
@@ -55,8 +47,8 @@ bool SqliteStorage::write(const std::string & data)
   try {
     std::string insert_message =
       "INSERT INTO messages (data, timestamp) VALUES ('" + data + "', strftime('%s%f','now'))";
-    sqlite::execute_query(database_, insert_message);
-  } catch (const sqlite::sql_exception & e) {
+    database_->execute_query(insert_message);
+  } catch (const sql_exception & e) {
     std::cerr << "Failed to write message. Error: " << e.what() << std::endl;
     return false;
   }
@@ -65,49 +57,33 @@ bool SqliteStorage::write(const std::string & data)
   return true;
 }
 
-void SqliteStorage::create_and_open(const std::string & database_name)
+void SqliteStorage::initialize()
 {
-  std::ifstream infile(database_name);
-  if (infile.good()) {
-    std::cerr << "Database '" << database_name << "' already exists." << std::endl;
-    return;
+  if (is_open()) {
+    try {
+      std::string create_table = "CREATE TABLE messages(" \
+        "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+        "data           BLOB    NOT NULL," \
+        "timestamp      INT     NOT NULL);";
+
+      database_->execute_query(create_table);
+    } catch (const sql_exception & e) {
+      std::cerr << "Could not initialize database. Error: " << e.what() << std::endl;
+      database_.reset();
+    }
   }
 
-  try {
-    database_ = sqlite::open(database_name);
-    std::string create_table = "CREATE TABLE messages(" \
-      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-      "data           BLOB    NOT NULL," \
-      "timestamp      INT     NOT NULL);";
-
-    sqlite::execute_query(database_, create_table);
-  } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Could not create database '" << database_name << "'. " <<
-      "Error: " << e.what() << std::endl;
-    database_ = nullptr;
-    return;
-  }
-
-  std::cout << "Database '" << database_name << "' created and opened" << std::endl;
+  std::cout << "Initialized database." << std::endl;
 }
 
 void SqliteStorage::open(const std::string & database_name)
 {
-  std::ifstream infile(database_name);
-  if (!infile.good()) {
-    std::cerr << "Database '" << database_name << "' does not exists." << std::endl;
-    return;
+  database_ = std::make_unique<SqliteWrapper>(database_name);
+  if (!is_open()) {
+    std::cerr << "Could not open database '" << database_name << "'." << std::endl;
   }
 
-  try {
-    database_ = sqlite::open(database_name);
-  } catch (const sqlite::sql_exception & e) {
-    std::cerr << "Could not open database '" << database_name << "'." <<
-      "Error: " << e.what() << std::endl;
-    return;
-  }
-
-  std::cout << "Database '" << database_name << "' opened" << std::endl;
+  std::cout << "Opened database '" << database_name << "'." << std::endl;
 }
 
 }  // namespace rosbag2

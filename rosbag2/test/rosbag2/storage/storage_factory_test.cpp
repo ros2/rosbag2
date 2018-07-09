@@ -16,27 +16,32 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
 #include <memory>
 #include <string>
-#include <vector>
 #include <fstream>
 
-#include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
+#include "../../../src/rosbag2/storage/storage_factory.hpp"
+
 #include "../rosbag2_test_fixture.cpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
-TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
-  auto storage = std::make_unique<SqliteStorage>(database_name_, true);
-  storage->write("test_message");
-  storage.reset();
+class StorageFactoryFixture : public Rosbag2TestFixture
+{
+public:
+  StorageFactoryFixture()
+  : factory_(std::make_unique<StorageFactory>()) {}
 
-  sqlite3 * database;
-  sqlite3_open(database_name_.c_str(), &database);
-  auto messages = getMessages(database);
-  sqlite3_close(database);
+  std::unique_ptr<StorageFactory> factory_;
+};
 
-  ASSERT_THAT(messages, SizeIs(1));
-  ASSERT_THAT(messages[0], Eq("test_message"));
+
+TEST_F(StorageFactoryFixture, returns_nullptr_if_database_already_exists) {
+  std::ofstream file {database_name_};
+
+  auto storage = factory_->get_for_writing(database_name_);
+
+  EXPECT_THAT(storage, IsNull());
 }

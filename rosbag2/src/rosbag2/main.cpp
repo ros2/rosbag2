@@ -14,16 +14,23 @@
  *  limitations under the License.
  */
 
+#include <stdio.h>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2/rosbag2.hpp"
 
 int main(int argc, const char ** argv)
 {
+  std::string filename("test.bag");
+
+  std::remove(filename.c_str());
+
   rclcpp::init(argc, argv);
 
   rosbag2::Rosbag2 rosbag2;
-  rosbag2.record("test.bag", "string_topic");
+  rosbag2.record(filename, "string_topic");
 
   rclcpp::shutdown();
 

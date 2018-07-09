@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_
-#define ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_
+#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_WRAPPER_HPP_
+#define ROSBAG2__STORAGE__SQLITE__SQLITE_WRAPPER_HPP_
 
 #include <sqlite3.h>
 #include <stdexcept>
@@ -23,8 +23,6 @@
 #include <vector>
 
 namespace rosbag2
-{
-namespace sqlite
 {
 
 class sql_exception : public std::runtime_error
@@ -36,16 +34,23 @@ public:
 
 using DBPtr = sqlite3 *;
 
-DBPtr open(const std::string & filename);
+class SqliteWrapper
+{
+public:
+  explicit SqliteWrapper(const std::string & filename);
+  ~SqliteWrapper();
 
-void execute_query(DBPtr db, const std::string & query);
+  void execute_query(const std::string & query);
 
-void close(DBPtr db);
+  std::vector<std::string> getMessages(std::string table = "messages");
 
-std::vector<std::string> getMessages(DBPtr db, std::string table = "messages");
+  explicit operator bool();
+
+private:
+  DBPtr db_ptr;
+};
 
 
-}  // namespace sqlite
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_HPP_
+#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_WRAPPER_HPP_

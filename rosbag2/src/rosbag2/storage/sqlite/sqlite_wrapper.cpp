@@ -18,29 +18,30 @@
 #include <memory>
 #include <vector>
 
-#include "sqlite.hpp"
+#include "sqlite_wrapper.hpp"
 
 namespace rosbag2
 {
-namespace sqlite
-{
 
-DBPtr open(const std::string & filename)
+SqliteWrapper::SqliteWrapper(const std::string & filename)
 {
-  DBPtr database;
-
-  int rc = sqlite3_open(filename.c_str(), &database);
+  int rc = sqlite3_open(filename.c_str(), &db_ptr);
   if (rc) {
-    throw sql_exception("Can't open database: " + std::string(sqlite3_errmsg(database)));
+    db_ptr = nullptr;
   }
-
-  return database;
 }
 
-void execute_query(DBPtr db, const std::string & query)
+SqliteWrapper::~SqliteWrapper()
+{
+  if (db_ptr) {
+    sqlite3_close(db_ptr);
+  }
+}
+
+void SqliteWrapper::execute_query(const std::string & query)
 {
   char * error_msg = 0;
-  int return_code = sqlite3_exec(db, query.c_str(), nullptr, nullptr, &error_msg);
+  int return_code = sqlite3_exec(db_ptr, query.c_str(), nullptr, nullptr, &error_msg);
 
   if (return_code != SQLITE_OK) {
     auto error = "SQL error: " + std::string(error_msg);
@@ -49,17 +50,12 @@ void execute_query(DBPtr db, const std::string & query)
   }
 }
 
-void close(DBPtr db)
-{
-  sqlite3_close(db);
-}
-
-std::vector<std::string> getMessages(DBPtr db, std::string table)
+std::vector<std::string> SqliteWrapper::getMessages(std::string table)
 {
   std::vector<std::string> table_msgs;
   sqlite3_stmt * statement;
   std::string query = "SELECT * FROM " + table;
-  sqlite3_prepare_v2(db, query.c_str(), -1, &statement, nullptr);
+  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
   int result = sqlite3_step(statement);
   while (result == SQLITE_ROW) {
     table_msgs.emplace_back(
@@ -71,5 +67,9 @@ std::vector<std::string> getMessages(DBPtr db, std::string table)
   return table_msgs;
 }
 
-}  // namespace sqlite
+SqliteWrapper::operator bool()
+{
+  return static_cast<bool>(db_ptr);
+}
+
 }  // namespace rosbag2

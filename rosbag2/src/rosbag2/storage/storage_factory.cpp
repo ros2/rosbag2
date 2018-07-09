@@ -16,6 +16,8 @@
 
 #include "storage_factory.hpp"
 
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -27,6 +29,12 @@ namespace rosbag2
 
 std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::string & database_name)
 {
+  std::ifstream infile(database_name);
+  if (infile.good()) {
+    std::cerr << "Database '" << database_name << "' already exists." << std::endl;
+    return std::unique_ptr<WritableStorage>();
+  }
+
   auto storage = std::make_unique<SqliteStorage>(database_name, true);
   if (storage->is_open()) {
     return std::unique_ptr<WritableStorage>(std::move(storage));

@@ -18,8 +18,9 @@
 #define ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
 
 #include <string>
+#include <memory>
 
-#include "sqlite.hpp"
+#include "sqlite_wrapper.hpp"
 
 #include "../writable_storage.hpp"
 
@@ -29,8 +30,7 @@ namespace rosbag2
 class SqliteStorage : public WritableStorage
 {
 public:
-  explicit SqliteStorage(const std::string & database_name, bool open_for_writing);
-  ~SqliteStorage();
+  explicit SqliteStorage(const std::string & database_name, bool shouldInitialize);
 
   bool write(const std::string & data) override;
 
@@ -38,9 +38,9 @@ public:
 
 private:
   void open(const std::string & database_name);
-  void create_and_open(const std::string & database_name);
+  void initialize();
 
-  sqlite::DBPtr database_;
+  std::unique_ptr<SqliteWrapper> database_;
 };
 
 }  // namespace rosbag2
