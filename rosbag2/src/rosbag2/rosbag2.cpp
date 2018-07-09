@@ -21,6 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#include "storage/storage_factory.hpp"
 #include "storage/sqlite/sqlite_storage.hpp"
 
 namespace rosbag2
@@ -31,9 +32,10 @@ void record(
   const std::string & topic_name,
   std::function<void(void)> after_write_action)
 {
-  std::shared_ptr<Storage> storage = std::make_shared<SqliteStorage>(file_name);
+  StorageFactory factory;
+  std::unique_ptr<WritableStorage> storage = factory.getForWriting(file_name);
 
-  if (storage->create()) {
+  if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,

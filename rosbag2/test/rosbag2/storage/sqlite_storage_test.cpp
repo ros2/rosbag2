@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
 
@@ -29,13 +30,12 @@ class SqliteStorageFixture : public Test
 {
 public:
   SqliteStorageFixture()
-  : database_name_("test_database"), storage_(database_name_)
+  : database_name_("test_database")
   {
-    std::remove("test_database");
+    std::remove(database_name_.c_str());
   }
 
   std::string database_name_;
-  SqliteStorage storage_;
 };
 
 std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & database_name)
@@ -48,9 +48,9 @@ std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & datab
 
 
 TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
-  storage_.create();
-  storage_.write("test_message");
-  storage_.close();
+  auto storage = std::make_unique<SqliteStorage>(database_name_, true);
+  storage->write("test_message");
+  storage.reset();
 
   auto messages = getMessagesFromSqliteDatabase(database_name_);
 
@@ -59,18 +59,20 @@ TEST_F(SqliteStorageFixture, write_single_message_to_storage) {
 }
 
 TEST_F(SqliteStorageFixture, create_fails_if_database_already_exists) {
-  storage_.create();
-  storage_.write("test_message");
-  storage_.close();
+  std::ofstream file {database_name_};
 
-  bool result = storage_.create();
+  auto storage = std::make_unique<SqliteStorage>(database_name_, true);
 
-  EXPECT_THAT(result, Eq(false));
+  EXPECT_THAT(storage->isOpen(), Eq(false));
 }
 
 
 TEST_F(SqliteStorageFixture, write_fails_if_database_not_opened) {
-  bool result = storage_.write("test_message");
+  std::ofstream file {database_name_};
+  auto storage = std::make_unique<SqliteStorage>(database_name_, true);
+  EXPECT_THAT(storage->isOpen(), Eq(false));
+
+  bool result = storage->write("test_message");
 
   EXPECT_THAT(result, Eq(false));
 }

@@ -14,35 +14,20 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
-#define ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+#ifndef ROSBAG2__STORAGE__WRITABLE_STORAGE_HPP_
+#define ROSBAG2__STORAGE__WRITABLE_STORAGE_HPP_
 
 #include <string>
-
-#include "sqlite.hpp"
-
-#include "../writable_storage.hpp"
 
 namespace rosbag2
 {
 
-class SqliteStorage : public WritableStorage
+class WritableStorage
 {
 public:
-  explicit SqliteStorage(const std::string & database_name, bool open_for_writing);
-  ~SqliteStorage();
-
-  bool write(const std::string & data) override;
-
-  bool isOpen();
-
-private:
-  void open(const std::string & database_name);
-  void create_and_open(const std::string & database_name);
-
-  sqlite::DBPtr database_;
+  virtual bool write(const std::string & data) = 0;
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+#endif  // ROSBAG2__STORAGE__WRITABLE_STORAGE_HPP_

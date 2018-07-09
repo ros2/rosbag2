@@ -14,24 +14,24 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__STORAGE_HPP_
-#define ROSBAG2__STORAGE__STORAGE_HPP_
+#include "storage_factory.hpp"
 
+#include <memory>
 #include <string>
+#include <utility>
+
+#include "sqlite/sqlite_storage.hpp"
 
 namespace rosbag2
 {
 
-class Storage
+std::unique_ptr<WritableStorage> StorageFactory::getForWriting(const std::string & database_name)
 {
-public:
-  virtual bool create() = 0;
-  virtual bool open() = 0;
-  virtual void close() = 0;
-
-  virtual bool write(const std::string & data) = 0;
-};
+  auto storage = std::make_unique<SqliteStorage>(database_name, true);
+  if (storage->isOpen()) {
+    return std::unique_ptr<WritableStorage>(std::move(storage));
+  }
+  return std::unique_ptr<WritableStorage>();
+}
 
 }  // namespace rosbag2
-
-#endif  // ROSBAG2__STORAGE__STORAGE_HPP_

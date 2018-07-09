@@ -25,7 +25,9 @@ find_package(std_msgs REQUIRED)
 
 add_library(librosbag
   src/rosbag2/rosbag2.cpp
-  src/rosbag2/storage/storage.hpp
+  src/rosbag2/storage/writable_storage.hpp
+  src/rosbag2/storage/storage_factory.hpp
+  src/rosbag2/storage/storage_factory.cpp
   src/rosbag2/storage/sqlite/sqlite.hpp
   src/rosbag2/storage/sqlite/sqlite.cpp
   src/rosbag2/storage/sqlite/sqlite_storage.hpp
