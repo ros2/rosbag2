@@ -16,8 +16,11 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <future>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -28,6 +31,7 @@
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
+using namespace std::chrono_literals;
 
 class Rosbag2TestFixture : public Test
 {
@@ -49,34 +53,55 @@ std::vector<std::string> getMessagesFromSqliteDatabase(const std::string & datab
   return messages;
 }
 
+void recordMessage(
+  std::string db_name, std::promise<void> * recorder_promise, std::promise<void> * rcl_promise)
+{
+  rosbag2::record(db_name, "string_topic", [&recorder_promise]() {
+      static bool promise_already_set = false;
+      if (!promise_already_set) {
+        recorder_promise->set_value();
+        promise_already_set = true;
+      }
+    });
+
+  rcl_promise->set_value();
+}
+
+void publish_messages(std::shared_future<void> future)
+{
+  auto node = std::make_shared<rclcpp::Node>("publisher_node");
+  auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
+  auto timer = node->create_wall_timer(500ms, [publisher]() {
+        auto msg = std_msgs::msg::String();
+        msg.data = "Hello world";
+        publisher->publish(msg);
+      });
+
+  rclcpp::spin_until_future_complete(node, future);
+}
+
 TEST_F(Rosbag2TestFixture, published_messages_are_recorded)
 {
   int argc = 0;
   char ** argv = nullptr;
   rclcpp::init(argc, argv);
 
-  std::thread record_thread(
-    [this]() {
-      rosbag2::record(database_name_, "string_topic");
-    });
+  std::promise<void> recorder_promise;
+  std::shared_future<void> recorder_future(recorder_promise.get_future());
+  std::promise<void> rcl_safety_promise;
+  std::future<void> rcl_safety_future = rcl_safety_promise.get_future();
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::thread record_thread(recordMessage, database_name_, &recorder_promise, &rcl_safety_promise);
+  publish_messages(recorder_future);
 
-  auto node = std::make_shared<rclcpp::Node>("publisher_node");
-  auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
-
-  auto msg = std_msgs::msg::String();
-  msg.data = "Hello world";
-  publisher->publish(msg);
-  rclcpp::spin_some(node);
-
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-
+  recorder_future.wait();
   rclcpp::shutdown();
   record_thread.join();
 
   auto messages = getMessagesFromSqliteDatabase(database_name_);
 
-  ASSERT_THAT(messages, SizeIs(1));
+  ASSERT_THAT(messages, Not(IsEmpty()));
   ASSERT_THAT(messages[0], Eq("Hello world"));
+
+  rcl_safety_future.wait();
 }

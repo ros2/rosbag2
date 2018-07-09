@@ -17,12 +17,16 @@
 #ifndef ROSBAG2__ROSBAG2_HPP_
 #define ROSBAG2__ROSBAG2_HPP_
 
+#include <functional>
 #include <string>
 
 namespace rosbag2
 {
 
-void record(const std::string & file_name, const std::string & topic_name);
+void record(
+  const std::string & file_name,
+  const std::string & topic_name,
+  std::function<void(void)> after_write_action = nullptr);
 
 }
 #endif  // ROSBAG2__ROSBAG2_HPP_
