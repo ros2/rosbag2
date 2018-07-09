@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace rosbag2
 {
@@ -31,6 +32,10 @@ SqliteStorage::SqliteStorage(const std::string & database_name, bool shouldIniti
     initialize();
   }
 }
+
+SqliteStorage::SqliteStorage(std::unique_ptr<SqliteWrapper> database)
+: database_(std::move(database))
+{}
 
 bool SqliteStorage::is_open()
 {

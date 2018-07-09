@@ -22,21 +22,61 @@
 #include <fstream>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
+#include "../../../src/rosbag2/storage/sqlite/sqlite_wrapper.hpp"
 #include "../rosbag2_test_fixture.cpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
+class MockSqliteWrapper : public SqliteWrapper
+{
+public:
+  explicit MockSqliteWrapper(std::string file_name)
+  : SqliteWrapper(""), file_name_(file_name), is_valid_(true) {}
+
+  void execute_query(const std::string & query) override
+  {
+    std::ofstream mock_database(file_name_);
+    if (mock_database.is_open()) {
+      mock_database << query;
+      mock_database.close();
+    }
+  }
+
+  explicit operator bool() override
+  {
+    return is_valid_;
+  }
+
+  std::string file_name_;
+  bool is_valid_;
+};
+
+std::vector<std::string> getWrittenContent(std::string file_name)
+{
+  std::string file_line;
+  std::vector<std::string> content;
+  std::ifstream mock_database(file_name);
+  if (mock_database.is_open()) {
+    while (getline(mock_database, file_line)) {
+      content.push_back(file_line);
+    }
+    mock_database.close();
+  }
+
+  return content;
+}
+
 TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
-  auto storage = std::make_unique<SqliteStorage>(database_name_, true);
+  auto storage = std::make_unique<SqliteStorage>(
+    std::make_unique<MockSqliteWrapper>(database_name_));
   storage->write("test_message");
   storage.reset();
 
-  sqlite3 * database;
-  sqlite3_open(database_name_.c_str(), &database);
-  auto messages = getMessages(database);
-  sqlite3_close(database);
+  auto messages = getWrittenContent(database_name_);
 
   ASSERT_THAT(messages, SizeIs(1));
-  ASSERT_THAT(messages[0], Eq("test_message"));
+  ASSERT_THAT(
+    messages[0],
+    Eq("INSERT INTO messages (data, timestamp) VALUES ('test_message', strftime('%s%f','now'))"));
 }

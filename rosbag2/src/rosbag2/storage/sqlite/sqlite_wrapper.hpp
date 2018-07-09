@@ -40,11 +40,11 @@ public:
   explicit SqliteWrapper(const std::string & filename);
   ~SqliteWrapper();
 
-  void execute_query(const std::string & query);
+  virtual void execute_query(const std::string & query);
 
-  std::vector<std::string> getMessages(std::string table = "messages");
+  virtual std::vector<std::string> getMessages(std::string table = "messages");
 
-  explicit operator bool();
+  virtual explicit operator bool();
 
 private:
   DBPtr db_ptr;
