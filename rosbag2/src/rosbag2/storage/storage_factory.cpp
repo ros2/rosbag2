@@ -25,10 +25,10 @@
 namespace rosbag2
 {
 
-std::unique_ptr<WritableStorage> StorageFactory::getForWriting(const std::string & database_name)
+std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::string & database_name)
 {
   auto storage = std::make_unique<SqliteStorage>(database_name, true);
-  if (storage->isOpen()) {
+  if (storage->is_open()) {
     return std::unique_ptr<WritableStorage>(std::move(storage));
   }
   return std::unique_ptr<WritableStorage>();

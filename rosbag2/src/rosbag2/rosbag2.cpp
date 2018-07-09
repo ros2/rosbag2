@@ -33,7 +33,7 @@ void Rosbag2::record(
   std::function<void(void)> after_write_action)
 {
   StorageFactory factory;
-  std::unique_ptr<WritableStorage> storage = factory.getForWriting(file_name);
+  std::unique_ptr<WritableStorage> storage = factory.get_for_writing(file_name);
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");

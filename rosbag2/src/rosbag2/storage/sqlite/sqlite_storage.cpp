@@ -35,19 +35,19 @@ SqliteStorage::SqliteStorage(const std::string & database_name, bool open_for_wr
 
 SqliteStorage::~SqliteStorage()
 {
-  if (isOpen()) {
+  if (is_open()) {
     sqlite::close(database_);
   }
 }
 
-bool SqliteStorage::isOpen()
+bool SqliteStorage::is_open()
 {
   return static_cast<bool>(database_);
 }
 
 bool SqliteStorage::write(const std::string & data)
 {
-  if (!isOpen()) {
+  if (!is_open()) {
     std::cerr << "Failed to write message. The database is not open." << std::endl;
     return false;
   }

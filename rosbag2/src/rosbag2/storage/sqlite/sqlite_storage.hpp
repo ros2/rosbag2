@@ -34,7 +34,7 @@ public:
 
   bool write(const std::string & data) override;
 
-  bool isOpen();
+  bool is_open();
 
 private:
   void open(const std::string & database_name);

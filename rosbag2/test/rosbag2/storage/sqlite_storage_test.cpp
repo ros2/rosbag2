@@ -63,14 +63,14 @@ TEST_F(SqliteStorageFixture, create_fails_if_database_already_exists) {
 
   auto storage = std::make_unique<SqliteStorage>(database_name_, true);
 
-  EXPECT_THAT(storage->isOpen(), Eq(false));
+  EXPECT_THAT(storage->is_open(), Eq(false));
 }
 
 
 TEST_F(SqliteStorageFixture, write_fails_if_database_not_opened) {
   std::ofstream file {database_name_};
   auto storage = std::make_unique<SqliteStorage>(database_name_, true);
-  EXPECT_THAT(storage->isOpen(), Eq(false));
+  EXPECT_THAT(storage->is_open(), Eq(false));
 
   bool result = storage->write("test_message");
 
