@@ -27,7 +27,7 @@
 namespace rosbag2
 {
 
-void record(
+void Rosbag2::record(
   const std::string & file_name,
   const std::string & topic_name,
   std::function<void(void)> after_write_action)

@@ -23,10 +23,15 @@
 namespace rosbag2
 {
 
-void record(
-  const std::string & file_name,
-  const std::string & topic_name,
-  std::function<void(void)> after_write_action = nullptr);
+class Rosbag2
+{
+public:
+  void record(
+    const std::string & file_name,
+    const std::string & topic_name,
+    std::function<void(void)> after_write_action = nullptr);
+};
 
-}
+}  // namespace rosbag2
+
 #endif  // ROSBAG2__ROSBAG2_HPP_

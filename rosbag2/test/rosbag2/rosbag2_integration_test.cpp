@@ -68,7 +68,8 @@ public:
 void recordMessage(
   std::string db_name, std::promise<void> * recorder_promise, std::promise<void> * rcl_promise)
 {
-  rosbag2::record(db_name, "string_topic", [&recorder_promise]() {
+  rosbag2::Rosbag2 rosbag2;
+  rosbag2.record(db_name, "string_topic", [&recorder_promise]() {
       static bool promise_already_set = false;
       if (!promise_already_set) {
         recorder_promise->set_value();

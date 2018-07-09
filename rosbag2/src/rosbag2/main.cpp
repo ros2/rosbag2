@@ -21,7 +21,10 @@
 int main(int argc, const char ** argv)
 {
   rclcpp::init(argc, argv);
-  rosbag2::record("test.bag", "string_topic");
+
+  rosbag2::Rosbag2 rosbag2;
+  rosbag2.record("test.bag", "string_topic");
+
   rclcpp::shutdown();
 
   return 0;
