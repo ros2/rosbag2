@@ -19,10 +19,10 @@
 
 #include <sqlite3.h>
 
+#include <atomic>
 #include <future>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -35,51 +35,57 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-void recordMessage(
-  std::string db_name, std::promise<void> * recorder_promise, std::promise<void> * rcl_promise)
+class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
-  rosbag2::Rosbag2 rosbag2;
-  rosbag2.record(db_name, "string_topic", [&recorder_promise]() {
-      static bool promise_already_set = false;
-      if (!promise_already_set) {
-        recorder_promise->set_value();
-        promise_already_set = true;
-      }
-    });
+public:
+  RosBag2IntegrationTestFixture()
+  : Rosbag2TestFixture(), message_received_(false)
+  {}
 
-  rcl_promise->set_value();
-}
-
-void publish_messages(std::shared_future<void> future)
-{
-  auto node = std::make_shared<rclcpp::Node>("publisher_node");
-  auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
-  auto timer = node->create_wall_timer(500ms, [publisher]() {
-        auto msg = std_msgs::msg::String();
-        msg.data = "Hello world";
-        publisher->publish(msg);
+  void recordMessage(std::string db_name)
+  {
+    rosbag2::Rosbag2 rosbag2;
+    rosbag2.record(db_name, "string_topic", [this]() {
+        message_received_ = true;
       });
+  }
 
-  rclcpp::spin_until_future_complete(node, future);
-}
+  void publish_messages()
+  {
+    auto node = std::make_shared<rclcpp::Node>("publisher_node");
+    auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
+    auto timer = node->create_wall_timer(500ms, [publisher]() {
+          auto msg = std_msgs::msg::String();
+          msg.data = "Hello world";
+          publisher->publish(msg);
+        });
 
-TEST_F(Rosbag2TestFixture, published_messages_are_recorded)
+    while (!message_received_) {
+      rclcpp::spin_some(node);
+    }
+  }
+
+  void rclcppInit()
+  {
+    int argc = 0;
+    char ** argv = nullptr;
+    rclcpp::init(argc, argv);
+  }
+
+  std::atomic<bool> message_received_;
+};
+
+TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
 {
-  int argc = 0;
-  char ** argv = nullptr;
-  rclcpp::init(argc, argv);
+  rclcppInit();
 
-  std::promise<void> recorder_promise;
-  std::shared_future<void> recorder_future(recorder_promise.get_future());
-  std::promise<void> rcl_safety_promise;
-  std::future<void> rcl_safety_future = rcl_safety_promise.get_future();
-
-  std::thread record_thread(recordMessage, database_name_, &recorder_promise, &rcl_safety_promise);
-  publish_messages(recorder_future);
-
-  recorder_future.wait();
+  // the future object returned from std::async needs to be stored not to block the execution
+  auto future = std::async(
+    std::launch::async, [this]() {
+      recordMessage(database_name_);
+    });
+  publish_messages();
   rclcpp::shutdown();
-  record_thread.join();
 
   sqlite3 * database;
   sqlite3_open(database_name_.c_str(), &database);
@@ -88,6 +94,4 @@ TEST_F(Rosbag2TestFixture, published_messages_are_recorded)
 
   ASSERT_THAT(messages, Not(IsEmpty()));
   ASSERT_THAT(messages[0], Eq("Hello world"));
-
-  rcl_safety_future.wait();
 }
