@@ -27,33 +27,28 @@ namespace rosbag2
 SqliteStorage::SqliteStorage(const std::string & database_name, bool shouldInitialize)
 : database_()
 {
-  open(database_name);
-  if (shouldInitialize) {
-    initialize();
+  try {
+    database_ = std::make_unique<SqliteWrapper>(database_name);
+    if (shouldInitialize) {
+      initialize();
+    }
+  } catch (const SqliteException & e) {
+    throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
+
+  std::cout << "Opened database '" << database_name << "'." << std::endl;
 }
 
 SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
-: database_(database)
-{}
-
-bool SqliteStorage::is_open()
-{
-  return static_cast<bool>(database_.get());
-}
+: database_(std::move(database)) {}
 
 bool SqliteStorage::write(const std::string & data)
 {
-  if (!is_open()) {
-    std::cerr << "Failed to write message. The database is not open." << std::endl;
-    return false;
-  }
-
   try {
     std::string insert_message =
       "INSERT INTO messages (data, timestamp) VALUES ('" + data + "', strftime('%s%f','now'))";
     database_->execute_query(insert_message);
-  } catch (const sql_exception & e) {
+  } catch (const SqliteException & e) {
     std::cerr << "Failed to write message. Error: " << e.what() << std::endl;
     return false;
   }
@@ -64,31 +59,12 @@ bool SqliteStorage::write(const std::string & data)
 
 void SqliteStorage::initialize()
 {
-  if (is_open()) {
-    try {
-      std::string create_table = "CREATE TABLE messages(" \
+  std::string create_table = "CREATE TABLE messages(" \
         "id INTEGER PRIMARY KEY AUTOINCREMENT," \
         "data           BLOB    NOT NULL," \
         "timestamp      INT     NOT NULL);";
 
-      database_->execute_query(create_table);
-    } catch (const sql_exception & e) {
-      std::cerr << "Could not initialize database. Error: " << e.what() << std::endl;
-      database_.reset();
-    }
-  }
-
-  std::cout << "Initialized database." << std::endl;
-}
-
-void SqliteStorage::open(const std::string & database_name)
-{
-  database_ = std::make_unique<SqliteWrapper>(database_name);
-  if (!is_open()) {
-    std::cerr << "Could not open database '" << database_name << "'." << std::endl;
-  }
-
-  std::cout << "Opened database '" << database_name << "'." << std::endl;
+  database_->execute_query(create_table);
 }
 
 }  // namespace rosbag2

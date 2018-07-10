@@ -35,10 +35,12 @@ std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::stri
     return std::unique_ptr<WritableStorage>();
   }
 
-  auto storage = std::make_unique<SqliteStorage>(file_name, true);
-  if (storage->is_open()) {
-    return std::move(storage);
+  try {
+    return std::move(std::make_unique<SqliteStorage>(file_name, true));
+  } catch (std::exception & e) {
+    std::cerr << "Could not initialize storage. Error: " << e.what() << std::endl;
   }
+
   return std::unique_ptr<WritableStorage>();
 }
 

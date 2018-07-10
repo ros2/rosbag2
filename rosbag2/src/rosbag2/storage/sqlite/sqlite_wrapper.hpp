@@ -25,10 +25,10 @@
 namespace rosbag2
 {
 
-class sql_exception : public std::runtime_error
+class SqliteException : public std::runtime_error
 {
 public:
-  explicit sql_exception(const std::string & message)
+  explicit SqliteException(const std::string & message)
   : runtime_error(message) {}
 };
 
@@ -43,7 +43,7 @@ public:
 
   virtual void execute_query(const std::string & query);
 
-  virtual std::vector<std::string> get_messages(std::string table = "messages");
+  virtual std::vector<std::string> get_messages();
 
   virtual explicit operator bool();
 

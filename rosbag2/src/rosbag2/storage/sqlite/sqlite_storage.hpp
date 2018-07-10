@@ -37,10 +37,7 @@ public:
 
   bool write(const std::string & data) override;
 
-  bool is_open();
-
 private:
-  void open(const std::string & database_name);
   void initialize();
 
   std::shared_ptr<SqliteWrapper> database_;

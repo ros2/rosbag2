@@ -24,37 +24,36 @@ namespace rosbag2
 {
 
 SqliteWrapper::SqliteWrapper(const std::string & filename)
+: db_ptr(nullptr)
 {
   int rc = sqlite3_open(filename.c_str(), &db_ptr);
   if (rc) {
-    db_ptr = nullptr;
+    throw SqliteException("Could not open database");
   }
 }
 
 SqliteWrapper::~SqliteWrapper()
 {
-  if (db_ptr) {
-    sqlite3_close(db_ptr);
-  }
+  sqlite3_close(db_ptr);
 }
 
 void SqliteWrapper::execute_query(const std::string & query)
 {
-  char * error_msg = 0;
+  char * error_msg = nullptr;
   int return_code = sqlite3_exec(db_ptr, query.c_str(), nullptr, nullptr, &error_msg);
 
   if (return_code != SQLITE_OK) {
     auto error = "SQL error: " + std::string(error_msg);
     sqlite3_free(error_msg);
-    throw sql_exception(error);
+    throw SqliteException(error);
   }
 }
 
-std::vector<std::string> SqliteWrapper::get_messages(std::string table)
+std::vector<std::string> SqliteWrapper::get_messages()
 {
   std::vector<std::string> table_msgs;
   sqlite3_stmt * statement;
-  std::string query = "SELECT * FROM " + table;
+  std::string query = "SELECT * FROM messages";
   sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
   int result = sqlite3_step(statement);
   while (result == SQLITE_ROW) {
