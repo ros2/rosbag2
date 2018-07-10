@@ -27,17 +27,17 @@
 namespace rosbag2
 {
 
-std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::string & database_name)
+std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(const std::string & file_name)
 {
-  std::ifstream infile(database_name);
+  std::ifstream infile(file_name);
   if (infile.good()) {
-    std::cerr << "Database '" << database_name << "' already exists." << std::endl;
+    std::cerr << "Bagfile '" << file_name << "' already exists." << std::endl;
     return std::unique_ptr<WritableStorage>();
   }
 
-  auto storage = std::make_unique<SqliteStorage>(database_name, true);
+  auto storage = std::make_unique<SqliteStorage>(file_name, true);
   if (storage->is_open()) {
-    return std::unique_ptr<WritableStorage>(std::move(storage));
+    return std::move(storage);
   }
   return std::unique_ptr<WritableStorage>();
 }

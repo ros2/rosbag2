@@ -27,7 +27,7 @@ namespace rosbag2
 class StorageFactory
 {
 public:
-  std::unique_ptr<WritableStorage> get_for_writing(const std::string & database_name);
+  std::unique_ptr<WritableStorage> get_for_writing(const std::string & file_name);
 };
 
 }  // namespace rosbag2
