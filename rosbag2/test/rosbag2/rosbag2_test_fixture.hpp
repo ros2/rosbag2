@@ -21,6 +21,9 @@
 #include <sqlite3.h>
 
 #include <cstdio>
+#if defined(_WIN32)
+#include <stdlib.h>
+#endif
 
 #include <string>
 #include <vector>
@@ -40,6 +43,14 @@ public:
 #endif
   }
 
+  ~Rosbag2TestFixture() override
+  {
+#if defined(_WIN32)
+    // TODO(botteroa-si): remove once a nice way to delete a not empty directory is found.
+    DeleteFileA(database_name_.c_str());
+#endif
+  }
+
   static void SetUpTestCase()
   {
 #if defined(__linux__) || defined(__APPLE__)
@@ -47,7 +58,9 @@ public:
     char * dir_name = mkdtemp(template_char);
     temporary_dir_path_ = dir_name;
 #elif defined(_WIN32)
-    // windows code
+    char dir_name[6];
+    tmpnam_s(dir_name, 6);
+    temporary_dir_path = std::string(dir_name);
 #endif
   }
 
@@ -79,7 +92,9 @@ public:
     std::string delete_directory_command = "exec rm -r " + temporary_dir_path_;
     system(delete_directory_command.c_str());
 #elif defined(_WIN32)
-    // windows code
+    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
+    // need the Fixture destructor anymore.
+    RemoveDirectoryA(temporary_dir_path_.c_str())
 #endif
   }
 
