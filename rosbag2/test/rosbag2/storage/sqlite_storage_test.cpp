@@ -76,7 +76,5 @@ TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
   auto messages = getWrittenContent(database_name_);
 
   ASSERT_THAT(messages, SizeIs(1));
-  ASSERT_THAT(
-    messages[0],
-    Eq("INSERT INTO messages (data, timestamp) VALUES ('test_message', strftime('%s%f','now'))"));
+  ASSERT_THAT(messages[0], HasSubstr("'test_message'"));
 }
