@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
