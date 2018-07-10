@@ -50,7 +50,7 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-std::vector<std::string> SqliteWrapper::getMessages(std::string table)
+std::vector<std::string> SqliteWrapper::get_messages(std::string table)
 {
   std::vector<std::string> table_msgs;
   sqlite3_stmt * statement;

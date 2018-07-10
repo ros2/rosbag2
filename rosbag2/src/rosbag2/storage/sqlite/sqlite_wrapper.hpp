@@ -38,11 +38,12 @@ class SqliteWrapper
 {
 public:
   explicit SqliteWrapper(const std::string & filename);
+  SqliteWrapper() = default;
   ~SqliteWrapper();
 
   virtual void execute_query(const std::string & query);
 
-  virtual std::vector<std::string> getMessages(std::string table = "messages");
+  virtual std::vector<std::string> get_messages(std::string table = "messages");
 
   virtual explicit operator bool();
 

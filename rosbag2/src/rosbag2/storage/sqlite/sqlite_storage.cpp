@@ -33,8 +33,8 @@ SqliteStorage::SqliteStorage(const std::string & database_name, bool shouldIniti
   }
 }
 
-SqliteStorage::SqliteStorage(std::unique_ptr<SqliteWrapper> database)
-: database_(std::move(database))
+SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
+: database_(database)
 {}
 
 bool SqliteStorage::is_open()

@@ -33,7 +33,7 @@ public:
   SqliteStorage(const std::string & database_name, bool shouldInitialize);
 
   // constructor for testing
-  explicit SqliteStorage(std::unique_ptr<SqliteWrapper> database);
+  explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
 
   bool write(const std::string & data) override;
 
@@ -43,7 +43,7 @@ private:
   void open(const std::string & database_name);
   void initialize();
 
-  std::unique_ptr<SqliteWrapper> database_;
+  std::shared_ptr<SqliteWrapper> database_;
 };
 
 }  // namespace rosbag2
