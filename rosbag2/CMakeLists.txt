@@ -12,16 +12,12 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-
 
 add_library(librosbag
   include/rosbag2/rosbag2.hpp
@@ -34,6 +30,7 @@ add_library(librosbag
   src/rosbag2/storage/sqlite/sqlite_wrapper.cpp
   src/rosbag2/storage/sqlite/sqlite_storage.hpp
   src/rosbag2/storage/sqlite/sqlite_storage.cpp)
+
 ament_target_dependencies(librosbag rclcpp std_msgs)
 target_link_libraries(librosbag sqlite3)
 target_include_directories(librosbag
@@ -49,6 +46,7 @@ add_executable(${PROJECT_NAME}_play src/rosbag2/main_play.cpp)
 target_link_libraries(${PROJECT_NAME}_play librosbag)
 
 if(BUILD_TESTING)
+  # TODO(Martin-Idel-SI): Add copyright linter or use ament_lint_auto() once available
   find_package(ament_cmake_cppcheck REQUIRED)
   find_package(ament_cmake_cpplint REQUIRED)
   find_package(ament_cmake_lint_cmake REQUIRED)
@@ -80,7 +78,6 @@ if(BUILD_TESTING)
   if(TARGET rosbag2_integration_test)
     target_link_libraries(rosbag2_integration_test sqlite3 librosbag)
   endif()
-
 endif()
 
 ament_package()
