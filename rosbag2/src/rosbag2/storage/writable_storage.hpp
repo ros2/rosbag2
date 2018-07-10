@@ -25,6 +25,8 @@ namespace rosbag2
 class WritableStorage
 {
 public:
+  virtual ~WritableStorage() = default;
+
   virtual bool write(const std::string & data) = 0;
 };
 
