@@ -78,3 +78,11 @@ TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
   ASSERT_THAT(messages, SizeIs(1));
   ASSERT_THAT(messages[0], HasSubstr("'test_message'"));
 }
+
+TEST_F(Rosbag2TestFixture, write_fails_if_database_is_not_open) {
+  auto storage = std::make_unique<SqliteStorage>(nullptr);
+  bool written = storage->write("test_message");
+  storage.reset();
+
+  ASSERT_FALSE(written);
+}
