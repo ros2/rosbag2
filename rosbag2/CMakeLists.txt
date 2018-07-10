@@ -57,7 +57,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
 
   ament_add_gmock(sqlite_storage_test test/rosbag2/storage/sqlite_storage_test.cpp
-    test/rosbag2/rosbag2_test_fixture.cpp
+    test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
     target_link_libraries(sqlite_storage_test sqlite3 librosbag)
@@ -70,7 +70,7 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(rosbag2_integration_test test/rosbag2/rosbag2_integration_test.cpp
-    test/rosbag2/rosbag2_test_fixture.cpp
+    test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_integration_test)
     target_link_libraries(rosbag2_integration_test sqlite3 librosbag)

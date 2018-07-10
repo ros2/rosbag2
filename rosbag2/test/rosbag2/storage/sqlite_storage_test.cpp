@@ -22,8 +22,7 @@
 #include <fstream>
 
 #include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
-#include "../../../src/rosbag2/storage/sqlite/sqlite_wrapper.hpp"
-#include "../rosbag2_test_fixture.cpp"
+#include "../rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT

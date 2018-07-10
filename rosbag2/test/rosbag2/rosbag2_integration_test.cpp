@@ -29,7 +29,7 @@
 #include "rosbag2/rosbag2.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "rosbag2_test_fixture.cpp"
+#include "rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
@@ -83,7 +83,7 @@ TEST_F(Rosbag2TestFixture, published_messages_are_recorded)
 
   sqlite3 * database;
   sqlite3_open(database_name_.c_str(), &database);
-  auto messages = getMessages(database);
+  auto messages = get_messages(database);
   sqlite3_close(database);
 
   ASSERT_THAT(messages, Not(IsEmpty()));

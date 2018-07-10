@@ -23,7 +23,7 @@
 
 #include "../../../src/rosbag2/storage/storage_factory.hpp"
 
-#include "../rosbag2_test_fixture.cpp"
+#include "../rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
