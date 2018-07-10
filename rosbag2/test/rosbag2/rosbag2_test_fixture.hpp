@@ -69,12 +69,15 @@ public:
     remove_temporary_dir();
   }
 
-  std::vector<std::string> get_messages(sqlite3 * db, std::string table = "messages")
+  std::vector<std::string> get_messages(std::string db_name)
   {
+    sqlite3 * database;
+    sqlite3_open(db_name.c_str(), &database);
+
     std::vector<std::string> table_msgs;
     sqlite3_stmt * statement;
-    std::string query = "SELECT * FROM " + table;
-    sqlite3_prepare_v2(db, query.c_str(), -1, &statement, nullptr);
+    std::string query = "SELECT * FROM messages";
+    sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
     int result = sqlite3_step(statement);
     while (result == SQLITE_ROW) {
       table_msgs.emplace_back(
@@ -82,6 +85,7 @@ public:
       result = sqlite3_step(statement);
     }
     sqlite3_finalize(statement);
+    sqlite3_close(database);
 
     return table_msgs;
   }

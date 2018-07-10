@@ -60,9 +60,9 @@ bool SqliteStorage::write(const std::string & data)
 void SqliteStorage::initialize()
 {
   std::string create_table = "CREATE TABLE messages(" \
-        "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-        "data           BLOB    NOT NULL," \
-        "timestamp      INT     NOT NULL);";
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+    "data           BLOB    NOT NULL," \
+    "timestamp      INT     NOT NULL);";
 
   database_->execute_query(create_table);
 }

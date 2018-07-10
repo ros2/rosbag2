@@ -87,10 +87,7 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
   publish_messages();
   rclcpp::shutdown();
 
-  sqlite3 * database;
-  sqlite3_open(database_name_.c_str(), &database);
-  auto messages = get_messages(database);
-  sqlite3_close(database);
+  auto messages = get_messages(database_name_);
 
   ASSERT_THAT(messages, Not(IsEmpty()));
   ASSERT_THAT(messages[0], Eq("Hello world"));
