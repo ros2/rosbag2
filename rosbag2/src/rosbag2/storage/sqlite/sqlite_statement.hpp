@@ -14,22 +14,29 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__MOCK_SQLITE_WRAPPER_HPP_
-#define ROSBAG2__STORAGE__MOCK_SQLITE_WRAPPER_HPP_
+#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_STATEMENT_HPP_
+#define ROSBAG2__STORAGE__SQLITE__SQLITE_STATEMENT_HPP_
 
-#include <gmock/gmock.h>
-
+#include <sqlite3.h>
 #include <string>
-#include <vector>
 
-#include "../../../src/rosbag2/storage/sqlite/sqlite_statement.hpp"
-#include "../../../src/rosbag2/storage/sqlite/sqlite_wrapper.hpp"
+namespace rosbag2
+{
 
-class MockSqliteWrapper : public rosbag2::SqliteWrapper
+using DBPtr = sqlite3 *;
+
+class SqliteStatement
 {
 public:
-  MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD1(get_raw_messages, std::vector<std::string>(const std::string &));
+  SqliteStatement(DBPtr dbPtr, const std::string & query);
+  ~SqliteStatement();
+
+  sqlite3_stmt * get() const {return statement;}
+
+private:
+  sqlite3_stmt * statement;
 };
 
-#endif  // ROSBAG2__STORAGE__MOCK_SQLITE_WRAPPER_HPP_
+}  // namespace rosbag2
+
+#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_STATEMENT_HPP_

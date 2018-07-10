@@ -25,6 +25,8 @@
 namespace rosbag2
 {
 
+class SqliteStatement;
+
 class SqliteException : public std::runtime_error
 {
 public:
@@ -43,7 +45,9 @@ public:
 
   virtual void execute_query(const std::string & query);
 
-  virtual std::vector<std::string> get_messages();
+  virtual SqliteStatement prepare_statement(const std::string & query);
+
+  virtual std::vector<std::string> get_raw_messages(const std::string & query);
 
   virtual explicit operator bool();
 
