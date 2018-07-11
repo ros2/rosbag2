@@ -21,7 +21,7 @@
 #include <sqlite3.h>
 
 #include <cstdio>
-#if defined(_WIN32)
+#ifdef _WIN32
 #include <stdlib.h>
 #endif
 
@@ -36,37 +36,51 @@ public:
   Rosbag2TestFixture()
   : database_name_(UnitTest::GetInstance()->current_test_info()->name())
   {
-#if defined(__linux__) || defined(__APPLE__)
-    database_name_ = temporary_dir_path_ + "/" + database_name_;
-#elif defined(_WIN32)
-    database_name_ = temporary_dir_path_ + "\\" + database_name_;
+    std::string system_separator = "/";
+#ifdef _WIN32
+    system_separator = "\\";
 #endif
+    database_name_ = temporary_dir_path_ + system_separator + database_name_;
   }
 
   ~Rosbag2TestFixture() override
   {
-#if defined(_WIN32)
-    // TODO(botteroa-si): remove once a nice way to delete a not empty directory is found.
-    DeleteFileA(database_name_.c_str());
+#ifdef _WIN32
+    DeleteFileW(database_name_.c_str());
+#else
+    // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
+    // the ful directory can be deleted in remove_temporary_dir()
+    remove(database_name_.c_str());
 #endif
   }
 
   static void SetUpTestCase()
   {
-#if defined(__linux__) || defined(__APPLE__)
-    char template_char[] = "/tmp/tmp_test_dir.XXXXXX";
-    char * dir_name = mkdtemp(template_char);
-    temporary_dir_path_ = dir_name;
-#elif defined(_WIN32)
+#ifdef _WIN32
     char dir_name[6];
     tmpnam_s(dir_name, 6);
     temporary_dir_path = std::string(dir_name);
+#else
+    char template_char[] = "tmp_test_dir.XXXXXX";
+    char * dir_name = mkdtemp(template_char);
+    temporary_dir_path_ = dir_name;
 #endif
   }
 
   static void TearDownTestCase()
   {
     remove_temporary_dir();
+  }
+
+  static void remove_temporary_dir()
+  {
+#ifdef _WIN32
+    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
+    // need the Windows line in the fixture destructor anymore.
+    RemoveDirectoryW(temporary_dir_path_.c_str());
+#else
+    remove(temporary_dir_path_.c_str());
+#endif
   }
 
   std::vector<std::string> get_messages(std::string db_name)
@@ -87,18 +101,6 @@ public:
     sqlite3_close(database);
 
     return table_msgs;
-  }
-
-  static void remove_temporary_dir()
-  {
-#if defined(__linux__) || defined(__APPLE__)
-    std::string delete_directory_command = "exec rm -r " + temporary_dir_path_;
-    system(delete_directory_command.c_str());
-#elif defined(_WIN32)
-    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
-    // need the Fixture destructor anymore.
-    RemoveDirectoryA(temporary_dir_path_.c_str())
-#endif
   }
 
   std::string database_name_;
