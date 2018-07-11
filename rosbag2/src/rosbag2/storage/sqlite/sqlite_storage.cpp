@@ -60,7 +60,12 @@ bool SqliteStorage::write(const std::string & data)
 
 std::vector<std::string> SqliteStorage::get_messages()
 {
-  return database_->get_messages();
+  try {
+    return database_->get_messages();
+  } catch (const SqliteException & e) {
+    std::cerr << "Failed to read messages. Error: " << e.what() << std::endl;
+    return std::vector<std::string>();
+  }
 }
 
 void SqliteStorage::initialize()

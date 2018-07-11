@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
+#include "sqlite_wrapper.hpp"
+
 #include <string>
 #include <memory>
 #include <vector>
-
-#include "sqlite_wrapper.hpp"
 
 namespace rosbag2
 {
@@ -32,8 +32,8 @@ SqliteWrapper::SqliteWrapper(const std::string & filename)
   }
 }
 
-SqliteWrapper::SqliteWrapper() : db_ptr(nullptr)
-{}
+SqliteWrapper::SqliteWrapper()
+: db_ptr(nullptr) {}
 
 SqliteWrapper::~SqliteWrapper()
 {
@@ -57,7 +57,13 @@ std::vector<std::string> SqliteWrapper::get_messages()
   std::vector<std::string> table_msgs;
   sqlite3_stmt * statement;
   std::string query = "SELECT * FROM messages";
-  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
+
+  int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
+  if (return_code != SQLITE_OK) {
+    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
+            std::to_string(return_code));
+  }
+
   int result = sqlite3_step(statement);
   while (result == SQLITE_ROW) {
     table_msgs.emplace_back(
