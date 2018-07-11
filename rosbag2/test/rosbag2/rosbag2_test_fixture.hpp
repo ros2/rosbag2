@@ -22,6 +22,7 @@
 
 #include <cstdio>
 #ifdef _WIN32
+#include <Windows.h>
 #include <stdlib.h>
 #endif
 
