@@ -18,16 +18,16 @@
 #define ROSBAG2__ROSBAG2_TEST_FIXTURE_HPP_
 
 #include <gtest/gtest.h>
-#include <sqlite3.h>
 
 #include <cstdio>
-#ifdef _WIN32
-#include <Windows.h>
-#include <stdlib.h>
-#endif
-
 #include <string>
 #include <vector>
+
+#ifdef _WIN32
+# include <Windows.h>
+#endif
+
+#include <sqlite3.h>
 
 using namespace ::testing;  // NOLINT
 
