@@ -36,7 +36,7 @@ std::unique_ptr<ReadableStorage> StorageFactory::get_for_reading(const std::stri
   }
 
   try {
-    return std::move(std::make_unique<SqliteStorage>(file_name, false));
+    return std::make_unique<SqliteStorage>(file_name, false);
   } catch (std::exception & e) {
     std::cerr << "Could not open storage. Error: " << e.what() << std::endl;
   }
