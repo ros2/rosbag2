@@ -14,13 +14,11 @@
  *  limitations under the License.
  */
 
-#include "sqlite_wrapper.hpp"
-
 #include <string>
 #include <memory>
 #include <vector>
 
-#include "sqlite_statement.hpp"
+#include "sqlite_wrapper.hpp"
 
 namespace rosbag2
 {
@@ -54,21 +52,19 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
-{
-  return SqliteStatement(db_ptr, query);
-}
-
-std::vector<std::string> SqliteWrapper::get_raw_messages(const std::string & query)
+std::vector<std::string> SqliteWrapper::get_messages()
 {
   std::vector<std::string> table_msgs;
-  SqliteStatement statement = prepare_statement(query);
-  int result = sqlite3_step(statement.get());
+  sqlite3_stmt * statement;
+  std::string query = "SELECT * FROM messages";
+  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
+  int result = sqlite3_step(statement);
   while (result == SQLITE_ROW) {
     table_msgs.emplace_back(
-      reinterpret_cast<const char *>(sqlite3_column_text(statement.get(), 1)));
-    result = sqlite3_step(statement.get());
+      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1))));
+    result = sqlite3_step(statement);
   }
+  sqlite3_finalize(statement);
 
   return table_msgs;
 }

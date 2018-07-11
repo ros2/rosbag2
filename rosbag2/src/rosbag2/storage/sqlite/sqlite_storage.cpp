@@ -60,7 +60,7 @@ bool SqliteStorage::write(const std::string & data)
 
 std::vector<std::string> SqliteStorage::get_messages()
 {
-  return database_->get_raw_messages("SELECT * FROM messages");
+  return database_->get_messages();
 }
 
 void SqliteStorage::initialize()

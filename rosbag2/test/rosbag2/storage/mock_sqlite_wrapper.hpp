@@ -22,14 +22,13 @@
 #include <string>
 #include <vector>
 
-#include "../../../src/rosbag2/storage/sqlite/sqlite_statement.hpp"
 #include "../../../src/rosbag2/storage/sqlite/sqlite_wrapper.hpp"
 
 class MockSqliteWrapper : public rosbag2::SqliteWrapper
 {
 public:
   MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD1(get_raw_messages, std::vector<std::string>(const std::string &));
+  MOCK_METHOD0(get_messages, std::vector<std::string>());
 };
 
 #endif  // ROSBAG2__STORAGE__MOCK_SQLITE_WRAPPER_HPP_

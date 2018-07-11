@@ -28,8 +28,6 @@ add_library(librosbag
   src/rosbag2/storage/storage_factory.cpp
   src/rosbag2/storage/sqlite/sqlite_wrapper.hpp
   src/rosbag2/storage/sqlite/sqlite_wrapper.cpp
-  src/rosbag2/storage/sqlite/sqlite_statement.hpp
-  src/rosbag2/storage/sqlite/sqlite_statement.cpp
   src/rosbag2/storage/sqlite/sqlite_storage.hpp
   src/rosbag2/storage/sqlite/sqlite_storage.cpp)
 
