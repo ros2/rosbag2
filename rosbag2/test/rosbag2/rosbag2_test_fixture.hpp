@@ -24,6 +24,7 @@
 #include <vector>
 
 #ifdef _WIN32
+# include <direct.h>
 # include <Windows.h>
 #endif
 
@@ -64,6 +65,7 @@ public:
     GetTempPathA(255, temp_path);
     _mktemp_s(template_char, strnlen(template_char, 20) + 1);
     temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
+    _mkdir(temporary_dir_path_.c_str());
 #else
     char * dir_name = mkdtemp(template_char);
     temporary_dir_path_ = dir_name;
