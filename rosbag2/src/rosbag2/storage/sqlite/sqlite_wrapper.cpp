@@ -28,7 +28,7 @@ SqliteWrapper::SqliteWrapper(const std::string & filename)
 {
   int rc = sqlite3_open(filename.c_str(), &db_ptr);
   if (rc) {
-    throw SqliteException("Could not open database");
+    throw SqliteException("Could not open database. Error: " + std::string(sqlite3_errmsg(db_ptr)));
   }
 }
 
