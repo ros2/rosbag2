@@ -39,56 +39,62 @@ class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), message_received_(false)
+  : Rosbag2TestFixture(), counter_(0)
   {}
 
-  void recordMessage(std::string db_name)
+  void record_message(const std::string & db_name)
   {
     rosbag2::Rosbag2 rosbag2;
     rosbag2.record(db_name, "string_topic", [this]() {
-        message_received_ = true;
+        counter_++;
       });
   }
 
-  void publish_messages()
+  void start_recording()
   {
+    rclcpp::init(0, nullptr);
+    // the future object returned from std::async needs to be stored not to block the execution
+    future_ = std::async(
+      std::launch::async, [this]() {
+        record_message(database_name_);
+      });
+  }
+
+  void stop_recording()
+  {
+    rclcpp::shutdown();
+  }
+
+  void publish_messages(std::vector<std::string> messages)
+  {
+    int expected_counter_value = messages.size();
     auto node = std::make_shared<rclcpp::Node>("publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
-    auto timer = node->create_wall_timer(500ms, [publisher]() {
+    auto timer = node->create_wall_timer(50ms, [this, publisher, messages]() {
           auto msg = std_msgs::msg::String();
-          msg.data = "Hello world";
+          msg.data = messages[counter_];
           publisher->publish(msg);
         });
 
-    while (!message_received_) {
+    while (counter_ < expected_counter_value) {
       rclcpp::spin_some(node);
     }
   }
 
-  void rclcppInit()
-  {
-    int argc = 0;
-    char ** argv = nullptr;
-    rclcpp::init(argc, argv);
-  }
-
-  std::atomic<bool> message_received_;
+  std::atomic<int> counter_;
+  std::future<void> future_;
 };
 
 TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
 {
-  rclcppInit();
+  std::string message_to_publish = "test_message";
 
-  // the future object returned from std::async needs to be stored not to block the execution
-  auto future = std::async(
-    std::launch::async, [this]() {
-      recordMessage(database_name_);
-    });
-  publish_messages();
-  rclcpp::shutdown();
+  start_recording();
+  publish_messages({message_to_publish});
+  stop_recording();
 
-  auto messages = get_messages(database_name_);
+  auto recorded_messages = get_messages(database_name_);
 
-  ASSERT_THAT(messages, Not(IsEmpty()));
-  ASSERT_THAT(messages[0], Eq("Hello world"));
+  ASSERT_THAT(recorded_messages, SizeIs(1));
+  ASSERT_THAT(recorded_messages[0], Eq(message_to_publish));
 }
