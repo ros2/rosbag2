@@ -65,13 +65,13 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
-    target_link_libraries(sqlite_storage_test SQLite3 librosbag)
+    target_link_libraries(sqlite_storage_test librosbag)
   endif()
 
   ament_add_gmock(storage_factory_test test/rosbag2/storage/storage_factory_test.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET storage_factory_test)
-    target_link_libraries(storage_factory_test SQLite3 librosbag)
+    target_link_libraries(storage_factory_test librosbag)
   endif()
 
   ament_add_gmock(rosbag2_write_integration_test test/rosbag2/rosbag2_write_integration_test.cpp
