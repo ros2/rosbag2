@@ -118,7 +118,7 @@ public:
     for (const auto & message : messages) {
       std::string insert_message =
         "INSERT INTO messages (data, timestamp) VALUES ('" + message + "', strftime('%s%f','now'))";
-      sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, nullptr);
+      sqlite3_exec(database, insert_message.c_str(), nullptr, nullptr, nullptr);
     }
     sqlite3_close(database);
   }

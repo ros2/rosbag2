@@ -40,10 +40,10 @@ class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), message_received_(false)
+  : Rosbag2TestFixture(), work_done_(false)
   {}
 
-  std::vector<std::string> subscribe_messages(std::shared_future<void> future)
+  std::vector<std::string> subscribe_messages()
   {
     std::vector<std::string> messages;
     auto node = std::make_shared<rclcpp::Node>("subscriber_node");
@@ -51,12 +51,13 @@ public:
         [&messages](const std_msgs::msg::String::ConstSharedPtr message)
         {messages.emplace_back(message->data);});
 
-    future.wait();  // this starts any deferred thread
-    rclcpp::spin_until_future_complete(node, future);
+    while (!work_done_) {
+      rclcpp::spin_some(node);
+    }
     return messages;
   }
 
-  std::atomic<bool> message_received_;
+  std::atomic<bool> work_done_;
 };
 
 TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
@@ -66,16 +67,20 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
   std::vector<std::string> messages = {"Hello World", "Hello World!"};
   write_messages(database_name_, messages);
 
+  std::future<std::vector<std::string>> replayed_messages_future = std::async(
+    std::launch::async, [this] {return subscribe_messages();});
+
   rosbag2::Rosbag2 rosbag2;
-  // Defer the future until we start subscribing
   auto future = std::async(
-    std::launch::deferred, [this, &rosbag2]() {
+    std::launch::async, [this, &rosbag2]() {
       rosbag2.play(database_name_, "string_topic");
+      work_done_ = true;
     });
-  subscribe_messages(std::shared_future<void>(std::move(future)));
+
   rclcpp::shutdown();
 
-  ASSERT_THAT(messages, SizeIs(2));
-  ASSERT_THAT(messages[0], Eq("Hello World"));
-  ASSERT_THAT(messages[1], Eq("Hello World!"));
+  auto replayed_messages = replayed_messages_future.get();
+  ASSERT_THAT(replayed_messages, SizeIs(2));
+  ASSERT_THAT(replayed_messages[0], Eq("Hello World"));
+  ASSERT_THAT(replayed_messages[1], Eq("Hello World!"));
 }
