@@ -34,6 +34,9 @@ SqliteWrapper::SqliteWrapper(const std::string & filename)
   }
 }
 
+SqliteWrapper::SqliteWrapper() : db_ptr(nullptr)
+{}
+
 SqliteWrapper::~SqliteWrapper()
 {
   sqlite3_close(db_ptr);

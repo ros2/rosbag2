@@ -40,7 +40,7 @@ class SqliteWrapper
 {
 public:
   explicit SqliteWrapper(const std::string & filename);
-  SqliteWrapper() = default;
+  SqliteWrapper();
   virtual ~SqliteWrapper();
 
   virtual void execute_query(const std::string & query);
