@@ -30,9 +30,14 @@ using namespace rosbag2;  // NOLINT
 
 TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
   auto sqlite_wrapper = std::make_shared<MockSqliteWrapper>();
-  EXPECT_CALL(*sqlite_wrapper, execute_query(_));
+  std::string message_to_write = "test_message";
+  std::string query =
+    "INSERT INTO messages (data, timestamp) VALUES ('" + message_to_write +
+    "', strftime('%s%f','now'))";
+
+  EXPECT_CALL(*sqlite_wrapper, execute_query(query));
 
   auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
-  storage->write("test_message");
+  storage->write(message_to_write);
   storage.reset();
 }
