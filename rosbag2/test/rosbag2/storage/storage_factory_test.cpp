@@ -17,9 +17,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <fstream>
 #include <memory>
 #include <string>
-#include <fstream>
 
 #include "../../../src/rosbag2/storage/storage_factory.hpp"
 
@@ -37,11 +37,16 @@ public:
   std::unique_ptr<StorageFactory> factory_;
 };
 
-
-TEST_F(StorageFactoryFixture, returns_nullptr_if_database_already_exists) {
+TEST_F(StorageFactoryFixture, get_for_writing_returns_nullptr_if_database_already_exists) {
   std::ofstream file {database_name_};
 
   auto storage = factory_->get_for_writing(database_name_);
 
   EXPECT_THAT(storage, IsNull());
+}
+
+TEST_F(StorageFactoryFixture, get_for_writing_returns_a_valid_sqlite_storage_if_no_errors_occur) {
+  auto storage = factory_->get_for_writing(database_name_);
+
+  EXPECT_THAT(storage, NotNull());
 }
