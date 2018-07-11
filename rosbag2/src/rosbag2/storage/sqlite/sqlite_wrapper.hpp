@@ -45,7 +45,7 @@ public:
 
   virtual std::vector<std::string> get_messages();
 
-  virtual explicit operator bool();
+  virtual operator bool();
 
 private:
   DBPtr db_ptr;
