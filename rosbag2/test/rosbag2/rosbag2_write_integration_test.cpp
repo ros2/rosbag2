@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2/rosbag2.hpp"
@@ -34,6 +35,7 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
+// TODO(Martin-Idel-SI): merge with rosbag2_read_integration_test once signal handling is sorted out
 class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:

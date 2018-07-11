@@ -103,6 +103,38 @@ public:
     return table_msgs;
   }
 
+  void write_messages(std::string db_name, std::vector<std::string> messages)
+  {
+    sqlite3 * database;
+    sqlite3_open(db_name.c_str(), &database);
+
+    std::string create_table = "CREATE TABLE messages(" \
+      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
+      "data           BLOB    NOT NULL," \
+      "timestamp      INT     NOT NULL);";
+
+    sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, nullptr);
+
+    for (const auto & message : messages) {
+      std::string insert_message =
+        "INSERT INTO messages (data, timestamp) VALUES ('" + message + "', strftime('%s%f','now'))";
+      sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, nullptr);
+    }
+    sqlite3_close(database);
+  }
+
+  static void remove_temporary_dir()
+  {
+#if defined(__linux__) || defined(__APPLE__)
+    std::string delete_directory_command = "exec rm -r " + temporary_dir_path_;
+    system(delete_directory_command.c_str());
+#elif defined(_WIN32)
+    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
+    // need the Fixture destructor anymore.
+    RemoveDirectoryA(temporary_dir_path_.c_str())
+#endif
+  }
+
   std::string database_name_;
   static std::string temporary_dir_path_;
 };

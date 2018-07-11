@@ -74,11 +74,18 @@ if(BUILD_TESTING)
     target_link_libraries(storage_factory_test sqlite3 librosbag)
   endif()
 
-  ament_add_gmock(rosbag2_integration_test test/rosbag2/rosbag2_integration_test.cpp
+  ament_add_gmock(rosbag2_write_integration_test test/rosbag2/rosbag2_write_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_integration_test)
-    target_link_libraries(rosbag2_integration_test sqlite3 librosbag)
+  if(TARGET rosbag2_write_integration_test)
+    target_link_libraries(rosbag2_write_integration_test sqlite3 librosbag)
+  endif()
+
+  ament_add_gmock(rosbag2_read_integration_test test/rosbag2/rosbag2_read_integration_test.cpp
+    test/rosbag2/rosbag2_test_fixture.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_read_integration_test)
+    target_link_libraries(rosbag2_read_integration_test sqlite3 librosbag)
   endif()
 endif()
 
