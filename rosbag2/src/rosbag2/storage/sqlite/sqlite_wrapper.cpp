@@ -57,8 +57,7 @@ std::vector<std::string> SqliteWrapper::get_messages()
   sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
   int result = sqlite3_step(statement);
   while (result == SQLITE_ROW) {
-    table_msgs.emplace_back(
-      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1))));
+    table_msgs.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
     result = sqlite3_step(statement);
   }
   sqlite3_finalize(statement);
