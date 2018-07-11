@@ -16,8 +16,6 @@
 
 #include <gmock/gmock.h>
 
-#include <sqlite3.h>
-
 #include <atomic>
 #include <future>
 #include <memory>

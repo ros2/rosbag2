@@ -18,6 +18,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sqlite3_vendor REQUIRED)
+
+find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 
 add_library(librosbag
   include/rosbag2/rosbag2.hpp
@@ -30,9 +33,8 @@ add_library(librosbag
   src/rosbag2/storage/sqlite/sqlite_wrapper.cpp
   src/rosbag2/storage/sqlite/sqlite_storage.hpp
   src/rosbag2/storage/sqlite/sqlite_storage.cpp)
-
-ament_target_dependencies(librosbag rclcpp std_msgs)
-target_link_libraries(librosbag sqlite3)
+ament_target_dependencies(librosbag rclcpp std_msgs SQLite3)
+target_link_libraries(librosbag)
 target_include_directories(librosbag
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -63,27 +65,27 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
-    target_link_libraries(sqlite_storage_test sqlite3 librosbag)
+    target_link_libraries(sqlite_storage_test SQLite3 librosbag)
   endif()
 
   ament_add_gmock(storage_factory_test test/rosbag2/storage/storage_factory_test.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET storage_factory_test)
-    target_link_libraries(storage_factory_test sqlite3 librosbag)
+    target_link_libraries(storage_factory_test SQLite3 librosbag)
   endif()
 
   ament_add_gmock(rosbag2_write_integration_test test/rosbag2/rosbag2_write_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
-    target_link_libraries(rosbag2_write_integration_test sqlite3 librosbag)
+    target_link_libraries(rosbag2_write_integration_test SQlite3 librosbag)
   endif()
 
   ament_add_gmock(rosbag2_read_integration_test test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
-    target_link_libraries(rosbag2_read_integration_test sqlite3 librosbag)
+    target_link_libraries(rosbag2_read_integration_test SQlite3 librosbag)
   endif()
 endif()
 
