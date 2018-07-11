@@ -58,12 +58,13 @@ public:
 
   static void SetUpTestCase()
   {
-#ifdef _WIN32
-    char dir_name[6];
-    tmpnam_s(dir_name, 6);
-    temporary_dir_path = std::string(dir_name);
-#else
     char template_char[] = "tmp_test_dir.XXXXXX";
+#ifdef _WIN32
+    char temp_path[255];
+    GetTempPathA(255, temp_path);
+    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
+    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
+#else
     char * dir_name = mkdtemp(template_char);
     temporary_dir_path_ = dir_name;
 #endif
