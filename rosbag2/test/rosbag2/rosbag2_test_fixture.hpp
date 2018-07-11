@@ -42,6 +42,7 @@ public:
     system_separator = "\\";
 #endif
     database_name_ = temporary_dir_path_ + system_separator + database_name_;
+    std::cout << "Database name: " << database_name_ << std::endl;
   }
 
   ~Rosbag2TestFixture() override
