@@ -77,7 +77,7 @@ std::vector<std::string> SqliteWrapper::get_messages()
 
 SqliteWrapper::operator bool()
 {
-  return static_cast<bool>(db_ptr);
+  return db_ptr != nullptr;
 }
 
 }  // namespace rosbag2
