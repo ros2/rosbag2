@@ -78,14 +78,14 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
-    target_link_libraries(rosbag2_write_integration_test SQlite3 librosbag)
+    target_link_libraries(rosbag2_write_integration_test librosbag)
   endif()
 
   ament_add_gmock(rosbag2_read_integration_test test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
-    target_link_libraries(rosbag2_read_integration_test SQlite3 librosbag)
+    target_link_libraries(rosbag2_read_integration_test librosbag)
   endif()
 endif()
 
