@@ -68,7 +68,7 @@ public:
 
   void publish_messages(std::vector<std::string> messages)
   {
-    int expected_counter_value = messages.size();
+    size_t expected_counter_value = messages.size();
     auto node = std::make_shared<rclcpp::Node>("publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
     auto timer = node->create_wall_timer(50ms, [this, publisher, messages]() {
@@ -82,7 +82,7 @@ public:
     }
   }
 
-  std::atomic<int> counter_;
+  std::atomic<size_t> counter_;
   std::future<void> future_;
 };
 

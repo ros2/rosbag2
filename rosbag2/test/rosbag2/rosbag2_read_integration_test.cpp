@@ -40,7 +40,7 @@ class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), work_done_(false)
+  : Rosbag2TestFixture(), counter_(0)
   {}
 
   std::vector<std::string> subscribe_messages()
@@ -51,35 +51,39 @@ public:
         [&messages](const std_msgs::msg::String::ConstSharedPtr message)
         {messages.emplace_back(message->data);});
 
-    while (!work_done_) {
+    while (counter_ == 0) {
       rclcpp::spin_some(node);
     }
     return messages;
   }
 
-  std::atomic<bool> work_done_;
+  void launch_subscriber()
+  {
+    subscriber_future_ = std::async(std::launch::async, [this] {return subscribe_messages();});
+  }
+
+  void play_bag(std::string database_name, std::string topic)
+  {
+    rosbag2::Rosbag2 rosbag2;
+    rosbag2.play(database_name, topic);
+    counter_++;
+  }
+
+  std::atomic<size_t> counter_;
+  std::future<std::vector<std::string>> subscriber_future_;
 };
 
 TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
 {
-  rclcpp::init(0, nullptr);
-
   std::vector<std::string> messages = {"Hello World", "Hello World!"};
   write_messages(database_name_, messages);
 
-  std::future<std::vector<std::string>> replayed_messages_future = std::async(
-    std::launch::async, [this] {return subscribe_messages();});
-
-  rosbag2::Rosbag2 rosbag2;
-  auto future = std::async(
-    std::launch::async, [this, &rosbag2]() {
-      rosbag2.play(database_name_, "string_topic");
-      work_done_ = true;
-    });
-
+  rclcpp::init(0, nullptr);
+  launch_subscriber();
+  play_bag(database_name_, "string_topic");
   rclcpp::shutdown();
 
-  auto replayed_messages = replayed_messages_future.get();
+  auto replayed_messages = subscriber_future_.get();
   ASSERT_THAT(replayed_messages, SizeIs(2));
   ASSERT_THAT(replayed_messages[0], Eq("Hello World"));
   ASSERT_THAT(replayed_messages[1], Eq("Hello World!"));
