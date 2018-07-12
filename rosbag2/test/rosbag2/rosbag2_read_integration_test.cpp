@@ -78,16 +78,18 @@ public:
 
 TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
 {
+  rclcpp::init(0, nullptr);
+
   std::vector<std::string> messages = {"Hello World", "Hello World!"};
   write_messages(database_name_, messages);
 
-  rclcpp::init(0, nullptr);
   launch_subscriber(messages.size());
   play_bag(database_name_, "string_topic");
-  rclcpp::shutdown();
 
   auto replayed_messages = subscriber_future_.get();
   ASSERT_THAT(replayed_messages, SizeIs(2));
   ASSERT_THAT(replayed_messages[0], Eq("Hello World"));
   ASSERT_THAT(replayed_messages[1], Eq("Hello World!"));
+
+  rclcpp::shutdown();
 }
