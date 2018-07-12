@@ -46,7 +46,7 @@ public:
   ~Rosbag2TestFixture() override
   {
 #ifdef _WIN32
-    DeleteFileW(database_name_.c_str());
+    DeleteFileA(database_name_.c_str());
 #else
     // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
     // the ful directory can be deleted in remove_temporary_dir()
@@ -77,7 +77,7 @@ public:
 #ifdef _WIN32
     // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
     // need the Windows line in the fixture destructor anymore.
-    RemoveDirectoryW(temporary_dir_path_.c_str());
+    RemoveDirectoryA(temporary_dir_path_.c_str());
 #else
     remove(temporary_dir_path_.c_str());
 #endif
@@ -121,18 +121,6 @@ public:
       sqlite3_exec(database, insert_message.c_str(), nullptr, nullptr, nullptr);
     }
     sqlite3_close(database);
-  }
-
-  static void remove_temporary_dir()
-  {
-#if defined(__linux__) || defined(__APPLE__)
-    std::string delete_directory_command = "exec rm -r " + temporary_dir_path_;
-    system(delete_directory_command.c_str());
-#elif defined(_WIN32)
-    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
-    // need the Fixture destructor anymore.
-    RemoveDirectoryA(temporary_dir_path_.c_str())
-#endif
   }
 
   std::string database_name_;
