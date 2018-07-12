@@ -56,3 +56,12 @@ TEST_F(StorageFactoryFixture, get_for_reading_returns_nullptr_if_file_does_not_e
 
   EXPECT_THAT(storage, IsNull());
 }
+
+TEST_F(StorageFactoryFixture, get_for_reading_returns_a_valid_sqlite_storage_if_file_exists)
+{
+  auto writable_storage = factory_->get_for_writing(database_name_);
+  writable_storage.reset();
+  auto readable_storage = factory_->get_for_reading(database_name_);
+
+  EXPECT_THAT(readable_storage, NotNull());
+}
