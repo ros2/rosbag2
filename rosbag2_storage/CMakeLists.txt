@@ -17,19 +17,57 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(pluginlib REQUIRED)
+
+add_library(
+  rosbag2_storage
+  SHARED
+  src/storage_factory.cpp)
+target_include_directories(rosbag2_storage PUBLIC include)
+ament_target_dependencies(
+  rosbag2_storage
+  "pluginlib")
+
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(rosbag2_storage PRIVATE "ROSBAG2_STORAGE_BUILDING_DLL")
+
+install(
+  DIRECTORY include/
+  DESTINATION include)
+
+install(
+  TARGETS rosbag2_storage
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+install(
+  DIRECTORY cmake
+  DESTINATION share/${PROJECT_NAME}/cmake)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # remove the line when a copyright and license is present in all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # remove the line when this package is a git repo
-  set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  add_library(test_plugin SHARED test/test_plugin.cpp)
+  target_link_libraries(test_plugin rosbag2_storage)
+  install(
+    TARGETS test_plugin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin)
+  pluginlib_export_plugin_description_file(rosbag2_storage test/test_plugin.xml)
+
+  ament_add_gtest(
+    test_storage_factory
+    test/test_storage_factory.cpp
+  )
+  target_include_directories(test_storage_factory PRIVATE include)
+  target_link_libraries(test_storage_factory rosbag2_storage)
 endif()
 
-ament_package()
+ament_export_include_directories(include)
+ament_export_libraries(rosbag2_storage)
+ament_package(
+  CONFIG_EXTRAS cmake/rosbag2_storage_register_storage_plugin.cmake)
