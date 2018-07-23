@@ -1,16 +1,28 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-  <name>rosbag2</name>
+  <name>sqlite3_storage_plugin</name>
   <version>0.0.0</version>
-  <description>ROSBag2 client library</description>
+  <description>ROSBag2 SQLite3 storage plugin</description>
   <maintainer email="karsten.knese@googlemail.com">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <build_depend>sqlite3_vendor</build_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <exec_depend>sqlite3_vendor</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gmock</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>rclcpp</test_depend>
+  <test_depend>std_msgs</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
