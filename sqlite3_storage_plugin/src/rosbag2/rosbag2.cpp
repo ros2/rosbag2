@@ -46,6 +46,7 @@ void Rosbag2::record(
         }
       });
 
+    // TODO(anhosi): use proper logging from rcutils
     std::cout << "Waiting for messages..." << std::endl;
     rclcpp::spin(node);
   }

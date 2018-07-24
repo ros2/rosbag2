@@ -25,12 +25,12 @@
 namespace rosbag2
 {
 
-SqliteStorage::SqliteStorage(const std::string & database_name, bool shouldInitialize)
+SqliteStorage::SqliteStorage(const std::string & database_name, bool should_initialize)
 : database_()
 {
   try {
     database_ = std::make_unique<SqliteWrapper>(database_name);
-    if (shouldInitialize) {
+    if (should_initialize) {
       initialize();
     }
   } catch (const SqliteException & e) {

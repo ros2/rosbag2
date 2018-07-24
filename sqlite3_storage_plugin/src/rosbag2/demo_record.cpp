@@ -23,8 +23,9 @@
 
 int main(int argc, const char ** argv)
 {
+  // TODO(anhosi): allow output file to be specified by cli argument and do proper checking if
+  // file already exists
   std::string filename("test.bag");
-
   std::remove(filename.c_str());
 
   rclcpp::init(argc, argv);

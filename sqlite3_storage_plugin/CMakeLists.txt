@@ -46,6 +46,7 @@ target_link_libraries(${PROJECT_NAME}_record librosbag)
 
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
 target_link_libraries(${PROJECT_NAME}_play librosbag)
+# TODO(anhosi): Add install for library and headers (GH-5)
 
 if(BUILD_TESTING)
   # TODO(Martin-Idel-SI): Add copyright linter or use ament_lint_auto() once available

@@ -32,7 +32,7 @@ namespace rosbag2
 class SqliteStorage : public WritableStorage, public ReadableStorage
 {
 public:
-  SqliteStorage(const std::string & database_name, bool shouldInitialize);
+  SqliteStorage(const std::string & database_name, bool should_initialize);
 
   // constructor for testing
   explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
