@@ -20,46 +20,68 @@
 
 #include "pluginlib/class_loader.hpp"
 
+#include "rosbag2_storage/writable_storage.hpp"
+#include "rosbag2_storage/readable_storage.hpp"
+
 namespace rosbag2_storage
 {
 
 class StorageFactoryImpl
 {
 public:
-  explicit StorageFactoryImpl(const std::string & storage_identifier)
-  : storage_identifier_(storage_identifier)
+  ~StorageFactoryImpl() = default;
+
+  std::unique_ptr<WritableStorage> get_for_writing(
+    const std::string & storage_id, const std::string & uri)
   {
-    class_loader_ = std::make_unique<pluginlib::ClassLoader<rosbag2_storage::StorageInterface>>(
-      "rosbag2_storage", "rosbag2_storage::StorageInterface");
+    try {
+      writable_class_loader_ = std::make_unique<pluginlib::ClassLoader<WritableStorage>>(
+        "rosbag2_storage", "rosbag2_storage::WritableStorage");
 
-    auto registered_classes = class_loader_->getDeclaredClasses();
+      auto registered_classes = writable_class_loader_->getDeclaredClasses();
 
-    bool matched_id = false;
-    fprintf(stderr, "registered classes\n");
-    for (auto class_ : registered_classes) {
-      fprintf(stderr, "%s\n", class_.c_str());
-      if (class_ == storage_identifier) {
-        fprintf(stderr, "%s\n", "found a matching class");
-        matched_id = true;
+      for (const auto & class_ : registered_classes) {
+        if (class_ == storage_id) {
+          auto instance = writable_class_loader_->createUnmanagedInstance(storage_id);
+          instance->open_for_writing(uri);
+          return std::unique_ptr<WritableStorage>(instance);
+        }
       }
+    } catch (std::exception & e) {
+      // TODO(botteroa-si): log error properly.
+      (void) e;
     }
-    if (matched_id == false) {
-      throw std::runtime_error("no matching class for storage id loaded");
-    }
+
+    return std::unique_ptr<WritableStorage>();
   }
 
-  ~StorageFactoryImpl() {}
-
-  std::shared_ptr<StorageInterface> get_instance()
+  std::unique_ptr<ReadableStorage> get_for_reading(
+    const std::string & storage_id, const std::string & uri)
   {
-    auto instance = class_loader_->createSharedInstance(storage_identifier_);
-    instance->set_storage_identifier(storage_identifier_);
-    return instance;
+    try {
+      readable_class_loader_ = std::make_unique<pluginlib::ClassLoader<ReadableStorage>>(
+        "rosbag2_storage", "rosbag2_storage::ReadableStorage");
+
+      auto registered_classes = readable_class_loader_->getDeclaredClasses();
+
+      for (const auto & class_ : registered_classes) {
+        if (class_ == storage_id) {
+          auto instance = readable_class_loader_->createUnmanagedInstance(storage_id);
+          instance->open_for_reading(uri);
+          return std::unique_ptr<ReadableStorage>(instance);
+        }
+      }
+    } catch (std::exception & e) {
+      // TODO(greimela-si): log error properly.
+      (void) e;
+    }
+
+    return std::unique_ptr<ReadableStorage>();
   }
 
 private:
-  std::string storage_identifier_;
-  std::unique_ptr<pluginlib::ClassLoader<rosbag2_storage::StorageInterface>> class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<WritableStorage>> writable_class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<ReadableStorage>> readable_class_loader_;
 };
 
 }  // namespace rosbag2_storage
