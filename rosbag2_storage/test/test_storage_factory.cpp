@@ -18,22 +18,18 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 
-class TestStorageFactory : public ::testing::Test
-{
-public:
-  static void SetUpTestCase()
-  {
-  }
 
-  void SetUp()
-  {
-  }
-};
+TEST(StorageFactoryTest, load_test_plugin) {
+  rosbag2_storage::StorageFactory factory;
 
-TEST_F(TestStorageFactory, load_test_plugin) {
-  rosbag2_storage::StorageFactory factory("my_test_plugin");
+  auto storage_for_writing = factory.get_for_writing("my_test_plugin", "file/to/be/written.bag");
+  storage_for_writing->write(nullptr, 0);
+  storage_for_writing->write(nullptr, 0);
+  storage_for_writing->write(nullptr, 0);
+  storage_for_writing.reset();
 
-  auto instance = factory.get_storage_interface();
-  EXPECT_STREQ("my_test_plugin", instance->get_storage_identifier().c_str());
-  SUCCEED();
+  auto storage_for_reading = factory.get_for_reading("my_test_plugin", "file/to/be/read.bag");
+  storage_for_reading->read_next(nullptr, 0);
+  storage_for_reading->read_next(nullptr, 0);
+  storage_for_reading->read_next(nullptr, 0);
 }

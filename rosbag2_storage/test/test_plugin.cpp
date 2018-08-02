@@ -12,39 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
 #include <string>
 
 #include "pluginlib/class_list_macros.hpp"
 
 #include "test_plugin.hpp"
 
-rosbag2_storage::StorageHandle
-TestPlugin::open(const std::string & file_path)
+TestPlugin::~TestPlugin()
 {
-  fprintf(stderr, "opening file path %s\n", file_path.c_str());
-  rosbag2_storage::StorageHandle handle;
-  handle.file_path = file_path;
-
-  return handle;
+  std::cout << "\nclosing bag\n";
 }
 
-bool
-TestPlugin::close(rosbag2_storage::StorageHandle & storage_handle)
+void TestPlugin::write(char * data, size_t size)
 {
-  fprintf(stderr, "closing file handle %s\n", storage_handle.file_path.c_str());
-  return true;
+  (void) data;
+  (void) size;
+  std::cout << "\nwriting\n";
 }
 
-void
-TestPlugin::set_storage_identifier(const std::string & storage_identifier)
+void TestPlugin::read_next(char * buffer, size_t size)
 {
-  storage_identifier_ = storage_identifier;
+  (void) buffer;
+  (void) size;
+  std::cout << "\nreading\n";
 }
 
-std::string
-TestPlugin::get_storage_identifier()
+void TestPlugin::open_for_reading(const std::string & uri)
 {
-  return storage_identifier_;
+  std::cout << "\nopened " << uri << " for reading.\n";
 }
 
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::StorageInterface)
+void TestPlugin::open_for_writing(const std::string & uri)
+{
+  std::cout << "\nopened " << uri << " for writing.\n";
+}
+
+rosbag2_storage::BagInfo TestPlugin::info()
+{
+  return rosbag2_storage::BagInfo();
+}
+
+PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::WritableStorage)
+PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadableStorage)
