@@ -22,11 +22,13 @@
 class TestPlugin : public rosbag2_storage::StorageInterface
 {
 public:
-  TestPlugin() {
+  TestPlugin()
+  {
     fprintf(stderr, "testplugin instantiated\n");
   }
 
-  ~TestPlugin() {
+  ~TestPlugin()
+  {
     fprintf(stderr, "testplugin destroyed\n");
   }
 
