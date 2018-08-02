@@ -21,16 +21,16 @@
 #include <vector>
 #include <fstream>
 
-#include "../../../src/rosbag2/storage/sqlite/sqlite_storage.hpp"
+#include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "mock_sqlite_wrapper.hpp"
-#include "../rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2;  // NOLINT
+using namespace rosbag2_storage_plugins;  // NOLINT
 
-TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
+TEST(SqliteStorageTest, write_single_message_to_storage) {
   auto sqlite_wrapper = std::make_shared<MockSqliteWrapper>();
   std::string message_to_write = "test_message";
+  void * data = &message_to_write;
   std::string query =
     "INSERT INTO messages (data, timestamp) VALUES ('" + message_to_write +
     "', strftime('%s%f','now'))";
@@ -38,6 +38,6 @@ TEST_F(Rosbag2TestFixture, write_single_message_to_storage) {
   EXPECT_CALL(*sqlite_wrapper, execute_query(query));
 
   auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
-  storage->write(message_to_write);
+  storage->write(data, strlen(message_to_write.c_str()));
   storage.reset();
 }

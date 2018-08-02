@@ -21,8 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "storage/storage_factory.hpp"
-#include "storage/sqlite/sqlite_storage.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2
 {
@@ -32,15 +31,18 @@ void Rosbag2::record(
   const std::string & topic_name,
   std::function<void(void)> after_write_action)
 {
-  StorageFactory factory;
-  std::unique_ptr<WritableStorage> storage = factory.get_for_writing(file_name);
+  rosbag2_storage::StorageFactory factory;
+  std::unique_ptr<rosbag2_storage::WritableStorage> storage =
+    factory.get_for_writing("sqlite3", file_name);
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,
       [&storage, after_write_action](std_msgs::msg::String::ConstSharedPtr msg) {
-        storage->write(msg->data);
+        std::string message = msg->data;
+        void * data = &message;
+        storage->write(data, strlen(msg->data.c_str()));
         if (after_write_action) {
           after_write_action();
         }
@@ -54,16 +56,18 @@ void Rosbag2::record(
 
 void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
 {
-  StorageFactory factory;
-  std::unique_ptr<ReadableStorage> storage = factory.get_for_reading(file_name);
+  rosbag2_storage::StorageFactory factory;
+  std::unique_ptr<rosbag2_storage::ReadableStorage> storage =
+    factory.get_for_reading("sqlite3", file_name);
 
   if (storage) {
-    auto messages = storage->get_messages();
+    char buffer[1000];
+    size_t size = 0;
     auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
-    for (const auto & message : messages) {
+    while (storage->read_next(buffer, size)) {
       auto string_msg = std_msgs::msg::String();
-      string_msg.data = message;
+      string_msg.data = buffer;
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
       publisher->publish(string_msg);

@@ -12,24 +12,61 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(rosbag2_storage REQUIRED)
+
+
+add_library(librosbag
+  include/rosbag2/rosbag2.hpp
+  src/rosbag2/rosbag2.cpp)
+
+ament_target_dependencies(librosbag rclcpp std_msgs rosbag2_storage)
+target_link_libraries(librosbag)
+target_include_directories(librosbag
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+add_executable(${PROJECT_NAME}_record src/rosbag2/demo_record.cpp)
+target_link_libraries(${PROJECT_NAME}_record librosbag)
+
+add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
+target_link_libraries(${PROJECT_NAME}_play librosbag)
+# TODO(anhosi): Add install for library and headers (GH-5)
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # remove the line when a copyright and license is present in all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # remove the line when this package is a git repo
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  # TODO(Martin-Idel-SI): Add copyright linter or use ament_lint_auto() once available
+  find_package(ament_cmake_cppcheck REQUIRED)
+  find_package(ament_cmake_cpplint REQUIRED)
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  find_package(ament_cmake_uncrustify REQUIRED)
+  ament_cppcheck()
+  ament_cpplint()
+  ament_lint_cmake()
+  ament_uncrustify()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
+
+  ament_add_gmock(rosbag2_write_integration_test test/rosbag2/rosbag2_write_integration_test.cpp
+    test/rosbag2/rosbag2_test_fixture.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_write_integration_test)
+    target_link_libraries(rosbag2_write_integration_test librosbag)
+  endif()
+
+  ament_add_gmock(rosbag2_read_integration_test test/rosbag2/rosbag2_read_integration_test.cpp
+    test/rosbag2/rosbag2_test_fixture.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_read_integration_test)
+    target_link_libraries(rosbag2_read_integration_test librosbag)
+  endif()
 endif()
 
 ament_package()
