@@ -24,18 +24,20 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-void TestPlugin::write(char * data, size_t size)
+bool TestPlugin::write(const char * data, size_t size)
 {
   (void) data;
   (void) size;
   std::cout << "\nwriting\n";
+  return true;
 }
 
-void TestPlugin::read_next(char * buffer, size_t size)
+bool TestPlugin::read_next(const char * buffer, size_t & size)
 {
   (void) buffer;
   (void) size;
   std::cout << "\nreading\n";
+  return true;
 }
 
 void TestPlugin::open_for_reading(const std::string & uri)

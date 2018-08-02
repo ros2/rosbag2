@@ -23,13 +23,14 @@ TEST(StorageFactoryTest, load_test_plugin) {
   rosbag2_storage::StorageFactory factory;
 
   auto storage_for_writing = factory.get_for_writing("my_test_plugin", "file/to/be/written.bag");
-  storage_for_writing->write(nullptr, 0);
-  storage_for_writing->write(nullptr, 0);
-  storage_for_writing->write(nullptr, 0);
+  size_t size = 0;
+  storage_for_writing->write(nullptr, size);
+  storage_for_writing->write(nullptr, size);
+  storage_for_writing->write(nullptr, size);
   storage_for_writing.reset();
 
   auto storage_for_reading = factory.get_for_reading("my_test_plugin", "file/to/be/read.bag");
-  storage_for_reading->read_next(nullptr, 0);
-  storage_for_reading->read_next(nullptr, 0);
-  storage_for_reading->read_next(nullptr, 0);
+  storage_for_reading->read_next(nullptr, size);
+  storage_for_reading->read_next(nullptr, size);
+  storage_for_reading->read_next(nullptr, size);
 }
