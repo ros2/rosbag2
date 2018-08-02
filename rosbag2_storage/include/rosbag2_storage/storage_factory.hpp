@@ -18,7 +18,9 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_interface.hpp"
+#include "rosbag2_storage/writable_storage.hpp"
+#include "rosbag2_storage/readable_storage.hpp"
+
 #include "rosbag2_storage/visibility_control.h"
 
 namespace rosbag2_storage
@@ -26,22 +28,17 @@ namespace rosbag2_storage
 
 class StorageFactoryImpl;
 
-/// Factory to create instances for various storage interfaces
+/// Factory to create instances of various storage interfaces
 class StorageFactory
 {
 public:
-  explicit StorageFactory(const std::string & storage_identifier);
+  StorageFactory();
+  virtual ~StorageFactory() = default;
 
-  virtual ~StorageFactory();
-
-  /// Static function to create \sa StorageInterface given the storage_identifier
-  /**
-   * The function returns the StorageInterface base class for a specific identifier.
-   * \param storage_identifier unique string indicating which storage format to use.
-   */
-  ROSBAG2_STORAGE_PUBLIC
-  std::shared_ptr<StorageInterface>
-  get_storage_interface();
+  virtual std::unique_ptr<WritableStorage> get_for_writing(
+    const std::string & storage_id, const std::string & uri);
+  virtual std::unique_ptr<ReadableStorage> get_for_reading(
+    const std::string & storage_id, const std::string & uri);
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;

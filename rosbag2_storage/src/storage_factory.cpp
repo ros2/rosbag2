@@ -21,19 +21,21 @@
 namespace rosbag2_storage
 {
 
-StorageFactory::StorageFactory(const std::string & storage_identifier)
-: impl_(new StorageFactoryImpl(storage_identifier))
+StorageFactory::StorageFactory()
+: impl_(std::make_unique<StorageFactoryImpl>())
 {
 }
 
-StorageFactory::~StorageFactory()
+std::unique_ptr<WritableStorage> StorageFactory::get_for_writing(
+  const std::string & storage_id, const std::string & uri)
 {
+  return impl_->get_for_writing(storage_id, uri);
 }
 
-std::shared_ptr<StorageInterface>
-StorageFactory::get_storage_interface()
+std::unique_ptr<ReadableStorage> StorageFactory::get_for_reading(
+  const std::string & storage_id, const std::string & uri)
 {
-  return impl_->get_instance();
+  return impl_->get_for_reading(storage_id, uri);
 }
 
 }  // namespace rosbag2_storage
