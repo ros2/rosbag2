@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <iostream>
 
 #include "pluginlib/class_loader.hpp"
 #include "rcutils/logging_macros.h"

@@ -41,7 +41,7 @@ public:
    * @param data Binary data to write.
    * @param size Size of the data in bytes.
    */
-  virtual void write(char * data, size_t size) = 0;
+  virtual bool write(const char * data, size_t size) = 0;
 };
 
 inline WritableStorage::~WritableStorage() = default;

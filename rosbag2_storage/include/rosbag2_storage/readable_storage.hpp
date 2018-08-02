@@ -50,7 +50,7 @@ public:
    * @param buffer .
    * @param size Size of the data in bytes.
    */
-  virtual void read_next(char * buffer, size_t size) = 0;
+  virtual bool read_next(const char * buffer, size_t & size) = 0;
 
   /**
    * Retrieve the storage information.
