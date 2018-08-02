@@ -14,24 +14,21 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
-#define ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_
+#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_
 
-#include <memory>
+#include <gmock/gmock.h>
+
 #include <string>
+#include <vector>
 
-#include "readable_storage.hpp"
-#include "writable_storage.hpp"
+#include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
-namespace rosbag2
-{
-class StorageFactory
+class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
 {
 public:
-  std::unique_ptr<ReadableStorage> get_for_reading(const std::string & file_name);
-  std::unique_ptr<WritableStorage> get_for_writing(const std::string & file_name);
+  MOCK_METHOD1(execute_query, void(const std::string &));
+  MOCK_METHOD3(get_message, bool(void *, size_t &, size_t));
 };
 
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__STORAGE__STORAGE_FACTORY_HPP_
+#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

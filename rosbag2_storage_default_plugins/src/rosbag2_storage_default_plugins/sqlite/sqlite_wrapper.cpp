@@ -16,11 +16,13 @@
 
 #include "sqlite_wrapper.hpp"
 
+#include <cstring>
+#include <iostream>
 #include <string>
 #include <memory>
 #include <vector>
 
-namespace rosbag2
+namespace rosbag2_storage_plugins
 {
 
 SqliteWrapper::SqliteWrapper(const std::string & filename)
@@ -52,11 +54,12 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-std::vector<std::string> SqliteWrapper::get_messages()
+bool SqliteWrapper::get_message(void * buffer, size_t & size, size_t index)
 {
-  std::vector<std::string> table_msgs;
+  std::string selected_message;
+  std::string offset = std::to_string(index);
   sqlite3_stmt * statement;
-  std::string query = "SELECT * FROM messages";
+  std::string query = "SELECT * FROM messages LIMIT 1 OFFSET " + offset;
 
   int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
   if (return_code != SQLITE_OK) {
@@ -65,14 +68,17 @@ std::vector<std::string> SqliteWrapper::get_messages()
   }
 
   int result = sqlite3_step(statement);
-  while (result == SQLITE_ROW) {
-    table_msgs.emplace_back(
-      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1))));
-    result = sqlite3_step(statement);
+  if (result == SQLITE_ROW) {
+    selected_message =
+      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
+    size = strlen(selected_message.c_str());
+    memcpy(buffer, selected_message.c_str(), size);
+    sqlite3_finalize(statement);
+    return true;
+  } else {
+    sqlite3_finalize(statement);
+    return false;
   }
-  sqlite3_finalize(statement);
-
-  return table_msgs;
 }
 
 SqliteWrapper::operator bool()
@@ -80,4 +86,4 @@ SqliteWrapper::operator bool()
   return db_ptr != nullptr;
 }
 
-}  // namespace rosbag2
+}  // namespace rosbag2_storage_plugins

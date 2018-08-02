@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
-#define ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
+#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
 #include <string>
 #include <memory>
@@ -23,30 +23,37 @@
 
 #include "sqlite_wrapper.hpp"
 
-#include "../readable_storage.hpp"
-#include "../writable_storage.hpp"
+#include "rosbag2_storage/writable_storage.hpp"
+#include "rosbag2_storage/readable_storage.hpp"
 
-namespace rosbag2
+namespace rosbag2_storage_plugins
 {
 
-class SqliteStorage : public WritableStorage, public ReadableStorage
+class SqliteStorage
+  : public rosbag2_storage::WritableStorage, public rosbag2_storage::ReadableStorage
 {
 public:
-  SqliteStorage(const std::string & database_name, bool should_initialize);
-
-  // constructor for testing
+  SqliteStorage();
   explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
+  ~SqliteStorage() = default;
 
-  bool write(const std::string & data) override;
+  void open_for_writing(const std::string & uri) override;
 
-  std::vector<std::string> get_messages() override;
+  void open_for_reading(const std::string & uri) override;
+
+  bool write(void * data, size_t size) override;
+
+  bool read_next(void * buffer, size_t & size) override;
+
+  rosbag2_storage::BagInfo info() override;
 
 private:
   void initialize();
 
   std::shared_ptr<SqliteWrapper> database_;
+  size_t counter_;
 };
 
-}  // namespace rosbag2
+}  // namespace rosbag2_storage_plugins
 
-#endif  // ROSBAG2__STORAGE__SQLITE__SQLITE_STORAGE_HPP_
+#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
