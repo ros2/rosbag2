@@ -1,0 +1,7 @@
+<library path="sqlite3_storage">
+  <class name="sqlite3" type="rosbag2::SqliteStorage" base_class_type="rosbag2_storage::WritableStorage">
+  </class>
+
+  <class name="sqlite3" type="rosbag2::SqliteStorage" base_class_type="rosbag2_storage::ReadableStorage">
+  </class>
+</library>

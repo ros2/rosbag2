@@ -16,38 +16,54 @@
 
 #include "sqlite_storage.hpp"
 
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-namespace rosbag2
+namespace rosbag2_storage_plugins
 {
+SqliteStorage::SqliteStorage()
+: database_(), counter_(0)
+{}
 
-SqliteStorage::SqliteStorage(const std::string & database_name, bool should_initialize)
-: database_()
+SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
+: database_(std::move(database)), counter_(0)
+{}
+
+void SqliteStorage::open_for_reading(const std::string & uri)
 {
   try {
-    database_ = std::make_unique<SqliteWrapper>(database_name);
-    if (should_initialize) {
-      initialize();
-    }
+    database_ = std::make_unique<SqliteWrapper>(uri);
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  std::cout << "Opened database '" << database_name << "'." << std::endl;
+  std::cout << "Opened database '" << uri << "'." << std::endl;
 }
 
-SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
-: database_(std::move(database)) {}
-
-bool SqliteStorage::write(const std::string & data)
+void SqliteStorage::open_for_writing(const std::string & uri)
 {
   try {
+    database_ = std::make_unique<SqliteWrapper>(uri);
+    initialize();
+  } catch (const SqliteException & e) {
+    throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
+  }
+
+  std::cout << "Opened database '" << uri << "'." << std::endl;
+}
+
+bool SqliteStorage::write(void * data, size_t size)
+{
+  (void) size;
+  try {
+    auto message = static_cast<std::string *>(data);
     std::string insert_message =
-      "INSERT INTO messages (data, timestamp) VALUES ('" + data + "', strftime('%s%f','now'))";
+      "INSERT INTO messages (data, timestamp) VALUES ('" + *message +
+      "', strftime('%s%f','now'))";
     database_->execute_query(insert_message);
   } catch (const SqliteException & e) {
     std::cerr << "Failed to write message. Error: " << e.what() << std::endl;
@@ -58,13 +74,13 @@ bool SqliteStorage::write(const std::string & data)
   return true;
 }
 
-std::vector<std::string> SqliteStorage::get_messages()
+bool SqliteStorage::read_next(void * buffer, size_t & size)
 {
   try {
-    return database_->get_messages();
+    return database_->get_message(buffer, size, counter_++);
   } catch (const SqliteException & e) {
     std::cerr << "Failed to read messages. Error: " << e.what() << std::endl;
-    return std::vector<std::string>();
+    return false;
   }
 }
 
@@ -78,4 +94,14 @@ void SqliteStorage::initialize()
   database_->execute_query(create_table);
 }
 
-}  // namespace rosbag2
+rosbag2_storage::BagInfo SqliteStorage::info()
+{
+  return rosbag2_storage::BagInfo();
+}
+
+}  // namespace rosbag2_storage_plugins
+
+
+#include "pluginlib/class_list_macros.hpp"  // NOLINT
+PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage, rosbag2_storage::WritableStorage)
+PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage, rosbag2_storage::ReadableStorage)
