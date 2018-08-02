@@ -1,5 +1,9 @@
 <library path="test_plugin">
-  <class name="my_test_plugin" type="TestPlugin" base_class_type="rosbag2_storage::StorageInterface">
+  <class name="my_test_plugin" type="TestPlugin" base_class_type="rosbag2_storage::WritableStorage">
+    <description>This is a test storage plugin.</description>
+  </class>
+
+  <class name="my_test_plugin" type="TestPlugin" base_class_type="rosbag2_storage::ReadableStorage">
     <description>This is a test storage plugin.</description>
   </class>
 </library>

@@ -24,7 +24,10 @@ namespace rosbag2_storage
 class WritableStorage
 {
 public:
-  virtual ~WritableStorage();
+  /**
+   * The destructor should be implemented and used to close the storage file.
+   */
+  virtual ~WritableStorage() = 0;
 
   /** Open the specified resource for writing.
    * @param uri The identifier of the storage to be opened.
@@ -38,6 +41,8 @@ public:
    */
   virtual void write(char * data, size_t size) = 0;
 };
+
+inline WritableStorage::~WritableStorage() = default;
 
 }  // namespace rosbag2_storage
 
