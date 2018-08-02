@@ -32,7 +32,10 @@ struct BagInfo
 class ReadableStorage
 {
 public:
-  virtual ~ReadableStorage();
+  /**
+   * The destructor should be implemented and used to close the storage file.
+   */
+  virtual ~ReadableStorage() = 0;
 
   /** Open the specified resource for reading.
    * @param uri The identifier of the storage to be opened.
@@ -53,6 +56,8 @@ public:
    */
   virtual BagInfo info() = 0;
 };
+
+inline ReadableStorage::~ReadableStorage() = default;
 
 }  // namespace rosbag2_storage
 

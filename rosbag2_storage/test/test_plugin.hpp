@@ -17,35 +17,19 @@
 
 #include <string>
 
-#include "rosbag2_storage/storage_interface.hpp"
+#include "rosbag2_storage/writable_storage.hpp"
+#include "rosbag2_storage/readable_storage.hpp"
 
-class TestPlugin : public rosbag2_storage::StorageInterface
+class TestPlugin : public rosbag2_storage::WritableStorage, public rosbag2_storage::ReadableStorage
 {
 public:
-  TestPlugin()
-  {
-    fprintf(stderr, "testplugin instantiated\n");
-  }
+  ~TestPlugin() override;
+  void write(char * data, size_t size) override;
+  void read_next(char * buffer, size_t size) override;
 
-  ~TestPlugin()
-  {
-    fprintf(stderr, "testplugin destroyed\n");
-  }
-
-  rosbag2_storage::StorageHandle
-  open(const std::string & file_path);
-
-  bool
-  close(rosbag2_storage::StorageHandle & storage_handle);
-
-  void
-  set_storage_identifier(const std::string & storage_identifier);
-
-  std::string
-  get_storage_identifier();
-
-private:
-  std::string storage_identifier_;
+  void open_for_reading(const std::string & uri) override;
+  void open_for_writing(const std::string & uri) override;
+  rosbag2_storage::BagInfo info() override;
 };
 
 #endif  // TEST_PLUGIN_HPP_

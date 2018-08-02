@@ -50,6 +50,13 @@ install(
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
+
+  install(
+    FILES test/test_plugin.xml
+    DESTINATION share/${PROJECT_NAME}/test/
+  )
+
   ament_lint_auto_find_test_dependencies()
 
   add_library(test_plugin SHARED test/test_plugin.cpp)
@@ -61,7 +68,7 @@ if(BUILD_TESTING)
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_storage test/test_plugin.xml)
 
-  ament_add_gtest(
+  ament_add_gmock(
     test_storage_factory
     test/test_storage_factory.cpp
   )

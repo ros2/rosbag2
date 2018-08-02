@@ -41,7 +41,7 @@ public:
     const std::string & storage_id, const std::string & uri);
 
 private:
-  std::unique_ptr<StorageFactoryImpl> impl_;
+  StorageFactoryImpl * impl_;
 };
 
 }  // namespace rosbag2_storage

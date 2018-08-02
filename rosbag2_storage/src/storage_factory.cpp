@@ -22,7 +22,7 @@ namespace rosbag2_storage
 {
 
 StorageFactory::StorageFactory()
-: impl_(std::make_unique<StorageFactoryImpl>())
+: impl_(new StorageFactoryImpl())
 {
 }
 
