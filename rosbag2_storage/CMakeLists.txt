@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rcutils REQUIRED)
 
 add_library(
   rosbag2_storage
@@ -26,8 +27,8 @@ add_library(
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
-  "pluginlib"
-  "rcutils")
+  pluginlib
+  rcutils)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
