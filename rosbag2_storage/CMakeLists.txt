@@ -34,6 +34,9 @@ ament_target_dependencies(
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(rosbag2_storage PRIVATE "ROSBAG2_STORAGE_BUILDING_DLL")
 
+# prevent pluginlib from using boost
+target_compile_definitions(rosbag2_storage PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+
 install(
   DIRECTORY include/
   DESTINATION include)
