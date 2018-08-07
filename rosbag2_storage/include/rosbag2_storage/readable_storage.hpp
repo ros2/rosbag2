@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "visibility_control.h"
+
 namespace rosbag2_storage
 {
 
@@ -29,7 +31,7 @@ struct BagInfo
   // TODO(greimela-si/botteroa-si): Add remaining info fields.
 };
 
-class ReadableStorage
+class ROSBAG2_STORAGE_PUBLIC ReadableStorage
 {
 public:
   /**
