@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "visibility_control.h"
+#include "visibility_control.hpp"
 
 namespace rosbag2_storage
 {
