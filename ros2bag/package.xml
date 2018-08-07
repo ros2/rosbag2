@@ -9,7 +9,6 @@
   <maintainer email="karsten@osrfoundation.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
-  <depend>rclpy</depend>
   <depend>ros2cli</depend>
 
   <exec_depend>python3-yaml</exec_depend>
