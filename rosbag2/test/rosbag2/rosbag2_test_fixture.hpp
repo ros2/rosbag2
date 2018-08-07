@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdio>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -28,7 +29,7 @@
 # include <Windows.h>
 #endif
 
-#include <sqlite3.h>
+#include "rosbag2_storage/storage_factory.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -88,44 +89,34 @@ public:
 #endif
   }
 
-  std::vector<std::string> get_messages(std::string db_name)
+  std::vector<std::string> get_messages(const std::string & db_name)
   {
-    sqlite3 * database;
-    sqlite3_open(db_name.c_str(), &database);
-
     std::vector<std::string> table_msgs;
-    sqlite3_stmt * statement;
-    std::string query = "SELECT * FROM messages";
-    sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
-    int result = sqlite3_step(statement);
-    while (result == SQLITE_ROW) {
-      table_msgs.emplace_back(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
-      result = sqlite3_step(statement);
-    }
-    sqlite3_finalize(statement);
-    sqlite3_close(database);
+    rosbag2_storage::StorageFactory factory;
+    std::unique_ptr<rosbag2_storage::ReadableStorage> storage =
+      factory.get_for_reading("sqlite3", db_name);
 
+    if (storage) {
+      char buffer[1000];
+      size_t size = 0;
+      while (storage->read_next(buffer, size)) {
+        table_msgs.emplace_back(buffer);
+      }
+    }
     return table_msgs;
   }
 
-  void write_messages(std::string db_name, std::vector<std::string> messages)
+  void write_messages(const std::string & db_name, std::vector<std::string> messages)
   {
-    sqlite3 * database;
-    sqlite3_open(db_name.c_str(), &database);
+    rosbag2_storage::StorageFactory factory;
+    std::unique_ptr<rosbag2_storage::WritableStorage> storage =
+      factory.get_for_writing("sqlite3", db_name);
 
-    std::string create_table = "CREATE TABLE messages(" \
-      "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-      "data           BLOB    NOT NULL," \
-      "timestamp      INT     NOT NULL);";
-
-    sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, nullptr);
-
-    for (const auto & message : messages) {
-      std::string insert_message =
-        "INSERT INTO messages (data, timestamp) VALUES ('" + message + "', strftime('%s%f','now'))";
-      sqlite3_exec(database, insert_message.c_str(), nullptr, nullptr, nullptr);
+    if (storage) {
+      for (auto msg : messages) {
+        storage->write(&msg, 0);
+      }
     }
-    sqlite3_close(database);
   }
 
   std::string database_name_;
