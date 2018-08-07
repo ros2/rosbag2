@@ -12,10 +12,9 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
@@ -55,11 +54,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
 
-  install(
-    FILES test/test_plugin.xml
-    DESTINATION share/${PROJECT_NAME}/test/
-  )
-
   ament_lint_auto_find_test_dependencies()
 
   add_library(test_plugin SHARED test/test_plugin.cpp)
@@ -70,13 +64,17 @@ if(BUILD_TESTING)
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_storage test/test_plugin.xml)
-
-  ament_add_gmock(
-    test_storage_factory
-    test/test_storage_factory.cpp
+  install(
+    FILES test/test_plugin.xml
+    DESTINATION share/${PROJECT_NAME}/test/
   )
-  target_include_directories(test_storage_factory PRIVATE include)
-  target_link_libraries(test_storage_factory rosbag2_storage)
+
+  ament_add_gmock(test_storage_factory
+    test/test_storage_factory.cpp)
+  if(TARGET test_storage_factory)
+    target_include_directories(test_storage_factory PRIVATE include)
+    target_link_libraries(test_storage_factory rosbag2_storage)
+  endif()
 endif()
 
 ament_export_include_directories(include)
