@@ -29,7 +29,7 @@ namespace rosbag2_storage
 class StorageFactoryImpl;
 
 /// Factory to create instances of various storage interfaces
-class StorageFactory
+class ROSBAG2_STORAGE_PUBLIC StorageFactory
 {
 public:
   StorageFactory();
