@@ -11,7 +11,7 @@
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  limitations under the License.≤
  */
 
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
@@ -35,7 +35,7 @@ class SqliteStorage
 public:
   SqliteStorage();
   explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
-  ~SqliteStorage() = default;
+  ~SqliteStorage() override = default;
 
   void open_for_writing(const std::string & uri) override;
 
