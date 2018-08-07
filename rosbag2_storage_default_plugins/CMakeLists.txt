@@ -64,6 +64,13 @@ if(BUILD_TESTING)
   if(TARGET sqlite_storage_test)
     target_link_libraries(sqlite_storage_test ${PROJECT_NAME})
   endif()
+
+  ament_add_gmock(sqlite_storage_integration_test
+    test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET sqlite_storage_integration_test)
+    target_link_libraries(sqlite_storage_integration_test ${PROJECT_NAME})
+  endif()
 endif()
 
 ament_package()
