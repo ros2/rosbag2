@@ -41,3 +41,21 @@ TEST(SqliteStorageTest, write_single_message_to_storage) {
   storage->write(data, strlen(message_to_write.c_str()));
   storage.reset();
 }
+
+TEST(SqliteStorageTest, read_messages_from_storage) {
+  auto sqlite_wrapper = std::make_shared<NiceMock<MockSqliteWrapper>>();
+  std::string message = "test_message";
+  void * data = &message;
+  auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
+  storage->write(data, strlen(message.c_str()));
+  storage->write(data, strlen(message.c_str()));
+  char buffer[100];
+  size_t size = 0;
+
+  EXPECT_CALL(*sqlite_wrapper, get_message(buffer, size, 0));
+  EXPECT_CALL(*sqlite_wrapper, get_message(buffer, size, 1));
+
+  storage->read_next(buffer, size);
+  storage->read_next(buffer, size);
+  storage.reset();
+}
