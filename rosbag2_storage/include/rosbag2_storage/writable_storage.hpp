@@ -18,10 +18,12 @@
 
 #include <string>
 
+#include "visibility_control.h"
+
 namespace rosbag2_storage
 {
 
-class WritableStorage
+class ROSBAG2_STORAGE_PUBLIC WritableStorage
 {
 public:
   /**
