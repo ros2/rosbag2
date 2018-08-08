@@ -37,13 +37,13 @@ using DBPtr = sqlite3 *;
 class SqliteWrapper
 {
 public:
-  explicit SqliteWrapper(const std::string & filename);
+  explicit SqliteWrapper(const std::string & uri);
   SqliteWrapper();
   virtual ~SqliteWrapper();
 
   virtual void execute_query(const std::string & query);
 
-  virtual bool get_message(void * buffer, size_t & size, size_t index);
+  virtual bool get_message(std::string & message, size_t index);
 
   virtual operator bool();
 

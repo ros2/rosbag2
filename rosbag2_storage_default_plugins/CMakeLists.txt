@@ -16,10 +16,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(sqlite3_vendor REQUIRED)
-find_package(rosbag2_storage REQUIRED)
 find_package(pluginlib REQUIRED)
-
+find_package(rcutils REQUIRED)
+find_package(rosbag2_storage REQUIRED)
+find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 
 add_library(${PROJECT_NAME} SHARED
@@ -28,8 +28,14 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp
   src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp)
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp std_msgs SQLite3 rosbag2_storage pluginlib)
-target_link_libraries(${PROJECT_NAME})
+ament_target_dependencies(${PROJECT_NAME}
+  rosbag2_storage
+  rclcpp
+  rcutils
+  std_msgs
+  SQLite3
+  pluginlib)
+
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -60,16 +66,32 @@ if(BUILD_TESTING)
 
   ament_add_gmock(sqlite_storage_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_test.cpp
+    src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
+    src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_test)
-    target_link_libraries(sqlite_storage_test ${PROJECT_NAME})
+    ament_target_dependencies(sqlite_storage_test
+      rosbag2_storage
+      rclcpp
+      rcutils
+      std_msgs
+      SQLite3
+      pluginlib)
   endif()
 
   ament_add_gmock(sqlite_storage_integration_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
+    src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
+    src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_integration_test)
-    target_link_libraries(sqlite_storage_integration_test ${PROJECT_NAME})
+    ament_target_dependencies(sqlite_storage_integration_test
+      rosbag2_storage
+      rclcpp
+      rcutils
+      std_msgs
+      SQLite3
+      pluginlib)
   endif()
 endif()
 
