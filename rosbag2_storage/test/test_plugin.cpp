@@ -55,5 +55,4 @@ rosbag2_storage::BagInfo TestPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::WritableStorage)
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadableStorage)
+PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::Storage)

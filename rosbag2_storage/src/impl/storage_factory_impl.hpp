@@ -1,4 +1,5 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018,  Open Source Robotics Foundation, Inc.
+// Copyright 2018,  Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +16,17 @@
 #ifndef IMPL__STORAGE_FACTORY_IMPL_HPP_
 #define IMPL__STORAGE_FACTORY_IMPL_HPP_
 
+#include <algorithm>
 #include <memory>
+#include <vector>
 #include <string>
-#include <iostream>
 
 #include "pluginlib/class_loader.hpp"
 #include "rcutils/logging_macros.h"
 
 #include "rosbag2_storage/writable_storage.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
+#include "rosbag2_storage/storage.hpp"
 
 namespace rosbag2_storage
 {
@@ -40,14 +43,15 @@ public:
       writable_class_loader_ = std::make_unique<pluginlib::ClassLoader<WritableStorage>>(
         "rosbag2_storage", "rosbag2_storage::WritableStorage");
 
-      auto registered_classes = writable_class_loader_->getDeclaredClasses();
+      if (storage_id_is_present(writable_class_loader_->getDeclaredClasses(), storage_id)) {
+        return open_writable_storage(writable_class_loader_, storage_id, uri);
+      }
 
-      for (const auto & class_ : registered_classes) {
-        if (class_ == storage_id) {
-          auto instance = writable_class_loader_->createUnmanagedInstance(storage_id);
-          instance->open_for_writing(uri);
-          return std::unique_ptr<WritableStorage>(instance);
-        }
+      storage_loader_ = std::make_unique<pluginlib::ClassLoader<Storage>>(
+        "rosbag2_storage", "rosbag2_storage::Storage");
+
+      if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
+        return open_writable_storage(storage_loader_, storage_id, uri);
       }
 
       RCUTILS_LOG_WARN("Requested storage id %s does not exist", storage_id.c_str());
@@ -65,14 +69,15 @@ public:
       readable_class_loader_ = std::make_unique<pluginlib::ClassLoader<ReadableStorage>>(
         "rosbag2_storage", "rosbag2_storage::ReadableStorage");
 
-      auto registered_classes = readable_class_loader_->getDeclaredClasses();
+      if (storage_id_is_present(readable_class_loader_->getDeclaredClasses(), storage_id)) {
+        return open_readable_storage(readable_class_loader_, storage_id, uri);
+      }
 
-      for (const auto & class_ : registered_classes) {
-        if (class_ == storage_id) {
-          auto instance = readable_class_loader_->createUnmanagedInstance(storage_id);
-          instance->open_for_reading(uri);
-          return std::unique_ptr<ReadableStorage>(instance);
-        }
+      storage_loader_ = std::make_unique<pluginlib::ClassLoader<Storage>>(
+        "rosbag2_storage", "rosbag2_storage::Storage");
+
+      if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
+        return open_readable_storage(storage_loader_, storage_id, uri);
       }
 
       RCUTILS_LOG_WARN("Requested storage id %s does not exist", storage_id.c_str());
@@ -84,6 +89,38 @@ public:
   }
 
 private:
+  bool storage_id_is_present(
+    std::vector<std::string> registered_classes, const std::string & storage_id)
+  {
+    return std::find(registered_classes.begin(), registered_classes.end(), storage_id) !=
+           registered_classes.end();
+  }
+
+  template<typename T>
+  std::unique_ptr<ReadableStorage> open_readable_storage(
+    const std::unique_ptr<pluginlib::ClassLoader<T>> & storage_loader,
+    std::string storage_id,
+    std::string uri)
+  {
+    static_assert(std::is_base_of<ReadableStorage, T>::value, "storage_loader has wrong type");
+    auto instance = storage_loader->createUnmanagedInstance(storage_id);
+    instance->open_for_reading(uri);
+    return std::unique_ptr<ReadableStorage>(instance);
+  }
+
+  template<typename T>
+  std::unique_ptr<WritableStorage> open_writable_storage(
+    const std::unique_ptr<pluginlib::ClassLoader<T>> & storage_loader,
+    std::string storage_id,
+    std::string uri)
+  {
+    static_assert(std::is_base_of<WritableStorage, T>::value, "storage_loader has wrong type");
+    auto instance = storage_loader->createUnmanagedInstance(storage_id);
+    instance->open_for_writing(uri);
+    return std::unique_ptr<WritableStorage>(instance);
+  }
+
+  std::unique_ptr<pluginlib::ClassLoader<Storage>> storage_loader_;
   std::unique_ptr<pluginlib::ClassLoader<WritableStorage>> writable_class_loader_;
   std::unique_ptr<pluginlib::ClassLoader<ReadableStorage>> readable_class_loader_;
 };
