@@ -19,6 +19,7 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rcutils/logging_macros.h"
 #include "std_msgs/msg/string.hpp"
 
 #include "rosbag2_storage/storage_factory.hpp"
@@ -26,30 +27,30 @@
 namespace rosbag2
 {
 
+const char * ROS_PACKAGE_NAME = "rosbag2";
+
 void Rosbag2::record(
   const std::string & file_name,
   const std::string & topic_name,
   std::function<void(void)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;
-  std::unique_ptr<rosbag2_storage::WritableStorage> storage =
-    factory.get_for_writing("sqlite3", file_name);
+  auto storage =
+    factory.get_read_write_storage("sqlite3", file_name);
+  storage->create_topic();
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,
       [&storage, after_write_action](std_msgs::msg::String::ConstSharedPtr msg) {
-        std::string message = msg->data;
-        void * data = &message;
-        storage->write(data, strlen(msg->data.c_str()));
+        storage->write(msg->data);
         if (after_write_action) {
           after_write_action();
         }
       });
 
-    // TODO(anhosi): use proper logging from rcutils
-    std::cout << "Waiting for messages..." << std::endl;
+    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
     rclcpp::spin(node);
   }
 }
@@ -57,17 +58,15 @@ void Rosbag2::record(
 void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
 {
   rosbag2_storage::StorageFactory factory;
-  std::unique_ptr<rosbag2_storage::ReadableStorage> storage =
-    factory.get_for_reading("sqlite3", file_name);
+  auto storage = factory.get_read_only_storage("sqlite3", file_name);
 
   if (storage) {
-    char buffer[1000];
-    size_t size = 0;
     auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
-    while (storage->read_next(buffer, size)) {
+    while (storage->has_next()) {
+      std::string message = storage->read_next();
       auto string_msg = std_msgs::msg::String();
-      string_msg.data = buffer;
+      string_msg.data = message;
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
       publisher->publish(string_msg);

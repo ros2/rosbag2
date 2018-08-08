@@ -17,16 +17,14 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
-
 add_library(librosbag
-  include/rosbag2/rosbag2.hpp
   src/rosbag2/rosbag2.cpp)
 
-ament_target_dependencies(librosbag rclcpp std_msgs rosbag2_storage)
-target_link_libraries(librosbag)
+ament_target_dependencies(librosbag rclcpp rcutils std_msgs rosbag2_storage)
 target_include_directories(librosbag
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -38,7 +36,15 @@ target_link_libraries(${PROJECT_NAME}_record librosbag)
 
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
 target_link_libraries(${PROJECT_NAME}_play librosbag)
-# TODO(anhosi): Add install for library and headers (GH-5)
+
+install(
+  DIRECTORY include/
+  DESTINATION include)
+
+install(
+  TARGETS librosbag
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
 
 if(BUILD_TESTING)
   # TODO(Martin-Idel-SI): Add copyright linter or use ament_lint_auto() once available
@@ -54,14 +60,16 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
 
-  ament_add_gmock(rosbag2_write_integration_test test/rosbag2/rosbag2_write_integration_test.cpp
+  ament_add_gmock(rosbag2_write_integration_test
+    test/rosbag2/rosbag2_write_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
     target_link_libraries(rosbag2_write_integration_test librosbag)
   endif()
 
-  ament_add_gmock(rosbag2_read_integration_test test/rosbag2/rosbag2_read_integration_test.cpp
+  ament_add_gmock(rosbag2_read_integration_test
+    test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)

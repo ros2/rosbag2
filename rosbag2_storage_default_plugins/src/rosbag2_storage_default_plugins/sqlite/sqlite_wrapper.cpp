@@ -25,10 +25,10 @@
 namespace rosbag2_storage_plugins
 {
 
-SqliteWrapper::SqliteWrapper(const std::string & filename)
+SqliteWrapper::SqliteWrapper(const std::string & uri)
 : db_ptr(nullptr)
 {
-  int rc = sqlite3_open(filename.c_str(), &db_ptr);
+  int rc = sqlite3_open(uri.c_str(), &db_ptr);
   if (rc) {
     throw SqliteException("Could not open database. Error: " + std::string(sqlite3_errmsg(db_ptr)));
   }
@@ -54,9 +54,8 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-bool SqliteWrapper::get_message(void * buffer, size_t & size, size_t index)
+bool SqliteWrapper::get_message(std::string & message, size_t index)
 {
-  std::string selected_message;
   std::string offset = std::to_string(index);
   sqlite3_stmt * statement;
   std::string query = "SELECT * FROM messages LIMIT 1 OFFSET " + offset;
@@ -69,10 +68,7 @@ bool SqliteWrapper::get_message(void * buffer, size_t & size, size_t index)
 
   int result = sqlite3_step(statement);
   if (result == SQLITE_ROW) {
-    selected_message =
-      std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
-    size = strlen(selected_message.c_str());
-    snprintf(static_cast<char *>(buffer), size + 1, "%s", selected_message.c_str());
+    message = std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
     sqlite3_finalize(statement);
     return true;
   } else {
