@@ -19,6 +19,7 @@
 #include <string>
 
 #include "pluginlib/class_loader.hpp"
+#include "rcutils/logging_macros.h"
 
 #include "rosbag2_storage/writable_storage.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
@@ -47,9 +48,10 @@ public:
           return std::unique_ptr<WritableStorage>(instance);
         }
       }
+
+      RCUTILS_LOG_WARN("Requested storage id %s does not exist", storage_id.c_str());
     } catch (std::exception & e) {
-      // TODO(botteroa-si): log error properly.
-      (void) e;
+      RCUTILS_LOG_ERROR("Error reading from pluginlib: %s", e.what());
     }
 
     return std::unique_ptr<WritableStorage>();
@@ -71,9 +73,10 @@ public:
           return std::unique_ptr<ReadableStorage>(instance);
         }
       }
+
+      RCUTILS_LOG_WARN("Requested storage id %s does not exist", storage_id.c_str());
     } catch (std::exception & e) {
-      // TODO(greimela-si): log error properly.
-      (void) e;
+      RCUTILS_LOG_ERROR("Error reading from pluginlib: %s", e.what());
     }
 
     return std::unique_ptr<ReadableStorage>();
