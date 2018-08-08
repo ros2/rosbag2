@@ -24,8 +24,8 @@ class TestPlugin : public rosbag2_storage::WritableStorage, public rosbag2_stora
 {
 public:
   ~TestPlugin() override;
-  bool write(const char * data, size_t size) override;
-  bool read_next(const char * buffer, size_t & size) override;
+  bool write(void * data, size_t size) override;
+  bool read_next(void * buffer, size_t & size) override;
 
   void open_for_reading(const std::string & uri) override;
   void open_for_writing(const std::string & uri) override;
