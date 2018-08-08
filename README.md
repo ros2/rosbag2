@@ -10,7 +10,7 @@ Create a new workspace:
 
 ```
 $ mkdir -p ~/rosbag_ws/src
-$ cd ~/rosbag_wsk/src
+$ cd ~/rosbag_ws/src
 ```
 
 Clone this repository into the source folder:
