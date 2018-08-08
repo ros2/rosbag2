@@ -24,7 +24,7 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-bool TestPlugin::write(const char * data, size_t size)
+bool TestPlugin::write(void * data, size_t size)
 {
   (void) data;
   (void) size;
@@ -32,7 +32,7 @@ bool TestPlugin::write(const char * data, size_t size)
   return true;
 }
 
-bool TestPlugin::read_next(const char * buffer, size_t & size)
+bool TestPlugin::read_next(void * buffer, size_t & size)
 {
   (void) buffer;
   (void) size;
