@@ -19,8 +19,9 @@
 
 #include "rosbag2_storage/writable_storage.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
+#include "rosbag2_storage/storage.hpp"
 
-class TestPlugin : public rosbag2_storage::WritableStorage, public rosbag2_storage::ReadableStorage
+class TestPlugin : public rosbag2_storage::Storage
 {
 public:
   ~TestPlugin() override;
