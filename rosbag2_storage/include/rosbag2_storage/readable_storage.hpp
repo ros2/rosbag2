@@ -17,19 +17,11 @@
 
 #include <string>
 
+#include "bag_info.hpp"
 #include "visibility_control.hpp"
 
 namespace rosbag2_storage
 {
-
-/**
- * Struct to hold the storage information.
- */
-struct BagInfo
-{
-  std::string uri;
-  // TODO(greimela-si/botteroa-si): Add remaining info fields.
-};
 
 class ROSBAG2_STORAGE_PUBLIC ReadableStorage
 {
