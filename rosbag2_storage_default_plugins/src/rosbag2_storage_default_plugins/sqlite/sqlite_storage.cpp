@@ -59,8 +59,8 @@ void SqliteStorage::open_for_writing(const std::string & uri)
 bool SqliteStorage::write(void * data, size_t size)
 {
   (void) size;
+  auto message = static_cast<std::string *>(data);
   try {
-    auto message = static_cast<std::string *>(data);
     std::string insert_message =
       "INSERT INTO messages (data, timestamp) VALUES ('" + *message +
       "', strftime('%s%f','now'))";
@@ -70,7 +70,7 @@ bool SqliteStorage::write(void * data, size_t size)
     return false;
   }
 
-  std::cout << "Stored message '" << data << "'." << std::endl;
+  std::cout << "Stored message '" << *message << "'." << std::endl;
   return true;
 }
 
