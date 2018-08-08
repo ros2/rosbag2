@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>rosbag2_storage_default_plugins</name>
   <version>0.0.0</version>
@@ -12,11 +11,13 @@
   <build_depend>sqlite3_vendor</build_depend>
   <build_depend>rclcpp</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>rcutils</build_depend>
   <build_depend>rosbag2_storage</build_depend>
 
   <exec_depend>sqlite3_vendor</exec_depend>
   <exec_depend>rosbag2_storage</exec_depend>
   <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rcutils</exec_depend>
   <exec_depend>std_msgs</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

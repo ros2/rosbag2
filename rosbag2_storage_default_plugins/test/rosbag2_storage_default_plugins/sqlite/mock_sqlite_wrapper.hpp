@@ -28,7 +28,7 @@ class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
 {
 public:
   MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD3(get_message, bool(void *, size_t &, size_t));
+  MOCK_METHOD2(get_message, bool(std::string &, size_t));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

@@ -93,14 +93,13 @@ public:
   {
     std::vector<std::string> table_msgs;
     rosbag2_storage::StorageFactory factory;
-    std::unique_ptr<rosbag2_storage::ReadableStorage> storage =
-      factory.get_for_reading("sqlite3", db_name);
+    auto storage =
+      factory.get_read_only_storage("sqlite3", db_name);
 
     if (storage) {
-      char buffer[1000];
-      size_t size = 0;
-      while (storage->read_next(buffer, size)) {
-        table_msgs.emplace_back(buffer);
+      while (storage->has_next()) {
+        std::string message = storage->read_next();
+        table_msgs.emplace_back(message);
       }
     }
     return table_msgs;
@@ -109,12 +108,13 @@ public:
   void write_messages(const std::string & db_name, std::vector<std::string> messages)
   {
     rosbag2_storage::StorageFactory factory;
-    std::unique_ptr<rosbag2_storage::WritableStorage> storage =
-      factory.get_for_writing("sqlite3", db_name);
+    auto storage =
+      factory.get_read_write_storage("sqlite3", db_name);
+    storage->create_topic();
 
     if (storage) {
       for (auto msg : messages) {
-        storage->write(&msg, 0);
+        storage->write(msg);
       }
     }
   }

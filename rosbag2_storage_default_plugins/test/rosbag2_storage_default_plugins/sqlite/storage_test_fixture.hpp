@@ -92,14 +92,13 @@ public:
 
   void write_messages_to_sqlite(std::vector<std::string> messages)
   {
-    std::unique_ptr<rosbag2_storage::WritableStorage> writable_storage =
+    std::unique_ptr<rosbag2_storage::ReadWriteStorage> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-    writable_storage->open_for_writing(database_name_);
+    writable_storage->open(database_name_);
+    writable_storage->create_topic();
 
-    if (writable_storage) {
-      for (auto msg : messages) {
-        writable_storage->write(&msg, 0);
-      }
+    for (auto msg : messages) {
+      writable_storage->write(msg);
     }
   }
 
@@ -107,15 +106,12 @@ public:
   {
     std::unique_ptr<rosbag2_storage::ReadableStorage> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-    readable_storage->open_for_reading(database_name_);
+    readable_storage->open_readonly(database_name_);
     std::vector<std::string> read_messages;
 
-    if (readable_storage) {
-      char buffer[1000];
-      size_t size = 0;
-      while (readable_storage->read_next(buffer, size)) {
-        read_messages.emplace_back(buffer);
-      }
+    std::string message;
+    while (readable_storage->has_next()) {
+      read_messages.emplace_back(readable_storage->read_next());
     }
 
     return read_messages;

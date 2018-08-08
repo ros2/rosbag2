@@ -17,71 +17,71 @@
 #include "sqlite_storage.hpp"
 
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "rcutils/logging_macros.h"
+
 namespace rosbag2_storage_plugins
 {
+const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
+
 SqliteStorage::SqliteStorage()
-: database_(), counter_(0)
+: database_(), counter_(0), bag_info_()
 {}
 
 SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
 : database_(std::move(database)), counter_(0)
 {}
 
-void SqliteStorage::open_for_reading(const std::string & uri)
+void SqliteStorage::open(const std::string & uri)
 {
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);
+    bag_info_.uri = uri;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  std::cout << "Opened database '" << uri << "'." << std::endl;
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Opened database '%s'.", uri.c_str());
 }
 
-void SqliteStorage::open_for_writing(const std::string & uri)
+void SqliteStorage::open_readonly(const std::string & uri)
 {
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);
-    initialize();
+    bag_info_.uri = uri;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  std::cout << "Opened database '" << uri << "'." << std::endl;
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Opened database '%s'.", uri.c_str());
 }
 
-bool SqliteStorage::write(void * data, size_t size)
+void SqliteStorage::write(std::string message)
 {
-  (void) size;
-  auto message = static_cast<std::string *>(data);
-  try {
-    std::string insert_message =
-      "INSERT INTO messages (data, timestamp) VALUES ('" + *message +
-      "', strftime('%s%f','now'))";
-    database_->execute_query(insert_message);
-  } catch (const SqliteException & e) {
-    std::cerr << "Failed to write message. Error: " << e.what() << std::endl;
-    return false;
-  }
+  std::string insert_message =
+    "INSERT INTO messages (data, timestamp) VALUES ('" + message + "', strftime('%s%f','now'))";
+  database_->execute_query(insert_message);
 
-  std::cout << "Stored message '" << *message << "'." << std::endl;
-  return true;
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message '%s'.", message.c_str());
 }
 
-bool SqliteStorage::read_next(void * buffer, size_t & size)
+bool SqliteStorage::has_next()
 {
-  try {
-    return database_->get_message(buffer, size, counter_++);
-  } catch (const SqliteException & e) {
-    std::cerr << "Failed to read messages. Error: " << e.what() << std::endl;
-    return false;
-  }
+  // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
+  std::string message;
+  return database_->get_message(message, counter_);
+}
+
+std::string SqliteStorage::read_next()
+{
+  // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
+  std::string message;
+  database_->get_message(message, counter_++);
+  return message;
 }
 
 void SqliteStorage::initialize()
@@ -96,12 +96,16 @@ void SqliteStorage::initialize()
 
 rosbag2_storage::BagInfo SqliteStorage::info()
 {
-  return rosbag2_storage::BagInfo();
+  return bag_info_;
+}
+
+void SqliteStorage::create_topic()
+{
+  initialize();
 }
 
 }  // namespace rosbag2_storage_plugins
 
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage, rosbag2_storage::WritableStorage)
-PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage, rosbag2_storage::ReadableStorage)
+PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage, rosbag2_storage::ReadWriteStorage)
