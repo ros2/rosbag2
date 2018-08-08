@@ -72,7 +72,7 @@ bool SqliteWrapper::get_message(void * buffer, size_t & size, size_t index)
     selected_message =
       std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
     size = strlen(selected_message.c_str());
-    memcpy(buffer, selected_message.c_str(), size);
+    snprintf(static_cast<char *>(buffer), size + 1, "%s", selected_message.c_str());
     sqlite3_finalize(statement);
     return true;
   } else {
