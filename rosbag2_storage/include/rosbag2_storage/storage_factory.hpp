@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/storage.hpp"
 #include "rosbag2_storage/writable_storage.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
 
@@ -28,21 +29,35 @@ namespace rosbag2_storage
 
 class StorageFactoryImpl;
 
+using ReadOnlyStorageSharedPtr = std::shared_ptr<ReadableStorage>;
+using WriteOnlyStorageSharedPtr = std::shared_ptr<WritableStorage>;
+using StorageSharedPtr = std::shared_ptr<Storage>;
+
 /// Factory to create instances of various storage interfaces
 class ROSBAG2_STORAGE_PUBLIC StorageFactory
 {
 public:
   StorageFactory();
-  virtual ~StorageFactory() = default;
+  virtual ~StorageFactory();
 
-  virtual std::unique_ptr<WritableStorage> get_for_writing(
-    const std::string & storage_id, const std::string & uri);
-  virtual std::unique_ptr<ReadableStorage> get_for_reading(
-    const std::string & storage_id, const std::string & uri);
+  template<class T>
+  T get_storage(const std::string & storage_id, const std::string & uri);
 
 private:
-  StorageFactoryImpl * impl_;
+  std::unique_ptr<StorageFactoryImpl> impl_;
 };
+
+template<>
+WriteOnlyStorageSharedPtr StorageFactory::get_storage(
+  const std::string & storage_id, const std::string & uri);
+
+template<>
+ReadOnlyStorageSharedPtr StorageFactory::get_storage(
+  const std::string & storage_id, const std::string & uri);
+
+template<>
+StorageSharedPtr StorageFactory::get_storage(
+  const std::string & storage_id, const std::string & uri);
 
 }  // namespace rosbag2_storage
 

@@ -1,4 +1,4 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,41 +17,28 @@
 
 #include "pluginlib/class_list_macros.hpp"
 
-#include "test_plugin.hpp"
+#include "test_read_only_plugin.hpp"
 
-TestPlugin::~TestPlugin()
+TestReadOnlyPlugin::~TestReadOnlyPlugin()
 {
   std::cout << "\nclosing bag\n";
 }
 
-bool TestPlugin::write(std::string message)
-{
-  (void) message;
-  std::cout << "\nwriting\n";
-  return true;
-}
-
-bool TestPlugin::read_next(std::string & message)
+bool TestReadOnlyPlugin::read_next(std::string & message)
 {
   (void) message;
   std::cout << "\nreading\n";
   return true;
 }
 
-void TestPlugin::open(const std::string & uri)
+void TestReadOnlyPlugin::open(const std::string & uri)
 {
   std::cout << "\nopened " << uri << ".\n";
 }
 
-rosbag2_storage::BagInfo TestPlugin::info()
+rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
 {
   return rosbag2_storage::BagInfo();
 }
 
-bool TestPlugin::create_topic()
-{
-  std::cout << "Created topic.\n";
-  return true;
-}
-
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::Storage)
+PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::ReadableStorage)

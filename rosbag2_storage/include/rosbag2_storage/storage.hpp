@@ -29,13 +29,13 @@ class ROSBAG2_STORAGE_PUBLIC Storage : public ReadableStorage, public WritableSt
 public:
   ~Storage() override;
 
-  void open_for_reading(const std::string & uri) override = 0;
+  void open(const std::string & uri) override = 0;
 
-  bool read_next(void * buffer, size_t & size) override = 0;
+  bool read_next(std::string & message) override = 0;
 
-  void open_for_writing(const std::string & uri) override = 0;
+  bool create_topic() override = 0;
 
-  bool write(void * data, size_t size) override = 0;
+  bool write(std::string message) override = 0;
 
   BagInfo info() override = 0;
 };
