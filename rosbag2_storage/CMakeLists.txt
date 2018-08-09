@@ -26,7 +26,8 @@ add_library(
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
-  "pluginlib")
+  "pluginlib"
+  "rcutils")
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
