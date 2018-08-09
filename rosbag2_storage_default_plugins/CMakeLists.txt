@@ -51,18 +51,10 @@ install(
 pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
 
 if(BUILD_TESTING)
-  # TODO(Martin-Idel-SI): Add copyright linter or use ament_lint_auto() once available
-  find_package(ament_cmake_cppcheck REQUIRED)
-  find_package(ament_cmake_cpplint REQUIRED)
-  find_package(ament_cmake_lint_cmake REQUIRED)
-  find_package(ament_cmake_uncrustify REQUIRED)
-  ament_cppcheck()
-  ament_cpplint()
-  ament_lint_cmake()
-  ament_uncrustify()
-
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(sqlite_storage_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_test.cpp
