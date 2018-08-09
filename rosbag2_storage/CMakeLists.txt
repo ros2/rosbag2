@@ -57,7 +57,9 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
-  add_library(test_plugin SHARED test/test_plugin.cpp)
+  add_library(test_plugin SHARED
+    test/test_plugin.cpp
+    test/test_read_only_plugin.cpp)
   target_link_libraries(test_plugin rosbag2_storage)
   install(
     TARGETS test_plugin
