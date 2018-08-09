@@ -27,21 +27,25 @@ class ROSBAG2_STORAGE_PUBLIC WritableStorage
 {
 public:
   /**
-   * The destructor should be implemented and used to close the storage file.
+   * The destructor should be implemented and used to close the storage file
    */
   virtual ~WritableStorage() = 0;
 
-  /** Open the specified resource for writing.
-   * @param uri The identifier of the storage to be opened.
+  /** Open the specified resource
+   * @param uri The identifier of the storage to be opened
    */
-  virtual void open_for_writing(const std::string & uri) = 0;
+  virtual void open(const std::string & uri) = 0;
 
   /**
-   * Write the data to storage.
-   * @param data Binary data to write.
-   * @param size Size of the data in bytes.
+   * Open a new topic to be written to
    */
-  virtual bool write(void * data, size_t size) = 0;
+  virtual bool create_topic() = 0;
+
+  /**
+   * Write the data to storage
+   * @param message String to write
+   */
+  virtual bool write(std::string message) = 0;
 };
 
 inline WritableStorage::~WritableStorage() = default;

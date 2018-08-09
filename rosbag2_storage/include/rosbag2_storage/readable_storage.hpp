@@ -31,18 +31,16 @@ public:
    */
   virtual ~ReadableStorage() = 0;
 
-  /** Open the specified resource for reading.
+  /** Open the specified resource.
    * @param uri The identifier of the storage to be opened.
    */
-  virtual void open_for_reading(const std::string & uri) = 0;
+  virtual void open(const std::string & uri) = 0;
 
-  // TODO(greimela-si/botteroa-si): find out correct parameter type.
   /**
    * Read the next data set from storage.
-   * @param buffer .
-   * @param size Size of the data in bytes.
+   * @param message String to save the message.
    */
-  virtual bool read_next(void * buffer, size_t & size) = 0;
+  virtual bool read_next(std::string & message) = 0;
 
   /**
    * Retrieve the storage information.
