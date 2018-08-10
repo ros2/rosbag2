@@ -24,11 +24,14 @@ namespace rosbag2_storage
 {
 
 StorageFactory::StorageFactory()
-: impl_(std::make_unique<StorageFactoryImpl>())
+: impl_(new StorageFactoryImpl())
 {
 }
 
-StorageFactory::~StorageFactory() = default;
+StorageFactory::~StorageFactory()
+{
+  delete impl_;
+}
 
 template<>
 std::shared_ptr<Storage> StorageFactory::get_storage(

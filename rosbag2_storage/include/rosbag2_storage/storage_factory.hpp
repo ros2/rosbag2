@@ -45,7 +45,7 @@ public:
   T get_storage(const std::string & storage_id, const std::string & uri);
 
 private:
-  std::unique_ptr<StorageFactoryImpl> impl_;
+  StorageFactoryImpl * impl_;
 };
 
 template<>
