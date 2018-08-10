@@ -67,10 +67,6 @@ if(BUILD_TESTING)
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_storage test/test_plugin.xml)
-  install(
-    FILES test/test_plugin.xml
-    DESTINATION share/${PROJECT_NAME}/test/
-  )
 
   ament_add_gmock(test_storage_factory
     test/test_storage_factory.cpp)
