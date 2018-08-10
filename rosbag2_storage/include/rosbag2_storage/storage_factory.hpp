@@ -48,14 +48,17 @@ private:
 };
 
 template<>
+ROSBAG2_STORAGE_PUBLIC
 WriteOnlyStorageSharedPtr StorageFactory::get_storage(
   const std::string & storage_id, const std::string & uri);
 
 template<>
+ROSBAG2_STORAGE_PUBLIC
 ReadOnlyStorageSharedPtr StorageFactory::get_storage(
   const std::string & storage_id, const std::string & uri);
 
 template<>
+ROSBAG2_STORAGE_PUBLIC
 StorageSharedPtr StorageFactory::get_storage(
   const std::string & storage_id, const std::string & uri);
 
