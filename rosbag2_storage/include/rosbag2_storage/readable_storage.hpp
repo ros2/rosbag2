@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "bag_info.hpp"
-#include "visibility_control.hpp"
+#include "rosbag2_storage/bag_info.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {

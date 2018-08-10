@@ -18,8 +18,8 @@
 
 #include <algorithm>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "pluginlib/class_loader.hpp"
 #include "rcutils/logging_macros.h"
@@ -58,7 +58,7 @@ public:
     return std::shared_ptr<Storage>();
   }
 
-  std::shared_ptr<WritableStorage> get_for_writing(
+  std::shared_ptr<WritableStorage> get_write_only_storage(
     const std::string & storage_id, const std::string & uri)
   {
     try {
@@ -73,7 +73,7 @@ public:
     return std::shared_ptr<WritableStorage>();
   }
 
-  std::shared_ptr<ReadableStorage> get_for_reading(
+  std::shared_ptr<ReadableStorage> get_read_only_storage(
     const std::string & storage_id, const std::string & uri)
   {
     try {
