@@ -42,14 +42,14 @@ public:
   std::shared_ptr<Storage> get_storage(const std::string & storage_id, const std::string & uri)
   {
     try {
-      storage_loader_ = std::make_unique<pluginlib::ClassLoader<Storage>>(
+      storage_loader_ = std::make_shared<pluginlib::ClassLoader<Storage>>(
         "rosbag2_storage", "rosbag2_storage::Storage");
 
       if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
         return open_storage(storage_loader_, storage_id, uri);
       }
 
-      RCUTILS_LOG_WARN_NAMED(ROS_PACKAGE_NAME,
+      RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
         "Requested storage id %s does not exist", storage_id.c_str());
     } catch (std::exception & e) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME, "Error reading from pluginlib: %s", e.what());
@@ -62,22 +62,10 @@ public:
     const std::string & storage_id, const std::string & uri)
   {
     try {
-      writable_class_loader_ = std::make_unique<pluginlib::ClassLoader<WritableStorage>>(
+      writable_class_loader_ = std::make_shared<pluginlib::ClassLoader<WritableStorage>>(
         "rosbag2_storage", "rosbag2_storage::WritableStorage");
 
-      if (storage_id_is_present(writable_class_loader_->getDeclaredClasses(), storage_id)) {
-        return open_storage(writable_class_loader_, storage_id, uri);
-      }
-
-      storage_loader_ = std::make_unique<pluginlib::ClassLoader<Storage>>(
-        "rosbag2_storage", "rosbag2_storage::Storage");
-
-      if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
-        return open_storage_as_subtype<WritableStorage>(storage_loader_, storage_id, uri);
-      }
-
-      RCUTILS_LOG_WARN_NAMED(ROS_PACKAGE_NAME,
-        "Requested storage id %s does not exist", storage_id.c_str());
+      return open_storage_of_type<WritableStorage>(writable_class_loader_, storage_id, uri);
     } catch (std::exception & e) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME, "Error reading from pluginlib: %s", e.what());
     }
@@ -89,22 +77,10 @@ public:
     const std::string & storage_id, const std::string & uri)
   {
     try {
-      readable_class_loader_ = std::make_unique<pluginlib::ClassLoader<ReadableStorage>>(
+      readable_class_loader_ = std::make_shared<pluginlib::ClassLoader<ReadableStorage>>(
         "rosbag2_storage", "rosbag2_storage::ReadableStorage");
 
-      if (storage_id_is_present(readable_class_loader_->getDeclaredClasses(), storage_id)) {
-        return open_storage(readable_class_loader_, storage_id, uri);
-      }
-
-      storage_loader_ = std::make_unique<pluginlib::ClassLoader<Storage>>(
-        "rosbag2_storage", "rosbag2_storage::Storage");
-
-      if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
-        return open_storage_as_subtype<ReadableStorage>(storage_loader_, storage_id, uri);
-      }
-
-      RCUTILS_LOG_WARN_NAMED(ROS_PACKAGE_NAME,
-        "Requested storage id %s does not exist", storage_id.c_str());
+      return open_storage_of_type<ReadableStorage>(readable_class_loader_, storage_id, uri);
     } catch (std::exception & e) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME, "Error reading from pluginlib: %s", e.what());
     }
@@ -121,8 +97,31 @@ private:
   }
 
   template<typename T>
+  std::shared_ptr<T> open_storage_of_type(
+    std::shared_ptr<pluginlib::ClassLoader<T>> loader,
+    const std::string & storage_id,
+    const std::string & uri)
+  {
+    if (storage_id_is_present(loader->getDeclaredClasses(), storage_id)) {
+      return open_storage(loader, storage_id, uri);
+    }
+
+    storage_loader_ = std::make_shared<pluginlib::ClassLoader<Storage>>(
+      "rosbag2_storage", "rosbag2_storage::Storage");
+
+    if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
+      return open_storage_as_subtype<T>(storage_loader_, storage_id, uri);
+    }
+
+    RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+      "Requested storage id %s does not exist", storage_id.c_str());
+
+    return std::shared_ptr<T>();
+  }
+
+  template<typename T>
   std::shared_ptr<T> open_storage(
-    const std::unique_ptr<pluginlib::ClassLoader<T>> & storage_loader,
+    std::shared_ptr<pluginlib::ClassLoader<T>> storage_loader,
     std::string storage_id,
     std::string uri)
   {
@@ -133,7 +132,7 @@ private:
 
   template<typename T>
   std::shared_ptr<T> open_storage_as_subtype(
-    const std::unique_ptr<pluginlib::ClassLoader<Storage>> & storage_loader,
+    std::shared_ptr<pluginlib::ClassLoader<Storage>> storage_loader,
     std::string storage_id,
     std::string uri)
   {
@@ -142,9 +141,9 @@ private:
     return std::shared_ptr<T>(instance);
   }
 
-  std::unique_ptr<pluginlib::ClassLoader<Storage>> storage_loader_;
-  std::unique_ptr<pluginlib::ClassLoader<WritableStorage>> writable_class_loader_;
-  std::unique_ptr<pluginlib::ClassLoader<ReadableStorage>> readable_class_loader_;
+  std::shared_ptr<pluginlib::ClassLoader<Storage>> storage_loader_;
+  std::shared_ptr<pluginlib::ClassLoader<WritableStorage>> writable_class_loader_;
+  std::shared_ptr<pluginlib::ClassLoader<ReadableStorage>> readable_class_loader_;
 };
 
 }  // namespace rosbag2_storage
