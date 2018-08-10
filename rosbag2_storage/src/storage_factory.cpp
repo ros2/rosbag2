@@ -1,4 +1,5 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018,  Open Source Robotics Foundation, Inc.
+// Copyright 2018,  Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rosbag2_storage/storage_factory.hpp"
+
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_factory.hpp"
 #include "./impl/storage_factory_impl.hpp"
 
 namespace rosbag2_storage
@@ -39,14 +41,14 @@ template<>
 std::shared_ptr<WritableStorage> StorageFactory::get_storage(
   const std::string & storage_id, const std::string & uri)
 {
-  return impl_->get_for_writing(storage_id, uri);
+  return impl_->get_write_only_storage(storage_id, uri);
 }
 
 template<>
 std::shared_ptr<ReadableStorage> StorageFactory::get_storage(
   const std::string & storage_id, const std::string & uri)
 {
-  return impl_->get_for_reading(storage_id, uri);
+  return impl_->get_read_only_storage(storage_id, uri);
 }
 
 }  // namespace rosbag2_storage
