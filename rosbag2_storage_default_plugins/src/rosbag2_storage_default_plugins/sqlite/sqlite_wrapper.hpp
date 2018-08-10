@@ -19,8 +19,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <rcutils/types.h>
-#include <rosbag2_storage/serialized_bag_message.hpp>
+
+#include "rcutils/types.h"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_storage_plugins
 {

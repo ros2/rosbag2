@@ -28,6 +28,7 @@ class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
 public:
   MOCK_METHOD1(execute_query, void(const std::string &));
   MOCK_METHOD2(get_message, bool(rosbag2_storage::SerializedBagMessage &, size_t));
+  MOCK_METHOD1(write_blob, void(rosbag2_storage::SerializedBagMessage message));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

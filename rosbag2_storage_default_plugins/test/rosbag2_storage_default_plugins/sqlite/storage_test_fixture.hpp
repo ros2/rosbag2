@@ -28,6 +28,10 @@
 # include <Windows.h>
 #endif
 
+#include "rclcpp/rclcpp.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
+#include "std_msgs/msg/string.hpp"
+
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -88,7 +92,45 @@ public:
 #endif
   }
 
-  void write_messages_to_sqlite(std::vector<rosbag2_storage::SerializedBagMessage> messages)
+  std::shared_ptr<rcutils_char_array_t> make_serialized_message(std::string message)
+  {
+    auto test_message = std::make_shared<std_msgs::msg::String>();
+    test_message->data = message;
+
+    auto serialized_test_message = std::make_shared<rcutils_char_array_t>();
+    auto allocator = rcutils_get_default_allocator();
+    auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
+    auto error = rmw_serialized_message_init(
+      serialized_test_message.get(),
+      initial_capacity,
+      &allocator);
+    if (error != RCL_RET_OK) {
+      throw std::runtime_error("Something went wrong preparing the serialized message");
+    }
+
+    auto string_ts =
+      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+
+    error = rmw_serialize(test_message.get(), string_ts, serialized_test_message.get());
+    if (error != RMW_RET_OK) {
+      throw std::runtime_error("Something went wrong preparing the serialized message");
+    }
+    return serialized_test_message;
+  }
+
+  std::string deserialize_message(rosbag2_storage::SerializedBagMessage serialized_message)
+  {
+    auto string_message = std::make_shared<std_msgs::msg::String>();
+    auto string_ts =
+      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+    auto error = rmw_deserialize(
+      serialized_message.serialized_data.get(), string_ts, string_message.get());
+    (void) error;
+
+    return string_message->data;
+  }
+
+  void write_messages_to_sqlite(std::vector<std::string> messages)
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();

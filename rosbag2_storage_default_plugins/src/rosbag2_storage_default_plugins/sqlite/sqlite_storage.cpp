@@ -63,14 +63,14 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 bool SqliteStorage::has_next() const
 {
   // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  rosbag2_storage::SerializedBagMessage message();
+  rosbag2_storage::SerializedBagMessage message;
   return database_->get_message(message, counter_);
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
   // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  rosbag2_storage::SerializedBagMessage message();
+  rosbag2_storage::SerializedBagMessage message;
   database_->get_message(message, counter_++);
   auto payload = new rcutils_char_array_t;
   *payload = rcutils_get_zero_initialized_char_array();
@@ -101,7 +101,7 @@ void SqliteStorage::initialize()
 {
   std::string create_table = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-    "data           BLOB    NOT NULL," \
+    "data           TEXT    NOT NULL," \
     "timestamp      INT     NOT NULL);";
 
   database_->execute_query(create_table);

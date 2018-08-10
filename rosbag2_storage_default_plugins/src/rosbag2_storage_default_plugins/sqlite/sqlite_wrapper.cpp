@@ -14,13 +14,15 @@
 
 #include "sqlite_wrapper.hpp"
 
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <string>
 #include <memory>
 #include <vector>
-#include <rcutils/types.h>
-#include <rosbag2_storage/serialized_bag_message.hpp>
+
+#include "rcutils/types.h"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -56,24 +58,23 @@ void SqliteWrapper::execute_query(const std::string & query)
 
 void SqliteWrapper::write_blob(rosbag2_storage::SerializedBagMessage message)
 {
-  (void) message;
   sqlite3_stmt * statement = nullptr;
-  const char* pszUnused;
 
   std::string query = "INSERT INTO messages (data, timestamp) VALUES (?, strftime('%s%f','now'));";
-  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, &pszUnused);
-  // sqlite3_bind_blob(statement, 1, message, sizeof(rosbag2_storage::SerializedBagMessage),
-  // SQLITE_STATIC);
-  sqlite3_step(statement);
+  auto buffer_length = message.serialized_data->buffer_length;
+  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
+  sqlite3_bind_text(statement, 1, message.serialized_data->buffer, buffer_length, SQLITE_STATIC);
+  auto error = sqlite3_step(statement);
+  assert(error != SQLITE_ROW);
+
   sqlite3_finalize(statement);
 }
 
 bool SqliteWrapper::get_message(rosbag2_storage::SerializedBagMessage & message, size_t index)
 {
-  (void) message;
   std::string offset = std::to_string(index);
   sqlite3_stmt * statement;
-  std::string query = "SELECT * FROM messages LIMIT 1 OFFSET " + offset;
+  std::string query = "SELECT data FROM messages WHERE id = " + std::to_string(index + 1);
 
   int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
   if (return_code != SQLITE_OK) {
@@ -82,11 +83,17 @@ bool SqliteWrapper::get_message(rosbag2_storage::SerializedBagMessage & message,
   }
 
   int result = sqlite3_step(statement);
+  unsigned char * read_blob = nullptr;
   if (result == SQLITE_ROW) {
-//    auto message_in_database = reinterpret_cast<const rcutils_serialized_message_t *>(
-//      sqlite3_column_text(statement, 1));
-//    memcpy(&message, &message_in_database, sizeof(rcutils_serialized_message_t));
-//    sqlite3_finalize(statement);
+    auto size = sqlite3_column_bytes(statement, 0);
+    read_blob = (unsigned char *)malloc(size);
+    memcpy(read_blob, sqlite3_column_text(statement, 0), size);
+    sqlite3_finalize(statement);
+    message.serialized_data = std::make_shared<rcutils_char_array_t>();
+    message.serialized_data->buffer = reinterpret_cast<char *>(read_blob);
+    message.serialized_data->buffer_capacity = size;
+    message.serialized_data->buffer_length = size;
+    message.serialized_data->allocator = rcutils_get_default_allocator();
     return true;
   } else {
     sqlite3_finalize(statement);

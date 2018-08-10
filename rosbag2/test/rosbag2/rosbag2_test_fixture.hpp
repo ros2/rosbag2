@@ -136,11 +136,10 @@ public:
   std::shared_ptr<rcutils_char_array_t> make_serialized_message(
     std::string message)
   {
-    std_msgs::msg::String::SharedPtr test_message;
+    auto test_message = std::make_shared<std_msgs::msg::String>();
     test_message->data = message;
 
-    auto serialized_test_message = std::shared_ptr<rcutils_char_array_t>();
-    *serialized_test_message = rmw_get_zero_initialized_serialized_message();
+    auto serialized_test_message = std::make_shared<rcutils_char_array_t>();
     auto allocator = rcutils_get_default_allocator();
     auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
     auto error = rmw_serialized_message_init(
