@@ -17,9 +17,9 @@
 
 #include <string>
 
-#include "visibility_control.hpp"
-#include "readable_storage.hpp"
-#include "writable_storage.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
+#include "rosbag2_storage/readable_storage.hpp"
+#include "rosbag2_storage/writable_storage.hpp"
 
 namespace rosbag2_storage
 {
