@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <rcutils/types.h>
+#include <rosbag2_storage/serialized_bag_message.hpp>
 
 namespace rosbag2_storage_plugins
 {
@@ -41,7 +43,9 @@ public:
 
   virtual void execute_query(const std::string & query);
 
-  virtual bool get_message(std::string & message, size_t index);
+  virtual bool get_message(rosbag2_storage::SerializedBagMessage & message, size_t index);
+
+  virtual void write_blob(rosbag2_storage::SerializedBagMessage message);
 
   virtual operator bool();
 

@@ -62,7 +62,7 @@ public:
     rclcpp::shutdown();
   }
 
-  void publish_messages(std::vector<std::string> messages)
+  void publish_messages(std::vector<std::shared_ptr<rcutils_char_array_t>> messages)
   {
     size_t expected_counter_value = messages.size();
     auto node = std::make_shared<rclcpp::Node>("publisher_node");
@@ -84,10 +84,10 @@ public:
 
 TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
 {
-  std::string message_to_publish = "test_message";
+  auto serialized_test_message = make_serialized_message("test_message");
 
   start_recording();
-  publish_messages({message_to_publish});
+  publish_messages({serialized_test_message});
   stop_recording();
 
   auto recorded_messages = get_messages(database_name_);

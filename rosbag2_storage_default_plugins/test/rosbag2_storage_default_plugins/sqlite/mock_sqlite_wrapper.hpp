@@ -20,13 +20,14 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
 {
 public:
   MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD2(get_message, bool(std::string &, size_t));
+  MOCK_METHOD2(get_message, bool(rosbag2_storage::SerializedBagMessage &, size_t));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

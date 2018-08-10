@@ -63,14 +63,14 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 bool SqliteStorage::has_next() const
 {
   // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  std::string message;
+  rosbag2_storage::SerializedBagMessage message();
   return database_->get_message(message, counter_);
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
   // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  std::string message;
+  rosbag2_storage::SerializedBagMessage message();
   database_->get_message(message, counter_++);
   auto payload = new rcutils_char_array_t;
   *payload = rcutils_get_zero_initialized_char_array();

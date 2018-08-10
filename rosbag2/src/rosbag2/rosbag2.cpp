@@ -27,6 +27,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2
 {

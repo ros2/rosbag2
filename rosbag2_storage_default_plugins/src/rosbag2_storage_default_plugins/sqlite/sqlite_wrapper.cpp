@@ -19,6 +19,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <rcutils/types.h>
+#include <rosbag2_storage/serialized_bag_message.hpp>
 
 namespace rosbag2_storage_plugins
 {
@@ -52,8 +54,23 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-bool SqliteWrapper::get_message(std::string & message, size_t index)
+void SqliteWrapper::write_blob(rosbag2_storage::SerializedBagMessage message)
 {
+  (void) message;
+  sqlite3_stmt * statement = nullptr;
+  const char* pszUnused;
+
+  std::string query = "INSERT INTO messages (data, timestamp) VALUES (?, strftime('%s%f','now'));";
+  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, &pszUnused);
+  // sqlite3_bind_blob(statement, 1, message, sizeof(rosbag2_storage::SerializedBagMessage),
+  // SQLITE_STATIC);
+  sqlite3_step(statement);
+  sqlite3_finalize(statement);
+}
+
+bool SqliteWrapper::get_message(rosbag2_storage::SerializedBagMessage & message, size_t index)
+{
+  (void) message;
   std::string offset = std::to_string(index);
   sqlite3_stmt * statement;
   std::string query = "SELECT * FROM messages LIMIT 1 OFFSET " + offset;
@@ -66,8 +83,10 @@ bool SqliteWrapper::get_message(std::string & message, size_t index)
 
   int result = sqlite3_step(statement);
   if (result == SQLITE_ROW) {
-    message = std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
-    sqlite3_finalize(statement);
+//    auto message_in_database = reinterpret_cast<const rcutils_serialized_message_t *>(
+//      sqlite3_column_text(statement, 1));
+//    memcpy(&message, &message_in_database, sizeof(rcutils_serialized_message_t));
+//    sqlite3_finalize(statement);
     return true;
   } else {
     sqlite3_finalize(statement);

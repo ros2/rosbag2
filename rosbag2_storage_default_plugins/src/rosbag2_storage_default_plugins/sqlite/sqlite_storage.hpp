@@ -23,6 +23,9 @@
 
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
+#include "rcutils/types.h"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
 namespace rosbag2_storage_plugins
 {
 

@@ -22,6 +22,10 @@
 #include <string>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
+#include "std_msgs/msg/string.hpp"
+
 #ifdef _WIN32
 # include <direct.h>
 # include <Windows.h>
@@ -107,8 +111,7 @@ public:
     return table_msgs;
   }
 
-  void
-  write_messages(
+  void write_messages(
     const std::string & db_name,
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages)
   {
@@ -119,10 +122,43 @@ public:
       throw std::runtime_error("failed to open sqlite3 storage");
     }
 
-    storage->create_topic();
-    for (auto msg : messages) {
-      storage->write(msg);
+    if (storage) {
+      for (auto msg : messages) {
+        auto ser_msg = make_serialized_message(msg);
+        rosbag2_storage::SerializedBagMessage bag_message;
+        bag_message.serialized_data = ser_msg;
+        // TODO(Martin-Idel-SI): Make time stamp
+        storage->write(bag_message);
+      }
     }
+  }
+
+  std::shared_ptr<rcutils_char_array_t> make_serialized_message(
+    std::string message)
+  {
+    std_msgs::msg::String::SharedPtr test_message;
+    test_message->data = message;
+
+    auto serialized_test_message = std::shared_ptr<rcutils_char_array_t>();
+    *serialized_test_message = rmw_get_zero_initialized_serialized_message();
+    auto allocator = rcutils_get_default_allocator();
+    auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
+    auto error = rmw_serialized_message_init(
+      serialized_test_message.get(),
+      initial_capacity,
+      &allocator);
+    if (error != RCL_RET_OK) {
+      throw std::runtime_error("Something went wrong preparing the serialized message");
+    }
+
+    auto string_ts =
+      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+
+    error = rmw_serialize(test_message.get(), string_ts, serialized_test_message.get());
+    if (error != RMW_RET_OK) {
+      throw std::runtime_error("Something went wrong preparing the serialized message");
+    }
+    return serialized_test_message;
   }
 
   std::string database_name_;
