@@ -34,7 +34,7 @@ public:
   /** Open the specified resource.
    * @param uri The identifier of the storage to be opened.
    */
-  virtual void open(const std::string & uri) = 0;
+  virtual void open_readonly(const std::string & uri) = 0;
 
   /**
    * Read the next data set from storage.

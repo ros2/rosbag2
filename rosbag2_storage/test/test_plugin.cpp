@@ -44,6 +44,11 @@ void TestPlugin::open(const std::string & uri)
   std::cout << "\nopened " << uri << ".\n";
 }
 
+void TestPlugin::open_readonly(const std::string & uri)
+{
+  std::cout << "\nopened readonly" << uri << ".\n";
+}
+
 rosbag2_storage::BagInfo TestPlugin::info()
 {
   return rosbag2_storage::BagInfo();
@@ -55,4 +60,4 @@ bool TestPlugin::create_topic()
   return true;
 }
 
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::Storage)
+PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadWriteStorage)
