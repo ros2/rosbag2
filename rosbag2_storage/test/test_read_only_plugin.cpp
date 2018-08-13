@@ -31,7 +31,7 @@ bool TestReadOnlyPlugin::read_next(std::string & message)
   return true;
 }
 
-void TestReadOnlyPlugin::open(const std::string & uri)
+void TestReadOnlyPlugin::open_readonly(const std::string & uri)
 {
   std::cout << "\nopened " << uri << ".\n";
 }

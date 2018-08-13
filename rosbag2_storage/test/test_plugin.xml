@@ -2,7 +2,7 @@
   <class
     name="my_test_plugin"
     type="TestPlugin"
-    base_class_type="rosbag2_storage::Storage"
+    base_class_type="rosbag2_storage::ReadWriteStorage"
   >
     <description>This is a test storage plugin.</description>
   </class>

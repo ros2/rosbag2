@@ -12,36 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__STORAGE_HPP_
-#define ROSBAG2_STORAGE__STORAGE_HPP_
+#ifndef ROSBAG2_STORAGE__READ_WRITE_STORAGE_HPP_
+#define ROSBAG2_STORAGE__READ_WRITE_STORAGE_HPP_
 
 #include <string>
 
 #include "rosbag2_storage/visibility_control.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
-#include "rosbag2_storage/writable_storage.hpp"
 
 namespace rosbag2_storage
 {
 
-class ROSBAG2_STORAGE_PUBLIC Storage : public ReadableStorage, public WritableStorage
+class ROSBAG2_STORAGE_PUBLIC ReadWriteStorage : public ReadableStorage
 {
 public:
-  ~Storage() override;
+  ~ReadWriteStorage() override;
 
-  void open(const std::string & uri) override = 0;
+  void open_readonly(const std::string & uri) override = 0;
+
+  virtual void open(const std::string & uri) = 0;
 
   bool read_next(std::string & message) override = 0;
 
-  bool create_topic() override = 0;
+  virtual bool create_topic() = 0;
 
-  bool write(std::string message) override = 0;
+  virtual bool write(std::string message) = 0;
 
   BagInfo info() override = 0;
 };
 
-inline Storage::~Storage() = default;
+inline ReadWriteStorage::~ReadWriteStorage() = default;
 
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__STORAGE_HPP_
+#endif  // ROSBAG2_STORAGE__READ_WRITE_STORAGE_HPP_
