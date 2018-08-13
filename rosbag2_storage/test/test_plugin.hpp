@@ -25,9 +25,9 @@ class TestPlugin : public rosbag2_storage::ReadWriteStorage
 {
 public:
   ~TestPlugin() override;
-  bool create_topic() override;
-  bool write(std::string message) override;
-  bool read_next(std::string & message) override;
+  void create_topic() override;
+  void write(std::string message) override;
+  void read_next(std::string & message) override;
 
   void open(const std::string & uri) override;
   void open_readonly(const std::string & uri) override;

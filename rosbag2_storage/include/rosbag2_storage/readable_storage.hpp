@@ -40,7 +40,7 @@ public:
    * Read the next data set from storage.
    * @param message String to save the message.
    */
-  virtual bool read_next(std::string & message) = 0;
+  virtual void read_next(std::string & message) = 0;
 
   /**
    * Retrieve the storage information.

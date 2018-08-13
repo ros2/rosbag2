@@ -47,7 +47,12 @@ public:
 
       if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
         auto instance = storage_loader_->createUnmanagedInstance(storage_id);
-        instance->open(uri);
+        try {
+          instance->open(uri);
+        } catch (const std::runtime_error & ex) {
+          RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+            "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+        }
         return std::shared_ptr<ReadWriteStorage>(instance);
       }
 
@@ -69,7 +74,12 @@ public:
 
       if (storage_id_is_present(readable_class_loader_->getDeclaredClasses(), storage_id)) {
         auto instance = readable_class_loader_->createUnmanagedInstance(storage_id);
-        instance->open_readonly(uri);
+        try {
+          instance->open_readonly(uri);
+        } catch (const std::runtime_error & ex) {
+          RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+            "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+        }
         return std::shared_ptr<ReadableStorage>(instance);
       }
 
@@ -78,7 +88,12 @@ public:
 
       if (storage_id_is_present(storage_loader_->getDeclaredClasses(), storage_id)) {
         auto instance = storage_loader_->createUnmanagedInstance(storage_id);
-        instance->open_readonly(uri);
+        try {
+          instance->open_readonly(uri);
+        } catch (const std::runtime_error & ex) {
+          RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+            "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+        }
         return std::shared_ptr<ReadableStorage>(instance);
       }
 
