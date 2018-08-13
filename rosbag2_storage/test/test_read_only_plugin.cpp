@@ -24,11 +24,10 @@ TestReadOnlyPlugin::~TestReadOnlyPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-bool TestReadOnlyPlugin::read_next(std::string & message)
+void TestReadOnlyPlugin::read_next(std::string & message)
 {
   (void) message;
   std::cout << "\nreading\n";
-  return true;
 }
 
 void TestReadOnlyPlugin::open_readonly(const std::string & uri)

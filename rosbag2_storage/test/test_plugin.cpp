@@ -25,18 +25,16 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-bool TestPlugin::write(std::string message)
+void TestPlugin::write(std::string message)
 {
   (void) message;
   std::cout << "\nwriting\n";
-  return true;
 }
 
-bool TestPlugin::read_next(std::string & message)
+void TestPlugin::read_next(std::string & message)
 {
   (void) message;
   std::cout << "\nreading\n";
-  return true;
 }
 
 void TestPlugin::open(const std::string & uri)
@@ -54,10 +52,9 @@ rosbag2_storage::BagInfo TestPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-bool TestPlugin::create_topic()
+void TestPlugin::create_topic()
 {
   std::cout << "Created topic.\n";
-  return true;
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadWriteStorage)
