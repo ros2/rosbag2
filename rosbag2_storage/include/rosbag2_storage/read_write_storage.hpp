@@ -32,11 +32,11 @@ public:
 
   virtual void open(const std::string & uri) = 0;
 
-  bool read_next(std::string & message) override = 0;
+  void read_next(std::string & message) override = 0;
 
-  virtual bool create_topic() = 0;
+  virtual void create_topic() = 0;
 
-  virtual bool write(std::string message) = 0;
+  virtual void write(std::string message) = 0;
 
   BagInfo info() override = 0;
 };
