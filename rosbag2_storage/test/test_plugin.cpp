@@ -31,10 +31,10 @@ void TestPlugin::write(std::string message)
   std::cout << "\nwriting\n";
 }
 
-void TestPlugin::read_next(std::string & message)
+std::string TestPlugin::read_next()
 {
-  (void) message;
   std::cout << "\nreading\n";
+  return "";
 }
 
 void TestPlugin::open(const std::string & uri)
@@ -55,6 +55,11 @@ rosbag2_storage::BagInfo TestPlugin::info()
 void TestPlugin::create_topic()
 {
   std::cout << "Created topic.\n";
+}
+
+bool TestPlugin::has_next()
+{
+  return true;
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadWriteStorage)

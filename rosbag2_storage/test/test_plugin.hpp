@@ -25,12 +25,15 @@ class TestPlugin : public rosbag2_storage::ReadWriteStorage
 {
 public:
   ~TestPlugin() override;
-  void create_topic() override;
-  void write(std::string message) override;
-  void read_next(std::string & message) override;
 
   void open(const std::string & uri) override;
   void open_readonly(const std::string & uri) override;
+
+  void create_topic() override;
+  void write(std::string message) override;
+
+  bool has_next() override;
+  std::string read_next() override;
   rosbag2_storage::BagInfo info() override;
 };
 
