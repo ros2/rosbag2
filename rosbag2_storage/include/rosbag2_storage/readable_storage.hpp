@@ -37,10 +37,16 @@ public:
   virtual void open_readonly(const std::string & uri) = 0;
 
   /**
-   * Read the next data set from storage.
-   * @param message String to save the message.
+   * Ask whether further messages are available.
+   * @return true if next message exists.
    */
-  virtual void read_next(std::string & message) = 0;
+  virtual bool has_next() = 0;
+
+  /**
+   * Read the next data set from storage.
+   * @return message String to save the message.
+   */
+  virtual std::string read_next() = 0;
 
   /**
    * Retrieve the storage information.

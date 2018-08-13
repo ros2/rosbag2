@@ -32,7 +32,9 @@ public:
 
   virtual void open(const std::string & uri) = 0;
 
-  void read_next(std::string & message) override = 0;
+  bool has_next() override = 0;
+
+  std::string read_next() override = 0;
 
   virtual void create_topic() = 0;
 
