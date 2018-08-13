@@ -18,11 +18,10 @@
 
 #include <string>
 
-#include "rosbag2_storage/writable_storage.hpp"
 #include "rosbag2_storage/readable_storage.hpp"
-#include "rosbag2_storage/storage.hpp"
+#include "rosbag2_storage/read_write_storage.hpp"
 
-class TestPlugin : public rosbag2_storage::Storage
+class TestPlugin : public rosbag2_storage::ReadWriteStorage
 {
 public:
   ~TestPlugin() override;
@@ -31,6 +30,7 @@ public:
   bool read_next(std::string & message) override;
 
   void open(const std::string & uri) override;
+  void open_readonly(const std::string & uri) override;
   rosbag2_storage::BagInfo info() override;
 };
 

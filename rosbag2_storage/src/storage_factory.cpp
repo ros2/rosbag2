@@ -33,22 +33,13 @@ StorageFactory::~StorageFactory()
   delete impl_;
 }
 
-template<>
-std::shared_ptr<Storage> StorageFactory::get_storage(
+std::shared_ptr<ReadWriteStorage> StorageFactory::get_read_write_storage(
   const std::string & storage_id, const std::string & uri)
 {
-  return impl_->get_storage(storage_id, uri);
+  return impl_->get_read_write_storage(storage_id, uri);
 }
 
-template<>
-std::shared_ptr<WritableStorage> StorageFactory::get_storage(
-  const std::string & storage_id, const std::string & uri)
-{
-  return impl_->get_write_only_storage(storage_id, uri);
-}
-
-template<>
-std::shared_ptr<ReadableStorage> StorageFactory::get_storage(
+std::shared_ptr<ReadableStorage> StorageFactory::get_read_only_storage(
   const std::string & storage_id, const std::string & uri)
 {
   return impl_->get_read_only_storage(storage_id, uri);

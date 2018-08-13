@@ -24,7 +24,7 @@ class TestReadOnlyPlugin : public rosbag2_storage::ReadableStorage
 public:
   ~TestReadOnlyPlugin() override;
   bool read_next(std::string & message) override;
-  void open(const std::string & uri) override;
+  void open_readonly(const std::string & uri) override;
   rosbag2_storage::BagInfo info() override;
 };
 
