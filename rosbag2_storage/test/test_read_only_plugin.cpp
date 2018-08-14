@@ -24,18 +24,7 @@ TestReadOnlyPlugin::~TestReadOnlyPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-bool TestReadOnlyPlugin::has_next()
-{
-  return true;
-}
-
-std::string TestReadOnlyPlugin::read_next()
-{
-  std::cout << "\nreading\n";
-  return "";
-}
-
-void TestReadOnlyPlugin::open_readonly(const std::string & uri)
+void TestReadOnlyPlugin::open(const std::string & uri)
 {
   std::cout << "\nopened " << uri << ".\n";
 }
@@ -45,4 +34,10 @@ rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::ReadableStorage)
+rosbag2_storage::SerializedBagMessage TestReadOnlyPlugin::read_next()
+{
+  std::cout << "\nreading\n";
+  return rosbag2_storage::SerializedBagMessage();
+}
+
+PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

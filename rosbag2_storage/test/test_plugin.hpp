@@ -18,23 +18,22 @@
 
 #include <string>
 
-#include "rosbag2_storage/readable_storage.hpp"
-#include "rosbag2_storage/read_write_storage.hpp"
+#include "rosbag2_storage/bag_info.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
-class TestPlugin : public rosbag2_storage::ReadWriteStorage
+class TestPlugin : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  ~TestPlugin() override;
+  virtual ~TestPlugin();
 
   void open(const std::string & uri) override;
-  void open_readonly(const std::string & uri) override;
 
-  void create_topic() override;
-  void write(std::string message) override;
-
-  bool has_next() override;
-  std::string read_next() override;
   rosbag2_storage::BagInfo info() override;
+
+  rosbag2_storage::SerializedBagMessage read_next() override;
+
+  void write(const rosbag2_storage::SerializedBagMessage & msg) override;
 };
 
 #endif  // TEST_PLUGIN_HPP_

@@ -18,6 +18,9 @@
 
 #include "pluginlib/class_list_macros.hpp"
 
+#include "rosbag2_storage/bag_info.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
 #include "test_plugin.hpp"
 
 TestPlugin::~TestPlugin()
@@ -25,26 +28,9 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-void TestPlugin::write(std::string message)
-{
-  (void) message;
-  std::cout << "\nwriting\n";
-}
-
-std::string TestPlugin::read_next()
-{
-  std::cout << "\nreading\n";
-  return "";
-}
-
 void TestPlugin::open(const std::string & uri)
 {
   std::cout << "\nopened " << uri << ".\n";
-}
-
-void TestPlugin::open_readonly(const std::string & uri)
-{
-  std::cout << "\nopened readonly" << uri << ".\n";
 }
 
 rosbag2_storage::BagInfo TestPlugin::info()
@@ -52,14 +38,16 @@ rosbag2_storage::BagInfo TestPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-void TestPlugin::create_topic()
+rosbag2_storage::SerializedBagMessage TestPlugin::read_next()
 {
-  std::cout << "Created topic.\n";
+  std::cout << "\nreading\n";
+  return rosbag2_storage::SerializedBagMessage();
 }
 
-bool TestPlugin::has_next()
+void TestPlugin::write(const rosbag2_storage::SerializedBagMessage & msg)
 {
-  return true;
+  (void) msg;
+  std::cout << "\nwriting\n";
 }
 
-PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::ReadWriteStorage)
+PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)
