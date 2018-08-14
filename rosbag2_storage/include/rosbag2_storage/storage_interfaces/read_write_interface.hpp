@@ -26,7 +26,7 @@ namespace storage_interfaces
 {
 
 class ReadWriteInterface
-: public BaseInfoInterface, public BaseIOInterface,
+  : public BaseInfoInterface, public BaseIOInterface,
   public BaseReadInterface, public BaseWriteInterface
 {
 public:

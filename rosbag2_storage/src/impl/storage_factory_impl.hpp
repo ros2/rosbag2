@@ -63,7 +63,7 @@ public:
       instance = read_write_class_loader_->createSharedInstance(storage_id);
     } catch (const std::runtime_error & ex) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-          "unable to load instance of read write interface: %s", ex.what());
+        "unable to load instance of read write interface: %s", ex.what());
       return nullptr;
     }
 
@@ -71,7 +71,7 @@ public:
       instance->open(uri);
     } catch (const std::runtime_error & ex) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-          "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+        "Could not open uri %s : %s", storage_id.c_str(), ex.what());
       return nullptr;
     }
 
@@ -100,7 +100,7 @@ public:
       instance = read_only_class_loader_->createSharedInstance(storage_id);
     } catch (const std::runtime_error & ex) {
       RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-          "unable to load instance of read only interface: %s", ex.what());
+        "unable to load instance of read only interface: %s", ex.what());
       return nullptr;
     }
 

@@ -25,7 +25,7 @@ namespace storage_interfaces
 {
 
 class ReadOnlyInterface
-: public BaseInfoInterface, public BaseIOInterface, public BaseReadInterface
+  : public BaseInfoInterface, public BaseIOInterface, public BaseReadInterface
 {
 public:
   virtual ~ReadOnlyInterface() = default;
