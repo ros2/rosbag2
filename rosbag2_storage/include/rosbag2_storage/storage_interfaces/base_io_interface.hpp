@@ -30,6 +30,6 @@ public:
 };
 
 }  // namespace storage_interfaces
-}  //namespace rosbag2_storage
+}  // namespace rosbag2_storage
 
 #endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_IO_INTERFACE_HPP_
