@@ -26,11 +26,12 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2_storage_plugins;  // NOLINT
 
 TEST(SqliteStorageTest, write_single_message_to_storage) {
-  auto sqlite_wrapper = std::make_shared<MockSqliteWrapper>();
+  auto sqlite_wrapper = std::make_shared<NiceMock<MockSqliteWrapper>>();
 
-  EXPECT_CALL(*sqlite_wrapper, write_blob(_));
+  EXPECT_CALL(*sqlite_wrapper, write_stamped_char_array(_, _));
 
   rosbag2_storage::SerializedBagMessage test_message;
+  test_message.serialized_data = std::make_shared<rcutils_char_array_t>();
   auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
   storage->write(test_message);
   storage.reset();
@@ -40,14 +41,31 @@ TEST(SqliteStorageTest, read_messages_from_storage) {
   auto sqlite_wrapper = std::make_shared<NiceMock<MockSqliteWrapper>>();
 
   rosbag2_storage::SerializedBagMessage test_message;
+  test_message.serialized_data = std::make_shared<rcutils_char_array_t>();
   auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
   storage->write(test_message);
   storage->write(test_message);
 
-  EXPECT_CALL(*sqlite_wrapper, get_message(_, 0));
-  EXPECT_CALL(*sqlite_wrapper, get_message(_, 1));
+  EXPECT_CALL(*sqlite_wrapper, get_message(0));
+  EXPECT_CALL(*sqlite_wrapper, get_message(1));
 
   storage->read_next();
   storage->read_next();
+  storage.reset();
+}
+
+TEST(SqliteStorageTest, has_next_return_false_if_there_is_no_other_message) {
+  auto sqlite_wrapper = std::make_shared<NiceMock<MockSqliteWrapper>>();
+  auto storage = std::make_unique<SqliteStorage>(sqlite_wrapper);
+  int rows = 2;
+  std::string query = "SELECT COALESCE(MAX(id), 0) FROM messages";
+  EXPECT_CALL(*sqlite_wrapper, execute_query(query, _, _))
+  .WillRepeatedly(SetSecondArgumentVoidPointerToInt(&rows));
+
+  EXPECT_TRUE(storage->has_next());
+  storage->read_next();
+  EXPECT_TRUE(storage->has_next());
+  storage->read_next();
+  EXPECT_FALSE(storage->has_next());
   storage.reset();
 }

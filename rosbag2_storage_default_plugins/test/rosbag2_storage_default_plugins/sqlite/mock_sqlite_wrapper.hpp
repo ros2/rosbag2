@@ -23,12 +23,19 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
+ACTION_P(SetSecondArgumentVoidPointerToInt, value)
+{
+  *static_cast<size_t *>(arg2) = *value;
+}
+
 class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
 {
 public:
-  MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD2(get_message, bool(rosbag2_storage::SerializedBagMessage &, size_t));
-  MOCK_METHOD1(write_blob, void(rosbag2_storage::SerializedBagMessage message));
+  MOCK_METHOD3(
+    execute_query,
+    void(const std::string &, int (* callback)(void *, int, char **, char **), void *));
+  MOCK_METHOD1(get_message, rosbag2_storage::SerializedBagMessage(size_t index));
+  MOCK_METHOD2(write_stamped_char_array, void(char * buffer, size_t buffer_lenght));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

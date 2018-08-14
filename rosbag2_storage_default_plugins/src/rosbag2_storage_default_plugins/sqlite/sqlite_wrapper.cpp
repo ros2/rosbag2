@@ -44,10 +44,14 @@ SqliteWrapper::~SqliteWrapper()
   sqlite3_close(db_ptr);
 }
 
-void SqliteWrapper::execute_query(const std::string & query)
+void SqliteWrapper::execute_query(
+  const std::string & query,
+  int (* callback)(void *, int, char **, char **),
+  void * first_callback_argument)
 {
   char * error_msg = nullptr;
-  int return_code = sqlite3_exec(db_ptr, query.c_str(), nullptr, nullptr, &error_msg);
+  int return_code = sqlite3_exec(
+    db_ptr, query.c_str(), callback, first_callback_argument, &error_msg);
 
   if (return_code != SQLITE_OK) {
     auto error = "SQL error: " + std::string(error_msg);
@@ -56,22 +60,33 @@ void SqliteWrapper::execute_query(const std::string & query)
   }
 }
 
-void SqliteWrapper::write_blob(rosbag2_storage::SerializedBagMessage message)
+void SqliteWrapper::write_stamped_char_array(char * buffer, size_t buffer_length)
 {
   sqlite3_stmt * statement = nullptr;
 
   std::string query = "INSERT INTO messages (data, timestamp) VALUES (?, strftime('%s%f','now'));";
-  auto buffer_length = message.serialized_data->buffer_length;
-  sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
-  sqlite3_bind_text(statement, 1, message.serialized_data->buffer, buffer_length, SQLITE_STATIC);
+  int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
+  if (return_code != SQLITE_OK) {
+    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
+            std::to_string(return_code));
+  }
+
+  return_code = sqlite3_bind_text(statement, 1, buffer, buffer_length, SQLITE_STATIC);
+
+  if (return_code != SQLITE_OK) {
+    throw SqliteException("SQL error when binding buffer. Return code: " +
+            std::to_string(return_code));
+  }
+
   auto error = sqlite3_step(statement);
   assert(error != SQLITE_ROW);
 
   sqlite3_finalize(statement);
 }
 
-bool SqliteWrapper::get_message(rosbag2_storage::SerializedBagMessage & message, size_t index)
+rosbag2_storage::SerializedBagMessage SqliteWrapper::get_message(size_t index)
 {
+  rosbag2_storage::SerializedBagMessage message;
   std::string offset = std::to_string(index);
   sqlite3_stmt * statement;
   std::string query = "SELECT data FROM messages WHERE id = " + std::to_string(index + 1);
@@ -94,10 +109,10 @@ bool SqliteWrapper::get_message(rosbag2_storage::SerializedBagMessage & message,
     message.serialized_data->buffer_capacity = size;
     message.serialized_data->buffer_length = size;
     message.serialized_data->allocator = rcutils_get_default_allocator();
-    return true;
+    return message;
   } else {
     sqlite3_finalize(statement);
-    return false;
+    throw SqliteException("No more messages available");
   }
 }
 

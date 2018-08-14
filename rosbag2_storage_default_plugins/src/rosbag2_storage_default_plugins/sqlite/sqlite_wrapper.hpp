@@ -42,11 +42,14 @@ public:
   SqliteWrapper();
   virtual ~SqliteWrapper();
 
-  virtual void execute_query(const std::string & query);
+  virtual void execute_query(
+    const std::string & query,
+    int (* callback)(void *, int, char **, char **),
+    void * first_callback_argument);
 
-  virtual bool get_message(rosbag2_storage::SerializedBagMessage & message, size_t index);
+  virtual rosbag2_storage::SerializedBagMessage get_message(size_t index);
 
-  virtual void write_blob(rosbag2_storage::SerializedBagMessage message);
+  virtual void write_stamped_char_array(char * buffer, size_t buffer_length);
 
   virtual operator bool();
 

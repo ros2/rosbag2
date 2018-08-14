@@ -60,11 +60,24 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message");
 }
 
-bool SqliteStorage::has_next() const
+size_t char_number_to_size_t(char char_to_convert)
 {
-  // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  rosbag2_storage::SerializedBagMessage message;
-  return database_->get_message(message, counter_);
+  return char_to_convert - '0';
+}
+
+bool SqliteStorage::has_next()
+{
+  auto callback = [](void * counter, int count, char ** data, char ** columns) -> int {
+      (void) count;
+      (void) columns;
+      *static_cast<size_t *>(counter) = char_number_to_size_t(*data[0]);
+      return 0;
+    };
+  size_t rows = 0;
+
+  database_->execute_query("SELECT COALESCE(MAX(id), 0) FROM messages", callback, &rows);
+
+  return rows > counter_;
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
@@ -104,7 +117,7 @@ void SqliteStorage::initialize()
     "data           TEXT    NOT NULL," \
     "timestamp      INT     NOT NULL);";
 
-  database_->execute_query(create_table);
+  database_->execute_query(create_table, nullptr, nullptr);
 }
 
 rosbag2_storage::BagInfo SqliteStorage::info()
