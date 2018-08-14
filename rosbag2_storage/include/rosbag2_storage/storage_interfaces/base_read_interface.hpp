@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2018 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_READ_ONLY_PLUGIN_HPP_
-#define TEST_READ_ONLY_PLUGIN_HPP_
+#ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
+#define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 
-#include <string>
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+namespace rosbag2_storage
+{
+namespace storage_interfaces
+{
 
-class TestReadOnlyPlugin : public rosbag2_storage::storage_interfaces::ReadOnlyInterface
+class BaseReadInterface
 {
 public:
-  ~TestReadOnlyPlugin() override;
-
-  void open(const std::string & uri) override;
-
-  rosbag2_storage::BagInfo info() override;
-
-  rosbag2_storage::SerializedBagMessage read_next() override;
+  virtual ~BaseReadInterface() = default;
+  virtual SerializedBagMessage read_next() = 0;
 };
 
-#endif  // TEST_READ_ONLY_PLUGIN_HPP_
+}  // namespace storage_interfaces
+}  // namespace rosbag2_storage
+
+#endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_

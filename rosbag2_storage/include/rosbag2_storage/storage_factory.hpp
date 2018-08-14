@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/read_write_storage.hpp"
-#include "rosbag2_storage/readable_storage.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -29,8 +29,8 @@ namespace rosbag2_storage
 
 class StorageFactoryImpl;
 
-using ReadOnlyStorageSharedPtr = std::shared_ptr<ReadableStorage>;
-using ReadWriteStorageSharedPtr = std::shared_ptr<ReadWriteStorage>;
+using ReadOnlyStorageSharedPtr = std::shared_ptr<storage_interfaces::ReadOnlyInterface>;
+using ReadWriteStorageSharedPtr = std::shared_ptr<storage_interfaces::ReadWriteInterface>;
 
 /// Factory to create instances of various storage interfaces
 class ROSBAG2_STORAGE_PUBLIC StorageFactory

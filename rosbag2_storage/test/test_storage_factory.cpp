@@ -22,22 +22,11 @@
 TEST(StorageFactoryTest, load_test_plugin) {
   rosbag2_storage::StorageFactory factory;
 
-  auto storage_for_reading = factory.get_read_only_storage(
-    "my_test_plugin", "file/to/be/read.bag");
-  std::string message;
-  storage_for_reading->read_next();
-  storage_for_reading->read_next();
-  storage_for_reading->read_next();
-  storage_for_reading.reset();
-
   auto read_write_storage = factory.get_read_write_storage(
     "my_test_plugin", "file/to/be/read_and_written.bag");
-  read_write_storage->write("");
-  read_write_storage->write("");
-  read_write_storage->write("");
-  read_write_storage->read_next();
-  read_write_storage->read_next();
-  read_write_storage->read_next();
+  ASSERT_NE(nullptr, read_write_storage);
+  auto msg = read_write_storage->read_next();
+  read_write_storage->write(msg);
   read_write_storage.reset();
 }
 
@@ -46,12 +35,11 @@ TEST(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
 
   auto storage_for_reading = factory.get_read_only_storage(
     "my_read_only_test_plugin", "file/to/be/read.bag");
-  storage_for_reading->read_next();
-  storage_for_reading->read_next();
+  EXPECT_NE(nullptr, storage_for_reading);
   storage_for_reading->read_next();
   storage_for_reading.reset();
 
   auto storage_for_reading_and_writing = factory.get_read_write_storage(
     "my_read_only_test_plugin", "file/to/be/read.bag");
-  EXPECT_FALSE(storage_for_reading_and_writing);
+  EXPECT_EQ(nullptr, storage_for_reading_and_writing);
 }
