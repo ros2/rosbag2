@@ -51,13 +51,13 @@ void SqliteStorage::open(
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
-  std::string msg(&message->serialized_data->buffer[8]);
-  std::string insert_message =
-    "INSERT INTO messages (data, timestamp) VALUES ('" + msg + "', strftime('%s%f','now'))";
-  database_->execute_query(insert_message);
+  auto statement = database_->get_prepared_statement(
+    "INSERT INTO messages (data, timestamp) VALUES (?, ?);");
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message");
+  statement->bind_text(1, message->serialized_data->buffer, message->serialized_data->buffer_length);
+  statement->bind_int(2, message->time_stamp);
+  statement->step();
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message.");
 }
 
 size_t char_number_to_size_t(char char_to_convert)
@@ -103,11 +103,14 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
         auto error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_default_plugins",
-          " Failed to destroy serialized bag message %s", rcutils_get_error_string_safe());
+          throw std::runtime_error("Leaking memory " + std::to_string(error));
         }
       });
-  return msg;
+
+  statement->read_text(0, message.serialized_data->buffer, size);
+  message.serialized_data->buffer_length = size;
+  message.time_stamp = statement->read_int(1);
+  return message;
 }
 
 void SqliteStorage::initialize()

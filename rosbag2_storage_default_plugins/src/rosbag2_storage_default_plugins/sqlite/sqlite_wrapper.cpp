@@ -14,8 +14,6 @@
 
 #include "sqlite_wrapper.hpp"
 
-#include <cassert>
-#include <cstring>
 #include <iostream>
 #include <string>
 #include <memory>
@@ -60,71 +58,9 @@ void SqliteWrapper::execute_query(
   }
 }
 
-void SqliteWrapper::write_stamped_char_array(
-  char * buffer, size_t buffer_length, int64_t time_stamp)
+std::shared_ptr<SqliteStatementWrapper> SqliteWrapper::get_prepared_statement(std::string query)
 {
-  sqlite3_stmt * statement = nullptr;
-
-  std::string query = "INSERT INTO messages (data, timestamp) VALUES (?, ?);";
-  int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
-            std::to_string(return_code));
-  }
-
-  return_code = sqlite3_bind_text(statement, 1, buffer, buffer_length, SQLITE_STATIC);
-
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when binding buffer. Return code: " +
-            std::to_string(return_code));
-  }
-
-  return_code = sqlite3_bind_int64(statement, 2, time_stamp);
-
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when binding time stamp. Return code: " +
-            std::to_string(return_code));
-  }
-
-  auto error = sqlite3_step(statement);
-  assert(error != SQLITE_ROW);
-
-  sqlite3_finalize(statement);
-}
-
-rosbag2_storage::SerializedBagMessage SqliteWrapper::get_message(size_t index)
-{
-  rosbag2_storage::SerializedBagMessage message;
-  std::string offset = std::to_string(index);
-  sqlite3_stmt * statement;
-  std::string query =
-    "SELECT data, timestamp FROM messages WHERE id = " + std::to_string(index + 1);
-
-  int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
-            std::to_string(return_code));
-  }
-
-  int result = sqlite3_step(statement);
-  unsigned char * read_char_array = nullptr;
-  if (result == SQLITE_ROW) {
-    auto size = sqlite3_column_bytes(statement, 0);
-    read_char_array = (unsigned char *)malloc(size);
-    memcpy(read_char_array, sqlite3_column_text(statement, 0), size);
-    auto time_stamp = sqlite3_column_int64(statement, 1);
-    sqlite3_finalize(statement);
-    message.serialized_data = std::make_shared<rcutils_char_array_t>();
-    message.serialized_data->buffer = reinterpret_cast<char *>(read_char_array);
-    message.serialized_data->buffer_capacity = size;
-    message.serialized_data->buffer_length = size;
-    message.serialized_data->allocator = rcutils_get_default_allocator();
-    message.time_stamp = time_stamp;
-    return message;
-  } else {
-    sqlite3_finalize(statement);
-    throw SqliteException("No more messages available");
-  }
+  return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }
 
 SqliteWrapper::operator bool()

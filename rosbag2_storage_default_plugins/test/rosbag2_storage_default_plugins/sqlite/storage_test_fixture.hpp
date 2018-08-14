@@ -29,10 +29,7 @@
 # include <Windows.h>
 #endif
 
-#include "rclcpp/rclcpp.hpp"
-#include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "std_msgs/msg/string.hpp"
-
+#include "rcutils/snprintf.h"
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -95,40 +92,48 @@ public:
 
   std::shared_ptr<rcutils_char_array_t> make_serialized_message(std::string message)
   {
-    auto test_message = std::make_shared<std_msgs::msg::String>();
-    test_message->data = message;
+    int message_size = rcutils_snprintf(nullptr, 0,
+        "%c%c%c%c%c%c%c%c%s",
+        0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
+        message.c_str());
+    message_size++;  // need to account for terminating null character
 
-    auto serialized_test_message = std::make_shared<rcutils_char_array_t>();
-    auto allocator = rcutils_get_default_allocator();
-    auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
-    auto error = rmw_serialized_message_init(
-      serialized_test_message.get(),
-      initial_capacity,
-      &allocator);
-    if (error != RCL_RET_OK) {
-      throw std::runtime_error("Something went wrong preparing the serialized message");
+    auto rcutils_allocator = rcutils_get_default_allocator();
+    auto msg = new rcutils_char_array_t;
+    *msg = rcutils_get_zero_initialized_char_array();
+    auto ret = rcutils_char_array_init(msg, message_size, &rcutils_allocator);
+    if (ret != RCUTILS_RET_OK) {
+      throw std::runtime_error("Error allocating resources " + std::to_string(ret));
     }
 
-    auto string_ts =
-      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
+    auto serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
+        [](rcutils_char_array_t * msg) {
+          auto error = rcutils_char_array_fini(msg);
+          delete msg;
+          if (error != RCUTILS_RET_OK) {
+            throw std::runtime_error("Leaking memory " + std::to_string(error));
+          }
+        });
 
-    error = rmw_serialize(test_message.get(), string_ts, serialized_test_message.get());
-    if (error != RMW_RET_OK) {
-      throw std::runtime_error("Something went wrong preparing the serialized message");
-    }
-    return serialized_test_message;
+    serialized_data->buffer_length = message_size;
+    int written_size = rcutils_snprintf(serialized_data->buffer,
+        serialized_data->buffer_capacity,
+        "%c%c%c%c%c%c%c%c%s",
+        0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
+        message.c_str());
+
+    assert(written_size == message_size - 1);  // terminated null character not counted
+    return serialized_data;
   }
 
   std::string deserialize_message(rosbag2_storage::SerializedBagMessage serialized_message)
   {
-    auto string_message = std::make_shared<std_msgs::msg::String>();
-    auto string_ts =
-      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
-    auto error = rmw_deserialize(
-      serialized_message.serialized_data.get(), string_ts, string_message.get());
-    (void) error;
-
-    return string_message->data;
+    char * copied = new char[serialized_message.serialized_data->buffer_length];
+    auto string_length = serialized_message.serialized_data->buffer_length - 8;
+    memcpy(copied, &serialized_message.serialized_data->buffer[8], string_length);
+    std::string message_content(copied);
+    delete[] copied;
+    return message_content;
   }
 
   void write_messages_to_sqlite(std::vector<std::pair<std::string, int64_t>> messages)

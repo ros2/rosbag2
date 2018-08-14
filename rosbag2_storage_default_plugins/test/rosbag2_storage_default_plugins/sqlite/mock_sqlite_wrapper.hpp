@@ -17,6 +17,7 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -34,9 +35,9 @@ public:
   MOCK_METHOD3(
     execute_query,
     void(const std::string &, int (* callback)(void *, int, char **, char **), void *));
-  MOCK_METHOD1(get_message, rosbag2_storage::SerializedBagMessage(size_t index));
-  MOCK_METHOD3(
-    write_stamped_char_array, void(char * buffer, size_t buffer_length, int64_t time_stamp));
+  MOCK_METHOD1(
+    get_prepared_statement,
+    std::shared_ptr<rosbag2_storage_plugins::SqliteStatementWrapper>(std::string));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

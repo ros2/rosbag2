@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcutils/snprintf.h"
+
 #include "storage_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -41,8 +43,8 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
 TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_correctly) {
   std::string message = "test_message";
   size_t message_size = strlen(message.c_str()) + 1;
-  char * test_message = new char(message_size);
-  strcpy(test_message, message.c_str());  // NOLINT
+  char * test_message = new char[message_size];
+  memcpy(test_message, message.c_str(), message_size);
 
   std::unique_ptr<rosbag2_storage::ReadWriteStorage> read_write_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
@@ -60,13 +62,14 @@ TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_cor
   auto read_message = read_write_storage->read_next();
   EXPECT_THAT(strcmp(read_message.serialized_data->buffer, test_message), Eq(0));
 
-  delete test_message;
+  delete[] test_message;
 }
 
 
 TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) {
   std::vector<std::pair<std::string, int64_t>> string_messages =
   {std::make_pair("first message", 1), std::make_pair("second message", 2)};
+
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::ReadableStorage> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
@@ -82,6 +85,7 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
 TEST_F(StorageTestFixture, write_stamped_char_array_writes_correct_time_stamp) {
   std::vector<std::pair<std::string, int64_t>> string_messages =
   {std::make_pair("first message", 1), std::make_pair("second message", 2)};
+
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::ReadableStorage> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
@@ -89,5 +93,6 @@ TEST_F(StorageTestFixture, write_stamped_char_array_writes_correct_time_stamp) {
 
   auto read_message = readable_storage->read_next();
   EXPECT_THAT(read_message.time_stamp, Eq(1));
+  read_message = readable_storage->read_next();
   EXPECT_THAT(read_message.time_stamp, Eq(2));
 }

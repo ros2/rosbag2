@@ -16,22 +16,17 @@
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
 
 #include <sqlite3.h>
-#include <stdexcept>
+
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "sqlite_statement_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
-
-class SqliteException : public std::runtime_error
-{
-public:
-  explicit SqliteException(const std::string & message)
-  : runtime_error(message) {}
-};
 
 using DBPtr = sqlite3 *;
 
@@ -47,10 +42,7 @@ public:
     int (* callback)(void *, int, char **, char **),
     void * first_callback_argument);
 
-  virtual rosbag2_storage::SerializedBagMessage get_message(size_t index);
-
-  virtual void write_stamped_char_array(
-    char * buffer, size_t buffer_length, int64_t time_stamp);
+  virtual std::shared_ptr<SqliteStatementWrapper> get_prepared_statement(std::string query);
 
   virtual operator bool();
 
