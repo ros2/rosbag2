@@ -31,3 +31,28 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   ASSERT_THAT(read_messages, SizeIs(3));
   EXPECT_THAT(std::string(read_messages[0]->serialized_data->buffer), Eq(string_messages[0]));
 }
+
+TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_correctly) {
+  std::string message = "test_message";
+  size_t message_size = strlen(message.c_str()) + 1;
+  char * test_message = new char(message_size);
+  strcpy(test_message, message.c_str());
+
+  std::unique_ptr<rosbag2_storage::ReadWriteStorage> writable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  writable_storage->open(database_name_);
+  writable_storage->create_topic();
+
+  rosbag2_storage::SerializedBagMessage test;
+  test.serialized_data = std::make_shared<rcutils_char_array_t>();
+  test.serialized_data->buffer = test_message;
+  test.serialized_data->buffer_length = message_size;
+  test.serialized_data->buffer_capacity = message_size;
+
+  writable_storage->write(test);
+
+  auto read_message = writable_storage->read_next();
+  EXPECT_TRUE(strcmp(read_message.serialized_data->buffer, test_message) == 0);
+
+  delete test_message;
+}
