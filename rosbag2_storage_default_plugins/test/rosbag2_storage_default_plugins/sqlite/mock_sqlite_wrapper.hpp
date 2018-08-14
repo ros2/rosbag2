@@ -35,7 +35,8 @@ public:
     execute_query,
     void(const std::string &, int (* callback)(void *, int, char **, char **), void *));
   MOCK_METHOD1(get_message, rosbag2_storage::SerializedBagMessage(size_t index));
-  MOCK_METHOD2(write_stamped_char_array, void(char * buffer, size_t buffer_lenght));
+  MOCK_METHOD3(
+    write_stamped_char_array, void(char * buffer, size_t buffer_length, int64_t time_stamp));
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_

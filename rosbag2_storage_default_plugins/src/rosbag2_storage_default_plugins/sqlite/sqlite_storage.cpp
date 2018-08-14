@@ -115,7 +115,7 @@ void SqliteStorage::initialize()
   std::string create_table = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "data           TEXT    NOT NULL," \
-    "timestamp      INT     NOT NULL);";
+    "timestamp      INTEGER     NOT NULL);";
 
   database_->execute_query(create_table, nullptr, nullptr);
 }

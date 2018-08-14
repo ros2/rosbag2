@@ -49,7 +49,8 @@ public:
 
   virtual rosbag2_storage::SerializedBagMessage get_message(size_t index);
 
-  virtual void write_stamped_char_array(char * buffer, size_t buffer_length);
+  virtual void write_stamped_char_array(
+    char * buffer, size_t buffer_length, int64_t time_stamp);
 
   virtual operator bool();
 

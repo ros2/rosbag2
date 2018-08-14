@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -130,7 +131,7 @@ public:
     return string_message->data;
   }
 
-  void write_messages_to_sqlite(std::vector<std::string> messages)
+  void write_messages_to_sqlite(std::vector<std::pair<std::string, int64_t>> messages)
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();

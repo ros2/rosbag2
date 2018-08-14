@@ -28,7 +28,7 @@ using namespace rosbag2_storage_plugins;  // NOLINT
 TEST(SqliteStorageTest, write_single_message_to_storage) {
   auto sqlite_wrapper = std::make_shared<NiceMock<MockSqliteWrapper>>();
 
-  EXPECT_CALL(*sqlite_wrapper, write_stamped_char_array(_, _));
+  EXPECT_CALL(*sqlite_wrapper, write_stamped_char_array(_, _, _));
 
   rosbag2_storage::SerializedBagMessage test_message;
   test_message.serialized_data = std::make_shared<rcutils_char_array_t>();
