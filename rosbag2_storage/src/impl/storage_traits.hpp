@@ -13,27 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_PLUGIN_HPP_
-#define TEST_PLUGIN_HPP_
+#ifndef IMPL__STORAGE_TRAITS_HPP_
+#define IMPL__STORAGE_TRAITS_HPP_
 
-#include <string>
-
-#include "rosbag2_storage/bag_info.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
-class TestPlugin : public rosbag2_storage::storage_interfaces::ReadWriteInterface
+namespace rosbag2_storage
 {
-public:
-  virtual ~TestPlugin();
 
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
-
-  rosbag2_storage::BagInfo info() override;
-
-  rosbag2_storage::SerializedBagMessage read_next() override;
-
-  void write(const rosbag2_storage::SerializedBagMessage & msg) override;
+template<typename T>
+struct InterfaceLookup
+{
 };
 
-#endif  // TEST_PLUGIN_HPP_
+template<>
+struct InterfaceLookup<rosbag2_storage::storage_interfaces::ReadWriteInterface>
+{
+  static constexpr const char * name = "rosbag2_storage::storage_interfaces::ReadWriteInterface";
+};
+
+template<>
+struct InterfaceLookup<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
+{
+  static constexpr const char * name = "rosbag2_storage::storage_interfaces::ReadOnlyInterface";
+};
+
+}  // namespace rosbag2_storage
+
+#endif  // IMPL__STORAGE_TRAITS_HPP_

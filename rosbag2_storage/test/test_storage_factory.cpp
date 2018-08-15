@@ -18,16 +18,23 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 
-
 TEST(StorageFactoryTest, load_test_plugin) {
   rosbag2_storage::StorageFactory factory;
 
+  // Load plugin for read and write
   auto read_write_storage = factory.get_read_write_storage(
     "my_test_plugin", "file/to/be/read_and_written.bag");
   ASSERT_NE(nullptr, read_write_storage);
   auto msg = read_write_storage->read_next();
   read_write_storage->write(msg);
   read_write_storage.reset();
+
+  // Load plugin for read only even though it provides read and write interfaces
+  auto read_only_storage = factory.get_read_only_storage(
+    "my_test_plugin", "file/to/be/read_and_written.bag");
+  ASSERT_NE(nullptr, read_only_storage);
+  msg = read_only_storage->read_next();
+  read_only_storage.reset();
 }
 
 TEST(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
@@ -42,4 +49,15 @@ TEST(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
   auto storage_for_reading_and_writing = factory.get_read_write_storage(
     "my_read_only_test_plugin", "file/to/be/read.bag");
   EXPECT_EQ(nullptr, storage_for_reading_and_writing);
+}
+
+TEST(StorageFactoryTest, load_unavailable_plugin) {
+  rosbag2_storage::StorageFactory factory;
+
+  auto instance_rw = factory.get_read_write_storage(
+    "my_unavailable_test_plugin", "not/existing/file.bag");
+  EXPECT_EQ(nullptr, instance_rw);
+  auto instance_ro = factory.get_read_only_storage(
+    "my_unavailable_test_plugin", "not/existing/file.bag");
+  EXPECT_EQ(nullptr, instance_ro);
 }

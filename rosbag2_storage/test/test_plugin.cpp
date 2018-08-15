@@ -28,8 +28,10 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing bag\n";
 }
 
-void TestPlugin::open(const std::string & uri)
+void TestPlugin::open(
+  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
+  (void) flag;
   std::cout << "\nopened " << uri << ".\n";
 }
 
