@@ -25,14 +25,27 @@
 
 TestPlugin::~TestPlugin()
 {
-  std::cout << "\nclosing bag\n";
+  close();
 }
 
 void TestPlugin::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
-  (void) flag;
+  if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+    std::cout << "opening testplugin read only\n";
+  } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
+    std::cout << "opening testplugin read write\n";
+  }
   std::cout << "\nopened " << uri << ".\n";
+  is_open_ = true;
+}
+
+bool TestPlugin::is_open() const { return is_open_; }
+
+void TestPlugin::close()
+{
+  std::cout << "\nclosing.\n";
+  is_open_ = false;
 }
 
 rosbag2_storage::BagInfo TestPlugin::info()

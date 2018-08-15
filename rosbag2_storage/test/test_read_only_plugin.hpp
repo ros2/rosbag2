@@ -26,9 +26,16 @@ public:
 
   void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
+  bool is_open() const override;
+
+  void close() override;
+
   rosbag2_storage::BagInfo info() override;
 
   rosbag2_storage::SerializedBagMessage read_next() override;
+
+protected:
+  bool is_open_;
 };
 
 #endif  // TEST_READ_ONLY_PLUGIN_HPP_

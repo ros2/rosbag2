@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMPL__STORAGE_TRAITS_HPP_
-#define IMPL__STORAGE_TRAITS_HPP_
+#ifndef ROSBAG2_STORAGE__STORAGE_TRAITS_HPP_
+#define ROSBAG2_STORAGE__STORAGE_TRAITS_HPP_
 
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
@@ -23,22 +24,23 @@ namespace rosbag2_storage
 {
 
 template<typename T>
-struct InterfaceLookup
-{
-};
+struct StorageTraits
+{};
 
 template<>
-struct InterfaceLookup<rosbag2_storage::storage_interfaces::ReadWriteInterface>
+struct StorageTraits<storage_interfaces::ReadWriteInterface>
 {
+  static constexpr storage_interfaces::IOFlag io_flag = storage_interfaces::IOFlag::READ_WRITE;
   static constexpr const char * name = "rosbag2_storage::storage_interfaces::ReadWriteInterface";
 };
 
 template<>
-struct InterfaceLookup<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
+struct StorageTraits<storage_interfaces::ReadOnlyInterface>
 {
+  static constexpr storage_interfaces::IOFlag io_flag = storage_interfaces::IOFlag::READ_ONLY;
   static constexpr const char * name = "rosbag2_storage::storage_interfaces::ReadOnlyInterface";
 };
 
 }  // namespace rosbag2_storage
 
-#endif  // IMPL__STORAGE_TRAITS_HPP_
+#endif  // ROSBAG2_STORAGE__STORAGE_TRAITS_HPP_

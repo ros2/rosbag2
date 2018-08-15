@@ -28,6 +28,7 @@ class ReadWriteInterface
 {
 public:
   virtual ~ReadWriteInterface() = default;
+  virtual void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
 };
 
 }  // namespace storage_interfaces

@@ -26,9 +26,9 @@
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
 
-#include "storage_traits.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_traits.hpp"
 
 namespace rosbag2_storage
 {
@@ -42,14 +42,19 @@ template<typename InterfaceT>
 std::shared_ptr<pluginlib::ClassLoader<InterfaceT>>
 get_class_loader()
 {
-  const char * lookup_name = InterfaceLookup<InterfaceT>::name;
+  const char * lookup_name = StorageTraits<InterfaceT>::name;
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>(ROS_PACKAGE_NAME, lookup_name);
 }
 
-template<typename InterfaceT>
+template<
+  typename InterfaceT,
+  storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
+>
 std::shared_ptr<InterfaceT>
 get_interface_instance(
-  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader, const std::string & storage_id)
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
+  const std::string & storage_id,
+  const std::string & uri)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
@@ -59,11 +64,21 @@ get_interface_instance(
     return nullptr;
   }
 
+  std::shared_ptr<InterfaceT> instance = nullptr;
   try {
-    return class_loader->createSharedInstance(storage_id);
+    instance = class_loader->createSharedInstance(storage_id);
   } catch (const std::runtime_error & ex) {
     RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
       "unable to load instance of read write interface: %s", ex.what());
+    return nullptr;
+  }
+
+  try {
+    instance->open(uri, flag);
+    return instance;
+  } catch (const std::runtime_error & ex) {
+    RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+        "Could not open uri %s : %s", storage_id.c_str(), ex.what());
     return nullptr;
   }
 }
@@ -95,45 +110,20 @@ public:
   std::shared_ptr<ReadWriteInterface> get_read_write_storage(
     const std::string & storage_id, const std::string & uri)
   {
-    auto instance = get_interface_instance(read_write_class_loader_, storage_id);
-    if (instance == nullptr) {
-      // error messages are already loggrd at this point
-      return nullptr;
-    }
-
-    try {
-      instance->open(uri, storage_interfaces::IOFlag::READ_WRITE);
-      return instance;
-    } catch (const std::runtime_error & ex) {
-      RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-        "Could not open uri %s : %s", storage_id.c_str(), ex.what());
-      return nullptr;
-    }
+    return  get_interface_instance(read_write_class_loader_, storage_id, uri);
   }
 
   std::shared_ptr<ReadOnlyInterface> get_read_only_storage(
     const std::string & storage_id, const std::string & uri)
   {
     // try to load the instance as read_only interface
-    auto instance = get_interface_instance(read_only_class_loader_, storage_id);
+    auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri);
     // try to load as read_write if not successful
     if (instance == nullptr) {
-      instance = get_interface_instance(read_write_class_loader_, storage_id);
+      instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
+        read_write_class_loader_, storage_id, uri);
     }
-    // couldn't load the instance
-    if (instance == nullptr) {
-      // error messages are already logged at this point
-      return nullptr;
-    }
-
-    try {
-      instance->open(uri, storage_interfaces::IOFlag::READ_ONLY);
-      return instance;
-    } catch (const std::runtime_error & ex) {
-      RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-        "Could not open uri %s : %s", storage_id.c_str(), ex.what());
-      return nullptr;
-    }
+    return instance;
   }
 
 private:

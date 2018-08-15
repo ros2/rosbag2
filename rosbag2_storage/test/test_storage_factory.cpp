@@ -61,3 +61,31 @@ TEST(StorageFactoryTest, load_unavailable_plugin) {
     "my_unavailable_test_plugin", "not/existing/file.bag");
   EXPECT_EQ(nullptr, instance_ro);
 }
+
+TEST(StorageFactoryTest, open_close_rw_plugin) {
+  rosbag2_storage::StorageFactory factory;
+
+  // Load plugin for read and write
+  auto read_write_storage = factory.get_read_write_storage(
+    "my_test_plugin", "file/to/be/read_and_written.bag");
+  ASSERT_NE(nullptr, read_write_storage);
+  ASSERT_EQ(true, read_write_storage->is_open());
+  read_write_storage->close();
+  ASSERT_EQ(false, read_write_storage->is_open());
+  read_write_storage->open("file/to/be/read_and_written.bag");  // using default parameter
+  ASSERT_EQ(true, read_write_storage->is_open());
+}
+
+TEST(StorageFactoryTest, open_close_ro_plugin) {
+  rosbag2_storage::StorageFactory factory;
+
+  // Load plugin for read only even though it provides read and write interfaces
+  auto read_only_storage = factory.get_read_only_storage(
+    "my_test_plugin", "file/to/be/read_and_written.bag");
+  ASSERT_NE(nullptr, read_only_storage);
+  ASSERT_EQ(true, read_only_storage->is_open());
+  read_only_storage->close();
+  ASSERT_EQ(false, read_only_storage->is_open());
+  read_only_storage->open("file/to/be/read_and_written.bag");  // using default parameter
+  ASSERT_EQ(true, read_only_storage->is_open());
+}
