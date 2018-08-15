@@ -15,6 +15,7 @@
 #ifndef TEST_READ_ONLY_PLUGIN_HPP_
 #define TEST_READ_ONLY_PLUGIN_HPP_
 
+#include <memory>
 #include <string>
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -32,7 +33,7 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  rosbag2_storage::SerializedBagMessage read_next() override;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
 protected:
   bool is_open_;

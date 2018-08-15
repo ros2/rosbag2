@@ -28,11 +28,11 @@ void TestReadOnlyPlugin::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
-    std::cout << "opening testplugin read only\n";
+    std::cout << "opening testplugin read only: ";
   } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
-    std::cout << "opening testplugin read write\n";
+    std::cout << "opening testplugin read write: ";
   }
-  std::cout << "\nopened " << uri << ".\n";
+  std::cout << uri << ".\n";
   is_open_ = true;
 }
 
@@ -49,10 +49,10 @@ rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-rosbag2_storage::SerializedBagMessage TestReadOnlyPlugin::read_next()
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_next()
 {
   std::cout << "\nreading\n";
-  return rosbag2_storage::SerializedBagMessage();
+  return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)
