@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 
+#include <string>
+
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 
@@ -28,7 +30,7 @@ class ReadWriteInterface
 {
 public:
   virtual ~ReadWriteInterface() = default;
-  virtual void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
+  void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
 };
 
 }  // namespace storage_interfaces

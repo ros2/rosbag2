@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "pluginlib/class_list_macros.hpp"
@@ -36,7 +37,7 @@ void TestReadOnlyPlugin::open(
   is_open_ = true;
 }
 
-bool TestReadOnlyPlugin::is_open() const { return is_open_; }
+bool TestReadOnlyPlugin::is_open() const {return is_open_;}
 
 void TestReadOnlyPlugin::close()
 {

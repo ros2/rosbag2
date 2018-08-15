@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "pluginlib/class_list_macros.hpp"
@@ -40,7 +41,7 @@ void TestPlugin::open(
   is_open_ = true;
 }
 
-bool TestPlugin::is_open() const { return is_open_; }
+bool TestPlugin::is_open() const {return is_open_;}
 
 void TestPlugin::close()
 {

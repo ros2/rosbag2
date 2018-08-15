@@ -78,7 +78,7 @@ get_interface_instance(
     return instance;
   } catch (const std::runtime_error & ex) {
     RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-        "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+      "Could not open uri %s : %s", storage_id.c_str(), ex.what());
     return nullptr;
   }
 }
@@ -110,7 +110,7 @@ public:
   std::shared_ptr<ReadWriteInterface> get_read_write_storage(
     const std::string & storage_id, const std::string & uri)
   {
-    return  get_interface_instance(read_write_class_loader_, storage_id, uri);
+    return get_interface_instance(read_write_class_loader_, storage_id, uri);
   }
 
   std::shared_ptr<ReadOnlyInterface> get_read_only_storage(
