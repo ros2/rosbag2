@@ -28,7 +28,7 @@ class BaseWriteInterface
 {
 public:
   virtual ~BaseWriteInterface() = default;
-  virtual void write(const SerializedBagMessage & msg) = 0;
+  virtual void write(const std::shared_ptr<SerializedBagMessage> msg) = 0;
 };
 
 }  // namespace storage_interfaces

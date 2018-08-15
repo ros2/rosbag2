@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 
+#include <memory>
+
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_storage
@@ -26,7 +28,7 @@ class BaseReadInterface
 {
 public:
   virtual ~BaseReadInterface() = default;
-  virtual SerializedBagMessage read_next() = 0;
+  virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
 };
 
 }  // namespace storage_interfaces

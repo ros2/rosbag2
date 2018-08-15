@@ -16,6 +16,7 @@
 #ifndef TEST_PLUGIN_HPP_
 #define TEST_PLUGIN_HPP_
 
+#include <memory>
 #include <string>
 
 #include "rosbag2_storage/bag_info.hpp"
@@ -35,9 +36,9 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  rosbag2_storage::SerializedBagMessage read_next() override;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  void write(const rosbag2_storage::SerializedBagMessage & msg) override;
+  void write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) override;
 
 protected:
   bool is_open_;
