@@ -15,9 +15,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 
-#include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 
 namespace rosbag2_storage
@@ -26,8 +24,7 @@ namespace storage_interfaces
 {
 
 class ReadWriteInterface
-  : public BaseInfoInterface, public BaseIOInterface,
-  public BaseReadInterface, public BaseWriteInterface
+  : public ReadOnlyInterface, public BaseWriteInterface
 {
 public:
   virtual ~ReadWriteInterface() = default;

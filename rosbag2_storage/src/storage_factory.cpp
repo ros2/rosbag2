@@ -25,8 +25,7 @@ namespace rosbag2_storage
 
 StorageFactory::StorageFactory()
 : impl_(new StorageFactoryImpl())
-{
-}
+{}
 
 StorageFactory::~StorageFactory()
 {

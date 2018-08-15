@@ -22,11 +22,18 @@ namespace rosbag2_storage
 namespace storage_interfaces
 {
 
+enum class IOFlag : uint8_t
+{
+  READ_ONLY = 0,
+  READ_WRITE = 1,
+  APPEND = 2
+};
+
 class BaseIOInterface
 {
 public:
   virtual ~BaseIOInterface() = default;
-  virtual void open(const std::string & uri) = 0;
+  virtual void open(const std::string & uri, IOFlag flag) = 0;
 };
 
 }  // namespace storage_interfaces
