@@ -124,16 +124,19 @@ public:
 
     if (storage) {
       for (auto msg : messages) {
-        auto ser_msg = make_serialized_message(msg);
+        auto ser_msg = serialize_message(msg);
         rosbag2_storage::SerializedBagMessage bag_message;
         bag_message.serialized_data = ser_msg;
-        // TODO(Martin-Idel-SI): Make time stamp
+        rcutils_time_point_value_t time_stamp;
+        auto unused = rcutils_system_time_now(&time_stamp);
+        (void) unused;
+        bag_message.time_stamp = time_stamp;
         storage->write(bag_message);
       }
     }
   }
 
-  std::shared_ptr<rcutils_char_array_t> make_serialized_message(
+  std::shared_ptr<rcutils_char_array_t> serialize_message(
     std::string message)
   {
     auto test_message = std::make_shared<std_msgs::msg::String>();
@@ -166,6 +169,16 @@ public:
       throw std::runtime_error("Something went wrong preparing the serialized message");
     }
     return serialized_test_message;
+  }
+
+  std::string deserialize_message(rosbag2_storage::SerializedBagMessage serialized_message)
+  {
+    char * copied = new char[serialized_message.serialized_data->buffer_length];
+    auto string_length = serialized_message.serialized_data->buffer_length - 8;
+    memcpy(copied, &serialized_message.serialized_data->buffer[8], string_length);
+    std::string message_content(copied);
+    delete[] copied;
+    return message_content;
   }
 
   std::string database_name_;

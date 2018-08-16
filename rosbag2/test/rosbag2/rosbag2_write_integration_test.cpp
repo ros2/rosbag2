@@ -84,13 +84,15 @@ public:
 
 TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
 {
-  auto serialized_test_message = make_serialized_message("test_message");
+  std::string message_to_publish = "test_message";
+  auto serialized_message = serialize_message("test_message");
 
   start_recording();
-  publish_messages({serialized_test_message});
+  publish_messages({serialized_message});
   stop_recording();
 
   auto recorded_messages = get_messages(database_name_);
 
   ASSERT_THAT(recorded_messages, Not(IsEmpty()));
+  EXPECT_THAT(deserialize_message(recorded_messages[0]), Eq(message_to_publish));
 }
