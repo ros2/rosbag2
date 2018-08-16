@@ -65,7 +65,6 @@ TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_cor
   delete[] test_message;
 }
 
-
 TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) {
   std::vector<std::pair<std::string, int64_t>> string_messages =
   {std::make_pair("first message", 1), std::make_pair("second message", 2)};

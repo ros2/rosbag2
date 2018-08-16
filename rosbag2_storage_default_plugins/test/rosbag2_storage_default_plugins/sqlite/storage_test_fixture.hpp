@@ -92,11 +92,9 @@ public:
 
   std::shared_ptr<rcutils_char_array_t> make_serialized_message(std::string message)
   {
-    int message_size = rcutils_snprintf(nullptr, 0,
-        "%c%c%c%c%c%c%c%c%s",
-        0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
-        message.c_str());
+    int message_size = get_buffer_capacity(message);
     message_size++;  // need to account for terminating null character
+    assert(message_size > 0);
 
     auto rcutils_allocator = rcutils_get_default_allocator();
     auto msg = new rcutils_char_array_t;
@@ -116,11 +114,8 @@ public:
         });
 
     serialized_data->buffer_length = message_size;
-    int written_size = rcutils_snprintf(serialized_data->buffer,
-        serialized_data->buffer_capacity,
-        "%c%c%c%c%c%c%c%c%s",
-        0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
-        message.c_str());
+    int written_size = write_data_to_serialized_string_message(
+      serialized_data->buffer, serialized_data->buffer_capacity, message);
 
     assert(written_size == message_size - 1);  // terminated null character not counted
     return serialized_data;
@@ -184,6 +179,23 @@ public:
     return read_messages;
   }
 
+protected:
+  int get_buffer_capacity(std::string message)
+  {
+    return write_data_to_serialized_string_message(nullptr, 0, message);
+  }
+
+  int write_data_to_serialized_string_message(
+    char * buffer, size_t buffer_capacity, std::string message)
+  {
+    return rcutils_snprintf(buffer,
+             buffer_capacity,
+             "%c%c%c%c%c%c%c%c%s",
+             0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
+             message.c_str());
+  }
+
+public:
   std::string database_name_;
   static std::string temporary_dir_path_;
 };
