@@ -30,10 +30,6 @@ public:
 
   void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
-  bool is_open() const override;
-
-  void close() override;
-
   rosbag2_storage::BagInfo info() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;

@@ -22,7 +22,7 @@
 
 TestReadOnlyPlugin::~TestReadOnlyPlugin()
 {
-  close();
+  std::cout << "\nclosing.\n";
 }
 
 void TestReadOnlyPlugin::open(
@@ -35,14 +35,6 @@ void TestReadOnlyPlugin::open(
   }
   std::cout << uri << ".\n";
   is_open_ = true;
-}
-
-bool TestReadOnlyPlugin::is_open() const {return is_open_;}
-
-void TestReadOnlyPlugin::close()
-{
-  std::cout << "\nclosing.\n";
-  is_open_ = false;
 }
 
 rosbag2_storage::BagInfo TestReadOnlyPlugin::info()

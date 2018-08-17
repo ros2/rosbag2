@@ -34,8 +34,6 @@ class BaseIOInterface
 public:
   virtual ~BaseIOInterface() = default;
   virtual void open(const std::string & uri, IOFlag io_flag) = 0;
-  virtual bool is_open() const = 0;
-  virtual void close() = 0;
 };
 
 }  // namespace storage_interfaces

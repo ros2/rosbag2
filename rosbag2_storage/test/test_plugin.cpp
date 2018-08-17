@@ -26,7 +26,7 @@
 
 TestPlugin::~TestPlugin()
 {
-  close();
+  std::cout << "\nclosing.\n";
 }
 
 void TestPlugin::open(
@@ -39,14 +39,6 @@ void TestPlugin::open(
   }
   std::cout << uri << ".\n";
   is_open_ = true;
-}
-
-bool TestPlugin::is_open() const {return is_open_;}
-
-void TestPlugin::close()
-{
-  std::cout << "\nclosing.\n";
-  is_open_ = false;
 }
 
 rosbag2_storage::BagInfo TestPlugin::info()
