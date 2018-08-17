@@ -29,6 +29,7 @@
 # include <Windows.h>
 #endif
 
+#include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
@@ -106,10 +107,11 @@ public:
 
     auto serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
         [](rcutils_char_array_t * msg) {
-          auto error = rcutils_char_array_fini(msg);
+          int error = rcutils_char_array_fini(msg);
           delete msg;
           if (error != RCUTILS_RET_OK) {
-            throw std::runtime_error("Leaking memory " + std::to_string(error));
+            RCUTILS_LOG_ERROR_NAMED(
+              "rosbag2_storage_default_plugins", "Leaking memory %i", error);
           }
         });
 

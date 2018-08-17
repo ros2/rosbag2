@@ -17,9 +17,13 @@
 
 #include <sqlite3.h>
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -34,24 +38,31 @@ public:
 class SqliteStatementWrapper
 {
 public:
-  // default constructor needed for testing.
   SqliteStatementWrapper();
   SqliteStatementWrapper(sqlite3 * database, std::string query);
   virtual ~SqliteStatementWrapper();
 
   virtual sqlite3_stmt * get();
-  virtual void step();
-  virtual void step_next_row();
-  virtual void bind_text(int column, char * buffer, size_t buffer_length);
-  virtual void bind_int(int column, int64_t int_to_bind);
+  virtual void execute_and_reset();
+  virtual void advance_one_row();
 
-  virtual size_t read_text_size(int column);
+  virtual void bind_table_entry(
+    std::shared_ptr<rcutils_char_array_t> serialized_data, int64_t timestamp,
+    int serialized_data_position_in_statement, int timestamp_position_in_statement);
+  rosbag2_storage::SerializedBagMessage read_table_entry(int blob_column, int timestamp_column);
 
-  virtual void read_text(int column, char * buffer, size_t size);
-  virtual int64_t read_int(int column);
+
+  virtual void reset();
+  virtual bool is_prepared();
 
 private:
+  virtual void bind_serialized_data(
+    int column, std::shared_ptr<rcutils_char_array_t> serialized_data);
+  virtual void bind_timestamp(int column, int64_t timestamp);
+
   sqlite3_stmt * statement_;
+  bool is_prepared_;
+  std::vector<std::shared_ptr<rcutils_char_array_t>> cached_written_blobls_;
 };
 
 }  // namespace rosbag2_storage_plugins

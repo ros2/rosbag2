@@ -37,12 +37,7 @@ public:
   SqliteWrapper();
   virtual ~SqliteWrapper();
 
-  virtual void execute_query(
-    const std::string & query,
-    int (* callback)(void *, int, char **, char **),
-    void * first_callback_argument);
-
-  virtual std::shared_ptr<SqliteStatementWrapper> get_prepared_statement(std::string query);
+  virtual std::shared_ptr<SqliteStatementWrapper> prepare_statement(std::string query);
 
   virtual operator bool();
 

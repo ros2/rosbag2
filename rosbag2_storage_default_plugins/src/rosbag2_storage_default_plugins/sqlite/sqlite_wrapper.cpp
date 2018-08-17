@@ -42,23 +42,7 @@ SqliteWrapper::~SqliteWrapper()
   sqlite3_close(db_ptr);
 }
 
-void SqliteWrapper::execute_query(
-  const std::string & query,
-  int (* callback)(void *, int, char **, char **),
-  void * first_callback_argument)
-{
-  char * error_msg = nullptr;
-  int return_code = sqlite3_exec(
-    db_ptr, query.c_str(), callback, first_callback_argument, &error_msg);
-
-  if (return_code != SQLITE_OK) {
-    auto error = "SQL error: " + std::string(error_msg);
-    sqlite3_free(error_msg);
-    throw SqliteException(error);
-  }
-}
-
-std::shared_ptr<SqliteStatementWrapper> SqliteWrapper::get_prepared_statement(std::string query)
+std::shared_ptr<SqliteStatementWrapper> SqliteWrapper::prepare_statement(std::string query)
 {
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }

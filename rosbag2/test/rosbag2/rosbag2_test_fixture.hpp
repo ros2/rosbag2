@@ -128,8 +128,10 @@ public:
         rosbag2_storage::SerializedBagMessage bag_message;
         bag_message.serialized_data = ser_msg;
         rcutils_time_point_value_t time_stamp;
-        auto unused = rcutils_system_time_now(&time_stamp);
-        (void) unused;
+        int error = rcutils_system_time_now(&time_stamp);
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED("rosbag2", "Error getting current time. Error code: %i", error);
+        }
         bag_message.time_stamp = time_stamp;
         storage->write(bag_message);
       }
@@ -154,10 +156,10 @@ public:
 
     auto serialized_test_message = std::shared_ptr<rcutils_char_array_t>(msg,
         [](rcutils_char_array_t * msg) {
-          auto error = rcutils_char_array_fini(msg);
+          int error = rcutils_char_array_fini(msg);
           delete msg;
           if (error != RCUTILS_RET_OK) {
-            throw std::runtime_error("Leaking memory " + std::to_string(error));
+            RCUTILS_LOG_ERROR_NAMED("rosbag2", "Leaking memory. Error code: %i", error);
           }
         });
 

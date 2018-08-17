@@ -53,10 +53,14 @@ public:
 
 private:
   void initialize();
+  void prepare_for_writing();
+  void prepare_for_reading();
 
   std::shared_ptr<SqliteWrapper> database_;
-  size_t counter_;
   rosbag2_storage::BagInfo bag_info_;
+  std::shared_ptr<SqliteStatementWrapper> write_statement_;
+  std::shared_ptr<SqliteStatementWrapper> read_statement_;
+  bool ready_to_read_next_;
 };
 
 }  // namespace rosbag2_storage_plugins

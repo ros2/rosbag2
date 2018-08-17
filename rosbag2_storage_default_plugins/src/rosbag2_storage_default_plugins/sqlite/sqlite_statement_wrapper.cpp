@@ -15,14 +15,18 @@
 #include "sqlite_statement_wrapper.hpp"
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include "rcutils/logging_macros.h"
 
 namespace rosbag2_storage_plugins
 {
 
 SqliteStatementWrapper::SqliteStatementWrapper()
-: statement_(nullptr) {}
+: statement_(nullptr), is_prepared_(false) {}
 
 SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string query)
 {
@@ -34,6 +38,7 @@ SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string q
   }
 
   statement_ = statement;
+  is_prepared_ = true;
 }
 
 SqliteStatementWrapper::~SqliteStatementWrapper()
@@ -41,6 +46,7 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   if (statement_) {
     sqlite3_finalize(statement_);
   }
+  cached_written_blobls_.clear();
 }
 
 sqlite3_stmt * SqliteStatementWrapper::get()
@@ -48,13 +54,16 @@ sqlite3_stmt * SqliteStatementWrapper::get()
   return statement_;
 }
 
-void SqliteStatementWrapper::step()
+void SqliteStatementWrapper::execute_and_reset()
 {
-  int unused = sqlite3_step(statement_);
-  (void) unused;
+  int return_code = sqlite3_step(statement_);
+  if (return_code != SQLITE_OK && return_code != SQLITE_DONE) {
+    throw SqliteException("Error processing SQLite statement.");
+  }
+  reset();
 }
 
-void SqliteStatementWrapper::step_next_row()
+void SqliteStatementWrapper::advance_one_row()
 {
   int row = sqlite3_step(statement_);
   if (row != SQLITE_ROW) {
@@ -62,10 +71,25 @@ void SqliteStatementWrapper::step_next_row()
   }
 }
 
-void SqliteStatementWrapper::bind_text(int column, char * buffer, size_t buffer_length)
+void SqliteStatementWrapper::bind_table_entry(
+  std::shared_ptr<rcutils_char_array_t> serialized_data, int64_t timestamp,
+  int serialized_data_position_in_statement, int timestamp_position_in_statement)
 {
-  int return_code = sqlite3_bind_text(
-    statement_, column, buffer, static_cast<int>(buffer_length), SQLITE_STATIC);
+  bind_serialized_data(serialized_data_position_in_statement, serialized_data);
+  bind_timestamp(timestamp_position_in_statement, timestamp);
+}
+
+void SqliteStatementWrapper::bind_serialized_data(
+  int column, std::shared_ptr<rcutils_char_array_t> serialized_data)
+{
+  cached_written_blobls_.push_back(serialized_data);
+  size_t last_cached_blob_index = cached_written_blobls_.size() - 1;
+  int return_code = sqlite3_bind_blob(
+    statement_,
+    column,
+    cached_written_blobls_[last_cached_blob_index]->buffer,
+    static_cast<int>(cached_written_blobls_[last_cached_blob_index]->buffer_length),
+    SQLITE_STATIC);
 
   if (return_code != SQLITE_OK) {
     throw SqliteException("SQL error when binding text buffer. Return code: " +
@@ -73,9 +97,9 @@ void SqliteStatementWrapper::bind_text(int column, char * buffer, size_t buffer_
   }
 }
 
-void SqliteStatementWrapper::bind_int(int column, int64_t int_to_bind)
+void SqliteStatementWrapper::bind_timestamp(int column, int64_t timestamp)
 {
-  int return_code = sqlite3_bind_int64(statement_, column, int_to_bind);
+  int return_code = sqlite3_bind_int64(statement_, column, timestamp);
 
   if (return_code != SQLITE_OK) {
     throw SqliteException("SQL error when binding integer. Return code: " +
@@ -83,19 +107,50 @@ void SqliteStatementWrapper::bind_int(int column, int64_t int_to_bind)
   }
 }
 
-void SqliteStatementWrapper::read_text(int column, char * buffer, size_t size)
+rosbag2_storage::SerializedBagMessage SqliteStatementWrapper::read_table_entry(
+  int blob_column, int timestamp_column)
 {
-  memcpy(reinterpret_cast<unsigned char *>(buffer), sqlite3_column_text(statement_, column), size);
+  rosbag2_storage::SerializedBagMessage message;
+  int buffer_size = sqlite3_column_bytes(statement_, blob_column);
+
+  auto rcutils_allocator = rcutils_get_default_allocator();
+  auto msg = new rcutils_char_array_t;
+  *msg = rcutils_get_zero_initialized_char_array();
+  auto ret = rcutils_char_array_init(msg, buffer_size, &rcutils_allocator);
+  if (ret != RCUTILS_RET_OK) {
+    throw std::runtime_error("Error allocating resources for serialized message" +
+            std::to_string(ret));
+  }
+
+  message.serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
+      [](rcutils_char_array_t * msg) {
+        int error = rcutils_char_array_fini(msg);
+        delete msg;
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED(
+            "rosbag2_storage_default_plugins", "Leaking memory. Error code: error %i", error);
+        }
+      });
+
+  memcpy(
+    reinterpret_cast<unsigned char *>(message.serialized_data->buffer),
+    sqlite3_column_blob(statement_, blob_column),
+    buffer_size);
+  message.serialized_data->buffer_length = buffer_size;
+  message.time_stamp = sqlite3_column_int64(statement_, timestamp_column);
+
+  return message;
 }
 
-int64_t SqliteStatementWrapper::read_int(int column)
+void SqliteStatementWrapper::reset()
 {
-  return sqlite3_column_int64(statement_, column);
+  sqlite3_reset(statement_);
+  sqlite3_clear_bindings(statement_);
 }
 
-size_t SqliteStatementWrapper::read_text_size(int column)
+bool SqliteStatementWrapper::is_prepared()
 {
-  return sqlite3_column_bytes(statement_, column);
+  return is_prepared_;
 }
 
 }  // namespace rosbag2_storage_plugins
