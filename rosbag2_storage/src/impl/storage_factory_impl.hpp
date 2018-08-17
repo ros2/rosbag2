@@ -105,16 +105,16 @@ public:
     }
   }
 
-  ~StorageFactoryImpl() = default;
+  virtual ~StorageFactoryImpl() = default;
 
-  std::shared_ptr<ReadWriteInterface> get_read_write_storage(
-    const std::string & storage_id, const std::string & uri)
+  std::shared_ptr<ReadWriteInterface> open_read_write(
+    const std::string & uri, const std::string & storage_id)
   {
     return get_interface_instance(read_write_class_loader_, storage_id, uri);
   }
 
-  std::shared_ptr<ReadOnlyInterface> get_read_only_storage(
-    const std::string & storage_id, const std::string & uri)
+  std::shared_ptr<ReadOnlyInterface> open_read_only(
+    const std::string & uri, const std::string & storage_id)
   {
     // try to load the instance as read_only interface
     auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri);
