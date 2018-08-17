@@ -18,30 +18,35 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+
 #include "./impl/storage_factory_impl.hpp"
 
 namespace rosbag2_storage
 {
 
+using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
+using rosbag2_storage::storage_interfaces::ReadWriteInterface;
+
 StorageFactory::StorageFactory()
 : impl_(new StorageFactoryImpl())
 {}
 
-StorageFactory::~StorageFactory()
+// needed explicit destructor because of unique_ptr for pimpl
+StorageFactory::~StorageFactory() {}
+
+template<>
+std::shared_ptr<ReadOnlyInterface> StorageFactory::open<ReadOnlyInterface>(
+  const std::string & uri, const std::string & storage_id)
 {
-  delete impl_;
+  return impl_->open_read_only(uri, storage_id);
 }
 
-ReadWriteStorageSharedPtr StorageFactory::get_read_write_storage(
-  const std::string & storage_id, const std::string & uri)
+template<>
+std::shared_ptr<ReadWriteInterface> StorageFactory::open<ReadWriteInterface>(
+  const std::string & uri, const std::string & storage_id)
 {
-  return impl_->get_read_write_storage(storage_id, uri);
+  return impl_->open_read_write(uri, storage_id);
 }
-
-ReadOnlyStorageSharedPtr StorageFactory::get_read_only_storage(
-  const std::string & storage_id, const std::string & uri)
-{
-  return impl_->get_read_only_storage(storage_id, uri);
-}
-
 }  // namespace rosbag2_storage
