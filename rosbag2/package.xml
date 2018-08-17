@@ -14,6 +14,12 @@
 
   <exec_depend>rosbag2_storage</exec_depend>
   <exec_depend>rcutils</exec_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>Poco</depend>
+  <depend>poco_vendor</depend>
+  <depend>rclcpp</depend>
+  <depend>rcl</depend>
+  <depend>rosidl_generator_c</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

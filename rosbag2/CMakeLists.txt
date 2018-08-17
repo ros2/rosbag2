@@ -20,6 +20,13 @@ find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(poco_vendor)
+find_package(Poco COMPONENTS Foundation)
+find_package(rclcpp REQUIRED)
+find_package(rcl REQUIRED)
+find_package(rcutils REQUIRED)
+find_package(rosidl_generator_c REQUIRED)
 
 add_library(
   librosbag2
@@ -43,6 +50,16 @@ target_link_libraries(${PROJECT_NAME}_record librosbag2)
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
 target_link_libraries(${PROJECT_NAME}_play librosbag2)
 
+add_executable(load_typesupport_handle src/load_typesupport_handle.cpp)
+ament_target_dependencies(
+  load_typesupport_handle
+  ament_index_cpp
+  Poco
+  rclcpp
+  rcl
+  rcutils
+)
+
 install(
   DIRECTORY include/
   DESTINATION include)
@@ -51,6 +68,10 @@ install(
   TARGETS librosbag2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
+
+install(
+  TARGETS load_typesupport_handle
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
