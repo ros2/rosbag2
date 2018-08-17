@@ -21,7 +21,9 @@ find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
-add_library(librosbag
+add_library(
+  librosbag
+  SHARED
   src/rosbag2/rosbag2.cpp)
 
 ament_target_dependencies(librosbag rclcpp rcutils std_msgs rosbag2_storage)

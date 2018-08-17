@@ -32,12 +32,13 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
+  bool has_next() const override;
+
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  void write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) override;
+  void create_topic() override;
 
-protected:
-  bool is_open_;
+  void write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) override;
 };
 
 #endif  // TEST_PLUGIN_HPP_

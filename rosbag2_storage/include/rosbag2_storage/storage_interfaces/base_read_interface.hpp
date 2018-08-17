@@ -28,6 +28,9 @@ class BaseReadInterface
 {
 public:
   virtual ~BaseReadInterface() = default;
+
+  virtual bool has_next() const = 0;
+
   virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
 };
 

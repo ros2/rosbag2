@@ -38,7 +38,6 @@ void TestPlugin::open(
     std::cout << "opening testplugin read write: ";
   }
   std::cout << uri << ".\n";
-  is_open_ = true;
 }
 
 rosbag2_storage::BagInfo TestPlugin::info()
@@ -46,10 +45,20 @@ rosbag2_storage::BagInfo TestPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
+bool TestPlugin::has_next() const
+{
+  return true;
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestPlugin::read_next()
 {
   std::cout << "\nreading\n";
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
+}
+
+void TestPlugin::create_topic()
+{
+  std::cout << "\ncreating topic\n";
 }
 
 void TestPlugin::write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg)

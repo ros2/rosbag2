@@ -34,12 +34,16 @@ void TestReadOnlyPlugin::open(
     std::cout << "opening testplugin read write: ";
   }
   std::cout << uri << ".\n";
-  is_open_ = true;
 }
 
 rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
 {
   return rosbag2_storage::BagInfo();
+}
+
+bool TestReadOnlyPlugin::has_next() const
+{
+  return true;
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_next()

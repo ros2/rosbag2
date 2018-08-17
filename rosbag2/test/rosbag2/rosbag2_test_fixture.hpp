@@ -27,6 +27,8 @@
 # include <Windows.h>
 #endif
 
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -87,27 +89,31 @@ public:
 #endif
   }
 
-  std::vector<std::string> get_messages(const std::string & db_name)
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  get_messages(const std::string & db_name)
   {
-    std::vector<std::string> table_msgs;
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     rosbag2_storage::StorageFactory factory;
     auto storage =
-      factory.get_read_only_storage("sqlite3", db_name);
+      factory.open<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(db_name, "sqlite3");
 
     if (storage) {
       while (storage->has_next()) {
-        std::string message = storage->read_next();
+        auto message = storage->read_next();
         table_msgs.emplace_back(message);
       }
     }
     return table_msgs;
   }
 
-  void write_messages(const std::string & db_name, std::vector<std::string> messages)
+  void
+  write_messages(
+    const std::string & db_name,
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages)
   {
     rosbag2_storage::StorageFactory factory;
     auto storage =
-      factory.get_read_write_storage("sqlite3", db_name);
+      factory.open<rosbag2_storage::storage_interfaces::ReadWriteInterface>(db_name, "sqlite3");
     storage->create_topic();
 
     if (storage) {

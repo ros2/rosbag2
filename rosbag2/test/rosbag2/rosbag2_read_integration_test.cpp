@@ -76,7 +76,18 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
 {
   rclcpp::init(0, nullptr);
 
-  std::vector<std::string> messages = {"Hello World 1", "Hello World 2", "Hello World 2"};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
+  for (int i: {1, 2, 3}) {
+    (void) i;
+    auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    msg->serialized_data = rcutils_get_zero_initialized_char_array();
+    auto ret = rcutils_char_array_resize(&msg->serialized_data, strlen("Hello World"));
+    if (ret != RCUTILS_RET_OK) {
+      FAIL() << "failed to resize serialized bag message";
+    }
+    strcpy(msg->serialized_data.buffer, "Hello World");
+    messages.push_back(msg);
+  }
   write_messages(database_name_, messages);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber

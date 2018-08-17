@@ -18,9 +18,14 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+
 #include "rcutils/logging_macros.h"
+
 #include "std_msgs/msg/string.hpp"
 
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2
@@ -35,15 +40,17 @@ void Rosbag2::record(
 {
   rosbag2_storage::StorageFactory factory;
   auto storage =
-    factory.get_read_write_storage("sqlite3", file_name);
+    factory.open<rosbag2_storage::storage_interfaces::ReadWriteInterface>(file_name, "sqlite3");
   storage->create_topic();
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,
-      [&storage, after_write_action](std_msgs::msg::String::ConstSharedPtr msg) {
-        storage->write(msg->data);
+      [&storage, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
+        auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        bag_msg->serialized_data = *msg;
+        storage->write(bag_msg);
         if (after_write_action) {
           after_write_action();
         }
@@ -57,18 +64,17 @@ void Rosbag2::record(
 void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
 {
   rosbag2_storage::StorageFactory factory;
-  auto storage = factory.get_read_only_storage("sqlite3", file_name);
+  auto storage =
+    factory.open<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(file_name, "sqlite3");
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
     while (storage->has_next()) {
-      std::string message = storage->read_next();
-      auto string_msg = std_msgs::msg::String();
-      string_msg.data = message;
+      auto message = storage->read_next();
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(string_msg);
+      publisher->publish(&message->serialized_data);
     }
     rclcpp::spin_some(node);
   }

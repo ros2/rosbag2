@@ -29,10 +29,9 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
+  bool has_next() const override;
 
-protected:
-  bool is_open_;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 };
 
 #endif  // TEST_READ_ONLY_PLUGIN_HPP_
