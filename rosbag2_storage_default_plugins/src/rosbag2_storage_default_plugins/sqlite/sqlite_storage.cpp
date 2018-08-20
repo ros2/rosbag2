@@ -51,7 +51,8 @@ void SqliteStorage::open(
 
 void SqliteStorage::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-  std::string msg(message->serialized_data->buffer);
+  // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
+  std::string msg(&message->serialized_data->buffer[8]);
   std::string insert_message =
     "INSERT INTO messages (data, timestamp) VALUES ('" + msg + "', strftime('%s%f','now'))";
   database_->execute_query(insert_message);
@@ -80,7 +81,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
     RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_default_plugins",
       " Failed to destroy serialized bag message");
   }
-  strcpy(payload->buffer, "Hello World");  // NOLINT cpplint doesn't like strcpy here
+  strcpy(payload->buffer, message.c_str());  // NOLINT cpplint doesn't like strcpy here
 
   msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
       [](rcutils_char_array_t * msg) {

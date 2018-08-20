@@ -29,4 +29,5 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   auto read_messages = read_all_messages_from_sqlite();
 
   ASSERT_THAT(read_messages, SizeIs(3));
+  EXPECT_THAT(std::string(read_messages[0]->serialized_data->buffer), Eq(string_messages[0]));
 }
