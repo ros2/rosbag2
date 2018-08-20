@@ -19,13 +19,14 @@
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
 namespace storage_interfaces
 {
 
-class ReadWriteInterface
+class ROSBAG2_STORAGE_PUBLIC ReadWriteInterface
   : public ReadOnlyInterface, public BaseWriteInterface
 {
 public:
