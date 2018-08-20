@@ -72,9 +72,14 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
     auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
     while (storage->has_next()) {
       auto message = storage->read_next();
+
+      std_msgs::msg::String string_message;
+      // TODO(Martin-Idel-SI): We don't write a correct serialized_data in sqlite3_storage for now
+      // Change once available
+      string_message.data = std::string(message->serialized_data->buffer);
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(message->serialized_data.get());
+      publisher->publish(string_message);
     }
     rclcpp::spin_some(node);
   }
