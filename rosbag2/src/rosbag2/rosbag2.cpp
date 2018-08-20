@@ -49,7 +49,7 @@ void Rosbag2::record(
       topic_name,
       [&storage, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
         auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        bag_msg->serialized_data = *msg;
+        bag_msg->serialized_data = msg;
         storage->write(bag_msg);
         if (after_write_action) {
           after_write_action();
@@ -74,7 +74,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
       auto message = storage->read_next();
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(&message->serialized_data);
+      publisher->publish(message->serialized_data.get());
     }
     rclcpp::spin_some(node);
   }
