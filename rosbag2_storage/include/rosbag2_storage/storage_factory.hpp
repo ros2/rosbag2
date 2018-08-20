@@ -54,6 +54,17 @@ public:
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;
 };
+
+template<>
+ROSBAG2_STORAGE_PUBLIC
+std::shared_ptr<storage_interfaces::ReadOnlyInterface> StorageFactory::open(
+  const std::string & uri, const std::string & storage_id);
+
+template<>
+ROSBAG2_STORAGE_PUBLIC
+std::shared_ptr<storage_interfaces::ReadWriteInterface> StorageFactory::open(
+  const std::string & uri, const std::string & storage_id);
+
 }  // namespace rosbag2_storage
 
 #ifdef _WIN32
