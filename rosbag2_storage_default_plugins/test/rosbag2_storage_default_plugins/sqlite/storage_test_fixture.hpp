@@ -100,13 +100,13 @@ public:
       auto payload = new rcutils_char_array_t;
       *payload = rcutils_get_zero_initialized_char_array();
       payload->allocator = rcutils_get_default_allocator();
-      auto ret = rcutils_char_array_resize(payload, 8 + strlen(message.c_str()));
+      auto ret = rcutils_char_array_resize(payload, 8 + strlen(message.c_str()) + 1);
       if (ret != RCUTILS_RET_OK) {
         FAIL() << " Failed to resize serialized bag message";
       }
       // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
       std::string full_message = "bbbbbbbb" + message;
-      strcpy(payload->buffer, full_message.c_str());  // NOLINT cpplint doesn't like strcpy here
+      memcpy(payload->buffer, full_message.c_str(), strlen(full_message.c_str()) + 1);
 
       msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
           [](rcutils_char_array_t * msg) {

@@ -76,12 +76,12 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   auto payload = new rcutils_char_array_t;
   *payload = rcutils_get_zero_initialized_char_array();
   payload->allocator = rcutils_get_default_allocator();
-  auto ret = rcutils_char_array_resize(payload, strlen("Hello World") + 1);
+  auto ret = rcutils_char_array_resize(payload, strlen(message.c_str()) + 1);
   if (ret != RCUTILS_RET_OK) {
     RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_default_plugins",
       " Failed to destroy serialized bag message");
   }
-  strcpy(payload->buffer, message.c_str());  // NOLINT cpplint doesn't like strcpy here
+  memcpy(payload->buffer, message.c_str(), strlen(message.c_str()) + 1);
 
   msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
       [](rcutils_char_array_t * msg) {

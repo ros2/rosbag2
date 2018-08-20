@@ -89,7 +89,9 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
     if (ret != RCUTILS_RET_OK) {
       FAIL() << " Failed to resize serialized bag message";
     }
-    strcpy(payload->buffer, string_message_to_publish.c_str());  // NOLINT doesn't like strcpy
+    memcpy(payload->buffer,
+      string_message_to_publish.c_str(),
+      strlen(string_message_to_publish.c_str()) + 1);
 
     msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
         [](rcutils_char_array_t * msg) {
