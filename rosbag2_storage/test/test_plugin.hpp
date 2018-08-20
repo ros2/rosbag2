@@ -38,7 +38,7 @@ public:
 
   void create_topic() override;
 
-  void write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) override;
+  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) override;
 };
 
 #endif  // TEST_PLUGIN_HPP_
