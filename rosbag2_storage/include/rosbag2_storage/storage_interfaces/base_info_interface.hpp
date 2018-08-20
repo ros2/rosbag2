@@ -16,13 +16,14 @@
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 
 #include "rosbag2_storage/bag_info.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
 namespace storage_interfaces
 {
 
-class BaseInfoInterface
+class ROSBAG2_STORAGE_PUBLIC BaseInfoInterface
 {
 public:
   virtual ~BaseInfoInterface() = default;

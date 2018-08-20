@@ -18,13 +18,14 @@
 #include <memory>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
 namespace storage_interfaces
 {
 
-class BaseReadInterface
+class ROSBAG2_STORAGE_PUBLIC BaseReadInterface
 {
 public:
   virtual ~BaseReadInterface() = default;

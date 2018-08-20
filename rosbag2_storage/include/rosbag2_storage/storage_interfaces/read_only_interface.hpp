@@ -20,13 +20,14 @@
 #include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
 namespace storage_interfaces
 {
 
-class ReadOnlyInterface
+class ROSBAG2_STORAGE_PUBLIC ReadOnlyInterface
   : public BaseInfoInterface, public BaseIOInterface, public BaseReadInterface
 {
 public:

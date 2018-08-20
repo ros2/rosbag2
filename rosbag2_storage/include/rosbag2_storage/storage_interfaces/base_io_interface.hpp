@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "rosbag2_storage/visibility_control.hpp"
+
 namespace rosbag2_storage
 {
 namespace storage_interfaces
@@ -29,7 +31,7 @@ enum class IOFlag : uint8_t
   APPEND = 2
 };
 
-class BaseIOInterface
+class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 {
 public:
   virtual ~BaseIOInterface() = default;
