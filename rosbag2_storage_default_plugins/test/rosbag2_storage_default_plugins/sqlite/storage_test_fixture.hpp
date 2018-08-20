@@ -90,22 +90,41 @@ public:
 
   void write_messages_to_sqlite(std::vector<std::string> messages)
   {
-    std::unique_ptr<rosbag2_storage::ReadWriteStorage> writable_storage =
+    std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
     writable_storage->open(database_name_);
     writable_storage->create_topic();
 
-    for (auto msg : messages) {
+    for (auto message : messages) {
+      auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      auto payload = new rcutils_char_array_t;
+      *payload = rcutils_get_zero_initialized_char_array();
+      payload->allocator = rcutils_get_default_allocator();
+      auto ret = rcutils_char_array_resize(payload, strlen(message.c_str()));
+      if (ret != RCUTILS_RET_OK) {
+        FAIL() << " Failed to resize serialized bag message";
+      }
+      strcpy(payload->buffer, "Hello World");  // NOLINT cpplint doesn't like strcpy here
+
+      msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
+          [](rcutils_char_array_t * msg) {
+            auto error = rcutils_char_array_fini(msg);
+            delete msg;
+            if (error != RCUTILS_RET_OK) {
+              FAIL() << " Failed to destroy serialized bag message";
+            }
+          });
       writable_storage->write(msg);
     }
   }
 
-  std::vector<std::string> read_all_messages_from_sqlite()
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  read_all_messages_from_sqlite()
   {
-    std::unique_ptr<rosbag2_storage::ReadableStorage> readable_storage =
+    std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-    readable_storage->open_readonly(database_name_);
-    std::vector<std::string> read_messages;
+    readable_storage->open(database_name_);
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     std::string message;
     while (readable_storage->has_next()) {

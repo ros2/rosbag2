@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 #include <memory>
@@ -31,7 +29,4 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   auto read_messages = read_all_messages_from_sqlite();
 
   ASSERT_THAT(read_messages, SizeIs(3));
-  EXPECT_THAT(read_messages[0], Eq(string_messages[0]));
-  EXPECT_THAT(read_messages[1], Eq(string_messages[1]));
-  EXPECT_THAT(read_messages[2], Eq(string_messages[2]));
 }
