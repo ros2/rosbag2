@@ -95,7 +95,7 @@ public:
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     rosbag2_storage::StorageFactory factory;
     auto storage =
-      factory.open<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(db_name, "sqlite3");
+      factory.open_read_only(db_name, "sqlite3");
 
     if (storage) {
       while (storage->has_next()) {
@@ -113,7 +113,7 @@ public:
   {
     rosbag2_storage::StorageFactory factory;
     auto storage =
-      factory.open<rosbag2_storage::storage_interfaces::ReadWriteInterface>(db_name, "sqlite3");
+      factory.open_read_write(db_name, "sqlite3");
     storage->create_topic();
 
     if (storage) {

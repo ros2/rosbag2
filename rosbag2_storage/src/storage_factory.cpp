@@ -36,15 +36,13 @@ StorageFactory::StorageFactory()
 // needed explicit destructor because of unique_ptr for pimpl
 StorageFactory::~StorageFactory() {}
 
-template<>
-std::shared_ptr<ReadOnlyInterface> StorageFactory::open<ReadOnlyInterface>(
+std::shared_ptr<ReadOnlyInterface> StorageFactory::open_read_only(
   const std::string & uri, const std::string & storage_id)
 {
   return impl_->open_read_only(uri, storage_id);
 }
 
-template<>
-std::shared_ptr<ReadWriteInterface> StorageFactory::open<ReadWriteInterface>(
+std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
   const std::string & uri, const std::string & storage_id)
 {
   return impl_->open_read_write(uri, storage_id);

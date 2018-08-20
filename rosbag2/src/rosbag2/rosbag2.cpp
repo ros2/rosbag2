@@ -40,7 +40,7 @@ void Rosbag2::record(
 {
   rosbag2_storage::StorageFactory factory;
   auto storage =
-    factory.open<rosbag2_storage::storage_interfaces::ReadWriteInterface>(file_name, "sqlite3");
+    factory.open_read_write(file_name, "sqlite3");
   storage->create_topic();
 
   if (storage) {
@@ -65,7 +65,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
 {
   rosbag2_storage::StorageFactory factory;
   auto storage =
-    factory.open<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(file_name, "sqlite3");
+    factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
