@@ -21,29 +21,30 @@
 
 #include "sqlite_wrapper.hpp"
 
-#include "rosbag2_storage/read_write_storage.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
-class SqliteStorage : public rosbag2_storage::ReadWriteStorage
+class SqliteStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
   SqliteStorage();
   explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
   ~SqliteStorage() override = default;
 
-  void open(const std::string & uri) override;
-
-  void open_readonly(const std::string & uri) override;
+  void open(
+    const std::string & uri,
+    rosbag2_storage::storage_interfaces::IOFlag io_flag =
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
   void create_topic() override;
 
-  void write(std::string message) override;
+  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
-  bool has_next() override;
+  bool has_next() const override;
 
-  std::string read_next() override;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
   rosbag2_storage::BagInfo info() override;
 

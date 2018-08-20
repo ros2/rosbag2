@@ -56,21 +56,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(sqlite_storage_test
-    test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_test.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET sqlite_storage_test)
-    ament_target_dependencies(sqlite_storage_test
-      rosbag2_storage
-      rclcpp
-      rcutils
-      std_msgs
-      SQLite3
-      pluginlib)
-  endif()
-
   ament_add_gmock(sqlite_storage_integration_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
     src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp

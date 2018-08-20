@@ -2,7 +2,8 @@
   <class
     name="sqlite3"
     type="rosbag2_storage_plugins::SqliteStorage"
-    base_class_type="rosbag2_storage::ReadWriteStorage"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
+
   >
     <description>Plugin to write to SQLite3 databases</description>
   </class>
