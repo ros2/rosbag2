@@ -29,7 +29,7 @@ class ReadWriteInterface
   : public ReadOnlyInterface, public BaseWriteInterface
 {
 public:
-  virtual ~ReadWriteInterface() = default;
+  ~ReadWriteInterface() override = default;
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
 };
 

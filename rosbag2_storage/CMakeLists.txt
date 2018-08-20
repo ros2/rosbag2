@@ -22,8 +22,7 @@ find_package(rcutils REQUIRED)
 add_library(
   rosbag2_storage
   SHARED
-  src/storage_factory.cpp
-  include/rosbag2_storage/read_write_storage.hpp)
+  src/storage_factory.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
