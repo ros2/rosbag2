@@ -93,5 +93,4 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
   auto recorded_messages = get_messages(database_name_);
 
   ASSERT_THAT(recorded_messages, Not(IsEmpty()));
-  //ASSERT_THAT(recorded_messages[0], Eq(message_to_publish));
 }
