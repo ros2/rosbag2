@@ -66,7 +66,8 @@ get_interface_instance(
 
   std::shared_ptr<InterfaceT> instance = nullptr;
   try {
-    instance = class_loader->createSharedInstance(storage_id);
+    auto unmanaged_instance = class_loader->createUnmanagedInstance(storage_id);
+    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
   } catch (const std::runtime_error & ex) {
     RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
       "unable to load instance of read write interface: %s", ex.what());
