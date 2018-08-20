@@ -61,7 +61,7 @@ void TestPlugin::create_topic()
   std::cout << "\ncreating topic\n";
 }
 
-void TestPlugin::write(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg)
+void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   (void) msg;
   std::cout << "\nwriting\n";
