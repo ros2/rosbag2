@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_STORAGE__SERIALIZED_BAG_MESSAGE_HPP_
 #define ROSBAG2_STORAGE__SERIALIZED_BAG_MESSAGE_HPP_
 
+#include <memory>
+
 #include "rcutils/types/char_array.h"
 #include "rcutils/time.h"
 
@@ -23,7 +25,7 @@ namespace rosbag2_storage
 
 struct SerializedBagMessage
 {
-  rcutils_char_array_t serialized_data;
+  std::shared_ptr<rcutils_char_array_t> serialized_data;
   rcutils_time_point_value_t time_stamp;
 };
 
