@@ -40,7 +40,7 @@ public:
 
   void create_topic() override;
 
-  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
   bool has_next() const override;
 

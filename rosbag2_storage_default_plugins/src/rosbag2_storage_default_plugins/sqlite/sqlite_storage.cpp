@@ -49,7 +49,7 @@ void SqliteStorage::open(
   RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Opened database '%s'.", uri.c_str());
 }
 
-void SqliteStorage::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
   std::string msg(&message->serialized_data->buffer[8]);
