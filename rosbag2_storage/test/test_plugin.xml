@@ -1,0 +1,17 @@
+<library path="test_plugin">
+  <class
+    name="my_test_plugin"
+    type="TestPlugin"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
+  >
+    <description>This is a test storage plugin.</description>
+  </class>
+
+  <class
+    name="my_read_only_test_plugin"
+    type="TestReadOnlyPlugin"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadOnlyInterface"
+  >
+    <description>This is a read-only test storage plugin.</description>
+  </class>
+</library>
