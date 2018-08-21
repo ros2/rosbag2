@@ -22,29 +22,33 @@ find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
 add_library(
-  librosbag
+  librosbag2
   SHARED
   src/rosbag2/rosbag2.cpp)
 
-ament_target_dependencies(librosbag rclcpp rcutils std_msgs rosbag2_storage)
-target_include_directories(librosbag
+ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rosbag2_storage)
+target_include_directories(librosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(librosbag2 PRIVATE "ROSBAG2_BUILDING_DLL")
+
 add_executable(${PROJECT_NAME}_record src/rosbag2/demo_record.cpp)
-target_link_libraries(${PROJECT_NAME}_record librosbag)
+target_link_libraries(${PROJECT_NAME}_record librosbag2)
 
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
-target_link_libraries(${PROJECT_NAME}_play librosbag)
+target_link_libraries(${PROJECT_NAME}_play librosbag2)
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
 install(
-  TARGETS librosbag
+  TARGETS librosbag2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
@@ -59,7 +63,7 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
-    target_link_libraries(rosbag2_write_integration_test librosbag)
+    target_link_libraries(rosbag2_write_integration_test librosbag2)
   endif()
 
   ament_add_gmock(rosbag2_read_integration_test
@@ -67,7 +71,7 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_test_fixture.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
-    target_link_libraries(rosbag2_read_integration_test librosbag)
+    target_link_libraries(rosbag2_read_integration_test librosbag2)
   endif()
 endif()
 

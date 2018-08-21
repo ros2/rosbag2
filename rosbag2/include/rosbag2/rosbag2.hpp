@@ -18,16 +18,21 @@
 #include <functional>
 #include <string>
 
+#include "rosbag2/visibility_control.hpp"
+
 namespace rosbag2
 {
 
 class Rosbag2
 {
 public:
+  ROSBAG2_PUBLIC
   void record(
     const std::string & file_name,
     const std::string & topic_name,
     std::function<void(void)> after_write_action = nullptr);
+
+  ROSBAG2_PUBLIC
   void play(const std::string & file_name, const std::string & topic_name);
 };
 
