@@ -96,12 +96,14 @@ public:
     rosbag2_storage::StorageFactory factory;
     auto storage =
       factory.open_read_only(db_name, "sqlite3");
-
-    if (storage) {
-      while (storage->has_next()) {
-        table_msgs.push_back(storage->read_next());
-      }
+    if (storage == nullptr) {
+      throw std::runtime_error("failed to open sqlite3 storage");
     }
+
+    while (storage->has_next()) {
+      table_msgs.push_back(storage->read_next());
+    }
+
     return table_msgs;
   }
 
@@ -113,12 +115,13 @@ public:
     rosbag2_storage::StorageFactory factory;
     auto storage =
       factory.open_read_write(db_name, "sqlite3");
-    storage->create_topic();
+    if (storage == nullptr) {
+      throw std::runtime_error("failed to open sqlite3 storage");
+    }
 
-    if (storage) {
-      for (auto msg : messages) {
-        storage->write(msg);
-      }
+    storage->create_topic();
+    for (auto msg : messages) {
+      storage->write(msg);
     }
   }
 

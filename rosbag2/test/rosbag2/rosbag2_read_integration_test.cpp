@@ -103,7 +103,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
         });
     messages.push_back(msg);
   }
-  write_messages(database_name_, messages);
+  ASSERT_NO_THROW(write_messages(database_name_, messages));
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
