@@ -27,7 +27,6 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2
 {
@@ -50,14 +49,14 @@ void Rosbag2::record(
       topic_name,
       [&storage, after_write_action](std::shared_ptr<rcutils_char_array_t> msg) {
         auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        bag_msg->serialized_data = msg;;
+        bag_msg->serialized_data = msg;
         rcutils_time_point_value_t time_stamp;
         int error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED("rosbag2", "Error getting current time. Error code: %i", error);
         }
         bag_msg->time_stamp = time_stamp;
-        storage->write(message);
+        storage->write(bag_msg);
         if (after_write_action) {
           after_write_action();
         }
@@ -86,7 +85,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
       string_message.data = std::string(message->serialized_data->buffer);
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(message.serialized_data.get());
+      publisher->publish(message->serialized_data.get());
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }

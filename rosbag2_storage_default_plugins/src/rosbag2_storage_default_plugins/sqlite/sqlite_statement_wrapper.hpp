@@ -49,7 +49,8 @@ public:
   virtual void bind_table_entry(
     std::shared_ptr<rcutils_char_array_t> serialized_data, int64_t timestamp,
     int serialized_data_position_in_statement, int timestamp_position_in_statement);
-  rosbag2_storage::SerializedBagMessage read_table_entry(int blob_column, int timestamp_column);
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  read_table_entry(int blob_column, int timestamp_column);
 
 
   virtual void reset();

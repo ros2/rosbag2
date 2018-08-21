@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #ifdef _WIN32
@@ -116,31 +115,20 @@ public:
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages)
   {
     rosbag2_storage::StorageFactory factory;
-    auto storage =
-      factory.open_read_write(db_name, "sqlite3");
-    if (storage == nullptr) {
-      throw std::runtime_error("failed to open sqlite3 storage");
-    }
+    auto storage = factory.open_read_write(db_name, "sqlite3");
 
     if (storage) {
+      storage->create_topic();
       for (auto msg : messages) {
-        auto ser_msg = serialize_message(msg);
-        rosbag2_storage::SerializedBagMessage bag_message;
-        bag_message.serialized_data = ser_msg;
-        rcutils_time_point_value_t time_stamp;
-        int error = rcutils_system_time_now(&time_stamp);
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED("rosbag2", "Error getting current time. Error code: %i", error);
-        }
-        bag_message.time_stamp = time_stamp;
-        storage->write(bag_message);
+        storage->write(msg);
       }
     }
   }
 
-  std::shared_ptr<rcutils_char_array_t> serialize_message(
-    std::string message)
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(std::string message)
   {
+    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+
     auto test_message = std::make_shared<std_msgs::msg::String>();
     test_message->data = message;
 
@@ -154,7 +142,7 @@ public:
               std::to_string(ret));
     }
 
-    auto serialized_test_message = std::shared_ptr<rcutils_char_array_t>(msg,
+    bag_msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
         [](rcutils_char_array_t * msg) {
           int error = rcutils_char_array_fini(msg);
           delete msg;
@@ -163,21 +151,25 @@ public:
           }
         });
 
+    bag_msg->serialized_data->buffer_length = initial_capacity;
+
     auto string_ts =
       rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
 
-    auto error = rmw_serialize(test_message.get(), string_ts, serialized_test_message.get());
+    auto error = rmw_serialize(test_message.get(), string_ts, bag_msg->serialized_data.get());
     if (error != RMW_RET_OK) {
       throw std::runtime_error("Something went wrong preparing the serialized message");
     }
-    return serialized_test_message;
+
+    return bag_msg;
   }
 
-  std::string deserialize_message(rosbag2_storage::SerializedBagMessage serialized_message)
+  std::string deserialize_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
   {
-    char * copied = new char[serialized_message.serialized_data->buffer_length];
-    auto string_length = serialized_message.serialized_data->buffer_length - 8;
-    memcpy(copied, &serialized_message.serialized_data->buffer[8], string_length);
+    char * copied = new char[serialized_message->serialized_data->buffer_length];
+    auto string_length = serialized_message->serialized_data->buffer_length - 8;
+    memcpy(copied, &serialized_message->serialized_data->buffer[8], string_length);
     std::string message_content(copied);
     delete[] copied;
     return message_content;

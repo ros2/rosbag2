@@ -62,15 +62,13 @@ public:
     rclcpp::shutdown();
   }
 
-  void publish_messages(std::vector<std::shared_ptr<rcutils_char_array_t>> messages)
+  void publish_messages(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> msgs)
   {
-    size_t expected_counter_value = messages.size();
+    size_t expected_counter_value = msgs.size();
     auto node = std::make_shared<rclcpp::Node>("publisher_node");
     auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
-    auto timer = node->create_wall_timer(50ms, [this, publisher, messages]() {
-          auto msg = std_msgs::msg::String();
-          msg.data = messages[counter_];
-          publisher->publish(msg);
+    auto timer = node->create_wall_timer(50ms, [this, publisher, msgs]() {
+          publisher->publish(msgs[counter_]->serialized_data.get());
         });
 
     while (counter_ < expected_counter_value) {
@@ -85,7 +83,7 @@ public:
 TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
 {
   std::string message_to_publish = "test_message";
-  auto serialized_message = serialize_message("test_message");
+  auto serialized_message = serialize_message(message_to_publish);
 
   start_recording();
   publish_messages({serialized_message});

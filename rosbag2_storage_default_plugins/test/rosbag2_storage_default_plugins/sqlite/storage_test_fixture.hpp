@@ -140,28 +140,11 @@ public:
     writable_storage->open(database_name_);
     writable_storage->create_topic();
 
-    for (auto message : messages) {
-      auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      auto payload = new rcutils_char_array_t;
-      *payload = rcutils_get_zero_initialized_char_array();
-      payload->allocator = rcutils_get_default_allocator();
-      auto ret = rcutils_char_array_resize(payload, 8 + strlen(message.c_str()) + 1);
-      if (ret != RCUTILS_RET_OK) {
-        FAIL() << " Failed to resize serialized bag message";
-      }
-      // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
-      std::string full_message = "bbbbbbbb" + message;
-      memcpy(payload->buffer, full_message.c_str(), strlen(full_message.c_str()) + 1);
-
-      msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
-          [](rcutils_char_array_t * msg) {
-            auto error = rcutils_char_array_fini(msg);
-            delete msg;
-            if (error != RCUTILS_RET_OK) {
-              FAIL() << " Failed to destroy serialized bag message";
-            }
-          });
-      writable_storage->write(msg);
+    for (auto msg : messages) {
+      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      bag_message->serialized_data = make_serialized_message(msg.first);
+      bag_message->time_stamp = msg.second;
+      writable_storage->write(bag_message);
     }
   }
 
@@ -173,7 +156,6 @@ public:
     readable_storage->open(database_name_);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
-    std::string message;
     while (readable_storage->has_next()) {
       read_messages.emplace_back(readable_storage->read_next());
     }
@@ -190,6 +172,8 @@ protected:
   int write_data_to_serialized_string_message(
     char * buffer, size_t buffer_capacity, std::string message)
   {
+    // This function also writes the final null charachter, which is absent in the CDR format.
+    // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
     return rcutils_snprintf(buffer,
              buffer_capacity,
              "%c%c%c%c%c%c%c%c%s",

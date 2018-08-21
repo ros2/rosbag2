@@ -107,10 +107,10 @@ void SqliteStatementWrapper::bind_timestamp(int column, int64_t timestamp)
   }
 }
 
-rosbag2_storage::SerializedBagMessage SqliteStatementWrapper::read_table_entry(
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::read_table_entry(
   int blob_column, int timestamp_column)
 {
-  rosbag2_storage::SerializedBagMessage message;
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   int buffer_size = sqlite3_column_bytes(statement_, blob_column);
 
   auto rcutils_allocator = rcutils_get_default_allocator();
@@ -122,7 +122,7 @@ rosbag2_storage::SerializedBagMessage SqliteStatementWrapper::read_table_entry(
             std::to_string(ret));
   }
 
-  message.serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
+  message->serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
       [](rcutils_char_array_t * msg) {
         int error = rcutils_char_array_fini(msg);
         delete msg;
@@ -133,11 +133,11 @@ rosbag2_storage::SerializedBagMessage SqliteStatementWrapper::read_table_entry(
       });
 
   memcpy(
-    reinterpret_cast<unsigned char *>(message.serialized_data->buffer),
+    reinterpret_cast<unsigned char *>(message->serialized_data->buffer),
     sqlite3_column_blob(statement_, blob_column),
     buffer_size);
-  message.serialized_data->buffer_length = buffer_size;
-  message.time_stamp = sqlite3_column_int64(statement_, timestamp_column);
+  message->serialized_data->buffer_length = buffer_size;
+  message->time_stamp = sqlite3_column_int64(statement_, timestamp_column);
 
   return message;
 }
