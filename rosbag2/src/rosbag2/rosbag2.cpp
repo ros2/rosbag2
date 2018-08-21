@@ -81,7 +81,6 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
       publisher->publish(string_message);
     }
-    rclcpp::spin_some(node);
   }
 }
 

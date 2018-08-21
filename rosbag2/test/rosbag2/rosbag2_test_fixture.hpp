@@ -99,8 +99,7 @@ public:
 
     if (storage) {
       while (storage->has_next()) {
-        auto message = storage->read_next();
-        table_msgs.emplace_back(message);
+        table_msgs.push_back(storage->read_next());
       }
     }
     return table_msgs;
