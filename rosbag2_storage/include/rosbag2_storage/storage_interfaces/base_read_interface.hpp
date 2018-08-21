@@ -30,7 +30,7 @@ class ROSBAG2_STORAGE_PUBLIC BaseReadInterface
 public:
   virtual ~BaseReadInterface() = default;
 
-  virtual bool has_next() const = 0;
+  virtual bool has_next() = 0;
 
   virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
 };

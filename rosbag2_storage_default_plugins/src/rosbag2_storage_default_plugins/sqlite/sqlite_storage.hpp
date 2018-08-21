@@ -45,7 +45,7 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
-  bool has_next() const override;
+  bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 

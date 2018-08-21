@@ -45,7 +45,7 @@ rosbag2_storage::BagInfo TestPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-bool TestPlugin::has_next() const
+bool TestPlugin::has_next()
 {
   return true;
 }

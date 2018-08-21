@@ -41,7 +41,7 @@ rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
   return rosbag2_storage::BagInfo();
 }
 
-bool TestReadOnlyPlugin::has_next() const
+bool TestReadOnlyPlugin::has_next()
 {
   return true;
 }
