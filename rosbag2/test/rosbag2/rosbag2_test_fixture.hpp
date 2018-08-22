@@ -147,7 +147,8 @@ public:
           int error = rcutils_char_array_fini(msg);
           delete msg;
           if (error != RCUTILS_RET_OK) {
-            RCUTILS_LOG_ERROR_NAMED("rosbag2", "Leaking memory. Error code: %i", error);
+            RCUTILS_LOG_ERROR_NAMED(
+              "rosbag2", "Leaking memory. Error: %s", rcutils_get_error_string_safe());
           }
         });
 

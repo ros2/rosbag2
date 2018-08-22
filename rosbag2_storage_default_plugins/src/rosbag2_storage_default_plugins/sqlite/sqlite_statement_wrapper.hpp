@@ -63,7 +63,7 @@ private:
 
   sqlite3_stmt * statement_;
   bool is_prepared_;
-  std::vector<std::shared_ptr<rcutils_char_array_t>> cached_written_blobls_;
+  std::vector<std::shared_ptr<rcutils_char_array_t>> cached_written_blobs_;
 };
 
 }  // namespace rosbag2_storage_plugins

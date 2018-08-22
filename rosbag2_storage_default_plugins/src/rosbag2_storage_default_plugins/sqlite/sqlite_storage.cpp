@@ -48,6 +48,7 @@ SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  // TODO(MARTIN-IDEL-SI): use flags to open database for read-only
   (void) io_flag;
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);

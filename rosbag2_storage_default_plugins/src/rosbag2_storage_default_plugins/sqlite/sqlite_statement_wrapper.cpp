@@ -31,7 +31,7 @@ SqliteStatementWrapper::SqliteStatementWrapper()
 SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string query)
 {
   sqlite3_stmt * statement;
-  int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
+  int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, & statement, nullptr);
   if (return_code != SQLITE_OK) {
     throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
             std::to_string(return_code));
@@ -46,7 +46,7 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   if (statement_) {
     sqlite3_finalize(statement_);
   }
-  cached_written_blobls_.clear();
+  cached_written_blobs_.clear();
 }
 
 sqlite3_stmt * SqliteStatementWrapper::get()
@@ -82,13 +82,13 @@ void SqliteStatementWrapper::bind_table_entry(
 void SqliteStatementWrapper::bind_serialized_data(
   int column, std::shared_ptr<rcutils_char_array_t> serialized_data)
 {
-  cached_written_blobls_.push_back(serialized_data);
-  size_t last_cached_blob_index = cached_written_blobls_.size() - 1;
+  cached_written_blobs_.push_back(serialized_data);
+  size_t last_cached_blob_index = cached_written_blobs_.size() - 1;
   int return_code = sqlite3_bind_blob(
     statement_,
     column,
-    cached_written_blobls_[last_cached_blob_index]->buffer,
-    static_cast<int>(cached_written_blobls_[last_cached_blob_index]->buffer_length),
+    cached_written_blobs_[last_cached_blob_index]->buffer,
+    static_cast<int>(cached_written_blobs_[last_cached_blob_index]->buffer_length),
     SQLITE_STATIC);
 
   if (return_code != SQLITE_OK) {
@@ -113,13 +113,14 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::r
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   int buffer_size = sqlite3_column_bytes(statement_, blob_column);
 
-  auto rcutils_allocator = rcutils_get_default_allocator();
+  auto rcutils_allocator = new rcutils_allocator_t;
+  *rcutils_allocator = rcutils_get_default_allocator();
   auto msg = new rcutils_char_array_t;
   *msg = rcutils_get_zero_initialized_char_array();
-  auto ret = rcutils_char_array_init(msg, buffer_size, &rcutils_allocator);
+  auto ret = rcutils_char_array_init(msg, buffer_size, rcutils_allocator);
   if (ret != RCUTILS_RET_OK) {
     throw std::runtime_error("Error allocating resources for serialized message" +
-            std::to_string(ret));
+            std::string(rcutils_get_error_string_safe()));
   }
 
   message->serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
@@ -128,7 +129,8 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::r
         delete msg;
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_storage_default_plugins", "Leaking memory. Error code: error %i", error);
+            "rosbag2_storage_default_plugins",
+            "Leaking memory. Error: %s", rcutils_get_error_string_safe());
         }
       });
 
