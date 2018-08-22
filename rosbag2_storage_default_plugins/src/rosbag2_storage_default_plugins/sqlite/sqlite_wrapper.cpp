@@ -47,6 +47,11 @@ std::shared_ptr<SqliteStatementWrapper> SqliteWrapper::prepare_statement(std::st
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }
 
+size_t SqliteWrapper::get_last_insert_id()
+{
+  return sqlite3_last_insert_rowid(db_ptr);
+}
+
 SqliteWrapper::operator bool()
 {
   return db_ptr != nullptr;

@@ -39,6 +39,8 @@ public:
 
   virtual std::shared_ptr<SqliteStatementWrapper> prepare_statement(std::string query);
 
+  size_t get_last_insert_id();
+
   virtual operator bool();
 
 private:

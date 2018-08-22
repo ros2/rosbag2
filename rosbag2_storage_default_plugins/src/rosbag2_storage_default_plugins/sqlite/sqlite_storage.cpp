@@ -66,13 +66,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
     prepare_for_writing();
   }
 
-  int blob_position_in_statement = 1;
-  int timestamp_position_in_statement = 2;
-  write_statement_->bind_table_entry(
-    message->serialized_data,
-    message->time_stamp,
-    blob_position_in_statement,
-    timestamp_position_in_statement);
+  write_statement_->bind(message->serialized_data, message->time_stamp);
   write_statement_->execute_and_reset();
 
   RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message.");

@@ -46,25 +46,56 @@ public:
   virtual void execute_and_reset();
   virtual void advance_one_row();
 
-  virtual void bind_table_entry(
-    std::shared_ptr<rcutils_char_array_t> serialized_data, int64_t timestamp,
-    int serialized_data_position_in_statement, int timestamp_position_in_statement);
+  template<typename T1, typename T2, typename ... Params>
+  void bind(T1 value1, T2 value2, Params ... values);
+  void bind(int value);
+  void bind(rcutils_time_point_value_t value);
+  void bind(double value);
+  void bind(std::string value);
+  void bind(std::shared_ptr<rcutils_char_array_t> value);
+
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   read_table_entry(int blob_column, int timestamp_column);
-
 
   virtual void reset();
   virtual bool is_prepared();
 
 private:
-  virtual void bind_serialized_data(
-    int column, std::shared_ptr<rcutils_char_array_t> serialized_data);
-  virtual void bind_timestamp(int column, int64_t timestamp);
+  template<typename T>
+  void check_and_report_bind_error(int return_code, T value);
+  void check_and_report_bind_error(int return_code);
 
   sqlite3_stmt * statement_;
   bool is_prepared_;
-  std::vector<std::shared_ptr<rcutils_char_array_t>> cached_written_blobs_;
+  int last_bound_parameter_index_;
+  std::vector<std::shared_ptr<rcutils_char_array_t>> written_blobs_cache_;
 };
+
+template<typename T1, typename T2, typename ... Params>
+inline
+void SqliteStatementWrapper::bind(T1 value1, T2 value2, Params ... values)
+{
+  bind(value1);
+  bind(value2, values ...);
+}
+
+template<>
+inline
+void SqliteStatementWrapper::check_and_report_bind_error(int return_code, std::string value)
+{
+  if (return_code != SQLITE_OK) {
+    throw SqliteException("SQLite error when binding parameter " +
+            std::to_string(last_bound_parameter_index_) + " to value '" + value +
+            "'. Return code: " + std::to_string(return_code));
+  }
+}
+
+template<typename T>
+inline
+void SqliteStatementWrapper::check_and_report_bind_error(int return_code, T value)
+{
+  check_and_report_bind_error(return_code, std::to_string(value));
+}
 
 }  // namespace rosbag2_storage_plugins
 

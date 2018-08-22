@@ -26,12 +26,12 @@ namespace rosbag2_storage_plugins
 {
 
 SqliteStatementWrapper::SqliteStatementWrapper()
-: statement_(nullptr), is_prepared_(false) {}
+: statement_(nullptr), is_prepared_(false), last_bound_parameter_index_(0) {}
 
 SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string query)
 {
   sqlite3_stmt * statement;
-  int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, & statement, nullptr);
+  int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
   if (return_code != SQLITE_OK) {
     throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
             std::to_string(return_code));
@@ -39,6 +39,7 @@ SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string q
 
   statement_ = statement;
   is_prepared_ = true;
+  last_bound_parameter_index_ = 0;
 }
 
 SqliteStatementWrapper::~SqliteStatementWrapper()
@@ -46,7 +47,6 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   if (statement_) {
     sqlite3_finalize(statement_);
   }
-  cached_written_blobs_.clear();
 }
 
 sqlite3_stmt * SqliteStatementWrapper::get()
@@ -71,40 +71,38 @@ void SqliteStatementWrapper::advance_one_row()
   }
 }
 
-void SqliteStatementWrapper::bind_table_entry(
-  std::shared_ptr<rcutils_char_array_t> serialized_data, int64_t timestamp,
-  int serialized_data_position_in_statement, int timestamp_position_in_statement)
+void SqliteStatementWrapper::bind(int value)
 {
-  bind_serialized_data(serialized_data_position_in_statement, serialized_data);
-  bind_timestamp(timestamp_position_in_statement, timestamp);
+  auto return_code = sqlite3_bind_int(statement_, ++last_bound_parameter_index_, value);
+  check_and_report_bind_error(return_code, value);
 }
 
-void SqliteStatementWrapper::bind_serialized_data(
-  int column, std::shared_ptr<rcutils_char_array_t> serialized_data)
+void SqliteStatementWrapper::bind(rcutils_time_point_value_t value)
 {
-  cached_written_blobs_.push_back(serialized_data);
-  size_t last_cached_blob_index = cached_written_blobs_.size() - 1;
-  int return_code = sqlite3_bind_blob(
-    statement_,
-    column,
-    cached_written_blobs_[last_cached_blob_index]->buffer,
-    static_cast<int>(cached_written_blobs_[last_cached_blob_index]->buffer_length),
-    SQLITE_STATIC);
-
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when binding text buffer. Return code: " +
-            std::to_string(return_code));
-  }
+  auto return_code = sqlite3_bind_int64(statement_, ++last_bound_parameter_index_, value);
+  check_and_report_bind_error(return_code, value);
 }
 
-void SqliteStatementWrapper::bind_timestamp(int column, int64_t timestamp)
+void SqliteStatementWrapper::bind(double value)
 {
-  int return_code = sqlite3_bind_int64(statement_, column, timestamp);
+  auto return_code = sqlite3_bind_double(statement_, ++last_bound_parameter_index_, value);
+  check_and_report_bind_error(return_code, value);
+}
 
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when binding integer. Return code: " +
-            std::to_string(return_code));
-  }
+void SqliteStatementWrapper::bind(std::string value)
+{
+  auto return_code = sqlite3_bind_text(
+    statement_, ++last_bound_parameter_index_, value.c_str(), -1, SQLITE_TRANSIENT);
+  check_and_report_bind_error(return_code, value);
+}
+
+void SqliteStatementWrapper::bind(std::shared_ptr<rcutils_char_array_t> value)
+{
+  written_blobs_cache_.push_back(value);
+  auto return_code = sqlite3_bind_blob(
+    statement_, ++last_bound_parameter_index_,
+    value->buffer, static_cast<int>(value->buffer_length), SQLITE_STATIC);
+  check_and_report_bind_error(return_code);
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::read_table_entry(
@@ -148,11 +146,22 @@ void SqliteStatementWrapper::reset()
 {
   sqlite3_reset(statement_);
   sqlite3_clear_bindings(statement_);
+  last_bound_parameter_index_ = 0;
+  written_blobs_cache_.clear();
 }
 
 bool SqliteStatementWrapper::is_prepared()
 {
   return is_prepared_;
+}
+
+void SqliteStatementWrapper::check_and_report_bind_error(int return_code)
+{
+  if (return_code != SQLITE_OK) {
+    throw SqliteException("SQLite error when binding parameter " +
+            std::to_string(last_bound_parameter_index_) + ". Return code: " +
+            std::to_string(return_code));
+  }
 }
 
 }  // namespace rosbag2_storage_plugins
