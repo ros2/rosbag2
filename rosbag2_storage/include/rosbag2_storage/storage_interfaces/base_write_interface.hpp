@@ -16,8 +16,10 @@
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/bag_info.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
@@ -32,7 +34,7 @@ public:
 
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
-  virtual void create_topic() = 0;
+  virtual void create_topic(const std::string & name, const std::string & type_id) = 0;
 };
 
 }  // namespace storage_interfaces

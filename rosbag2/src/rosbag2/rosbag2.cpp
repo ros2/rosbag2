@@ -40,27 +40,29 @@ void Rosbag2::record(
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
-  storage->create_topic();
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,
-      [&storage, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
-        auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        bag_msg->serialized_data = msg;
+      [&storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
+        auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        message->serialized_data = msg;
+        message->topic_name = topic_name;
         rcutils_time_point_value_t time_stamp;
         int error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
             "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
-        bag_msg->time_stamp = time_stamp;
-        storage->write(bag_msg);
+        message->time_stamp = time_stamp;
+        storage->write(message);
         if (after_write_action) {
           after_write_action();
         }
       });
+    storage->create_topic(
+      topic_name, subscription->get_message_type_support_handle().typesupport_identifier);
 
     RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
     rclcpp::spin(node);

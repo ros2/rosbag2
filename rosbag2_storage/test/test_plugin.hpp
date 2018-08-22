@@ -32,11 +32,11 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
+  void create_topic(const std::string & name, const std::string & type_id) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
-
-  void create_topic() override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 };
