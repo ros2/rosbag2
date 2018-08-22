@@ -15,16 +15,14 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
-#include "sqlite_wrapper.hpp"
-
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-
 #include "rcutils/types.h"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "sqlite_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -33,7 +31,6 @@ class SqliteStorage : public rosbag2_storage::storage_interfaces::ReadWriteInter
 {
 public:
   SqliteStorage();
-  explicit SqliteStorage(std::shared_ptr<SqliteWrapper> database);
   ~SqliteStorage() override = default;
 
   void open(
@@ -58,8 +55,8 @@ private:
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;
-  std::shared_ptr<SqliteStatementWrapper> write_statement_;
-  std::shared_ptr<SqliteStatementWrapper> read_statement_;
+  SqliteStatement write_statement_;
+  SqliteStatement read_statement_;
   bool ready_to_read_next_;
 };
 

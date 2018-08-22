@@ -22,23 +22,21 @@
 
 #include "rcutils/logging_macros.h"
 
+#include "sqlite_exception.hpp"
+
 namespace rosbag2_storage_plugins
 {
-
-SqliteStatementWrapper::SqliteStatementWrapper()
-: statement_(nullptr), is_prepared_(false), last_bound_parameter_index_(0) {}
 
 SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string query)
 {
   sqlite3_stmt * statement;
   int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
   if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
+    throw SqliteException("SQL error when preparing statement '" + query + "' with return code: " +
             std::to_string(return_code));
   }
 
   statement_ = statement;
-  is_prepared_ = true;
   last_bound_parameter_index_ = 0;
 }
 
@@ -47,11 +45,6 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   if (statement_) {
     sqlite3_finalize(statement_);
   }
-}
-
-sqlite3_stmt * SqliteStatementWrapper::get()
-{
-  return statement_;
 }
 
 void SqliteStatementWrapper::execute_and_reset()
@@ -148,11 +141,6 @@ void SqliteStatementWrapper::reset()
   sqlite3_clear_bindings(statement_);
   last_bound_parameter_index_ = 0;
   written_blobs_cache_.clear();
-}
-
-bool SqliteStatementWrapper::is_prepared()
-{
-  return is_prepared_;
 }
 
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code)

@@ -12,42 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
+#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
+#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
 
-#include <sqlite3.h>
-
-#include <memory>
+#include <stdexcept>
 #include <string>
-#include <vector>
-
-#include "rcutils/types.h"
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "sqlite_statement_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
-using DBPtr = sqlite3 *;
-
-class SqliteWrapper
+class SqliteException : public std::runtime_error
 {
 public:
-  explicit SqliteWrapper(const std::string & uri);
-  SqliteWrapper();
-  ~SqliteWrapper();
-
-  SqliteStatement prepare_statement(std::string query);
-
-  size_t get_last_insert_id();
-
-  operator bool();
-
-private:
-  DBPtr db_ptr;
+  explicit SqliteException(const std::string & message)
+  : runtime_error(message) {}
 };
-
 
 }  // namespace rosbag2_storage_plugins
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
+#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_

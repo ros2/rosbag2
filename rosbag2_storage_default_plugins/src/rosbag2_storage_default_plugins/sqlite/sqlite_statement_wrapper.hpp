@@ -24,27 +24,21 @@
 #include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
-class SqliteException : public std::runtime_error
+class SqliteStatementWrapper : public std::enable_shared_from_this<SqliteStatementWrapper>
 {
 public:
-  explicit SqliteException(const std::string & message)
-  : runtime_error(message) {}
-};
-
-class SqliteStatementWrapper
-{
-public:
-  SqliteStatementWrapper();
   SqliteStatementWrapper(sqlite3 * database, std::string query);
-  virtual ~SqliteStatementWrapper();
+  SqliteStatementWrapper(const SqliteStatementWrapper &) = delete;
+  SqliteStatementWrapper & operator=(const SqliteStatementWrapper &) = delete;
+  ~SqliteStatementWrapper();
 
-  virtual sqlite3_stmt * get();
-  virtual void execute_and_reset();
-  virtual void advance_one_row();
+  void execute_and_reset();
+  void advance_one_row();
 
   template<typename T1, typename T2, typename ... Params>
   void bind(T1 value1, T2 value2, Params ... values);
@@ -57,8 +51,7 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   read_table_entry(int blob_column, int timestamp_column);
 
-  virtual void reset();
-  virtual bool is_prepared();
+  void reset();
 
 private:
   template<typename T>
@@ -66,7 +59,6 @@ private:
   void check_and_report_bind_error(int return_code);
 
   sqlite3_stmt * statement_;
-  bool is_prepared_;
   int last_bound_parameter_index_;
   std::vector<std::shared_ptr<rcutils_char_array_t>> written_blobs_cache_;
 };
@@ -96,6 +88,8 @@ void SqliteStatementWrapper::check_and_report_bind_error(int return_code, T valu
 {
   check_and_report_bind_error(return_code, std::to_string(value));
 }
+
+using SqliteStatement = std::shared_ptr<SqliteStatementWrapper>;
 
 }  // namespace rosbag2_storage_plugins
 

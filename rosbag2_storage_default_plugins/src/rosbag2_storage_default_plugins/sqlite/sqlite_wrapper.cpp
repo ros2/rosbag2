@@ -15,12 +15,14 @@
 #include "sqlite_wrapper.hpp"
 
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+
+#include "sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -42,7 +44,7 @@ SqliteWrapper::~SqliteWrapper()
   sqlite3_close(db_ptr);
 }
 
-std::shared_ptr<SqliteStatementWrapper> SqliteWrapper::prepare_statement(std::string query)
+SqliteStatement SqliteWrapper::prepare_statement(std::string query)
 {
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }

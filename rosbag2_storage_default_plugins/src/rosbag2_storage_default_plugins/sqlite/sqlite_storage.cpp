@@ -15,12 +15,11 @@
 #include "sqlite_storage.hpp"
 
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <iostream>
 
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -32,16 +31,8 @@ const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 SqliteStorage::SqliteStorage()
 : database_(),
   bag_info_(),
-  write_statement_(std::make_shared<SqliteStatementWrapper>()),
-  read_statement_(std::make_shared<SqliteStatementWrapper>()),
-  ready_to_read_next_(false)
-{}
-
-SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
-: database_(std::move(database)),
-  bag_info_(),
-  write_statement_(std::make_shared<SqliteStatementWrapper>()),
-  read_statement_(std::make_shared<SqliteStatementWrapper>()),
+  write_statement_(nullptr),
+  read_statement_(nullptr),
   ready_to_read_next_(false)
 {}
 
@@ -62,7 +53,7 @@ void SqliteStorage::open(
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  if (!write_statement_->is_prepared()) {
+  if (!write_statement_) {
     prepare_for_writing();
   }
 
@@ -74,7 +65,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
 bool SqliteStorage::has_next()
 {
-  if (!read_statement_->is_prepared()) {
+  if (!read_statement_) {
     prepare_for_reading();
   }
 
@@ -90,7 +81,7 @@ bool SqliteStorage::has_next()
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
   if (!ready_to_read_next_) {
-    if (!read_statement_->is_prepared()) {
+    if (!read_statement_) {
       prepare_for_reading();
     }
     read_statement_->advance_one_row();
