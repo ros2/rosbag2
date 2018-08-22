@@ -71,7 +71,7 @@ void Rosbag2::record(
         std::string complete_topic = "/" + topic_name;
         if (complete_topic == std::string(names_and_types->names.data[i])) {
           topic_found = true;
-          // TODO(botteroa-si): can a topic have multiple types? Here we asssume not.
+          // TODO(botteroa-si): can a topic have multiple types? Here we assume not.
           type = std::string(names_and_types->types[i].data[0]);
           break;
         }
@@ -157,7 +157,7 @@ void Rosbag2::record(
             "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
         message->time_stamp = time_stamp;
-        storage->create_topic(topic_name, ts->typesupport_identifier);
+        storage->create_topic(topic_name, type);
         storage->write(message);
         if (after_write_action) {
           after_write_action();
@@ -177,14 +177,66 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
   auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
-    auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
-    auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
+
+    auto ret = RCL_RET_ERROR;
+
+    auto node_ptr = new rcl_node_t;
+    *node_ptr = rcl_get_zero_initialized_node();
+    const char * name = "rosbag2_node";
+    rcl_node_options_t node_options = rcl_node_get_default_options();
+    ret = rcl_node_init(node_ptr, name, "", &node_options);
+
+    auto r_allocator = new rcl_allocator_t;
+    *r_allocator = rcutils_get_default_allocator();
+
+    // TODO(botteroa-si): this works if only one '/' is present.
+    std::string type = storage->read_topic_type(topic_name);
+    std::cout << "\ntype = " << type << "\n";
+    char type_separator = '/';
+    auto sep_position = type.find(type_separator);
+
+    std::string type_name = type.substr(sep_position + 1);
+    std::string package_name = type.substr(0, sep_position);
+
+    auto library_path = get_typesupport_library(package_name);
+    std::shared_ptr<Poco::SharedLibrary> typesupport_library = nullptr;
+    const rosidl_message_type_support_t * ts = nullptr;
+
+    try {
+      typesupport_library = std::make_shared<Poco::SharedLibrary>(library_path);
+
+      auto symbol_name = std::string("rosidl_typesupport_c__get_message_type_support_handle__") +
+        package_name + "__msg__" + type_name;
+
+      if (!typesupport_library->hasSymbol(symbol_name)) {
+        std::cout << "\nerror 1\n";
+        return;
+      }
+
+      const rosidl_message_type_support_t * (* get_ts)(void) = nullptr;
+      get_ts = (decltype(get_ts))typesupport_library->getSymbol(symbol_name);
+      ts = get_ts();
+      if (!ts) {
+        std::cout << "\nerror 2\n";
+        return;
+      }
+    } catch (Poco::LibraryLoadException &) {
+      std::cout << "\nerror 3\n";
+    }
+
+    rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
+    rcl_publisher_options_t publisher_options = rcl_publisher_get_default_options();
+    ret = rcl_publisher_init(&publisher, node_ptr, ts, topic_name.c_str(), &publisher_options);
+
     while (storage->has_next()) {
       auto message = storage->read_next();
 
       // without the sleep_for() many messages are lost.
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(message->serialized_data.get());
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      ret = rcl_publish_serialized_message(&publisher, message->serialized_data.get());
+      if (ret != RCL_RET_OK) {
+        throw std::runtime_error("failed to publish serialized message");
+      }
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }

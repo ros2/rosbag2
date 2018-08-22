@@ -21,6 +21,12 @@
 
 int main(int argc, const char ** argv)
 {
+  if (argc < 2) {
+    std::cerr << "\nThe name of the topic to record must be given as parameter!\n";
+    return 0;
+  }
+  std::string topic_name = argv[1];
+
   // TODO(anhosi): allow output file to be specified by cli argument and do proper checking if
   // file already exists
   std::string filename("test.bag");
@@ -29,7 +35,7 @@ int main(int argc, const char ** argv)
   rclcpp::init(argc, argv);
 
   rosbag2::Rosbag2 rosbag2;
-  rosbag2.record(filename, "string_topic");
+  rosbag2.record(filename, topic_name);
 
   rclcpp::shutdown();
 

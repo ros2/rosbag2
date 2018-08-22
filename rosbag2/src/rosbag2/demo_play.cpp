@@ -18,10 +18,16 @@
 
 int main(int argc, const char ** argv)
 {
+  if (argc < 2) {
+    std::cerr << "\nThe name of the topic to play to must be given as parameter!\n";
+    return 0;
+  }
+  std::string topic_name = argv[1];
+
   rclcpp::init(argc, argv);
 
   rosbag2::Rosbag2 rosbag2;
-  rosbag2.play("test.bag", "string_topic");
+  rosbag2.play("test.bag", topic_name);
 
   rclcpp::shutdown();
 
