@@ -27,6 +27,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "demo_helpers.hpp"
 
 namespace rosbag2
 {
@@ -38,16 +39,83 @@ void Rosbag2::record(
   const std::string & topic_name,
   std::function<void(void)> after_write_action)
 {
+  (void) after_write_action;
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
 
   if (storage) {
-    auto node = std::make_shared<rclcpp::Node>("rosbag_node");
-    auto subscription = node->create_subscription<std_msgs::msg::String>(
-      topic_name,
-      [&storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
+    std::string type_name = "String";
+    std::string package_name = "std_msgs";
+
+    auto library_path = get_typesupport_library(package_name);
+    std::shared_ptr<Poco::SharedLibrary> typesupport_library = nullptr;
+    const rosidl_message_type_support_t * ts = nullptr;
+
+    try {
+      typesupport_library = std::make_shared<Poco::SharedLibrary>(library_path);
+
+      auto symbol_name = std::string("rosidl_typesupport_c__get_message_type_support_handle__")
+        + package_name + "__msg__" + type_name;
+
+      if (!typesupport_library->hasSymbol(symbol_name)) {
+        std::cout << "\nerror 1\n";
+        return;
+      }
+
+      const rosidl_message_type_support_t * (*get_ts)(void) = nullptr;
+      get_ts = (decltype(get_ts)) typesupport_library->getSymbol(symbol_name);
+      ts = get_ts();
+      if (!ts) {
+        std::cout << "\nerror 2\n";
+        return;
+      }
+    } catch (Poco::LibraryLoadException &) {
+      std::cout << "\nerror 3\n";
+    }
+
+    auto ret = RCL_RET_ERROR;
+
+    auto node_ptr = new rcl_node_t;
+    *node_ptr = rcl_get_zero_initialized_node();
+    const char * name = "rosbag2_node";
+    rcl_node_options_t node_options = rcl_node_get_default_options();
+    ret = rcl_node_init(node_ptr, name, "", &node_options);
+
+    auto subscription = rcl_get_zero_initialized_subscription();
+    auto subscription_options = rcl_subscription_get_default_options();
+    ret =  rcl_subscription_init(
+      &subscription, node_ptr, ts, topic_name.c_str(), &subscription_options);
+
+    ret = RCL_RET_SUBSCRIPTION_TAKE_FAILED;
+    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+
+    while ((ret == RCL_RET_OK || ret == RCL_RET_SUBSCRIPTION_TAKE_FAILED) && rclcpp::ok()) {
+      auto serialized_msg = new rcutils_char_array_t;
+      *serialized_msg = rcutils_get_zero_initialized_char_array();
+      auto allocator = new rcutils_allocator_t;
+      *allocator = rcutils_get_default_allocator();
+      ret = rcutils_char_array_init(
+        serialized_msg,
+        0,
+        allocator);
+      if (ret != RCL_RET_OK) {
+        throw std::runtime_error("failed to initialize serialized message");
+      }
+
+      ret = rcl_take_serialized_message(&subscription, serialized_msg, nullptr);
+
+      if (ret == RCL_RET_OK) {
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        message->serialized_data = msg;
+        message->serialized_data = std::shared_ptr<rcutils_char_array_t>(serialized_msg,
+          [](rcutils_char_array_t * msg) {
+            int error = rcutils_char_array_fini(msg);
+            delete msg;
+            if (error != RCUTILS_RET_OK) {
+              RCUTILS_LOG_ERROR_NAMED(
+                "rosbag2_storage_default_plugins",
+                "Leaking memory. Error: %s", rcutils_get_error_string_safe());
+            }
+          });
         message->topic_name = topic_name;
         rcutils_time_point_value_t time_stamp;
         int error = rcutils_system_time_now(&time_stamp);
@@ -56,16 +124,17 @@ void Rosbag2::record(
             "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
         message->time_stamp = time_stamp;
+        storage->create_topic(topic_name, ts->typesupport_identifier);
         storage->write(message);
         if (after_write_action) {
           after_write_action();
         }
-      });
-    storage->create_topic(
-      topic_name, subscription->get_message_type_support_handle().typesupport_identifier);
-
-    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
-    rclcpp::spin(node);
+      } else {
+        (void) rcutils_char_array_fini(serialized_msg);
+      }
+    }
+    (void) rcl_subscription_fini(&subscription, node_ptr);
+    (void) rcl_node_fini(node_ptr);
   }
 }
 

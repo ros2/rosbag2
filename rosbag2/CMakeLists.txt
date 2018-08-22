@@ -20,13 +20,19 @@ find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(poco_vendor)
+find_package(Poco COMPONENTS Foundation)
+find_package(rcl REQUIRED)
+find_package(rosidl_generator_c REQUIRED)
 
 add_library(
   librosbag2
   SHARED
-  src/rosbag2/rosbag2.cpp)
+  src/rosbag2/rosbag2.cpp
+  src/rosbag2/demo_helpers.hpp)
 
-ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rosbag2_storage)
+ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rcl Poco ament_index_cpp rosbag2_storage)
 target_include_directories(librosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
