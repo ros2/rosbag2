@@ -17,6 +17,8 @@
 #include <memory>
 #include <string>
 
+#include "typesupport_helpers.hpp"
+
 namespace rosbag2
 {
 
@@ -25,9 +27,10 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name)
 {}
 
 std::shared_ptr<RawPublisher> Rosbag2Node::create_raw_publisher(
-  const std::string & topic, const rosidl_message_type_support_t & type_support)
+  const std::string & topic, const std::string & type)
 {
-  return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, type_support);
+  auto type_support = get_typesupport(type);
+  return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, *type_support);
 }
 
 }  // namespace rosbag2

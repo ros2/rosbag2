@@ -47,7 +47,6 @@ public:
           message.data = "string message";
           publisher->publish(message);
         });
-
   }
 
   static void SetUpTestCase()

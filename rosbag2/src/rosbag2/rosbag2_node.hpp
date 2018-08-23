@@ -29,9 +29,10 @@ class Rosbag2Node : public rclcpp::Node
 {
 public:
   explicit Rosbag2Node(const std::string & node_name);
+  ~Rosbag2Node() override = default;
 
   std::shared_ptr<RawPublisher> create_raw_publisher(
-    const std::string & topic, const rosidl_message_type_support_t & type_support);
+    const std::string & topic, const std::string & type);
 };
 
 }  // namespace rosbag2

@@ -33,7 +33,7 @@ public:
     const std::string & topic,
     const rosidl_message_type_support_t & type_support);
 
-  ~RawPublisher() = default;
+  ~RawPublisher() override = default;
 
   void publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
