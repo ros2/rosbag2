@@ -56,14 +56,6 @@ void SqliteStatementWrapper::execute_and_reset()
   reset();
 }
 
-void SqliteStatementWrapper::advance_one_row()
-{
-  int row = sqlite3_step(statement_);
-  if (row != SQLITE_ROW) {
-    throw SqliteException("No more rows available in table.");
-  }
-}
-
 void SqliteStatementWrapper::bind(int value)
 {
   auto return_code = sqlite3_bind_int(statement_, ++last_bound_parameter_index_, value);
@@ -98,23 +90,64 @@ void SqliteStatementWrapper::bind(std::shared_ptr<rcutils_char_array_t> value)
   check_and_report_bind_error(return_code);
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::read_table_entry(
-  int blob_column, int timestamp_column)
+void SqliteStatementWrapper::reset()
 {
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  int buffer_size = sqlite3_column_bytes(statement_, blob_column);
+  sqlite3_reset(statement_);
+  sqlite3_clear_bindings(statement_);
+  last_bound_parameter_index_ = 0;
+  written_blobs_cache_.clear();
+}
+
+bool SqliteStatementWrapper::step()
+{
+  int return_code = sqlite3_step(statement_);
+  if (return_code == SQLITE_ROW) {
+    return true;
+  } else if (return_code == SQLITE_DONE) {
+    return false;
+  } else {
+    throw SqliteException("Error reading query result: " + std::to_string(return_code));
+  }
+}
+
+void SqliteStatementWrapper::obtain_column_value(size_t index, int & value) const
+{
+  value = sqlite3_column_int(statement_, static_cast<int>(index));
+}
+
+void
+SqliteStatementWrapper::obtain_column_value(size_t index, rcutils_time_point_value_t & value) const
+{
+  value = sqlite3_column_int64(statement_, static_cast<int>(index));
+}
+
+void SqliteStatementWrapper::obtain_column_value(size_t index, double & value) const
+{
+  value = sqlite3_column_double(statement_, static_cast<int>(index));
+}
+
+void SqliteStatementWrapper::obtain_column_value(size_t index, std::string & value) const
+{
+  value = reinterpret_cast<const char *>(sqlite3_column_text(statement_, static_cast<int>(index)));
+}
+
+void SqliteStatementWrapper::obtain_column_value(
+  size_t index, std::shared_ptr<rcutils_char_array_t> & value) const
+{
+  auto data = sqlite3_column_blob(statement_, static_cast<int>(index));
+  auto size = static_cast<size_t>(sqlite3_column_bytes(statement_, static_cast<int>(index)));
 
   auto rcutils_allocator = new rcutils_allocator_t;
   *rcutils_allocator = rcutils_get_default_allocator();
   auto msg = new rcutils_char_array_t;
   *msg = rcutils_get_zero_initialized_char_array();
-  auto ret = rcutils_char_array_init(msg, buffer_size, rcutils_allocator);
+  auto ret = rcutils_char_array_init(msg, size, rcutils_allocator);
   if (ret != RCUTILS_RET_OK) {
-    throw std::runtime_error("Error allocating resources for serialized message" +
+    throw std::runtime_error("Error allocating resources for serialized message: " +
             std::string(rcutils_get_error_string_safe()));
   }
 
-  message->serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
+  value = std::shared_ptr<rcutils_char_array_t>(msg,
       [](rcutils_char_array_t * msg) {
         int error = rcutils_char_array_fini(msg);
         delete msg;
@@ -125,22 +158,8 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStatementWrapper::r
         }
       });
 
-  memcpy(
-    reinterpret_cast<unsigned char *>(message->serialized_data->buffer),
-    sqlite3_column_blob(statement_, blob_column),
-    buffer_size);
-  message->serialized_data->buffer_length = buffer_size;
-  message->time_stamp = sqlite3_column_int64(statement_, timestamp_column);
-
-  return message;
-}
-
-void SqliteStatementWrapper::reset()
-{
-  sqlite3_reset(statement_);
-  sqlite3_clear_bindings(statement_);
-  last_bound_parameter_index_ = 0;
-  written_blobs_cache_.clear();
+  memcpy(value->buffer, data, size);
+  value->buffer_length = size;
 }
 
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code)

@@ -35,9 +35,9 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   auto read_messages = read_all_messages_from_sqlite();
 
   ASSERT_THAT(read_messages, SizeIs(3));
-  EXPECT_THAT(deserialize_message(*read_messages[0]), Eq(string_messages[0].first));
-  EXPECT_THAT(deserialize_message(*read_messages[1]), Eq(string_messages[1].first));
-  EXPECT_THAT(deserialize_message(*read_messages[2]), Eq(string_messages[2].first));
+  EXPECT_THAT(deserialize_message(read_messages[0]->serialized_data), Eq(string_messages[0].first));
+  EXPECT_THAT(deserialize_message(read_messages[1]->serialized_data), Eq(string_messages[1].first));
+  EXPECT_THAT(deserialize_message(read_messages[2]->serialized_data), Eq(string_messages[2].first));
 }
 
 TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_correctly) {

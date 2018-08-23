@@ -123,11 +123,11 @@ public:
     return serialized_data;
   }
 
-  std::string deserialize_message(rosbag2_storage::SerializedBagMessage serialized_message)
+  std::string deserialize_message(std::shared_ptr<rcutils_char_array_t> serialized_message)
   {
-    char * copied = new char[serialized_message.serialized_data->buffer_length];
-    auto string_length = serialized_message.serialized_data->buffer_length - 8;
-    memcpy(copied, &serialized_message.serialized_data->buffer[8], string_length);
+    char * copied = new char[serialized_message->buffer_length];
+    auto string_length = serialized_message->buffer_length - 8;
+    memcpy(copied, &serialized_message->buffer[8], string_length);
     std::string message_content(copied);
     delete[] copied;
     return message_content;
@@ -157,7 +157,7 @@ public:
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     while (readable_storage->has_next()) {
-      read_messages.emplace_back(readable_storage->read_next());
+      read_messages.push_back(readable_storage->read_next());
     }
 
     return read_messages;

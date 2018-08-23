@@ -29,11 +29,9 @@ namespace rosbag2_storage_plugins
 const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 
 SqliteStorage::SqliteStorage()
-: database_(),
-  bag_info_(),
-  write_statement_(nullptr),
-  read_statement_(nullptr),
-  ready_to_read_next_(false)
+: database_(), bag_info_(), write_statement_(nullptr), read_statement_(nullptr),
+  message_result_(nullptr),
+  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {}
 
 void SqliteStorage::open(
@@ -69,29 +67,19 @@ bool SqliteStorage::has_next()
     prepare_for_reading();
   }
 
-  try {
-    read_statement_->advance_one_row();
-    ready_to_read_next_ = true;
-    return true;
-  } catch (const SqliteException &) {
-    return false;
-  }
+  return current_message_row_ != message_result_.end();
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
-  if (!ready_to_read_next_) {
-    if (!read_statement_) {
-      prepare_for_reading();
-    }
-    read_statement_->advance_one_row();
+  if (!read_statement_) {
+    prepare_for_reading();
   }
 
-  ready_to_read_next_ = false;
-
-  int blob_data_column = 1;
-  int timestamp_column = 2;
-  return read_statement_->read_table_entry(blob_data_column, timestamp_column);
+  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  std::tie(bag_message->serialized_data, bag_message->time_stamp) = *current_message_row_;
+  ++current_message_row_;
+  return bag_message;
 }
 
 void SqliteStorage::initialize()
@@ -122,7 +110,11 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ = database_->prepare_statement("SELECT * FROM messages ORDER BY id;");
+  read_statement_ =
+    database_->prepare_statement("SELECT data, timestamp FROM messages ORDER BY id;");
+  message_result_ = read_statement_->execute_query<
+    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t>();
+  current_message_row_ = message_result_.begin();
 }
 
 }  // namespace rosbag2_storage_plugins

@@ -57,7 +57,10 @@ private:
   rosbag2_storage::BagInfo bag_info_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
-  bool ready_to_read_next_;
+  SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
+    rcutils_time_point_value_t> message_result_;
+  SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
+    rcutils_time_point_value_t>::Iterator current_message_row_;
 };
 
 }  // namespace rosbag2_storage_plugins

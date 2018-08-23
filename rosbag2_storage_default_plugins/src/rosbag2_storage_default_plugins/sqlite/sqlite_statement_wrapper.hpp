@@ -20,6 +20,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -37,8 +38,102 @@ public:
   SqliteStatementWrapper & operator=(const SqliteStatementWrapper &) = delete;
   ~SqliteStatementWrapper();
 
+  template<typename ... Columns>
+  class QueryResult
+  {
+public:
+    using RowType = std::tuple<Columns ...>;
+    class Iterator : public std::iterator<std::input_iterator_tag, RowType>
+    {
+public:
+      static const int POSITION_END = -1;
+      Iterator(std::shared_ptr<SqliteStatementWrapper> statement, int position)
+      : statement_(statement), next_row_idx_(position)
+      {
+        if (next_row_idx_ != POSITION_END) {
+          if (statement_->step()) {
+            ++next_row_idx_;
+          } else {
+            next_row_idx_ = POSITION_END;
+          }
+        }
+      }
+
+      Iterator & operator++()
+      {
+        if (next_row_idx_ != POSITION_END) {
+          if (statement_->step()) {
+            ++next_row_idx_;
+          } else {
+            next_row_idx_ = POSITION_END;
+          }
+          return *this;
+        } else {
+          throw SqliteException("Cannot increment result iterator beyond result set!");
+        }
+      }
+      Iterator operator++(int)
+      {
+        auto old_value = *this;
+        ++(*this);
+        return old_value;
+      }
+
+      RowType operator*() const
+      {
+        RowType row{};
+        obtain_row_values(row);
+        return row;
+      }
+
+      bool operator==(Iterator other) const
+      {
+        return statement_ == other.statement_ && next_row_idx_ == other.next_row_idx_;
+      }
+      bool operator!=(Iterator other) const
+      {
+        return !(*this == other);
+      }
+
+private:
+      template<typename Indices = std::index_sequence_for<Columns ...>>
+      void obtain_row_values(RowType & row) const
+      {
+        obtain_row_values_impl(row, Indices{});
+      }
+
+      template<size_t I, size_t ... Is, typename RemainingIndices = std::index_sequence<Is ...>>
+      void obtain_row_values_impl(RowType & row, std::index_sequence<I, Is ...>) const
+      {
+        statement_->obtain_column_value(I, std::get<I>(row));
+        obtain_row_values_impl(row, RemainingIndices{});
+      }
+      void obtain_row_values_impl(RowType &, std::index_sequence<>) const {}  // end of recursion
+
+      std::shared_ptr<SqliteStatementWrapper> statement_;
+      int next_row_idx_;
+    };
+
+    explicit QueryResult(std::shared_ptr<SqliteStatementWrapper> statement)
+    : statement_(statement)
+    {}
+
+    Iterator begin()
+    {
+      return Iterator(statement_, 0);
+    }
+    Iterator end()
+    {
+      return Iterator(statement_, Iterator::POSITION_END);
+    }
+
+private:
+    std::shared_ptr<SqliteStatementWrapper> statement_;
+  };
+
   void execute_and_reset();
-  void advance_one_row();
+  template<typename ... Columns>
+  QueryResult<Columns ...> execute_query();
 
   template<typename T1, typename T2, typename ... Params>
   void bind(T1 value1, T2 value2, Params ... values);
@@ -48,12 +143,17 @@ public:
   void bind(std::string value);
   void bind(std::shared_ptr<rcutils_char_array_t> value);
 
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  read_table_entry(int blob_column, int timestamp_column);
-
   void reset();
 
 private:
+  bool step();
+
+  void obtain_column_value(size_t index, int & value) const;
+  void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;
+  void obtain_column_value(size_t index, double & value) const;
+  void obtain_column_value(size_t index, std::string & value) const;
+  void obtain_column_value(size_t index, std::shared_ptr<rcutils_char_array_t> & value) const;
+
   template<typename T>
   void check_and_report_bind_error(int return_code, T value);
   void check_and_report_bind_error(int return_code);
@@ -87,6 +187,13 @@ inline
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code, T value)
 {
   check_and_report_bind_error(return_code, std::to_string(value));
+}
+
+template<typename ... Columns>
+inline
+SqliteStatementWrapper::QueryResult<Columns ...> SqliteStatementWrapper::execute_query()
+{
+  return QueryResult<Columns ...>(shared_from_this());
 }
 
 using SqliteStatement = std::shared_ptr<SqliteStatementWrapper>;
