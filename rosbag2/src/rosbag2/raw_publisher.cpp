@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_publisher.hpp"
+#include "raw_publisher.hpp"
 
 #include <memory>
 
 namespace rosbag2
 {
 
-Rosbag2Publisher::Rosbag2Publisher(
+RawPublisher::RawPublisher(
   rclcpp::node_interfaces::NodeBaseInterface * node_base,
   const std::string &topic,
   const rosidl_message_type_support_t &type_support)
 : rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
 {}
 
-void Rosbag2Publisher::publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+void RawPublisher::publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   auto return_code = rcl_publish_serialized_message(
     get_publisher_handle(), message->serialized_data.get());

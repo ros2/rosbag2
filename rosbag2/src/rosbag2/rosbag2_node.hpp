@@ -17,7 +17,7 @@
 
 #include "rclcpp/node.hpp"
 
-#include "rosbag2_publisher.hpp"
+#include "raw_publisher.hpp"
 
 namespace rosbag2
 {
@@ -28,8 +28,8 @@ public:
   Rosbag2Node(const std::string & node_name);
   ~Rosbag2Node() = default;
 
-  std::shared_ptr<Rosbag2Publisher> create_rosbag2_publisher(
-    const std::string & topic, const rosidl_message_type_support_t & type_support);
+  std::shared_ptr<RawPublisher> create_raw_publisher(
+    const std::string &topic, const rosidl_message_type_support_t &type_support);
 };
 
 }  // namespace rosbag2

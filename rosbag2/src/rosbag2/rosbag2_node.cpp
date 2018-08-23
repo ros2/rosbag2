@@ -22,10 +22,10 @@ namespace rosbag2
 Rosbag2Node::Rosbag2Node(const std::string &node_name) : rclcpp::Node(node_name)
 {}
 
-std::shared_ptr<Rosbag2Publisher> Rosbag2Node::create_rosbag2_publisher(
+std::shared_ptr<RawPublisher> Rosbag2Node::create_raw_publisher(
   const std::string &topic, const rosidl_message_type_support_t &type_support)
 {
-  return std::make_shared<Rosbag2Publisher>(get_node_base_interface().get(), topic, type_support);
+  return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, type_support);
 }
 
 }  // namespace rosbag2

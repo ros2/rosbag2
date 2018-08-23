@@ -24,15 +24,15 @@
 namespace rosbag2
 {
 
-class Rosbag2Publisher : public rclcpp::PublisherBase
+class RawPublisher : public rclcpp::PublisherBase
 {
 public:
-  Rosbag2Publisher(
+  RawPublisher(
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
     const std::string & topic,
     const rosidl_message_type_support_t & type_support);
 
-  ~Rosbag2Publisher() = default;
+  ~RawPublisher() = default;
 
   void publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };

@@ -108,7 +108,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
     auto type_support = get_typesupport(type);
 
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
-    auto publisher = node->create_rosbag2_publisher(topic_name, *type_support);
+    auto publisher = node->create_raw_publisher(topic_name, *type_support);
 
     while (storage->has_next()) {
       auto message = storage->read_next();

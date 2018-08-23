@@ -31,7 +31,7 @@ add_library(
   SHARED
   src/rosbag2/rosbag2.cpp
   src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/rosbag2_publisher.cpp
+  src/rosbag2/raw_publisher.cpp
   src/rosbag2/rosbag2_node.cpp)
 
 ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rcl Poco ament_index_cpp rosbag2_storage)
