@@ -37,12 +37,31 @@ namespace rosbag2
 
 const char * ROS_PACKAGE_NAME = "rosbag2";
 
+std::string Rosbag2::wait_for_topic(
+  const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node)
+{
+  while (rclcpp::ok()) {
+    auto topics = node->get_topic_names_and_types();
+    std::string complete_topic_name = topic_name;
+    if (topic_name[0] != '/') {
+      complete_topic_name = "/" + topic_name;
+    }
+    auto position = topics.find(complete_topic_name);
+    if (position != topics.end()) {
+      if (position->second.size() > 1) {
+        throw std::runtime_error("Topic has several types. Only ros topics are supported");
+      }
+      return position->second[0];
+    }
+  }
+  return "";
+}
+
 void Rosbag2::record(
   const std::string & file_name,
   const std::string & topic_name,
   std::function<void(void)> after_write_action)
 {
-  (void) after_write_action;
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
 
@@ -51,22 +70,14 @@ void Rosbag2::record(
 
     auto node = std::make_shared<rclcpp::Node>("rosbag2");
 
-    bool topic_found = false;
-    std::string type;
-    while (!topic_found && rclcpp::ok()) {
-      auto topics = node->get_topic_names_and_types();
-      // TODO(Martin_Idel-SI): check topics
-      std::string complete_topic = "/" + topic_name;
-      auto position = topics.find(complete_topic);
-      if (position != topics.end()) {
-        topic_found = true;
-        // TODO(Martin_Idel-SI): handle case of multiple types
-        type = position->second[0];
-        break;
-      }
+    std::string type = wait_for_topic(topic_name, node);
+
+    if (type.empty()) {
+      return;
     }
 
     auto type_support = get_typesupport(type);
+
     auto subscription = std::make_shared<RawSubscription>(
       node->get_node_base_interface()->get_shared_rcl_node_handle(),
       *type_support,
@@ -79,7 +90,8 @@ void Rosbag2::record(
         int error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+            ROS_PACKAGE_NAME,
+            "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
         bag_message->time_stamp = time_stamp;
 
@@ -92,6 +104,7 @@ void Rosbag2::record(
     node->get_node_topics_interface()->add_subscription(subscription, nullptr);
 
     storage->create_topic(topic_name, type);
+
     while (rclcpp::ok()) {
       rclcpp::spin(node);
     }

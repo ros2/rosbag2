@@ -90,6 +90,13 @@ if(BUILD_TESTING)
     ament_target_dependencies(rosbag2_typesupport_helpers_test rcl Poco ament_index_cpp
       rosidl_generator_c)
   endif()
+
+  ament_add_gmock(rosbag2_integration_test
+    test/rosbag2/rosbag2_integration_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_integration_test)
+    target_link_libraries(rosbag2_integration_test librosbag2)
+  endif()
 endif()
 
 ament_package()

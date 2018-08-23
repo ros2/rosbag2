@@ -16,8 +16,10 @@
 #define ROSBAG2__ROSBAG2_HPP_
 
 #include <functional>
+#include <memory>
 #include <string>
 
+#include "rclcpp/rclcpp.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -34,6 +36,10 @@ public:
 
   ROSBAG2_PUBLIC
   void play(const std::string & file_name, const std::string & topic_name);
+
+  ROSBAG2_PUBLIC
+  std::string wait_for_topic(
+    const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
 };
 
 }  // namespace rosbag2
