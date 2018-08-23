@@ -107,8 +107,7 @@ if(BUILD_TESTING)
     src/rosbag2/rosbag2_node.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_rosbag_node_test)
-    ament_target_dependencies(rosbag2_rosbag_node_test rclcpp Poco ament_index_cpp
-      rcutils)
+    ament_target_dependencies(rosbag2_rosbag_node_test rclcpp Poco ament_index_cpp std_msgs)
   endif()
 endif()
 
