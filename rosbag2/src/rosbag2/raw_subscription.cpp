@@ -23,6 +23,8 @@
 namespace rosbag2
 {
 
+const char * ROS_PACKAGE_NAME = "rosbag2";
+
 RawSubscription::RawSubscription(
   std::shared_ptr<rcl_node_t> node_handle,
   const rosidl_message_type_support_t & ts,
@@ -101,7 +103,7 @@ RawSubscription::borrow_serialized_message(size_t capacity)
         delete msg;
         if (fini_return != RCL_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2",
+            ROS_PACKAGE_NAME,
             "failed to destroy serialized message: %s", rcl_get_error_string_safe());
         }
       });

@@ -24,33 +24,51 @@
 namespace rosbag2
 {
 
+/**
+ * This class is an implementation of an rclcpp::Subscription for serialized messages whose topic
+ * is not known at compile time (hence templating does not work).
+ *
+ * It does not support intra-process handling
+ */
 class RawSubscription : public rclcpp::SubscriptionBase
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(RawSubscription)
 
+  /**
+   * Constructor. In order to properly subscribe to a topic, this subscription needs to be added to
+   * the node_topic_interface of the node passed into this constructor.
+   *
+   * @param node_handle Node handle to the node to create the subscription to
+   * @param ts Type support handle
+   * @param topic_name Topic name
+   * @param callback Callback for new messages of serialized form
+   */
   RawSubscription(
     std::shared_ptr<rcl_node_t> node_handle,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
     std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback);
 
+  // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
 
   std::shared_ptr<rcl_serialized_message_t> create_serialized_message() override;
 
-
   void handle_message(
     std::shared_ptr<void> & message, const rmw_message_info_t & message_info) override;
 
+  // Same as return_serialized_message() as the subscription is to serialized_messages only
   void return_message(std::shared_ptr<void> & message) override;
 
   void return_serialized_message(std::shared_ptr<rcl_serialized_message_t> & message) override;
 
+  // Intra-process message handling is not supported by this publisher
   void handle_intra_process_message(
     rcl_interfaces::msg::IntraProcessMessage & ipm,
     const rmw_message_info_t & message_info) override;
 
+  // Intra-process message handling is not supported by this publisher (returns nullptr always)
   const std::shared_ptr<rcl_subscription_t>
   get_intra_process_subscription_handle() const override;
 
