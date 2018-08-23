@@ -49,7 +49,7 @@ std::string Rosbag2::wait_for_topic(
     auto position = topics.find(complete_topic_name);
     if (position != topics.end()) {
       if (position->second.size() > 1) {
-        throw std::runtime_error("Topic has several types. Only ros topics are supported");
+        throw std::runtime_error("Topic has several types. Only ROS topics are supported");
       }
       return position->second[0];
     }
@@ -113,6 +113,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
 
   if (storage) {
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
+    // TODO(Martin-Idel-SI): Check whether topic exists and use correct API once available
     auto publisher = node->create_raw_publisher(topic_name, storage->read_topic_type(topic_name));
 
     while (storage->has_next()) {
