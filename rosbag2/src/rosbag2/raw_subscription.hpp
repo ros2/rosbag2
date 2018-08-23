@@ -26,9 +26,6 @@ namespace rosbag2
 
 class RawSubscription : public rclcpp::SubscriptionBase
 {
-  // TODO(Martin-Idel-SI): Do we need this?
-  friend class rclcpp::node_interfaces::NodeTopicsInterface;
-
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(RawSubscription)
 
