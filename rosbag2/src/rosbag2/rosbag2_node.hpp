@@ -19,8 +19,11 @@
 #include <string>
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rcl/graph.h"
 
 #include "raw_publisher.hpp"
+#include "raw_subscription.hpp"
 
 namespace rosbag2
 {
@@ -33,6 +36,11 @@ public:
 
   std::shared_ptr<RawPublisher> create_raw_publisher(
     const std::string & topic, const std::string & type);
+
+  std::shared_ptr<RawSubscription> create_raw_subscription(
+    const std::string & topic,
+    const std::string & type,
+    std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback);
 };
 
 }  // namespace rosbag2

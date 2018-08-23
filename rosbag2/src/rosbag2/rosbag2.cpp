@@ -68,7 +68,7 @@ void Rosbag2::record(
   if (storage) {
     RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
 
-    auto node = std::make_shared<rclcpp::Node>("rosbag2");
+    auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
     std::string type = wait_for_topic(topic_name, node);
 
@@ -76,12 +76,9 @@ void Rosbag2::record(
       return;
     }
 
-    auto type_support = get_typesupport(type);
-
-    auto subscription = std::make_shared<RawSubscription>(
-      node->get_node_base_interface()->get_shared_rcl_node_handle(),
-      *type_support,
+    node->create_raw_subscription(
       topic_name,
+      type,
       [storage, topic_name, after_write_action](std::shared_ptr<rcutils_char_array_t> message) {
         auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         bag_message->serialized_data = message;
@@ -100,8 +97,6 @@ void Rosbag2::record(
           after_write_action();
         }
       });
-
-    node->get_node_topics_interface()->add_subscription(subscription, nullptr);
 
     storage->create_topic(topic_name, type);
 
