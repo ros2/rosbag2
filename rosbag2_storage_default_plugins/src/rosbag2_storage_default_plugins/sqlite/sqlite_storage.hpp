@@ -54,12 +54,15 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
+  std::map<std::string, std::string> get_all_topics_and_types() override;
+
   rosbag2_storage::BagInfo info() override;
 
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
+  void fill_topics_and_types_map();
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;
@@ -70,6 +73,7 @@ private:
   SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
     rcutils_time_point_value_t>::Iterator current_message_row_;
   std::map<std::string, int> topics_;
+  std::map<std::string, std::string> all_topics_and_types_;
 };
 
 }  // namespace rosbag2_storage_plugins

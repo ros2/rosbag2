@@ -116,7 +116,7 @@ public:
     const std::string & db_name,
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages)
   {
-    std::string topic = "test_topic";
+    std::string topic = "string_topic";
     rosbag2_storage::StorageFactory factory;
     auto storage = factory.open_read_write(db_name, "sqlite3");
 

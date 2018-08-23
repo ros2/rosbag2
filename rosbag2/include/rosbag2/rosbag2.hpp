@@ -20,6 +20,8 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -40,6 +42,11 @@ public:
   ROSBAG2_PUBLIC
   std::string wait_for_topic(
     const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
+
+  ROSBAG2_PUBLIC
+  std::string get_topic_type(
+    std::shared_ptr<rosbag2_storage::storage_interfaces::BaseReadInterface> storage,
+    const std::string & topic);
 };
 
 }  // namespace rosbag2

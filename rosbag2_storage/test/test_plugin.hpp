@@ -16,6 +16,7 @@
 #ifndef TEST_PLUGIN_HPP_
 #define TEST_PLUGIN_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
 
@@ -39,6 +40,8 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
+
+  std::map<std::string, std::string> get_all_topics_and_types() override;
 };
 
 #endif  // TEST_PLUGIN_HPP_

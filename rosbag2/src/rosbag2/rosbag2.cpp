@@ -57,6 +57,20 @@ std::string Rosbag2::wait_for_topic(
   return "";
 }
 
+std::string Rosbag2::get_topic_type(
+  std::shared_ptr<rosbag2_storage::storage_interfaces::BaseReadInterface> storage,
+  const std::string & topic)
+{
+  auto all_topics_and_types = storage->get_all_topics_and_types();
+  for (const auto & pair : all_topics_and_types) {
+    if (pair.first == topic) {
+      return pair.second;
+    }
+  }
+
+  return "";
+}
+
 void Rosbag2::record(
   const std::string & file_name,
   const std::string & topic_name,
@@ -114,7 +128,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
   if (storage) {
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
     // TODO(Martin-Idel-SI): Check whether topic exists and use correct API once available
-    auto publisher = node->create_raw_publisher(topic_name, storage->read_topic_type(topic_name));
+    auto publisher = node->create_raw_publisher(topic_name, get_topic_type(storage, topic_name));
 
     while (storage->has_next()) {
       auto message = storage->read_next();

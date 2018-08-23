@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -30,7 +31,10 @@ namespace rosbag2_storage_plugins
 const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 
 SqliteStorage::SqliteStorage()
-: database_(), bag_info_(), write_statement_(nullptr), read_statement_(nullptr),
+: database_(),
+  bag_info_(),
+  write_statement_(nullptr),
+  read_statement_(nullptr),
   message_result_(nullptr),
   current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {}
@@ -90,6 +94,15 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   return bag_message;
 }
 
+std::map<std::string, std::string> SqliteStorage::get_all_topics_and_types()
+{
+  if (all_topics_and_types_.empty()) {
+    fill_topics_and_types_map();
+  }
+
+  return all_topics_and_types_;
+}
+
 void SqliteStorage::initialize()
 {
   std::string create_table = "CREATE TABLE topics(" \
@@ -134,6 +147,16 @@ void SqliteStorage::prepare_for_reading()
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t>();
   current_message_row_ = message_result_.begin();
+}
+
+void SqliteStorage::fill_topics_and_types_map()
+{
+  auto statement = database_->prepare_statement("SELECT name, type FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string>();
+
+  for (auto result : query_results) {
+    all_topics_and_types_.insert(result);
+  }
 }
 
 }  // namespace rosbag2_storage_plugins
