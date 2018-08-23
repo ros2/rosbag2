@@ -76,7 +76,7 @@ void Rosbag2::record(
       return;
     }
 
-    node->create_raw_subscription(
+    auto subscription = node->create_raw_subscription(
       topic_name,
       type,
       [storage, topic_name, after_write_action](std::shared_ptr<rcutils_char_array_t> message) {
