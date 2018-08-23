@@ -89,7 +89,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_typesupport_helpers_test)
     ament_target_dependencies(rosbag2_typesupport_helpers_test rcl Poco ament_index_cpp
-      rosidl_generator_c)
+      rosidl_generator_cpp)
   endif()
 
   ament_add_gmock(rosbag2_integration_test
@@ -97,6 +97,18 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_integration_test)
     target_link_libraries(rosbag2_integration_test librosbag2)
+  endif()
+
+  ament_add_gmock(rosbag2_rosbag_node_test
+    test/rosbag2/rosbag2_rosbag_node_test.cpp
+    src/rosbag2/typesupport_helpers.cpp
+    src/rosbag2/raw_subscription.cpp
+    src/rosbag2/raw_publisher.cpp
+    src/rosbag2/rosbag2_node.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_rosbag_node_test)
+    ament_target_dependencies(rosbag2_rosbag_node_test rclcpp Poco ament_index_cpp
+      rcutils)
   endif()
 endif()
 

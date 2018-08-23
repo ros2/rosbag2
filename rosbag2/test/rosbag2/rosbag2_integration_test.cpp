@@ -17,8 +17,6 @@
 #include <future>
 #include <memory>
 #include <string>
-#include <vector>
-#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2/rosbag2.hpp"
@@ -27,7 +25,6 @@
 #include "rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 
 class RosBag2IntegrationFixture : public Test
 {
