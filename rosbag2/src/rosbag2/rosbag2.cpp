@@ -29,6 +29,7 @@
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "raw_subscription.hpp"
+#include "rosbag2_node.hpp"
 #include "typesupport_helpers.hpp"
 
 namespace rosbag2
@@ -103,27 +104,17 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
   auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
-
     std::string type = storage->read_topic_type(topic_name);
-    auto ts = get_typesupport(type);
+    auto type_support = get_typesupport(type);
 
-    auto node = std::make_shared<rclcpp::Node>("load_typesupport_cpp");
-    auto publisher_base = std::make_shared<rclcpp::PublisherBase>(
-      node->get_node_base_interface().get(),
-      topic_name,
-      *ts,
-      rcl_publisher_get_default_options());
+    auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
+    auto publisher = node->create_rosbag2_publisher(topic_name, *type_support);
 
     while (storage->has_next()) {
       auto message = storage->read_next();
-
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      auto ret = rcl_publish_serialized_message(
-        publisher_base->get_publisher_handle(), message->serialized_data.get());
-      if (ret != RCL_RET_OK) {
-        throw std::runtime_error("failed to publish serialized message");
-      }
+      publisher->publish(message);
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }
