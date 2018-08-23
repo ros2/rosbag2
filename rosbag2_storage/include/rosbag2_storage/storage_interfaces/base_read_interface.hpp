@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 
+#include <string>
 #include <memory>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"

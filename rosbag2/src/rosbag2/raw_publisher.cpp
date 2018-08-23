@@ -15,14 +15,15 @@
 #include "raw_publisher.hpp"
 
 #include <memory>
+#include <string>
 
 namespace rosbag2
 {
 
 RawPublisher::RawPublisher(
   rclcpp::node_interfaces::NodeBaseInterface * node_base,
-  const std::string &topic,
-  const rosidl_message_type_support_t &type_support)
+  const std::string & topic,
+  const rosidl_message_type_support_t & type_support)
 : rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
 {}
 

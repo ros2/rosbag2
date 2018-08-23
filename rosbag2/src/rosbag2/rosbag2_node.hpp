@@ -15,6 +15,9 @@
 #ifndef ROSBAG2__ROSBAG2_NODE_HPP_
 #define ROSBAG2__ROSBAG2_NODE_HPP_
 
+#include <memory>
+#include <string>
+
 #include "rclcpp/node.hpp"
 
 #include "raw_publisher.hpp"
@@ -28,7 +31,7 @@ public:
   explicit Rosbag2Node(const std::string & node_name);
 
   std::shared_ptr<RawPublisher> create_raw_publisher(
-    const std::string &topic, const rosidl_message_type_support_t &type_support);
+    const std::string & topic, const rosidl_message_type_support_t & type_support);
 };
 
 }  // namespace rosbag2

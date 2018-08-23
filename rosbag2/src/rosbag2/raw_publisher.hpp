@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__ROSBAG2_PUBLISHER_HPP_
-#define ROSBAG2__ROSBAG2_PUBLISHER_HPP_
+#ifndef ROSBAG2__RAW_PUBLISHER_HPP_
+#define ROSBAG2__RAW_PUBLISHER_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -39,4 +40,4 @@ public:
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__ROSBAG2_PUBLISHER_HPP_
+#endif  // ROSBAG2__RAW_PUBLISHER_HPP_

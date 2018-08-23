@@ -15,15 +15,17 @@
 #include "rosbag2_node.hpp"
 
 #include <memory>
+#include <string>
 
 namespace rosbag2
 {
 
-Rosbag2Node::Rosbag2Node(const std::string &node_name) : rclcpp::Node(node_name)
+Rosbag2Node::Rosbag2Node(const std::string & node_name)
+: rclcpp::Node(node_name)
 {}
 
 std::shared_ptr<RawPublisher> Rosbag2Node::create_raw_publisher(
-  const std::string &topic, const rosidl_message_type_support_t &type_support)
+  const std::string & topic, const rosidl_message_type_support_t & type_support)
 {
   return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, type_support);
 }

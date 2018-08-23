@@ -119,7 +119,7 @@ public:
     auto storage = factory.open_read_write(db_name, "sqlite3");
 
     if (storage) {
-      storage->create_topic(topic, "string");
+      storage->create_topic(topic, "std_msgs/String");
       for (auto msg : messages) {
         msg->topic_name = topic;
         storage->write(msg);
