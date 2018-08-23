@@ -28,6 +28,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "raw_subscription.hpp"
 #include "typesupport_helpers.hpp"
 
 namespace rosbag2
@@ -47,99 +48,52 @@ void Rosbag2::record(
   if (storage) {
     RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
 
-    auto ret = RCL_RET_ERROR;
-
-    auto node_ptr = new rcl_node_t;
-    *node_ptr = rcl_get_zero_initialized_node();
-    const char * name = "rosbag2_node";
-    rcl_node_options_t node_options = rcl_node_get_default_options();
-    ret = rcl_node_init(node_ptr, name, "", &node_options);
-
-    auto r_allocator = new rcl_allocator_t;
-    *r_allocator = rcutils_get_default_allocator();
+    auto node = std::make_shared<rclcpp::Node>("rosbag2");
 
     bool topic_found = false;
     std::string type;
     while (!topic_found && rclcpp::ok()) {
-      auto names_and_types = new rmw_names_and_types_t;
-      *names_and_types = rmw_get_zero_initialized_names_and_types();
-
-      auto error = rcl_get_topic_names_and_types(node_ptr, r_allocator, false, names_and_types);
-      (void) error;
-      size_t number_of_topics = names_and_types->names.size;
-      for (size_t i = 0; i < number_of_topics; i++) {
-        std::string complete_topic = "/" + topic_name;
-        if (complete_topic == std::string(names_and_types->names.data[i])) {
-          topic_found = true;
-          // TODO(botteroa-si): can a topic have multiple types? Here we assume not.
-          type = std::string(names_and_types->types[i].data[0]);
-          break;
-        }
+      auto topics = node->get_topic_names_and_types();
+      // TODO(Martin_Idel-SI): check topics
+      std::string complete_topic = "/" + topic_name;
+      auto position = topics.find(complete_topic);
+      if (position != topics.end()) {
+        topic_found = true;
+        // TODO(Martin_Idel-SI): handle case of multiple types
+        type = position->second[0];
+        break;
       }
-      auto fini_error = rmw_names_and_types_fini(names_and_types);
-      (void) fini_error;
     }
 
     auto type_support = get_typesupport(type);
-
-    auto subscription = rcl_get_zero_initialized_subscription();
-    auto subscription_options = rcl_subscription_get_default_options();
-    ret = rcl_subscription_init(
-      &subscription, node_ptr, type_support, topic_name.c_str(), &subscription_options);
-
-    ret = RCL_RET_SUBSCRIPTION_TAKE_FAILED;
-
-
-    while ((ret == RCL_RET_OK || ret == RCL_RET_SUBSCRIPTION_TAKE_FAILED) && rclcpp::ok()) {
-      auto serialized_msg = new rcutils_char_array_t;
-      *serialized_msg = rcutils_get_zero_initialized_char_array();
-      auto allocator = new rcutils_allocator_t;
-      *allocator = rcutils_get_default_allocator();
-      ret = rcutils_char_array_init(
-        serialized_msg,
-        0,
-        allocator);
-      if (ret != RCL_RET_OK) {
-        throw std::runtime_error("failed to initialize serialized message");
-      }
-
-      ret = rcl_take_serialized_message(&subscription, serialized_msg, nullptr);
-
-      if (ret == RCL_RET_OK) {
-        auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        message->serialized_data = std::shared_ptr<rcutils_char_array_t>(serialized_msg,
-            [](rcutils_char_array_t * msg) {
-              int error = rcutils_char_array_fini(msg);
-              delete msg;
-              if (error != RCUTILS_RET_OK) {
-                RCUTILS_LOG_ERROR_NAMED(
-                  "rosbag2_storage_default_plugins",
-                  "Leaking memory. Error: %s", rcutils_get_error_string_safe());
-              }
-            });
-        message->topic_name = topic_name;
+    auto subscription = std::make_shared<RawSubscription>(
+      node->get_node_base_interface()->get_shared_rcl_node_handle(),
+      *type_support,
+      topic_name,
+      [storage, topic_name, after_write_action](std::shared_ptr<rcutils_char_array_t> message) {
+        auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        bag_message->serialized_data = message;
+        bag_message->topic_name = topic_name;
         rcutils_time_point_value_t time_stamp;
         int error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
             "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
-        message->time_stamp = time_stamp;
+        bag_message->time_stamp = time_stamp;
 
-        storage->create_topic(topic_name, type);
-        storage->write(message);
+        storage->write(bag_message);
         if (after_write_action) {
           after_write_action();
         }
-      } else {
-        auto fini_error = rcutils_char_array_fini(serialized_msg);
-        (void) fini_error;
-      }
+      });
+
+    node->get_node_topics_interface()->add_subscription(subscription, nullptr);
+
+    storage->create_topic(topic_name, type);
+    while (rclcpp::ok()) {
+      rclcpp::spin(node);
     }
-    auto fini_error = rcl_subscription_fini(&subscription, node_ptr);
-    (void) fini_error;
-    auto fini_error2 = rcl_node_fini(node_ptr);
-    (void) fini_error2;
   }
 }
 
