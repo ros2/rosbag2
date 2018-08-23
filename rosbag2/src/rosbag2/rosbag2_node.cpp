@@ -33,8 +33,7 @@ std::shared_ptr<RawPublisher> Rosbag2Node::create_raw_publisher(
   return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, *type_support);
 }
 
-std::shared_ptr<RawSubscription>
-Rosbag2Node::create_raw_subscription(
+std::shared_ptr<RawSubscription> Rosbag2Node::create_raw_subscription(
   const std::string & topic,
   const std::string & type,
   std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback)

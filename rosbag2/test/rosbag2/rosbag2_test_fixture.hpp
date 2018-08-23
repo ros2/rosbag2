@@ -34,6 +34,8 @@
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 
+#include "test_helpers.hpp"
+
 using namespace ::testing;  // NOLINT
 
 class Rosbag2TestFixture : public Test
@@ -130,39 +132,7 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(std::string message)
   {
     auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-
-    auto test_message = std::make_shared<std_msgs::msg::String>();
-    test_message->data = message;
-
-    auto rcutils_allocator = rcutils_get_default_allocator();
-    auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
-    auto msg = new rcutils_char_array_t;
-    *msg = rcutils_get_zero_initialized_char_array();
-    auto ret = rcutils_char_array_init(msg, initial_capacity, &rcutils_allocator);
-    if (ret != RCUTILS_RET_OK) {
-      throw std::runtime_error("Error allocating resources for serialized message" +
-              std::to_string(ret));
-    }
-
-    bag_msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
-        [](rcutils_char_array_t * msg) {
-          int error = rcutils_char_array_fini(msg);
-          delete msg;
-          if (error != RCUTILS_RET_OK) {
-            RCUTILS_LOG_ERROR_NAMED(
-              "rosbag2", "Leaking memory. Error: %s", rcutils_get_error_string_safe());
-          }
-        });
-
-    bag_msg->serialized_data->buffer_length = initial_capacity;
-
-    auto string_ts =
-      rosidl_typesupport_cpp::get_message_type_support_handle<std_msgs::msg::String>();
-
-    auto error = rmw_serialize(test_message.get(), string_ts, bag_msg->serialized_data.get());
-    if (error != RMW_RET_OK) {
-      throw std::runtime_error("Something went wrong preparing the serialized message");
-    }
+    bag_msg->serialized_data = test_helpers::serialize_string_message(message);
 
     return bag_msg;
   }
@@ -170,12 +140,7 @@ public:
   std::string deserialize_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
   {
-    char * copied = new char[serialized_message->serialized_data->buffer_length];
-    auto string_length = serialized_message->serialized_data->buffer_length - 8;
-    memcpy(copied, &serialized_message->serialized_data->buffer[8], string_length);
-    std::string message_content(copied);
-    delete[] copied;
-    return message_content;
+    return test_helpers::deserialize_string_message(serialized_message->serialized_data);
   }
 
   std::string database_name_;
