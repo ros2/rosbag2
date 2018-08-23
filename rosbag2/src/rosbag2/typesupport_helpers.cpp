@@ -32,20 +32,24 @@ std::string get_typesupport_library_path(
 {
   const char * filename_prefix;
   const char * filename_extension;
+  const char * dynamic_library_folder;
 #ifdef _WIN32
   filename_prefix = "";
   filename_extension = ".dll";
+  dynamic_library_folder = "/bin/";
 #elif __APPLE__
   filename_prefix = "lib";
   filename_extension = ".dylib";
+  dynamic_library_folder = "/lib/";
 #else
   filename_prefix = "lib";
   filename_extension = ".so";
+  dynamic_library_folder = "/lib/";
 #endif
 
   auto package_prefix = ament_index_cpp::get_package_prefix(package_name);
-  auto library_path = package_prefix + "/lib/" + filename_prefix + package_name + "__" +
-    typesupport_identifier + filename_extension;
+  auto library_path = package_prefix + dynamic_library_folder + filename_prefix +
+    package_name + "__" + typesupport_identifier + filename_extension;
   return library_path;
 }
 
