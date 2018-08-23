@@ -28,7 +28,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
-#include "demo_helpers.hpp"
+#include "typesupport_helpers.hpp"
 
 namespace rosbag2
 {
@@ -45,7 +45,6 @@ void Rosbag2::record(
   auto storage = factory.open_read_write(file_name, "sqlite3");
 
   if (storage) {
-
     RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
 
     auto ret = RCL_RET_ERROR;
@@ -65,7 +64,8 @@ void Rosbag2::record(
       auto names_and_types = new rmw_names_and_types_t;
       *names_and_types = rmw_get_zero_initialized_names_and_types();
 
-      (void) rcl_get_topic_names_and_types(node_ptr, r_allocator, false, names_and_types);
+      auto error = rcl_get_topic_names_and_types(node_ptr, r_allocator, false, names_and_types);
+      (void) error;
       size_t number_of_topics = names_and_types->names.size;
       for (size_t i = 0; i < number_of_topics; i++) {
         std::string complete_topic = "/" + topic_name;
@@ -76,53 +76,21 @@ void Rosbag2::record(
           break;
         }
       }
-      (void) rmw_names_and_types_fini(names_and_types);
+      auto fini_error = rmw_names_and_types_fini(names_and_types);
+      (void) fini_error;
     }
 
-    // TODO(botteroa-si): this works if only one '/' is present.
-    char type_separator = '/';
-    auto sep_position = type.find(type_separator);
-
-    std::string type_name = type.substr(sep_position + 1);
-    std::string package_name = type.substr(0, sep_position);
-
-    auto library_path = get_typesupport_library(package_name);
-    std::shared_ptr<Poco::SharedLibrary> typesupport_library = nullptr;
-    const rosidl_message_type_support_t * ts = nullptr;
-
-    try {
-      typesupport_library = std::make_shared<Poco::SharedLibrary>(library_path);
-
-      auto symbol_name = std::string("rosidl_typesupport_c__get_message_type_support_handle__") +
-        package_name + "__msg__" + type_name;
-
-      if (!typesupport_library->hasSymbol(symbol_name)) {
-        std::cout << "\nerror 1\n";
-        return;
-      }
-
-      const rosidl_message_type_support_t * (* get_ts)(void) = nullptr;
-      get_ts = (decltype(get_ts))typesupport_library->getSymbol(symbol_name);
-      ts = get_ts();
-      if (!ts) {
-        std::cout << "\nerror 2\n";
-        return;
-      }
-    } catch (Poco::LibraryLoadException &) {
-      std::cout << "\nerror 3\n";
-    }
-
+    auto type_support = get_typesupport(type);
 
     auto subscription = rcl_get_zero_initialized_subscription();
     auto subscription_options = rcl_subscription_get_default_options();
     ret = rcl_subscription_init(
-      &subscription, node_ptr, ts, topic_name.c_str(), &subscription_options);
+      &subscription, node_ptr, type_support, topic_name.c_str(), &subscription_options);
 
     ret = RCL_RET_SUBSCRIPTION_TAKE_FAILED;
 
 
     while ((ret == RCL_RET_OK || ret == RCL_RET_SUBSCRIPTION_TAKE_FAILED) && rclcpp::ok()) {
-
       auto serialized_msg = new rcutils_char_array_t;
       *serialized_msg = rcutils_get_zero_initialized_char_array();
       auto allocator = new rcutils_allocator_t;
@@ -157,17 +125,21 @@ void Rosbag2::record(
             "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
         }
         message->time_stamp = time_stamp;
+
         storage->create_topic(topic_name, type);
         storage->write(message);
         if (after_write_action) {
           after_write_action();
         }
       } else {
-        (void) rcutils_char_array_fini(serialized_msg);
+        auto fini_error = rcutils_char_array_fini(serialized_msg);
+        (void) fini_error;
       }
     }
-    (void) rcl_subscription_fini(&subscription, node_ptr);
-    (void) rcl_node_fini(node_ptr);
+    auto fini_error = rcl_subscription_fini(&subscription, node_ptr);
+    (void) fini_error;
+    auto fini_error2 = rcl_node_fini(node_ptr);
+    (void) fini_error2;
   }
 }
 
@@ -189,40 +161,9 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
     auto r_allocator = new rcl_allocator_t;
     *r_allocator = rcutils_get_default_allocator();
 
-    // TODO(botteroa-si): this works if only one '/' is present.
     std::string type = storage->read_topic_type(topic_name);
-    std::cout << "\ntype = " << type << "\n";
-    char type_separator = '/';
-    auto sep_position = type.find(type_separator);
 
-    std::string type_name = type.substr(sep_position + 1);
-    std::string package_name = type.substr(0, sep_position);
-
-    auto library_path = get_typesupport_library(package_name);
-    std::shared_ptr<Poco::SharedLibrary> typesupport_library = nullptr;
-    const rosidl_message_type_support_t * ts = nullptr;
-
-    try {
-      typesupport_library = std::make_shared<Poco::SharedLibrary>(library_path);
-
-      auto symbol_name = std::string("rosidl_typesupport_c__get_message_type_support_handle__") +
-        package_name + "__msg__" + type_name;
-
-      if (!typesupport_library->hasSymbol(symbol_name)) {
-        std::cout << "\nerror 1\n";
-        return;
-      }
-
-      const rosidl_message_type_support_t * (* get_ts)(void) = nullptr;
-      get_ts = (decltype(get_ts))typesupport_library->getSymbol(symbol_name);
-      ts = get_ts();
-      if (!ts) {
-        std::cout << "\nerror 2\n";
-        return;
-      }
-    } catch (Poco::LibraryLoadException &) {
-      std::cout << "\nerror 3\n";
-    }
+    auto ts = get_typesupport(type);
 
     rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
     rcl_publisher_options_t publisher_options = rcl_publisher_get_default_options();

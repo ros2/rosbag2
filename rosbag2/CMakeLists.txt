@@ -30,7 +30,7 @@ add_library(
   librosbag2
   SHARED
   src/rosbag2/rosbag2.cpp
-  src/rosbag2/demo_helpers.hpp)
+  src/rosbag2/typesupport_helpers.cpp)
 
 ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rcl Poco ament_index_cpp rosbag2_storage)
 target_include_directories(librosbag2
@@ -78,6 +78,15 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
     target_link_libraries(rosbag2_read_integration_test librosbag2)
+  endif()
+
+  ament_add_gmock(rosbag2_typesupport_helpers_test
+    test/rosbag2/rosbag2_typesupport_helpers_test.cpp
+    src/rosbag2/typesupport_helpers.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_typesupport_helpers_test)
+    ament_target_dependencies(rosbag2_typesupport_helpers_test rcl Poco ament_index_cpp
+      rosidl_generator_c)
   endif()
 endif()
 
