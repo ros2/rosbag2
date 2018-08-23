@@ -27,10 +27,10 @@ RawPublisher::RawPublisher(
 : rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
 {}
 
-void RawPublisher::publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+void RawPublisher::publish(std::shared_ptr<rcutils_char_array_t> message)
 {
   auto return_code = rcl_publish_serialized_message(
-    get_publisher_handle(), message->serialized_data.get());
+    get_publisher_handle(), message.get());
 
   if (return_code != RCL_RET_OK) {
     rclcpp::exceptions::throw_from_rcl_error(return_code, "failed to publish serialized message");

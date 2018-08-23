@@ -20,8 +20,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_storage/serialized_bag_message.hpp"
-
 namespace rosbag2
 {
 
@@ -35,7 +33,7 @@ public:
 
   ~RawPublisher() override = default;
 
-  void publish(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+  void publish(std::shared_ptr<rcutils_char_array_t> message);
 };
 
 }  // namespace rosbag2

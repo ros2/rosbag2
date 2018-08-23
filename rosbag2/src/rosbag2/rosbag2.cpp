@@ -119,7 +119,7 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
       auto message = storage->read_next();
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      publisher->publish(message);
+      publisher->publish(message->serialized_data);
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }
