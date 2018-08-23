@@ -39,6 +39,11 @@ public:
     rclcpp::init(0, nullptr);
   }
 
+  static void TearDownTestCase()
+  {
+    rclcpp::shutdown();
+  }
+
   std::vector<std::string> subscribe_raw_messages(
     size_t expected_messages_number, const std::string & topic_name, const std::string & type)
   {
