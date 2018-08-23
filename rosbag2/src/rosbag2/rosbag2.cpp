@@ -150,31 +150,23 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
 
   if (storage) {
 
-    auto ret = RCL_RET_ERROR;
-
-    auto node_ptr = new rcl_node_t;
-    *node_ptr = rcl_get_zero_initialized_node();
-    const char * name = "rosbag2_node";
-    rcl_node_options_t node_options = rcl_node_get_default_options();
-    ret = rcl_node_init(node_ptr, name, "", &node_options);
-
-    auto r_allocator = new rcl_allocator_t;
-    *r_allocator = rcutils_get_default_allocator();
-
     std::string type = storage->read_topic_type(topic_name);
-
     auto ts = get_typesupport(type);
 
-    rcl_publisher_t publisher = rcl_get_zero_initialized_publisher();
-    rcl_publisher_options_t publisher_options = rcl_publisher_get_default_options();
-    ret = rcl_publisher_init(&publisher, node_ptr, ts, topic_name.c_str(), &publisher_options);
+    auto node = std::make_shared<rclcpp::Node>("load_typesupport_cpp");
+    auto publisher_base = std::make_shared<rclcpp::PublisherBase>(
+      node->get_node_base_interface().get(),
+      topic_name,
+      *ts,
+      rcl_publisher_get_default_options());
 
     while (storage->has_next()) {
       auto message = storage->read_next();
 
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      ret = rcl_publish_serialized_message(&publisher, message->serialized_data.get());
+      auto ret = rcl_publish_serialized_message(
+        publisher_base->get_publisher_handle(), message->serialized_data.get());
       if (ret != RCL_RET_OK) {
         throw std::runtime_error("failed to publish serialized message");
       }
