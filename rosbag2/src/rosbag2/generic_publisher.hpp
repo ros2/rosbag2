@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__RAW_PUBLISHER_HPP_
-#define ROSBAG2__RAW_PUBLISHER_HPP_
+#ifndef ROSBAG2__GENERIC_PUBLISHER_HPP_
+#define ROSBAG2__GENERIC_PUBLISHER_HPP_
 
 #include <memory>
 #include <string>
@@ -23,19 +23,19 @@
 namespace rosbag2
 {
 
-class RawPublisher : public rclcpp::PublisherBase
+class GenericPublisher : public rclcpp::PublisherBase
 {
 public:
-  RawPublisher(
+  GenericPublisher(
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
     const std::string & topic,
     const rosidl_message_type_support_t & type_support);
 
-  ~RawPublisher() override = default;
+  ~GenericPublisher() override = default;
 
   void publish(std::shared_ptr<rcutils_char_array_t> message);
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__RAW_PUBLISHER_HPP_
+#endif  // ROSBAG2__GENERIC_PUBLISHER_HPP_

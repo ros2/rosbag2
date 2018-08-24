@@ -51,7 +51,7 @@ public:
   {
     std::vector<std::string> messages;
     size_t counter = 0;
-    auto subscription = node_->create_raw_subscription(topic_name, type,
+    auto subscription = node_->create_generic_subscription(topic_name, type,
         [&counter, &messages](std::shared_ptr<rcutils_char_array_t> message) {
           messages.push_back(test_helpers::deserialize_string_message(message));
           counter++;
@@ -78,7 +78,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
         return subscribe_raw_messages(1, topic_name, type);
       });
 
-  auto publisher = node_->create_raw_publisher(topic_name, type);
+  auto publisher = node_->create_generic_publisher(topic_name, type);
   for (const auto & message : test_messages) {
     publisher->publish(test_helpers::serialize_string_message(message));
   }

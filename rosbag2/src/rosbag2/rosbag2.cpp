@@ -28,7 +28,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
-#include "raw_subscription.hpp"
+#include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
 #include "typesupport_helpers.hpp"
 
@@ -90,7 +90,7 @@ void Rosbag2::record(
       return;
     }
 
-    auto subscription = node->create_raw_subscription(
+    auto subscription = node->create_generic_subscription(
       topic_name,
       type,
       [storage, topic_name, after_write_action](std::shared_ptr<rcutils_char_array_t> message) {
@@ -128,7 +128,8 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
   if (storage) {
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
     // TODO(Martin-Idel-SI): Check whether topic exists and use correct API once available
-    auto publisher = node->create_raw_publisher(topic_name, get_topic_type(storage, topic_name));
+    auto publisher = node->create_generic_publisher(
+      topic_name, get_topic_type(storage, topic_name));
 
     while (storage->has_next()) {
       auto message = storage->read_next();

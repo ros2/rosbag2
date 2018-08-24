@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__RAW_SUBSCRIPTION_HPP_
-#define ROSBAG2__RAW_SUBSCRIPTION_HPP_
+#ifndef ROSBAG2__GENERIC_SUBSCRIPTION_HPP_
+#define ROSBAG2__GENERIC_SUBSCRIPTION_HPP_
 
 #include <memory>
 #include <string>
@@ -30,10 +30,10 @@ namespace rosbag2
  *
  * It does not support intra-process handling
  */
-class RawSubscription : public rclcpp::SubscriptionBase
+class GenericSubscription : public rclcpp::SubscriptionBase
 {
 public:
-  RCLCPP_SMART_PTR_DEFINITIONS(RawSubscription)
+  RCLCPP_SMART_PTR_DEFINITIONS(GenericSubscription)
 
   /**
    * Constructor. In order to properly subscribe to a topic, this subscription needs to be added to
@@ -44,7 +44,7 @@ public:
    * @param topic_name Topic name
    * @param callback Callback for new messages of serialized form
    */
-  RawSubscription(
+  GenericSubscription(
     std::shared_ptr<rcl_node_t> node_handle,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
@@ -73,7 +73,7 @@ public:
   get_intra_process_subscription_handle() const override;
 
 private:
-  RCLCPP_DISABLE_COPY(RawSubscription)
+  RCLCPP_DISABLE_COPY(GenericSubscription)
 
   std::shared_ptr<rcl_serialized_message_t> borrow_serialized_message(size_t capacity);
 
@@ -82,4 +82,4 @@ private:
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__RAW_SUBSCRIPTION_HPP_
+#endif  // ROSBAG2__GENERIC_SUBSCRIPTION_HPP_

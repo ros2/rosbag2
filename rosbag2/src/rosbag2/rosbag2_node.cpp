@@ -26,21 +26,21 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name)
 : rclcpp::Node(node_name)
 {}
 
-std::shared_ptr<RawPublisher> Rosbag2Node::create_raw_publisher(
+std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
   const std::string & topic, const std::string & type)
 {
   auto type_support = get_typesupport(type);
-  return std::make_shared<RawPublisher>(get_node_base_interface().get(), topic, *type_support);
+  return std::make_shared<GenericPublisher>(get_node_base_interface().get(), topic, *type_support);
 }
 
-std::shared_ptr<RawSubscription> Rosbag2Node::create_raw_subscription(
+std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const std::string & topic,
   const std::string & type,
   std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback)
 {
   auto type_support = get_typesupport(type);
 
-  auto subscription = std::make_shared<RawSubscription>(
+  auto subscription = std::make_shared<GenericSubscription>(
     get_node_base_interface()->get_shared_rcl_node_handle(),
     *type_support,
     topic,

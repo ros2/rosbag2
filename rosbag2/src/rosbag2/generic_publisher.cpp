@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "raw_publisher.hpp"
+#include "generic_publisher.hpp"
 
 #include <memory>
 #include <string>
@@ -20,14 +20,14 @@
 namespace rosbag2
 {
 
-RawPublisher::RawPublisher(
+GenericPublisher::GenericPublisher(
   rclcpp::node_interfaces::NodeBaseInterface * node_base,
   const std::string & topic,
   const rosidl_message_type_support_t & type_support)
 : rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
 {}
 
-void RawPublisher::publish(std::shared_ptr<rcutils_char_array_t> message)
+void GenericPublisher::publish(std::shared_ptr<rcutils_char_array_t> message)
 {
   auto return_code = rcl_publish_serialized_message(
     get_publisher_handle(), message.get());

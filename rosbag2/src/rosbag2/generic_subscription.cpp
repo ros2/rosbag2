@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "raw_subscription.hpp"
+#include "generic_subscription.hpp"
 
 #include <memory>
 #include <string>
@@ -23,7 +23,7 @@
 namespace rosbag2
 {
 
-RawSubscription::RawSubscription(
+GenericSubscription::GenericSubscription(
   std::shared_ptr<rcl_node_t> node_handle,
   const rosidl_message_type_support_t & ts,
   const std::string & topic_name,
@@ -37,18 +37,18 @@ RawSubscription::RawSubscription(
   callback_(callback)
 {}
 
-std::shared_ptr<void> RawSubscription::create_message()
+std::shared_ptr<void> GenericSubscription::create_message()
 {
   return borrow_serialized_message(0);
 }
 
-std::shared_ptr<rcl_serialized_message_t> RawSubscription::create_serialized_message()
+std::shared_ptr<rcl_serialized_message_t> GenericSubscription::create_serialized_message()
 {
   return borrow_serialized_message(0);
 }
 
 
-void RawSubscription::handle_message(
+void GenericSubscription::handle_message(
   std::shared_ptr<void> & message, const rmw_message_info_t & message_info)
 {
   (void) message_info;
@@ -56,19 +56,19 @@ void RawSubscription::handle_message(
   callback_(typed_message);
 }
 
-void RawSubscription::return_message(std::shared_ptr<void> & message)
+void GenericSubscription::return_message(std::shared_ptr<void> & message)
 {
   auto typed_message = std::static_pointer_cast<rcutils_char_array_t>(message);
   message.reset();
 }
 
-void RawSubscription::return_serialized_message(
+void GenericSubscription::return_serialized_message(
   std::shared_ptr<rcl_serialized_message_t> & message)
 {
   message.reset();
 }
 
-void RawSubscription::handle_intra_process_message(
+void GenericSubscription::handle_intra_process_message(
   rcl_interfaces::msg::IntraProcessMessage & ipm,
   const rmw_message_info_t & message_info)
 {
@@ -78,13 +78,13 @@ void RawSubscription::handle_intra_process_message(
 }
 
 const std::shared_ptr<rcl_subscription_t>
-RawSubscription::get_intra_process_subscription_handle() const
+GenericSubscription::get_intra_process_subscription_handle() const
 {
   return nullptr;
 }
 
 std::shared_ptr<rcl_serialized_message_t>
-RawSubscription::borrow_serialized_message(size_t capacity)
+GenericSubscription::borrow_serialized_message(size_t capacity)
 {
   auto message = new rcl_serialized_message_t;
   *message = rmw_get_zero_initialized_serialized_message();
