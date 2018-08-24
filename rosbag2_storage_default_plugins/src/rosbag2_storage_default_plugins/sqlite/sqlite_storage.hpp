@@ -63,6 +63,7 @@ private:
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types_map();
+  bool database_exists(const std::string & uri);
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;

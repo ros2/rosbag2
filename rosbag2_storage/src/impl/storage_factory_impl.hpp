@@ -83,7 +83,7 @@ get_interface_instance(
     return instance;
   } catch (const std::runtime_error & ex) {
     RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-      "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+      "Could not open '%s' with %s. Error: %s", uri.c_str(), storage_id.c_str(), ex.what());
     return nullptr;
   }
 }

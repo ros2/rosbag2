@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
@@ -42,6 +43,10 @@ SqliteStorage::SqliteStorage()
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY && !database_exists(uri)) {
+    throw std::runtime_error("Failed to read from bag '" + uri + "': file does not exist.");
+  }
+
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);
     bag_info_.uri = uri;
@@ -157,6 +162,12 @@ void SqliteStorage::fill_topics_and_types_map()
   for (auto result : query_results) {
     all_topics_and_types_.insert(std::make_pair(std::get<0>(result), std::get<1>(result)));
   }
+}
+
+bool SqliteStorage::database_exists(const std::string & uri)
+{
+  std::ifstream database(uri);
+  return database.good();
 }
 
 }  // namespace rosbag2_storage_plugins
