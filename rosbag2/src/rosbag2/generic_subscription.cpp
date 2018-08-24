@@ -40,7 +40,7 @@ GenericSubscription::GenericSubscription(
 
 std::shared_ptr<void> GenericSubscription::create_message()
 {
-  return borrow_serialized_message(0);
+  return create_serialized_message();
 }
 
 std::shared_ptr<rcl_serialized_message_t> GenericSubscription::create_serialized_message()
@@ -60,7 +60,7 @@ void GenericSubscription::handle_message(
 void GenericSubscription::return_message(std::shared_ptr<void> & message)
 {
   auto typed_message = std::static_pointer_cast<rcutils_char_array_t>(message);
-  message.reset();
+  return_serialized_message(typed_message);
 }
 
 void GenericSubscription::return_serialized_message(
