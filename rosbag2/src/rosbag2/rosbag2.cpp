@@ -18,9 +18,8 @@
 #include <memory>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
 #include "rcl/graph.h"
-
+#include "rclcpp/rclcpp.hpp"
 #include "rcutils/logging_macros.h"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -64,27 +63,15 @@ std::string Rosbag2::get_topic_type(
   return "";
 }
 
-std::string Rosbag2::get_topic_type(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
-  const std::string & topic)
+void Rosbag2::prepare_publishers(
+  std::shared_ptr<Rosbag2Node> node,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
 {
   auto all_topics_and_types = storage->get_all_topics_and_types();
-  auto map_iterator_to_topic = all_topics_and_types.find(topic);
-
-  if (map_iterator_to_topic == all_topics_and_types.end()) {
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME,
-      "No messages with topic '%s' in bag file '%s'. Messages cannot be played.",
-      topic.c_str(), storage->info().uri.c_str());
-    return "";
-  } else if (map_iterator_to_topic->second.empty()) {
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME,
-      "No type specified for topic '%s' in bag file '%s'. Messages cannot be played.",
-      topic.c_str(), storage->info().uri.c_str());
+  for (const auto & element : all_topics_and_types) {
+    publishers_.insert(std::make_pair(
+        element.first, node->create_generic_publisher(element.first, element.second)));
   }
-
-  return map_iterator_to_topic->second;
 }
 
 void Rosbag2::record(
@@ -140,24 +127,20 @@ void Rosbag2::record(
   }
 }
 
-void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
+void Rosbag2::play(const std::string & file_name)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
-    std::string type_name = get_topic_type(storage, topic_name);
-    if (type_name.empty()) {
-      return;
-    }
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
-    auto publisher = node->create_generic_publisher(topic_name, type_name);
+    prepare_publishers(node, storage);
 
     while (storage->has_next()) {
       auto message = storage->read_next();
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      publisher->publish(message->serialized_data);
+      publishers_[message->topic_name]->publish(message->serialized_data);
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }

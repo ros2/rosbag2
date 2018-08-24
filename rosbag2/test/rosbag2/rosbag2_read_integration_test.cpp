@@ -62,10 +62,10 @@ public:
         });
   }
 
-  void play_bag(std::string database_name, std::string topic)
+  void play_bag(std::string database_name)
   {
     rosbag2::Rosbag2 rosbag2;
-    rosbag2.play(database_name, topic);
+    rosbag2.play(database_name);
   }
 
   std::atomic<size_t> counter_;
@@ -86,7 +86,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
   launch_subscriber(2);
-  play_bag(database_name_, "string_topic");
+  play_bag(database_name_);
 
   auto replayed_messages = subscriber_future_.get();
   ASSERT_THAT(replayed_messages, SizeIs(2));

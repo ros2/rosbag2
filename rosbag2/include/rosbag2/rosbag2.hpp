@@ -16,6 +16,7 @@
 #define ROSBAG2__ROSBAG2_HPP_
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -27,6 +28,9 @@
 namespace rosbag2
 {
 
+class GenericPublisher;
+class Rosbag2Node;
+
 class Rosbag2
 {
 public:
@@ -37,16 +41,18 @@ public:
     std::function<void(void)> after_write_action = nullptr);
 
   ROSBAG2_PUBLIC
-  void play(const std::string & file_name, const std::string & topic_name);
+  void play(const std::string & file_name);
 
   ROSBAG2_PUBLIC
   std::string get_topic_type(
     const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
 
-  ROSBAG2_PUBLIC
-  std::string get_topic_type(
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
-    const std::string & topic);
+private:
+  void prepare_publishers(
+    std::shared_ptr<Rosbag2Node> node,
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage);
+
+  std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };
 
 }  // namespace rosbag2
