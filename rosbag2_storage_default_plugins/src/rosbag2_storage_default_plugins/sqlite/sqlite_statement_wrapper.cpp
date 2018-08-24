@@ -47,55 +47,63 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   }
 }
 
-void SqliteStatementWrapper::execute_and_reset()
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
 {
   int return_code = sqlite3_step(statement_);
   if (return_code != SQLITE_OK && return_code != SQLITE_DONE) {
     throw SqliteException("Error processing SQLite statement.");
   }
-  reset();
+  return reset();
 }
 
-void SqliteStatementWrapper::bind(int value)
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(int value)
 {
   auto return_code = sqlite3_bind_int(statement_, ++last_bound_parameter_index_, value);
   check_and_report_bind_error(return_code, value);
+  return shared_from_this();
 }
 
-void SqliteStatementWrapper::bind(rcutils_time_point_value_t value)
+std::shared_ptr<SqliteStatementWrapper>
+SqliteStatementWrapper::bind(rcutils_time_point_value_t value)
 {
   auto return_code = sqlite3_bind_int64(statement_, ++last_bound_parameter_index_, value);
   check_and_report_bind_error(return_code, value);
+  return shared_from_this();
 }
 
-void SqliteStatementWrapper::bind(double value)
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(double value)
 {
   auto return_code = sqlite3_bind_double(statement_, ++last_bound_parameter_index_, value);
   check_and_report_bind_error(return_code, value);
+  return shared_from_this();
 }
 
-void SqliteStatementWrapper::bind(std::string value)
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(std::string value)
 {
   auto return_code = sqlite3_bind_text(
     statement_, ++last_bound_parameter_index_, value.c_str(), -1, SQLITE_TRANSIENT);
   check_and_report_bind_error(return_code, value);
+  return shared_from_this();
 }
 
-void SqliteStatementWrapper::bind(std::shared_ptr<rcutils_char_array_t> value)
+std::shared_ptr<SqliteStatementWrapper>
+SqliteStatementWrapper::bind(std::shared_ptr<rcutils_char_array_t> value)
 {
   written_blobs_cache_.push_back(value);
   auto return_code = sqlite3_bind_blob(
     statement_, ++last_bound_parameter_index_,
     value->buffer, static_cast<int>(value->buffer_length), SQLITE_STATIC);
   check_and_report_bind_error(return_code);
+  return shared_from_this();
 }
 
-void SqliteStatementWrapper::reset()
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::reset()
 {
   sqlite3_reset(statement_);
   sqlite3_clear_bindings(statement_);
   last_bound_parameter_index_ = 0;
   written_blobs_cache_.clear();
+  return shared_from_this();
 }
 
 bool SqliteStatementWrapper::step()

@@ -51,10 +51,8 @@ TEST_F(StorageTestFixture, bind_values_are_inserted) {
   db.prepare_statement("CREATE TABLE test (int_col INTEGER, double_col FLOAT, string_col TEXT);")
   ->execute_and_reset();
 
-  auto statement = db.prepare_statement(
-    "INSERT INTO test (int_col, double_col, string_col) VALUES (?, ?, ?);");
-  statement->bind(1, 3.14, "abc");
-  statement->execute_and_reset();
+  db.prepare_statement("INSERT INTO test (int_col, double_col, string_col) VALUES (?, ?, ?);")
+  ->bind(1, 3.14, "abc")->execute_and_reset();
 
   auto row_iter = db.prepare_statement(
     "SELECT COUNT(*) FROM test WHERE int_col = 1 AND double_col = 3.14 AND string_col = 'abc';")
@@ -66,11 +64,8 @@ TEST_F(StorageTestFixture, reuse_prepared_statement) {
   auto db = rosbag2_storage_plugins::SqliteWrapper{database_name_};
   db.prepare_statement("CREATE TABLE test (col INTEGER);")->execute_and_reset();
 
-  auto statement = db.prepare_statement("INSERT INTO test (col) VALUES (?);");
-  statement->bind(1);
-  statement->execute_and_reset();
-  statement->bind(2);
-  statement->execute_and_reset();
+  db.prepare_statement("INSERT INTO test (col) VALUES (?);")
+  ->bind(1)->execute_and_reset()->bind(2)->execute_and_reset();
 
   auto row_iter = db.prepare_statement("SELECT COUNT(*) FROM test;")->execute_query<int>().begin();
   ASSERT_THAT(std::get<0>(*row_iter), Eq(2));
@@ -110,9 +105,8 @@ TEST_F(StorageTestFixture, ros_specific_types_are_supported_for_reading_and_writ
   auto msg_content = "message";
   std::shared_ptr<rcutils_char_array_t> message = make_serialized_message(msg_content);
 
-  auto statement = db.prepare_statement("INSERT INTO test (timestamp, data) VALUES (?, ?);");
-  statement->bind(time, message);
-  statement->execute_and_reset();
+  db.prepare_statement("INSERT INTO test (timestamp, data) VALUES (?, ?);")
+  ->bind(time, message)->execute_and_reset();
   auto row_iter = db.prepare_statement("SELECT timestamp, data FROM test")
     ->execute_query<rcutils_time_point_value_t, std::shared_ptr<rcutils_char_array_t>>().begin();
 

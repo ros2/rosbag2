@@ -131,19 +131,19 @@ private:
     std::shared_ptr<SqliteStatementWrapper> statement_;
   };
 
-  void execute_and_reset();
+  std::shared_ptr<SqliteStatementWrapper> execute_and_reset();
   template<typename ... Columns>
   QueryResult<Columns ...> execute_query();
 
   template<typename T1, typename T2, typename ... Params>
-  void bind(T1 value1, T2 value2, Params ... values);
-  void bind(int value);
-  void bind(rcutils_time_point_value_t value);
-  void bind(double value);
-  void bind(std::string value);
-  void bind(std::shared_ptr<rcutils_char_array_t> value);
+  std::shared_ptr<SqliteStatementWrapper> bind(T1 value1, T2 value2, Params ... values);
+  std::shared_ptr<SqliteStatementWrapper> bind(int value);
+  std::shared_ptr<SqliteStatementWrapper> bind(rcutils_time_point_value_t value);
+  std::shared_ptr<SqliteStatementWrapper> bind(double value);
+  std::shared_ptr<SqliteStatementWrapper> bind(std::string value);
+  std::shared_ptr<SqliteStatementWrapper> bind(std::shared_ptr<rcutils_char_array_t> value);
 
-  void reset();
+  std::shared_ptr<SqliteStatementWrapper> reset();
 
 private:
   bool step();
@@ -165,10 +165,11 @@ private:
 
 template<typename T1, typename T2, typename ... Params>
 inline
-void SqliteStatementWrapper::bind(T1 value1, T2 value2, Params ... values)
+std::shared_ptr<SqliteStatementWrapper>
+SqliteStatementWrapper::bind(T1 value1, T2 value2, Params ... values)
 {
   bind(value1);
-  bind(value2, values ...);
+  return bind(value2, values ...);
 }
 
 template<>
