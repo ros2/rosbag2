@@ -155,7 +155,7 @@ void SqliteStorage::fill_topics_and_types_map()
   auto query_results = statement->execute_query<std::string, std::string>();
 
   for (auto result : query_results) {
-    all_topics_and_types_.insert(result);
+    all_topics_and_types_.insert(std::make_pair(std::get<0>(result), std::get<1>(result)));
   }
 }
 

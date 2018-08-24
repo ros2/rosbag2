@@ -71,6 +71,7 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_write_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
     target_link_libraries(rosbag2_write_integration_test librosbag2)
@@ -80,6 +81,7 @@ if(BUILD_TESTING)
     test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
     test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
     target_link_libraries(rosbag2_read_integration_test librosbag2)
@@ -97,6 +99,7 @@ if(BUILD_TESTING)
   ament_add_gmock(rosbag2_integration_test
     test/rosbag2/rosbag2_integration_test.cpp
     test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_integration_test)
     target_link_libraries(rosbag2_integration_test librosbag2)
