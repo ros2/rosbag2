@@ -58,6 +58,8 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
+  std::string get_topic_with_id(int topic_id);
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -65,7 +67,6 @@ private:
   void fill_topics_and_types();
   void fill_topics();
   bool database_exists(const std::string & uri);
-  std::string get_topic_with_id(int topic_id);
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;
