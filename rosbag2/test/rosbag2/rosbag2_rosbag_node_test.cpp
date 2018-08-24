@@ -70,7 +70,7 @@ public:
 TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
 {
   // We currently publish more messages because they can get lost
-  std::vector<std::string> test_messages = {"Hello World", "Hello World", "Hello World"};
+  std::vector<std::string> test_messages = {"Hello World", "Hello World"};
   std::string topic_name = "string_topic";
   std::string type = "std_msgs/String";
 
@@ -81,6 +81,8 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   auto publisher = node_->create_generic_publisher(topic_name, type);
   for (const auto & message : test_messages) {
     publisher->publish(test_helpers::serialize_string_message(message));
+    // This is necessary because sometimes, the subscriber is initialized very late
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   auto subscribed_messages = subscriber_future_.get();
