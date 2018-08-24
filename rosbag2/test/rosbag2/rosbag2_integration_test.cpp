@@ -67,17 +67,23 @@ public:
 };
 
 TEST_F(RosBag2IntegrationFixture,
-  wait_for_topic_returns_with_topic_string_if_topic_is_specified_without_slash)
+  get_topic_returns_with_topic_string_if_topic_is_specified_without_slash)
 {
-  std::string type = rosbag2_.wait_for_topic("string_topic", node_);
+  std::string type = rosbag2_.get_topic_type("string_topic", node_);
 
   EXPECT_THAT(type, StrEq("std_msgs/String"));
 }
 
 TEST_F(RosBag2IntegrationFixture,
-  wait_for_topic_returns_with_topic_string_if_topic_is_specified_with_slash)
+  get_topic_returns_with_topic_string_if_topic_is_specified_with_slash)
 {
-  std::string type = rosbag2_.wait_for_topic("/string_topic", node_);
+  std::string type = rosbag2_.get_topic_type("/string_topic", node_);
 
   EXPECT_THAT(type, StrEq("std_msgs/String"));
+}
+
+TEST_F(RosBag2IntegrationFixture, get_topic_returns_empty_if_topic_does_not_exist) {
+  std::string type = rosbag2_.get_topic_type("/wrong_topic", node_);
+
+  EXPECT_THAT(type, IsEmpty());
 }

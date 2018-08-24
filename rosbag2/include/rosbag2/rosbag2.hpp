@@ -40,7 +40,7 @@ public:
   void play(const std::string & file_name, const std::string & topic_name);
 
   ROSBAG2_PUBLIC
-  std::string wait_for_topic(
+  std::string get_topic_type(
     const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
 
   ROSBAG2_PUBLIC
