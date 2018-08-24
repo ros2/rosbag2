@@ -34,6 +34,7 @@ GenericSubscription::GenericSubscription(
     topic_name,
     rcl_subscription_get_default_options(),
     true),
+  default_allocator_(rcutils_get_default_allocator()),
   callback_(callback)
 {}
 
@@ -88,9 +89,7 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
 {
   auto message = new rcl_serialized_message_t;
   *message = rmw_get_zero_initialized_serialized_message();
-  auto allocator = new rcutils_allocator_t;
-  *allocator = rcutils_get_default_allocator();
-  auto init_return = rmw_serialized_message_init(message, capacity, allocator);
+  auto init_return = rmw_serialized_message_init(message, capacity, &default_allocator_);
   if (init_return != RCL_RET_OK) {
     rclcpp::exceptions::throw_from_rcl_error(init_return);
   }

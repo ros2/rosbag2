@@ -76,7 +76,7 @@ private:
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
   std::shared_ptr<rcl_serialized_message_t> borrow_serialized_message(size_t capacity);
-
+  rcutils_allocator_t default_allocator_;
   std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback_;
 };
 
