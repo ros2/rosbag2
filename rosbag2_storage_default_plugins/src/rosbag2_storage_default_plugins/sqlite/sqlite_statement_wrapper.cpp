@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "rcutils/logging_macros.h"
+#include "rosbag2_storage/ros_helper.hpp"
 
 #include "sqlite_exception.hpp"
 
@@ -144,30 +145,7 @@ void SqliteStatementWrapper::obtain_column_value(
 {
   auto data = sqlite3_column_blob(statement_, static_cast<int>(index));
   auto size = static_cast<size_t>(sqlite3_column_bytes(statement_, static_cast<int>(index)));
-
-  auto rcutils_allocator = new rcutils_allocator_t;
-  *rcutils_allocator = rcutils_get_default_allocator();
-  auto msg = new rcutils_char_array_t;
-  *msg = rcutils_get_zero_initialized_char_array();
-  auto ret = rcutils_char_array_init(msg, size, rcutils_allocator);
-  if (ret != RCUTILS_RET_OK) {
-    throw std::runtime_error("Error allocating resources for serialized message: " +
-            std::string(rcutils_get_error_string_safe()));
-  }
-
-  value = std::shared_ptr<rcutils_char_array_t>(msg,
-      [](rcutils_char_array_t * msg) {
-        int error = rcutils_char_array_fini(msg);
-        delete msg;
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_storage_default_plugins",
-            "Leaking memory. Error: %s", rcutils_get_error_string_safe());
-        }
-      });
-
-  memcpy(value->buffer, data, size);
-  value->buffer_length = size;
+  value = rosbag2_storage::make_serialized_message(data, size);
 }
 
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code)
