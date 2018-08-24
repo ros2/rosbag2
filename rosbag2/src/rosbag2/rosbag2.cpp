@@ -49,7 +49,11 @@ std::string Rosbag2::wait_for_topic(
     auto position = topics.find(complete_topic_name);
     if (position != topics.end()) {
       if (position->second.size() > 1) {
-        throw std::runtime_error("Topic has several types. Only ROS topics are supported");
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Topic '%s' has several types associated. Only ROS topics are supported.",
+          position->first.c_str());
+        return "";
       }
       return position->second[0];
     }
@@ -58,17 +62,26 @@ std::string Rosbag2::wait_for_topic(
 }
 
 std::string Rosbag2::get_topic_type(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::BaseReadInterface> storage,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
   const std::string & topic)
 {
   auto all_topics_and_types = storage->get_all_topics_and_types();
-  for (const auto & pair : all_topics_and_types) {
-    if (pair.first == topic) {
-      return pair.second;
-    }
+  auto map_iterator_to_topic = all_topics_and_types.find(topic);
+
+  if (map_iterator_to_topic == all_topics_and_types.end()) {
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME,
+      "No messages with topic '%s' in bag file '%s'. Messages cannot be played.",
+      topic.c_str(), storage->info().uri.c_str());
+    return "";
+  } else if (map_iterator_to_topic->second.empty()) {
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME,
+      "No type specified for topic '%s' in bag file '%s'. Messages cannot be played.",
+      topic.c_str(), storage->info().uri.c_str());
   }
 
-  return "";
+  return map_iterator_to_topic->second;
 }
 
 void Rosbag2::record(
@@ -126,10 +139,12 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
   auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
+    std::string type_name = get_topic_type(storage, topic_name);
+    if (type_name.empty()) {
+      return;
+    }
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
-    // TODO(Martin-Idel-SI): Check whether topic exists and use correct API once available
-    auto publisher = node->create_generic_publisher(
-      topic_name, get_topic_type(storage, topic_name));
+    auto publisher = node->create_generic_publisher(topic_name, type_name);
 
     while (storage->has_next()) {
       auto message = storage->read_next();

@@ -21,7 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -45,7 +45,7 @@ public:
 
   ROSBAG2_PUBLIC
   std::string get_topic_type(
-    std::shared_ptr<rosbag2_storage::storage_interfaces::BaseReadInterface> storage,
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
     const std::string & topic);
 };
 
