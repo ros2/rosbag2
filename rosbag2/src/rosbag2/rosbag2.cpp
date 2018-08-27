@@ -128,6 +128,10 @@ void Rosbag2::record(
         }
       });
 
+    if (!subscription) {
+      return;
+    }
+
     storage->create_topic(topic_name, type);
 
     while (rclcpp::ok()) {

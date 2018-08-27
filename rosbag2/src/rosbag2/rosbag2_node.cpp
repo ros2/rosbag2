@@ -40,13 +40,20 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
 {
   auto type_support = get_typesupport(type);
 
-  auto subscription = std::make_shared<GenericSubscription>(
-    get_node_base_interface()->get_shared_rcl_node_handle(),
-    *type_support,
-    topic,
-    callback);
+  auto subscription = std::shared_ptr<GenericSubscription>();
 
-  get_node_topics_interface()->add_subscription(subscription, nullptr);
+  try {
+    subscription = std::make_shared<GenericSubscription>(
+      get_node_base_interface()->get_shared_rcl_node_handle(),
+      *type_support,
+      topic,
+      callback);
+
+    get_node_topics_interface()->add_subscription(subscription, nullptr);
+  } catch (const std::runtime_error & ex) {
+    RCUTILS_LOG_ERROR_NAMED(
+      "rosbag2", "Error subscribing to topic %s. Error: %s", topic.c_str(), ex.what());
+  }
 
   return subscription;
 }
