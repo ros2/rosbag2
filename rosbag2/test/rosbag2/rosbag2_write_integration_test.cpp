@@ -42,7 +42,7 @@ public:
   void record_message(const std::string & db_name)
   {
     rosbag2::Rosbag2 rosbag2;
-    rosbag2.record(db_name, "string_topic", [this]() {
+    rosbag2.record(db_name, {"string_topic"}, [this]() {
         counter_++;
       });
   }

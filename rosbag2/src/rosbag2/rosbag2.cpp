@@ -82,64 +82,84 @@ void Rosbag2::prepare_publishers(
 
 void Rosbag2::record(
   const std::string & file_name,
-  const std::string & topic_name,
+  std::vector<std::string> topic_names,
   std::function<void(void)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
 
-  if (storage) {
-    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  if (!storage) {
+    throw std::runtime_error("No storage could be initialized. Abort");
+    return;
+  }
 
-    auto node = std::make_shared<Rosbag2Node>("rosbag2");
+  auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
-    auto topic_names_and_types = get_topic_types({topic_name}, node);
+  auto topic_names_and_types = get_topic_types(topic_names, node);
 
-    if (topic_names_and_types.empty()) {
-      throw std::runtime_error(" No topics found. Abort");
-      return;
-    }
+  if (topic_names_and_types.empty()) {
+    throw std::runtime_error("No topics found. Abort");
+  }
 
-    auto type_position = topic_names_and_types.find(topic_name);
-    if (type_position == topic_names_and_types.end()) {
-      throw std::runtime_error(" No topics found. Abort");
-      return;
-    }
+  if (topic_names_and_types.empty()) {
+    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "No topics found. Abort.");
+    return;
+  }
 
-    auto type = type_position->second;
+  for (const auto & topic_and_type : topic_names_and_types) {
+    auto topic_name = topic_and_type.first;
+    auto topic_type = topic_and_type.second;
 
-    auto subscription = node->create_generic_subscription(
-      topic_name,
-      type,
-      [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
-        auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        bag_message->serialized_data = message;
-        bag_message->topic_name = topic_name;
-        rcutils_time_point_value_t time_stamp;
-        int error = rcutils_system_time_now(&time_stamp);
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            ROS_PACKAGE_NAME,
-            "Error getting current time. Error: %s", rcutils_get_error_string_safe());
-        }
-        bag_message->time_stamp = time_stamp;
+    std::shared_ptr<GenericSubscription> subscription = create_subscription(
+      after_write_action, storage, node, topic_name, topic_type);
 
-        storage->write(bag_message);
-        if (after_write_action) {
-          after_write_action();
-        }
-      });
+    if (subscription) {
+      subscriptions_.push_back(subscription);
 
-    if (!subscription) {
-      return;
-    }
-
-    storage->create_topic(topic_name, type);
-
-    while (rclcpp::ok()) {
-      rclcpp::spin(node);
+      storage->create_topic(topic_name, topic_type);
     }
   }
+
+  if (subscriptions_.empty()) {
+    throw std::runtime_error("No topics could be subscribed. Abort");
+    return;
+  }
+
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  while (rclcpp::ok()) {
+    rclcpp::spin(node);
+  }
+}
+
+std::shared_ptr<GenericSubscription>
+Rosbag2::create_subscription(
+  const std::function<void()> & after_write_action,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+  std::shared_ptr<Rosbag2Node> & node,
+  const std::string & topic_name, const std::string & topic_type) const
+{
+  auto subscription = node->create_generic_subscription(
+    topic_name,
+    topic_type,
+    [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
+      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      bag_message->serialized_data = message;
+      bag_message->topic_name = topic_name;
+      rcutils_time_point_value_t time_stamp;
+      int error = rcutils_system_time_now(&time_stamp);
+      if (error != RCUTILS_RET_OK) {
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+      }
+      bag_message->time_stamp = time_stamp;
+
+      storage->write(bag_message);
+      if (after_write_action) {
+        after_write_action();
+      }
+    });
+  return subscription;
 }
 
 void Rosbag2::play(const std::string & file_name)

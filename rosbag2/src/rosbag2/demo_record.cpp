@@ -35,7 +35,7 @@ int main(int argc, const char ** argv)
   rclcpp::init(argc, argv);
 
   rosbag2::Rosbag2 rosbag2;
-  rosbag2.record(filename, topic_name);
+  rosbag2.record(filename, {topic_name});
 
   rclcpp::shutdown();
 

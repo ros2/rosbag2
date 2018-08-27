@@ -24,12 +24,14 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
 
 class GenericPublisher;
+class GenericSubscription;
 class Rosbag2Node;
 
 class Rosbag2
@@ -38,7 +40,7 @@ public:
   ROSBAG2_PUBLIC
   void record(
     const std::string & file_name,
-    const std::string & topic_name,
+    std::vector<std::string> topic_names,
     std::function<void(void)> after_write_action = nullptr);
 
   ROSBAG2_PUBLIC
@@ -53,6 +55,14 @@ private:
     std::shared_ptr<Rosbag2Node> node,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage);
 
+  std::shared_ptr<rosbag2::GenericSubscription>
+  create_subscription(
+    const std::function<void()> & after_write_action,
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+    std::shared_ptr<Rosbag2Node> & node,
+    const std::string & topic_name, const std::string & topic_type) const;
+
+  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };
 
