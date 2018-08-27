@@ -21,16 +21,6 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
-include(cmake/configure_python.cmake)
-ament_python_install_package(${PROJECT_NAME})
-set(python_extension_files src/rosbag2_transport/_rosbag2_transport.c)
-set_source_files_properties(${python_extension_files} PROPERTIES LANGUAGE C)
-add_library(
-  rosbag2_transport_py
-  SHARED
-  ${python_extension_files})
-configure_python_c_extension_library(rosbag2_transport_py)
-
 add_library(rosbag2_transport src/rosbag2_transport.cpp)
 target_include_directories(rosbag2_transport PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -40,6 +30,15 @@ ament_target_dependencies(
   "rclcpp"
   "rosbag2_storage"
 )
+
+include(cmake/configure_python.cmake)
+ament_python_install_package(${PROJECT_NAME})
+add_library(
+  rosbag2_transport_py
+  SHARED
+  src/rosbag2_transport/_rosbag2_transport.cpp)
+configure_python_c_extension_library(rosbag2_transport_py)
+target_link_libraries(rosbag2_transport_py rosbag2_transport)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.

@@ -13,11 +13,39 @@
 // limitations under the License.
 
 #include <Python.h>
+#include <string>
+#include <vector>
+
+#include "rosbag2_transport/rosbag2_transport.hpp"
 
 static PyObject *
-rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * Py_UNUSED(args))
+rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
 {
-  fprintf(stderr, "recording topics\n");
+  PyObject * listObj; /* the list of strings */
+  if (!PyArg_ParseTuple(args, "O", &listObj)) {
+    return NULL;
+  }
+
+  PyObject *iterator = PyObject_GetIter(listObj);
+  if (iterator == NULL) {
+    return NULL;
+  }
+
+  std::vector<std::string> topic_vector;
+  PyObject *item;
+  while ((item = PyIter_Next(iterator))) {
+    topic_vector.push_back(std::string(PyUnicode_AsUTF8(item)));
+
+    Py_DECREF(item);
+  }
+  Py_DECREF(iterator);
+
+  if (topic_vector.size() == 0) {
+    return NULL;
+  }
+  rosbag2_transport::Rosbag2Transport transport;
+  transport.record(topic_vector);
+
   Py_RETURN_NONE;
 }
 
