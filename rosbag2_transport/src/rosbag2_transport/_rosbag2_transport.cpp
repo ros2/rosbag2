@@ -26,13 +26,13 @@ rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
     return NULL;
   }
 
-  PyObject *iterator = PyObject_GetIter(listObj);
+  PyObject * iterator = PyObject_GetIter(listObj);
   if (iterator == NULL) {
     return NULL;
   }
 
   std::vector<std::string> topic_vector;
-  PyObject *item;
+  PyObject * item;
   while ((item = PyIter_Next(iterator))) {
     topic_vector.push_back(std::string(PyUnicode_AsUTF8(item)));
 
