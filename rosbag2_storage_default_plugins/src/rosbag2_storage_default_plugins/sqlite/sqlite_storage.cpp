@@ -169,16 +169,6 @@ void SqliteStorage::fill_topics_and_types()
   }
 }
 
-void SqliteStorage::fill_topics()
-{
-  auto statement = database_->prepare_statement("SELECT id, name FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<int, std::string>();
-
-  for (auto result : query_results) {
-    topics_.insert(std::make_pair(std::get<1>(result), std::get<0>(result)));
-  }
-}
-
 bool SqliteStorage::database_exists(const std::string & uri)
 {
   std::ifstream database(uri);
