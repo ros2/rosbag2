@@ -129,7 +129,8 @@ public:
     }
   }
 
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(std::string message)
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_string_message(
+    std::string message)
   {
     auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     bag_msg->serialized_data = test_helpers::serialize_string_message(message);
@@ -137,7 +138,7 @@ public:
     return bag_msg;
   }
 
-  std::string deserialize_message(
+  std::string deserialize_string_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
   {
     return test_helpers::deserialize_string_message(serialized_message->serialized_data);

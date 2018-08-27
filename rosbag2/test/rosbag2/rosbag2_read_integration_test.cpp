@@ -77,9 +77,9 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
   rclcpp::init(0, nullptr);
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_message("Hello World 1"),
-    serialize_message("Hello World 2"),
-    serialize_message("Hello World 2")};
+  {serialize_string_message("Hello World 1"),
+    serialize_string_message("Hello World 2"),
+    serialize_string_message("Hello World 2")};
 
   write_messages(database_name_, messages);
 
