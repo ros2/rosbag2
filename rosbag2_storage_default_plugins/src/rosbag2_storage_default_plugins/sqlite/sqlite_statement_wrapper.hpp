@@ -48,7 +48,7 @@ public:
 public:
       static const int POSITION_END = -1;
       Iterator(std::shared_ptr<SqliteStatementWrapper> statement, int position)
-      : statement_(statement), next_row_idx_(position)
+      : statement_(statement), next_row_idx_(position), cached_row_idx_(POSITION_END - 1)
       {
         if (next_row_idx_ != POSITION_END) {
           if (statement_->step()) {
@@ -81,6 +81,12 @@ public:
 
       RowType operator*() const
       {
+        if (next_row_idx_ == POSITION_END) {
+          throw SqliteException("Cannot dereference iterator at end of result set!");
+        }
+        if (is_row_cache_valid()) {
+          return row_cache_;
+        }
         RowType row{};
         obtain_row_values(row);
         return row;
@@ -100,6 +106,8 @@ private:
       void obtain_row_values(RowType & row) const
       {
         obtain_row_values_impl(row, Indices{});
+        row_cache_ = row;
+        cached_row_idx_ = next_row_idx_ - 1;
       }
 
       template<size_t I, size_t ... Is, typename RemainingIndices = std::index_sequence<Is ...>>
@@ -110,8 +118,15 @@ private:
       }
       void obtain_row_values_impl(RowType &, std::index_sequence<>) const {}  // end of recursion
 
+      bool is_row_cache_valid() const
+      {
+        return cached_row_idx_ == next_row_idx_ - 1;
+      }
+
       std::shared_ptr<SqliteStatementWrapper> statement_;
       int next_row_idx_;
+      mutable int cached_row_idx_;
+      mutable RowType row_cache_;
     };
 
     explicit QueryResult(std::shared_ptr<SqliteStatementWrapper> statement)
