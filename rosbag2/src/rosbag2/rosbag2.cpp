@@ -172,7 +172,7 @@ void Rosbag2::prepare_publishers(
   auto all_topics_and_types = storage->get_all_topics_and_types();
   for (const auto & element : all_topics_and_types) {
     publishers_.insert(std::make_pair(
-      element.first, node->create_generic_publisher(element.first, element.second)));
+        element.first, node->create_generic_publisher(element.first, element.second)));
   }
 }
 

@@ -43,8 +43,8 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_ar
   string_message->data = "test_message";
   auto serialized_string_bag_message = serialize_message(string_message, string_topic);
 
-  start_publishing(serialized_string_bag_message, string_topic, 2);
-  start_publishing(serialized_int_bag_message, int_topic, 2);
+  start_publishing(serialized_string_bag_message, string_topic);
+  start_publishing(serialized_int_bag_message, int_topic);
   start_recording({string_topic, int_topic});
   stop_recording();
 

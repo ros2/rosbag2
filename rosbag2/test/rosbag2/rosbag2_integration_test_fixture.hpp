@@ -48,9 +48,7 @@ public:
   void record_message(const std::string & db_name, std::vector<std::string> topics)
   {
     rosbag2::Rosbag2 rosbag2;
-    rosbag2.record(db_name, topics, [this]() {
-        messages_stored_counter_++;
-      });
+    rosbag2.record(db_name, topics);
   }
 
   void start_recording(std::vector<std::string> topics)
@@ -71,32 +69,22 @@ public:
     future_.get();
   }
 
-  /**
-   * This function starts publishers which will automatically cease to publish once the counter
-   * internal to this test reaches the number_of_messages.
-   *
-   * @param message correctly filled message to publish
-   * @param topic_name Name of topic to publish to
-   * @param expected_number_of_messages expected overall number of messages of recorder
-   */
   void start_publishing(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
-    std::string topic_name,
-    size_t expected_number_of_messages = 1)
+    std::string topic_name)
   {
+    // We just publish three messages. This should be enough for all practical purposes
     std::weak_ptr<rosbag2_storage::SerializedBagMessage> message_weak_ptr(message);
     publisher_futures_.push_back(std::async(
-        std::launch::async, [this, message_weak_ptr, topic_name, expected_number_of_messages]() {
+        std::launch::async, [message_weak_ptr, topic_name]() {
+          auto message_lock = message_weak_ptr.lock();
           auto node = std::make_shared<rclcpp::Node>("publisher_node");
           auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
-          auto timer = node->create_wall_timer(50ms, [publisher, message_weak_ptr]() {
-            auto locked_message = message_weak_ptr.lock();
-            publisher->publish(locked_message->serialized_data.get());
-          });
-
-          while (messages_stored_counter_ < expected_number_of_messages) {
-            rclcpp::spin_some(node);
-          }
+          publisher->publish(message_lock->serialized_data.get());
+          std::this_thread::sleep_for(150ms);
+          publisher->publish(message_lock->serialized_data.get());
+          std::this_thread::sleep_for(150ms);
+          publisher->publish(message_lock->serialized_data.get());
         }
     ));
   }
