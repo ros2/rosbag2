@@ -9,19 +9,14 @@
 namespace rosbag2_transport
 {
 
-class Rosbag2Transport
+class ROSBAG2_TRANSPORT_PUBLIC Rosbag2Transport
 {
 public:
-  Rosbag2Transport();
+  Rosbag2Transport() = default;
 
-  virtual ~Rosbag2Transport();
+  virtual ~Rosbag2Transport() = default;
 
-  void record(const std::vector<std::string> & topic_names)
-  {
-    for (auto topic : topic_names) {
-      fprintf(stderr, "going to record %s\n", topic.c_str());
-    }
-  }
+  void record(const std::vector<std::string> & topic_names);
 };
 
 }  // namespace rosbag2_transport

@@ -3,12 +3,11 @@
 namespace rosbag2_transport
 {
 
-Rosbag2Transport::Rosbag2Transport()
+void Rosbag2Transport::record(const std::vector<std::string> & topic_names)
 {
-}
-
-Rosbag2Transport::~Rosbag2Transport()
-{
+  for (auto topic : topic_names) {
+    fprintf(stderr, "going to record %s\n", topic.c_str());
+  }
 }
 
 }  // namespace rosbag2_transport
