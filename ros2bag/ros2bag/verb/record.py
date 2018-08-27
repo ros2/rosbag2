@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import time
-
-from ros2cli.node.strategy import add_arguments
-from ros2cli.node.strategy import NodeStrategy
-
 from ros2bag.verb import VerbExtension
+
+from ros2cli.node.strategy import NodeStrategy
+from ros2cli.node.strategy import add_arguments
+
+from rosbag2_transport import rosbag_transport_py
 
 
 class RecordVerb(VerbExtension):
@@ -39,8 +38,7 @@ class RecordVerb(VerbExtension):
         with NodeStrategy(args) as node:
             if args.all:
                 t_and_n = node.get_topic_names_and_types()
-                print(t_and_n)
                 topics = [t for t,n in node.get_topic_names_and_types()]
             if args.topics:
                 topics = args.topics
-            print('topics to be recorded:', topics)
+            rosbag_transport_py.record_topics(topics)
