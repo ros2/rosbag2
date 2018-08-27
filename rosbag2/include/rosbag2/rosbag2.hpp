@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -44,8 +45,8 @@ public:
   void play(const std::string & file_name);
 
   ROSBAG2_PUBLIC
-  std::string get_topic_type(
-    const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
+  std::map<std::string, std::string> get_topic_types(
+    std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node);
 
 private:
   void prepare_publishers(

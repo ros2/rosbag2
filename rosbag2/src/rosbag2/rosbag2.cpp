@@ -15,8 +15,10 @@
 #include "rosbag2/rosbag2.hpp"
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rcl/graph.h"
 #include "rclcpp/rclcpp.hpp"
@@ -38,29 +40,33 @@ namespace rosbag2
 
 const char * ROS_PACKAGE_NAME = "rosbag2";
 
-std::string Rosbag2::get_topic_type(
-  const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node)
+std::map<std::string, std::string> Rosbag2::get_topic_types(
+  std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node)
 {
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
   // This should be replaced by an auto-discovery system in the future
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   auto topics = node->get_topic_names_and_types();
-  std::string complete_topic_name = topic_name;
-  if (topic_name[0] != '/') {
-    complete_topic_name = "/" + topic_name;
-  }
-  auto position = topics.find(complete_topic_name);
-  if (position != topics.end()) {
-    if (position->second.size() > 1) {
-      RCUTILS_LOG_ERROR_NAMED(
-        ROS_PACKAGE_NAME,
-        "Topic '%s' has several types associated. Only ROS topics are supported.",
-        position->first.c_str());
-      return "";
+
+  std::map<std::string, std::string> topic_names_and_types;
+  for (const auto & topic_name : topic_names) {
+    std::string complete_topic_name = topic_name;
+    if (topic_name[0] != '/') {
+      complete_topic_name = "/" + topic_name;
     }
-    return position->second[0];
+    auto position = topics.find(complete_topic_name);
+    if (position != topics.end()) {
+      if (position->second.size() > 1) {
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Topic '%s' has several types associated. Only topics with one type are supported.",
+          position->first.c_str());
+      } else {
+        topic_names_and_types.insert({position->first, position->second[0]});
+      }
+    }
   }
-  return "";
+  return topic_names_and_types;
 }
 
 void Rosbag2::prepare_publishers(
@@ -87,11 +93,20 @@ void Rosbag2::record(
 
     auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
-    std::string type = get_topic_type(topic_name, node);
+    auto topic_names_and_types = get_topic_types({topic_name}, node);
 
-    if (type.empty()) {
-      throw std::runtime_error(" Topic could not be found. Abort");
+    if (topic_names_and_types.empty()) {
+      throw std::runtime_error(" No topics found. Abort");
+      return;
     }
+
+    auto type_position = topic_names_and_types.find(topic_name);
+    if (type_position == topic_names_and_types.end()) {
+      throw std::runtime_error(" No topics found. Abort");
+      return;
+    }
+
+    auto type = type_position->second;
 
     auto subscription = node->create_generic_subscription(
       topic_name,
