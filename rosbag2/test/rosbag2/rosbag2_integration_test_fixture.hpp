@@ -64,28 +64,41 @@ public:
 
   void stop_recording()
   {
-    publisher_future_.get();
+    for (auto & future : publisher_futures_) {
+      future.get();
+    }
     rclcpp::shutdown();
     future_.get();
   }
 
+  /**
+   * This function starts publishers which will automatically cease to publish once the counter
+   * internal to this test reaches the number_of_messages.
+   *
+   * @param message correctly filled message to publish
+   * @param topic_name Name of topic to publish to
+   * @param expected_number_of_messages expected overall number of messages of recorder
+   */
   void start_publishing(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
-    std::string topic_name)
+    std::string topic_name,
+    size_t expected_number_of_messages = 1)
   {
-    publisher_future_ = std::async(
-      std::launch::async, [this, message, topic_name]() {
-        auto node = std::make_shared<rclcpp::Node>("publisher_node");
-        auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
-        auto timer = node->create_wall_timer(50ms, [publisher, message]() {
-          publisher->publish(message->serialized_data.get());
-        });
+    std::weak_ptr<rosbag2_storage::SerializedBagMessage> message_weak_ptr(message);
+    publisher_futures_.push_back(std::async(
+        std::launch::async, [this, message_weak_ptr, topic_name, expected_number_of_messages]() {
+          auto node = std::make_shared<rclcpp::Node>("publisher_node");
+          auto publisher = node->create_publisher<std_msgs::msg::String>(topic_name);
+          auto timer = node->create_wall_timer(50ms, [publisher, message_weak_ptr]() {
+            auto locked_message = message_weak_ptr.lock();
+            publisher->publish(locked_message->serialized_data.get());
+          });
 
-        while (counter_ < 1) {
-          rclcpp::spin_some(node);
+          while (counter_ < expected_number_of_messages) {
+            rclcpp::spin_some(node);
+          }
         }
-      }
-    );
+    ));
   }
 
   template<typename T>
@@ -109,7 +122,7 @@ public:
 
   test_helpers::TestMemoryManagement memory_;
   std::atomic<size_t> counter_;
-  std::future<void> publisher_future_;
+  std::vector<std::future<void>> publisher_futures_;
   std::future<void> future_;
 };
 

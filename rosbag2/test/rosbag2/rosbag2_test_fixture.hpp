@@ -99,8 +99,7 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     rosbag2_storage::StorageFactory factory;
-    auto storage =
-      factory.open_read_only(db_name, "sqlite3");
+    auto storage = factory.open_read_only(db_name, "sqlite3");
     if (storage == nullptr) {
       throw std::runtime_error("failed to open sqlite3 storage");
     }

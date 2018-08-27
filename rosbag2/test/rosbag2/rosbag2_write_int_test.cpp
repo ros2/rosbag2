@@ -31,14 +31,15 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 
 // TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
-TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
+TEST_F(RosBag2IntegrationTestFixture, published_messages_from_integer_topic_are_recorded)
 {
+  auto topic = "/int_topic";
   auto message = std::make_shared<std_msgs::msg::UInt8>();
   message->data = 10;
-  auto serialized_bag_message = serialize_message(message, "/string_topic");
+  auto serialized_bag_message = serialize_message(message, topic);
 
-  start_publishing(serialized_bag_message, "string_topic");
-  start_recording({"/string_topic"});
+  start_publishing(serialized_bag_message, topic);
+  start_recording({topic});
   stop_recording();
 
   auto recorded_messages = get_messages(database_name_);
