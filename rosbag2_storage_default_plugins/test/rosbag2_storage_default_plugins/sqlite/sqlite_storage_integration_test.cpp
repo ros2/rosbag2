@@ -103,21 +103,6 @@ TEST_F(StorageTestFixture, write_stamped_char_array_writes_correct_time_stamp_an
   EXPECT_THAT(read_message->time_stamp, Eq(2));
 }
 
-TEST_F(StorageTestFixture, get_topic_with_id_returns_the_correct_topic) {
-  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(database_name_);
-  writable_storage->create_topic("topic1", "type1");
-  writable_storage->create_topic("topic2", "type2");
-  writable_storage.reset();
-
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-
-  EXPECT_THAT(readable_storage->get_topic_with_id(1), Eq("topic1"));
-  EXPECT_THAT(readable_storage->get_topic_with_id(2), Eq("topic2"));
-}
-
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
@@ -130,6 +115,7 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
   readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
+  EXPECT_THAT(topics_and_types, SizeIs(2));
   EXPECT_THAT(topics_and_types["topic1"], Eq("type1"));
   EXPECT_THAT(topics_and_types["topic2"], Eq("type2"));
 }

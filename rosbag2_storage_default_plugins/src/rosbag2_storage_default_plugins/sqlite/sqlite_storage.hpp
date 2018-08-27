@@ -58,8 +58,6 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  std::string get_topic_with_id(int topic_id);
-
 private:
   void initialize();
   void prepare_for_writing();
@@ -73,9 +71,9 @@ private:
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
   SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
-    rcutils_time_point_value_t, int> message_result_;
+    rcutils_time_point_value_t, std::string> message_result_;
   SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
-    rcutils_time_point_value_t, int>::Iterator current_message_row_;
+    rcutils_time_point_value_t, std::string>::Iterator current_message_row_;
   std::map<std::string, int> topics_;
   std::map<std::string, std::string> all_topics_and_types_;
 };

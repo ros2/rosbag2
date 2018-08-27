@@ -96,26 +96,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   bag_message->serialized_data = std::get<0>(*current_message_row_);
   bag_message->time_stamp = std::get<1>(*current_message_row_);
-  bag_message->topic_name = get_topic_with_id(std::get<2>(*current_message_row_));
+  bag_message->topic_name = std::get<2>(*current_message_row_);
 
   ++current_message_row_;
   return bag_message;
-}
-
-std::string SqliteStorage::get_topic_with_id(int topic_id)
-{
-  if (topics_.empty()) {
-    fill_topics();
-  }
-
-  // TODO(botteroa-si): find out if a better searching algorithm can be used or the topics_ map
-  // reversed (i.e. use the topic_id as key).
-  for (const auto & element : topics_) {
-    if (element.second == topic_id) {
-      return element.first;
-    }
-  }
-  return "";
 }
 
 std::map<std::string, std::string> SqliteStorage::get_all_topics_and_types()
@@ -166,10 +150,12 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ =
-    database_->prepare_statement("SELECT data, timestamp, topic_id FROM messages ORDER BY id;");
+  read_statement_ = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "ORDER BY messages.id;");
   message_result_ = read_statement_->execute_query<
-    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, int>();
+    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
 }
 
