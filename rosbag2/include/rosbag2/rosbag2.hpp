@@ -47,7 +47,7 @@ public:
   void play(const std::string & file_name);
 
   ROSBAG2_PUBLIC
-  std::map<std::string, std::string> get_topic_types(
+  std::map<std::string, std::string> get_topics_with_types(
     std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node);
 
 private:

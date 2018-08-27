@@ -66,7 +66,7 @@ TEST_F(RosBag2IntegrationFixture,
 {
   auto future = create_publisher("string_topic");
 
-  auto topics_and_types = rosbag2_.get_topic_types({"string_topic"}, node_);
+  auto topics_and_types = rosbag2_.get_topics_with_types({"string_topic"}, node_);
 
   EXPECT_THAT(topics_and_types, SizeIs(1));
   EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
@@ -78,7 +78,7 @@ TEST_F(RosBag2IntegrationFixture,
 {
   auto future = create_publisher("string_topic");
 
-  auto topics_and_types = rosbag2_.get_topic_types({"/string_topic"}, node_);
+  auto topics_and_types = rosbag2_.get_topics_with_types({"/string_topic"}, node_);
 
   EXPECT_THAT(topics_and_types, SizeIs(1));
   EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
@@ -96,7 +96,7 @@ TEST_F(RosBag2IntegrationFixture,
   auto future2 = create_publisher(second_topic);
   auto future3 = create_publisher(third_topic);
 
-  auto topics_and_types = rosbag2_.get_topic_types({first_topic, second_topic}, node_);
+  auto topics_and_types = rosbag2_.get_topics_with_types({first_topic, second_topic}, node_);
 
   EXPECT_THAT(topics_and_types, SizeIs(2));
   EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
@@ -107,7 +107,7 @@ TEST_F(RosBag2IntegrationFixture,
 TEST_F(RosBag2IntegrationFixture, get_topic_returns_empty_if_topic_does_not_exist) {
   auto future = create_publisher("string_topic");
 
-  auto topics_and_types = rosbag2_.get_topic_types({"/wrong_topic"}, node_);
+  auto topics_and_types = rosbag2_.get_topics_with_types({"/wrong_topic"}, node_);
 
   EXPECT_THAT(topics_and_types, IsEmpty());
   future.get();

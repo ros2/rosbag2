@@ -36,7 +36,7 @@ class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), counter_(0)
+  : Rosbag2TestFixture(), messages_stored_counter_(0)
   {}
 
   std::vector<std::string> subscribe_messages(size_t expected_messages_number)
@@ -46,10 +46,10 @@ public:
     auto subscription = node->create_subscription<std_msgs::msg::String>("string_topic",
         [this, &messages](const std_msgs::msg::String::ConstSharedPtr message) {
           messages.emplace_back(message->data);
-          counter_++;
+          messages_stored_counter_++;
         }, 10);
 
-    while (counter_ < expected_messages_number) {
+    while (messages_stored_counter_ < expected_messages_number) {
       rclcpp::spin_some(node);
     }
     return messages;
@@ -68,7 +68,7 @@ public:
     rosbag2.play(database_name);
   }
 
-  std::atomic<size_t> counter_;
+  std::atomic<size_t> messages_stored_counter_;
   std::future<std::vector<std::string>> subscriber_future_;
 };
 

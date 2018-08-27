@@ -40,7 +40,53 @@ namespace rosbag2
 
 const char * ROS_PACKAGE_NAME = "rosbag2";
 
-std::map<std::string, std::string> Rosbag2::get_topic_types(
+void Rosbag2::record(
+  const std::string & file_name,
+  std::vector<std::string> topic_names,
+  std::function<void(void)> after_write_action)
+{
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_write(file_name, "sqlite3");
+
+  if (!storage) {
+    throw std::runtime_error("No storage could be initialized. Abort");
+    return;
+  }
+
+  auto node = std::make_shared<Rosbag2Node>("rosbag2");
+
+  auto topics_and_types = get_topics_with_types(topic_names, node);
+
+  if (topics_and_types.empty()) {
+    throw std::runtime_error("No topics found. Abort");
+  }
+
+  for (const auto & topic_and_type : topics_and_types) {
+    auto topic_name = topic_and_type.first;
+    auto topic_type = topic_and_type.second;
+
+    std::shared_ptr<GenericSubscription> subscription = create_subscription(
+      after_write_action, storage, node, topic_name, topic_type);
+
+    if (subscription) {
+      subscriptions_.push_back(subscription);
+
+      storage->create_topic(topic_name, topic_type);
+    }
+  }
+
+  if (subscriptions_.empty()) {
+    throw std::runtime_error("No topics could be subscribed. Abort");
+    return;
+  }
+
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  while (rclcpp::ok()) {
+    rclcpp::spin(node);
+  }
+}
+
+std::map<std::string, std::string> Rosbag2::get_topics_with_types(
   std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node)
 {
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
@@ -67,68 +113,6 @@ std::map<std::string, std::string> Rosbag2::get_topic_types(
     }
   }
   return topic_names_and_types;
-}
-
-void Rosbag2::prepare_publishers(
-  std::shared_ptr<Rosbag2Node> node,
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
-{
-  auto all_topics_and_types = storage->get_all_topics_and_types();
-  for (const auto & element : all_topics_and_types) {
-    publishers_.insert(std::make_pair(
-        element.first, node->create_generic_publisher(element.first, element.second)));
-  }
-}
-
-void Rosbag2::record(
-  const std::string & file_name,
-  std::vector<std::string> topic_names,
-  std::function<void(void)> after_write_action)
-{
-  rosbag2_storage::StorageFactory factory;
-  auto storage = factory.open_read_write(file_name, "sqlite3");
-
-  if (!storage) {
-    throw std::runtime_error("No storage could be initialized. Abort");
-    return;
-  }
-
-  auto node = std::make_shared<Rosbag2Node>("rosbag2");
-
-  auto topic_names_and_types = get_topic_types(topic_names, node);
-
-  if (topic_names_and_types.empty()) {
-    throw std::runtime_error("No topics found. Abort");
-  }
-
-  if (topic_names_and_types.empty()) {
-    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "No topics found. Abort.");
-    return;
-  }
-
-  for (const auto & topic_and_type : topic_names_and_types) {
-    auto topic_name = topic_and_type.first;
-    auto topic_type = topic_and_type.second;
-
-    std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      after_write_action, storage, node, topic_name, topic_type);
-
-    if (subscription) {
-      subscriptions_.push_back(subscription);
-
-      storage->create_topic(topic_name, topic_type);
-    }
-  }
-
-  if (subscriptions_.empty()) {
-    throw std::runtime_error("No topics could be subscribed. Abort");
-    return;
-  }
-
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
-  while (rclcpp::ok()) {
-    rclcpp::spin(node);
-  }
 }
 
 std::shared_ptr<GenericSubscription>
@@ -178,6 +162,17 @@ void Rosbag2::play(const std::string & file_name)
       publishers_[message->topic_name]->publish(message->serialized_data);
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
+  }
+}
+
+void Rosbag2::prepare_publishers(
+  std::shared_ptr<Rosbag2Node> node,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
+{
+  auto all_topics_and_types = storage->get_all_topics_and_types();
+  for (const auto & element : all_topics_and_types) {
+    publishers_.insert(std::make_pair(
+      element.first, node->create_generic_publisher(element.first, element.second)));
   }
 }
 

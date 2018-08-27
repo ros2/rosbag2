@@ -18,9 +18,8 @@
 #include <memory>
 #include <string>
 
+#include "rcutils/types.h"
 #include "rclcpp/node.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rcl/graph.h"
 
 #include "generic_publisher.hpp"
 #include "generic_subscription.hpp"

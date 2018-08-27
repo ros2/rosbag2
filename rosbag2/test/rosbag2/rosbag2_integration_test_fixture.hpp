@@ -37,7 +37,7 @@ class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), memory_(), counter_(0)
+  : Rosbag2TestFixture(), memory_(), messages_stored_counter_(0)
   {}
 
   void SetUp() override
@@ -49,7 +49,7 @@ public:
   {
     rosbag2::Rosbag2 rosbag2;
     rosbag2.record(db_name, topics, [this]() {
-        counter_++;
+        messages_stored_counter_++;
       });
   }
 
@@ -94,7 +94,7 @@ public:
             publisher->publish(locked_message->serialized_data.get());
           });
 
-          while (counter_ < expected_number_of_messages) {
+          while (messages_stored_counter_ < expected_number_of_messages) {
             rclcpp::spin_some(node);
           }
         }
@@ -121,7 +121,7 @@ public:
   }
 
   test_helpers::TestMemoryManagement memory_;
-  std::atomic<size_t> counter_;
+  std::atomic<size_t> messages_stored_counter_;
   std::vector<std::future<void>> publisher_futures_;
   std::future<void> future_;
 };
