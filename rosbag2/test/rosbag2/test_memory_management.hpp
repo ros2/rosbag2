@@ -27,7 +27,7 @@ public:
   TestMemoryManagement();
   ~TestMemoryManagement() = default;
 
-  std::shared_ptr<rcutils_char_array_t> get_initiliazed_serialized_message(size_t capacity);
+  std::shared_ptr<rmw_serialized_message_t> get_initialized_serialized_message(size_t capacity);
 
   template<typename T>
   inline
@@ -38,9 +38,9 @@ public:
 
   template<typename T>
   inline
-  std::shared_ptr<rcutils_char_array_t> serialize_message(std::shared_ptr<T> message)
+  std::shared_ptr<rmw_serialized_message_t> serialize_message(std::shared_ptr<T> message)
   {
-    auto serialized_message = get_initiliazed_serialized_message(0);
+    auto serialized_message = get_initialized_serialized_message(0);
     auto error = rmw_serialize(
       message.get(),
       get_message_typesupport(message),
@@ -53,7 +53,7 @@ public:
 
   template<typename T>
   inline
-  std::shared_ptr<T> deserialize_message(std::shared_ptr<rcutils_char_array_t> serialized_msg)
+  std::shared_ptr<T> deserialize_message(std::shared_ptr<rmw_serialized_message_t> serialized_msg)
   {
     auto message = std::make_shared<T>();
     auto error = rmw_deserialize(

@@ -25,10 +25,10 @@ TestMemoryManagement::TestMemoryManagement()
   rcutils_allocator_ = rcutils_get_default_allocator();
 }
 
-std::shared_ptr<rcutils_char_array_t>
-TestMemoryManagement::get_initiliazed_serialized_message(size_t capacity)
+std::shared_ptr<rmw_serialized_message_t>
+TestMemoryManagement::get_initialized_serialized_message(size_t capacity)
 {
-  auto msg = new rcutils_char_array_t;
+  auto msg = new rmw_serialized_message_t;
   *msg = rcutils_get_zero_initialized_char_array();
   auto ret = rcutils_char_array_init(msg, capacity, &rcutils_allocator_);
   if (ret != RCUTILS_RET_OK) {
@@ -36,8 +36,8 @@ TestMemoryManagement::get_initiliazed_serialized_message(size_t capacity)
             std::string(rcutils_get_error_string_safe()));
   }
 
-  auto serialized_message = std::shared_ptr<rcutils_char_array_t>(msg,
-      [](rcutils_char_array_t * msg) {
+  auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
+      [](rmw_serialized_message_t * msg) {
         int error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
