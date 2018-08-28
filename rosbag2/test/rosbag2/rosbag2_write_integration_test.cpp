@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__ROSBAG2_INTEGRATION_TEST_FIXTURE_HPP_
-#define ROSBAG2__ROSBAG2_INTEGRATION_TEST_FIXTURE_HPP_
-
 #include <gmock/gmock.h>
 
 #include <atomic>
@@ -27,10 +24,14 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2/rosbag2.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/u_int8.hpp"
 
 #include "rosbag2_test_fixture.hpp"
 #include "test_memory_management.hpp"
 
+using namespace ::testing;  // NOLINT
+using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
 class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
@@ -89,23 +90,11 @@ public:
     ));
   }
 
-  template<typename T>
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(
-    std::shared_ptr<T> message, std::string topic_name)
-  {
-    auto serialized_message = memory_.serialize_message<T>(message);
-
-    auto serialized_bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    serialized_bag_message->serialized_data = serialized_message;
-    serialized_bag_message->topic_name = topic_name;
-    return serialized_bag_message;
-  }
-
-  template<typename T>
-  std::shared_ptr<T> deserialize_message(
+  template<typename MessageT>
+  std::shared_ptr<MessageT> deserialize_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
   {
-    return memory_.deserialize_message<T>(message->serialized_data);
+    return memory_.deserialize_message<MessageT>(message->serialized_data);
   }
 
   test_helpers::TestMemoryManagement memory_;
@@ -114,4 +103,37 @@ public:
   std::future<void> future_;
 };
 
-#endif  // ROSBAG2__ROSBAG2_INTEGRATION_TEST_FIXTURE_HPP_
+// TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
+TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
+{
+  std::string int_topic = "/int_topic";
+  auto serialized_int_bag_message = serialize_message<std_msgs::msg::UInt8>(int_topic, 10);
+
+  std::string string_topic = "/string_topic";
+  auto serialized_string_bag_message = serialize_message<std_msgs::msg::String>(
+    string_topic, "test_message");
+
+  start_publishing(serialized_string_bag_message, string_topic);
+  start_publishing(serialized_int_bag_message, int_topic);
+  start_recording({string_topic, int_topic});
+  stop_recording();
+
+  auto recorded_messages = get_messages(database_name_);
+
+  ASSERT_THAT(recorded_messages, Not(IsEmpty()));
+  std::vector<std::shared_ptr<std_msgs::msg::String>> string_messages;
+  std::vector<std::shared_ptr<std_msgs::msg::UInt8>> int_messages;
+  for (const auto & message : recorded_messages) {
+    if (message->topic_name == string_topic) {
+      auto deserialized = deserialize_message<std_msgs::msg::String>(message);
+      string_messages.push_back(deserialized);
+    } else if (message->topic_name == int_topic) {
+      auto deserialized = deserialize_message<std_msgs::msg::UInt8>(message);
+      int_messages.push_back(deserialized);
+    }
+  }
+  ASSERT_THAT(string_messages, Not(IsEmpty()));
+  ASSERT_THAT(int_messages, Not(IsEmpty()));
+  EXPECT_THAT(string_messages[0]->data, Eq("test_message"));
+  EXPECT_THAT(int_messages[0]->data, Eq(10));
+}
