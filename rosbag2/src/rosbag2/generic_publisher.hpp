@@ -33,7 +33,7 @@ public:
 
   ~GenericPublisher() override = default;
 
-  void publish(std::shared_ptr<rcutils_char_array_t> message);
+  void publish(std::shared_ptr<rmw_serialized_message_t> message);
 };
 
 }  // namespace rosbag2

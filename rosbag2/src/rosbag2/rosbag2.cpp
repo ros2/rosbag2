@@ -109,7 +109,7 @@ void Rosbag2::record(
     auto subscription = node->create_generic_subscription(
       topic_name,
       type,
-      [storage, topic_name, after_write_action](std::shared_ptr<rcutils_char_array_t> message) {
+      [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
         auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         bag_message->serialized_data = message;
         bag_message->topic_name = topic_name;

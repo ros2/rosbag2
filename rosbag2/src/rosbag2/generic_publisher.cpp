@@ -27,7 +27,7 @@ GenericPublisher::GenericPublisher(
 : rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
 {}
 
-void GenericPublisher::publish(std::shared_ptr<rcutils_char_array_t> message)
+void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message)
 {
   auto return_code = rcl_publish_serialized_message(
     get_publisher_handle(), message.get());

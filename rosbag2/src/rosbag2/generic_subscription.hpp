@@ -53,7 +53,7 @@ public:
   // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
 
-  std::shared_ptr<rcl_serialized_message_t> create_serialized_message() override;
+  std::shared_ptr<rmw_serialized_message_t> create_serialized_message() override;
 
   void handle_message(
     std::shared_ptr<void> & message, const rmw_message_info_t & message_info) override;
@@ -61,7 +61,7 @@ public:
   // Same as return_serialized_message() as the subscription is to serialized_messages only
   void return_message(std::shared_ptr<void> & message) override;
 
-  void return_serialized_message(std::shared_ptr<rcl_serialized_message_t> & message) override;
+  void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
 
   // Intra-process message handling is not supported by this publisher
   void handle_intra_process_message(
@@ -75,7 +75,7 @@ public:
 private:
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
-  std::shared_ptr<rcl_serialized_message_t> borrow_serialized_message(size_t capacity);
+  std::shared_ptr<rmw_serialized_message_t> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
   std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback_;
 };

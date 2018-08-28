@@ -43,7 +43,7 @@ std::shared_ptr<void> GenericSubscription::create_message()
   return create_serialized_message();
 }
 
-std::shared_ptr<rcl_serialized_message_t> GenericSubscription::create_serialized_message()
+std::shared_ptr<rmw_serialized_message_t> GenericSubscription::create_serialized_message()
 {
   return borrow_serialized_message(0);
 }
@@ -64,7 +64,7 @@ void GenericSubscription::return_message(std::shared_ptr<void> & message)
 }
 
 void GenericSubscription::return_serialized_message(
-  std::shared_ptr<rcl_serialized_message_t> & message)
+  std::shared_ptr<rmw_serialized_message_t> & message)
 {
   message.reset();
 }
@@ -84,17 +84,17 @@ GenericSubscription::get_intra_process_subscription_handle() const
   return nullptr;
 }
 
-std::shared_ptr<rcl_serialized_message_t>
+std::shared_ptr<rmw_serialized_message_t>
 GenericSubscription::borrow_serialized_message(size_t capacity)
 {
-  auto message = new rcl_serialized_message_t;
+  auto message = new rmw_serialized_message_t;
   *message = rmw_get_zero_initialized_serialized_message();
   auto init_return = rmw_serialized_message_init(message, capacity, &default_allocator_);
   if (init_return != RCL_RET_OK) {
     rclcpp::exceptions::throw_from_rcl_error(init_return);
   }
 
-  auto serialized_msg = std::shared_ptr<rcl_serialized_message_t>(message,
+  auto serialized_msg = std::shared_ptr<rmw_serialized_message_t>(message,
       [](rmw_serialized_message_t * msg) {
         auto fini_return = rmw_serialized_message_fini(msg);
         delete msg;

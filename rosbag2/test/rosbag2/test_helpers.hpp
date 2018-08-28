@@ -27,14 +27,14 @@
 namespace test_helpers
 {
 
-std::shared_ptr<rcutils_char_array_t> serialize_string_message(std::string message)
+std::shared_ptr<rmw_serialized_message_t> serialize_string_message(std::string message)
 {
   auto test_message = std::make_shared<std_msgs::msg::String>();
   test_message->data = message;
 
   auto rcutils_allocator = rcutils_get_default_allocator();
   auto initial_capacity = 8u + static_cast<size_t>(test_message->data.size());
-  auto msg = new rcutils_char_array_t;
+  auto msg = new rmw_serialized_message_t;
   *msg = rcutils_get_zero_initialized_char_array();
   auto ret = rcutils_char_array_init(msg, initial_capacity, &rcutils_allocator);
   if (ret != RCUTILS_RET_OK) {
@@ -42,8 +42,8 @@ std::shared_ptr<rcutils_char_array_t> serialize_string_message(std::string messa
             std::to_string(ret));
   }
 
-  auto serialized_message = std::shared_ptr<rcutils_char_array_t>(msg,
-      [](rcutils_char_array_t * msg) {
+  auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
+      [](rmw_serialized_message_t * msg) {
         int error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
@@ -64,7 +64,7 @@ std::shared_ptr<rcutils_char_array_t> serialize_string_message(std::string messa
   return serialized_message;
 }
 
-std::string deserialize_string_message(std::shared_ptr<rcutils_char_array_t> serialized_message)
+std::string deserialize_string_message(std::shared_ptr<rmw_serialized_message_t> serialized_message)
 {
   char * copied = new char[serialized_message->buffer_length];
   auto string_length = serialized_message->buffer_length - 8;

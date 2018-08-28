@@ -52,7 +52,7 @@ public:
     std::vector<std::string> messages;
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(topic_name, type,
-        [&counter, &messages](std::shared_ptr<rcutils_char_array_t> message) {
+        [&counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
           messages.push_back(test_helpers::deserialize_string_message(message));
           counter++;
         });
