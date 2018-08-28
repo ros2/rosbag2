@@ -41,7 +41,7 @@ public:
   void record(
     const std::string & file_name,
     std::vector<std::string> topic_names,
-    std::function<void(void)> after_write_action = nullptr);
+    std::function<void(std::string)> after_write_action = nullptr);
 
   ROSBAG2_PUBLIC
   void play(const std::string & file_name);
@@ -57,7 +57,7 @@ private:
 
   std::shared_ptr<rosbag2::GenericSubscription>
   create_subscription(
-    const std::function<void()> & after_write_action,
+    const std::function<void(std::string)> & after_write_action,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
     std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;

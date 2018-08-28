@@ -43,7 +43,7 @@ const char * ROS_PACKAGE_NAME = "rosbag2";
 void Rosbag2::record(
   const std::string & file_name,
   std::vector<std::string> topic_names,
-  std::function<void(void)> after_write_action)
+  std::function<void(std::string)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
@@ -118,7 +118,7 @@ std::map<std::string, std::string> Rosbag2::get_topics_with_types(
 
 std::shared_ptr<GenericSubscription>
 Rosbag2::create_subscription(
-  const std::function<void()> & after_write_action,
+  const std::function<void(std::string)> & after_write_action,
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
   std::shared_ptr<Rosbag2Node> & node,
   const std::string & topic_name, const std::string & topic_type) const
@@ -141,7 +141,7 @@ Rosbag2::create_subscription(
 
       storage->write(bag_message);
       if (after_write_action) {
-        after_write_action();
+        after_write_action(topic_name);
       }
     });
   return subscription;
