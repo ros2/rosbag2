@@ -84,10 +84,11 @@ void Rosbag2::record(
   while (rclcpp::ok()) {
     rclcpp::spin(node);
   }
+  subscriptions_.clear();
 }
 
 std::map<std::string, std::string> Rosbag2::get_topics_with_types(
-  std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node)
+  const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node)
 {
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
   // This should be replaced by an auto-discovery system in the future

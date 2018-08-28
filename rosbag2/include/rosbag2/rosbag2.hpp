@@ -48,7 +48,7 @@ public:
 
   ROSBAG2_PUBLIC
   std::map<std::string, std::string> get_topics_with_types(
-    std::vector<std::string> topic_names, const std::shared_ptr<rclcpp::Node> & node);
+    const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node);
 
 private:
   void prepare_publishers(

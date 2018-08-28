@@ -120,16 +120,14 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_ar
 
   auto recorded_messages = get_messages(database_name_);
 
-  ASSERT_THAT(recorded_messages, Not(IsEmpty()));
+  ASSERT_THAT(recorded_messages, SizeIs(4));
   std::vector<std::shared_ptr<std_msgs::msg::String>> string_messages;
   std::vector<std::shared_ptr<std_msgs::msg::UInt8>> int_messages;
   for (const auto & message : recorded_messages) {
     if (message->topic_name == string_topic) {
-      auto deserialized = deserialize_message<std_msgs::msg::String>(message);
-      string_messages.push_back(deserialized);
-    } else if (message->topic_name == int_topic) {
-      auto deserialized = deserialize_message<std_msgs::msg::UInt8>(message);
-      int_messages.push_back(deserialized);
+      string_messages.push_back(deserialize_message<std_msgs::msg::String>(message));
+    } else {
+      int_messages.push_back(deserialize_message<std_msgs::msg::UInt8>(message));
     }
   }
   ASSERT_THAT(string_messages, Not(IsEmpty()));
