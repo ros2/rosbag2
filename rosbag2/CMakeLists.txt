@@ -112,6 +112,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(rosbag2_rosbag_node_test
     test/rosbag2/rosbag2_rosbag_node_test.cpp
+    test/rosbag2/test_memory_management.cpp
     src/rosbag2/typesupport_helpers.cpp
     src/rosbag2/generic_subscription.cpp
     src/rosbag2/generic_publisher.cpp
