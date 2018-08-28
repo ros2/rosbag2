@@ -46,7 +46,7 @@ void Rosbag2::record(
     auto node = std::make_shared<rclcpp::Node>("rosbag_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>(
       topic_name,
-      [&storage, after_write_action](std::shared_ptr<rcutils_char_array_t> msg) {
+      [&storage, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
         auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         bag_msg->serialized_data = msg;
         rcutils_time_point_value_t time_stamp;
