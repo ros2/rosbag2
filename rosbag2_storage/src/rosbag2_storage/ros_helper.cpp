@@ -23,14 +23,14 @@
 namespace rosbag2_storage
 {
 
+static rcutils_allocator_t allocator = rcutils_get_default_allocator();
+
 std::shared_ptr<rcutils_char_array_t>
 make_serialized_message(const void * data, size_t size)
 {
-  auto rcutils_allocator = new rcutils_allocator_t;
-  *rcutils_allocator = rcutils_get_default_allocator();
   auto msg = new rcutils_char_array_t;
   *msg = rcutils_get_zero_initialized_char_array();
-  auto ret = rcutils_char_array_init(msg, size, rcutils_allocator);
+  auto ret = rcutils_char_array_init(msg, size, &allocator);
   if (ret != RCUTILS_RET_OK) {
     throw std::runtime_error("Error allocating resources for serialized message: " +
             std::string(rcutils_get_error_string_safe()));
