@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <future>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -140,7 +141,7 @@ TEST_F(RosBag2NodeFixture,
   EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
 }
 
-TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_multiple_topics_for_multiple_inputs) {
+TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
   std::string first_topic("/string_topic");
   std::string second_topic("/other_topic");
   std::string third_topic("/wrong_topic");
@@ -176,4 +177,31 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   EXPECT_THAT(topics_and_types.find("/clock")->second, StrEq("rosgraph_msgs/Clock"));
   EXPECT_THAT(
     topics_and_types.find("/parameter_events")->second, StrEq("rcl_interfaces/ParameterEvent"));
+}
+
+TEST_F(RosBag2NodeFixture, sanitize_topics_and_types_deletes_topics_with_multiple_types)
+{
+  std::map<std::string, std::vector<std::string>> topics_and_types = {
+    {"/topic", {"package1/type1"}},
+    {"/topic2", {"package1/type1", "package2/type2"}}};
+
+  auto sanitized_topics_and_types = node_->sanitize_topics_and_types(topics_and_types);
+
+  ASSERT_THAT(sanitized_topics_and_types, SizeIs(1));
+  EXPECT_THAT(sanitized_topics_and_types.find("/topic")->second, StrEq("package1/type1"));
+}
+
+TEST_F(RosBag2NodeFixture, sanitize_topics_and_types_deletes_topics_with_wrong_type_format)
+{
+  std::map<std::string, std::vector<std::string>> topics_and_types = {
+    {"/topic", {"package1/type1"}},
+    {"/topic2", {"package1/"}},
+    {"/topic3", {"package1/package2/type"}},
+    {"/topic4", {"/type"}}
+  };
+
+  auto sanitized_topics_and_types = node_->sanitize_topics_and_types(topics_and_types);
+
+  ASSERT_THAT(sanitized_topics_and_types, SizeIs(1));
+  EXPECT_THAT(sanitized_topics_and_types.find("/topic")->second, StrEq("package1/type1"));
 }

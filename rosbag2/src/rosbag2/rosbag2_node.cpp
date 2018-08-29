@@ -109,8 +109,23 @@ std::map<std::string, std::string> Rosbag2Node::sanitize_topics_and_types(
           "Topic '%s' has several types associated. Only topics with one type are supported.",
           element.first.c_str());
         return true;
+      } else {
+        char type_separator = '/';
+        auto sep_position_back = element.second[0].find_last_of(type_separator);
+        auto sep_position_front = element.second[0].find_first_of(type_separator);
+        if (sep_position_back == std::string::npos ||
+        sep_position_back != sep_position_front ||
+        sep_position_back == 0 ||
+        sep_position_back == element.second[0].length() - 1)
+        {
+          RCUTILS_LOG_ERROR_NAMED(
+            "rosbag2",
+            "Topic '%s' has non-ROS type %s . Only ROS topics are supported.",
+            element.first.c_str(), element.second[0].c_str());
+          return true;
+        }
+        return false;
       }
-      return false;
     });
 
   std::map<std::string, std::string> topics_and_types_to_record;
