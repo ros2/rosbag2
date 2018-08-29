@@ -142,6 +142,11 @@ private:
       return Iterator(statement_, Iterator::POSITION_END);
     }
 
+    RowType get_single_line()
+    {
+      return *begin();
+    }
+
 private:
     std::shared_ptr<SqliteStatementWrapper> statement_;
   };

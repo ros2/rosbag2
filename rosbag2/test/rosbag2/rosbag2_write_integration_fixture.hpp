@@ -109,17 +109,17 @@ public:
 
   size_t count_stored_messages_in_db(std::string topic_name)
   {
-    auto table_result = db_.prepare_statement(
+    auto row = db_.prepare_statement(
         "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
-      ->execute_query<int>();
-    if (std::get<0>(*table_result.begin()) == 0) {
+      ->execute_query<int>().get_single_line();
+    if (std::get<0>(row) == 0) {
       return 0;
     }
-    auto result_set = db_.prepare_statement(
+    auto message_count = db_.prepare_statement(
       "SELECT COUNT(*) "
       "FROM messages LEFT JOIN topics ON messages.topic_id = topics.id "
-      "WHERE topics.name = ?;")->bind(topic_name)->execute_query<int>();
-    return static_cast<size_t>(std::get<0>(*result_set.begin()));
+      "WHERE topics.name = ?;")->bind(topic_name)->execute_query<int>().get_single_line();
+    return static_cast<size_t>(std::get<0>(message_count));
   }
 
   template<typename MessageT>

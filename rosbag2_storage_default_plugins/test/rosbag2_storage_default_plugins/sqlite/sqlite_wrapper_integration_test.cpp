@@ -113,3 +113,20 @@ TEST_F(StorageTestFixture, ros_specific_types_are_supported_for_reading_and_writ
   ASSERT_THAT(std::get<0>(*row_iter), Eq(time));
   ASSERT_THAT(deserialize_message(std::get<1>(*row_iter)), StrEq(msg_content));
 }
+
+TEST_F(StorageTestFixture, single_line_results_can_be_obtained_directly) {
+  auto db = rosbag2_storage_plugins::SqliteWrapper{database_name_};
+
+  auto row = db.prepare_statement("SELECT 1, 2;")->execute_query<int, int>().get_single_line();
+
+  ASSERT_THAT(std::get<0>(row), Eq(1));
+  ASSERT_THAT(std::get<1>(row), Eq(2));
+}
+
+TEST_F(StorageTestFixture, get_single_line_handles_empty_result_set) {
+  auto db = rosbag2_storage_plugins::SqliteWrapper{database_name_};
+
+  auto result = db.prepare_statement("SELECT 1, 2 WHERE 1 = 2;")->execute_query<int, int>();
+
+  EXPECT_THROW(result.get_single_line(), rosbag2_storage_plugins::SqliteException);
+}
