@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sqlite_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 #include <iostream>
 #include <memory>
@@ -22,7 +22,7 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
-#include "sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {

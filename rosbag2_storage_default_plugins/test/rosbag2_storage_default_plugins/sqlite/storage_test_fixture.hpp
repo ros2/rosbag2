@@ -32,7 +32,7 @@
 
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
-#include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
 

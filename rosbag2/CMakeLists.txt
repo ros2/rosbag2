@@ -75,6 +75,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -83,7 +84,10 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
-    target_link_libraries(rosbag2_write_integration_test librosbag2)
+    target_link_libraries(rosbag2_write_integration_test librosbag2
+      ${rosbag2_storage_default_plugins_LIBRARIES})
+    target_include_directories(rosbag2_write_integration_test PRIVATE
+      ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
   ament_add_gmock(rosbag2_write_all_integration_test

@@ -23,7 +23,7 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "sqlite_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
