@@ -14,10 +14,12 @@
 
 #include "rosbag2/rosbag2.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rcl/graph.h"
@@ -87,35 +89,6 @@ void Rosbag2::record(
   subscriptions_.clear();
 }
 
-std::map<std::string, std::string> Rosbag2::get_topics_with_types(
-  const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node)
-{
-  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
-  // This should be replaced by an auto-discovery system in the future
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  auto topics = node->get_topic_names_and_types();
-
-  std::map<std::string, std::string> topic_names_and_types;
-  for (const auto & topic_name : topic_names) {
-    std::string complete_topic_name = topic_name;
-    if (topic_name[0] != '/') {
-      complete_topic_name = "/" + topic_name;
-    }
-    auto position = topics.find(complete_topic_name);
-    if (position != topics.end()) {
-      if (position->second.size() > 1) {
-        RCUTILS_LOG_ERROR_NAMED(
-          ROS_PACKAGE_NAME,
-          "Topic '%s' has several types associated. Only topics with one type are supported.",
-          position->first.c_str());
-      } else {
-        topic_names_and_types.insert({position->first, position->second[0]});
-      }
-    }
-  }
-  return topic_names_and_types;
-}
-
 std::shared_ptr<GenericSubscription>
 Rosbag2::create_subscription(
   const std::function<void(std::string)> & after_write_action,
@@ -175,6 +148,69 @@ void Rosbag2::prepare_publishers(
     publishers_.insert(std::make_pair(
         element.first, node->create_generic_publisher(element.first, element.second)));
   }
+}
+
+std::map<std::string, std::string> Rosbag2::get_topics_with_types(
+  const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node)
+{
+  std::vector<std::string> sanitized_topic_names;
+  std::transform(topic_names.begin(), topic_names.end(), std::back_inserter(sanitized_topic_names),
+    [](std::string topic_name) {
+      return topic_name[0] != '/' ? "/" + topic_name : topic_name;
+    });
+
+  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
+  // This should be replaced by an auto-discovery system in the future
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  auto topics_and_types = node->get_topic_names_and_types();
+
+  std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
+  std::remove_copy_if(topics_and_types.begin(), topics_and_types.end(),
+    std::inserter(filtered_topics_and_types, filtered_topics_and_types.end()),
+    [sanitized_topic_names](auto element) {
+      return std::find(sanitized_topic_names.begin(), sanitized_topic_names.end(), element.first) ==
+      sanitized_topic_names.end();
+    });
+
+  return sanitize_topics_and_types(filtered_topics_and_types);
+}
+
+std::map<std::string, std::string>
+Rosbag2::get_all_topics_with_types(std::shared_ptr<rclcpp::Node> node)
+{
+  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
+  // This should be replaced by an auto-discovery system in the future
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  return sanitize_topics_and_types(node->get_topic_names_and_types());
+}
+
+std::map<std::string, std::string> Rosbag2::sanitize_topics_and_types(
+  std::map<std::string, std::vector<std::string>> topics_and_types)
+{
+  std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
+  std::remove_copy_if(topics_and_types.begin(),
+    topics_and_types.end(),
+    std::inserter(filtered_topics_and_types, filtered_topics_and_types.end()),
+    [](auto element) {
+      if (element.second.size() > 1) {
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Topic '%s' has several types associated. Only topics with one type are supported.",
+          element.first.c_str());
+        return true;
+      }
+      return false;
+    });
+
+  std::map<std::string, std::string> topics_and_types_to_record;
+  std::transform(
+    filtered_topics_and_types.begin(),
+    filtered_topics_and_types.end(),
+    std::inserter(topics_and_types_to_record, topics_and_types_to_record.end()),
+    [](auto element) {
+      return std::make_pair(element.first, element.second[0]);
+    });
+  return topics_and_types_to_record;
 }
 
 }  // namespace rosbag2

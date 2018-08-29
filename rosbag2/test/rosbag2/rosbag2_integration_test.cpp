@@ -59,8 +59,16 @@ public:
   std::vector<std::shared_ptr<rclcpp::PublisherBase>> publishers_;
 };
 
+TEST_F(RosBag2IntegrationFixture, get_topics_with_types_returns_empty_if_topic_does_not_exist) {
+  create_publisher("string_topic");
+
+  auto topics_and_types = rosbag2_.get_topics_with_types({"/wrong_topic"}, node_);
+
+  ASSERT_THAT(topics_and_types, IsEmpty());
+}
+
 TEST_F(RosBag2IntegrationFixture,
-  get_topic_returns_with_topic_string_if_topic_is_specified_without_slash)
+  get_topics_with_types_returns_with_topic_string_if_topic_is_specified_without_slash)
 {
   create_publisher("string_topic");
 
@@ -71,7 +79,7 @@ TEST_F(RosBag2IntegrationFixture,
 }
 
 TEST_F(RosBag2IntegrationFixture,
-  get_topic_returns_with_topic_string_if_topic_is_specified_with_slash)
+  get_topics_with_types_returns_with_topic_string_if_topic_is_specified_with_slash)
 {
   create_publisher("string_topic");
 
@@ -81,7 +89,7 @@ TEST_F(RosBag2IntegrationFixture,
   EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
 }
 
-TEST_F(RosBag2IntegrationFixture, returns_multiple_topics_for_multiple_inputs)
+TEST_F(RosBag2IntegrationFixture, get_topics_with_types_returns_multiple_topics_for_multiple_inputs)
 {
   std::string first_topic("/string_topic");
   std::string second_topic("/other_topic");
@@ -98,10 +106,24 @@ TEST_F(RosBag2IntegrationFixture, returns_multiple_topics_for_multiple_inputs)
   EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
 }
 
-TEST_F(RosBag2IntegrationFixture, get_topic_returns_empty_if_topic_does_not_exist) {
-  create_publisher("string_topic");
+TEST_F(RosBag2IntegrationFixture, get_all_topics_with_types_returns_all_topics)
+{
+  std::string first_topic("/string_topic");
+  std::string second_topic("/other_topic");
+  std::string third_topic("/wrong_topic");
 
-  auto topics_and_types = rosbag2_.get_topics_with_types({"/wrong_topic"}, node_);
+  create_publisher(first_topic);
+  create_publisher(second_topic);
+  create_publisher(third_topic);
 
-  ASSERT_THAT(topics_and_types, IsEmpty());
+  auto topics_and_types = rosbag2_.get_all_topics_with_types(node_);
+
+  ASSERT_THAT(topics_and_types, SizeIs(5));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("std_msgs/String"));
+  // The latter two topics can usually be found on any node, so they should be subscribed here
+  EXPECT_THAT(topics_and_types.find("/clock")->second, StrEq("rosgraph_msgs/Clock"));
+  EXPECT_THAT(
+    topics_and_types.find("/parameter_events")->second, StrEq("rcl_interfaces/ParameterEvent"));
 }
