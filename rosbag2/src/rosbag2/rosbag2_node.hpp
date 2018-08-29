@@ -15,8 +15,10 @@
 #ifndef ROSBAG2__ROSBAG2_NODE_HPP_
 #define ROSBAG2__ROSBAG2_NODE_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/node.hpp"
 #include "rcutils/types.h"
@@ -40,6 +42,14 @@ public:
     const std::string & topic,
     const std::string & type,
     std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback);
+
+  std::map<std::string, std::string>
+  get_topics_with_types(const std::vector<std::string> & topic_names);
+
+  std::map<std::string, std::string> get_all_topics_with_types();
+
+  std::map<std::string, std::string> sanitize_topics_and_types(
+    std::map<std::string, std::vector<std::string>> topics_and_types);
 };
 
 }  // namespace rosbag2

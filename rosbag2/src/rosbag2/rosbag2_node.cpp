@@ -14,8 +14,12 @@
 
 #include "rosbag2_node.hpp"
 
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
+#include <utility>
 
 #include "typesupport_helpers.hpp"
 
@@ -56,6 +60,68 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   }
 
   return subscription;
+}
+std::map<std::string, std::string> Rosbag2Node::get_topics_with_types(
+  const std::vector<std::string> & topic_names)
+{
+  std::vector<std::string> sanitized_topic_names;
+  std::transform(topic_names.begin(), topic_names.end(), std::back_inserter(sanitized_topic_names),
+    [](std::string topic_name) {
+      return topic_name[0] != '/' ? "/" + topic_name : topic_name;
+    });
+
+  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
+  // This should be replaced by an auto-discovery system in the future
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  auto topics_and_types = this->get_topic_names_and_types();
+
+  std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
+  std::remove_copy_if(topics_and_types.begin(), topics_and_types.end(),
+    std::inserter(filtered_topics_and_types, filtered_topics_and_types.end()),
+    [sanitized_topic_names](auto element) {
+      return std::find(sanitized_topic_names.begin(), sanitized_topic_names.end(), element.first) ==
+      sanitized_topic_names.end();
+    });
+
+  return sanitize_topics_and_types(filtered_topics_and_types);
+}
+
+std::map<std::string, std::string>
+Rosbag2Node::get_all_topics_with_types()
+{
+  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
+  // This should be replaced by an auto-discovery system in the future
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  return sanitize_topics_and_types(this->get_topic_names_and_types());
+}
+
+std::map<std::string, std::string> Rosbag2Node::sanitize_topics_and_types(
+  std::map<std::string, std::vector<std::string>> topics_and_types)
+{
+  std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
+  std::remove_copy_if(topics_and_types.begin(),
+    topics_and_types.end(),
+    std::inserter(filtered_topics_and_types, filtered_topics_and_types.end()),
+    [](auto element) {
+      if (element.second.size() > 1) {
+        RCUTILS_LOG_ERROR_NAMED(
+          "rosbag2",
+          "Topic '%s' has several types associated. Only topics with one type are supported.",
+          element.first.c_str());
+        return true;
+      }
+      return false;
+    });
+
+  std::map<std::string, std::string> topics_and_types_to_record;
+  std::transform(
+    filtered_topics_and_types.begin(),
+    filtered_topics_and_types.end(),
+    std::inserter(topics_and_types_to_record, topics_and_types_to_record.end()),
+    [](auto element) {
+      return std::make_pair(element.first, element.second[0]);
+    });
+  return topics_and_types_to_record;
 }
 
 }  // namespace rosbag2

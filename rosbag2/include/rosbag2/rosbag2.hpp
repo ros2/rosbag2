@@ -62,15 +62,6 @@ public:
   ROSBAG2_PUBLIC
   void play(const std::string & file_name);
 
-  /// Exposed for testing
-  ROSBAG2_PUBLIC
-  std::map<std::string, std::string> get_topics_with_types(
-    const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node);
-
-  /// Exposed for testing
-  ROSBAG2_PUBLIC
-  std::map<std::string, std::string> get_all_topics_with_types(std::shared_ptr<rclcpp::Node> node);
-
 private:
   void prepare_publishers(
     std::shared_ptr<Rosbag2Node> node,
@@ -82,9 +73,6 @@ private:
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
     std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;
-
-  std::map<std::string, std::string> sanitize_topics_and_types(
-    std::map<std::string, std::vector<std::string>> topics_and_types);
 
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;

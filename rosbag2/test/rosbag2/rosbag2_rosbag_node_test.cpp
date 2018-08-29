@@ -34,6 +34,7 @@ public:
   RosBag2NodeFixture()
   {
     node_ = std::make_shared<rosbag2::Rosbag2Node>("rosbag2");
+    publisher_node_ = std::make_shared<rclcpp::Node>("publisher_node");
   }
 
   static void SetUpTestCase()
@@ -44,6 +45,12 @@ public:
   static void TearDownTestCase()
   {
     rclcpp::shutdown();
+  }
+
+  void create_publisher(std::string topic)
+  {
+    auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic);
+    publishers_.push_back(publisher);
   }
 
   std::vector<std::string> subscribe_raw_messages(
@@ -74,6 +81,8 @@ public:
 
   test_helpers::TestMemoryManagement memory_management_;
   std::shared_ptr<rosbag2::Rosbag2Node> node_;
+  rclcpp::Node::SharedPtr publisher_node_;
+  std::vector<std::shared_ptr<rclcpp::PublisherBase>> publishers_;
 };
 
 
@@ -99,4 +108,72 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   auto subscribed_messages = subscriber_future_.get();
   EXPECT_THAT(subscribed_messages, SizeIs(Not(0)));
   EXPECT_THAT(subscribed_messages[0], StrEq("Hello World"));
+}
+
+TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_empty_if_topic_does_not_exist) {
+  create_publisher("string_topic");
+
+  auto topics_and_types = node_->get_topics_with_types({"/wrong_topic"});
+
+  ASSERT_THAT(topics_and_types, IsEmpty());
+}
+
+TEST_F(RosBag2NodeFixture,
+  get_topics_with_types_returns_with_topic_string_if_topic_is_specified_without_slash)
+{
+  create_publisher("string_topic");
+
+  auto topics_and_types = node_->get_topics_with_types({"string_topic"});
+
+  ASSERT_THAT(topics_and_types, SizeIs(1));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
+}
+
+TEST_F(RosBag2NodeFixture,
+  get_topics_with_types_returns_with_topic_string_if_topic_is_specified_with_slash)
+{
+  create_publisher("string_topic");
+
+  auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
+
+  ASSERT_THAT(topics_and_types, SizeIs(1));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
+}
+
+TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_multiple_topics_for_multiple_inputs) {
+  std::string first_topic("/string_topic");
+  std::string second_topic("/other_topic");
+  std::string third_topic("/wrong_topic");
+
+  create_publisher(first_topic);
+  create_publisher(second_topic);
+  create_publisher(third_topic);
+
+  auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
+
+  ASSERT_THAT(topics_and_types, SizeIs(2));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
+}
+
+TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
+{
+  std::string first_topic("/string_topic");
+  std::string second_topic("/other_topic");
+  std::string third_topic("/wrong_topic");
+
+  create_publisher(first_topic);
+  create_publisher(second_topic);
+  create_publisher(third_topic);
+
+  auto topics_and_types = node_->get_all_topics_with_types();
+
+  ASSERT_THAT(topics_and_types, SizeIs(5));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("std_msgs/String"));
+  // The latter two topics can usually be found on any node, so they should be subscribed here
+  EXPECT_THAT(topics_and_types.find("/clock")->second, StrEq("rosgraph_msgs/Clock"));
+  EXPECT_THAT(
+    topics_and_types.find("/parameter_events")->second, StrEq("rcl_interfaces/ParameterEvent"));
 }
