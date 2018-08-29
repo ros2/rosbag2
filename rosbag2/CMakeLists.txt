@@ -16,10 +16,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(poco_vendor)
+find_package(Poco COMPONENTS Foundation)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(rosidl_generator_c REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(
   librosbag2
@@ -43,6 +47,24 @@ target_link_libraries(${PROJECT_NAME}_record librosbag2)
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
 target_link_libraries(${PROJECT_NAME}_play librosbag2)
 
+add_executable(load_typesupport_handle_c src/load_typesupport_handle_c.cpp)
+ament_target_dependencies(
+  load_typesupport_handle_c
+  ament_index_cpp
+  Poco
+  rcl
+  rcutils
+)
+
+add_executable(load_typesupport_handle_cpp src/load_typesupport_handle_cpp.cpp)
+ament_target_dependencies(
+  load_typesupport_handle_cpp
+  ament_index_cpp
+  Poco
+  rclcpp
+  rcutils
+)
+
 install(
   DIRECTORY include/
   DESTINATION include)
@@ -51,6 +73,10 @@ install(
   TARGETS librosbag2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
+
+install(
+  TARGETS load_typesupport_handle_c load_typesupport_handle_cpp
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
