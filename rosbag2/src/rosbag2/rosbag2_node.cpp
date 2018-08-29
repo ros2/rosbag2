@@ -40,7 +40,7 @@ std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
 std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const std::string & topic,
   const std::string & type,
-  std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback)
+  std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 {
   auto type_support = get_typesupport(type);
 
