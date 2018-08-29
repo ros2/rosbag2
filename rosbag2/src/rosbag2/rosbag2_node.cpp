@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 
+#include "rosbag2/logging.hpp"
 #include "typesupport_helpers.hpp"
 
 namespace rosbag2
@@ -55,8 +56,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
 
     get_node_topics_interface()->add_subscription(subscription, nullptr);
   } catch (const std::runtime_error & ex) {
-    RCUTILS_LOG_ERROR_NAMED(
-      "rosbag2", "Error subscribing to topic %s. Error: %s", topic.c_str(), ex.what());
+    ROSBAG2_LOG_ERROR_STREAM("Error subscribing to topic '" << topic << "'. Error: " << ex.what());
   }
 
   return subscription;
@@ -104,10 +104,8 @@ std::map<std::string, std::string> Rosbag2Node::sanitize_topics_and_types(
     std::inserter(filtered_topics_and_types, filtered_topics_and_types.end()),
     [](auto element) {
       if (element.second.size() > 1) {
-        RCUTILS_LOG_ERROR_NAMED(
-          "rosbag2",
-          "Topic '%s' has several types associated. Only topics with one type are supported.",
-          element.first.c_str());
+        ROSBAG2_LOG_ERROR_STREAM("Topic '" << element.first <<
+        "' has several types associated. Only topics with one type are supported");
         return true;
       } else {
         char type_separator = '/';
@@ -118,10 +116,8 @@ std::map<std::string, std::string> Rosbag2Node::sanitize_topics_and_types(
         sep_position_back == 0 ||
         sep_position_back == element.second[0].length() - 1)
         {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2",
-            "Topic '%s' has non-ROS type %s . Only ROS topics are supported.",
-            element.first.c_str(), element.second[0].c_str());
+          ROSBAG2_LOG_ERROR_STREAM("Topic '" << element.first <<
+          "' has non-ROS type '" << element.second[0] << "'. Only ROS topics are supported.");
           return true;
         }
         return false;

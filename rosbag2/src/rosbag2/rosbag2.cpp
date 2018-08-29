@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/logging_macros.h"
 
+#include "rosbag2/logging.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -50,7 +51,6 @@ void Rosbag2::record(
 
   if (!storage) {
     throw std::runtime_error("No storage could be initialized. Abort");
-    return;
   }
 
   auto node = std::make_shared<Rosbag2Node>("rosbag2");
@@ -79,10 +79,9 @@ void Rosbag2::record(
 
   if (subscriptions_.empty()) {
     throw std::runtime_error("No topics could be subscribed. Abort");
-    return;
   }
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  ROSBAG2_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
     rclcpp::spin(node);
   }
@@ -106,9 +105,8 @@ Rosbag2::create_subscription(
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
-        RCUTILS_LOG_ERROR_NAMED(
-          ROS_PACKAGE_NAME,
-          "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+        ROSBAG2_LOG_ERROR_STREAM(
+          "Error getting current time. Error:" << rcutils_get_error_string_safe());
       }
       bag_message->time_stamp = time_stamp;
 
@@ -134,7 +132,7 @@ void Rosbag2::play(const std::string & file_name)
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
       publishers_[message->topic_name]->publish(message->serialized_data);
-      RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
+      ROSBAG2_LOG_INFO("Published message");
     }
   }
 }

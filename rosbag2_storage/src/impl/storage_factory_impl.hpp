@@ -22,18 +22,16 @@
 #include <vector>
 
 #include "pluginlib/class_loader.hpp"
-#include "rcutils/logging_macros.h"
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_traits.hpp"
+#include "rosbag2_storage/logging.hpp"
 
 namespace rosbag2_storage
 {
-
-constexpr const char * ROS_PACKAGE_NAME = "rosbag2_storage";
 
 using storage_interfaces::ReadOnlyInterface;
 using storage_interfaces::ReadWriteInterface;
@@ -43,7 +41,7 @@ std::shared_ptr<pluginlib::ClassLoader<InterfaceT>>
 get_class_loader()
 {
   const char * lookup_name = StorageTraits<InterfaceT>::name;
-  return std::make_shared<pluginlib::ClassLoader<InterfaceT>>(ROS_PACKAGE_NAME, lookup_name);
+  return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_storage", lookup_name);
 }
 
 template<
@@ -59,8 +57,7 @@ get_interface_instance(
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
   if (class_exists == registered_classes.end()) {
-    RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME,
-      "Requested storage id %s does not exist", storage_id.c_str());
+    ROSBAG2_STORAGE_LOG_DEBUG_STREAM("Requested storage id '" << storage_id << "' does not exist");
     return nullptr;
   }
 
@@ -69,8 +66,8 @@ get_interface_instance(
     auto unmanaged_instance = class_loader->createUnmanagedInstance(storage_id);
     instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
   } catch (const std::runtime_error & ex) {
-    RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-      "unable to load instance of read write interface: %s", ex.what());
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Unable to load instance of read write interface: " << ex.what());
     return nullptr;
   }
 
@@ -78,8 +75,8 @@ get_interface_instance(
     instance->open(uri, flag);
     return instance;
   } catch (const std::runtime_error & ex) {
-    RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-      "Could not open '%s' with %s. Error: %s", uri.c_str(), storage_id.c_str(), ex.what());
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Could not open '" << uri << "' with '" << storage_id << "'. Error: " << ex.what());
     return nullptr;
   }
 }
@@ -92,16 +89,14 @@ public:
     try {
       read_write_class_loader_ = get_class_loader<ReadWriteInterface>();
     } catch (const std::exception & e) {
-      RCUTILS_LOG_ERROR_NAMED(
-        ROS_PACKAGE_NAME, "unable to create class load instance: %s", e.what());
+      ROSBAG2_STORAGE_LOG_ERROR_STREAM("Unable to create class load instance: " << e.what());
       throw e;
     }
 
     try {
       read_only_class_loader_ = get_class_loader<ReadOnlyInterface>();
     } catch (const std::exception & e) {
-      RCUTILS_LOG_ERROR_NAMED(
-        ROS_PACKAGE_NAME, "unable to create class load instance: %s", e.what());
+      ROSBAG2_STORAGE_LOG_ERROR_STREAM("Unable to create class load instance: " << e.what());
       throw e;
     }
   }
@@ -113,8 +108,8 @@ public:
   {
     auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
 
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Could not load/open plugin with storage id '" << storage_id << "'.");
 
     return instance;
   }
@@ -130,8 +125,8 @@ public:
         read_write_class_loader_, storage_id, uri);
     }
 
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Could not load/open plugin with storage id '" << storage_id << "'.");
 
     return instance;
   }
