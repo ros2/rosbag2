@@ -34,13 +34,6 @@
 namespace rosbag2_storage_plugins
 {
 
-class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorageException : public std::runtime_error
-{
-public:
-  explicit SqliteStorageException(const std::string & message)
-  : runtime_error(message) {}
-};
-
 class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
   : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {

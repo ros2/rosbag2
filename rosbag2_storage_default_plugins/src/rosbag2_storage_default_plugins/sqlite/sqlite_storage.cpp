@@ -26,6 +26,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "../logging.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -67,7 +68,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   }
   auto topic_entry = topics_.find(message->topic_name);
   if (topic_entry == end(topics_)) {
-    throw SqliteStorageException("Topic '" + message->topic_name +
+    throw SqliteException("Topic '" + message->topic_name +
             "' has not been created yet! Call 'create_topic' first.");
   }
 
