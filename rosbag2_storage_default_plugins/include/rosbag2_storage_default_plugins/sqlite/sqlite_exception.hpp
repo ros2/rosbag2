@@ -18,10 +18,17 @@
 #include <stdexcept>
 #include <string>
 
+#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4275)
+#endif
+
 namespace rosbag2_storage_plugins
 {
 
-class SqliteException : public std::runtime_error
+class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteException : public std::runtime_error
 {
 public:
   explicit SqliteException(const std::string & message)
@@ -29,5 +36,9 @@ public:
 };
 
 }  // namespace rosbag2_storage_plugins
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_

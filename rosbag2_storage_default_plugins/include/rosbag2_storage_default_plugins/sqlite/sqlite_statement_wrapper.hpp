@@ -26,11 +26,18 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
 
 namespace rosbag2_storage_plugins
 {
 
-class SqliteStatementWrapper : public std::enable_shared_from_this<SqliteStatementWrapper>
+class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStatementWrapper
+  : public std::enable_shared_from_this<SqliteStatementWrapper>
 {
 public:
   SqliteStatementWrapper(sqlite3 * database, std::string query);
@@ -220,5 +227,9 @@ SqliteStatementWrapper::QueryResult<Columns ...> SqliteStatementWrapper::execute
 using SqliteStatement = std::shared_ptr<SqliteStatementWrapper>;
 
 }  // namespace rosbag2_storage_plugins
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STATEMENT_WRAPPER_HPP_
