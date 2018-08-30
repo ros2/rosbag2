@@ -88,7 +88,7 @@ public:
           auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
 
           while (rclcpp::ok() && messages_stored_counter_[topic_name] < number_expected_messages) {
-            publisher->publish(message->serialized_data.get());
+            publisher->publish(message->serialized_data);
             // We need to wait a bit, in order for record to process the messages
             std::this_thread::sleep_for(50ms);
           }
