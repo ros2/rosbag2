@@ -45,7 +45,6 @@ public:
     auto node = std::make_shared<rclcpp::Node>("subscriber_node");
     auto subscription = node->create_subscription<std_msgs::msg::String>("string_topic",
         [this, &messages](const std_msgs::msg::String::ConstSharedPtr message) {
-          std::cout << "\ndata = " << message->data << "\n";
           messages.emplace_back(message->data);
           counter_++;
         }, 10);
