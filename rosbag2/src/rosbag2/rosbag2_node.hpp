@@ -48,7 +48,10 @@ public:
 
   std::map<std::string, std::string> get_all_topics_with_types();
 
-  std::map<std::string, std::string> sanitize_topics_and_types(
+  std::map<std::string, std::vector<std::string>> filter_topics_with_wrong_types(
+    std::map<std::string, std::vector<std::string>> topics_and_types);
+
+  std::map<std::string, std::string> reduce_multiple_types_to_one(
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };
 
