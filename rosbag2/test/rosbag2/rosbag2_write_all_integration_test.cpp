@@ -40,7 +40,7 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_ar
   start_publishing(serialized_string_bag_message, string_topic, 2);
   start_publishing(serialized_int_bag_message, int_topic, 2);
 
-  start_recording({string_topic, int_topic});
+  start_recording_all_topics();
   wait_for_publishers();
   stop_recording();
 
