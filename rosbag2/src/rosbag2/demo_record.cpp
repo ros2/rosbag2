@@ -23,13 +23,15 @@
 int main(int argc, const char ** argv)
 {
   if (argc < 2) {
-    std::cerr << "\nThe names of topics to record must be given as parameter!\n";
+    std::cerr << "\nThe names of topics or `--all` must be given to record as parameter!\n";
     return 0;
   }
   std::vector<std::string> topics;
 
-  for (int i = 1; i < argc; i++) {
-    topics.emplace_back(argv[i]);
+  if (strcmp(argv[1], "--all") != 0) {
+    for (int i = 1; i < argc; i++) {
+      topics.emplace_back(argv[i]);
+    }
   }
 
   // TODO(anhosi): allow output file to be specified by cli argument and do proper checking if

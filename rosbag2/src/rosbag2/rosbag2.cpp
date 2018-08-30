@@ -57,7 +57,9 @@ void Rosbag2::record(
 
   auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
-  auto topics_and_types = get_topics_with_types(topic_names, node);
+  auto topics_and_types = topic_names.empty() ?
+    get_all_topics_with_types(node) :
+    get_topics_with_types(topic_names, node);
 
   if (topics_and_types.empty()) {
     throw std::runtime_error("No topics found. Abort");
