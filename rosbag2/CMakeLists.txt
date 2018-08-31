@@ -23,7 +23,7 @@ find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_package(rosidl_generator_c REQUIRED)
+find_package(rosidl_generator_cpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
 add_library(
@@ -72,7 +72,6 @@ install(
   LIBRARY DESTINATION lib)
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)

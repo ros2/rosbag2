@@ -54,9 +54,7 @@ TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
   auto string_typesupport = rosbag2::get_typesupport("std_msgs/String");
-  auto pointcloud_typesupport = rosbag2::get_typesupport("sensor_msgs/PointCloud");
 
-  EXPECT_THAT(std::string(string_typesupport->typesupport_identifier), "rosidl_typesupport_cpp");
-  EXPECT_THAT(
-    std::string(pointcloud_typesupport->typesupport_identifier), "rosidl_typesupport_cpp");
+  EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
+    StrEq("rosidl_typesupport_cpp"));
 }
