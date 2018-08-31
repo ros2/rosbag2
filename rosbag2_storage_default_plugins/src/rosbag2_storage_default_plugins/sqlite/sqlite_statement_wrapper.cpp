@@ -51,7 +51,7 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
 std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
 {
   int return_code = sqlite3_step(statement_);
-  if (return_code != SQLITE_OK && return_code != SQLITE_DONE) {
+  if (return_code != SQLITE_OK && return_code != SQLITE_DONE && return_code != SQLITE_ROW) {
     throw SqliteException("Error processing SQLite statement. Return code: " +
             std::to_string(return_code));
   }

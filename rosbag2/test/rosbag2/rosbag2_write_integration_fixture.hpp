@@ -41,8 +41,11 @@ class RosBag2WriteIntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2WriteIntegrationTestFixture()
-    : Rosbag2TestFixture(), db_(database_name_)
+  : Rosbag2TestFixture()
   {
+    rosbag2_storage_plugins::SqliteWrapper
+    db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
+
     rclcpp::init(0, nullptr);
     publisher_node_ = rclcpp::Node::make_shared("publisher_node");
   }
@@ -85,37 +88,43 @@ public:
     std::string topic_name, size_t number_expected_messages)
   {
     publisher_futures_.push_back(std::async(
-      std::launch::async, [this, message, topic_name, number_expected_messages]() {
-        auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
+        std::launch::async, [this, message, topic_name, number_expected_messages]() {
+          auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
 
-        while (rclcpp::ok() && count_stored_messages(topic_name) < number_expected_messages) {
-          publisher->publish(message->serialized_data.get());
-          // rate limiting
-          std::this_thread::sleep_for(50ms);
+          rosbag2_storage_plugins::SqliteWrapper
+          db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+          while (rclcpp::ok() && count_stored_messages(db, topic_name) < number_expected_messages) {
+            publisher->publish(message->serialized_data.get());
+            // rate limiting
+            std::this_thread::sleep_for(50ms);
+          }
         }
-      }
     ));
   }
 
-  size_t count_stored_messages(std::string topic_name)
+  size_t count_stored_messages(rosbag2_storage_plugins::SqliteWrapper & db, std::string topic_name)
   {
     // protect against concurrent writes (from recording) that may make the count query throw.
     while (true) {
       try {
-        return count_stored_messages_in_db(topic_name);
-      } catch (const rosbag2_storage_plugins::SqliteException & e) {}
+        return count_stored_messages_in_db(db, topic_name);
+      } catch (const rosbag2_storage_plugins::SqliteException & e) {
+        (void) e;
+      }
+      std::this_thread::sleep_for(50ms);
     }
   }
 
-  size_t count_stored_messages_in_db(std::string topic_name)
+  size_t count_stored_messages_in_db(
+    rosbag2_storage_plugins::SqliteWrapper & db, std::string topic_name)
   {
-    auto row = db_.prepare_statement(
-        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
+    auto row = db.prepare_statement(
+      "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
       ->execute_query<int>().get_single_line();
     if (std::get<0>(row) == 0) {
       return 0;
     }
-    auto message_count = db_.prepare_statement(
+    auto message_count = db.prepare_statement(
       "SELECT COUNT(*) "
       "FROM messages LEFT JOIN topics ON messages.topic_id = topics.id "
       "WHERE topics.name = ?;")->bind(topic_name)->execute_query<int>().get_single_line();
@@ -147,7 +156,6 @@ public:
   test_helpers::TestMemoryManagement memory_;
   std::vector<std::future<void>> publisher_futures_;
   std::future<void> future_;
-  rosbag2_storage_plugins::SqliteWrapper db_;
 };
 
 #endif  // ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_

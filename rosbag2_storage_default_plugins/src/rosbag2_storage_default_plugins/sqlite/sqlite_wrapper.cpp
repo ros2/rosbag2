@@ -27,12 +27,25 @@
 namespace rosbag2_storage_plugins
 {
 
-SqliteWrapper::SqliteWrapper(const std::string & uri)
+SqliteWrapper::SqliteWrapper(
+  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 : db_ptr(nullptr)
 {
-  int rc = sqlite3_open(uri.c_str(), &db_ptr);
-  if (rc) {
-    throw SqliteException("Could not open database. Error: " + std::string(sqlite3_errmsg(db_ptr)));
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+    int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
+        SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nullptr);
+    if (rc != SQLITE_OK) {
+      throw SqliteException("Could not read-only open database. Error code: " + std::to_string(rc));
+    }
+  } else {
+    int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
+    if (rc != SQLITE_OK) {
+      throw SqliteException(
+              "Could not read-write open database. Error code: " + std::to_string(rc));
+    }
+    prepare_statement("PRAGMA journal_mode = WAL;")->execute_and_reset();
+    prepare_statement("PRAGMA synchronous = NORMAL;")->execute_and_reset();
   }
 }
 

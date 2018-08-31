@@ -42,7 +42,7 @@ class Rosbag2TestFixture : public Test
 {
 public:
   Rosbag2TestFixture()
-  : database_name_(UnitTest::GetInstance()->current_test_info()->name())
+  : database_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".db3")
   {
     std::string system_separator = "/";
 #ifdef _WIN32

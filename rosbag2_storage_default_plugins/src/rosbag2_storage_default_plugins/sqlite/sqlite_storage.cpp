@@ -48,13 +48,13 @@ void SqliteStorage::open(
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(uri);
+    database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
     bag_info_.uri = uri;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  if (io_flag != rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
     initialize();
   }
 
