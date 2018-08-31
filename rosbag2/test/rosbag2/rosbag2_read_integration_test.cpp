@@ -49,24 +49,24 @@ public:
   }
 
   template<typename T>
-  auto subscribe_messages(
-    size_t expected_messages_number, const std::string & topic)
+  auto prepare_subscriber(size_t expected_messages_number, std::string topic)
   {
     auto node = rclcpp::Node::make_shared("node_" + topic);
-    std::vector<typename T::ConstSharedPtr> messages;
-    size_t messages_received = 0;
-
+    auto messages = std::make_shared<std::vector<typename T::ConstSharedPtr>>();
+    auto messages_received = std::make_shared<size_t>(0);
     auto subscription = node->create_subscription<T>(topic,
-        [&messages, &messages_received](typename T::ConstSharedPtr message) {
-          messages.push_back(message);
-          ++messages_received;
+        [messages, messages_received](typename T::ConstSharedPtr message) {
+          messages->push_back(message);
+          ++*messages_received;
         });
     subscriptions_.push_back(subscription);
 
-    while (messages_received < expected_messages_number) {
-      rclcpp::spin_some(node);
-    }
-    return messages;
+    return [messages, messages_received, node, expected_messages_number]() {
+             while (*messages_received < expected_messages_number) {
+               rclcpp::spin_some(node);
+             }
+             return *messages;
+           };
   }
 
   template<typename MessageT>
@@ -83,9 +83,8 @@ public:
   template<typename MessageT>
   auto launch_subscriber(size_t expected_messages_number, const std::string & topic)
   {
-    return std::async(std::launch::async, [this, expected_messages_number, topic] {
-               return subscribe_messages<MessageT>(expected_messages_number, topic);
-             });
+    auto spin_subscriber = prepare_subscriber<MessageT>(expected_messages_number, topic);
+    return std::async(std::launch::async, spin_subscriber);
   }
 
   void wait_for_subscribers(size_t count)
