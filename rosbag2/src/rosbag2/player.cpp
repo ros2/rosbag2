@@ -45,9 +45,10 @@ void Player::play()
   prepare_publishers();
 
   auto db_read_future = std::async(std::launch::async, [this]() {load_storage_content();});
-  db_read_future.get();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  play_messages_from_queue();
+  play_messages_from_queue(std::future<void>());
+  db_read_future.get();
 }
 
 void Player::load_storage_content()
@@ -60,27 +61,32 @@ void Player::load_storage_content()
     message.message = storage_->read_next();
     message.time_since_start = std::chrono::nanoseconds(0);
     time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
-    message_queue_.push(message);
+    message_queue_.enqueue(message);
   }
   while (storage_->has_next()) {
     message.message = storage_->read_next();
     message.time_since_start =
       TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
 
-    message_queue_.push(message);
+    message_queue_.enqueue(message);
   }
 }
 
-void Player::play_messages_from_queue()
+bool is_not_ready(const std::future<void> & future)
+{
+  return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
+}
+
+void Player::play_messages_from_queue(std::future<void> storage_loading_future)
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  // TODO(holznera): only stop if also the storage has been read completly.
-  while (!message_queue_.empty()) {
-    const auto & message = message_queue_.front();
-    std::this_thread::sleep_until(start_time + message.time_since_start);
-    publishers_[message.message->topic_name]->publish(message.message->serialized_data);
-    message_queue_.pop();
+  while (message_queue_.size_approx() != 0 && is_not_ready(storage_loading_future)) {
+    ReplayableMessage message;
+    if (message_queue_.try_dequeue(message)) {
+      std::this_thread::sleep_until(start_time + message.time_since_start);
+      publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+    }
   }
 }
 

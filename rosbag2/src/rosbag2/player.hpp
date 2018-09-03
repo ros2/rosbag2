@@ -15,14 +15,15 @@
 #ifndef ROSBAG2__PLAYER_HPP_
 #define ROSBAG2__PLAYER_HPP_
 
+#include <future>
 #include <map>
 #include <memory>
 #include <queue>
 #include <string>
 
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "moodycamel/readerwriterqueue.h"
 #include "replayable_message.hpp"
-
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 namespace rosbag2
@@ -40,11 +41,11 @@ public:
 
 private:
   void load_storage_content();
-  void play_messages_from_queue();
+  void play_messages_from_queue(std::future<void> storage_loading_future);
   void prepare_publishers();
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
-  std::queue<ReplayableMessage> message_queue_;
+  moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
   std::shared_ptr<Rosbag2Node> node_;
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };

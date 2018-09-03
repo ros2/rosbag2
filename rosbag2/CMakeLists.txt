@@ -24,6 +24,7 @@ find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
+find_package(shared_queues_vendor REQUIRED)
 
 add_library(
   librosbag2
@@ -35,8 +36,7 @@ add_library(
   src/rosbag2/generic_subscription.cpp
   src/rosbag2/rosbag2_node.cpp)
 
-ament_target_dependencies(
-  librosbag2
+ament_target_dependencies(librosbag2
   ament_index_cpp
   Poco
   rcl
@@ -44,7 +44,9 @@ ament_target_dependencies(
   rcutils
   rosbag2_storage
   rosidl_generator_c
+  shared_queues_vendor
 )
+
 target_include_directories(librosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

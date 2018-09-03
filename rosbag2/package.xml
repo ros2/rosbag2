@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>ament_index_cpp</depend>
-  <depend>libpoco-dev</depend>
   <depend>poco_vendor</depend>
   <depend>rcl</depend>
   <depend>rclcpp</depend>
@@ -18,6 +17,7 @@
   <depend>rosbag2_storage</depend>
   <depend>rosidl_generator_cpp</depend>
   <depend>std_msgs</depend>
+  <depend>shared_queues_vendor</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
