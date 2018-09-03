@@ -56,5 +56,5 @@ TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
   auto string_typesupport = rosbag2::get_typesupport("std_msgs/String");
 
   EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
-    StrEq("rosidl_typesupport_cpp"));
+    ContainsRegex("rosidl_typesupport"));
 }
