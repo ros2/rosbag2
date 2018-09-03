@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_
+#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
+#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
 
-#include <gmock/gmock.h>
-
+#include <stdexcept>
 #include <string>
-#include <vector>
 
-#include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
+namespace rosbag2_storage_plugins
+{
 
-class MockSqliteWrapper : public rosbag2_storage_plugins::SqliteWrapper
+class SqliteException : public std::runtime_error
 {
 public:
-  MOCK_METHOD1(execute_query, void(const std::string &));
-  MOCK_METHOD2(get_message, bool(std::string &, size_t));
+  explicit SqliteException(const std::string & message)
+  : runtime_error(message) {}
 };
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__MOCK_SQLITE_WRAPPER_HPP_
+}  // namespace rosbag2_storage_plugins
+
+#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_

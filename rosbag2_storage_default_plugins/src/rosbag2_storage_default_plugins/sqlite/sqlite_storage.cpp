@@ -15,6 +15,7 @@
 #include "sqlite_storage.hpp"
 
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -28,16 +29,15 @@ namespace rosbag2_storage_plugins
 const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 
 SqliteStorage::SqliteStorage()
-: database_(), counter_(0), bag_info_()
-{}
-
-SqliteStorage::SqliteStorage(std::shared_ptr<SqliteWrapper> database)
-: database_(std::move(database)), counter_(0)
+: database_(), bag_info_(), write_statement_(nullptr), read_statement_(nullptr),
+  message_result_(nullptr),
+  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {}
 
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  // TODO(MARTIN-IDEL-SI): use flags to open database for read-only
   (void) io_flag;
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);
@@ -51,50 +51,35 @@ void SqliteStorage::open(
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
-  std::string msg(&message->serialized_data->buffer[8]);
-  std::string insert_message =
-    "INSERT INTO messages (data, timestamp) VALUES ('" + msg + "', strftime('%s%f','now'))";
-  database_->execute_query(insert_message);
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message");
+  write_statement_->bind(message->serialized_data, message->time_stamp);
+  write_statement_->execute_and_reset();
+
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message.");
 }
 
-bool SqliteStorage::has_next() const
+bool SqliteStorage::has_next()
 {
-  // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  std::string message;
-  return database_->get_message(message, counter_);
+  if (!read_statement_) {
+    prepare_for_reading();
+  }
+
+  return current_message_row_ != message_result_.end();
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
-  // TODO(Martin-Idel-SI): improve sqlite_wrapper interface
-  std::string message;
-  database_->get_message(message, counter_++);
-  auto payload = new rcutils_char_array_t;
-  *payload = rcutils_get_zero_initialized_char_array();
-  auto allocator = new rcutils_allocator_t;
-  *allocator = rcutils_get_default_allocator();
-  auto ret = rcutils_char_array_init(payload, strlen(message.c_str()) + 1, allocator);
-  if (ret != RCUTILS_RET_OK) {
-    throw std::runtime_error(std::string(" Failed to allocate serialized bag message ") +
-            rcutils_get_error_string_safe());
+  if (!read_statement_) {
+    prepare_for_reading();
   }
-  memcpy(payload->buffer, message.c_str(), strlen(message.c_str()) + 1);
 
-  auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  msg->time_stamp = 0;
-  msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
-      [](rcutils_char_array_t * msg) {
-        auto error = rcutils_char_array_fini(msg);
-        delete msg;
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_default_plugins",
-          " Failed to destroy serialized bag message %s", rcutils_get_error_string_safe());
-        }
-      });
-  return msg;
+  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  std::tie(bag_message->serialized_data, bag_message->time_stamp) = *current_message_row_;
+  ++current_message_row_;
+  return bag_message;
 }
 
 void SqliteStorage::initialize()
@@ -102,9 +87,9 @@ void SqliteStorage::initialize()
   std::string create_table = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY AUTOINCREMENT," \
     "data           BLOB    NOT NULL," \
-    "timestamp      INT     NOT NULL);";
+    "timestamp      INTEGER     NOT NULL);";
 
-  database_->execute_query(create_table);
+  database_->prepare_statement(create_table)->execute_and_reset();
 }
 
 rosbag2_storage::BagInfo SqliteStorage::info()
@@ -115,6 +100,21 @@ rosbag2_storage::BagInfo SqliteStorage::info()
 void SqliteStorage::create_topic()
 {
   initialize();
+}
+
+void SqliteStorage::prepare_for_writing()
+{
+  write_statement_ = database_->prepare_statement(
+    "INSERT INTO messages (data, timestamp) VALUES (?, ?);");
+}
+
+void SqliteStorage::prepare_for_reading()
+{
+  read_statement_ =
+    database_->prepare_statement("SELECT data, timestamp FROM messages ORDER BY id;");
+  message_result_ = read_statement_->execute_query<
+    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t>();
+  current_message_row_ = message_result_.begin();
 }
 
 }  // namespace rosbag2_storage_plugins

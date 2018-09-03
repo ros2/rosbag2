@@ -76,34 +76,12 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
 {
   rclcpp::init(0, nullptr);
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
-  for (int i : {1, 2, 3}) {
-    (void) i;
-    auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    auto payload = new rcutils_char_array_t;
-    *payload = rcutils_get_zero_initialized_char_array();
-    payload->allocator = rcutils_get_default_allocator();
-    // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
-    std::string string_message_to_publish = "bbbbbbbbHello World";
-    auto ret = rcutils_char_array_resize(payload, strlen(string_message_to_publish.c_str()) + 1);
-    if (ret != RCUTILS_RET_OK) {
-      FAIL() << " Failed to resize serialized bag message";
-    }
-    memcpy(payload->buffer,
-      string_message_to_publish.c_str(),
-      strlen(string_message_to_publish.c_str()) + 1);
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_message("Hello World 1"),
+    serialize_message("Hello World 2"),
+    serialize_message("Hello World 2")};
 
-    msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
-        [](rcutils_char_array_t * msg) {
-          auto error = rcutils_char_array_fini(msg);
-          delete msg;
-          if (error != RCUTILS_RET_OK) {
-            FAIL() << " Failed to destroy serialized bag message";
-          }
-        });
-    messages.push_back(msg);
-  }
-  ASSERT_NO_THROW(write_messages(database_name_, messages));
+  write_messages(database_name_, messages);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
@@ -112,8 +90,8 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played)
 
   auto replayed_messages = subscriber_future_.get();
   ASSERT_THAT(replayed_messages, SizeIs(2));
-  ASSERT_THAT(replayed_messages[0], Eq("Hello World"));
-  ASSERT_THAT(replayed_messages[1], Eq("Hello World"));
+  ASSERT_THAT(replayed_messages[0], Eq("Hello World 1"));
+  ASSERT_THAT(replayed_messages[1], Eq("Hello World 2"));
 
   rclcpp::shutdown();
 }

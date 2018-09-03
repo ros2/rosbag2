@@ -22,6 +22,7 @@ find_package(rcutils REQUIRED)
 add_library(
   rosbag2_storage
   SHARED
+  src/rosbag2_storage/ros_helper.cpp
   src/storage_factory.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
@@ -74,6 +75,13 @@ if(BUILD_TESTING)
   if(TARGET test_storage_factory)
     target_include_directories(test_storage_factory PRIVATE include)
     target_link_libraries(test_storage_factory rosbag2_storage)
+  endif()
+
+  ament_add_gmock(test_ros_helper
+    test/test_ros_helper.cpp)
+  if(TARGET test_ros_helper)
+    target_include_directories(test_ros_helper PRIVATE include)
+    target_link_libraries(test_ros_helper rosbag2_storage)
   endif()
 endif()
 

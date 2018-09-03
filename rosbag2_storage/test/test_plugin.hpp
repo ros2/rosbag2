@@ -32,7 +32,7 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  bool has_next() const override;
+  bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 

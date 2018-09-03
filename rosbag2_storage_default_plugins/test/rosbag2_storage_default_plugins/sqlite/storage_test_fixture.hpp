@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -28,6 +29,8 @@
 # include <Windows.h>
 #endif
 
+#include "rcutils/logging_macros.h"
+#include "rcutils/snprintf.h"
 #include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -88,35 +91,60 @@ public:
 #endif
   }
 
-  void write_messages_to_sqlite(std::vector<std::string> messages)
+  std::shared_ptr<rcutils_char_array_t> make_serialized_message(std::string message)
+  {
+    int message_size = get_buffer_capacity(message);
+    message_size++;  // need to account for terminating null character
+    assert(message_size > 0);
+
+    auto rcutils_allocator = rcutils_get_default_allocator();
+    auto msg = new rcutils_char_array_t;
+    *msg = rcutils_get_zero_initialized_char_array();
+    auto ret = rcutils_char_array_init(msg, message_size, &rcutils_allocator);
+    if (ret != RCUTILS_RET_OK) {
+      throw std::runtime_error("Error allocating resources " + std::to_string(ret));
+    }
+
+    auto serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
+        [](rcutils_char_array_t * msg) {
+          int error = rcutils_char_array_fini(msg);
+          delete msg;
+          if (error != RCUTILS_RET_OK) {
+            RCUTILS_LOG_ERROR_NAMED(
+              "rosbag2_storage_default_plugins", "Leaking memory %i", error);
+          }
+        });
+
+    serialized_data->buffer_length = message_size;
+    int written_size = write_data_to_serialized_string_message(
+      serialized_data->buffer, serialized_data->buffer_capacity, message);
+
+    assert(written_size == message_size - 1);  // terminated null character not counted
+    return serialized_data;
+  }
+
+  std::string deserialize_message(std::shared_ptr<rcutils_char_array_t> serialized_message)
+  {
+    char * copied = new char[serialized_message->buffer_length];
+    auto string_length = serialized_message->buffer_length - 8;
+    memcpy(copied, &serialized_message->buffer[8], string_length);
+    std::string message_content(copied);
+    delete[] copied;
+    return message_content;
+  }
+
+  void write_messages_to_sqlite(std::vector<std::pair<std::string, int64_t>> messages)
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
     writable_storage->open(database_name_);
     writable_storage->create_topic();
 
-    for (auto message : messages) {
-      auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      auto payload = new rcutils_char_array_t;
-      *payload = rcutils_get_zero_initialized_char_array();
-      payload->allocator = rcutils_get_default_allocator();
-      auto ret = rcutils_char_array_resize(payload, 8 + strlen(message.c_str()) + 1);
-      if (ret != RCUTILS_RET_OK) {
-        FAIL() << " Failed to resize serialized bag message";
-      }
-      // TODO(Martin-Idel-SI) The real serialized string message has 8 leading chars in CDR
-      std::string full_message = "bbbbbbbb" + message;
-      memcpy(payload->buffer, full_message.c_str(), strlen(full_message.c_str()) + 1);
-
-      msg->serialized_data = std::shared_ptr<rcutils_char_array_t>(payload,
-          [](rcutils_char_array_t * msg) {
-            auto error = rcutils_char_array_fini(msg);
-            delete msg;
-            if (error != RCUTILS_RET_OK) {
-              FAIL() << " Failed to destroy serialized bag message";
-            }
-          });
-      writable_storage->write(msg);
+    for (auto msg : messages) {
+      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      bag_message->serialized_data = make_serialized_message(msg.first);
+      bag_message->time_stamp = msg.second;
+      writable_storage->write(bag_message);
     }
   }
 
@@ -128,14 +156,32 @@ public:
     readable_storage->open(database_name_);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
-    std::string message;
     while (readable_storage->has_next()) {
-      read_messages.emplace_back(readable_storage->read_next());
+      read_messages.push_back(readable_storage->read_next());
     }
 
     return read_messages;
   }
 
+protected:
+  int get_buffer_capacity(std::string message)
+  {
+    return write_data_to_serialized_string_message(nullptr, 0, message);
+  }
+
+  int write_data_to_serialized_string_message(
+    char * buffer, size_t buffer_capacity, std::string message)
+  {
+    // This function also writes the final null charachter, which is absent in the CDR format.
+    // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
+    return rcutils_snprintf(buffer,
+             buffer_capacity,
+             "%c%c%c%c%c%c%c%c%s",
+             0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
+             message.c_str());
+  }
+
+public:
   std::string database_name_;
   static std::string temporary_dir_path_;
 };

@@ -39,8 +39,7 @@ void Rosbag2::record(
   std::function<void(void)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;
-  auto storage =
-    factory.open_read_write(file_name, "sqlite3");
+  auto storage = factory.open_read_write(file_name, "sqlite3");
   storage->create_topic();
 
   if (storage) {
@@ -50,6 +49,13 @@ void Rosbag2::record(
       [&storage, after_write_action](std::shared_ptr<rmw_serialized_message_t> msg) {
         auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         bag_msg->serialized_data = msg;
+        rcutils_time_point_value_t time_stamp;
+        int error = rcutils_system_time_now(&time_stamp);
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED(
+            "rosbag2", "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+        }
+        bag_msg->time_stamp = time_stamp;
         storage->write(bag_msg);
         if (after_write_action) {
           after_write_action();
@@ -64,8 +70,7 @@ void Rosbag2::record(
 void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
 {
   rosbag2_storage::StorageFactory factory;
-  auto storage =
-    factory.open_read_only(file_name, "sqlite3");
+  auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
     auto node = std::make_shared<rclcpp::Node>("rosbag_publisher_node");
@@ -73,13 +78,10 @@ void Rosbag2::play(const std::string & file_name, const std::string & topic_name
     while (storage->has_next()) {
       auto message = storage->read_next();
 
-      std_msgs::msg::String string_message;
-      // TODO(Martin-Idel-SI): We don't write a correct serialized_data in sqlite3_storage for now
-      // Change once available
-      string_message.data = std::string(message->serialized_data->buffer);
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      publisher->publish(string_message);
+      publisher->publish(message->serialized_data.get());
+      RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
   }
 }

@@ -14,11 +14,15 @@
 
 #include "sqlite_wrapper.hpp"
 
-#include <cstring>
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
+
+#include "rcutils/types.h"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
+#include "sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -40,39 +44,14 @@ SqliteWrapper::~SqliteWrapper()
   sqlite3_close(db_ptr);
 }
 
-void SqliteWrapper::execute_query(const std::string & query)
+SqliteStatement SqliteWrapper::prepare_statement(std::string query)
 {
-  char * error_msg = nullptr;
-  int return_code = sqlite3_exec(db_ptr, query.c_str(), nullptr, nullptr, &error_msg);
-
-  if (return_code != SQLITE_OK) {
-    auto error = "SQL error: " + std::string(error_msg);
-    sqlite3_free(error_msg);
-    throw SqliteException(error);
-  }
+  return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }
 
-bool SqliteWrapper::get_message(std::string & message, size_t index)
+size_t SqliteWrapper::get_last_insert_id()
 {
-  std::string offset = std::to_string(index);
-  sqlite3_stmt * statement;
-  std::string query = "SELECT * FROM messages LIMIT 1 OFFSET " + offset;
-
-  int return_code = sqlite3_prepare_v2(db_ptr, query.c_str(), -1, &statement, nullptr);
-  if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when preparing statement '" + query + "'with return code: " +
-            std::to_string(return_code));
-  }
-
-  int result = sqlite3_step(statement);
-  if (result == SQLITE_ROW) {
-    message = std::string(reinterpret_cast<const char *>(sqlite3_column_text(statement, 1)));
-    sqlite3_finalize(statement);
-    return true;
-  } else {
-    sqlite3_finalize(statement);
-    return false;
-  }
+  return sqlite3_last_insert_rowid(db_ptr);
 }
 
 SqliteWrapper::operator bool()

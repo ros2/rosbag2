@@ -12,30 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
-#define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
+#ifndef ROSBAG2_STORAGE__ROS_HELPER_HPP_
+#define ROSBAG2_STORAGE__ROS_HELPER_HPP_
 
 #include <memory>
 
-#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rcutils/types.h"
+
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
-namespace storage_interfaces
-{
 
-class ROSBAG2_STORAGE_PUBLIC BaseReadInterface
-{
-public:
-  virtual ~BaseReadInterface() = default;
+ROSBAG2_STORAGE_PUBLIC
+std::shared_ptr<rcutils_char_array_t>
+make_serialized_message(const void * data, size_t size);
 
-  virtual bool has_next() = 0;
-
-  virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
-};
-
-}  // namespace storage_interfaces
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
+#endif  // ROSBAG2_STORAGE__ROS_HELPER_HPP_
