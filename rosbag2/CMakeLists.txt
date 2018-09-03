@@ -111,6 +111,14 @@ if(BUILD_TESTING)
     )
   endif()
 
+  ament_add_gmock(rosbag2_play_timing_integration_test
+    test/rosbag2/rosbag2_play_timing_integration_test.cpp
+    test/rosbag2/test_memory_management.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_play_timing_integration_test)
+    target_link_libraries(rosbag2_play_timing_integration_test librosbag2)
+  endif()
+
   ament_add_gmock(rosbag2_typesupport_helpers_test
     test/rosbag2/rosbag2_typesupport_helpers_test.cpp
     src/rosbag2/typesupport_helpers.cpp

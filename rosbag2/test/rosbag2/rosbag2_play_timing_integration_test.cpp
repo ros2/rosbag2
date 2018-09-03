@@ -1,0 +1,57 @@
+// Copyright 2018, Bosch Software Innovations GmbH.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <gmock/gmock.h>
+
+#include <chrono>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
+
+#include "rosbag2/rosbag2.hpp"
+
+#include "rosbag2_test_fixture.hpp"
+
+using namespace ::testing;  // NOLINT
+using namespace rosbag2;  // NOLINT
+
+TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
+{
+  rclcpp::init(0, nullptr);
+
+  auto message_time_difference = std::chrono::seconds(1);
+  auto topic_types = std::map<std::string, std::string>{{"topic1", "std_msgs/String"}};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_message<std_msgs::msg::String>("topic1", "Hello World 1"),
+    serialize_message<std_msgs::msg::String>("topic1", "Hello World 2")};
+  messages[0]->time_stamp = 100;
+  messages[1]->time_stamp =
+    messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
+  write_messages(database_name_, messages, topic_types);
+
+  // We can only assert indirectly that the relative times are respected when playing a bag. So
+  // we check that time elapsed during playing is at least the time difference between the two
+  // messages
+  auto start = std::chrono::steady_clock::now();
+  Rosbag2 rosbag2;
+  rosbag2.play(database_name_);
+  auto replay_time = std::chrono::steady_clock::now() - start;
+
+  ASSERT_THAT(replay_time, Gt(message_time_difference));
+  rclcpp::shutdown();
+}
