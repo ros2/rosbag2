@@ -130,7 +130,7 @@ public:
     auto string_length = serialized_message->buffer_length - 8;
     memcpy(copied, &serialized_message->buffer[8], string_length);
     std::string message_content(copied);
-    // cppcheck-suppress mismatchAllocDealloc (complains about "copied" but used new[] and delete[])
+    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
     delete[] copied;
     return message_content;
   }
