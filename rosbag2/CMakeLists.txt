@@ -30,6 +30,7 @@ add_library(
   librosbag2
   SHARED
   src/rosbag2/rosbag2.cpp
+  src/rosbag2/player.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/generic_publisher.cpp
   src/rosbag2/generic_subscription.cpp

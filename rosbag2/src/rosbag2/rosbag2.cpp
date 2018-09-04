@@ -35,13 +35,12 @@
 
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
+#include "player.hpp"
 #include "replayable_message.hpp"
 #include "typesupport_helpers.hpp"
 
 namespace rosbag2
 {
-
-const char * ROS_PACKAGE_NAME = "rosbag2";
 
 void Rosbag2::record(const std::string & file_name, const std::vector<std::string> & topic_names)
 {
@@ -120,47 +119,8 @@ void Rosbag2::play(const std::string & file_name)
     throw std::runtime_error("Could not open storage: " + file_name);
   }
 
-  std::queue<ReplayableMessage> message_queue;
-
-  auto db_read_future = std::async(std::launch::async, [&storage, &message_queue]() {
-        using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
-        TimePoint time_first_message;
-        while (storage->has_next()) {
-          ReplayableMessage message;
-          message.message = storage->read_next();
-          if (time_first_message == TimePoint()) {
-            time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
-          }
-          message.time_since_start =
-          TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
-
-          message_queue.push(message);
-        }
-      });
-  db_read_future.get();
-
-  auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
-  prepare_publishers(node, storage);
-
-  auto start_time = std::chrono::high_resolution_clock::now();
-  while (!message_queue.empty()) {
-    const auto & message = message_queue.front();
-    std::this_thread::sleep_until(start_time + message.time_since_start);
-    publishers_[message.message->topic_name]->publish(message.message->serialized_data);
-    ROSBAG2_LOG_INFO("Published message");
-    message_queue.pop();
-  }
-}
-
-void Rosbag2::prepare_publishers(
-  std::shared_ptr<Rosbag2Node> node,
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
-{
-  auto all_topics_and_types = storage->get_all_topics_and_types();
-  for (const auto & element : all_topics_and_types) {
-    publishers_.insert(std::make_pair(
-        element.first, node->create_generic_publisher(element.first, element.second)));
-  }
+  player_ = std::make_shared<Player>(storage);
+  player_->play();
 }
 
 }  // namespace rosbag2
