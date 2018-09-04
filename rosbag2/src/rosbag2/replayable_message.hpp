@@ -15,9 +15,8 @@
 #ifndef ROSBAG2__REPLAYABLE_MESSAGE_HPP_
 #define ROSBAG2__REPLAYABLE_MESSAGE_HPP_
 
+#include <chrono>
 #include <memory>
-
-#include "rcutils/time.h"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
@@ -27,7 +26,7 @@ namespace rosbag2
 struct ReplayableMessage
 {
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
-  rcutils_duration_value_t time_since_start;
+  std::chrono::nanoseconds time_since_start;
 };
 
 }  // namespace rosbag2

@@ -124,14 +124,16 @@ void Rosbag2::play(const std::string & file_name)
   std::queue<ReplayableMessage> message_queue;
 
   auto db_read_future = std::async(std::launch::async, [&storage, &message_queue]() {
-        rcutils_time_point_value_t time_first_message = 0;
+        using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+        TimePoint time_first_message;
         while (storage->has_next()) {
           ReplayableMessage message;
           message.message = storage->read_next();
-          if (!time_first_message) {
-            time_first_message = message.message->time_stamp;
+          if (time_first_message == TimePoint()) {
+            time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
           }
-          message.time_since_start = message.message->time_stamp - time_first_message;
+          message.time_since_start =
+          TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
 
           message_queue.push(message);
         }
@@ -141,13 +143,13 @@ void Rosbag2::play(const std::string & file_name)
   auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
   prepare_publishers(node, storage);
 
+  auto start_time = std::chrono::high_resolution_clock::now();
   while (!message_queue.empty()) {
-    auto message = message_queue.front();
+    const auto & message = message_queue.front();
+    std::this_thread::sleep_until(start_time + message.time_since_start);
     publishers_[message.message->topic_name]->publish(message.message->serialized_data);
-    message_queue.pop();
     ROSBAG2_LOG_INFO("Published message");
-    // without the sleep_for() many messages are lost.
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    message_queue.pop();
   }
 }
 
