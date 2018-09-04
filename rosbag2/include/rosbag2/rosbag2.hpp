@@ -23,6 +23,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -70,6 +71,7 @@ private:
     std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;
 
+  rosbag2_storage::StorageFactory factory_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };

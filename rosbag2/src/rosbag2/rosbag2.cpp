@@ -115,8 +115,7 @@ Rosbag2::create_subscription(
 
 void Rosbag2::play(const std::string & file_name)
 {
-  rosbag2_storage::StorageFactory factory;
-  auto storage = factory.open_read_only(file_name, "sqlite3");
+  auto storage = factory_.open_read_only(file_name, "sqlite3");
   if (!storage) {
     throw std::runtime_error("Could not open storage: " + file_name);
   }
