@@ -24,7 +24,6 @@ find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
-find_package(std_msgs REQUIRED)
 
 add_library(
   librosbag2
@@ -45,7 +44,6 @@ ament_target_dependencies(
   rcutils
   rosbag2_storage
   rosidl_generator_c
-  std_msgs
 )
 target_include_directories(librosbag2
   PUBLIC
@@ -77,6 +75,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(std_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(rosbag2_write_integration_test
@@ -85,8 +84,10 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
     target_link_libraries(rosbag2_write_integration_test librosbag2
+      ${std_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_write_integration_test PRIVATE
+      ${std_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
@@ -96,8 +97,10 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_all_integration_test)
     target_link_libraries(rosbag2_write_all_integration_test librosbag2
+      ${std_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_write_all_integration_test PRIVATE
+      ${std_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
@@ -117,7 +120,10 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_play_timing_integration_test)
-    target_link_libraries(rosbag2_play_timing_integration_test librosbag2)
+    target_link_libraries(rosbag2_play_timing_integration_test librosbag2
+      ${std_msgs_LIBRARIES})
+    target_include_directories(rosbag2_play_timing_integration_test PRIVATE
+      ${std_msgs_INCLUDE_DIRS})
   endif()
 
   ament_add_gmock(rosbag2_typesupport_helpers_test

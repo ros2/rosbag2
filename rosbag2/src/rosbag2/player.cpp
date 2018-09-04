@@ -24,7 +24,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcl/graph.h"
 #include "rcutils/time.h"
-#include "std_msgs/msg/string.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
