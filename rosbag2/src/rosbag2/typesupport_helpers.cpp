@@ -18,11 +18,12 @@
 #include <string>
 #include <utility>
 
-#include "Poco/SharedLibrary.h"
-#include "rosidl_generator_c/message_type_support_struct.h"
-
 #include "ament_index_cpp/get_resources.hpp"
 #include "ament_index_cpp/get_package_prefix.hpp"
+
+#include "Poco/SharedLibrary.h"
+
+#include "rosidl_generator_c/message_type_support_struct.h"
 
 namespace rosbag2
 {

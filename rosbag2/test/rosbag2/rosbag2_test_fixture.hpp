@@ -30,9 +30,9 @@
 # include <Windows.h>
 #endif
 
+#include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
 
 #include "test_helpers.hpp"
 

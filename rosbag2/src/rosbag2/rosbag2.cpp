@@ -23,12 +23,13 @@
 
 #include "rcutils/logging_macros.h"
 
-#include "std_msgs/msg/string.hpp"
-
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
+
+#include "std_msgs/msg/string.hpp"
+
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
 #include "typesupport_helpers.hpp"

@@ -16,15 +16,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rcutils REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(rosbag2_storage REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(poco_vendor)
 find_package(Poco COMPONENTS Foundation)
 find_package(rcl REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rcutils REQUIRED)
+find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_c REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(
   librosbag2
@@ -35,7 +35,17 @@ add_library(
   src/rosbag2/generic_subscription.cpp
   src/rosbag2/rosbag2_node.cpp)
 
-ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rcl Poco ament_index_cpp rosbag2_storage)
+ament_target_dependencies(
+  librosbag2
+  ament_index_cpp
+  Poco
+  rcl
+  rclcpp
+  rcutils
+  rosbag2_storage
+  rosidl_generator_c
+  std_msgs
+)
 target_include_directories(librosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 
-#include "rclcpp/subscription.hpp"
 #include "rclcpp/any_subscription_callback.hpp"
+#include "rclcpp/subscription.hpp"
 
 namespace rosbag2
 {
