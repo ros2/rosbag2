@@ -27,7 +27,7 @@
 namespace test_helpers
 {
 
-std::shared_ptr<rmw_serialized_message_t> serialize_string_message(std::string message)
+std::shared_ptr<rmw_serialized_message_t> serialize_string_message(const std::string & message)
 {
   auto test_message = std::make_shared<std_msgs::msg::String>();
   test_message->data = message;

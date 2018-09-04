@@ -37,7 +37,7 @@ public:
   SqliteWrapper();
   ~SqliteWrapper();
 
-  SqliteStatement prepare_statement(std::string query);
+  SqliteStatement prepare_statement(const std::string & query);
 
   size_t get_last_insert_id();
 

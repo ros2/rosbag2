@@ -102,8 +102,7 @@ void Rosbag2::record(
     std::string type = get_topic_type(topic_name, node);
 
     if (type.empty()) {
-      RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Topic could not be found. Abort.");
-      return;
+      throw std::runtime_error(" Topic could not be found. Abort");
     }
 
     auto subscription = node->create_generic_subscription(

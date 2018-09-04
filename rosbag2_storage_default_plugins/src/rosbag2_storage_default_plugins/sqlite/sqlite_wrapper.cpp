@@ -44,7 +44,7 @@ SqliteWrapper::~SqliteWrapper()
   sqlite3_close(db_ptr);
 }
 
-SqliteStatement SqliteWrapper::prepare_statement(std::string query)
+SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
 {
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }
