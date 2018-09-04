@@ -54,11 +54,18 @@ public:
     auto node = rclcpp::Node::make_shared("node_" + topic);
     auto messages = std::make_shared<std::vector<typename T::ConstSharedPtr>>();
     auto messages_received = std::make_shared<size_t>(0);
+    rmw_qos_profile_t qos_profile;
+    qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
+    qos_profile.depth = 3;
+    qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT;
+    qos_profile.durability = RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT;
+    qos_profile.avoid_ros_namespace_conventions = false;
+
     auto subscription = node->create_subscription<T>(topic,
         [messages, messages_received](typename T::ConstSharedPtr message) {
           messages->push_back(message);
           ++*messages_received;
-        });
+        }, qos_profile);
     subscriptions_.push_back(subscription);
 
     return [messages, messages_received, node, expected_messages_number]() {
