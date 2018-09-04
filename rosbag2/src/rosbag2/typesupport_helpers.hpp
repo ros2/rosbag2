@@ -12,32 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cstdio>
+#ifndef ROSBAG2__TYPESUPPORT_HELPERS_HPP_
+#define ROSBAG2__TYPESUPPORT_HELPERS_HPP_
+
 #include <string>
+#include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rosidl_generator_c/message_type_support_struct.h"
 
-#include "rosbag2/rosbag2.hpp"
-
-int main(int argc, const char ** argv)
+namespace rosbag2
 {
-  if (argc < 2) {
-    std::cerr << "\nThe name of the topic to record must be given as parameter!\n";
-    return 0;
-  }
-  std::string topic_name = argv[1];
 
-  // TODO(anhosi): allow output file to be specified by cli argument and do proper checking if
-  // file already exists
-  std::string filename("test.bag");
-  std::remove(filename.c_str());
+std::string get_typesupport_library_path(
+  const std::string & package_name, const std::string & typesupport_identifier);
 
-  rclcpp::init(argc, argv);
+const std::pair<std::string, std::string> extract_type_and_package(const std::string & full_type);
 
-  rosbag2::Rosbag2 rosbag2;
-  rosbag2.record(filename, topic_name);
+const rosidl_message_type_support_t * get_typesupport(const std::string & type);
 
-  rclcpp::shutdown();
+}  // namespace rosbag2
 
-  return 0;
-}
+#endif  // ROSBAG2__TYPESUPPORT_HELPERS_HPP_

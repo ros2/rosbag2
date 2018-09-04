@@ -42,6 +42,7 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
 
 TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_correctly) {
   std::string message = "test_message";
+  std::string topic = "test_topic";
   size_t message_size = strlen(message.c_str()) + 1;
   char * test_message = new char[message_size];
   memcpy(test_message, message.c_str(), message_size);
@@ -49,13 +50,14 @@ TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_cor
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> read_write_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   read_write_storage->open(database_name_);
-  read_write_storage->create_topic();
+  read_write_storage->create_topic(topic, "string");
 
   auto test = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   test->serialized_data = std::make_shared<rcutils_char_array_t>();
   test->serialized_data->buffer = test_message;
   test->serialized_data->buffer_length = message_size;
   test->serialized_data->buffer_capacity = message_size;
+  test->topic_name = topic;
 
   read_write_storage->write(test);
 

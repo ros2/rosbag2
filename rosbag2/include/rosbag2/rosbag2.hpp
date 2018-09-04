@@ -16,8 +16,12 @@
 #define ROSBAG2__ROSBAG2_HPP_
 
 #include <functional>
+#include <memory>
 #include <string>
 
+#include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -34,6 +38,15 @@ public:
 
   ROSBAG2_PUBLIC
   void play(const std::string & file_name, const std::string & topic_name);
+
+  ROSBAG2_PUBLIC
+  std::string get_topic_type(
+    const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
+
+  ROSBAG2_PUBLIC
+  std::string get_topic_type(
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
+    const std::string & topic);
 };
 
 }  // namespace rosbag2

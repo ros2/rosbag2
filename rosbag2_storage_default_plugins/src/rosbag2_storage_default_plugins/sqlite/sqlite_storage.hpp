@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,6 +28,13 @@
 namespace rosbag2_storage_plugins
 {
 
+class SqliteStorageException : public std::runtime_error
+{
+public:
+  explicit SqliteStorageException(const std::string & message)
+  : runtime_error(message) {}
+};
+
 class SqliteStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
@@ -38,7 +46,7 @@ public:
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
-  void create_topic() override;
+  void create_topic(const std::string & name, const std::string & type) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
@@ -46,12 +54,16 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
+  std::map<std::string, std::string> get_all_topics_and_types() override;
+
   rosbag2_storage::BagInfo info() override;
 
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
+  void fill_topics_and_types_map();
+  bool database_exists(const std::string & uri);
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;
@@ -61,6 +73,8 @@ private:
     rcutils_time_point_value_t> message_result_;
   SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
     rcutils_time_point_value_t>::Iterator current_message_row_;
+  std::map<std::string, int> topics_;
+  std::map<std::string, std::string> all_topics_and_types_;
 };
 
 }  // namespace rosbag2_storage_plugins

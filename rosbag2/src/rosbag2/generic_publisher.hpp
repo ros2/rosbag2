@@ -12,29 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_READ_ONLY_PLUGIN_HPP_
-#define TEST_READ_ONLY_PLUGIN_HPP_
+#ifndef ROSBAG2__GENERIC_PUBLISHER_HPP_
+#define ROSBAG2__GENERIC_PUBLISHER_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-class TestReadOnlyPlugin : public rosbag2_storage::storage_interfaces::ReadOnlyInterface
+namespace rosbag2
+{
+
+class GenericPublisher : public rclcpp::PublisherBase
 {
 public:
-  ~TestReadOnlyPlugin() override;
+  GenericPublisher(
+    rclcpp::node_interfaces::NodeBaseInterface * node_base,
+    const std::string & topic,
+    const rosidl_message_type_support_t & type_support);
 
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
+  ~GenericPublisher() override = default;
 
-  rosbag2_storage::BagInfo info() override;
-
-  bool has_next() override;
-
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
-
-  std::map<std::string, std::string> get_all_topics_and_types() override;
+  void publish(std::shared_ptr<rmw_serialized_message_t> message);
 };
 
-#endif  // TEST_READ_ONLY_PLUGIN_HPP_
+}  // namespace rosbag2
+
+#endif  // ROSBAG2__GENERIC_PUBLISHER_HPP_

@@ -15,7 +15,9 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_READ_INTERFACE_HPP_
 
+#include <map>
 #include <memory>
+#include <string>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
@@ -33,6 +35,8 @@ public:
   virtual bool has_next() = 0;
 
   virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
+
+  virtual std::map<std::string, std::string> get_all_topics_and_types() = 0;
 };
 
 }  // namespace storage_interfaces

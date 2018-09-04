@@ -9,11 +9,15 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>rosbag2_storage</build_depend>
-  <build_depend>rcutils</build_depend>
-
-  <exec_depend>rosbag2_storage</exec_depend>
-  <exec_depend>rcutils</exec_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>libpoco-dev</depend>
+  <depend>poco_vendor</depend>
+  <depend>rcl</depend>
+  <depend>rclcpp</depend>
+  <depend>rcutils</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>rosidl_generator_c</depend>
+  <depend>std_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

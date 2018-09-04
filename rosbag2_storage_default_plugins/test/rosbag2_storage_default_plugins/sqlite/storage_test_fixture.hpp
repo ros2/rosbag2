@@ -129,6 +129,7 @@ public:
     auto string_length = serialized_message->buffer_length - 8;
     memcpy(copied, &serialized_message->buffer[8], string_length);
     std::string message_content(copied);
+    // cppcheck-suppress mismatchAllocDealloc (complains about "copied" but used new[] and delete[])
     delete[] copied;
     return message_content;
   }
@@ -137,13 +138,15 @@ public:
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    std::string topic = "test_topic";
     writable_storage->open(database_name_);
-    writable_storage->create_topic();
+    writable_storage->create_topic(topic, "string");
 
     for (auto msg : messages) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(msg.first);
       bag_message->time_stamp = msg.second;
+      bag_message->topic_name = topic;
       writable_storage->write(bag_message);
     }
   }
@@ -151,9 +154,9 @@ public:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
   read_all_messages_from_sqlite()
   {
-    std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> readable_storage =
+    std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-    readable_storage->open(database_name_);
+    readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     while (readable_storage->has_next()) {

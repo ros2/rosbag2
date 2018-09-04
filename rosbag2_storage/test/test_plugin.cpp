@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -56,15 +57,21 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestPlugin::read_next()
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-void TestPlugin::create_topic()
+void TestPlugin::create_topic(const std::string & name, const std::string & type)
 {
-  std::cout << "\ncreating topic\n";
+  std::cout << "Created topic with name =" << name << " and type =" << type << ".\n";
 }
 
 void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   (void) msg;
   std::cout << "\nwriting\n";
+}
+
+std::map<std::string, std::string> TestPlugin::get_all_topics_and_types()
+{
+  std::cout << "\nreading topics and types\n";
+  return std::map<std::string, std::string>();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

@@ -16,6 +16,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,13 +25,17 @@
 
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "sqlite_statement_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
 const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 
 SqliteStorage::SqliteStorage()
-: database_(), bag_info_(), write_statement_(nullptr), read_statement_(nullptr),
+: database_(),
+  bag_info_(),
+  write_statement_(nullptr),
+  read_statement_(nullptr),
   message_result_(nullptr),
   current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {}
@@ -37,13 +43,19 @@ SqliteStorage::SqliteStorage()
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  // TODO(MARTIN-IDEL-SI): use flags to open database for read-only
-  (void) io_flag;
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY && !database_exists(uri)) {
+    throw std::runtime_error("Failed to read from bag '" + uri + "': file does not exist.");
+  }
+
   try {
     database_ = std::make_unique<SqliteWrapper>(uri);
     bag_info_.uri = uri;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
+  }
+
+  if (io_flag != rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+    initialize();
   }
 
   RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Opened database '%s'.", uri.c_str());
@@ -54,8 +66,13 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   if (!write_statement_) {
     prepare_for_writing();
   }
+  auto topic_entry = topics_.find(message->topic_name);
+  if (topic_entry == end(topics_)) {
+    throw SqliteStorageException("Topic '" + message->topic_name +
+            "' has not been created yet! Call 'create_topic' first.");
+  }
 
-  write_statement_->bind(message->serialized_data, message->time_stamp);
+  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
 
   RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message.");
@@ -82,13 +99,27 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   return bag_message;
 }
 
+std::map<std::string, std::string> SqliteStorage::get_all_topics_and_types()
+{
+  if (all_topics_and_types_.empty()) {
+    fill_topics_and_types_map();
+  }
+
+  return all_topics_and_types_;
+}
+
 void SqliteStorage::initialize()
 {
-  std::string create_table = "CREATE TABLE messages(" \
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-    "data           BLOB    NOT NULL," \
-    "timestamp      INTEGER     NOT NULL);";
-
+  std::string create_table = "CREATE TABLE topics(" \
+    "id INTEGER PRIMARY KEY," \
+    "name TEXT NOT NULL," \
+    "type TEXT NOT NULL);";
+  database_->prepare_statement(create_table)->execute_and_reset();
+  create_table = "CREATE TABLE messages(" \
+    "id INTEGER PRIMARY KEY," \
+    "topic_id INTEGER NOT NULL," \
+    "timestamp INTEGER NOT NULL, " \
+    "data BLOB NOT NULL);";
   database_->prepare_statement(create_table)->execute_and_reset();
 }
 
@@ -97,15 +128,21 @@ rosbag2_storage::BagInfo SqliteStorage::info()
   return bag_info_;
 }
 
-void SqliteStorage::create_topic()
+void SqliteStorage::create_topic(const std::string & name, const std::string & type)
 {
-  initialize();
+  if (topics_.find(name) == std::end(topics_)) {
+    auto insert_topic =
+      database_->prepare_statement("INSERT INTO topics (name, type) VALUES (?, ?)");
+    insert_topic->bind(name, type);
+    insert_topic->execute_and_reset();
+    topics_.emplace(name, static_cast<int>(database_->get_last_insert_id()));
+  }
 }
 
 void SqliteStorage::prepare_for_writing()
 {
   write_statement_ = database_->prepare_statement(
-    "INSERT INTO messages (data, timestamp) VALUES (?, ?);");
+    "INSERT INTO messages (timestamp, topic_id, data) VALUES (?, ?, ?);");
 }
 
 void SqliteStorage::prepare_for_reading()
@@ -115,6 +152,22 @@ void SqliteStorage::prepare_for_reading()
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t>();
   current_message_row_ = message_result_.begin();
+}
+
+void SqliteStorage::fill_topics_and_types_map()
+{
+  auto statement = database_->prepare_statement("SELECT name, type FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string>();
+
+  for (auto result : query_results) {
+    all_topics_and_types_.insert(std::make_pair(std::get<0>(result), std::get<1>(result)));
+  }
+}
+
+bool SqliteStorage::database_exists(const std::string & uri)
+{
+  std::ifstream database(uri);
+  return database.good();
 }
 
 }  // namespace rosbag2_storage_plugins

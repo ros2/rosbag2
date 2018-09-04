@@ -16,17 +16,36 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(poco_vendor)
+find_package(Poco COMPONENTS Foundation)
+find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(rosidl_generator_c REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(
   librosbag2
   SHARED
-  src/rosbag2/rosbag2.cpp)
+  src/rosbag2/rosbag2.cpp
+  src/rosbag2/typesupport_helpers.cpp
+  src/rosbag2/generic_publisher.cpp
+  src/rosbag2/generic_subscription.cpp
+  src/rosbag2/rosbag2_node.cpp)
 
-ament_target_dependencies(librosbag2 rclcpp rcutils std_msgs rosbag2_storage)
+ament_target_dependencies(
+  librosbag2
+  ament_index_cpp
+  Poco
+  rcl
+  rclcpp
+  rcutils
+  rosbag2_storage
+  rosidl_generator_c
+  std_msgs
+)
 target_include_directories(librosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -61,6 +80,8 @@ if(BUILD_TESTING)
   ament_add_gmock(rosbag2_write_integration_test
     test/rosbag2/rosbag2_write_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
+    test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_write_integration_test)
     target_link_libraries(rosbag2_write_integration_test librosbag2)
@@ -69,9 +90,41 @@ if(BUILD_TESTING)
   ament_add_gmock(rosbag2_read_integration_test
     test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/rosbag2_test_fixture.hpp
+    test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
     target_link_libraries(rosbag2_read_integration_test librosbag2)
+  endif()
+
+  ament_add_gmock(rosbag2_typesupport_helpers_test
+    test/rosbag2/rosbag2_typesupport_helpers_test.cpp
+    src/rosbag2/typesupport_helpers.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_typesupport_helpers_test)
+    ament_target_dependencies(rosbag2_typesupport_helpers_test rcl Poco ament_index_cpp
+      rosidl_generator_cpp)
+  endif()
+
+  ament_add_gmock(rosbag2_integration_test
+    test/rosbag2/rosbag2_integration_test.cpp
+    test/rosbag2/test_helpers.hpp
+    src/rosbag2/typesupport_helpers.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_integration_test)
+    target_link_libraries(rosbag2_integration_test librosbag2)
+  endif()
+
+  ament_add_gmock(rosbag2_rosbag_node_test
+    test/rosbag2/rosbag2_rosbag_node_test.cpp
+    src/rosbag2/typesupport_helpers.cpp
+    src/rosbag2/generic_subscription.cpp
+    src/rosbag2/generic_publisher.cpp
+    src/rosbag2/rosbag2_node.cpp
+    test/rosbag2/test_helpers.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_rosbag_node_test)
+    ament_target_dependencies(rosbag2_rosbag_node_test rclcpp Poco ament_index_cpp std_msgs)
   endif()
 endif()
 

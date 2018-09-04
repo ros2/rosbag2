@@ -59,7 +59,7 @@ get_interface_instance(
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
   if (class_exists == registered_classes.end()) {
-    RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
+    RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME,
       "Requested storage id %s does not exist", storage_id.c_str());
     return nullptr;
   }
@@ -79,7 +79,7 @@ get_interface_instance(
     return instance;
   } catch (const std::runtime_error & ex) {
     RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-      "Could not open uri %s : %s", storage_id.c_str(), ex.what());
+      "Could not open '%s' with %s. Error: %s", uri.c_str(), storage_id.c_str(), ex.what());
     return nullptr;
   }
 }
@@ -111,7 +111,12 @@ public:
   std::shared_ptr<ReadWriteInterface> open_read_write(
     const std::string & uri, const std::string & storage_id)
   {
-    return get_interface_instance(read_write_class_loader_, storage_id, uri);
+    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
+
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+
+    return instance;
   }
 
   std::shared_ptr<ReadOnlyInterface> open_read_only(
@@ -124,6 +129,10 @@ public:
       instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
         read_write_class_loader_, storage_id, uri);
     }
+
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+
     return instance;
   }
 
