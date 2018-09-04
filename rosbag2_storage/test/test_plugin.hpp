@@ -33,7 +33,7 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
-  void create_topic(const std::string & name, const std::string & type_id) override;
+  void create_topic(const std::string & name, const std::string & type) override;
 
   bool has_next() override;
 
