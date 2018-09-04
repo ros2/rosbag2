@@ -54,17 +54,13 @@ std::shared_ptr<InterfaceT>
 get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & storage_id,
-  const std::string & uri,
-  bool last_attempt)
+  const std::string & uri)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
   if (class_exists == registered_classes.end()) {
-    // This prevents unnecessary error messages when loading a ReadWrite storage as ReadOnly storage
-    if (last_attempt) {
-      RCUTILS_LOG_ERROR_NAMED(ROS_PACKAGE_NAME,
-        "Requested storage id %s does not exist", storage_id.c_str());
-    }
+    RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME,
+      "Requested storage id %s does not exist", storage_id.c_str());
     return nullptr;
   }
 
@@ -115,19 +111,28 @@ public:
   std::shared_ptr<ReadWriteInterface> open_read_write(
     const std::string & uri, const std::string & storage_id)
   {
-    return get_interface_instance(read_write_class_loader_, storage_id, uri, true);
+    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
+
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+
+    return instance;
   }
 
   std::shared_ptr<ReadOnlyInterface> open_read_only(
     const std::string & uri, const std::string & storage_id)
   {
     // try to load the instance as read_only interface
-    auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri, false);
+    auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri);
     // try to load as read_write if not successful
     if (instance == nullptr) {
       instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
-        read_write_class_loader_, storage_id, uri, true);
+        read_write_class_loader_, storage_id, uri);
     }
+
+    RCUTILS_LOG_ERROR_NAMED(
+      ROS_PACKAGE_NAME, "Could not load/open plugin with storage id '%s'", storage_id.c_str())
+
     return instance;
   }
 
