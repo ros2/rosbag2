@@ -75,6 +75,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(rosbag2_write_integration_test
@@ -91,6 +92,9 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_read_integration_test)
     target_link_libraries(rosbag2_read_integration_test librosbag2)
+    ament_target_dependencies(rosbag2_read_integration_test
+      test_msgs
+    )
   endif()
 
   ament_add_gmock(rosbag2_typesupport_helpers_test

@@ -23,7 +23,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2/rosbag2.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/msg/static_array_primitives.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_test_fixture.hpp"
 
@@ -48,16 +50,16 @@ public:
 
   template<typename T>
   auto subscribe_messages(
-    size_t expected_messages_number, std::string topic)
+    size_t expected_messages_number, const std::string & topic)
   {
     auto node = rclcpp::Node::make_shared("node_" + topic);
-    std::vector<typename T::_data_type> messages;
+    std::vector<typename T::ConstSharedPtr> messages;
     size_t messages_received = 0;
+
     auto subscription = node->create_subscription<T>(topic,
         [&messages, &messages_received](typename T::ConstSharedPtr message) {
-          messages.push_back(message->data);
+          messages.push_back(message);
           ++messages_received;
-          std::cout << "received message: " << message->data << std::endl;
         });
     subscriptions_.push_back(subscription);
 
@@ -68,7 +70,18 @@ public:
   }
 
   template<typename MessageT>
-  auto launch_subscriber(size_t expected_messages_number, std::string topic)
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_test_message(
+    const std::string & topic, std::shared_ptr<MessageT> message)
+  {
+    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    bag_msg->serialized_data = memory_management_.serialize_message(message);
+    bag_msg->topic_name = topic;
+
+    return bag_msg;
+  }
+
+  template<typename MessageT>
+  auto launch_subscriber(size_t expected_messages_number, const std::string & topic)
   {
     return std::async(std::launch::async, [this, expected_messages_number, topic] {
                return subscribe_messages<MessageT>(expected_messages_number, topic);
@@ -84,45 +97,61 @@ public:
       }).get();
   }
 
-  void play_bag(std::string database_name)
-  {
-    rosbag2::Rosbag2 rosbag2;
-    rosbag2.play(database_name);
-  }
-
   std::atomic<size_t> messages_stored_counter_;
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
 };
 
 TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topics)
 {
+  auto primitive_message1 = get_messages_primitives()[0];
+  primitive_message1->string_value = "Hello World 1";
+
+  auto primitive_message2 = get_messages_primitives()[1];
+  primitive_message2->string_value = "Hello World 2";
+
+  auto complex_message1 = get_messages_static_array_primitives()[0];
+  complex_message1->string_values = {"Complex Hello1", "Complex Hello2", "Complex Hello3"};
+  complex_message1->bool_values = {true, false, true};
+
+  auto complex_message2 = get_messages_static_array_primitives()[0];
+  complex_message2->string_values = {"Complex Hello4", "Complex Hello5", "Complex Hello6"};
+  complex_message2->bool_values = {false, false, true};
+
   auto topic_types = std::map<std::string, std::string>{
-    {"topic1", "std_msgs/String"},
-    {"topic2", "std_msgs/UInt8"},
+    {"topic1", "test_msgs/Primitives"},
+    {"topic2", "test_msgs/StaticArrayPrimitives"},
   };
+
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_message<std_msgs::msg::String>("topic1", "Hello World 1"),
-    serialize_message<std_msgs::msg::String>("topic1", "Hello World 2"),
-    serialize_message<std_msgs::msg::String>("topic1", "Hello World 2"),
-    serialize_message<std_msgs::msg::UInt8>("topic2", 123),
-    serialize_message<std_msgs::msg::UInt8>("topic2", 127),
-    serialize_message<std_msgs::msg::UInt8>("topic2", 127)};
+  {serialize_test_message("topic1", primitive_message1),
+    serialize_test_message("topic1", primitive_message2),
+    serialize_test_message("topic1", primitive_message2),
+    serialize_test_message("topic2", complex_message1),
+    serialize_test_message("topic2", complex_message2),
+    serialize_test_message("topic2", complex_message2)};
 
   write_messages(database_name_, messages, topic_types);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
-  auto string_subscriber_future = launch_subscriber<std_msgs::msg::String>(2, "topic1");
-  auto int_subscriber_future = launch_subscriber<std_msgs::msg::UInt8>(2, "topic2");
+  auto primitive_subscriber_future = launch_subscriber<test_msgs::msg::Primitives>(2, "topic1");
+  auto static_array_subscriber_future =
+    launch_subscriber<test_msgs::msg::StaticArrayPrimitives>(2, "topic2");
   wait_for_subscribers(2);
-  play_bag(database_name_);
 
-  auto replayed_string_messages = string_subscriber_future.get();
-  ASSERT_THAT(replayed_string_messages, SizeIs(2));
-  ASSERT_THAT(replayed_string_messages[0], Eq("Hello World 1"));
-  ASSERT_THAT(replayed_string_messages[1], Eq("Hello World 2"));
-  auto replayed_int_messages = int_subscriber_future.get();
-  ASSERT_THAT(replayed_int_messages, SizeIs(2));
-  ASSERT_THAT(replayed_int_messages[0], Eq(123));
-  ASSERT_THAT(replayed_int_messages[1], Eq(127));
+  Rosbag2 rosbag2;
+  rosbag2.play(database_name_);
+
+  auto replayed_test_primitives = primitive_subscriber_future.get();
+  ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
+  EXPECT_THAT(replayed_test_primitives[0]->string_value, Eq("Hello World 1"));
+  EXPECT_THAT(replayed_test_primitives[1]->string_value, Eq("Hello World 2"));
+  auto replayed_test_arrays = static_array_subscriber_future.get();
+  ASSERT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
+  EXPECT_THAT(replayed_test_arrays[0]->bool_values, ElementsAre(true, false, true));
+  EXPECT_THAT(replayed_test_arrays[0]->string_values,
+    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3"));
+  EXPECT_THAT(replayed_test_arrays[1]->bool_values, ElementsAre(false, false, true));
+  EXPECT_THAT(replayed_test_arrays[1]->string_values,
+    ElementsAre("Complex Hello4", "Complex Hello5", "Complex Hello6"));
 }

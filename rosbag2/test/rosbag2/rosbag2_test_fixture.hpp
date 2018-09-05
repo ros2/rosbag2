@@ -24,8 +24,6 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "std_msgs/msg/u_int8.hpp"
 
 #ifdef _WIN32
 # include <direct.h>
