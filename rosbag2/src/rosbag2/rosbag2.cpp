@@ -43,7 +43,7 @@ const char * ROS_PACKAGE_NAME = "rosbag2";
 
 void Rosbag2::record(
   const std::string & file_name,
-  std::vector<std::string> topic_names,
+  const std::vector<std::string> & topic_names,
   std::function<void(std::string)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;

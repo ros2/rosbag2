@@ -51,7 +51,7 @@ public:
   ROSBAG2_PUBLIC
   void record(
     const std::string & file_name,
-    std::vector<std::string> topic_names,
+    const std::vector<std::string> & topic_names,
     std::function<void(std::string)> after_write_action = nullptr);
 
   /**
