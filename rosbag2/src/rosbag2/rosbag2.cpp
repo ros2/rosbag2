@@ -42,8 +42,7 @@ namespace rosbag2
 
 void Rosbag2::record(const std::string & file_name, const std::vector<std::string> & topic_names)
 {
-  rosbag2_storage::StorageFactory factory;
-  auto storage = factory.open_read_write(file_name, "sqlite3");
+  auto storage = factory_.open_read_write(file_name, "sqlite3");
 
   if (!storage) {
     throw std::runtime_error("No storage could be initialized. Abort");
