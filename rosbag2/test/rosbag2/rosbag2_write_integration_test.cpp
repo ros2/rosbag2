@@ -14,8 +14,8 @@
 
 #include <gmock/gmock.h>
 
-#include <atomic>
 #include <future>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,74 +23,130 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2/rosbag2.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/u_int8.hpp"
 
 #include "rosbag2_test_fixture.hpp"
+#include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-// TODO(Martin-Idel-SI): merge with rosbag2_read_integration_test once signal handling is sorted out
+// TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
 class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
   RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture(), counter_(0)
+  : Rosbag2TestFixture()
   {}
 
-  void record_message(const std::string & db_name)
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
+    publisher_node_ = rclcpp::Node::make_shared("publisher_node");
+  }
+
+  void record_message(const std::string & db_name, std::vector<std::string> topics)
   {
     rosbag2::Rosbag2 rosbag2;
-    rosbag2.record(db_name, "string_topic", [this]() {
-        counter_++;
+    rosbag2.record(db_name, topics, [this](std::string topic_name) {
+        messages_stored_counter_[topic_name]++;
       });
   }
 
-  void start_recording()
+  void start_recording(std::vector<std::string> topics)
   {
-    rclcpp::init(0, nullptr);
     // the future object returned from std::async needs to be stored not to block the execution
     future_ = std::async(
-      std::launch::async, [this]() {
-        record_message(database_name_);
+      std::launch::async, [this, topics]() {
+        record_message(database_name_, topics);
       });
   }
 
   void stop_recording()
   {
     rclcpp::shutdown();
+    future_.get();
   }
 
-  void publish_messages(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> msgs)
+  void wait_for_publishers()
   {
-    size_t expected_counter_value = msgs.size();
-    auto node = std::make_shared<rclcpp::Node>("publisher_node");
-    auto publisher = node->create_publisher<std_msgs::msg::String>("string_topic");
-    auto timer = node->create_wall_timer(50ms, [this, publisher, msgs]() {
-          publisher->publish(msgs[counter_]->serialized_data.get());
-        });
-
-    while (counter_ < expected_counter_value) {
-      rclcpp::spin_some(node);
+    for (auto & future : publisher_futures_) {
+      future.get();
     }
   }
 
-  std::atomic<size_t> counter_;
+  void start_publishing(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
+    std::string topic_name, size_t number_expected_messages)
+  {
+    messages_stored_counter_.insert({topic_name, 0});
+    publisher_futures_.push_back(std::async(
+        std::launch::async, [this, message, topic_name, number_expected_messages]() {
+          auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
+
+          while (rclcpp::ok() && messages_stored_counter_[topic_name] < number_expected_messages) {
+            publisher->publish(message->serialized_data.get());
+            // We need to wait a bit, in order for record to process the messages
+            std::this_thread::sleep_for(50ms);
+          }
+        }
+    ));
+  }
+
+  template<typename MessageT>
+  std::shared_ptr<MessageT> deserialize_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+  {
+    return memory_.deserialize_message<MessageT>(message->serialized_data);
+  }
+
+  template<typename MessageT>
+  std::vector<std::shared_ptr<MessageT>> filter_messages(
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
+    std::string topic)
+  {
+    std::vector<std::shared_ptr<MessageT>> filtered_messages;
+    for (const auto & message : messages) {
+      if (message->topic_name == topic) {
+        filtered_messages.push_back(deserialize_message<MessageT>(message));
+      }
+    }
+    return filtered_messages;
+  }
+
+  rclcpp::Node::SharedPtr publisher_node_;
+  test_helpers::TestMemoryManagement memory_;
+  std::map<std::string, size_t> messages_stored_counter_;
+  std::vector<std::future<void>> publisher_futures_;
   std::future<void> future_;
 };
 
-TEST_F(RosBag2IntegrationTestFixture, published_messages_are_recorded)
+TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
-  std::string message_to_publish = "test_message";
-  auto serialized_message = serialize_message(message_to_publish);
+  std::string int_topic = "/int_topic";
+  auto serialized_int_bag_message = serialize_message<std_msgs::msg::UInt8>(int_topic, 10);
 
-  start_recording();
-  publish_messages({serialized_message});
+  std::string string_topic = "/string_topic";
+  auto serialized_string_bag_message = serialize_message<std_msgs::msg::String>(
+    string_topic, "test_message");
+
+  start_publishing(serialized_string_bag_message, string_topic, 2);
+  start_publishing(serialized_int_bag_message, int_topic, 2);
+
+  start_recording({string_topic, int_topic});
+  wait_for_publishers();
   stop_recording();
 
   auto recorded_messages = get_messages(database_name_);
 
-  ASSERT_THAT(recorded_messages, Not(IsEmpty()));
-  EXPECT_THAT(deserialize_message(recorded_messages[0]), Eq(message_to_publish));
+  ASSERT_THAT(recorded_messages, SizeIs(4));
+  auto string_messages = filter_messages<std_msgs::msg::String>(recorded_messages, string_topic);
+  auto int_messages = filter_messages<std_msgs::msg::UInt8>(recorded_messages, int_topic);
+  ASSERT_THAT(string_messages, SizeIs(2));
+  ASSERT_THAT(int_messages, SizeIs(2));
+  EXPECT_THAT(string_messages[0]->data, Eq("test_message"));
+  EXPECT_THAT(int_messages[0]->data, Eq(10));
 }

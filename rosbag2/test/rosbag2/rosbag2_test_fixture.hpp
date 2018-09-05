@@ -18,12 +18,12 @@
 #include <gtest/gtest.h>
 
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
 #ifdef _WIN32
 # include <direct.h>
@@ -34,7 +34,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
-#include "test_helpers.hpp"
+#include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -99,8 +99,7 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     rosbag2_storage::StorageFactory factory;
-    auto storage =
-      factory.open_read_only(db_name, "sqlite3");
+    auto storage = factory.open_read_only(db_name, "sqlite3");
     if (storage == nullptr) {
       throw std::runtime_error("failed to open sqlite3 storage");
     }
@@ -114,37 +113,36 @@ public:
 
   void write_messages(
     const std::string & db_name,
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages)
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
+    std::map<std::string, std::string> topic_types)
   {
-    std::string topic = "string_topic";
     rosbag2_storage::StorageFactory factory;
     auto storage = factory.open_read_write(db_name, "sqlite3");
+    for (auto topic_and_type : topic_types) {
+      storage->create_topic(topic_and_type.first, topic_and_type.second);
+    }
 
-    if (storage) {
-      storage->create_topic(topic, "std_msgs/String");
-      for (auto msg : messages) {
-        msg->topic_name = topic;
-        storage->write(msg);
-      }
+    for (auto msg : messages) {
+      storage->write(msg);
     }
   }
 
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(std::string message)
+  template<typename MessageT>
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(
+    std::string topic, typename MessageT::_data_type message)
   {
+    auto msg = std::make_shared<MessageT>();
+    msg->data = message;
     auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    bag_msg->serialized_data = test_helpers::serialize_string_message(message);
+    bag_msg->serialized_data = memory_management_.serialize_message(msg);
+    bag_msg->topic_name = topic;
 
     return bag_msg;
   }
 
-  std::string deserialize_message(
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
-  {
-    return test_helpers::deserialize_string_message(serialized_message->serialized_data);
-  }
-
   std::string database_name_;
   static std::string temporary_dir_path_;
+  test_helpers::TestMemoryManagement memory_management_;
 };
 
 std::string Rosbag2TestFixture::temporary_dir_path_ = "";  // NOLINT

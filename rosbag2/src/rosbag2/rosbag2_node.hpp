@@ -19,8 +19,7 @@
 #include <string>
 
 #include "rclcpp/node.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rcl/graph.h"
+#include "rcutils/types.h"
 
 #include "generic_publisher.hpp"
 #include "generic_subscription.hpp"

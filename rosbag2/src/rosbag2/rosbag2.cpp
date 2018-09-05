@@ -15,12 +15,13 @@
 #include "rosbag2/rosbag2.hpp"
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "rclcpp/rclcpp.hpp"
 #include "rcl/graph.h"
-
+#include "rclcpp/rclcpp.hpp"
 #include "rcutils/logging_macros.h"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -39,127 +40,140 @@ namespace rosbag2
 
 const char * ROS_PACKAGE_NAME = "rosbag2";
 
-std::string Rosbag2::get_topic_type(
-  const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node)
+void Rosbag2::record(
+  const std::string & file_name,
+  std::vector<std::string> topic_names,
+  std::function<void(std::string)> after_write_action)
+{
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_write(file_name, "sqlite3");
+
+  if (!storage) {
+    throw std::runtime_error("No storage could be initialized. Abort");
+    return;
+  }
+
+  auto node = std::make_shared<Rosbag2Node>("rosbag2");
+
+  auto topics_and_types = get_topics_with_types(topic_names, node);
+
+  if (topics_and_types.empty()) {
+    throw std::runtime_error("No topics found. Abort");
+  }
+
+  for (const auto & topic_and_type : topics_and_types) {
+    auto topic_name = topic_and_type.first;
+    auto topic_type = topic_and_type.second;
+
+    std::shared_ptr<GenericSubscription> subscription = create_subscription(
+      after_write_action, storage, node, topic_name, topic_type);
+
+    if (subscription) {
+      subscriptions_.push_back(subscription);
+
+      storage->create_topic(topic_name, topic_type);
+    }
+  }
+
+  if (subscriptions_.empty()) {
+    throw std::runtime_error("No topics could be subscribed. Abort");
+    return;
+  }
+
+  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  while (rclcpp::ok()) {
+    rclcpp::spin(node);
+  }
+  subscriptions_.clear();
+}
+
+std::map<std::string, std::string> Rosbag2::get_topics_with_types(
+  const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node)
 {
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
   // This should be replaced by an auto-discovery system in the future
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   auto topics = node->get_topic_names_and_types();
-  std::string complete_topic_name = topic_name;
-  if (topic_name[0] != '/') {
-    complete_topic_name = "/" + topic_name;
-  }
-  auto position = topics.find(complete_topic_name);
-  if (position != topics.end()) {
-    if (position->second.size() > 1) {
-      RCUTILS_LOG_ERROR_NAMED(
-        ROS_PACKAGE_NAME,
-        "Topic '%s' has several types associated. Only ROS topics are supported.",
-        position->first.c_str());
-      return "";
+
+  std::map<std::string, std::string> topic_names_and_types;
+  for (const auto & topic_name : topic_names) {
+    std::string complete_topic_name = topic_name;
+    if (topic_name[0] != '/') {
+      complete_topic_name = "/" + topic_name;
     }
-    return position->second[0];
+    auto position = topics.find(complete_topic_name);
+    if (position != topics.end()) {
+      if (position->second.size() > 1) {
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Topic '%s' has several types associated. Only topics with one type are supported.",
+          position->first.c_str());
+      } else {
+        topic_names_and_types.insert({position->first, position->second[0]});
+      }
+    }
   }
-  return "";
+  return topic_names_and_types;
 }
 
-std::string Rosbag2::get_topic_type(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
-  const std::string & topic)
+std::shared_ptr<GenericSubscription>
+Rosbag2::create_subscription(
+  const std::function<void(std::string)> & after_write_action,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+  std::shared_ptr<Rosbag2Node> & node,
+  const std::string & topic_name, const std::string & topic_type) const
 {
-  auto all_topics_and_types = storage->get_all_topics_and_types();
-  auto map_iterator_to_topic = all_topics_and_types.find(topic);
+  auto subscription = node->create_generic_subscription(
+    topic_name,
+    topic_type,
+    [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
+      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      bag_message->serialized_data = message;
+      bag_message->topic_name = topic_name;
+      rcutils_time_point_value_t time_stamp;
+      int error = rcutils_system_time_now(&time_stamp);
+      if (error != RCUTILS_RET_OK) {
+        RCUTILS_LOG_ERROR_NAMED(
+          ROS_PACKAGE_NAME,
+          "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+      }
+      bag_message->time_stamp = time_stamp;
 
-  if (map_iterator_to_topic == all_topics_and_types.end()) {
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME,
-      "No messages with topic '%s' in bag file '%s'. Messages cannot be played.",
-      topic.c_str(), storage->info().uri.c_str());
-    return "";
-  } else if (map_iterator_to_topic->second.empty()) {
-    RCUTILS_LOG_ERROR_NAMED(
-      ROS_PACKAGE_NAME,
-      "No type specified for topic '%s' in bag file '%s'. Messages cannot be played.",
-      topic.c_str(), storage->info().uri.c_str());
-  }
-
-  return map_iterator_to_topic->second;
+      storage->write(bag_message);
+      if (after_write_action) {
+        after_write_action(topic_name);
+      }
+    });
+  return subscription;
 }
 
-void Rosbag2::record(
-  const std::string & file_name,
-  const std::string & topic_name,
-  std::function<void(void)> after_write_action)
-{
-  rosbag2_storage::StorageFactory factory;
-  auto storage = factory.open_read_write(file_name, "sqlite3");
-
-  if (storage) {
-    RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
-
-    auto node = std::make_shared<Rosbag2Node>("rosbag2");
-
-    std::string type = get_topic_type(topic_name, node);
-
-    if (type.empty()) {
-      throw std::runtime_error(" Topic could not be found. Abort");
-    }
-
-    auto subscription = node->create_generic_subscription(
-      topic_name,
-      type,
-      [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
-        auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        bag_message->serialized_data = message;
-        bag_message->topic_name = topic_name;
-        rcutils_time_point_value_t time_stamp;
-        int error = rcutils_system_time_now(&time_stamp);
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            ROS_PACKAGE_NAME,
-            "Error getting current time. Error: %s", rcutils_get_error_string_safe());
-        }
-        bag_message->time_stamp = time_stamp;
-
-        storage->write(bag_message);
-        if (after_write_action) {
-          after_write_action();
-        }
-      });
-
-    if (!subscription) {
-      return;
-    }
-
-    storage->create_topic(topic_name, type);
-
-    while (rclcpp::ok()) {
-      rclcpp::spin(node);
-    }
-  }
-}
-
-void Rosbag2::play(const std::string & file_name, const std::string & topic_name)
+void Rosbag2::play(const std::string & file_name)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_only(file_name, "sqlite3");
 
   if (storage) {
-    std::string type_name = get_topic_type(storage, topic_name);
-    if (type_name.empty()) {
-      return;
-    }
     auto node = std::make_shared<Rosbag2Node>("rosbag2_node");
-    auto publisher = node->create_generic_publisher(topic_name, type_name);
+    prepare_publishers(node, storage);
 
     while (storage->has_next()) {
       auto message = storage->read_next();
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      publisher->publish(message->serialized_data);
+      publishers_[message->topic_name]->publish(message->serialized_data);
       RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
     }
+  }
+}
+
+void Rosbag2::prepare_publishers(
+  std::shared_ptr<Rosbag2Node> node,
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
+{
+  auto all_topics_and_types = storage->get_all_topics_and_types();
+  for (const auto & element : all_topics_and_types) {
+    publishers_.insert(std::make_pair(
+        element.first, node->create_generic_publisher(element.first, element.second)));
   }
 }
 

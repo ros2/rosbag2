@@ -16,16 +16,23 @@
 #define ROSBAG2__ROSBAG2_HPP_
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
+
+class GenericPublisher;
+class GenericSubscription;
+class Rosbag2Node;
 
 class Rosbag2
 {
@@ -33,20 +40,30 @@ public:
   ROSBAG2_PUBLIC
   void record(
     const std::string & file_name,
-    const std::string & topic_name,
-    std::function<void(void)> after_write_action = nullptr);
+    std::vector<std::string> topic_names,
+    std::function<void(std::string)> after_write_action = nullptr);
 
   ROSBAG2_PUBLIC
-  void play(const std::string & file_name, const std::string & topic_name);
+  void play(const std::string & file_name);
 
   ROSBAG2_PUBLIC
-  std::string get_topic_type(
-    const std::string & topic_name, const std::shared_ptr<rclcpp::Node> & node);
+  std::map<std::string, std::string> get_topics_with_types(
+    const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node);
 
-  ROSBAG2_PUBLIC
-  std::string get_topic_type(
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage,
-    const std::string & topic);
+private:
+  void prepare_publishers(
+    std::shared_ptr<Rosbag2Node> node,
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage);
+
+  std::shared_ptr<rosbag2::GenericSubscription>
+  create_subscription(
+    const std::function<void(std::string)> & after_write_action,
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+    std::shared_ptr<Rosbag2Node> & node,
+    const std::string & topic_name, const std::string & topic_type) const;
+
+  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };
 
 }  // namespace rosbag2

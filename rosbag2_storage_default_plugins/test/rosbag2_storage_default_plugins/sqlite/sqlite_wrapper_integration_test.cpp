@@ -39,11 +39,11 @@ TEST_F(StorageTestFixture, querying_adhoc_results_with_normal_data_gives_content
 
   auto result =
     db.prepare_statement("SELECT 1, 1.465, 'abc';")->execute_query<int, double, std::string>();
-  auto row = *(result.begin());
+  auto row_iter = result.begin();
 
-  ASSERT_THAT(std::get<0>(row), Eq(1));
-  ASSERT_THAT(std::get<1>(row), Eq(1.465));
-  ASSERT_THAT(std::get<2>(row), StrEq("abc"));
+  ASSERT_THAT(std::get<0>(*row_iter), Eq(1));
+  ASSERT_THAT(std::get<1>(*row_iter), Eq(1.465));
+  ASSERT_THAT(std::get<2>(*row_iter), StrEq("abc"));
 }
 
 TEST_F(StorageTestFixture, bind_values_are_inserted) {

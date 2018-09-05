@@ -24,7 +24,7 @@
 
 #include "../../src/rosbag2/rosbag2_node.hpp"
 #include "../../src/rosbag2/typesupport_helpers.hpp"
-#include "test_helpers.hpp"
+#include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -52,8 +52,10 @@ public:
     std::vector<std::string> messages;
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(topic_name, type,
-        [&counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
-          messages.push_back(test_helpers::deserialize_string_message(message));
+        [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
+          auto string_message = memory_management_
+          .deserialize_message<std_msgs::msg::String>(message);
+          messages.push_back(string_message->data);
           counter++;
         });
 
@@ -63,6 +65,14 @@ public:
     return messages;
   }
 
+  std::shared_ptr<rcutils_char_array_t> serialize_string_message(std::string message)
+  {
+    auto string_message = std::make_shared<std_msgs::msg::String>();
+    string_message->data = message;
+    return memory_management_.serialize_message(string_message);
+  }
+
+  test_helpers::TestMemoryManagement memory_management_;
   std::shared_ptr<rosbag2::Rosbag2Node> node_;
 };
 
@@ -74,13 +84,14 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   std::string topic_name = "string_topic";
   std::string type = "std_msgs/String";
 
+  auto publisher = node_->create_generic_publisher(topic_name, type);
+
   auto subscriber_future_ = std::async(std::launch::async, [this, topic_name, type] {
         return subscribe_raw_messages(1, topic_name, type);
       });
 
-  auto publisher = node_->create_generic_publisher(topic_name, type);
   for (const auto & message : test_messages) {
-    publisher->publish(test_helpers::serialize_string_message(message));
+    publisher->publish(serialize_string_message(message));
     // This is necessary because sometimes, the subscriber is initialized very late
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

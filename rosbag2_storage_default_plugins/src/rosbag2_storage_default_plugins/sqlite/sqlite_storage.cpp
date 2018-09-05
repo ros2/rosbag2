@@ -94,7 +94,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   }
 
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  std::tie(bag_message->serialized_data, bag_message->time_stamp) = *current_message_row_;
+  bag_message->serialized_data = std::get<0>(*current_message_row_);
+  bag_message->time_stamp = std::get<1>(*current_message_row_);
+  bag_message->topic_name = std::get<2>(*current_message_row_);
+
   ++current_message_row_;
   return bag_message;
 }
@@ -102,7 +105,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
 std::map<std::string, std::string> SqliteStorage::get_all_topics_and_types()
 {
   if (all_topics_and_types_.empty()) {
-    fill_topics_and_types_map();
+    fill_topics_and_types();
   }
 
   return all_topics_and_types_;
@@ -147,14 +150,16 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ =
-    database_->prepare_statement("SELECT data, timestamp FROM messages ORDER BY id;");
+  read_statement_ = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "ORDER BY messages.id;");
   message_result_ = read_statement_->execute_query<
-    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t>();
+    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
 }
 
-void SqliteStorage::fill_topics_and_types_map()
+void SqliteStorage::fill_topics_and_types()
 {
   auto statement = database_->prepare_statement("SELECT name, type FROM topics ORDER BY id;");
   auto query_results = statement->execute_query<std::string, std::string>();

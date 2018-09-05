@@ -62,17 +62,18 @@ private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
-  void fill_topics_and_types_map();
+  void fill_topics_and_types();
   bool database_exists(const std::string & uri);
+
+  using ReadQueryResult = SqliteStatementWrapper::QueryResult<
+    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
   rosbag2_storage::BagInfo bag_info_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
-  SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
-    rcutils_time_point_value_t> message_result_;
-  SqliteStatementWrapper::QueryResult<std::shared_ptr<rcutils_char_array_t>,
-    rcutils_time_point_value_t>::Iterator current_message_row_;
+  ReadQueryResult message_result_;
+  ReadQueryResult::Iterator current_message_row_;
   std::map<std::string, int> topics_;
   std::map<std::string, std::string> all_topics_and_types_;
 };

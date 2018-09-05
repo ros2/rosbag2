@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -26,50 +27,27 @@
 using namespace ::testing;  // NOLINT
 
 TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqlite3_storage) {
-  std::vector<std::pair<std::string, int64_t>> string_messages =
-  {std::make_pair("first message", 1),
-    std::make_pair("second message", 2),
-    std::make_pair("third message", 3)};
+  std::vector<std::string> string_messages = {"first message", "second message", "third message"};
+  std::vector<std::string> topics = {"topic1", "topic2", "topic3"};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> messages =
+  {std::make_tuple(string_messages[0], 1, topics[0], "type1"),
+    std::make_tuple(string_messages[1], 2, topics[1], "type2"),
+    std::make_tuple(string_messages[2], 3, topics[2], "type3")};
 
-  write_messages_to_sqlite(string_messages);
+  write_messages_to_sqlite(messages);
   auto read_messages = read_all_messages_from_sqlite();
 
   ASSERT_THAT(read_messages, SizeIs(3));
-  EXPECT_THAT(deserialize_message(read_messages[0]->serialized_data), Eq(string_messages[0].first));
-  EXPECT_THAT(deserialize_message(read_messages[1]->serialized_data), Eq(string_messages[1].first));
-  EXPECT_THAT(deserialize_message(read_messages[2]->serialized_data), Eq(string_messages[2].first));
-}
-
-TEST_F(StorageTestFixture, message_roundtrip_with_arbitrary_char_array_works_correctly) {
-  std::string message = "test_message";
-  std::string topic = "test_topic";
-  size_t message_size = strlen(message.c_str()) + 1;
-  char * test_message = new char[message_size];
-  memcpy(test_message, message.c_str(), message_size);
-
-  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> read_write_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  read_write_storage->open(database_name_);
-  read_write_storage->create_topic(topic, "string");
-
-  auto test = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  test->serialized_data = std::make_shared<rcutils_char_array_t>();
-  test->serialized_data->buffer = test_message;
-  test->serialized_data->buffer_length = message_size;
-  test->serialized_data->buffer_capacity = message_size;
-  test->topic_name = topic;
-
-  read_write_storage->write(test);
-
-  auto read_message = read_write_storage->read_next();
-  EXPECT_THAT(strcmp(read_message->serialized_data->buffer, test_message), Eq(0));
-
-  delete[] test_message;
+  for (size_t i = 0; i < 3; i++) {
+    EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
+    EXPECT_THAT(read_messages[i]->time_stamp, Eq(std::get<1>(messages[i])));
+    EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+  }
 }
 
 TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) {
-  std::vector<std::pair<std::string, int64_t>> string_messages =
-  {std::make_pair("first message", 1), std::make_pair("second message", 2)};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> string_messages =
+  {std::make_tuple("first message", 1, "", ""), std::make_tuple("second message", 2, "", "")};
 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
@@ -83,17 +61,19 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   EXPECT_FALSE(readable_storage->has_next());
 }
 
-TEST_F(StorageTestFixture, write_stamped_char_array_writes_correct_time_stamp) {
-  std::vector<std::pair<std::string, int64_t>> string_messages =
-  {std::make_pair("first message", 1), std::make_pair("second message", 2)};
-
-  write_messages_to_sqlite(string_messages);
-  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
+TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_);
+  writable_storage->open(database_name_);
+  writable_storage->create_topic("topic1", "type1");
+  writable_storage->create_topic("topic2", "type2");
+  writable_storage.reset();
 
-  auto read_message = readable_storage->read_next();
-  EXPECT_THAT(read_message->time_stamp, Eq(1));
-  read_message = readable_storage->read_next();
-  EXPECT_THAT(read_message->time_stamp, Eq(2));
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  auto topics_and_types = readable_storage->get_all_topics_and_types();
+
+  EXPECT_THAT(topics_and_types, SizeIs(2));
+  EXPECT_THAT(topics_and_types["topic1"], Eq("type1"));
+  EXPECT_THAT(topics_and_types["topic2"], Eq("type2"));
 }
