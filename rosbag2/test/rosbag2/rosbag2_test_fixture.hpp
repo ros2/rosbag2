@@ -114,11 +114,11 @@ public:
   void write_messages(
     const std::string & db_name,
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
-    std::map<std::string, std::string> topic_types)
+    std::map<std::string, std::string> topics_and_types)
   {
     rosbag2_storage::StorageFactory factory;
     auto storage = factory.open_read_write(db_name, "sqlite3");
-    for (auto topic_and_type : topic_types) {
+    for (auto topic_and_type : topics_and_types) {
       storage->create_topic(topic_and_type.first, topic_and_type.second);
     }
 

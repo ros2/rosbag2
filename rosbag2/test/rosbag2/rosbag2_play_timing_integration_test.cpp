@@ -35,14 +35,14 @@ TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
   rclcpp::init(0, nullptr);
 
   auto message_time_difference = std::chrono::seconds(1);
-  auto topic_types = std::map<std::string, std::string>{{"topic1", "std_msgs/String"}};
+  auto topics_and_types = std::map<std::string, std::string>{{"topic1", "std_msgs/String"}};
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_message<std_msgs::msg::String>("topic1", "Hello World 1"),
     serialize_message<std_msgs::msg::String>("topic1", "Hello World 2")};
   messages[0]->time_stamp = 100;
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
-  write_messages(database_name_, messages, topic_types);
+  write_messages(database_name_, messages, topics_and_types);
 
   // We can only assert indirectly that the relative times are respected when playing a bag. So
   // we check that time elapsed during playing is at least the time difference between the two
