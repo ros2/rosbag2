@@ -25,6 +25,7 @@
 #include "replayable_message.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2/rosbag2_play_options.hpp"
 
 namespace rosbag2
 {
@@ -37,10 +38,10 @@ class Player
 public:
   explicit Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage);
 
-  void play();
+  void play(Rosbag2PlayOptions options);
 
 private:
-  void load_storage_content();
+  void load_storage_content(Rosbag2PlayOptions options);
   void play_messages_from_queue(std::future<void> storage_loading_future);
   void prepare_publishers();
 

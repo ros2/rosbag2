@@ -49,7 +49,7 @@ TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
   // messages
   auto start = std::chrono::steady_clock::now();
   Rosbag2 rosbag2;
-  rosbag2.play(database_name_);
+  rosbag2.play(database_name_, options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));

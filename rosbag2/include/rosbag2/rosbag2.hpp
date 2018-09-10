@@ -26,6 +26,7 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2/rosbag2_play_options.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -59,7 +60,7 @@ public:
    * \param file_name Name of the bagfile to replay
    */
   ROSBAG2_PUBLIC
-  void play(const std::string & file_name);
+  void play(const std::string & file_name, Rosbag2PlayOptions options);
 
 private:
   std::shared_ptr<rosbag2::GenericSubscription>

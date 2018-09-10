@@ -146,7 +146,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
   wait_for_subscribers(2);
 
   Rosbag2 rosbag2;
-  rosbag2.play(database_name_);
+  rosbag2.play(database_name_, options_);
 
   auto replayed_test_primitives = primitive_subscriber_future.get();
   ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));

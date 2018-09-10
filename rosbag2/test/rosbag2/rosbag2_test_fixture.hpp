@@ -30,10 +30,10 @@
 # include <Windows.h>
 #endif
 
+#include "rosbag2/rosbag2_play_options.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-
 #include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -50,6 +50,9 @@ public:
 #endif
     database_name_ = temporary_dir_path_ + system_separator + database_name_;
     std::cout << "Database name: " << database_name_ << std::endl;
+
+    options_ = rosbag2::Rosbag2PlayOptions();
+    options_.queue_buffer_length_ = 1000;
   }
 
   ~Rosbag2TestFixture() override
@@ -143,6 +146,7 @@ public:
   std::string database_name_;
   static std::string temporary_dir_path_;
   test_helpers::TestMemoryManagement memory_management_;
+  rosbag2::Rosbag2PlayOptions options_;
 };
 
 std::string Rosbag2TestFixture::temporary_dir_path_ = "";  // NOLINT

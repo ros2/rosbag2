@@ -109,7 +109,7 @@ Rosbag2::create_subscription(
   return subscription;
 }
 
-void Rosbag2::play(const std::string & file_name)
+void Rosbag2::play(const std::string & file_name, Rosbag2PlayOptions options)
 {
   auto storage = factory_.open_read_only(file_name, "sqlite3");
   if (!storage) {
@@ -117,7 +117,7 @@ void Rosbag2::play(const std::string & file_name)
   }
 
   player_ = std::make_shared<Player>(storage);
-  player_->play();
+  player_->play(options);
 }
 
 }  // namespace rosbag2
