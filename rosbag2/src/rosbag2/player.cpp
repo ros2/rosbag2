@@ -50,19 +50,20 @@ void Player::play(Rosbag2PlayOptions options)
 {
   prepare_publishers();
 
-  auto db_read_future = std::async(std::launch::async,
+  auto storage_loading_future = std::async(std::launch::async,
       [this, options]() {load_storage_content(options);});
 
-  wait_for_filled_queue(options, db_read_future);
+  wait_for_filled_queue(options, storage_loading_future);
 
-  play_messages_from_queue(std::move(db_read_future));
+  play_messages_from_queue(std::move(storage_loading_future));
 }
 
 void Player::wait_for_filled_queue(
-  const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const
+  const Rosbag2PlayOptions & options, const std::future<void> & storage_loading_future) const
 {
   while (
-    message_queue_.size_approx() < options.queue_buffer_length_ && is_pending(db_read_future))
+    message_queue_.size_approx() < options.queue_buffer_length_ &&
+    is_pending(storage_loading_future))
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

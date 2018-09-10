@@ -46,7 +46,7 @@ private:
   void load_storage_content(const Rosbag2PlayOptions & options);
   void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
   void wait_for_filled_queue(
-    const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const;
+    const Rosbag2PlayOptions & options, const std::future<void> & storage_loading_future) const;
   void play_messages_from_queue(std::future<void> storage_loading_future);
   void prepare_publishers();
 
