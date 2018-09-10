@@ -77,17 +77,6 @@ public:
   }
 
   template<typename MessageT>
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_test_message(
-    const std::string & topic, std::shared_ptr<MessageT> message)
-  {
-    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    bag_msg->serialized_data = memory_management_.serialize_message(message);
-    bag_msg->topic_name = topic;
-
-    return bag_msg;
-  }
-
-  template<typename MessageT>
   auto launch_subscriber(size_t expected_messages_number, const std::string & topic)
   {
     auto spin_subscriber = prepare_subscriber<MessageT>(expected_messages_number, topic);

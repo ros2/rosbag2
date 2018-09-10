@@ -143,6 +143,17 @@ public:
     return bag_msg;
   }
 
+  template<typename MessageT>
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_test_message(
+    const std::string & topic, std::shared_ptr<MessageT> message)
+  {
+    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    bag_msg->serialized_data = memory_management_.serialize_message(message);
+    bag_msg->topic_name = topic;
+
+    return bag_msg;
+  }
+
   std::string database_name_;
   static std::string temporary_dir_path_;
   test_helpers::TestMemoryManagement memory_management_;

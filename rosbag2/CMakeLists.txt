@@ -77,7 +77,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(test_msgs REQUIRED)
-  find_package(std_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(rosbag2_record_integration_test
@@ -86,10 +85,10 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_integration_test)
     target_link_libraries(rosbag2_record_integration_test librosbag2
-      ${std_msgs_LIBRARIES}
+      ${test_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_record_integration_test PRIVATE
-      ${std_msgs_INCLUDE_DIRS}
+      ${test_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
@@ -99,10 +98,10 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_all_integration_test)
     target_link_libraries(rosbag2_record_all_integration_test librosbag2
-      ${std_msgs_LIBRARIES}
+      ${test_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_record_all_integration_test PRIVATE
-      ${std_msgs_INCLUDE_DIRS}
+      ${test_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
@@ -112,9 +111,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_play_integration_test)
     target_link_libraries(rosbag2_play_integration_test librosbag2)
-    ament_target_dependencies(rosbag2_play_integration_test
-      test_msgs
-    )
+    ament_target_dependencies(rosbag2_play_integration_test test_msgs)
   endif()
 
   ament_add_gmock(rosbag2_play_timing_integration_test
@@ -122,10 +119,8 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_play_timing_integration_test)
-    target_link_libraries(rosbag2_play_timing_integration_test librosbag2
-      ${std_msgs_LIBRARIES})
-    target_include_directories(rosbag2_play_timing_integration_test PRIVATE
-      ${std_msgs_INCLUDE_DIRS})
+    target_link_libraries(rosbag2_play_timing_integration_test librosbag2)
+    ament_target_dependencies(rosbag2_play_timing_integration_test test_msgs)
   endif()
 
   ament_add_gmock(rosbag2_typesupport_helpers_test
@@ -159,7 +154,7 @@ if(BUILD_TESTING)
       ament_index_cpp
       Poco
       rclcpp
-      std_msgs
+      test_msgs
     )
   endif()
 endif()

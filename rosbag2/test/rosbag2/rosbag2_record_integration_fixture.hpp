@@ -83,13 +83,14 @@ public:
     }
   }
 
+  template<typename MessageT>
   void start_publishing(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
     const std::string & topic_name, size_t number_expected_messages)
   {
     publisher_futures_.push_back(std::async(
         std::launch::async, [this, message, topic_name, number_expected_messages]() {
-          auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
+          auto publisher = publisher_node_->create_publisher<MessageT>(topic_name);
 
           rosbag2_storage_plugins::SqliteWrapper
           db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);

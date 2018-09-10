@@ -21,11 +21,11 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-
 #include "rosbag2/rosbag2.hpp"
-
 #include "rosbag2_test_fixture.hpp"
+#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/message_fixtures.hpp"
+
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
@@ -33,12 +33,18 @@ using namespace rosbag2;  // NOLINT
 TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
 {
   rclcpp::init(0, nullptr);
+  auto primitive_message1 = get_messages_primitives()[0];
+  primitive_message1->string_value = "Hello World 1";
+
+  auto primitive_message2 = get_messages_primitives()[0];
+  primitive_message2->string_value = "Hello World 2";
 
   auto message_time_difference = std::chrono::seconds(1);
-  auto topics_and_types = std::map<std::string, std::string>{{"topic1", "std_msgs/String"}};
+  auto topics_and_types = std::map<std::string, std::string>{{"topic1", "test_msgs/Primitives"}};
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_message<std_msgs::msg::String>("topic1", "Hello World 1"),
-    serialize_message<std_msgs::msg::String>("topic1", "Hello World 2")};
+  {serialize_test_message("topic1", primitive_message1),
+    serialize_test_message("topic1", primitive_message2)};
+
   messages[0]->time_stamp = 100;
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
