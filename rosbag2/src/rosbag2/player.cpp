@@ -41,18 +41,34 @@ Player::Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInte
 : storage_(storage), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
+bool is_not_ready(const std::future<void> & future)
+{
+  return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
+}
+
 void Player::play(Rosbag2PlayOptions options)
 {
   prepare_publishers();
 
   auto db_read_future = std::async(std::launch::async,
       [this, options]() {load_storage_content(options);});
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  wait_for_filled_queue(options, db_read_future);
 
   play_messages_from_queue(std::move(db_read_future));
 }
 
-void Player::load_storage_content(Rosbag2PlayOptions options)
+void Player::wait_for_filled_queue(
+  const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const
+{
+  while (
+    message_queue_.size_approx() < options.queue_buffer_length_ && is_not_ready(db_read_future))
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+}
+
+void Player::load_storage_content(const Rosbag2PlayOptions & options)
 {
   using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
   TimePoint time_first_message;
@@ -75,11 +91,6 @@ void Player::load_storage_content(Rosbag2PlayOptions options)
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
-}
-
-bool is_not_ready(const std::future<void> & future)
-{
-  return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
 }
 
 void Player::play_messages_from_queue(std::future<void> storage_loading_future)

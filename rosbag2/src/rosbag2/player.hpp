@@ -41,7 +41,9 @@ public:
   void play(Rosbag2PlayOptions options);
 
 private:
-  void load_storage_content(Rosbag2PlayOptions options);
+  void load_storage_content(const Rosbag2PlayOptions & options);
+  void wait_for_filled_queue(
+    const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const;
   void play_messages_from_queue(std::future<void> storage_loading_future);
   void prepare_publishers();
 
