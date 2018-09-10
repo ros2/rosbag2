@@ -27,6 +27,8 @@
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2/rosbag2_play_options.hpp"
 
+using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
 namespace rosbag2
 {
 
@@ -42,6 +44,7 @@ public:
 
 private:
   void load_storage_content(const Rosbag2PlayOptions & options);
+  void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
   void wait_for_filled_queue(
     const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const;
   void play_messages_from_queue(std::future<void> storage_loading_future);

@@ -41,7 +41,7 @@ Player::Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInte
 : storage_(storage), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
-bool is_not_ready(const std::future<void> & future)
+bool is_pending(const std::future<void> & future)
 {
   return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
 }
@@ -62,7 +62,7 @@ void Player::wait_for_filled_queue(
   const Rosbag2PlayOptions & options, const std::future<void> & db_read_future) const
 {
   while (
-    message_queue_.size_approx() < options.queue_buffer_length_ && is_not_ready(db_read_future))
+    message_queue_.size_approx() < options.queue_buffer_length_ && is_pending(db_read_future))
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -70,7 +70,6 @@ void Player::wait_for_filled_queue(
 
 void Player::load_storage_content(const Rosbag2PlayOptions & options)
 {
-  using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
   TimePoint time_first_message;
 
   ReplayableMessage message;
@@ -80,16 +79,31 @@ void Player::load_storage_content(const Rosbag2PlayOptions & options)
     time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
     message_queue_.enqueue(message);
   }
-  while (storage_->has_next()) {
-    if (message_queue_.size_approx() < options.queue_buffer_length_) {
-      message.message = storage_->read_next();
-      message.time_since_start =
-        TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
 
-      message_queue_.enqueue(message);
+  auto queue_lower_boundary = options.queue_buffer_length_ - options.queue_buffer_length_ / 10;
+  auto queue_upper_boundary = options.queue_buffer_length_;
+
+  while (storage_->has_next()) {
+    if (message_queue_.size_approx() < queue_lower_boundary) {
+      enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+  }
+}
+
+void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary)
+{
+  ReplayableMessage message;
+  for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
+    if (!storage_->has_next()) {
+      break;
+    }
+    message.message = storage_->read_next();
+    message.time_since_start =
+      TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
+
+    message_queue_.enqueue(message);
   }
 }
 
@@ -97,7 +111,7 @@ void Player::play_messages_from_queue(std::future<void> storage_loading_future)
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  while (message_queue_.size_approx() != 0 || is_not_ready(storage_loading_future)) {
+  while (message_queue_.size_approx() != 0 || is_pending(storage_loading_future)) {
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message)) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
