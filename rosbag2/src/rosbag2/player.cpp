@@ -20,6 +20,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rcl/graph.h"
@@ -47,8 +48,7 @@ void Player::play()
   auto db_read_future = std::async(std::launch::async, [this]() {load_storage_content();});
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  play_messages_from_queue(std::future<void>());
-  db_read_future.get();
+  play_messages_from_queue(std::move(db_read_future));
 }
 
 void Player::load_storage_content()
@@ -64,11 +64,15 @@ void Player::load_storage_content()
     message_queue_.enqueue(message);
   }
   while (storage_->has_next()) {
-    message.message = storage_->read_next();
-    message.time_since_start =
-      TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
+    if (message_queue_.size_approx() < 1000) {
+      message.message = storage_->read_next();
+      message.time_since_start =
+        TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
 
-    message_queue_.enqueue(message);
+      message_queue_.enqueue(message);
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 }
 
@@ -81,13 +85,14 @@ void Player::play_messages_from_queue(std::future<void> storage_loading_future)
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  while (message_queue_.size_approx() != 0 && is_not_ready(storage_loading_future)) {
+  while (message_queue_.size_approx() != 0 || is_not_ready(storage_loading_future)) {
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message)) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
   }
+  storage_loading_future.get();
 }
 
 void Player::prepare_publishers()
