@@ -24,11 +24,11 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int8.hpp"
 
-#include "rosbag2_write_integration_fixture.hpp"
+#include "rosbag2_record_integration_fixture.hpp"
 #include "test_memory_management.hpp"
 
 // TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
-TEST_F(RosBag2WriteIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
+TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   std::string int_topic = "/int_topic";
   auto serialized_int_bag_message = serialize_message<std_msgs::msg::UInt8>(int_topic, 10);
@@ -40,7 +40,7 @@ TEST_F(RosBag2WriteIntegrationTestFixture, published_messages_from_multiple_topi
   start_publishing(serialized_string_bag_message, string_topic, 2);
   start_publishing(serialized_int_bag_message, int_topic, 2);
 
-  start_recording_all_topics();
+  start_recording({string_topic, int_topic});
   wait_for_publishers_to_stop();
   stop_recording();
 

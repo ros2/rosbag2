@@ -80,39 +80,39 @@ if(BUILD_TESTING)
   find_package(std_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(rosbag2_write_integration_test
-    test/rosbag2/rosbag2_write_integration_test.cpp
+  ament_add_gmock(rosbag2_record_integration_test
+    test/rosbag2/rosbag2_record_integration_test.cpp
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_write_integration_test)
-    target_link_libraries(rosbag2_write_integration_test librosbag2
+  if(TARGET rosbag2_record_integration_test)
+    target_link_libraries(rosbag2_record_integration_test librosbag2
       ${std_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
-    target_include_directories(rosbag2_write_integration_test PRIVATE
+    target_include_directories(rosbag2_record_integration_test PRIVATE
       ${std_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
-  ament_add_gmock(rosbag2_write_all_integration_test
-    test/rosbag2/rosbag2_write_all_integration_test.cpp
+  ament_add_gmock(rosbag2_record_all_integration_test
+    test/rosbag2/rosbag2_record_all_integration_test.cpp
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_write_all_integration_test)
-    target_link_libraries(rosbag2_write_all_integration_test librosbag2
+  if(TARGET rosbag2_record_all_integration_test)
+    target_link_libraries(rosbag2_record_all_integration_test librosbag2
       ${std_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
-    target_include_directories(rosbag2_write_all_integration_test PRIVATE
+    target_include_directories(rosbag2_record_all_integration_test PRIVATE
       ${std_msgs_INCLUDE_DIRS}
       ${rosbag2_storage_default_plugins_INCLUDE_DIRS})
   endif()
 
-  ament_add_gmock(rosbag2_read_integration_test
-    test/rosbag2/rosbag2_read_integration_test.cpp
+  ament_add_gmock(rosbag2_play_integration_test
+    test/rosbag2/rosbag2_play_integration_test.cpp
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_read_integration_test)
-    target_link_libraries(rosbag2_read_integration_test librosbag2)
-    ament_target_dependencies(rosbag2_read_integration_test
+  if(TARGET rosbag2_play_integration_test)
+    target_link_libraries(rosbag2_play_integration_test librosbag2)
+    ament_target_dependencies(rosbag2_play_integration_test
       test_msgs
     )
   endif()

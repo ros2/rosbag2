@@ -34,13 +34,13 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-#ifndef ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
-#define ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
+#ifndef ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#define ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
 
-class RosBag2WriteIntegrationTestFixture : public Rosbag2TestFixture
+class RosBag2RecordIntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
-  RosBag2WriteIntegrationTestFixture()
+  RosBag2RecordIntegrationTestFixture()
   : Rosbag2TestFixture()
   {
     rosbag2_storage_plugins::SqliteWrapper
@@ -159,4 +159,4 @@ public:
   std::future<void> future_;
 };
 
-#endif  // ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
+#endif  // ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
