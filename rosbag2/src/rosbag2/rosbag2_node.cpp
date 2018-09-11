@@ -83,7 +83,7 @@ std::shared_ptr<rcutils_string_map_t> get_initialized_string_map()
            });
 }
 
-std::string Rosbag2Node::expand_topic_name(std::string topic_name)
+std::string Rosbag2Node::expand_topic_name(const std::string & topic_name)
 {
   rcl_allocator_t allocator = rcl_get_default_allocator();
   auto substitutions_map = get_initialized_string_map();

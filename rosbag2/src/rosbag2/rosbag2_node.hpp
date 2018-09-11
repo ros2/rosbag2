@@ -46,7 +46,7 @@ public:
   std::map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);
 
-  std::string expand_topic_name(std::string topic_name);
+  std::string expand_topic_name(const std::string & topic_name);
 
   std::map<std::string, std::string> get_all_topics_with_types();
 
