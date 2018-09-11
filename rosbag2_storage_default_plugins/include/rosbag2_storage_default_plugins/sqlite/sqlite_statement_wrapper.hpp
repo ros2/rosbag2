@@ -28,6 +28,9 @@
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
 #ifdef _WIN32
 # pragma warning(push)
 # pragma warning(disable:4251)
@@ -40,7 +43,7 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStatementWrapper
   : public std::enable_shared_from_this<SqliteStatementWrapper>
 {
 public:
-  SqliteStatementWrapper(sqlite3 * database, std::string query);
+  SqliteStatementWrapper(sqlite3 * database, const std::string & query);
   SqliteStatementWrapper(const SqliteStatementWrapper &) = delete;
   SqliteStatementWrapper & operator=(const SqliteStatementWrapper &) = delete;
   ~SqliteStatementWrapper();
@@ -167,13 +170,14 @@ private:
   std::shared_ptr<SqliteStatementWrapper> bind(int value);
   std::shared_ptr<SqliteStatementWrapper> bind(rcutils_time_point_value_t value);
   std::shared_ptr<SqliteStatementWrapper> bind(double value);
-  std::shared_ptr<SqliteStatementWrapper> bind(std::string value);
+  std::shared_ptr<SqliteStatementWrapper> bind(const std::string & value);
   std::shared_ptr<SqliteStatementWrapper> bind(std::shared_ptr<rcutils_char_array_t> value);
 
   std::shared_ptr<SqliteStatementWrapper> reset();
 
 private:
   bool step();
+  bool isQueryOk(int return_code);
 
   void obtain_column_value(size_t index, int & value) const;
   void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;

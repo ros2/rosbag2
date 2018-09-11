@@ -171,13 +171,13 @@ public:
   }
 
 protected:
-  int get_buffer_capacity(std::string message)
+  int get_buffer_capacity(const std::string & message)
   {
     return write_data_to_serialized_string_message(nullptr, 0, message);
   }
 
   int write_data_to_serialized_string_message(
-    char * buffer, size_t buffer_capacity, std::string message)
+    char * buffer, size_t buffer_capacity, const std::string & message)
   {
     // This function also writes the final null charachter, which is absent in the CDR format.
     // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.

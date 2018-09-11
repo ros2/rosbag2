@@ -20,6 +20,7 @@
 
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
+// ignore incorrect warning when deriving from standard library types
 #ifdef _WIN32
 # pragma warning(push)
 # pragma warning(disable:4275)

@@ -24,9 +24,10 @@
 #include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "../logging.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+
+#include "../logging.hpp"
 
 namespace rosbag2_storage_plugins
 {

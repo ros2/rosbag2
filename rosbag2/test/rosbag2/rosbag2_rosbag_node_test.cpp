@@ -48,7 +48,7 @@ public:
     rclcpp::shutdown();
   }
 
-  void create_publisher(std::string topic)
+  void create_publisher(const std::string & topic)
   {
     auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic);
     publishers_.push_back(publisher);
@@ -73,7 +73,7 @@ public:
     return messages;
   }
 
-  std::shared_ptr<rcutils_char_array_t> serialize_string_message(std::string message)
+  std::shared_ptr<rcutils_char_array_t> serialize_string_message(const std::string & message)
   {
     auto string_message = std::make_shared<std_msgs::msg::String>();
     string_message->data = message;

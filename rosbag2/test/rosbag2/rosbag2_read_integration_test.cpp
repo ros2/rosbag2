@@ -49,7 +49,7 @@ public:
   }
 
   template<typename T>
-  auto prepare_subscriber(size_t expected_messages_number, std::string topic)
+  auto prepare_subscriber(size_t expected_messages_number, const std::string & topic)
   {
     auto node = rclcpp::Node::make_shared("node_" + topic);
     auto messages = std::make_shared<std::vector<typename T::ConstSharedPtr>>();

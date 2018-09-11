@@ -85,7 +85,7 @@ public:
 
   void start_publishing(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
-    std::string topic_name, size_t number_expected_messages)
+    const std::string & topic_name, size_t number_expected_messages)
   {
     publisher_futures_.push_back(std::async(
         std::launch::async, [this, message, topic_name, number_expected_messages]() {
@@ -102,7 +102,8 @@ public:
     ));
   }
 
-  size_t count_stored_messages(rosbag2_storage_plugins::SqliteWrapper & db, std::string topic_name)
+  size_t
+  count_stored_messages(rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
   {
     // protect against concurrent writes (from recording) that may make the count query throw.
     while (true) {
@@ -116,7 +117,7 @@ public:
   }
 
   size_t count_stored_messages_in_db(
-    rosbag2_storage_plugins::SqliteWrapper & db, std::string topic_name)
+    rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
   {
     auto row = db.prepare_statement(
       "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
@@ -141,7 +142,7 @@ public:
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> filter_messages(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
-    std::string topic)
+    const std::string & topic)
   {
     std::vector<std::shared_ptr<MessageT>> filtered_messages;
     for (const auto & message : messages) {
