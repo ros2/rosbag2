@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 
+#include "rcl/expand_topic_name.h"
 #include "rosbag2/logging.hpp"
 #include "typesupport_helpers.hpp"
 
@@ -61,12 +62,69 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
 
   return subscription;
 }
+
+std::shared_ptr<rcutils_string_map_t> get_initialized_string_map()
+{
+  rcutils_allocator_t allocator = rcutils_get_default_allocator();
+  auto substitutions_map = new rcutils_string_map_t;
+  *substitutions_map = rcutils_get_zero_initialized_string_map();
+  rcutils_ret_t map_init = rcutils_string_map_init(substitutions_map, 0, allocator);
+  if (map_init != RCUTILS_RET_OK) {
+    ROSBAG2_LOG_ERROR("Failed to initialize string map within rcutils.");
+    return std::shared_ptr<rcutils_string_map_t>();
+  }
+  return std::shared_ptr<rcutils_string_map_t>(substitutions_map,
+           [](rcutils_string_map_t * map) {
+             rcl_ret_t cleanup = rcutils_string_map_fini(map);
+             delete map;
+             if (cleanup != RCL_RET_OK) {
+               ROSBAG2_LOG_ERROR("Failed to deallocate string map when expanding topic.");
+             }
+           });
+}
+
+std::string Rosbag2Node::expand_topic_name(std::string topic_name)
+{
+  rcl_allocator_t allocator = rcl_get_default_allocator();
+  auto substitutions_map = get_initialized_string_map();
+  if (!substitutions_map) {
+    ROSBAG2_LOG_ERROR("Failed to initialize string map within rcutils.");
+    return "";
+  }
+  rcl_ret_t ret = rcl_get_default_topic_name_substitutions(substitutions_map.get());
+  if (ret != RCL_RET_OK) {
+    ROSBAG2_LOG_ERROR("Failed to initialize map with default values.");
+    return "";
+  }
+  char * expanded_topic_name = nullptr;
+  ret = rcl_expand_topic_name(
+    topic_name.c_str(),
+    get_name(),
+    get_namespace(),
+    substitutions_map.get(),
+    allocator,
+    &expanded_topic_name);
+
+  if (ret != RCL_RET_OK) {
+    ROSBAG2_LOG_ERROR_STREAM(
+      "Failed to expand topic name " << topic_name << " with error: " <<
+        rcutils_get_error_string_safe());
+    return "";
+  }
+  std::string expanded_topic_name_std(expanded_topic_name);
+  allocator.deallocate(expanded_topic_name, allocator.state);
+  return expanded_topic_name_std;
+}
+
 std::map<std::string, std::string> Rosbag2Node::get_topics_with_types(
   const std::vector<std::string> & topic_names)
 {
   std::vector<std::string> sanitized_topic_names;
   for (const auto & topic_name : topic_names) {
-    sanitized_topic_names.push_back(topic_name[0] != '/' ? "/" + topic_name : topic_name);
+    auto sanitized_topic_name = expand_topic_name(topic_name);
+    if (!sanitized_topic_name.empty()) {
+      sanitized_topic_names.push_back(sanitized_topic_name);
+    }
   }
 
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
@@ -83,7 +141,7 @@ std::map<std::string, std::string> Rosbag2Node::get_topics_with_types(
     }
   }
 
-  return reduce_multiple_types_to_one(filter_topics_with_wrong_types(filtered_topics_and_types));
+  return filter_topics_with_more_than_one_type(filtered_topics_and_types);
 }
 
 std::map<std::string, std::string>
@@ -92,47 +150,22 @@ Rosbag2Node::get_all_topics_with_types()
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
   // This should be replaced by an auto-discovery system in the future
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  return reduce_multiple_types_to_one(
-    filter_topics_with_wrong_types(this->get_topic_names_and_types()));
+  return filter_topics_with_more_than_one_type(this->get_topic_names_and_types());
 }
 
-bool type_is_of_incorrect_form(const std::string & type)
-{
-  char type_separator = '/';
-  auto sep_position_back = type.find_last_of(type_separator);
-  auto sep_position_front = type.find_first_of(type_separator);
-  return sep_position_back == std::string::npos ||
-         sep_position_back != sep_position_front ||
-         sep_position_back == 0 ||
-         sep_position_back == type.length() - 1;
-}
-
-std::map<std::string, std::vector<std::string>> Rosbag2Node::filter_topics_with_wrong_types(
+std::map<std::string, std::string> Rosbag2Node::filter_topics_with_more_than_one_type(
   std::map<std::string, std::vector<std::string>> topics_and_types)
 {
-  std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
+  std::map<std::string, std::string> filtered_topics_and_types;
   for (const auto & topic_and_type : topics_and_types) {
     if (topic_and_type.second.size() > 1) {
       ROSBAG2_LOG_ERROR_STREAM("Topic '" << topic_and_type.first <<
         "' has several types associated. Only topics with one type are supported");
-    } else if (type_is_of_incorrect_form(topic_and_type.second[0])) {
-      ROSBAG2_LOG_ERROR_STREAM("Topic '" << topic_and_type.first << "' has non-ROS type '" <<
-        topic_and_type.second[0] << "'. Only ROS topics are supported.");
     } else {
-      filtered_topics_and_types.insert(topic_and_type);
+      filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
     }
   }
   return filtered_topics_and_types;
-}
-
-std::map<std::string, std::string> Rosbag2Node::reduce_multiple_types_to_one(
-  std::map<std::string, std::vector<std::string>> topics_and_types)
-{
-  std::map<std::string, std::string> topics_and_types_to_record;
-  for (const auto & topic_and_types : topics_and_types) {
-    topics_and_types_to_record.insert({topic_and_types.first, topic_and_types.second[0]});
-  }
-  return topics_and_types_to_record;
 }
 
 }  // namespace rosbag2

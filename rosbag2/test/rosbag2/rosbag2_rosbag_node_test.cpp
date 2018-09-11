@@ -178,39 +178,3 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   EXPECT_THAT(
     topics_and_types.find("/parameter_events")->second, StrEq("rcl_interfaces/ParameterEvent"));
 }
-
-TEST_F(RosBag2NodeFixture, filter_topics_with_wrong_type_deletes_topics_with_multiple_types) {
-  std::map<std::string, std::vector<std::string>> topics_and_types = {
-    {"/topic", {"package1/type1"}},
-    {"/topic2", {"package1/type1", "package2/type2"}}};
-
-  auto filtered_topics_and_types = node_->filter_topics_with_wrong_types(topics_and_types);
-
-  ASSERT_THAT(filtered_topics_and_types, SizeIs(1));
-  EXPECT_THAT(filtered_topics_and_types.find("/topic")->second[0], StrEq("package1/type1"));
-}
-
-TEST_F(RosBag2NodeFixture, filter_topics_with_wrong_type_deletes_topics_with_wrong_type_format) {
-  std::map<std::string, std::vector<std::string>> topics_and_types = {
-    {"/topic", {"package1/type1"}},
-    {"/topic2", {"package1/"}},
-    {"/topic3", {"package1/package2/type"}},
-    {"/topic4", {"/type"}}
-  };
-
-  auto filtered_topics_and_types = node_->filter_topics_with_wrong_types(topics_and_types);
-
-  ASSERT_THAT(filtered_topics_and_types, SizeIs(1));
-  EXPECT_THAT(filtered_topics_and_types.find("/topic")->second[0], StrEq("package1/type1"));
-}
-
-TEST_F(RosBag2NodeFixture, reduce_multiple_types_to_one) {
-  std::map<std::string, std::vector<std::string>> topics_and_types = {
-    {"/topic", {"package1/type1"}},
-    {"/topic2", {"package1/type1", "package2/type2"}}};
-
-  auto reduced_types = node_->reduce_multiple_types_to_one(topics_and_types);
-
-  ASSERT_THAT(reduced_types, SizeIs(2));
-  EXPECT_THAT(reduced_types.find("/topic")->second, StrEq("package1/type1"));
-}

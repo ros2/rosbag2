@@ -46,12 +46,11 @@ public:
   std::map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);
 
+  std::string expand_topic_name(std::string topic_name);
+
   std::map<std::string, std::string> get_all_topics_with_types();
 
-  std::map<std::string, std::vector<std::string>> filter_topics_with_wrong_types(
-    std::map<std::string, std::vector<std::string>> topics_and_types);
-
-  std::map<std::string, std::string> reduce_multiple_types_to_one(
+  std::map<std::string, std::string> filter_topics_with_more_than_one_type(
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };
 
