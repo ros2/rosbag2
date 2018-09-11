@@ -17,8 +17,8 @@
 #include <memory>
 #include <string>
 
-#include "rcutils/logging_macros.h"
 #include "rcutils/types.h"
+#include "rosbag2_storage/logging.hpp"
 
 namespace rosbag2_storage
 {
@@ -41,9 +41,8 @@ make_serialized_message(const void * data, size_t size)
         int error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_storage",
-            "Leaking memory. Error: %s", rcutils_get_error_string_safe());
+          ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+            "Leaking memory. Error: " << rcutils_get_error_string_safe());
         }
       });
 

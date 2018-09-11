@@ -20,6 +20,8 @@
 #include "rclcpp/any_subscription_callback.hpp"
 #include "rclcpp/subscription.hpp"
 
+#include "rosbag2/logging.hpp"
+
 namespace rosbag2
 {
 
@@ -98,9 +100,8 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
         auto fini_return = rmw_serialized_message_fini(msg);
         delete msg;
         if (fini_return != RCL_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2",
-            "failed to destroy serialized message: %s", rcl_get_error_string_safe());
+          ROSBAG2_LOG_ERROR_STREAM(
+            "Failed to destroy serialized message: " << rcl_get_error_string_safe());
         }
       });
 

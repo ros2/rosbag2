@@ -23,13 +23,12 @@
 #include <utility>
 #include <vector>
 
-#include "rcutils/logging_macros.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "../logging.hpp"
 #include "sqlite_statement_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
-const char * ROS_PACKAGE_NAME = "rosbag2_storage_default_plugins";
 
 SqliteStorage::SqliteStorage()
 : database_(),
@@ -58,7 +57,7 @@ void SqliteStorage::open(
     initialize();
   }
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Opened database '%s'.", uri.c_str());
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << uri << "'.");
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -75,7 +74,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Stored message.");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("Stored message");
 }
 
 bool SqliteStorage::has_next()

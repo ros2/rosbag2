@@ -86,6 +86,14 @@ if(BUILD_TESTING)
     target_link_libraries(rosbag2_write_integration_test librosbag2)
   endif()
 
+  ament_add_gmock(rosbag2_write_all_integration_test
+    test/rosbag2/rosbag2_write_all_integration_test.cpp
+    test/rosbag2/test_memory_management.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_write_all_integration_test)
+    target_link_libraries(rosbag2_write_all_integration_test librosbag2)
+  endif()
+
   ament_add_gmock(rosbag2_read_integration_test
     test/rosbag2/rosbag2_read_integration_test.cpp
     test/rosbag2/test_memory_management.cpp
@@ -110,14 +118,6 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gmock(rosbag2_integration_test
-    test/rosbag2/rosbag2_integration_test.cpp
-    src/rosbag2/typesupport_helpers.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_integration_test)
-    target_link_libraries(rosbag2_integration_test librosbag2)
-  endif()
-
   ament_add_gmock(rosbag2_rosbag_node_test
     test/rosbag2/rosbag2_rosbag_node_test.cpp
     test/rosbag2/test_memory_management.cpp
@@ -127,6 +127,11 @@ if(BUILD_TESTING)
     src/rosbag2/typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_rosbag_node_test)
+    target_include_directories(rosbag2_rosbag_node_test
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    )
     ament_target_dependencies(rosbag2_rosbag_node_test
       ament_index_cpp
       Poco

@@ -37,18 +37,30 @@ class Rosbag2Node;
 class Rosbag2
 {
 public:
+  /**
+   * Records topics to a bagfile. Subscription happens at startup time, hence the topics must
+   * exist when "record" is called.
+   *
+   * \param file_name Name of the bagfile to write
+   * \param topic_names Vector of topics to subscribe to. Topics must exist at startup time. If
+   * the vector is empty, all topics will be subscribed.
+   * \param after_write_action This function will be executed after each write to the database
+   * where the input parameter is the topic name of the topic written Currently needed for testing.
+   * Might be removed later.
+   */
   ROSBAG2_PUBLIC
   void record(
     const std::string & file_name,
-    std::vector<std::string> topic_names,
+    const std::vector<std::string> & topic_names,
     std::function<void(std::string)> after_write_action = nullptr);
 
+  /**
+   * Replay all topics in a bagfile.
+   *
+   * \param file_name Name of the bagfile to replay
+   */
   ROSBAG2_PUBLIC
   void play(const std::string & file_name);
-
-  ROSBAG2_PUBLIC
-  std::map<std::string, std::string> get_topics_with_types(
-    const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node);
 
 private:
   void prepare_publishers(

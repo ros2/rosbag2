@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/logging_macros.h"
 
+#include "rosbag2/logging.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -42,7 +43,7 @@ const char * ROS_PACKAGE_NAME = "rosbag2";
 
 void Rosbag2::record(
   const std::string & file_name,
-  std::vector<std::string> topic_names,
+  const std::vector<std::string> & topic_names,
   std::function<void(std::string)> after_write_action)
 {
   rosbag2_storage::StorageFactory factory;
@@ -50,12 +51,13 @@ void Rosbag2::record(
 
   if (!storage) {
     throw std::runtime_error("No storage could be initialized. Abort");
-    return;
   }
 
   auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
-  auto topics_and_types = get_topics_with_types(topic_names, node);
+  auto topics_and_types = topic_names.empty() ?
+    node->get_all_topics_with_types() :
+    node->get_topics_with_types(topic_names);
 
   if (topics_and_types.empty()) {
     throw std::runtime_error("No topics found. Abort");
@@ -77,43 +79,13 @@ void Rosbag2::record(
 
   if (subscriptions_.empty()) {
     throw std::runtime_error("No topics could be subscribed. Abort");
-    return;
   }
 
-  RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "Waiting for messages...");
+  ROSBAG2_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
     rclcpp::spin(node);
   }
   subscriptions_.clear();
-}
-
-std::map<std::string, std::string> Rosbag2::get_topics_with_types(
-  const std::vector<std::string> & topic_names, std::shared_ptr<rclcpp::Node> node)
-{
-  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
-  // This should be replaced by an auto-discovery system in the future
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  auto topics = node->get_topic_names_and_types();
-
-  std::map<std::string, std::string> topic_names_and_types;
-  for (const auto & topic_name : topic_names) {
-    std::string complete_topic_name = topic_name;
-    if (topic_name[0] != '/') {
-      complete_topic_name = "/" + topic_name;
-    }
-    auto position = topics.find(complete_topic_name);
-    if (position != topics.end()) {
-      if (position->second.size() > 1) {
-        RCUTILS_LOG_ERROR_NAMED(
-          ROS_PACKAGE_NAME,
-          "Topic '%s' has several types associated. Only topics with one type are supported.",
-          position->first.c_str());
-      } else {
-        topic_names_and_types.insert({position->first, position->second[0]});
-      }
-    }
-  }
-  return topic_names_and_types;
 }
 
 std::shared_ptr<GenericSubscription>
@@ -133,9 +105,8 @@ Rosbag2::create_subscription(
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
-        RCUTILS_LOG_ERROR_NAMED(
-          ROS_PACKAGE_NAME,
-          "Error getting current time. Error: %s", rcutils_get_error_string_safe());
+        ROSBAG2_LOG_ERROR_STREAM(
+          "Error getting current time. Error:" << rcutils_get_error_string_safe());
       }
       bag_message->time_stamp = time_stamp;
 
@@ -161,7 +132,7 @@ void Rosbag2::play(const std::string & file_name)
       // without the sleep_for() many messages are lost.
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
       publishers_[message->topic_name]->publish(message->serialized_data);
-      RCUTILS_LOG_INFO_NAMED(ROS_PACKAGE_NAME, "published message");
+      ROSBAG2_LOG_INFO("Published message");
     }
   }
 }
