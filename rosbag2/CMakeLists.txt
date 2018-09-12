@@ -27,7 +27,7 @@ find_package(rosidl_generator_cpp REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 
 add_library(
-  librosbag2
+  rosbag2
   SHARED
   src/rosbag2/rosbag2.cpp
   src/rosbag2/player.cpp
@@ -36,7 +36,7 @@ add_library(
   src/rosbag2/generic_subscription.cpp
   src/rosbag2/rosbag2_node.cpp)
 
-ament_target_dependencies(librosbag2
+ament_target_dependencies(rosbag2
   ament_index_cpp
   Poco
   rcl
@@ -47,7 +47,7 @@ ament_target_dependencies(librosbag2
   shared_queues_vendor
 )
 
-target_include_directories(librosbag2
+target_include_directories(rosbag2
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -55,20 +55,20 @@ target_include_directories(librosbag2
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(librosbag2 PRIVATE "ROSBAG2_BUILDING_DLL")
+target_compile_definitions(rosbag2 PRIVATE "ROSBAG2_BUILDING_DLL")
 
 add_executable(${PROJECT_NAME}_record src/rosbag2/demo_record.cpp)
-target_link_libraries(${PROJECT_NAME}_record librosbag2)
+target_link_libraries(${PROJECT_NAME}_record rosbag2)
 
 add_executable(${PROJECT_NAME}_play src/rosbag2/demo_play.cpp)
-target_link_libraries(${PROJECT_NAME}_play librosbag2)
+target_link_libraries(${PROJECT_NAME}_play rosbag2)
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
 install(
-  TARGETS librosbag2
+  TARGETS rosbag2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
@@ -84,7 +84,7 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_integration_test)
-    target_link_libraries(rosbag2_record_integration_test librosbag2
+    target_link_libraries(rosbag2_record_integration_test rosbag2
       ${test_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_record_integration_test PRIVATE
@@ -97,7 +97,7 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_all_integration_test)
-    target_link_libraries(rosbag2_record_all_integration_test librosbag2
+    target_link_libraries(rosbag2_record_all_integration_test rosbag2
       ${test_msgs_LIBRARIES}
       ${rosbag2_storage_default_plugins_LIBRARIES})
     target_include_directories(rosbag2_record_all_integration_test PRIVATE
@@ -110,7 +110,7 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_play_integration_test)
-    target_link_libraries(rosbag2_play_integration_test librosbag2)
+    target_link_libraries(rosbag2_play_integration_test rosbag2)
     ament_target_dependencies(rosbag2_play_integration_test test_msgs)
   endif()
 
@@ -119,7 +119,7 @@ if(BUILD_TESTING)
     test/rosbag2/test_memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_play_timing_integration_test)
-    target_link_libraries(rosbag2_play_timing_integration_test librosbag2)
+    target_link_libraries(rosbag2_play_timing_integration_test rosbag2)
     ament_target_dependencies(rosbag2_play_timing_integration_test test_msgs)
   endif()
 
