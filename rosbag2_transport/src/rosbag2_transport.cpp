@@ -1,13 +1,18 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
+#include "rosbag2/rosbag2.hpp"
+
 namespace rosbag2_transport
 {
 
 void Rosbag2Transport::record(const std::vector<std::string> & topic_names)
 {
-  for (auto topic : topic_names) {
-    fprintf(stderr, "going to record %s\n", topic.c_str());
-  }
+  rclcpp::init(0, nullptr);
+
+  rosbag2::Rosbag2 rosbag2;
+  rosbag2.record("test.bag", topic_names);
+
+  rclcpp::shutdown();
 }
 
 }  // namespace rosbag2_transport

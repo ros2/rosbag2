@@ -19,16 +19,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rosbag2_storage REQUIRED)
+find_package(rosbag2 REQUIRED)
 
 add_library(rosbag2_transport src/rosbag2_transport.cpp)
 target_include_directories(rosbag2_transport PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(
-  rosbag2_transport
-  "rclcpp"
-  "rosbag2_storage"
+
+ament_target_dependencies(rosbag2_transport
+  rclcpp
+  rosbag2
 )
 
 include(cmake/configure_python.cmake)

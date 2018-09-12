@@ -72,6 +72,10 @@ install(
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
 
+ament_export_include_directories(include)
+ament_export_libraries(rosbag2)
+ament_export_dependencies(rosbag2_storage)
+
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
