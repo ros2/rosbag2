@@ -18,10 +18,12 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rviz_yaml_cpp_vendor REQUIRED)
 
 add_library(
   rosbag2_storage
   SHARED
+  src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
   src/rosbag2_storage/storage_factory.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
@@ -85,6 +87,13 @@ if(BUILD_TESTING)
   if(TARGET test_ros_helper)
     target_include_directories(test_ros_helper PRIVATE include)
     target_link_libraries(test_ros_helper rosbag2_storage)
+  endif()
+
+  ament_add_gmock(metadata_serialization_test
+    test/metadata_serialization_test.cpp)
+  if(TARGET metadata_serialization_test)
+    target_include_directories(metadata_serialization_test PRIVATE include)
+    target_link_libraries(metadata_serialization_test rosbag2_storage)
   endif()
 endif()
 
