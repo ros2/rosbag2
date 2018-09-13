@@ -14,7 +14,7 @@
 
 from ros2bag.verb import VerbExtension
 
-from rosbag2_transport import rosbag_transport_py
+from rosbag2_transport import rosbag2_transport_py
 
 
 class PlayVerb(VerbExtension):
@@ -26,4 +26,4 @@ class PlayVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
-        rosbag_transport_py.play_bag(bag_file)
+        rosbag2_transport_py.play_bag(bag_file)

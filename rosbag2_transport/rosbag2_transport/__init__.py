@@ -28,4 +28,4 @@ def _import(name):
         raise
 
 
-rosbag_transport_py = _import('._rosbag2_transport_py')
+rosbag2_transport_py = _import('._rosbag2_transport_py')

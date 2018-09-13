@@ -17,7 +17,7 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node.strategy import NodeStrategy
 from ros2cli.node.strategy import add_arguments
 
-from rosbag2_transport import rosbag_transport_py
+from rosbag2_transport import rosbag2_transport_py
 
 
 class RecordVerb(VerbExtension):
@@ -41,4 +41,4 @@ class RecordVerb(VerbExtension):
                 topics = [t for t,n in node.get_topic_names_and_types()]
             if args.topics:
                 topics = args.topics
-            rosbag_transport_py.record_topics(topics)
+            rosbag2_transport_py.record_topics(topics)
