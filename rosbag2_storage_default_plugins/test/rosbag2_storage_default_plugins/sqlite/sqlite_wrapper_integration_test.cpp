@@ -82,8 +82,8 @@ TEST_F(SqliteWrapperTestFixture, all_result_rows_are_available) {
   db_.prepare_statement("INSERT INTO test (col) VALUES (2);")->execute_and_reset();
   db_.prepare_statement("INSERT INTO test (col) VALUES (3);")->execute_and_reset();
 
-  auto result =
-    db_.prepare_statement("SELECT col FROM test ORDER BY col ASC;")->execute_query<int>();
+  auto query = db_.prepare_statement("SELECT col FROM test ORDER BY col ASC;");
+  auto result = query->execute_query<int>();
 
   // range-for access
   int row_value = 1;
@@ -91,6 +91,8 @@ TEST_F(SqliteWrapperTestFixture, all_result_rows_are_available) {
     ASSERT_THAT(std::get<0>(row), Eq(row_value++));
   }
   ASSERT_THAT(row_value, Eq(4));
+
+  query->reset();
 
   // iterator access
   row_value = 1;
