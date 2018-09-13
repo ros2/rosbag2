@@ -41,10 +41,7 @@ namespace rosbag2
 
 const char * ROS_PACKAGE_NAME = "rosbag2";
 
-void Rosbag2::record(
-  const std::string & file_name,
-  const std::vector<std::string> & topic_names,
-  std::function<void(std::string)> after_write_action)
+void Rosbag2::record(const std::string & file_name, const std::vector<std::string> & topic_names)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_write(file_name, "sqlite3");
@@ -68,7 +65,7 @@ void Rosbag2::record(
     auto topic_type = topic_and_type.second;
 
     std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      after_write_action, storage, node, topic_name, topic_type);
+      storage, node, topic_name, topic_type);
 
     if (subscription) {
       subscriptions_.push_back(subscription);
@@ -90,7 +87,6 @@ void Rosbag2::record(
 
 std::shared_ptr<GenericSubscription>
 Rosbag2::create_subscription(
-  const std::function<void(std::string)> & after_write_action,
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
   std::shared_ptr<Rosbag2Node> & node,
   const std::string & topic_name, const std::string & topic_type) const
@@ -98,7 +94,7 @@ Rosbag2::create_subscription(
   auto subscription = node->create_generic_subscription(
     topic_name,
     topic_type,
-    [storage, topic_name, after_write_action](std::shared_ptr<rmw_serialized_message_t> message) {
+    [storage, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;
       bag_message->topic_name = topic_name;
@@ -111,9 +107,6 @@ Rosbag2::create_subscription(
       bag_message->time_stamp = time_stamp;
 
       storage->write(bag_message);
-      if (after_write_action) {
-        after_write_action(topic_name);
-      }
     });
   return subscription;
 }

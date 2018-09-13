@@ -28,7 +28,7 @@
 #include "test_memory_management.hpp"
 
 // TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
-TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
+TEST_F(RosBag2WriteIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   std::string int_topic = "/int_topic";
   auto serialized_int_bag_message = serialize_message<std_msgs::msg::UInt8>(int_topic, 10);
@@ -41,7 +41,7 @@ TEST_F(RosBag2IntegrationTestFixture, published_messages_from_multiple_topics_ar
   start_publishing(serialized_int_bag_message, int_topic, 2);
 
   start_recording_all_topics();
-  wait_for_publishers();
+  wait_for_publishers_to_stop();
   stop_recording();
 
   auto recorded_messages = get_messages(database_name_);

@@ -39,6 +39,23 @@ target_include_directories(${PROJECT_NAME}
   $<INSTALL_INTERFACE:include>
 )
 
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(
+  rosbag2_storage
+  sqlite3_vendor
+  SQLite3
+  rcutils)
+
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(rosbag2_storage_default_plugins PRIVATE
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_BUILDING_DLL)
+
+install(
+  DIRECTORY include/
+  DESTINATION include)
+
 install(
   TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
@@ -53,31 +70,26 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
+  set(TEST_LINK_LIBRARIES
+    ${PROJECT_NAME}
+    ${rosbag2_storage_LIBRARIES}
+    ${rcutils_LIBRARIES}
+    ${SQLite3_LIBRARIES}
+    ${pluginlib_LIBRARIES}
+  )
+
   ament_add_gmock(sqlite_wrapper_integration_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper_integration_test.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_wrapper_integration_test)
-    ament_target_dependencies(sqlite_wrapper_integration_test
-      rosbag2_storage
-      rcutils
-      SQLite3
-      pluginlib)
+    target_link_libraries(sqlite_wrapper_integration_test ${TEST_LINK_LIBRARIES})
   endif()
 
   ament_add_gmock(sqlite_storage_integration_test
     test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
-    src/rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET sqlite_storage_integration_test)
-    ament_target_dependencies(sqlite_storage_integration_test
-      rosbag2_storage
-      rcutils
-      SQLite3
-      pluginlib)
+    target_link_libraries(sqlite_storage_integration_test ${TEST_LINK_LIBRARIES})
   endif()
 endif()
 

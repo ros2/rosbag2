@@ -23,19 +23,22 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "sqlite_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
 
 namespace rosbag2_storage_plugins
 {
 
-class SqliteStorageException : public std::runtime_error
-{
-public:
-  explicit SqliteStorageException(const std::string & message)
-  : runtime_error(message) {}
-};
-
-class SqliteStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
+class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
+  : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
   SqliteStorage();
@@ -79,5 +82,9 @@ private:
 };
 
 }  // namespace rosbag2_storage_plugins
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_

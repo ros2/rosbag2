@@ -49,10 +49,7 @@ public:
    * Might be removed later.
    */
   ROSBAG2_PUBLIC
-  void record(
-    const std::string & file_name,
-    const std::vector<std::string> & topic_names,
-    std::function<void(std::string)> after_write_action = nullptr);
+  void record(const std::string & file_name, const std::vector<std::string> & topic_names);
 
   /**
    * Replay all topics in a bagfile.
@@ -69,7 +66,6 @@ private:
 
   std::shared_ptr<rosbag2::GenericSubscription>
   create_subscription(
-    const std::function<void(std::string)> & after_write_action,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
     std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;

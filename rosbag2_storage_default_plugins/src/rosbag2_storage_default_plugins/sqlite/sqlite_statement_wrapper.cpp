@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 
 #include <cstring>
 #include <memory>
@@ -23,12 +23,12 @@
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/ros_helper.hpp"
 
-#include "sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
-SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, std::string query)
+SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, const std::string & query)
 {
   sqlite3_stmt * statement;
   int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
@@ -51,10 +51,16 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
 std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
 {
   int return_code = sqlite3_step(statement_);
-  if (return_code != SQLITE_OK && return_code != SQLITE_DONE) {
-    throw SqliteException("Error processing SQLite statement.");
+  if (!isQueryOk(return_code)) {
+    throw SqliteException("Error processing SQLite statement. Return code: " +
+            std::to_string(return_code));
   }
   return reset();
+}
+
+bool SqliteStatementWrapper::isQueryOk(int return_code)
+{
+  return return_code == SQLITE_OK || return_code == SQLITE_DONE || return_code == SQLITE_ROW;
 }
 
 std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(int value)
@@ -79,7 +85,7 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(double valu
   return shared_from_this();
 }
 
-std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(std::string value)
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(const std::string & value)
 {
   auto return_code = sqlite3_bind_text(
     statement_, ++last_bound_parameter_index_, value.c_str(), -1, SQLITE_TRANSIENT);

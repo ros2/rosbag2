@@ -32,7 +32,7 @@
 
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
-#include "../../../src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -40,7 +40,7 @@ class StorageTestFixture : public Test
 {
 public:
   StorageTestFixture()
-  : database_name_(UnitTest::GetInstance()->current_test_info()->name())
+  : database_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".db3")
   {
     std::string system_separator = "/";
 #ifdef _WIN32
@@ -130,7 +130,7 @@ public:
     auto string_length = serialized_message->buffer_length - 8;
     memcpy(copied, &serialized_message->buffer[8], string_length);
     std::string message_content(copied);
-    // cppcheck-suppress mismatchAllocDealloc (complains about "copied" but used new[] and delete[])
+    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
     delete[] copied;
     return message_content;
   }
@@ -171,13 +171,13 @@ public:
   }
 
 protected:
-  int get_buffer_capacity(std::string message)
+  int get_buffer_capacity(const std::string & message)
   {
     return write_data_to_serialized_string_message(nullptr, 0, message);
   }
 
   int write_data_to_serialized_string_message(
-    char * buffer, size_t buffer_capacity, std::string message)
+    char * buffer, size_t buffer_capacity, const std::string & message)
   {
     // This function also writes the final null charachter, which is absent in the CDR format.
     // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.

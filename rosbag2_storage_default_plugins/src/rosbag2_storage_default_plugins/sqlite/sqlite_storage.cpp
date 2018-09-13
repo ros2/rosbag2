@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sqlite_storage.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 #include <cstring>
 #include <iostream>
@@ -24,8 +24,10 @@
 #include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+
 #include "../logging.hpp"
-#include "sqlite_statement_wrapper.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -47,13 +49,13 @@ void SqliteStorage::open(
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(uri);
+    database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
     bag_info_.uri = uri;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  if (io_flag != rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
     initialize();
   }
 
@@ -67,7 +69,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   }
   auto topic_entry = topics_.find(message->topic_name);
   if (topic_entry == end(topics_)) {
-    throw SqliteStorageException("Topic '" + message->topic_name +
+    throw SqliteException("Topic '" + message->topic_name +
             "' has not been created yet! Call 'create_topic' first.");
   }
 

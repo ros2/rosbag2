@@ -23,17 +23,19 @@
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
 using DBPtr = sqlite3 *;
 
-class SqliteWrapper
+class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteWrapper
 {
 public:
-  explicit SqliteWrapper(const std::string & uri);
+  SqliteWrapper(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag);
   SqliteWrapper();
   ~SqliteWrapper();
 
