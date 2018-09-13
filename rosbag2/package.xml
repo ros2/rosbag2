@@ -11,8 +11,6 @@
 
   <depend>ament_index_cpp</depend>
   <depend>poco_vendor</depend>
-  <depend>rcl</depend>
-  <depend>rclcpp</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosidl_generator_cpp</depend>
