@@ -109,12 +109,12 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
   primitive_message2->string_value = "Hello World 2";
 
   auto complex_message1 = get_messages_static_array_primitives()[0];
-  complex_message1->string_values = {"Complex Hello1", "Complex Hello2", "Complex Hello3"};
-  complex_message1->bool_values = {true, false, true};
+  complex_message1->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
+  complex_message1->bool_values = {{true, false, true}};
 
   auto complex_message2 = get_messages_static_array_primitives()[0];
-  complex_message2->string_values = {"Complex Hello4", "Complex Hello5", "Complex Hello6"};
-  complex_message2->bool_values = {false, false, true};
+  complex_message2->string_values = {{"Complex Hello4", "Complex Hello5", "Complex Hello6"}};
+  complex_message2->bool_values = {{false, false, true}};
 
   auto topic_types = std::map<std::string, std::string>{
     {"topic1", "test_msgs/Primitives"},
