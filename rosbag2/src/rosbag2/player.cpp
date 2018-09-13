@@ -128,10 +128,10 @@ void Player::play_messages_from_queue()
 
 void Player::prepare_publishers()
 {
-  auto all_topics_and_types = storage_->get_all_topics_and_types();
-  for (const auto & element : all_topics_and_types) {
+  auto topics = storage_->get_all_topics_and_types();
+  for (const auto & topic : topics) {
     publishers_.insert(std::make_pair(
-        element.first, node_->create_generic_publisher(element.first, element.second)));
+        topic.name, node_->create_generic_publisher(topic.name, topic.type)));
   }
 }
 

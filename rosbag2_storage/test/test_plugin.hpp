@@ -19,9 +19,11 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/bag_info.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 class TestPlugin : public rosbag2_storage::storage_interfaces::ReadWriteInterface
@@ -41,7 +43,7 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
-  std::map<std::string, std::string> get_all_topics_and_types() override;
+  std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
 };
 
 #endif  // TEST_PLUGIN_HPP_

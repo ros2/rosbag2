@@ -23,6 +23,7 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
@@ -57,7 +58,7 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  std::map<std::string, std::string> get_all_topics_and_types() override;
+  std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
 
   rosbag2_storage::BagInfo info() override;
 
@@ -78,7 +79,7 @@ private:
   ReadQueryResult message_result_;
   ReadQueryResult::Iterator current_message_row_;
   std::map<std::string, int> topics_;
-  std::map<std::string, std::string> all_topics_and_types_;
+  std::vector<rosbag2_storage::TopicWithType> all_topics_and_types_;
 };
 
 }  // namespace rosbag2_storage_plugins

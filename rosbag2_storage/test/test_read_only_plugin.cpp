@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "pluginlib/class_list_macros.hpp"
 
@@ -53,10 +54,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-std::map<std::string, std::string> TestReadOnlyPlugin::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicWithType> TestReadOnlyPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::map<std::string, std::string>();
+  return std::vector<rosbag2_storage::TopicWithType>();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

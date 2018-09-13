@@ -79,7 +79,7 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   EXPECT_FALSE(readable_storage->has_next());
 }
 
-TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
+TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   writable_storage->open(database_name_);
@@ -92,6 +92,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types["topic1"], Eq("type1"));
-  EXPECT_THAT(topics_and_types["topic2"], Eq("type2"));
+  EXPECT_THAT(topics_and_types[0].topic, Eq("topic1"));
+  EXPECT_THAT(topics_and_types[0].type, Eq("type1"));
+  EXPECT_THAT(topics_and_types[1].topic, Eq("topic2"));
+  EXPECT_THAT(topics_and_types[1].type, Eq("type2"));
 }

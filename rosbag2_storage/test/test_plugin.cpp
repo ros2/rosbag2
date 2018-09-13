@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "pluginlib/class_list_macros.hpp"
 
@@ -68,10 +69,10 @@ void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBa
   std::cout << "\nwriting\n";
 }
 
-std::map<std::string, std::string> TestPlugin::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicWithType> TestPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::map<std::string, std::string>();
+  return std::vector<rosbag2_storage::TopicWithType>();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

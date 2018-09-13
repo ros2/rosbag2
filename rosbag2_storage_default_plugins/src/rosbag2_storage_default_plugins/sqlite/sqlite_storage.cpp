@@ -101,7 +101,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   return bag_message;
 }
 
-std::map<std::string, std::string> SqliteStorage::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicWithType> SqliteStorage::get_all_topics_and_types()
 {
   if (all_topics_and_types_.empty()) {
     fill_topics_and_types();
@@ -164,7 +164,7 @@ void SqliteStorage::fill_topics_and_types()
   auto query_results = statement->execute_query<std::string, std::string>();
 
   for (auto result : query_results) {
-    all_topics_and_types_.insert(std::make_pair(std::get<0>(result), std::get<1>(result)));
+    all_topics_and_types_.push_back({std::get<0>(result), std::get<1>(result)});
   }
 }
 
