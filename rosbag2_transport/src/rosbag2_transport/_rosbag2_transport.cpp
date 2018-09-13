@@ -23,25 +23,25 @@ rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
 {
   PyObject * listObj; /* the list of strings */
   if (!PyArg_ParseTuple(args, "O", &listObj)) {
-    return NULL;
+    return nullptr;
   }
 
   PyObject * iterator = PyObject_GetIter(listObj);
-  if (iterator == NULL) {
-    return NULL;
+  if (iterator == nullptr) {
+    return nullptr;
   }
 
   std::vector<std::string> topic_vector;
   PyObject * item;
   while ((item = PyIter_Next(iterator))) {
-    topic_vector.push_back(std::string(PyUnicode_AsUTF8(item)));
+    topic_vector.emplace_back(PyUnicode_AsUTF8(item));
 
     Py_DECREF(item);
   }
   Py_DECREF(iterator);
 
-  if (topic_vector.size() == 0) {
-    return NULL;
+  if (topic_vector.empty()) {
+    return nullptr;
   }
   rosbag2_transport::Rosbag2Transport transport;
   transport.record(topic_vector);
@@ -55,7 +55,7 @@ static PyMethodDef rosbag2_transport_methods[] = {
     "record_topics", rosbag2_transport_record_topics, METH_VARARGS,
     "Record topics"
   },
-  {NULL, NULL, 0, NULL}  /* sentinel */
+  {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };
 
 PyDoc_STRVAR(rosbag2_transport__doc__,
@@ -68,10 +68,10 @@ static struct PyModuleDef _rosbag2_transport_module = {
   rosbag2_transport__doc__,
   -1,   /* -1 means that the module keeps state in global variables */
   rosbag2_transport_methods,
-  NULL,
-  NULL,
-  NULL,
-  NULL
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr
 };
 
 /// Init function of this module
