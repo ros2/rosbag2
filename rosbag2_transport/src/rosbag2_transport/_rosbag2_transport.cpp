@@ -40,9 +40,6 @@ rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
   }
   Py_DECREF(iterator);
 
-  if (topic_vector.empty()) {
-    return nullptr;
-  }
   rosbag2_transport::Rosbag2Transport transport;
   transport.record(topic_vector);
 
