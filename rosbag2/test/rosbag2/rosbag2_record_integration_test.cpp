@@ -31,8 +31,8 @@
 TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   auto array_message = get_messages_static_array_primitives()[0];
-  array_message->string_values = {"Complex Hello1", "Complex Hello2", "Complex Hello3"};
-  array_message->bool_values = {true, false, true};
+  array_message->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
+  array_message->bool_values = {{true, false, true}};
   std::string array_topic = "/array_topic";
   auto serialized_array_bag_message = serialize_test_message(array_topic, array_message);
 
