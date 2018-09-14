@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__BAG_METADATA_HPP_
 #define ROSBAG2_STORAGE__BAG_METADATA_HPP_
 
+#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
@@ -37,8 +38,8 @@ struct BagMetadata
   std::string encoding;
   std::vector<std::string> relative_file_paths;
   size_t combined_bag_size;
-  uint64_t duration_in_nanoseconds;
-  uint64_t time_start_in_nanoseconds;
+  std::chrono::nanoseconds duration_in_nanoseconds;
+  std::chrono::nanoseconds time_start_in_nanoseconds;
   size_t message_count;
   std::vector<TopicMetadata> topics_with_message_count;
 };

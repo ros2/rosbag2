@@ -65,6 +65,23 @@ struct convert<rosbag2_storage::TopicMetadata>
 };
 
 template<>
+struct convert<std::chrono::nanoseconds>
+{
+  static Node encode(const std::chrono::nanoseconds & time_in_ns)
+  {
+    Node node;
+    node["nanoseconds"] = time_in_ns.count();
+    return node;
+  }
+
+  static bool decode(const Node & node, std::chrono::nanoseconds & time_in_ns)
+  {
+    time_in_ns = std::chrono::nanoseconds(node["nanoseconds"].as<size_t>());
+    return true;
+  }
+};
+
+template<>
 struct convert<rosbag2_storage::BagMetadata>
 {
   static Node encode(const rosbag2_storage::BagMetadata & metadata)
@@ -74,8 +91,8 @@ struct convert<rosbag2_storage::BagMetadata>
     node["encoding"] = metadata.encoding;
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["combined_bag_size"] = metadata.combined_bag_size;
-    node["duration_in_nanoseconds"] = metadata.duration_in_nanoseconds;
-    node["time_start_in_nanoseconds"] = metadata.time_start_in_nanoseconds;
+    node["duration"] = metadata.duration_in_nanoseconds;
+    node["time_start"] = metadata.time_start_in_nanoseconds;
     node["message_count"] = metadata.message_count;
     node["topics_with_message_count"] = metadata.topics_with_message_count;
     return node;
@@ -87,8 +104,8 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.encoding = node["encoding"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     metadata.combined_bag_size = node["combined_bag_size"].as<size_t>();
-    metadata.duration_in_nanoseconds = node["duration_in_nanoseconds"].as<uint64_t>();
-    metadata.time_start_in_nanoseconds = node["time_start_in_nanoseconds"].as<uint64_t>();
+    metadata.duration_in_nanoseconds = node["duration"].as<std::chrono::nanoseconds>();
+    metadata.time_start_in_nanoseconds = node["time_start"].as<std::chrono::nanoseconds>();
     metadata.message_count = node["message_count"].as<size_t>();
     metadata.topics_with_message_count =
       node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicMetadata>>();

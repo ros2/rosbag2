@@ -14,6 +14,8 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
@@ -90,8 +92,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.relative_file_paths.emplace_back("some_relative_path");
   metadata.relative_file_paths.emplace_back("some_other_relative_path");
   metadata.combined_bag_size = 10;
-  metadata.duration_in_nanoseconds = 100;
-  metadata.time_start_in_nanoseconds = 10000;
+  metadata.duration_in_nanoseconds = std::chrono::nanoseconds(100);
+  metadata.time_start_in_nanoseconds = std::chrono::nanoseconds(10000);
   metadata.message_count = 50;
   metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
