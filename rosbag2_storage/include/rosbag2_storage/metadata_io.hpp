@@ -22,9 +22,9 @@
 
 namespace rosbag2_storage
 {
-  ROSBAG2_STORAGE_PUBLIC void write_metadata(std::string filename, BagMetadata metadata);
+ROSBAG2_STORAGE_PUBLIC void write_metadata(std::string filename, BagMetadata metadata);
 
-  ROSBAG2_STORAGE_PUBLIC BagMetadata read_metadata(std::string filename);
+ROSBAG2_STORAGE_PUBLIC BagMetadata read_metadata(std::string filename);
 }  // namespace rosbag2_storage
 
 #endif  // ROSBAG2_STORAGE__METADATA_IO_HPP_

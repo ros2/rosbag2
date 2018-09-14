@@ -23,7 +23,7 @@ class MetadataFixture : public Test
 {
 public:
   MetadataFixture()
-    : yaml_file_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".yaml")
+  : yaml_file_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".yaml")
   {
     std::string system_separator = "/";
 #ifdef _WIN32
@@ -93,8 +93,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.duration_in_nanoseconds = 100;
   metadata.time_start_in_nanoseconds = 10000;
   metadata.message_count = 50;
-  metadata.topics_and_message_count.push_back({{"topic1", "type1"}, 100});
-  metadata.topics_and_message_count.push_back({{"topic2", "type2"}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
 
   rosbag2_storage::write_metadata(yaml_file_name_, metadata);
   auto read_metadata = rosbag2_storage::read_metadata(yaml_file_name_);
@@ -106,17 +106,17 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   EXPECT_THAT(read_metadata.duration_in_nanoseconds, Eq(metadata.duration_in_nanoseconds));
   EXPECT_THAT(read_metadata.time_start_in_nanoseconds, Eq(metadata.time_start_in_nanoseconds));
   EXPECT_THAT(read_metadata.message_count, Eq(metadata.message_count));
-  EXPECT_THAT(read_metadata.topics_and_message_count,
-    SizeIs(metadata.topics_and_message_count.size()));
-  auto actual_first_topic = read_metadata.topics_and_message_count[0];
-  auto expected_first_topic = read_metadata.topics_and_message_count[0];
+  EXPECT_THAT(read_metadata.topics_with_message_count,
+    SizeIs(metadata.topics_with_message_count.size()));
+  auto actual_first_topic = read_metadata.topics_with_message_count[0];
+  auto expected_first_topic = read_metadata.topics_with_message_count[0];
   EXPECT_THAT(actual_first_topic.topic_with_type.name,
     Eq(expected_first_topic.topic_with_type.name));
   EXPECT_THAT(actual_first_topic.topic_with_type.type,
     Eq(expected_first_topic.topic_with_type.type));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
-  auto actual_second_topic = read_metadata.topics_and_message_count[1];
-  auto expected_second_topic = read_metadata.topics_and_message_count[1];
+  auto actual_second_topic = read_metadata.topics_with_message_count[1];
+  auto expected_second_topic = read_metadata.topics_with_message_count[1];
   EXPECT_THAT(actual_second_topic.topic_with_type.name,
     Eq(expected_second_topic.topic_with_type.name));
   EXPECT_THAT(actual_second_topic.topic_with_type.type,
