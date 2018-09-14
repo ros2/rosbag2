@@ -26,7 +26,9 @@ find_package(rosidl_generator_cpp REQUIRED)
 add_library(
   rosbag2
   SHARED
-  src/rosbag2/typesupport_helpers.cpp)
+  src/rosbag2/sequential_reader.cpp
+  src/rosbag2/typesupport_helpers.cpp
+  src/rosbag2/writer.cpp)
 
 ament_target_dependencies(rosbag2
   ament_index_cpp
