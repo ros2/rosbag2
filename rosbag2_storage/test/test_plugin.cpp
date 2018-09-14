@@ -58,9 +58,9 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestPlugin::read_next()
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-void TestPlugin::create_topic(const std::string & name, const std::string & type)
+void TestPlugin::create_topic(const rosbag2_storage::TopicWithType & topic)
 {
-  std::cout << "Created topic with name =" << name << " and type =" << type << ".\n";
+  std::cout << "Created topic with name =" << topic.name << " and type =" << topic.type << ".\n";
 }
 
 void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)

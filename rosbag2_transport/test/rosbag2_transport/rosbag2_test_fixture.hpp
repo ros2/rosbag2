@@ -122,7 +122,7 @@ public:
     rosbag2_storage::StorageFactory factory;
     auto storage = factory.open_read_write(db_name, "sqlite3");
     for (const auto & topic_and_type : topics_and_types) {
-      storage->create_topic(topic_and_type.first, topic_and_type.second);
+      storage->create_topic({topic_and_type.first, topic_and_type.second});
     }
 
     for (const auto & msg : messages) {

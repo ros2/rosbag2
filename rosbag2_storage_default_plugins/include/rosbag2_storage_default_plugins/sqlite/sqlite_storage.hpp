@@ -50,7 +50,7 @@ public:
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
-  void create_topic(const std::string & name, const std::string & type) override;
+  void create_topic(const rosbag2_storage::TopicWithType & topic) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 

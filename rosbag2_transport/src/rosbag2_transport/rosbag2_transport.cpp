@@ -78,7 +78,7 @@ void Rosbag2Transport::record(
     if (subscription) {
       subscriptions_.push_back(subscription);
 
-      storage->create_topic(topic_name, topic_type);
+      storage->create_topic({topic_name, topic_type});
     }
   }
 

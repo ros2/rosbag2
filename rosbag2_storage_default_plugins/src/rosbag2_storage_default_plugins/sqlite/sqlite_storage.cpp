@@ -130,14 +130,14 @@ rosbag2_storage::BagInfo SqliteStorage::info()
   return bag_info_;
 }
 
-void SqliteStorage::create_topic(const std::string & name, const std::string & type)
+void SqliteStorage::create_topic(const rosbag2_storage::TopicWithType & topic)
 {
-  if (topics_.find(name) == std::end(topics_)) {
+  if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement("INSERT INTO topics (name, type) VALUES (?, ?)");
-    insert_topic->bind(name, type);
+    insert_topic->bind(topic.name, topic.type);
     insert_topic->execute_and_reset();
-    topics_.emplace(name, static_cast<int>(database_->get_last_insert_id()));
+    topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
 }
 

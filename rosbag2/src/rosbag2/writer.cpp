@@ -33,9 +33,9 @@ Writer::~Writer()
   writer_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
-void Writer::create_topic(TopicWithType topic_with_type)
+void Writer::create_topic(const TopicWithType & topic_with_type)
 {
-  writer_->create_topic(topic_with_type.name, topic_with_type.type);
+  writer_->create_topic(topic_with_type);
 }
 
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)

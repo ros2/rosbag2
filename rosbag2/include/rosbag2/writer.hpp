@@ -31,7 +31,7 @@ public:
   Writer(std::string uri, std::string storage_identifier);
   ~Writer();
 
-  void create_topic(TopicWithType topic_with_type);
+  void create_topic(const TopicWithType & topic_with_type);
 
   void write(std::shared_ptr<SerializedBagMessage> message);
 
