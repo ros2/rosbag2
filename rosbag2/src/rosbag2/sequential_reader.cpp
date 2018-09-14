@@ -18,7 +18,9 @@
 #include <string>
 #include <vector>
 
-rosbag2::SequentialReader::SequentialReader(std::string uri, std::string storage_identifier)
+rosbag2::SequentialReader::SequentialReader(
+  const std::string & uri,
+  const std::string & storage_identifier)
 {
   reader_ = factory_.open_read_only(uri, storage_identifier);
   if (!reader_) {

@@ -20,7 +20,7 @@
 namespace rosbag2
 {
 
-Writer::Writer(std::string uri, std::string storage_identifier)
+Writer::Writer(const std::string & uri, const std::string & storage_identifier)
 {
   writer_ = factory_.open_read_write(uri, storage_identifier);
   if (!writer_) {

@@ -26,16 +26,37 @@
 namespace rosbag2
 {
 
+/**
+ * The Writer allows writing messages to a new bag. For every topic, information about its type
+ * needs to be added before writing the first message.
+ */
 class Writer
 {
 public:
-  ROSBAG2_PUBLIC Writer(std::string uri, std::string storage_identifier);
+  /**
+   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   *
+   * \param uri  name of the bagfile to write
+   * \param storage_identifier identifier of storage plugin to use
+   */
+  ROSBAG2_PUBLIC Writer(const std::string & uri, const std::string & storage_identifier);
 
   ROSBAG2_PUBLIC ~Writer();
 
+  /**
+   * Create a new topic in the underlying storage. Needs to be called for every topic used within
+   * a message which is passed to write(...).
+   *
+   * \param topic_with_type name and type identifier of topic to be created
+   */
   ROSBAG2_PUBLIC
   void create_topic(const TopicWithType & topic_with_type);
 
+  /**
+   * Write a message to a bagfile. The topic needs to have been created before writing is possible.
+   *
+   * \param message to be written to the bagfile
+   */
   ROSBAG2_PUBLIC
   void write(std::shared_ptr<SerializedBagMessage> message);
 

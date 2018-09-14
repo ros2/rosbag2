@@ -26,18 +26,49 @@
 
 namespace rosbag2
 {
+/**
+ * The SequentialReader allows opening and reading messages of a bag. Messages will be read
+ * sequentially according to timestamp.
+ */
 class SequentialReader
 {
 public:
-  ROSBAG2_PUBLIC SequentialReader(std::string uri, std::string storage_identifier);
+  /**
+   * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
+   * opened.
+   *
+   * \param uri file name of bagfile to read
+   * \param storage_identifier identifier of storage plugin to open storage
+   */
+  ROSBAG2_PUBLIC SequentialReader(const std::string & uri, const std::string & storage_identifier);
+
+  /// Destructor
   ROSBAG2_PUBLIC ~SequentialReader();
 
+  /**
+   * Ask whether the underlying bagfile contains at least one more message.
+   *
+   * \return true if storage constains at least one more message
+   */
   ROSBAG2_PUBLIC
   bool has_next();
 
+  /**
+   * Read next message from storage. Will throw if no more messages are available.
+   *
+   * Expected usage:
+   * if (writer.has_next()) message = writer.read_next();
+   *
+   * \return next message in serialized form
+   */
   ROSBAG2_PUBLIC
   std::shared_ptr<SerializedBagMessage> read_next();
 
+  /**
+   * Ask bagfile for all topics (including their type identifier) that were recorded.
+   *
+   * \return vector of topics with topic name and type as std::string
+   */
   ROSBAG2_PUBLIC
   std::vector<TopicWithType> get_all_topics_and_types();
 
