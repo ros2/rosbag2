@@ -21,6 +21,7 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2/types.hpp"
+#include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
@@ -28,11 +29,14 @@ namespace rosbag2
 class Writer
 {
 public:
-  Writer(std::string uri, std::string storage_identifier);
-  ~Writer();
+  ROSBAG2_PUBLIC Writer(std::string uri, std::string storage_identifier);
 
+  ROSBAG2_PUBLIC ~Writer();
+
+  ROSBAG2_PUBLIC
   void create_topic(const TopicWithType & topic_with_type);
 
+  ROSBAG2_PUBLIC
   void write(std::shared_ptr<SerializedBagMessage> message);
 
 private:

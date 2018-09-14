@@ -22,19 +22,23 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2/types.hpp"
+#include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
 class SequentialReader
 {
 public:
-  SequentialReader(std::string uri, std::string storage_identifier);
-  ~SequentialReader();
+  ROSBAG2_PUBLIC SequentialReader(std::string uri, std::string storage_identifier);
+  ROSBAG2_PUBLIC ~SequentialReader();
 
+  ROSBAG2_PUBLIC
   bool has_next();
 
+  ROSBAG2_PUBLIC
   std::shared_ptr<SerializedBagMessage> read_next();
 
+  ROSBAG2_PUBLIC
   std::vector<TopicWithType> get_all_topics_and_types();
 
 private:
