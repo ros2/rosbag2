@@ -21,7 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/rosbag2_play_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
@@ -76,10 +77,9 @@ public:
 private:
   std::shared_ptr<rosbag2_transport::GenericSubscription>
   create_subscription(
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+    rosbag2::Writer & writer,
     const std::string & topic_name, const std::string & topic_type) const;
 
-  rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
 };

@@ -17,6 +17,8 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_transport/logging.hpp"
+
 namespace test_helpers
 {
 
@@ -41,9 +43,7 @@ TestMemoryManagement::get_initialized_serialized_message(size_t capacity)
         int error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_storage",
-            "Leaking memory. Error: %s", rcutils_get_error_string_safe());
+          ROSBAG2_TRANSPORT_LOG_ERROR("Leaking memory. Error: %s", rcutils_get_error_string_safe());
         }
       });
   return serialized_message;

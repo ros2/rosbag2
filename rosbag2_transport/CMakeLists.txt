@@ -22,7 +22,6 @@ find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2 REQUIRED)
-find_package(rosbag2_storage REQUIRED)  # TODO(MI) delete
 find_package(shared_queues_vendor REQUIRED)
 
 add_library(rosbag2_transport
@@ -40,8 +39,7 @@ ament_target_dependencies(rosbag2_transport
   rclcpp
   rcutils
   rosbag2
-  rosbag2_storage
-  rosidl_generator_c
+  rosidl_generator_cpp
   shared_queues_vendor
 )
 

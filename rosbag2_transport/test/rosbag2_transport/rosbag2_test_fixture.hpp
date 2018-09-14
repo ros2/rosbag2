@@ -31,9 +31,9 @@
 #endif
 
 #include "rosbag2_transport/rosbag2_play_options.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/types.hpp"
+#include "rosbag2/writer.hpp"
 #include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -97,18 +97,14 @@ public:
 #endif
   }
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>>
   get_messages(const std::string & db_name)
   {
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
-    rosbag2_storage::StorageFactory factory;
-    auto storage = factory.open_read_only(db_name, "sqlite3");
-    if (storage == nullptr) {
-      throw std::runtime_error("failed to open sqlite3 storage");
-    }
+    std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> table_msgs;
+    rosbag2::SequentialReader reader(db_name, "sqlite3");
 
-    while (storage->has_next()) {
-      table_msgs.push_back(storage->read_next());
+    while (reader.has_next()) {
+      table_msgs.push_back(reader.read_next());
     }
 
     return table_msgs;
@@ -116,27 +112,26 @@ public:
 
   void write_messages(
     const std::string & db_name,
-    const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & messages,
+    const std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> & messages,
     const std::map<std::string, std::string> & topics_and_types)
   {
-    rosbag2_storage::StorageFactory factory;
-    auto storage = factory.open_read_write(db_name, "sqlite3");
+    rosbag2::Writer writer(db_name, "sqlite3");
     for (const auto & topic_and_type : topics_and_types) {
-      storage->create_topic({topic_and_type.first, topic_and_type.second});
+      writer.create_topic({topic_and_type.first, topic_and_type.second});
     }
 
     for (const auto & msg : messages) {
-      storage->write(msg);
+      writer.write(msg);
     }
   }
 
   template<typename MessageT>
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(
+  std::shared_ptr<rosbag2::SerializedBagMessage> serialize_message(
     const std::string & topic, typename MessageT::_data_type message)
   {
     auto msg = std::make_shared<MessageT>();
     msg->data = message;
-    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    auto bag_msg = std::make_shared<rosbag2::SerializedBagMessage>();
     bag_msg->serialized_data = memory_management_.serialize_message(msg);
     bag_msg->topic_name = topic;
 
@@ -144,10 +139,10 @@ public:
   }
 
   template<typename MessageT>
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_test_message(
+  std::shared_ptr<rosbag2::SerializedBagMessage> serialize_test_message(
     const std::string & topic, std::shared_ptr<MessageT> message)
   {
-    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    auto bag_msg = std::make_shared<rosbag2::SerializedBagMessage>();
     bag_msg->serialized_data = memory_management_.serialize_message(message);
     bag_msg->topic_name = topic;
 

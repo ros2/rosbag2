@@ -26,10 +26,9 @@
 #include "rcutils/time.h"
 
 #include "rosbag2_transport/logging.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/types.hpp"
+#include "rosbag2/writer.hpp"
 
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
@@ -57,11 +56,7 @@ void Rosbag2Transport::shutdown()
 void Rosbag2Transport::record(
   const std::string & file_name, const std::vector<std::string> & topic_names)
 {
-  auto storage = factory_.open_read_write(file_name, "sqlite3");
-
-  if (!storage) {
-    throw std::runtime_error("No storage could be initialized. Abort");
-  }
+  rosbag2::Writer writer(file_name, "sqlite3");
 
   auto topics_and_types = node_->get_topics_with_types(topic_names);
   if (topics_and_types.empty()) {
@@ -73,12 +68,12 @@ void Rosbag2Transport::record(
     auto topic_type = topic_and_type.second;
 
     std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      storage, topic_name, topic_type);
+      writer, topic_name, topic_type);
 
     if (subscription) {
       subscriptions_.push_back(subscription);
 
-      storage->create_topic({topic_name, topic_type});
+      writer.create_topic({topic_name, topic_type});
     }
   }
 
@@ -113,14 +108,14 @@ void Rosbag2Transport::record(const std::string & file_name)
 
 std::shared_ptr<GenericSubscription>
 Rosbag2Transport::create_subscription(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+  rosbag2::Writer & writer,
   const std::string & topic_name, const std::string & topic_type) const
 {
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
-    [storage, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
-      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    [&writer, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
+      auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
       bag_message->serialized_data = message;
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;
@@ -131,19 +126,16 @@ Rosbag2Transport::create_subscription(
       }
       bag_message->time_stamp = time_stamp;
 
-      storage->write(bag_message);
+      writer.write(bag_message);
     });
   return subscription;
 }
 
 void Rosbag2Transport::play(const std::string & file_name, const Rosbag2PlayOptions & options)
 {
-  auto storage = factory_.open_read_only(file_name, "sqlite3");
-  if (!storage) {
-    throw std::runtime_error("Could not open storage: " + file_name);
-  }
+  auto reader = std::make_shared<rosbag2::SequentialReader>(file_name, "sqlite3");
 
-  Player player(storage);
+  Player player(reader);
   player.play(options);
 }
 

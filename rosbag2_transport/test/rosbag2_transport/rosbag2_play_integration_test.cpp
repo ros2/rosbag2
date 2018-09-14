@@ -117,7 +117,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
     {"topic2", "test_msgs/StaticArrayPrimitives"},
   };
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", primitive_message1),
     serialize_test_message("topic1", primitive_message2),
     serialize_test_message("topic1", primitive_message2),

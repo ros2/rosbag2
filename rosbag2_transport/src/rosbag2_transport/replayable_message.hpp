@@ -18,14 +18,14 @@
 #include <chrono>
 #include <memory>
 
-#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2/types.hpp"
 
 namespace rosbag2_transport
 {
 
 struct ReplayableMessage
 {
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
+  std::shared_ptr<rosbag2::SerializedBagMessage> message;
   std::chrono::nanoseconds time_since_start;
 };
 

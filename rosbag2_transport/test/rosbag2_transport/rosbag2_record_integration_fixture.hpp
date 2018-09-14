@@ -23,7 +23,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2/types.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
@@ -86,7 +86,7 @@ public:
 
   template<typename MessageT>
   void start_publishing(
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
+    std::shared_ptr<rosbag2::SerializedBagMessage> message,
     const std::string & topic_name, size_t number_expected_messages)
   {
     publisher_futures_.push_back(std::async(
@@ -136,14 +136,14 @@ public:
 
   template<typename MessageT>
   std::shared_ptr<MessageT> deserialize_message(
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+    std::shared_ptr<rosbag2::SerializedBagMessage> message)
   {
     return memory_.deserialize_message<MessageT>(message->serialized_data);
   }
 
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> filter_messages(
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
+    std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages,
     const std::string & topic)
   {
     std::vector<std::shared_ptr<MessageT>> filtered_messages;

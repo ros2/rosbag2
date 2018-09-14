@@ -26,9 +26,6 @@
 #include "rcl/graph.h"
 #include "rcutils/time.h"
 
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_transport/logging.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
@@ -37,8 +34,8 @@
 namespace rosbag2_transport
 {
 
-Player::Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
-: storage_(storage), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
+Player::Player(std::shared_ptr<rosbag2::SequentialReader> reader)
+: reader_(reader), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
 bool Player::is_storage_completely_loaded() const
@@ -78,8 +75,8 @@ void Player::load_storage_content(const Rosbag2PlayOptions & options)
   TimePoint time_first_message;
 
   ReplayableMessage message;
-  if (storage_->has_next()) {
-    message.message = storage_->read_next();
+  if (reader_->has_next()) {
+    message.message = reader_->read_next();
     message.time_since_start = std::chrono::nanoseconds(0);
     time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
     message_queue_.enqueue(message);
@@ -89,7 +86,7 @@ void Player::load_storage_content(const Rosbag2PlayOptions & options)
     static_cast<size_t>(options.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = options.read_ahead_queue_size;
 
-  while (storage_->has_next()) {
+  while (reader_->has_next()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
       enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
     } else {
@@ -102,10 +99,10 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 {
   ReplayableMessage message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
-    if (!storage_->has_next()) {
+    if (!reader_->has_next()) {
       break;
     }
-    message.message = storage_->read_next();
+    message.message = reader_->read_next();
     message.time_since_start =
       TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
 
@@ -128,7 +125,7 @@ void Player::play_messages_from_queue()
 
 void Player::prepare_publishers()
 {
-  auto topics = storage_->get_all_topics_and_types();
+  auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
     publishers_.insert(std::make_pair(
         topic.name, node_->create_generic_publisher(topic.name, topic.type)));

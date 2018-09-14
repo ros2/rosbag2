@@ -20,7 +20,7 @@
 
 rosbag2::SequentialReader::SequentialReader(std::string uri, std::string storage_identifier)
 {
-  reader_ = factory_.open_read_write(uri, storage_identifier);
+  reader_ = factory_.open_read_only(uri, storage_identifier);
   if (!reader_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
