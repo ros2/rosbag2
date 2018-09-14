@@ -51,6 +51,9 @@ install(
   DIRECTORY cmake
   DESTINATION share/${PROJECT_NAME})
 
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
@@ -85,7 +88,5 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-ament_export_include_directories(include)
-ament_export_libraries(rosbag2_storage)
 ament_package(
   CONFIG_EXTRAS cmake/rosbag2_storage_register_storage_plugin.cmake)

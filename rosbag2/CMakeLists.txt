@@ -23,14 +23,12 @@ find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 
-add_library(
-  rosbag2
-  SHARED
+add_library(${PROJECT_NAME} SHARED
   src/rosbag2/sequential_reader.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/writer.cpp)
 
-ament_target_dependencies(rosbag2
+ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
   Poco
   rcutils
@@ -38,7 +36,7 @@ ament_target_dependencies(rosbag2
   rosidl_generator_cpp
 )
 
-target_include_directories(rosbag2
+target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -55,10 +53,11 @@ install(
 install(
   TARGETS rosbag2
   ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib)
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 ament_export_include_directories(include)
-ament_export_libraries(rosbag2)
+ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_storage)
 
 if(BUILD_TESTING)

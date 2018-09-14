@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>transport related dependencies for rosbag2</description>
   <maintainer email="karsten.knese@googlemail.com">karsten</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 

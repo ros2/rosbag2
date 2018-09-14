@@ -8,24 +8,14 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>sqlite3_vendor</build_depend>
-  <build_depend>rcutils</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>rosbag2_storage</build_depend>
-
-  <exec_depend>sqlite3_vendor</exec_depend>
-  <exec_depend>rosbag2_storage</exec_depend>
-  <exec_depend>rcutils</exec_depend>
-  <exec_depend>pluginlib</exec_depend>
+  <depend>pluginlib</depend>
+  <depend>rcutils</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>sqlite3_vendor</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>
-  <test_depend>ament_cmake_gtest</test_depend>
-  <test_depend>rcutils</test_depend>
-  <test_depend>pluginlib</test_depend>
-  <test_depend>sqlite3_vendor</test_depend>
-  <test_depend>rosbag2_storage</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

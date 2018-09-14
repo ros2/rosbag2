@@ -15,7 +15,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rcl REQUIRED)
@@ -24,13 +23,13 @@ find_package(rcutils REQUIRED)
 find_package(rosbag2 REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 
-add_library(rosbag2_transport
+add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
-target_include_directories(rosbag2_transport PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
