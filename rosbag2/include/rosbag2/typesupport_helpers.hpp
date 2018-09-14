@@ -30,6 +30,7 @@ const rosidl_message_type_support_t * get_typesupport(const std::string & type);
 std::string get_typesupport_library_path(
   const std::string & package_name, const std::string & typesupport_identifier);
 
+ROSBAG2_PUBLIC
 const std::pair<std::string, std::string> extract_type_and_package(const std::string & full_type);
 
 }  // namespace rosbag2
