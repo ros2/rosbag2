@@ -41,11 +41,7 @@ target_include_directories(${PROJECT_NAME}
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(
-  rosbag2_storage
-  sqlite3_vendor
-  SQLite3
-  rcutils)
+ament_export_dependencies(rosbag2_storage rcutils)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
