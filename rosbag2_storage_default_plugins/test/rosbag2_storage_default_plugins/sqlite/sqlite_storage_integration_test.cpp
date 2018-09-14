@@ -61,6 +61,24 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   EXPECT_FALSE(readable_storage->has_next());
 }
 
+TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> string_messages =
+  {std::make_tuple("first_message", 6, "", ""), std::make_tuple("second_message", 2, "", "")};
+
+  write_messages_to_sqlite(string_messages);
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  readable_storage->open(database_name_);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->time_stamp, Eq(2));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->time_stamp, Eq(6));
+  EXPECT_FALSE(readable_storage->has_next());
+}
+
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_map) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
