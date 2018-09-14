@@ -177,7 +177,7 @@ private:
 
 private:
   bool step();
-  bool isQueryOk(int return_code);
+  bool is_query_ok(int return_code);
 
   void obtain_column_value(size_t index, int & value) const;
   void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;
