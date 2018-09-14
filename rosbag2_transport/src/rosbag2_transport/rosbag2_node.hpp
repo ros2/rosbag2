@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__ROSBAG2_NODE_HPP_
-#define ROSBAG2__ROSBAG2_NODE_HPP_
+#ifndef ROSBAG2_TRANSPORT__ROSBAG2_NODE_HPP_
+#define ROSBAG2_TRANSPORT__ROSBAG2_NODE_HPP_
 
 #include <map>
 #include <memory>
@@ -26,7 +26,7 @@
 #include "generic_publisher.hpp"
 #include "generic_subscription.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 class Rosbag2Node : public rclcpp::Node
@@ -54,6 +54,6 @@ public:
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport
 
-#endif  // ROSBAG2__ROSBAG2_NODE_HPP_
+#endif  // ROSBAG2_TRANSPORT__ROSBAG2_NODE_HPP_

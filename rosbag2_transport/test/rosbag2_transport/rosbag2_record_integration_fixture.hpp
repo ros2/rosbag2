@@ -22,7 +22,7 @@
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
@@ -31,11 +31,11 @@
 #include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2;  // NOLINT
+using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-#ifndef ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
-#define ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#ifndef ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#define ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
 
 class RosBag2RecordIntegrationTestFixture : public Rosbag2TestFixture
 {
@@ -55,8 +55,8 @@ public:
     // the future object returned from std::async needs to be stored not to block the execution
     future_ = std::async(
       std::launch::async, [this, topics]() {
-        rosbag2::Rosbag2 rosbag2;
-        rosbag2.record(database_name_, topics);
+        rosbag2_transport::Rosbag2Transport rosbag2_transport;
+        rosbag2_transport.record(database_name_, topics);
       });
   }
 
@@ -65,9 +65,9 @@ public:
     // the future object returned from std::async needs to be stored not to block the execution
     future_ = std::async(
       std::launch::async, [this]() {
-        rosbag2::Rosbag2 rosbag2;
+        rosbag2_transport::Rosbag2Transport rosbag2_transport;
         std::this_thread::sleep_for(2s);
-        rosbag2.record(database_name_);
+        rosbag2_transport.record(database_name_);
       });
   }
 
@@ -161,4 +161,4 @@ public:
   std::future<void> future_;
 };
 
-#endif  // ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#endif  // ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_

@@ -21,14 +21,14 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_test_fixture.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2;  // NOLINT
+using namespace rosbag2_transport;  // NOLINT
 
 TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
 {
@@ -54,8 +54,8 @@ TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  Rosbag2 rosbag2;
-  rosbag2.play(database_name_, options_);
+  Rosbag2Transport rosbag2_transport;
+  rosbag2_transport.play(database_name_, options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));

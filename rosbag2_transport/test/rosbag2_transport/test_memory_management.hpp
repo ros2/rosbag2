@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__TEST_MEMORY_MANAGEMENT_HPP_
-#define ROSBAG2__TEST_MEMORY_MANAGEMENT_HPP_
+#ifndef ROSBAG2_TRANSPORT__TEST_MEMORY_MANAGEMENT_HPP_
+#define ROSBAG2_TRANSPORT__TEST_MEMORY_MANAGEMENT_HPP_
 
 #include <memory>
 
@@ -73,4 +73,4 @@ private:
 
 }  // namespace test_helpers
 
-#endif  // ROSBAG2__TEST_MEMORY_MANAGEMENT_HPP_
+#endif  // ROSBAG2_TRANSPORT__TEST_MEMORY_MANAGEMENT_HPP_

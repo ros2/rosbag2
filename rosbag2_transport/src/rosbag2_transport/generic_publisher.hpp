@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__GENERIC_PUBLISHER_HPP_
-#define ROSBAG2__GENERIC_PUBLISHER_HPP_
+#ifndef ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_
+#define ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_
 
 #include <memory>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 class GenericPublisher : public rclcpp::PublisherBase
@@ -36,6 +36,6 @@ public:
   void publish(std::shared_ptr<rmw_serialized_message_t> message);
 };
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport
 
-#endif  // ROSBAG2__GENERIC_PUBLISHER_HPP_
+#endif  // ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_

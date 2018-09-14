@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -30,7 +30,7 @@
 #include "rosbag2_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2;  // NOLINT
+using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
 // TODO(Martin-Idel-SI): merge w. rosbag2_write_integration_test once signal handling is sorted out
@@ -134,8 +134,8 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
     launch_subscriber<test_msgs::msg::StaticArrayPrimitives>(2, "topic2");
   wait_for_subscribers(2);
 
-  Rosbag2 rosbag2;
-  rosbag2.play(database_name_, options_);
+  Rosbag2Transport rosbag2_transport;
+  rosbag2_transport.play(database_name_, options_);
 
   auto replayed_test_primitives = primitive_subscriber_future.get();
   ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));

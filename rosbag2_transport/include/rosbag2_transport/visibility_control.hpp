@@ -1,5 +1,5 @@
-#ifndef ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_H_
-#define ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_H_
+#ifndef ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_HPP_
+#define ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_HPP_
 
 // This logic was borrowed (then namespaced) from the examples on the gcc wiki:
 //     https://gcc.gnu.org/wiki/Visibility
@@ -32,4 +32,4 @@
   #define ROSBAG2_TRANSPORT_PUBLIC_TYPE
 #endif
 
-#endif  // ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_H_
+#endif  // ROSBAG2_TRANSPORT__VISIBILITY_CONTROL_HPP_

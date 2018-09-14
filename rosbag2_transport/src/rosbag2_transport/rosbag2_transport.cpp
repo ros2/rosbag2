@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/rosbag2.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include <chrono>
 #include <map>
@@ -25,7 +25,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/time.h"
 
-#include "rosbag2/logging.hpp"
+#include "rosbag2_transport/logging.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -35,15 +35,27 @@
 #include "rosbag2_node.hpp"
 #include "player.hpp"
 #include "replayable_message.hpp"
-#include "typesupport_helpers.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
-Rosbag2::Rosbag2()
-: node_(std::make_shared<Rosbag2Node>("rosbag2"))
+
+Rosbag2Transport::Rosbag2Transport()
+  : node_(std::make_shared<Rosbag2Node>("rosbag2"))
 {}
 
-void Rosbag2::record(const std::string & file_name, const std::vector<std::string> & topic_names)
+void Rosbag2Transport::init()
+{
+  rclcpp::init(0, nullptr);
+}
+
+void Rosbag2Transport::shutdown()
+{
+  rclcpp::shutdown();
+}
+
+void Rosbag2Transport::record(
+  const std::string & file_name, const std::vector<std::string> & topic_names)
 {
   auto storage = factory_.open_read_write(file_name, "sqlite3");
 
@@ -74,7 +86,7 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
     throw std::runtime_error("No topics could be subscribed. Abort");
   }
 
-  ROSBAG2_LOG_INFO("Waiting for messages...");
+  ROSBAG2_TRANSPORT_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
     rclcpp::spin(node_);
   }
@@ -82,7 +94,7 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
 }
 
 
-void Rosbag2::record(const std::string & file_name)
+void Rosbag2Transport::record(const std::string & file_name)
 {
   auto topics_and_types = node_->get_all_topics_with_types();
   std::vector<std::string> topic_names;
@@ -92,7 +104,7 @@ void Rosbag2::record(const std::string & file_name)
   }
 
   if (topic_names.empty()) {
-    ROSBAG2_LOG_ERROR("no topics found to record");
+    ROSBAG2_TRANSPORT_LOG_ERROR("no topics found to record");
     return;
   }
 
@@ -100,7 +112,7 @@ void Rosbag2::record(const std::string & file_name)
 }
 
 std::shared_ptr<GenericSubscription>
-Rosbag2::create_subscription(
+Rosbag2Transport::create_subscription(
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
   const std::string & topic_name, const std::string & topic_type) const
 {
@@ -114,7 +126,7 @@ Rosbag2::create_subscription(
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
-        ROSBAG2_LOG_ERROR_STREAM(
+        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
           "Error getting current time. Error:" << rcutils_get_error_string_safe());
       }
       bag_message->time_stamp = time_stamp;
@@ -124,7 +136,7 @@ Rosbag2::create_subscription(
   return subscription;
 }
 
-void Rosbag2::play(const std::string & file_name, const Rosbag2PlayOptions & options)
+void Rosbag2Transport::play(const std::string & file_name, const Rosbag2PlayOptions & options)
 {
   auto storage = factory_.open_read_only(file_name, "sqlite3");
   if (!storage) {
@@ -135,4 +147,4 @@ void Rosbag2::play(const std::string & file_name, const Rosbag2PlayOptions & opt
   player.play(options);
 }
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport

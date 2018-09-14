@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__PLAYER_HPP_
-#define ROSBAG2__PLAYER_HPP_
+#ifndef ROSBAG2_TRANSPORT__PLAYER_HPP_
+#define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
 #include <future>
 #include <map>
@@ -25,11 +25,11 @@
 #include "replayable_message.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2/rosbag2_play_options.hpp"
+#include "rosbag2_transport/rosbag2_play_options.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 class GenericPublisher;
@@ -59,6 +59,6 @@ private:
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport
 
-#endif  // ROSBAG2__PLAYER_HPP_
+#endif  // ROSBAG2_TRANSPORT__PLAYER_HPP_

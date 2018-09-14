@@ -19,13 +19,13 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_record_integration_fixture.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "test_memory_management.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "test_memory_management.hpp"
 
 // TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
 TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
@@ -45,7 +45,7 @@ TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_top
   start_publishing<test_msgs::msg::StaticArrayPrimitives>(
     serialized_array_bag_message, array_topic, 2);
 
-  start_recording_all_topics();
+  start_recording({string_topic, array_topic});
   wait_for_publishers_to_stop();
   stop_recording();
 

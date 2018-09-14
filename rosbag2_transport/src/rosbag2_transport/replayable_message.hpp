@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2018 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
+#ifndef ROSBAG2_TRANSPORT__REPLAYABLE_MESSAGE_HPP_
+#define ROSBAG2_TRANSPORT__REPLAYABLE_MESSAGE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2_play_options.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include <chrono>
+#include <memory>
 
-int main(int argc, const char ** argv)
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
+namespace rosbag2_transport
 {
-  rclcpp::init(argc, argv);
 
-  auto options = rosbag2::Rosbag2PlayOptions();
-  options.read_ahead_queue_size = 1000;
+struct ReplayableMessage
+{
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
+  std::chrono::nanoseconds time_since_start;
+};
 
-  rosbag2::Rosbag2 rosbag2;
-  rosbag2.play("test.bag", options);
+}  // namespace rosbag2_transport
 
-  rclcpp::shutdown();
-
-  return 0;
-}
+#endif  // ROSBAG2_TRANSPORT__REPLAYABLE_MESSAGE_HPP_

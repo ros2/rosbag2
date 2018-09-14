@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "ament_index_cpp/get_package_prefix.hpp"
-#include "../../src/rosbag2/typesupport_helpers.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
 

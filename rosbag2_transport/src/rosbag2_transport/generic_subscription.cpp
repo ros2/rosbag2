@@ -20,9 +20,9 @@
 #include "rclcpp/any_subscription_callback.hpp"
 #include "rclcpp/subscription.hpp"
 
-#include "rosbag2/logging.hpp"
+#include "rosbag2_transport/logging.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 GenericSubscription::GenericSubscription(
@@ -100,7 +100,7 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
         auto fini_return = rmw_serialized_message_fini(msg);
         delete msg;
         if (fini_return != RCL_RET_OK) {
-          ROSBAG2_LOG_ERROR_STREAM(
+          ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
             "Failed to destroy serialized message: " << rcl_get_error_string_safe());
         }
       });
@@ -108,4 +108,4 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
   return serialized_msg;
 }
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport

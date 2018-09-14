@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 GenericPublisher::GenericPublisher(
@@ -37,4 +37,4 @@ void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message
   }
 }
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport

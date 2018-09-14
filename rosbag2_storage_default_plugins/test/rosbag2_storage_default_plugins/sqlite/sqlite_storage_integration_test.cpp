@@ -92,8 +92,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types[0].topic, Eq("topic1"));
+  EXPECT_THAT(topics_and_types[0].name, Eq("topic1"));
   EXPECT_THAT(topics_and_types[0].type, Eq("type1"));
-  EXPECT_THAT(topics_and_types[1].topic, Eq("topic2"));
+  EXPECT_THAT(topics_and_types[1].name, Eq("topic2"));
   EXPECT_THAT(topics_and_types[1].type, Eq("type2"));
 }

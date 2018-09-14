@@ -29,12 +29,12 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2/logging.hpp"
+#include "rosbag2_transport/logging.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
-#include "typesupport_helpers.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 Player::Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage)
@@ -135,4 +135,4 @@ void Player::prepare_publishers()
   }
 }
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport

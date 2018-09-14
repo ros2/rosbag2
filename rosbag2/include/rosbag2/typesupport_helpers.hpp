@@ -19,16 +19,18 @@
 #include <utility>
 
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
+#include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
+
+ROSBAG2_PUBLIC
+const rosidl_message_type_support_t * get_typesupport(const std::string & type);
 
 std::string get_typesupport_library_path(
   const std::string & package_name, const std::string & typesupport_identifier);
 
 const std::pair<std::string, std::string> extract_type_and_package(const std::string & full_type);
-
-const rosidl_message_type_support_t * get_typesupport(const std::string & type);
 
 }  // namespace rosbag2
 

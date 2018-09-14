@@ -41,7 +41,7 @@ rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
   Py_DECREF(iterator);
 
   rosbag2_transport::Rosbag2Transport transport;
-  transport.record(topic_vector);
+  transport.record("test.bag", topic_vector);
 
   Py_RETURN_NONE;
 }
@@ -54,7 +54,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args)
     return nullptr;
   }
 
-  rosbag2::Rosbag2PlayOptions options{};
+  rosbag2_transport::Rosbag2PlayOptions options{};
   options.queue_buffer_length_ = 1000;
 
   rosbag2_transport::Rosbag2Transport transport;
