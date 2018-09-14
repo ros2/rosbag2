@@ -22,8 +22,18 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gmock(rosbag2_end_to_end_test
+    test/rosbag2_end_to_end_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET rosbag2_end_to_end_test)
+    ament_target_dependencies(rosbag2_end_to_end_test
+      rclcpp
+      std_msgs)
+  endif()
 
 endif()
 
