@@ -41,7 +41,9 @@ rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
   Py_DECREF(iterator);
 
   rosbag2_transport::Rosbag2Transport transport;
+  transport.init();
   transport.record("test.bag", topic_vector);
+  transport.shutdown();
 
   Py_RETURN_NONE;
 }
