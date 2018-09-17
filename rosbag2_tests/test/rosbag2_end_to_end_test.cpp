@@ -101,7 +101,8 @@ public:
 
     STARTUPINFO start_up_info{};
     PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr, nullptr,
+    CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr,
+      temporary_dir_path_.c_str(),
       &start_up_info, &process_info);
 
     AssignProcessToJobObject(h_job, process_info.hProcess);
@@ -129,7 +130,8 @@ public:
 #ifdef _WIN32
     STARTUPINFO start_up_info{};
     PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr, nullptr,
+    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr,
+      temporary_dir_path_.c_str(),
       &start_up_info, &process_info);
 #else
     system(("cd " + temporary_dir_path_ + " && ros2 bag play test.bag").c_str());
