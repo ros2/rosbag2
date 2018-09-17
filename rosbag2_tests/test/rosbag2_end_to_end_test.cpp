@@ -47,9 +47,13 @@ public:
     if (process_id == 0) {
       setpgid(getpid(), getpid());
       system("ros2 bag record -a");
+    } else {
+      // Here we wait to allow rosbag2 to record some messages before killing the process.
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+      kill(-process_id, SIGINT);
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      kill(-process_id, SIGTERM);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-    kill(-process_id, SIGKILL);
   }
 
   void play_bag()
@@ -57,47 +61,48 @@ public:
     system("ros2 bag play test.bag");
   }
 
-  void publish_test_message()
+  std::future<void> publish_test_message()
   {
-    auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
-    auto publisher = publisher_node->create_publisher<test_msgs::msg::Primitives>("test_topic");
-    auto message = get_messages_primitives()[0];
-    message->string_value = "test";
-    for (int i = 0; i < 10; i++) {
-      publisher->publish(message);
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    }
+    return async(std::launch::async, []() {
+      auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
+      auto publisher = publisher_node->create_publisher<test_msgs::msg::Primitives>("test_topic");
+      auto message = get_messages_primitives()[0];
+      message->string_value = "test";
+      for (int i = 0; i < 10; i++) {
+        publisher->publish(message);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      }
+    });
   }
 
-  std::vector<std::string> subscribe_to_string_topic()
+  std::future<std::vector<std::string>> subscribe_and_wait_for_one_test_message()
   {
-    std::vector<std::string> messages;
-    int counter = 0;
-    auto subscriber_node = std::make_shared<rclcpp::Node>("subscriber_node");
-    auto subscription = subscriber_node->create_subscription<test_msgs::msg::Primitives>(
-      "test_topic",
-      [&messages, &counter](test_msgs::msg::Primitives::SharedPtr msg) {
-        messages.push_back(msg->string_value);
-        counter++;
+    return async(
+      std::launch::async, []() -> std::vector<std::string> {
+        std::vector<std::string> messages;
+        int counter = 0;
+        auto subscriber_node = std::make_shared<rclcpp::Node>("subscriber_node");
+        auto subscription = subscriber_node->create_subscription<test_msgs::msg::Primitives>(
+          "test_topic",
+          [&messages, &counter](test_msgs::msg::Primitives::SharedPtr msg) {
+            messages.push_back(msg->string_value);
+            counter++;
+          });
+        while (counter < 1) {
+          rclcpp::spin_some(subscriber_node);
+        }
+        return messages;
       });
-    while (counter < 1) {
-      rclcpp::spin_some(subscriber_node);
-    }
-    return messages;
   }
 };
 
 
 TEST_F(EndToEndTestFixture, messages_are_recorder_and_replayed_correctly) {
-  auto publisher_future = async(std::launch::async, [this]() {publish_test_message();});
+  auto publisher_future = publish_test_message();
   record_all_topics();
   publisher_future.wait();
 
-  auto subscriber_future = async(std::launch::async, [this]() -> std::vector<std::string>
-      {
-        return subscribe_to_string_topic();
-      }
-  );
+  auto subscriber_future = subscribe_and_wait_for_one_test_message();
   play_bag();
   auto messages = subscriber_future.get();
 
