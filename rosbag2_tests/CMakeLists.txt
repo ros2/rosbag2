@@ -22,7 +22,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
-  find_package(std_msgs REQUIRED)
+  find_package(test_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
@@ -32,7 +32,7 @@ if(BUILD_TESTING)
   if(TARGET rosbag2_end_to_end_test)
     ament_target_dependencies(rosbag2_end_to_end_test
       rclcpp
-      std_msgs)
+      test_msgs)
   endif()
 
 endif()

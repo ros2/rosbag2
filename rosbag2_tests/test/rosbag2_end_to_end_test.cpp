@@ -21,7 +21,9 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/msg/static_array_primitives.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -55,14 +57,14 @@ public:
     system("ros2 bag play test.bag");
   }
 
-  void publish_string_message()
+  void publish_test_message()
   {
     auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
-    auto publisher = publisher_node->create_publisher<std_msgs::msg::String>("test_topic");
+    auto publisher = publisher_node->create_publisher<test_msgs::msg::Primitives>("test_topic");
+    auto message = get_messages_primitives()[0];
+    message->string_value = "test";
     for (int i = 0; i < 10; i++) {
-      std_msgs::msg::String string_message;
-      string_message.data = "test";
-      publisher->publish(string_message);
+      publisher->publish(message);
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
   }
@@ -72,10 +74,10 @@ public:
     std::vector<std::string> messages;
     int counter = 0;
     auto subscriber_node = std::make_shared<rclcpp::Node>("subscriber_node");
-    auto subscription = subscriber_node->create_subscription<std_msgs::msg::String>(
+    auto subscription = subscriber_node->create_subscription<test_msgs::msg::Primitives>(
       "test_topic",
-      [&messages, &counter](std_msgs::msg::String::SharedPtr msg) {
-        messages.push_back(msg->data);
+      [&messages, &counter](test_msgs::msg::Primitives::SharedPtr msg) {
+        messages.push_back(msg->string_value);
         counter++;
       });
     while (counter < 1) {
@@ -87,7 +89,7 @@ public:
 
 
 TEST_F(EndToEndTestFixture, messages_are_recorder_and_replayed_correctly) {
-  auto publisher_future = async(std::launch::async, [this]() {publish_string_message();});
+  auto publisher_future = async(std::launch::async, [this]() {publish_test_message();});
   record_all_topics();
   publisher_future.wait();
 
