@@ -37,19 +37,58 @@ class EndToEndTestFixture : public Test
 {
 public:
   EndToEndTestFixture()
+  : database_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".db3")
   {
+    std::string system_separator = "/";
 #ifdef _WIN32
-    DeleteFileA("test.bag");
-    rclcpp::init(0, nullptr);
-#else
-    remove("test.bag");
-    rclcpp::init(0, nullptr);
+    system_separator = "\\";
 #endif
+    database_name_ = temporary_dir_path_ + system_separator + database_name_;
+    std::cout << "Database name: " << database_name_ << std::endl;
+    rclcpp::init(0, nullptr);
   }
 
   ~EndToEndTestFixture() override
   {
+#ifdef _WIN32
+    DeleteFileA(database_name_.c_str());
+#else
+    // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
+    // the ful directory can be deleted in remove_temporary_dir()
+    remove(database_name_.c_str());
+#endif
     rclcpp::shutdown();
+  }
+
+  static void SetUpTestCase()
+  {
+    char template_char[] = "tmp_test_dir.XXXXXX";
+#ifdef _WIN32
+    char temp_path[255];
+    GetTempPathA(255, temp_path);
+    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
+    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
+    _mkdir(temporary_dir_path_.c_str());
+#else
+    char * dir_name = mkdtemp(template_char);
+    temporary_dir_path_ = dir_name;
+#endif
+  }
+
+  static void TearDownTestCase()
+  {
+    remove_temporary_dir();
+  }
+
+  static void remove_temporary_dir()
+  {
+#ifdef _WIN32
+    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
+    // need the Windows line in the fixture destructor anymore.
+    RemoveDirectoryA(temporary_dir_path_.c_str());
+#else
+    remove(temporary_dir_path_.c_str());
+#endif
   }
 
   void record_all_topics()
@@ -74,7 +113,7 @@ public:
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
-      system("ros2 bag record -a");
+      system(("cd " + temporary_dir_path_ + " && ros2 bag record -a").c_str());
     } else {
       // Here we wait to allow rosbag2 to record some messages before killing the process.
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -93,7 +132,7 @@ public:
     CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr, nullptr,
       &start_up_info, &process_info);
 #else
-    system("ros2 bag play test.bag");
+    system(("cd " + temporary_dir_path_ + " && ros2 bag play test.bag").c_str());
 #endif
   }
 
@@ -131,8 +170,12 @@ public:
         return messages;
       });
   }
+
+  std::string database_name_;
+  static std::string temporary_dir_path_;
 };
 
+std::string EndToEndTestFixture::temporary_dir_path_ = "";  // NOLINT
 
 TEST_F(EndToEndTestFixture, messages_are_recorder_and_replayed_correctly) {
   auto publisher_future = publish_test_message();
