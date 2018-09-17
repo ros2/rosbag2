@@ -58,7 +58,7 @@ public:
   ~Rosbag2TestFixture() override
   {
 #ifdef _WIN32
-    DeleteFileA(database_name_.c_str());
+    DeleteFileA(storage_options_.uri.c_str());
 #else
     // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
     // the ful directory can be deleted in remove_temporary_dir()

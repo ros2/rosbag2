@@ -36,10 +36,16 @@
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
+#ifdef _WIN32
+using ProcessHandle = HANDLE;
+#else
+using ProcessHandle = int;
+#endif
+
 class EndToEndTestFixture : public Test
 {
 public:
-  EndToEndTestFixture() : publisher_is_done_(false)
+  EndToEndTestFixture()
   {
     std::string system_separator = "/";
 #ifdef _WIN32
@@ -93,7 +99,7 @@ public:
 #endif
   }
 
-  void record_all_topics()
+  ProcessHandle record_all_topics()
   {
 #ifdef _WIN32
     auto h_job = CreateJobObject(nullptr, nullptr);
@@ -110,10 +116,8 @@ public:
     AssignProcessToJobObject(h_job, process_info.hProcess);
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
-    while (!publisher_is_done_) {
-      std::this_thread::sleep_for(50ms);
-    }
-    CloseHandle(h_job);
+    std::this_thread::sleep_for(3s);  // we must wait for rosbag2 to start.
+    return h_job;
 #else
     auto process_id = fork();
     if (process_id == 0) {
@@ -121,14 +125,9 @@ public:
       chdir(temporary_dir_path_.c_str());
       system("ros2 bag record -a");
     } else {
-      // Here we wait to allow rosbag2 to record some messages before killing the process.
-      while (!publisher_is_done_) {
-        std::this_thread::sleep_for(50ms);
-      }
-      kill(-process_id, SIGINT);
-      std::this_thread::sleep_for(200ms);
-      kill(-process_id, SIGTERM);
+      std::this_thread::sleep_for(3s);  // we must wait for rosbag2 to start.
     }
+    return process_id;
 #endif
   }
 
@@ -158,13 +157,12 @@ public:
         message->string_value = "test";
 
         rosbag2_storage_plugins::SqliteWrapper
-          db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+        db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
         while (rclcpp::ok() && count_stored_messages(db, topic_name) < 3) {
           publisher->publish(message);
           // rate limiting
           std::this_thread::sleep_for(50ms);
         }
-        publisher_is_done_ = true;
       });
   }
 
@@ -206,7 +204,7 @@ public:
     rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
   {
     auto row = db.prepare_statement(
-        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
+      "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
       ->execute_query<int>().get_single_line();
     if (std::get<0>(row) == 0) {
       return 0;
@@ -231,21 +229,26 @@ public:
     return table_msgs;
   }
 
+  void stop_recording(ProcessHandle process_handle)
+  {
+#ifdef _WIN32
+    CloseHandle(process_handle);
+#else
+    kill(-process_handle, SIGTERM);
+#endif
+  }
 
   std::string database_name_;
   static std::string temporary_dir_path_;
-  std::atomic<bool> publisher_is_done_;
 };
 
 std::string EndToEndTestFixture::temporary_dir_path_ = "";  // NOLINT
 
 TEST_F(EndToEndTestFixture, record_end_to_end_test) {
-  auto record_future = std::async(std::launch::async, [this]() {record_all_topics();});
-  std::this_thread::sleep_for(5000ms);
-  auto publisher_future = publish_test_message();
+  auto id = record_all_topics();
+  publish_test_message().get();
 
-  record_future.get();
-  publisher_future.get();
+  stop_recording(id);
 
   auto recorded_messages = get_messages();
   ASSERT_THAT(recorded_messages, SizeIs(Ge(3u)));
