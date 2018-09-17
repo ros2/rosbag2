@@ -114,7 +114,8 @@ public:
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
-      system(("cd " + temporary_dir_path_ + " && ros2 bag record -a").c_str());
+      chdir(temporary_dir_path_.c_str());
+      system("ros2 bag record -a");
     } else {
       // Here we wait to allow rosbag2 to record some messages before killing the process.
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
@@ -134,7 +135,8 @@ public:
       temporary_dir_path_.c_str(),
       &start_up_info, &process_info);
 #else
-    system(("cd " + temporary_dir_path_ + " && ros2 bag play test.bag").c_str());
+    chdir(temporary_dir_path_.c_str());
+    system("ros2 bag play test.bag");
 #endif
   }
 
