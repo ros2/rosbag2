@@ -38,8 +38,8 @@ struct BagMetadata
   std::string encoding;
   std::vector<std::string> relative_file_paths;
   size_t combined_bag_size;
-  std::chrono::nanoseconds duration_in_nanoseconds;
-  std::chrono::nanoseconds time_start_in_nanoseconds;
+  std::chrono::nanoseconds duration;
+  std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   size_t message_count;
   std::vector<TopicMetadata> topics_with_message_count;
 };

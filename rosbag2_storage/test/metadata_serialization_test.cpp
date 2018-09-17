@@ -92,8 +92,9 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.relative_file_paths.emplace_back("some_relative_path");
   metadata.relative_file_paths.emplace_back("some_other_relative_path");
   metadata.combined_bag_size = 10;
-  metadata.duration_in_nanoseconds = std::chrono::nanoseconds(100);
-  metadata.time_start_in_nanoseconds = std::chrono::nanoseconds(10000);
+  metadata.duration = std::chrono::nanoseconds(100);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
   metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
@@ -105,8 +106,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   EXPECT_THAT(read_metadata.encoding, Eq(metadata.encoding));
   EXPECT_THAT(read_metadata.relative_file_paths, Eq(metadata.relative_file_paths));
   EXPECT_THAT(read_metadata.combined_bag_size, Eq(metadata.combined_bag_size));
-  EXPECT_THAT(read_metadata.duration_in_nanoseconds, Eq(metadata.duration_in_nanoseconds));
-  EXPECT_THAT(read_metadata.time_start_in_nanoseconds, Eq(metadata.time_start_in_nanoseconds));
+  EXPECT_THAT(read_metadata.duration, Eq(metadata.duration));
+  EXPECT_THAT(read_metadata.starting_time, Eq(metadata.starting_time));
   EXPECT_THAT(read_metadata.message_count, Eq(metadata.message_count));
   EXPECT_THAT(read_metadata.topics_with_message_count,
     SizeIs(metadata.topics_with_message_count.size()));

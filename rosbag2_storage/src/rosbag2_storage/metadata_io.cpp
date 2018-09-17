@@ -82,6 +82,25 @@ struct convert<std::chrono::nanoseconds>
 };
 
 template<>
+struct convert<std::chrono::time_point<std::chrono::high_resolution_clock>>
+{
+  static Node encode(const std::chrono::time_point<std::chrono::high_resolution_clock> & start_time)
+  {
+    Node node;
+    node["nanoseconds_since_epoch"] = start_time.time_since_epoch().count();
+    return node;
+  }
+
+  static bool decode(
+    const Node & node, std::chrono::time_point<std::chrono::high_resolution_clock> & start_time)
+  {
+    start_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(node["nanoseconds_since_epoch"].as<size_t>()));
+    return true;
+  }
+};
+
+template<>
 struct convert<rosbag2_storage::BagMetadata>
 {
   static Node encode(const rosbag2_storage::BagMetadata & metadata)
@@ -91,8 +110,8 @@ struct convert<rosbag2_storage::BagMetadata>
     node["encoding"] = metadata.encoding;
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["combined_bag_size"] = metadata.combined_bag_size;
-    node["duration"] = metadata.duration_in_nanoseconds;
-    node["time_start"] = metadata.time_start_in_nanoseconds;
+    node["duration"] = metadata.duration;
+    node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
     node["topics_with_message_count"] = metadata.topics_with_message_count;
     return node;
@@ -104,8 +123,9 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.encoding = node["encoding"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     metadata.combined_bag_size = node["combined_bag_size"].as<size_t>();
-    metadata.duration_in_nanoseconds = node["duration"].as<std::chrono::nanoseconds>();
-    metadata.time_start_in_nanoseconds = node["time_start"].as<std::chrono::nanoseconds>();
+    metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
+    metadata.starting_time = node["starting_time"]
+      .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
     metadata.message_count = node["message_count"].as<size_t>();
     metadata.topics_with_message_count =
       node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicMetadata>>();
