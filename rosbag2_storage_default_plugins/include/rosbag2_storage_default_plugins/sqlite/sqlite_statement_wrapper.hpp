@@ -72,8 +72,8 @@ public:
       Iterator(const Iterator &) = delete;
       Iterator & operator=(const Iterator &) = delete;
 
-      Iterator(Iterator &&) noexcept = default;
-      Iterator & operator=(Iterator &&) noexcept = default;
+      Iterator(Iterator &&) = default;
+      Iterator & operator=(Iterator &&) = default;
 
       Iterator & operator++()
       {
