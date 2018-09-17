@@ -23,15 +23,19 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(rosbag2_storage REQUIRED)
+  find_package(rosbag2_storage_default_plugins REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(rosbag2_end_to_end_test
-    test/rosbag2_end_to_end_test.cpp
+  ament_add_gmock(rosbag2_record_end_to_end_test
+    test/rosbag2_record_end_to_end_test.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_end_to_end_test)
-    ament_target_dependencies(rosbag2_end_to_end_test
+  if(TARGET rosbag2_record_end_to_end_test)
+    ament_target_dependencies(rosbag2_record_end_to_end_test
       rclcpp
+      rosbag2_storage
+      rosbag2_storage_default_plugins
       test_msgs)
   endif()
 
