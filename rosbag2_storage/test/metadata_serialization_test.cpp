@@ -16,6 +16,11 @@
 
 #include <chrono>
 
+#ifdef _WIN32
+# include <direct.h>
+# include <Windows.h>
+#endif
+
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
