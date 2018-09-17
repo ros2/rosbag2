@@ -37,9 +37,12 @@ class RecordVerb(VerbExtension):
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
+        uri = 'test.bag'
+        storage_id = 'sqlite3'
+
         if args.all:
-            rosbag2_transport_py.record_topics([])
+            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, all=True)
         elif args.topics and len(args.topics) > 0:
-            rosbag2_transport_py.record_topics(args.topics)
+            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, topics=args.topics)
         else:
             self._subparser.print_help()

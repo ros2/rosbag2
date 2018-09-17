@@ -34,8 +34,8 @@
 namespace rosbag2_transport
 {
 
-Player::Player(std::shared_ptr<rosbag2::SequentialReader> reader)
-: reader_(reader), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
+Player::Player(std::unique_ptr<rosbag2::SequentialReader> reader)
+: reader_(std::move(reader)), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
 bool Player::is_storage_completely_loaded() const
@@ -48,7 +48,7 @@ bool Player::is_storage_completely_loaded() const
   return !storage_loading_future_.valid();
 }
 
-void Player::play(const Rosbag2PlayOptions & options)
+void Player::play(const PlayOptions & options)
 {
   prepare_publishers();
 
@@ -60,7 +60,7 @@ void Player::play(const Rosbag2PlayOptions & options)
   play_messages_from_queue();
 }
 
-void Player::wait_for_filled_queue(const Rosbag2PlayOptions & options) const
+void Player::wait_for_filled_queue(const PlayOptions & options) const
 {
   while (
     message_queue_.size_approx() < options.read_ahead_queue_size &&
@@ -70,7 +70,7 @@ void Player::wait_for_filled_queue(const Rosbag2PlayOptions & options) const
   }
 }
 
-void Player::load_storage_content(const Rosbag2PlayOptions & options)
+void Player::load_storage_content(const PlayOptions & options)
 {
   TimePoint time_first_message;
 

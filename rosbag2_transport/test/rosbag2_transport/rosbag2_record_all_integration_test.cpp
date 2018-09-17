@@ -49,7 +49,7 @@ TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_top
   wait_for_publishers_to_stop();
   stop_recording();
 
-  auto recorded_messages = get_messages(database_name_);
+  auto recorded_messages = get_messages(storage_options_.uri);
 
   ASSERT_THAT(recorded_messages, SizeIs(4));
   auto string_messages = filter_messages<test_msgs::msg::Primitives>(

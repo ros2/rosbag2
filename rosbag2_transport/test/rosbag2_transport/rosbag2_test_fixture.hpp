@@ -30,7 +30,8 @@
 # include <Windows.h>
 #endif
 
-#include "rosbag2_transport/rosbag2_play_options.hpp"
+#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/writer.hpp"
@@ -38,21 +39,29 @@
 
 using namespace ::testing;  // NOLINT
 
+inline char separator()
+{
+#ifdef _WIN32
+  return '\\';
+#else
+  return '/';
+#endif
+}
+
 class Rosbag2TestFixture : public Test
 {
 public:
   Rosbag2TestFixture()
-  : database_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".db3")
+  : storage_options_(), play_options_()
   {
-    std::string system_separator = "/";
-#ifdef _WIN32
-    system_separator = "\\";
-#endif
-    database_name_ = temporary_dir_path_ + system_separator + database_name_;
-    std::cout << "Database name: " << database_name_ << std::endl;
+    storage_options_.storage_id = "sqlite3";
+    storage_options_.uri = temporary_dir_path_ +
+      separator() +
+      std::string(UnitTest::GetInstance()->current_test_info()->name()) +
+      ".db3";
+    std::cout << "Database name: " << storage_options_.uri << std::endl;
 
-    options_ = rosbag2_transport::Rosbag2PlayOptions();
-    options_.read_ahead_queue_size = 1000;
+    play_options_.read_ahead_queue_size = 1000;
   }
 
   ~Rosbag2TestFixture() override
@@ -62,7 +71,7 @@ public:
 #else
     // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
     // the ful directory can be deleted in remove_temporary_dir()
-    remove(database_name_.c_str());
+    remove(storage_options_.uri.c_str());
 #endif
   }
 
@@ -101,7 +110,7 @@ public:
   get_messages(const std::string & db_name)
   {
     std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> table_msgs;
-    rosbag2::SequentialReader reader(db_name, "sqlite3");
+    rosbag2::SequentialReader reader(db_name, storage_options_.storage_id);
 
     while (reader.has_next()) {
       table_msgs.push_back(reader.read_next());
@@ -115,7 +124,7 @@ public:
     const std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> & messages,
     const std::map<std::string, std::string> & topics_and_types)
   {
-    rosbag2::Writer writer(db_name, "sqlite3");
+    rosbag2::Writer writer(db_name, storage_options_.storage_id);
     for (const auto & topic_and_type : topics_and_types) {
       writer.create_topic({topic_and_type.first, topic_and_type.second});
     }
@@ -149,10 +158,10 @@ public:
     return bag_msg;
   }
 
-  std::string database_name_;
   static std::string temporary_dir_path_;
   test_helpers::TestMemoryManagement memory_management_;
-  rosbag2_transport::Rosbag2PlayOptions options_;
+  rosbag2_transport::StorageOptions storage_options_;
+  rosbag2_transport::PlayOptions play_options_;
 };
 
 std::string Rosbag2TestFixture::temporary_dir_path_ = "";  // NOLINT

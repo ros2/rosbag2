@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__ROSBAG2_PLAY_OPTIONS_HPP_
-#define ROSBAG2_TRANSPORT__ROSBAG2_PLAY_OPTIONS_HPP_
+#ifndef ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_
+#define ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_
 
-#include <cstddef>
+#include <string>
+#include <vector>
 
 namespace rosbag2_transport
 {
-struct Rosbag2PlayOptions
+struct RecordOptions
 {
 public:
-  size_t read_ahead_queue_size;
+  bool all;
+  std::vector<std::string> topics;
 };
 
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__ROSBAG2_PLAY_OPTIONS_HPP_
+#endif  // ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_

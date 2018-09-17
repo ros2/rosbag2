@@ -23,7 +23,9 @@
 
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/writer.hpp"
-#include "rosbag2_transport/rosbag2_play_options.hpp"
+#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
@@ -38,9 +40,6 @@ class Rosbag2Transport
 {
 public:
   ROSBAG2_TRANSPORT_PUBLIC
-  Rosbag2Transport();
-
-  ROSBAG2_TRANSPORT_PUBLIC
   void init();
 
   ROSBAG2_TRANSPORT_PUBLIC
@@ -50,37 +49,28 @@ public:
    * Records topics to a bagfile. Subscription happens at startup time, hence the topics must
    * exist when "record" is called.
    *
-   * \param file_name Name of the bagfile to write
-   * \param topic_names Vector of topics to subscribe to. Topics must exist at startup time. If
-   * the vector is empty, all topics will be subscribed.
+   * \param storage_options Options regarding the storage (e.g. bag file name)
+   * \param record_options Options regarding the recording (e.g. the topics to record)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void record(const std::string & file_name, const std::vector<std::string> & topic_names);
-
-  /**
-   * Records all available topics to a bagfile. Subscription happens at startup time, hence only
-   * topics available at startup time are recorded.
-   *
-   * \param file_name Name of the bagfile to write
-   */
-  ROSBAG2_TRANSPORT_PUBLIC
-  void record(const std::string & file_name);
+  void record(const StorageOptions & storage_options, const RecordOptions & record_options);
 
   /**
    * Replay all topics in a bagfile.
    *
-   * \param file_name Name of the bagfile to replay
+   * \param storage_options Option regarding the storage (e.g. bag file name)
+   * \param play_options Options regarding the playback (e.g. queue size)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void play(const std::string & file_name, const Rosbag2PlayOptions & options);
+  void play(const StorageOptions & storage_options, const PlayOptions & play_options);
 
 private:
   std::shared_ptr<rosbag2_transport::GenericSubscription>
   create_subscription(
     rosbag2::Writer & writer,
+    std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;
 
-  std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
 };
 

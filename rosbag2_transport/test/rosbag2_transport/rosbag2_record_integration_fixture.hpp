@@ -44,7 +44,7 @@ public:
   : Rosbag2TestFixture()
   {
     rosbag2_storage_plugins::SqliteWrapper
-    db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
+    db(storage_options_.uri, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
 
     rclcpp::init(0, nullptr);
     publisher_node_ = rclcpp::Node::make_shared("publisher_node");
@@ -56,7 +56,7 @@ public:
     future_ = std::async(
       std::launch::async, [this, topics]() {
         rosbag2_transport::Rosbag2Transport rosbag2_transport;
-        rosbag2_transport.record(database_name_, topics);
+        rosbag2_transport.record(storage_options_, {false, topics});
       });
   }
 
@@ -67,7 +67,7 @@ public:
       std::launch::async, [this]() {
         rosbag2_transport::Rosbag2Transport rosbag2_transport;
         std::this_thread::sleep_for(2s);
-        rosbag2_transport.record(database_name_);
+        rosbag2_transport.record(storage_options_, {true, {}});
       });
   }
 
@@ -94,7 +94,7 @@ public:
           auto publisher = publisher_node_->create_publisher<MessageT>(topic_name);
 
           rosbag2_storage_plugins::SqliteWrapper
-          db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+          db(storage_options_.uri, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
           while (rclcpp::ok() && count_stored_messages(db, topic_name) < number_expected_messages) {
             publisher->publish(message->serialized_data.get());
             // rate limiting

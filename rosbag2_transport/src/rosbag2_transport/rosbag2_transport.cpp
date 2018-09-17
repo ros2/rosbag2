@@ -19,6 +19,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rcl/graph.h"
@@ -28,20 +29,16 @@
 #include "rosbag2_transport/logging.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/writer.hpp"
 
 #include "generic_subscription.hpp"
-#include "rosbag2_node.hpp"
 #include "player.hpp"
 #include "replayable_message.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
+#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
-
-Rosbag2Transport::Rosbag2Transport()
-  : node_(std::make_shared<Rosbag2Node>("rosbag2"))
-{}
 
 void Rosbag2Transport::init()
 {
@@ -54,11 +51,16 @@ void Rosbag2Transport::shutdown()
 }
 
 void Rosbag2Transport::record(
-  const std::string & file_name, const std::vector<std::string> & topic_names)
+  const StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  rosbag2::Writer writer(file_name, "sqlite3");
+  rosbag2::Writer writer(storage_options.uri, storage_options.storage_id);
 
-  auto topics_and_types = node_->get_topics_with_types(topic_names);
+  auto node = std::make_shared<Rosbag2Node>("rosbag2");
+
+  auto topics_and_types = record_options.all ?
+    node->get_all_topics_with_types() :
+    node->get_topics_with_types(record_options.topics);
+
   if (topics_and_types.empty()) {
     throw std::runtime_error("No topics found. Abort");
   }
@@ -68,7 +70,7 @@ void Rosbag2Transport::record(
     auto topic_type = topic_and_type.second;
 
     std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      writer, topic_name, topic_type);
+      writer, node, topic_name, topic_type);
 
     if (subscription) {
       subscriptions_.push_back(subscription);
@@ -83,35 +85,18 @@ void Rosbag2Transport::record(
 
   ROSBAG2_TRANSPORT_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
-    rclcpp::spin(node_);
+    rclcpp::spin(node);
   }
   subscriptions_.clear();
-}
-
-
-void Rosbag2Transport::record(const std::string & file_name)
-{
-  auto topics_and_types = node_->get_all_topics_with_types();
-  std::vector<std::string> topic_names;
-  topic_names.reserve(topics_and_types.size());
-  for (const auto & topic_and_type : topics_and_types) {
-    topic_names.push_back(topic_and_type.first);
-  }
-
-  if (topic_names.empty()) {
-    ROSBAG2_TRANSPORT_LOG_ERROR("no topics found to record");
-    return;
-  }
-
-  record(file_name, topic_names);
 }
 
 std::shared_ptr<GenericSubscription>
 Rosbag2Transport::create_subscription(
   rosbag2::Writer & writer,
+  std::shared_ptr<Rosbag2Node> & node,
   const std::string & topic_name, const std::string & topic_type) const
 {
-  auto subscription = node_->create_generic_subscription(
+  auto subscription = node->create_generic_subscription(
     topic_name,
     topic_type,
     [&writer, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
@@ -131,12 +116,14 @@ Rosbag2Transport::create_subscription(
   return subscription;
 }
 
-void Rosbag2Transport::play(const std::string & file_name, const Rosbag2PlayOptions & options)
+void Rosbag2Transport::play(
+  const StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  auto reader = std::make_shared<rosbag2::SequentialReader>(file_name, "sqlite3");
+  auto reader = std::make_unique<rosbag2::SequentialReader>(
+    storage_options.uri, storage_options.storage_id);
 
-  Player player(reader);
-  player.play(options);
+  Player player(std::move(reader));
+  player.play(play_options);
 }
 
 }  // namespace rosbag2_transport

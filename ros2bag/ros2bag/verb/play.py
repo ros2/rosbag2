@@ -26,4 +26,4 @@ class PlayVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
-        rosbag2_transport_py.play_bag(bag_file)
+        rosbag2_transport_py.play(uri=bag_file, storage_id='sqlite3')

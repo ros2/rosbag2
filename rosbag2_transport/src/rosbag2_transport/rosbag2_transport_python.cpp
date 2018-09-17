@@ -17,51 +17,80 @@
 #include <vector>
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/storage_options.hpp"
 
 static PyObject *
-rosbag2_transport_record_topics(PyObject * Py_UNUSED(self), PyObject * args)
+rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  PyObject * listObj; /* the list of strings */
-  if (!PyArg_ParseTuple(args, "O", &listObj)) {
+  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_transport::RecordOptions record_options{};
+
+  static const char * kwlist[] = {"uri", "storage_id", "all", "topics", nullptr};
+
+  char * uri;
+  char * storage_id;
+  bool all;
+  PyObject * topics;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|bO", const_cast<char **>(kwlist),
+    &uri,
+    &storage_id,
+    &all,
+    &topics))
+  {
     return nullptr;
   }
 
-  PyObject * iterator = PyObject_GetIter(listObj);
-  if (iterator == nullptr) {
-    return nullptr;
-  }
+  storage_options.uri = std::string(uri);
+  storage_options.storage_id = std::string(storage_id);
+  record_options.all = all;
 
-  std::vector<std::string> topic_vector;
-  PyObject * item;
-  while ((item = PyIter_Next(iterator))) {
-    topic_vector.emplace_back(PyUnicode_AsUTF8(item));
+  PyObject * topic_iterator = PyObject_GetIter(topics);
+  if (topic_iterator != nullptr) {
+    PyObject * topic;
+    while ((topic = PyIter_Next(topic_iterator))) {
+      record_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
 
-    Py_DECREF(item);
+      Py_DECREF(topic);
+    }
+    Py_DECREF(topic_iterator);
   }
-  Py_DECREF(iterator);
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();
-  transport.record("test.bag", topic_vector);
+  transport.record(storage_options, record_options);
   transport.shutdown();
 
   Py_RETURN_NONE;
 }
 
 static PyObject *
-rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args)
+rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  char * file_name;
-  if (!PyArg_ParseTuple(args, "s", &file_name)) {
+  rosbag2_transport::PlayOptions play_options{};
+  rosbag2_transport::StorageOptions storage_options{};
+
+  static const char * kwlist[] = {"uri", "storage_id", "read_ahead_queue_size", nullptr};
+
+  char * uri;
+  char * storage_id;
+  size_t read_ahead_queue_size;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|k", const_cast<char **>(kwlist),
+    &uri,
+    &storage_id,
+    &read_ahead_queue_size))
+  {
     return nullptr;
   }
 
-  rosbag2_transport::Rosbag2PlayOptions options{};
-  options.queue_buffer_length_ = 1000;
+  storage_options.uri = std::string(uri);
+  storage_options.storage_id = std::string(storage_id);
+
+  play_options.read_ahead_queue_size = read_ahead_queue_size ? read_ahead_queue_size : 1000;
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();
-  transport.play(file_name, options);
+  transport.play(storage_options, play_options);
   transport.shutdown();
 
   Py_RETURN_NONE;
@@ -70,11 +99,11 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args)
 /// Define the public methods of this module
 static PyMethodDef rosbag2_transport_methods[] = {
   {
-    "record_topics", rosbag2_transport_record_topics, METH_VARARGS,
-    "Record topics"
+    "record", reinterpret_cast<PyCFunction>(rosbag2_transport_record), METH_VARARGS | METH_KEYWORDS,
+    "Record to bag"
   },
   {
-    "play_bag", rosbag2_transport_play, METH_VARARGS,
+    "play", reinterpret_cast<PyCFunction>(rosbag2_transport_play), METH_VARARGS | METH_KEYWORDS,
     "Play bag"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */

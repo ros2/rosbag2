@@ -125,7 +125,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
     serialize_test_message("topic2", complex_message2),
     serialize_test_message("topic2", complex_message2)};
 
-  write_messages(database_name_, messages, topic_types);
+  write_messages(storage_options_.uri, messages, topic_types);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
@@ -135,7 +135,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
   wait_for_subscribers(2);
 
   Rosbag2Transport rosbag2_transport;
-  rosbag2_transport.play(database_name_, options_);
+  rosbag2_transport.play(storage_options_, play_options_);
 
   auto replayed_test_primitives = primitive_subscriber_future.get();
   ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
