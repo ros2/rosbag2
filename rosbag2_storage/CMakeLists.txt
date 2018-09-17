@@ -90,11 +90,11 @@ if(BUILD_TESTING)
     target_link_libraries(test_ros_helper rosbag2_storage)
   endif()
 
-  ament_add_gmock(metadata_serialization_test
-    test/metadata_serialization_test.cpp)
-  if(TARGET metadata_serialization_test)
-    target_include_directories(metadata_serialization_test PRIVATE include)
-    target_link_libraries(metadata_serialization_test rosbag2_storage)
+  ament_add_gmock(test_metadata_serialization
+    test/test_metadata_serialization.cpp)
+  if(TARGET test_metadata_serialization)
+    target_include_directories(test_metadata_serialization PRIVATE include)
+    target_link_libraries(test_metadata_serialization rosbag2_storage)
   endif()
 endif()
 
