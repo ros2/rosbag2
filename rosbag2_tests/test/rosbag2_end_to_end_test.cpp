@@ -20,7 +20,13 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+
+#ifdef _WIN32
+# include <direct.h>
+# include <Windows.h>
+#endif
+
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -32,8 +38,13 @@ class EndToEndTestFixture : public Test
 public:
   EndToEndTestFixture()
   {
+#ifdef _WIN32
+    DeleteFileA("test.bag");
+    rclcpp::init(0, nullptr);
+#else
     remove("test.bag");
     rclcpp::init(0, nullptr);
+#endif
   }
 
   ~EndToEndTestFixture() override
@@ -43,6 +54,22 @@ public:
 
   void record_all_topics()
   {
+#ifdef _WIN32
+      auto h_job = CreateJobObject(nullptr, nullptr);
+      JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
+      info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+      SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
+
+      STARTUPINFO start_up_info{};
+      PROCESS_INFORMATION process_info{};
+      CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr, nullptr, &start_up_info, &process_info);
+
+      AssignProcessToJobObject(h_job, process_info.hProcess);
+      CloseHandle(process_info.hProcess);
+      CloseHandle(process_info.hThread);
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+      CloseHandle(h_job);
+#else
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
@@ -54,11 +81,18 @@ public:
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       kill(-process_id, SIGTERM);
     }
+#endif
   }
 
   void play_bag()
   {
+#ifdef _WIN32
+    STARTUPINFO start_up_info{};
+    PROCESS_INFORMATION process_info{};
+    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr, nullptr, &start_up_info, &process_info);
+#else
     system("ros2 bag play test.bag");
+#endif
   }
 
   std::future<void> publish_test_message()
