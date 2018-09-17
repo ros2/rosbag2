@@ -55,20 +55,21 @@ public:
   void record_all_topics()
   {
 #ifdef _WIN32
-      auto h_job = CreateJobObject(nullptr, nullptr);
-      JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
-      info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-      SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
+    auto h_job = CreateJobObject(nullptr, nullptr);
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
+    info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
 
-      STARTUPINFO start_up_info{};
-      PROCESS_INFORMATION process_info{};
-      CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr, nullptr, &start_up_info, &process_info);
+    STARTUPINFO start_up_info{};
+    PROCESS_INFORMATION process_info{};
+    CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr, nullptr,
+      &start_up_info, &process_info);
 
-      AssignProcessToJobObject(h_job, process_info.hProcess);
-      CloseHandle(process_info.hProcess);
-      CloseHandle(process_info.hThread);
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      CloseHandle(h_job);
+    AssignProcessToJobObject(h_job, process_info.hProcess);
+    CloseHandle(process_info.hProcess);
+    CloseHandle(process_info.hThread);
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+    CloseHandle(h_job);
 #else
     auto process_id = fork();
     if (process_id == 0) {
@@ -89,7 +90,8 @@ public:
 #ifdef _WIN32
     STARTUPINFO start_up_info{};
     PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr, nullptr, &start_up_info, &process_info);
+    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr, nullptr,
+      &start_up_info, &process_info);
 #else
     system("ros2 bag play test.bag");
 #endif
@@ -98,15 +100,16 @@ public:
   std::future<void> publish_test_message()
   {
     return async(std::launch::async, []() {
-      auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
-      auto publisher = publisher_node->create_publisher<test_msgs::msg::Primitives>("test_topic");
-      auto message = get_messages_primitives()[0];
-      message->string_value = "test";
-      for (int i = 0; i < 10; i++) {
-        publisher->publish(message);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      }
-    });
+               auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
+               auto publisher =
+               publisher_node->create_publisher<test_msgs::msg::Primitives>("test_topic");
+               auto message = get_messages_primitives()[0];
+               message->string_value = "test";
+               for (int i = 0; i < 10; i++) {
+                 publisher->publish(message);
+                 std::this_thread::sleep_for(std::chrono::milliseconds(200));
+               }
+             });
   }
 
   std::future<std::vector<std::string>> subscribe_and_wait_for_one_test_message()
