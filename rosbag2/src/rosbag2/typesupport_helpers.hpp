@@ -18,7 +18,7 @@
 #include <string>
 #include <utility>
 
-#include "rosidl_generator_c/message_type_support_struct.h"
+#include "rosidl_generator_cpp/message_type_support_decl.hpp"
 
 namespace rosbag2
 {
