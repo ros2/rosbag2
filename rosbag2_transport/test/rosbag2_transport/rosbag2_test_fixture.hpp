@@ -35,6 +35,9 @@
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/writer.hpp"
+
+#include "mock_sequential_reader.hpp"
+#include "mock_writer.hpp"
 #include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -52,100 +55,9 @@ class Rosbag2TestFixture : public Test
 {
 public:
   Rosbag2TestFixture()
-  : storage_options_(), play_options_()
-  {
-    storage_options_.storage_id = "sqlite3";
-    storage_options_.uri = temporary_dir_path_ +
-      separator() +
-      std::string(UnitTest::GetInstance()->current_test_info()->name()) +
-      ".db3";
-    std::cout << "Database name: " << storage_options_.uri << std::endl;
-
-    play_options_.read_ahead_queue_size = 1000;
-  }
-
-  ~Rosbag2TestFixture() override
-  {
-#ifdef _WIN32
-    DeleteFileA(storage_options_.uri.c_str());
-#else
-    // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
-    // the ful directory can be deleted in remove_temporary_dir()
-    remove(storage_options_.uri.c_str());
-#endif
-  }
-
-  static void SetUpTestCase()
-  {
-    char template_char[] = "tmp_test_dir.XXXXXX";
-#ifdef _WIN32
-    char temp_path[255];
-    GetTempPathA(255, temp_path);
-    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
-    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
-    _mkdir(temporary_dir_path_.c_str());
-#else
-    char * dir_name = mkdtemp(template_char);
-    temporary_dir_path_ = dir_name;
-#endif
-  }
-
-  static void TearDownTestCase()
-  {
-    remove_temporary_dir();
-  }
-
-  static void remove_temporary_dir()
-  {
-#ifdef _WIN32
-    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
-    // need the Windows line in the fixture destructor anymore.
-    RemoveDirectoryA(temporary_dir_path_.c_str());
-#else
-    remove(temporary_dir_path_.c_str());
-#endif
-  }
-
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>>
-  get_messages(const std::string & db_name)
-  {
-    std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> table_msgs;
-    rosbag2::SequentialReader reader(db_name, storage_options_.storage_id);
-
-    while (reader.has_next()) {
-      table_msgs.push_back(reader.read_next());
-    }
-
-    return table_msgs;
-  }
-
-  void write_messages(
-    const std::string & db_name,
-    const std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> & messages,
-    const std::map<std::string, std::string> & topics_and_types)
-  {
-    rosbag2::Writer writer(db_name, storage_options_.storage_id);
-    for (const auto & topic_and_type : topics_and_types) {
-      writer.create_topic({topic_and_type.first, topic_and_type.second});
-    }
-
-    for (const auto & msg : messages) {
-      writer.write(msg);
-    }
-  }
-
-  template<typename MessageT>
-  std::shared_ptr<rosbag2::SerializedBagMessage> serialize_message(
-    const std::string & topic, typename MessageT::_data_type message)
-  {
-    auto msg = std::make_shared<MessageT>();
-    msg->data = message;
-    auto bag_msg = std::make_shared<rosbag2::SerializedBagMessage>();
-    bag_msg->serialized_data = memory_management_.serialize_message(msg);
-    bag_msg->topic_name = topic;
-
-    return bag_msg;
-  }
+  : storage_options_({"uri", "storage_id"}), play_options_({1000}),
+    reader_(std::make_shared<MockSequentialReader>()),
+    writer_(std::make_shared<MockWriter>()) {}
 
   template<typename MessageT>
   std::shared_ptr<rosbag2::SerializedBagMessage> serialize_test_message(
@@ -158,12 +70,13 @@ public:
     return bag_msg;
   }
 
-  static std::string temporary_dir_path_;
   test_helpers::TestMemoryManagement memory_management_;
+
   rosbag2_transport::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
-};
 
-std::string Rosbag2TestFixture::temporary_dir_path_ = "";  // NOLINT
+  std::shared_ptr<MockSequentialReader> reader_;
+  std::shared_ptr<MockWriter> writer_;
+};
 
 #endif  // ROSBAG2_TRANSPORT__ROSBAG2_TEST_FIXTURE_HPP_

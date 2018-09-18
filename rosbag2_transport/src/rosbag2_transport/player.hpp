@@ -38,7 +38,7 @@ class Rosbag2Node;
 class Player
 {
 public:
-  explicit Player(std::unique_ptr<rosbag2::SequentialReader> reader);
+  explicit Player(std::shared_ptr<rosbag2::SequentialReader> reader);
 
   void play(const PlayOptions & options);
 
@@ -52,7 +52,7 @@ private:
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
 
-  std::unique_ptr<rosbag2::SequentialReader> reader_;
+  std::shared_ptr<rosbag2::SequentialReader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> node_;

@@ -17,14 +17,12 @@
 
 #include <string>
 
+#include "rosbag2/storage_options.hpp"
+
 namespace rosbag2_transport
 {
-struct StorageOptions
-{
-public:
-  std::string uri;
-  std::string storage_id;
-};
+
+using StorageOptions = rosbag2::StorageOptions;
 
 }  // namespace rosbag2_transport
 

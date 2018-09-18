@@ -40,6 +40,15 @@
 namespace rosbag2_transport
 {
 
+Rosbag2Transport::Rosbag2Transport()
+: reader_(std::make_shared<rosbag2::SequentialReader>()),
+  writer_(std::make_shared<rosbag2::Writer>())
+{}
+
+Rosbag2Transport::Rosbag2Transport(
+  std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer)
+: reader_(std::move(reader)), writer_(std::move(writer)) {}
+
 void Rosbag2Transport::init()
 {
   rclcpp::init(0, nullptr);
@@ -53,7 +62,7 @@ void Rosbag2Transport::shutdown()
 void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  rosbag2::Writer writer(storage_options.uri, storage_options.storage_id);
+  writer_->open(storage_options);
 
   auto node = std::make_shared<Rosbag2Node>("rosbag2");
 
@@ -69,13 +78,10 @@ void Rosbag2Transport::record(
     auto topic_name = topic_and_type.first;
     auto topic_type = topic_and_type.second;
 
-    std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      writer, node, topic_name, topic_type);
-
+    auto subscription = create_subscription(node, topic_name, topic_type);
     if (subscription) {
       subscriptions_.push_back(subscription);
-
-      writer.create_topic({topic_name, topic_type});
+      writer_->create_topic({topic_name, topic_type});
     }
   }
 
@@ -92,14 +98,13 @@ void Rosbag2Transport::record(
 
 std::shared_ptr<GenericSubscription>
 Rosbag2Transport::create_subscription(
-  rosbag2::Writer & writer,
   std::shared_ptr<Rosbag2Node> & node,
   const std::string & topic_name, const std::string & topic_type) const
 {
   auto subscription = node->create_generic_subscription(
     topic_name,
     topic_type,
-    [&writer, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
+    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
       bag_message->serialized_data = message;
       bag_message->topic_name = topic_name;
@@ -111,7 +116,7 @@ Rosbag2Transport::create_subscription(
       }
       bag_message->time_stamp = time_stamp;
 
-      writer.write(bag_message);
+      writer_->write(bag_message);
     });
   return subscription;
 }
@@ -119,10 +124,9 @@ Rosbag2Transport::create_subscription(
 void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  auto reader = std::make_unique<rosbag2::SequentialReader>(
-    storage_options.uri, storage_options.storage_id);
+  reader_->open(storage_options);
 
-  Player player(std::move(reader));
+  Player player(reader_);
   player.play(play_options);
 }
 

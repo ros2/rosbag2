@@ -112,7 +112,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
   complex_message2->string_values = {{"Complex Hello4", "Complex Hello5", "Complex Hello6"}};
   complex_message2->bool_values = {{false, false, true}};
 
-  auto topic_types = std::map<std::string, std::string>{
+  auto topic_types = std::vector<rosbag2::TopicWithType>{
     {"topic1", "test_msgs/Primitives"},
     {"topic2", "test_msgs/StaticArrayPrimitives"},
   };
@@ -125,7 +125,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
     serialize_test_message("topic2", complex_message2),
     serialize_test_message("topic2", complex_message2)};
 
-  write_messages(storage_options_.uri, messages, topic_types);
+  reader_->prepare(messages, topic_types);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
@@ -134,19 +134,18 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
     launch_subscriber<test_msgs::msg::StaticArrayPrimitives>(2, "topic2");
   wait_for_subscribers(2);
 
-  Rosbag2Transport rosbag2_transport;
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   auto replayed_test_primitives = primitive_subscriber_future.get();
   ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_primitives[0]->string_value, Eq("Hello World 1"));
-  EXPECT_THAT(replayed_test_primitives[1]->string_value, Eq("Hello World 2"));
+  EXPECT_THAT(replayed_test_primitives[0]->string_value, Eq(primitive_message1->string_value));
+  EXPECT_THAT(replayed_test_primitives[1]->string_value, Eq(primitive_message2->string_value));
+
   auto replayed_test_arrays = static_array_subscriber_future.get();
   ASSERT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_arrays[0]->bool_values, ElementsAre(true, false, true));
-  EXPECT_THAT(replayed_test_arrays[0]->string_values,
-    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3"));
-  EXPECT_THAT(replayed_test_arrays[1]->bool_values, ElementsAre(false, false, true));
-  EXPECT_THAT(replayed_test_arrays[1]->string_values,
-    ElementsAre("Complex Hello4", "Complex Hello5", "Complex Hello6"));
+  EXPECT_THAT(replayed_test_arrays[0]->bool_values, Eq(complex_message1->bool_values));
+  EXPECT_THAT(replayed_test_arrays[0]->string_values, Eq(complex_message1->string_values));
+  EXPECT_THAT(replayed_test_arrays[1]->bool_values, Eq(complex_message2->bool_values));
+  EXPECT_THAT(replayed_test_arrays[1]->string_values, Eq(complex_message2->string_values));
 }

@@ -34,7 +34,7 @@
 namespace rosbag2_transport
 {
 
-Player::Player(std::unique_ptr<rosbag2::SequentialReader> reader)
+Player::Player(std::shared_ptr<rosbag2::SequentialReader> reader)
 : reader_(std::move(reader)), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 

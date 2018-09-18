@@ -39,6 +39,15 @@ class Player;
 class Rosbag2Transport
 {
 public:
+  /// Default constructor
+  ROSBAG2_TRANSPORT_PUBLIC
+  Rosbag2Transport();
+
+  /// Constructor for testing, allows to set the reader and writer to use
+  ROSBAG2_TRANSPORT_PUBLIC
+  Rosbag2Transport(
+    std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer);
+
   ROSBAG2_TRANSPORT_PUBLIC
   void init();
 
@@ -67,9 +76,11 @@ public:
 private:
   std::shared_ptr<rosbag2_transport::GenericSubscription>
   create_subscription(
-    rosbag2::Writer & writer,
     std::shared_ptr<Rosbag2Node> & node,
     const std::string & topic_name, const std::string & topic_type) const;
+
+  std::shared_ptr<rosbag2::SequentialReader> reader_;
+  std::shared_ptr<rosbag2::Writer> writer_;
 
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
 };

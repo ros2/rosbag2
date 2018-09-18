@@ -26,7 +26,6 @@
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 
@@ -40,7 +39,7 @@ TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
   primitive_message2->string_value = "Hello World 2";
 
   auto message_time_difference = std::chrono::seconds(1);
-  auto topics_and_types = std::map<std::string, std::string>{{"topic1", "test_msgs/Primitives"}};
+  auto topics_and_types = std::vector<rosbag2::TopicWithType>{{"topic1", "test_msgs/Primitives"}};
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", primitive_message1),
     serialize_test_message("topic1", primitive_message2)};
@@ -48,13 +47,14 @@ TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
   messages[0]->time_stamp = 100;
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
-  write_messages(storage_options_.uri, messages, topics_and_types);
+
+  reader_->prepare(messages, topics_and_types);
 
   // We can only assert indirectly that the relative times are respected when playing a bag. So
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport;
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
