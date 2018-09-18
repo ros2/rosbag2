@@ -26,6 +26,10 @@
 #ifdef _WIN32
 # include <direct.h>
 # include <Windows.h>
+#else
+# include <unistd.h>
+# include <sys/types.h>
+# include <dirent.h>
 #endif
 
 #include "test_msgs/msg/primitives.hpp"
@@ -78,14 +82,14 @@ public:
 
   static void TearDownTestCase()
   {
-    remove_temporary_dir();
+    remove_directory_recursively(temporary_dir_path_);
   }
 
-  static void remove_temporary_dir()
+  static void remove_directory_recursively(const std::string & directory_path)
   {
 #ifdef _WIN32
     // We need a string of type PCZZTSTR, which is a double null terminated char ptr
-    size_t length = strlen(temporary_dir_path_.c_str());
+    size_t length = strlen(directory_path.c_str());
     TCHAR * temp_dir = new TCHAR[length + 2];
     memcpy(temp_dir, temporary_dir_path_.c_str(), length);
     temp_dir[length] = 0;
@@ -102,9 +106,24 @@ public:
     file_options.hNameMappings = nullptr;
 
     SHFileOperation(&file_options);
-    delete temp_dir;
+    delete[] temp_dir;
 #else
-    remove_all(temporary_dir_path_.c_str());
+    DIR * dir = opendir(directory_path.c_str());
+    if (!dir) {
+      return;
+    }
+    struct dirent * directory_entry;
+    while ((directory_entry = readdir(dir)) != nullptr) {
+      // Make sure to not call ".." or "." entries in directory (might delete everything)
+      if (strcmp(directory_entry->d_name, ".") != 0 && strcmp(directory_entry->d_name, "..") != 0) {
+        if (directory_entry->d_type == DT_DIR) {
+          remove_directory_recursively(directory_path + "/" + directory_entry->d_name);
+        }
+        remove((directory_path + "/" + directory_entry->d_name).c_str());
+      }
+    }
+    closedir(dir);
+    remove(temporary_dir_path_.c_str());
 #endif
   }
 
