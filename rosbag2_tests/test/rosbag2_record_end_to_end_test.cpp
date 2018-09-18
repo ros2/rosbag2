@@ -58,13 +58,6 @@ public:
 
   ~EndToEndTestFixture() override
   {
-#ifdef _WIN32
-    DeleteFileA(database_name_.c_str());
-#else
-    // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
-    // the ful directory can be deleted in remove_temporary_dir()
-    remove(database_name_.c_str());
-#endif
     rclcpp::shutdown();
   }
 
@@ -91,11 +84,27 @@ public:
   static void remove_temporary_dir()
   {
 #ifdef _WIN32
-    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
-    // need the Windows line in the fixture destructor anymore.
-    RemoveDirectoryA(temporary_dir_path_.c_str());
+    // We need a string of type PCZZTSTR, which is a double null terminated char ptr
+    size_t length = strlen(temporary_dir_path_.c_str());
+    TCHAR * temp_dir = new TCHAR[length + 2];
+    memcpy(temp_dir, temporary_dir_path_.c_str(), length);
+    temp_dir[length] = 0;
+    temp_dir[length + 1] = 0;  // double null terminated
+
+    SHFILEOPSTRUCT file_options;
+    file_options.hwnd = nullptr;
+    file_options.wFunc = FO_DELETE;  // delete (recursively)
+    file_options.pFrom = temp_dir;
+    file_options.pTo = nullptr;
+    file_options.fFlags = FOF_NOCONFIRMATION | FOF_SILENT;  // do not prompt user
+    file_options.fAnyOperationsAborted = FALSE;
+    file_options.lpszProgressTitle = nullptr;
+    file_options.hNameMappings = nullptr;
+
+    SHFileOperation(&file_options);
+    delete temp_dir;
 #else
-    remove(temporary_dir_path_.c_str());
+    remove_all(temporary_dir_path_.c_str());
 #endif
   }
 
