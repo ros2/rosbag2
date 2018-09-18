@@ -28,10 +28,10 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   static const char * kwlist[] = {"uri", "storage_id", "all", "topics", nullptr};
 
-  char * uri;
-  char * storage_id;
-  bool all;
-  PyObject * topics;
+  char * uri = nullptr;
+  char * storage_id = nullptr;
+  bool all = false;
+  PyObject * topics = nullptr;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|bO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
@@ -45,15 +45,17 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   storage_options.storage_id = std::string(storage_id);
   record_options.all = all;
 
-  PyObject * topic_iterator = PyObject_GetIter(topics);
-  if (topic_iterator != nullptr) {
-    PyObject * topic;
-    while ((topic = PyIter_Next(topic_iterator))) {
-      record_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
+  if (!all) {
+    PyObject * topic_iterator = PyObject_GetIter(topics);
+    if (topic_iterator != nullptr) {
+      PyObject * topic;
+      while ((topic = PyIter_Next(topic_iterator))) {
+        record_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
 
-      Py_DECREF(topic);
+        Py_DECREF(topic);
+      }
+      Py_DECREF(topic_iterator);
     }
-    Py_DECREF(topic_iterator);
   }
 
   rosbag2_transport::Rosbag2Transport transport;
