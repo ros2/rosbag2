@@ -125,7 +125,7 @@ public:
       chdir(temporary_dir_path_.c_str());
       system("ros2 bag record -a");
     } else {
-      std::this_thread::sleep_for(3s);  // we must wait for rosbag2 to start.
+      std::this_thread::sleep_for(1s);  // we must wait for rosbag2 to start.
     }
     return process_id;
 #endif
@@ -145,25 +145,28 @@ public:
 #endif
   }
 
-  std::future<void> publish_test_message()
+  auto create_publisher()
   {
-    return async(
-      std::launch::async, [this]() {
-        std::string topic_name = "/test_topic";
-        auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
-        auto publisher =
-        publisher_node->create_publisher<test_msgs::msg::Primitives>(topic_name);
-        auto message = get_messages_primitives()[0];
-        message->string_value = "test";
+    std::string topic_name = "/test_topic";
+    auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
+    auto publisher =
+      publisher_node->create_publisher<test_msgs::msg::Primitives>(topic_name);
+    auto message = get_messages_primitives()[0];
+    message->string_value = "test";
 
-        rosbag2_storage_plugins::SqliteWrapper
-        db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-        while (rclcpp::ok() && count_stored_messages(db, topic_name) < 3) {
-          publisher->publish(message);
-          // rate limiting
-          std::this_thread::sleep_for(50ms);
-        }
-      });
+    // We need to publish one message to set up the topic for discovery
+    publisher->publish(message);
+
+    return [this, publisher, topic_name, message]() {
+             rosbag2_storage_plugins::SqliteWrapper
+               db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+             while (rclcpp::ok() && count_stored_messages(db, topic_name) < 3) {
+               publisher->publish(message);
+               // rate limiting
+               std::cout << "publishing" << std::endl;
+               std::this_thread::sleep_for(50ms);
+             }
+           };
   }
 
   std::future<std::vector<std::string>> subscribe_and_wait_for_one_test_message()
@@ -245,8 +248,11 @@ public:
 std::string EndToEndTestFixture::temporary_dir_path_ = "";  // NOLINT
 
 TEST_F(EndToEndTestFixture, record_end_to_end_test) {
+  auto publishing_lambda = create_publisher();
+
   auto id = record_all_topics();
-  publish_test_message().get();
+
+  std::async(std::launch::async, publishing_lambda).get();
 
   stop_recording(id);
 
