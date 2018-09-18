@@ -14,8 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <atomic>
-#include <iostream>
 #include <memory>
 #include <future>
 #include <string>
@@ -143,8 +141,16 @@ public:
     memcpy(command_char, command.c_str(), length + 1);
 
     CreateProcess(
-      nullptr, command_char, nullptr, nullptr, false, 0, nullptr,
-      temporary_dir_path_.c_str(), &start_up_info, &process_info);
+      nullptr,
+      command_char,
+      nullptr,
+      nullptr,
+      false,
+      0,
+      nullptr,
+      temporary_dir_path_.c_str(),
+      &start_up_info,
+      &process_info);
 
     AssignProcessToJobObject(h_job, process_info.hProcess);
     CloseHandle(process_info.hProcess);
@@ -185,40 +191,6 @@ public:
 #else
     kill(-bag_handle_, SIGTERM);
 #endif
-  }
-
-  void play_bag()
-  {
-#ifdef _WIN32
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr,
-      temporary_dir_path_.c_str(),
-      &start_up_info, &process_info);
-#else
-    chdir(temporary_dir_path_.c_str());
-    system("ros2 bag play test.bag");
-#endif
-  }
-
-  std::future<std::vector<std::string>> subscribe_and_wait_for_one_test_message()
-  {
-    return async(
-      std::launch::async, []() -> std::vector<std::string> {
-        std::vector<std::string> messages;
-        int counter = 0;
-        auto subscriber_node = std::make_shared<rclcpp::Node>("subscriber_node");
-        auto subscription = subscriber_node->create_subscription<test_msgs::msg::Primitives>(
-          "test_topic",
-          [&messages, &counter](test_msgs::msg::Primitives::SharedPtr msg) {
-            messages.push_back(msg->string_value);
-            counter++;
-          });
-        while (counter < 1) {
-          rclcpp::spin_some(subscriber_node);
-        }
-        return messages;
-      });
   }
 
   template<class T>

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_tests)
 
+add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -34,6 +36,18 @@ if(BUILD_TESTING)
     ENV ROS_DOMAIN_ID=42) # make sure this test does not interfer with transport tests
   if(TARGET rosbag2_record_end_to_end_test)
     ament_target_dependencies(rosbag2_record_end_to_end_test
+      rclcpp
+      rosbag2_storage
+      rosbag2_storage_default_plugins
+      test_msgs)
+  endif()
+
+  ament_add_gmock(rosbag2_play_end_to_end_test
+    test/rosbag2_play_end_to_end_test.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ENV ROS_DOMAIN_ID=42) # make sure this test does not interfer with transport tests
+  if(TARGET rosbag2_play_end_to_end_test)
+    ament_target_dependencies(rosbag2_play_end_to_end_test
       rclcpp
       rosbag2_storage
       rosbag2_storage_default_plugins
