@@ -45,7 +45,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   storage_options.storage_id = std::string(storage_id);
   record_options.all = all;
 
-  if (!all) {
+  if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
     if (topic_iterator != nullptr) {
       PyObject * topic;
