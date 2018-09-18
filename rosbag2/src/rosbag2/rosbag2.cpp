@@ -85,9 +85,15 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
 void Rosbag2::record(const std::string & file_name)
 {
   auto topics_and_types = node_->get_all_topics_with_types();
-  std::vector<std::string> topic_names(topics_and_types.size());
+  std::vector<std::string> topic_names;
+  topic_names.reserve(topics_and_types.size());
   for (const auto & topic_and_type : topics_and_types) {
     topic_names.push_back(topic_and_type.first);
+  }
+
+  if (topic_names.empty()) {
+    ROSBAG2_LOG_ERROR("no topics found to record");
+    return;
   }
 
   record(file_name, topic_names);

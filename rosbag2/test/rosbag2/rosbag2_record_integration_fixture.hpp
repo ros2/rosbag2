@@ -66,7 +66,8 @@ public:
     future_ = std::async(
       std::launch::async, [this]() {
         rosbag2::Rosbag2 rosbag2;
-        rosbag2.record(database_name_, {});
+        std::this_thread::sleep_for(2s);
+        rosbag2.record(database_name_);
       });
   }
 
