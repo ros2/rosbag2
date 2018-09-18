@@ -75,8 +75,6 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
-
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("Stored message");
 }
 
 bool SqliteStorage::has_next()
