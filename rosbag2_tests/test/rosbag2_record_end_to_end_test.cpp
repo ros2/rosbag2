@@ -127,7 +127,7 @@ public:
 #endif
   }
 
-  ProcessHandle start_recording(const std::string & command)
+  void start_recording(const std::string & command)
   {
 #ifdef _WIN32
     auto h_job = CreateJobObject(nullptr, nullptr);
@@ -145,7 +145,7 @@ public:
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
     wait_for_db();
-    return h_job;
+    bag_handle_ = h_job;
 #else
     auto process_id = fork();
     if (process_id == 0) {
@@ -154,8 +154,8 @@ public:
       system(command.c_str());
     } else {
       wait_for_db();
+      bag_handle_ = process_id;
     }
-    return process_id;
 #endif
   }
 
@@ -173,12 +173,12 @@ public:
     }
   }
 
-  void stop_recording(ProcessHandle process_handle)
+  void stop_recording()
   {
 #ifdef _WIN32
-    CloseHandle(process_handle);
+    CloseHandle(bag_handle_);
 #else
-    kill(-process_handle, SIGTERM);
+    kill(-bag_handle_, SIGTERM);
 #endif
   }
 
@@ -218,8 +218,7 @@ public:
 
   template<class T>
   auto create_publisher(
-    const std::string & topic_name, std::shared_ptr<T> message,
-    size_t expected_messages)
+    const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages = 0)
   {
     static int counter = 0;
     auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
@@ -324,6 +323,7 @@ public:
     return message;
   }
 
+  ProcessHandle bag_handle_;
   std::string database_name_;
   static std::string temporary_dir_path_;
 };
@@ -338,13 +338,13 @@ TEST_F(EndToEndTestFixture, record_end_to_end_test) {
 
   auto wrong_message = get_messages_primitives()[0];
   wrong_message->string_value = "wrong_content";
-  auto wrong_publisher = create_publisher("/wrong_topic", wrong_message, 0);
+  auto wrong_publisher = create_publisher("/wrong_topic", wrong_message);
 
-  auto record_process = start_recording("ros2 bag record /test_topic");
+  start_recording("ros2 bag record /test_topic");
 
   run_publishers({test_publisher, wrong_publisher});
 
-  stop_recording(record_process);
+  stop_recording();
 
   auto recorded_messages = get_messages();
   ASSERT_THAT(recorded_messages, SizeIs(Ge(expected_test_messages)));
