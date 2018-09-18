@@ -116,7 +116,7 @@ public:
     AssignProcessToJobObject(h_job, process_info.hProcess);
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
-    std::this_thread::sleep_for(3s);  // we must wait for rosbag2 to start.
+    wait_for_db();
     return h_job;
 #else
     auto process_id = fork();
@@ -125,7 +125,7 @@ public:
       chdir(temporary_dir_path_.c_str());
       system("ros2 bag record -a");
     } else {
-      std::this_thread::sleep_for(1s);  // we must wait for rosbag2 to start.
+      wait_for_db();
     }
     return process_id;
 #endif
@@ -143,6 +143,20 @@ public:
     chdir(temporary_dir_path_.c_str());
     system("ros2 bag play test.bag");
 #endif
+  }
+
+  void wait_for_db()
+  {
+    while (true) {
+      try {
+        std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
+        rosbag2_storage_plugins::SqliteWrapper
+          db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+        return;
+      } catch (const rosbag2_storage_plugins::SqliteException & ex) {
+        (void) ex;  // still waiting
+      }
+    }
   }
 
   auto create_publisher()
@@ -163,7 +177,6 @@ public:
              while (rclcpp::ok() && count_stored_messages(db, topic_name) < 3) {
                publisher->publish(message);
                // rate limiting
-               std::cout << "publishing" << std::endl;
                std::this_thread::sleep_for(50ms);
              }
            };
@@ -230,6 +243,21 @@ public:
     }
 
     return table_msgs;
+  }
+
+  template<typename T>
+  inline
+  std::shared_ptr<T> deserialize_message(std::shared_ptr<rmw_serialized_message_t> serialized_msg)
+  {
+    auto message = std::make_shared<T>();
+    auto error = rmw_deserialize(
+      serialized_msg.get(),
+      get_message_typesupport(message),
+      message.get());
+    if (error != RCL_RET_OK) {
+      throw std::runtime_error("Failed to deserialize");
+    }
+    return message;
   }
 
   void stop_recording(ProcessHandle process_handle)
