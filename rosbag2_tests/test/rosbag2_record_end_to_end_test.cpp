@@ -127,7 +127,7 @@ public:
 #endif
   }
 
-  ProcessHandle record_all_topics()
+  ProcessHandle start_recording(const std::string & command)
   {
 #ifdef _WIN32
     auto h_job = CreateJobObject(nullptr, nullptr);
@@ -137,7 +137,7 @@ public:
 
     STARTUPINFO start_up_info{};
     PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag record -a", nullptr, nullptr, false, 0, nullptr,
+    CreateProcess(nullptr, command.c_str(), nullptr, nullptr, false, 0, nullptr,
       temporary_dir_path_.c_str(),
       &start_up_info, &process_info);
 
@@ -151,25 +151,11 @@ public:
     if (process_id == 0) {
       setpgid(getpid(), getpid());
       chdir(temporary_dir_path_.c_str());
-      system("ros2 bag record -a");
+      system(command.c_str());
     } else {
       wait_for_db();
     }
     return process_id;
-#endif
-  }
-
-  void play_bag()
-  {
-#ifdef _WIN32
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr,
-      temporary_dir_path_.c_str(),
-      &start_up_info, &process_info);
-#else
-    chdir(temporary_dir_path_.c_str());
-    system("ros2 bag play test.bag");
 #endif
   }
 
@@ -187,27 +173,27 @@ public:
     }
   }
 
-  auto create_publisher()
+  void stop_recording(ProcessHandle process_handle)
   {
-    std::string topic_name = "/test_topic";
-    auto publisher_node = std::make_shared<rclcpp::Node>("publisher_node");
-    auto publisher =
-      publisher_node->create_publisher<test_msgs::msg::Primitives>(topic_name);
-    auto message = get_messages_primitives()[0];
-    message->string_value = "test";
+#ifdef _WIN32
+    CloseHandle(process_handle);
+#else
+    kill(-process_handle, SIGTERM);
+#endif
+  }
 
-    // We need to publish one message to set up the topic for discovery
-    publisher->publish(message);
-
-    return [this, publisher, topic_name, message]() {
-             rosbag2_storage_plugins::SqliteWrapper
-               db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-             while (rclcpp::ok() && count_stored_messages(db, topic_name) < 3) {
-               publisher->publish(message);
-               // rate limiting
-               std::this_thread::sleep_for(50ms);
-             }
-           };
+  void play_bag()
+  {
+#ifdef _WIN32
+    STARTUPINFO start_up_info{};
+    PROCESS_INFORMATION process_info{};
+    CreateProcess(nullptr, "ros2 bag play test.bag", nullptr, nullptr, false, 0, nullptr,
+      temporary_dir_path_.c_str(),
+      &start_up_info, &process_info);
+#else
+    chdir(temporary_dir_path_.c_str());
+    system("ros2 bag play test.bag");
+#endif
   }
 
   std::future<std::vector<std::string>> subscribe_and_wait_for_one_test_message()
@@ -228,6 +214,38 @@ public:
         }
         return messages;
       });
+  }
+
+  template<class T>
+  auto create_publisher(
+    const std::string & topic_name, std::shared_ptr<T> message,
+    size_t expected_messages)
+  {
+    static int counter = 0;
+    auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
+    auto publisher = publisher_node->create_publisher<T>(topic_name);
+
+    // We need to publish one message to set up the topic for discovery
+    publisher->publish(message);
+
+    return [this, publisher, topic_name, message, expected_messages]() {
+             rosbag2_storage_plugins::SqliteWrapper
+               db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+             if (expected_messages != 0) {
+               while (rclcpp::ok() && count_stored_messages(db, topic_name) < expected_messages) {
+                 publisher->publish(message);
+                 // rate limiting
+                 std::this_thread::sleep_for(50ms);
+               }
+             } else {
+               // Just publish a few messages - they should never be stored
+               publisher->publish(message);
+               std::this_thread::sleep_for(50ms);
+               publisher->publish(message);
+               std::this_thread::sleep_for(50ms);
+               publisher->publish(message);
+             }
+           };
   }
 
   size_t
@@ -260,6 +278,17 @@ public:
     return static_cast<size_t>(std::get<0>(message_count));
   }
 
+  void run_publishers(std::initializer_list<std::function<void()>> publishers)
+  {
+    std::vector<std::future<void>> futures;
+    for (const auto & publisher : publishers) {
+      futures.push_back(std::async(std::launch::async, publisher));
+    }
+    for (auto & publisher_future : futures) {
+      publisher_future.get();
+    }
+  }
+
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> get_messages()
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
@@ -271,6 +300,13 @@ public:
     }
 
     return table_msgs;
+  }
+
+  template<typename T>
+  inline
+  const rosidl_message_type_support_t * get_message_typesupport(std::shared_ptr<T>)
+  {
+    return rosidl_typesupport_cpp::get_message_type_support_handle<T>();
   }
 
   template<typename T>
@@ -288,15 +324,6 @@ public:
     return message;
   }
 
-  void stop_recording(ProcessHandle process_handle)
-  {
-#ifdef _WIN32
-    CloseHandle(process_handle);
-#else
-    kill(-process_handle, SIGTERM);
-#endif
-  }
-
   std::string database_name_;
   static std::string temporary_dir_path_;
 };
@@ -304,15 +331,27 @@ public:
 std::string EndToEndTestFixture::temporary_dir_path_ = "";  // NOLINT
 
 TEST_F(EndToEndTestFixture, record_end_to_end_test) {
-  auto publishing_lambda = create_publisher();
+  auto message = get_messages_primitives()[0];
+  message->string_value = "test";
+  size_t expected_test_messages = 3;
+  auto test_publisher = create_publisher("/test_topic", message, expected_test_messages);
 
-  auto id = record_all_topics();
+  auto wrong_message = get_messages_primitives()[0];
+  wrong_message->string_value = "wrong_content";
+  auto wrong_publisher = create_publisher("/wrong_topic", wrong_message, 0);
 
-  std::async(std::launch::async, publishing_lambda).get();
+  auto record_process = start_recording("ros2 bag record /test_topic");
 
-  stop_recording(id);
+  run_publishers({test_publisher, wrong_publisher});
+
+  stop_recording(record_process);
 
   auto recorded_messages = get_messages();
-  ASSERT_THAT(recorded_messages, SizeIs(Ge(3u)));
-  EXPECT_THAT(recorded_messages[0]->topic_name, Eq("/test_topic"));
+  ASSERT_THAT(recorded_messages, SizeIs(Ge(expected_test_messages)));
+  for (const auto & recorded_message : recorded_messages) {
+    EXPECT_THAT(recorded_message->topic_name, Eq("/test_topic"));
+    auto deserialized_message = deserialize_message<test_msgs::msg::Primitives>(
+      recorded_message->serialized_data);
+    EXPECT_THAT(deserialized_message->string_value, Eq("test"));
+  }
 }
