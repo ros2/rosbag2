@@ -40,7 +40,7 @@ class Player
 public:
   explicit Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage);
 
-  void play(Rosbag2PlayOptions options);
+  void play(const Rosbag2PlayOptions & options);
 
 private:
   void load_storage_content(const Rosbag2PlayOptions & options);
@@ -49,6 +49,8 @@ private:
     const Rosbag2PlayOptions & options, const std::future<void> & storage_loading_future) const;
   void play_messages_from_queue(std::future<void> storage_loading_future);
   void prepare_publishers();
+
+  static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;

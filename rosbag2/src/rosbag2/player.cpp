@@ -46,7 +46,7 @@ bool is_pending(const std::future<void> & future)
   return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
 }
 
-void Player::play(Rosbag2PlayOptions options)
+void Player::play(const Rosbag2PlayOptions & options)
 {
   prepare_publishers();
 
@@ -81,8 +81,9 @@ void Player::load_storage_content(const Rosbag2PlayOptions & options)
     message_queue_.enqueue(message);
   }
 
-  auto queue_lower_boundary = options.queue_buffer_length_ - options.queue_buffer_length_ / 10;
-  auto queue_upper_boundary = options.queue_buffer_length_;
+  auto queue_lower_boundary =
+    static_cast<size_t>(options.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
+  auto queue_upper_boundary = options.read_ahead_queue_size;
 
   while (storage_->has_next()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {

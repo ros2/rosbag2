@@ -52,7 +52,7 @@ public:
     std::cout << "Database name: " << database_name_ << std::endl;
 
     options_ = rosbag2::Rosbag2PlayOptions();
-    options_.queue_buffer_length_ = 1000;
+    options_.read_ahead_queue_size = 1000;
   }
 
   ~Rosbag2TestFixture() override
@@ -116,23 +116,23 @@ public:
 
   void write_messages(
     const std::string & db_name,
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
-    std::map<std::string, std::string> topics_and_types)
+    const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & messages,
+    const std::map<std::string, std::string> & topics_and_types)
   {
     rosbag2_storage::StorageFactory factory;
     auto storage = factory.open_read_write(db_name, "sqlite3");
-    for (auto topic_and_type : topics_and_types) {
+    for (const auto & topic_and_type : topics_and_types) {
       storage->create_topic(topic_and_type.first, topic_and_type.second);
     }
 
-    for (auto msg : messages) {
+    for (const auto & msg : messages) {
       storage->write(msg);
     }
   }
 
   template<typename MessageT>
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_message(
-    std::string topic, typename MessageT::_data_type message)
+    const std::string & topic, typename MessageT::_data_type message)
   {
     auto msg = std::make_shared<MessageT>();
     msg->data = message;

@@ -61,8 +61,8 @@ public:
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(topic_name, type,
         [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
-          auto string_message = memory_management_
-          .deserialize_message<test_msgs::msg::Primitives>(message);
+          auto string_message =
+          memory_management_.deserialize_message<test_msgs::msg::Primitives>(message);
           messages.push_back(string_message->string_value);
           counter++;
         });

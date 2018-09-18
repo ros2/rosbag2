@@ -60,7 +60,7 @@ public:
    * \param file_name Name of the bagfile to replay
    */
   ROSBAG2_PUBLIC
-  void play(const std::string & file_name, Rosbag2PlayOptions options);
+  void play(const std::string & file_name, const Rosbag2PlayOptions & options);
 
 private:
   std::shared_ptr<rosbag2::GenericSubscription>

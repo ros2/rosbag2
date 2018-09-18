@@ -109,7 +109,7 @@ Rosbag2::create_subscription(
   return subscription;
 }
 
-void Rosbag2::play(const std::string & file_name, Rosbag2PlayOptions options)
+void Rosbag2::play(const std::string & file_name, const Rosbag2PlayOptions & options)
 {
   auto storage = factory_.open_read_only(file_name, "sqlite3");
   if (!storage) {

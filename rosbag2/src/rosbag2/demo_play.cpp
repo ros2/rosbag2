@@ -23,7 +23,7 @@ int main(int argc, const char ** argv)
   rclcpp::init(argc, argv);
 
   auto options = rosbag2::Rosbag2PlayOptions();
-  options.queue_buffer_length_ = 1000;
+  options.read_ahead_queue_size = 1000;
 
   rosbag2::Rosbag2 rosbag2;
   rosbag2.play("test.bag", options);

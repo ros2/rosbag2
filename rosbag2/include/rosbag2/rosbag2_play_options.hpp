@@ -15,14 +15,14 @@
 #ifndef ROSBAG2__ROSBAG2_PLAY_OPTIONS_HPP_
 #define ROSBAG2__ROSBAG2_PLAY_OPTIONS_HPP_
 
-#include <cstdint>
+#include <cstddef>
 
 namespace rosbag2
 {
 struct Rosbag2PlayOptions
 {
 public:
-  uint64_t queue_buffer_length_;
+  size_t read_ahead_queue_size;
 };
 
 }  // namespace rosbag2
