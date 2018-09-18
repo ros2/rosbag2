@@ -30,7 +30,8 @@ if(BUILD_TESTING)
 
   ament_add_gmock(rosbag2_record_end_to_end_test
     test/rosbag2_record_end_to_end_test.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ENV "ROS_DOMAIN_ID=42") # make sure this test does not interfer with transport tests
   if(TARGET rosbag2_record_end_to_end_test)
     ament_target_dependencies(rosbag2_record_end_to_end_test
       rclcpp
