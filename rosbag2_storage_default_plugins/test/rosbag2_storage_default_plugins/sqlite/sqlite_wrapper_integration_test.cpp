@@ -40,7 +40,8 @@ public:
 TEST_F(SqliteWrapperTestFixture, querying_empty_adhoc_results_gives_empty_query_result) {
   auto result = db_.prepare_statement("SELECT 1 WHERE 1=2;")->execute_query<int>();
 
-  ASSERT_THAT(result.begin(), Eq(result.end()));
+  // ASSERT_THAT cannot be used as the iterators can only be moved and not copied.
+  ASSERT_TRUE(result.begin() == result.end());
 }
 
 TEST_F(SqliteWrapperTestFixture, querying_adhoc_results_with_normal_data_gives_content) {
@@ -93,6 +94,7 @@ TEST_F(SqliteWrapperTestFixture, all_result_rows_are_available) {
   ASSERT_THAT(row_value, Eq(4));
 
   query->reset();
+  result = query->execute_query<int>();
 
   // iterator access
   row_value = 1;
@@ -102,6 +104,16 @@ TEST_F(SqliteWrapperTestFixture, all_result_rows_are_available) {
     ++row_iterator;
   }
   ASSERT_THAT(row_value, Eq(4));
+}
+
+TEST_F(SqliteWrapperTestFixture, only_a_single_iterator_is_allowed_per_result) {
+  auto result = db_.prepare_statement("SELECT 1;")->execute_query<int>();
+
+  auto row = result.begin();
+
+  EXPECT_THROW(result.get_single_line(), rosbag2_storage_plugins::SqliteException);
+  EXPECT_THROW(result.begin(), rosbag2_storage_plugins::SqliteException);
+  EXPECT_NO_THROW(result.end());
 }
 
 TEST_F(SqliteWrapperTestFixture, ros_specific_types_are_supported_for_reading_and_writing) {

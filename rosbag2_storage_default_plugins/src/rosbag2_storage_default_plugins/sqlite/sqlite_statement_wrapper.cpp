@@ -51,14 +51,14 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
 std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
 {
   int return_code = sqlite3_step(statement_);
-  if (!isQueryOk(return_code)) {
+  if (!is_query_ok(return_code)) {
     throw SqliteException("Error processing SQLite statement. Return code: " +
             std::to_string(return_code));
   }
   return reset();
 }
 
-bool SqliteStatementWrapper::isQueryOk(int return_code)
+bool SqliteStatementWrapper::is_query_ok(int return_code)
 {
   return return_code == SQLITE_OK || return_code == SQLITE_DONE || return_code == SQLITE_ROW;
 }

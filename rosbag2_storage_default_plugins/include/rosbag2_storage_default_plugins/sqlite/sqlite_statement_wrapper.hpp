@@ -69,6 +69,12 @@ public:
         }
       }
 
+      Iterator(const Iterator &) = delete;
+      Iterator & operator=(const Iterator &) = delete;
+
+      Iterator(Iterator &&) = default;
+      Iterator & operator=(Iterator &&) = default;
+
       Iterator & operator++()
       {
         if (next_row_idx_ != POSITION_END) {
@@ -102,11 +108,11 @@ public:
         return row;
       }
 
-      bool operator==(Iterator other) const
+      bool operator==(const Iterator & other) const
       {
         return statement_ == other.statement_ && next_row_idx_ == other.next_row_idx_;
       }
-      bool operator!=(Iterator other) const
+      bool operator!=(const Iterator & other) const
       {
         return !(*this == other);
       }
@@ -140,11 +146,12 @@ private:
     };
 
     explicit QueryResult(std::shared_ptr<SqliteStatementWrapper> statement)
-    : statement_(statement)
+    : statement_(statement), is_already_accessed_(false)
     {}
 
     Iterator begin()
     {
+      try_access_data();
       return Iterator(statement_, 0);
     }
     Iterator end()
@@ -158,7 +165,16 @@ private:
     }
 
 private:
+    void try_access_data()
+    {
+      if (is_already_accessed_) {
+        throw SqliteException("Only one iterator per query result is supported!");
+      }
+      is_already_accessed_ = true;
+    }
+
     std::shared_ptr<SqliteStatementWrapper> statement_;
+    bool is_already_accessed_;
   };
 
   std::shared_ptr<SqliteStatementWrapper> execute_and_reset();
@@ -177,7 +193,7 @@ private:
 
 private:
   bool step();
-  bool isQueryOk(int return_code);
+  bool is_query_ok(int return_code);
 
   void obtain_column_value(size_t index, int & value) const;
   void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;
