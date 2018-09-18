@@ -39,6 +39,9 @@
 
 namespace rosbag2
 {
+Rosbag2::Rosbag2()
+: node_(std::make_shared<Rosbag2Node>("rosbag2"))
+{}
 
 void Rosbag2::record(const std::string & file_name, const std::vector<std::string> & topic_names)
 {
@@ -48,12 +51,7 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  auto node = std::make_shared<Rosbag2Node>("rosbag2");
-
-  auto topics_and_types = topic_names.empty() ?
-    node->get_all_topics_with_types() :
-    node->get_topics_with_types(topic_names);
-
+  auto topics_and_types = node_->get_topics_with_types(topic_names);
   if (topics_and_types.empty()) {
     throw std::runtime_error("No topics found. Abort");
   }
@@ -63,7 +61,7 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
     auto topic_type = topic_and_type.second;
 
     std::shared_ptr<GenericSubscription> subscription = create_subscription(
-      storage, node, topic_name, topic_type);
+      storage, topic_name, topic_type);
 
     if (subscription) {
       subscriptions_.push_back(subscription);
@@ -78,18 +76,29 @@ void Rosbag2::record(const std::string & file_name, const std::vector<std::strin
 
   ROSBAG2_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
-    rclcpp::spin(node);
+    rclcpp::spin(node_);
   }
   subscriptions_.clear();
+}
+
+
+void Rosbag2::record(const std::string & file_name)
+{
+  auto topics_and_types = node_->get_all_topics_with_types();
+  std::vector<std::string> topic_names(topics_and_types.size());
+  for (const auto & topic_and_type : topics_and_types) {
+    topic_names.push_back(topic_and_type.first);
+  }
+
+  record(file_name, topic_names);
 }
 
 std::shared_ptr<GenericSubscription>
 Rosbag2::create_subscription(
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
-  std::shared_ptr<Rosbag2Node> & node,
   const std::string & topic_name, const std::string & topic_type) const
 {
-  auto subscription = node->create_generic_subscription(
+  auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
     [storage, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
@@ -116,8 +125,8 @@ void Rosbag2::play(const std::string & file_name, const Rosbag2PlayOptions & opt
     throw std::runtime_error("Could not open storage: " + file_name);
   }
 
-  player_ = std::make_shared<Player>(storage);
-  player_->play(options);
+  Player player(storage);
+  player.play(options);
 }
 
 }  // namespace rosbag2
