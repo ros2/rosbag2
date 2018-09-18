@@ -18,32 +18,44 @@
 #include <string>
 #include <vector>
 
-rosbag2::SequentialReader::SequentialReader(
-  const std::string & uri,
-  const std::string & storage_identifier)
+namespace rosbag2
 {
-  reader_ = factory_.open_read_only(uri, storage_identifier);
-  if (!reader_) {
+
+SequentialReader::~SequentialReader()
+{
+  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+}
+
+void SequentialReader::open(const StorageOptions & options)
+{
+  storage_ = factory_.open_read_only(options.uri, options.storage_id);
+  if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 }
 
-rosbag2::SequentialReader::~SequentialReader()
+bool SequentialReader::has_next()
 {
-  reader_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  if (storage_) {
+    return storage_->has_next();
+  }
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-bool rosbag2::SequentialReader::has_next()
+std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
 {
-  return reader_->has_next();
+  if (storage_) {
+    return storage_->read_next();
+  }
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<rosbag2::SerializedBagMessage> rosbag2::SequentialReader::read_next()
+std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
 {
-  return reader_->read_next();
+  if (storage_) {
+    return storage_->get_all_topics_and_types();
+  }
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<rosbag2::TopicWithType> rosbag2::SequentialReader::get_all_topics_and_types()
-{
-  return reader_->get_all_topics_and_types();
-}
+}  // namespace rosbag2

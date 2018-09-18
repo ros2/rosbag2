@@ -17,30 +17,40 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2/storage_options.hpp"
+
 namespace rosbag2
 {
 
-Writer::Writer(const std::string & uri, const std::string & storage_identifier)
+Writer::~Writer()
 {
-  writer_ = factory_.open_read_write(uri, storage_identifier);
-  if (!writer_) {
+  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+}
+
+void Writer::open(const StorageOptions & options)
+{
+  storage_ = factory_.open_read_write(options.uri, options.storage_id);
+  if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 }
 
-Writer::~Writer()
-{
-  writer_.reset();  // Necessary to ensure that the writer is destroyed before the factory
-}
-
 void Writer::create_topic(const TopicWithType & topic_with_type)
 {
-  writer_->create_topic(topic_with_type);
+  if (!storage_) {
+    throw std::runtime_error("Bag is not open. Call open() before writing.");
+  }
+
+  storage_->create_topic(topic_with_type);
 }
 
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 {
-  writer_->write(message);
+  if (!storage_) {
+    throw std::runtime_error("Bag is not open. Call open() before writing.");
+  }
+
+  storage_->write(message);
 }
 
 }  // namespace rosbag2
