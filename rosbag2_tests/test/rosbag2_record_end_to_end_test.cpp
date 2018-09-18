@@ -137,9 +137,14 @@ public:
 
     STARTUPINFO start_up_info{};
     PROCESS_INFORMATION process_info{};
-    CreateProcess(nullptr, command.c_str(), nullptr, nullptr, false, 0, nullptr,
-      temporary_dir_path_.c_str(),
-      &start_up_info, &process_info);
+
+    size_t length = strlen(command.c_str());
+    TCHAR * command_char = new TCHAR[length + 1];
+    memcpy(command_char, command.c_str(), length + 1);
+
+    CreateProcess(
+      nullptr, command_char, nullptr, nullptr, false, 0, nullptr,
+      temporary_dir_path_.c_str(), &start_up_info, &process_info);
 
     AssignProcessToJobObject(h_job, process_info.hProcess);
     CloseHandle(process_info.hProcess);
