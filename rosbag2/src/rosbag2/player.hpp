@@ -44,16 +44,17 @@ public:
 
 private:
   void load_storage_content(const Rosbag2PlayOptions & options);
+  bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
-  void wait_for_filled_queue(
-    const Rosbag2PlayOptions & options, const std::future<void> & storage_loading_future) const;
-  void play_messages_from_queue(std::future<void> storage_loading_future);
+  void wait_for_filled_queue(const Rosbag2PlayOptions & options) const;
+  void play_messages_from_queue();
   void prepare_publishers();
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
+  mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> node_;
   std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };

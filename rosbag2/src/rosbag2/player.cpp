@@ -41,29 +41,33 @@ Player::Player(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInte
 : storage_(storage), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
-bool is_pending(const std::future<void> & future)
+bool Player::is_storage_completely_loaded() const
 {
-  return !(future.valid() && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready);
+  if (storage_loading_future_.valid() &&
+    storage_loading_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+  {
+    storage_loading_future_.get();
+  }
+  return !storage_loading_future_.valid();
 }
 
 void Player::play(const Rosbag2PlayOptions & options)
 {
   prepare_publishers();
 
-  auto storage_loading_future = std::async(std::launch::async,
+  storage_loading_future_ = std::async(std::launch::async,
       [this, options]() {load_storage_content(options);});
 
-  wait_for_filled_queue(options, storage_loading_future);
+  wait_for_filled_queue(options);
 
-  play_messages_from_queue(std::move(storage_loading_future));
+  play_messages_from_queue();
 }
 
-void Player::wait_for_filled_queue(
-  const Rosbag2PlayOptions & options, const std::future<void> & storage_loading_future) const
+void Player::wait_for_filled_queue(const Rosbag2PlayOptions & options) const
 {
   while (
-    message_queue_.size_approx() < options.queue_buffer_length_ &&
-    is_pending(storage_loading_future))
+    message_queue_.size_approx() < options.read_ahead_queue_size &&
+    !is_storage_completely_loaded())
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -109,18 +113,17 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::play_messages_from_queue(std::future<void> storage_loading_future)
+void Player::play_messages_from_queue()
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  while (message_queue_.size_approx() != 0 || is_pending(storage_loading_future)) {
+  while (message_queue_.size_approx() != 0 || !is_storage_completely_loaded()) {
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message)) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
   }
-  storage_loading_future.get();
 }
 
 void Player::prepare_publishers()
