@@ -155,6 +155,7 @@ public:
     AssignProcessToJobObject(h_job, process_info.hProcess);
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
+    delete[] command_char;
     wait_for_db();
     bag_handle_ = h_job;
 #else
