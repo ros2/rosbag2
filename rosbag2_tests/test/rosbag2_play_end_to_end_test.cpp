@@ -67,7 +67,7 @@ public:
       false,
       0,
       nullptr,
-      database_path.c_str(),
+      database_path_.c_str(),
       &start_up_info,
       &process_info);
     CloseHandle(process_info.hProcess);
