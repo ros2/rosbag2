@@ -14,6 +14,7 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -174,8 +175,43 @@ bool SqliteStorage::database_exists(const std::string & uri)
   return database.good();
 }
 
-}  // namespace rosbag2_storage_plugins
+rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
+{
+  rosbag2_storage::BagMetadata metadata = rosbag2_storage::BagMetadata();
+  metadata.storage_identifier = "sqlite3";
+  metadata.encoding = "cdr";  // TODO(greimela) Determine encoding
+  metadata.relative_file_paths = {bag_info_.uri};
+  metadata.combined_bag_size = 0;
+  metadata.message_count = 0;
+  metadata.topics_with_message_count = {};
 
+  auto statement = database_->prepare_statement(
+    "SELECT name, type, COUNT(messages.id), MIN(messages.timestamp), MAX(messages.timestamp) "
+    "FROM messages JOIN topics on topics.id = messages.topic_id "
+    "GROUP BY topics.name;");
+  auto query_results = statement->execute_query<
+    std::string, std::string, int, rcutils_time_point_value_t, rcutils_time_point_value_t>();
+
+  rcutils_time_point_value_t min_time = INT64_MAX;
+  rcutils_time_point_value_t max_time = 0;
+  for (auto result : query_results) {
+    metadata.topics_with_message_count.push_back(
+      {
+        {std::get<0>(result), std::get<1>(result)},
+        static_cast<size_t>(std::get<2>(result))
+      });
+    metadata.message_count += std::get<2>(result);
+    min_time = std::get<3>(result) < min_time ? std::get<3>(result) : min_time;
+    max_time = std::get<4>(result) > max_time ? std::get<4>(result) : max_time;
+  }
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
+  metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
+
+  return metadata;
+}
+
+}  // namespace rosbag2_storage_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage,

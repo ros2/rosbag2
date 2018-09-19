@@ -75,4 +75,10 @@ std::vector<rosbag2_storage::TopicWithType> TestPlugin::get_all_topics_and_types
   return std::vector<rosbag2_storage::TopicWithType>();
 }
 
+rosbag2_storage::BagMetadata TestPlugin::get_metadata()
+{
+  std::cout << "\nreturning metadata\n";
+  return rosbag2_storage::BagMetadata();
+}
+
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

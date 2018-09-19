@@ -62,6 +62,8 @@ public:
 
   rosbag2_storage::BagInfo info() override;
 
+  rosbag2_storage::BagMetadata get_metadata() override;
+
 private:
   void initialize();
   void prepare_for_writing();
