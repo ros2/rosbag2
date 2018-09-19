@@ -34,13 +34,13 @@ namespace rosbag2
 class SequentialReader
 {
 public:
-  /// Destructor
   ROSBAG2_PUBLIC
   virtual ~SequentialReader();
 
   /**
    * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
-   * opened.
+   * opened. This must be called before any other function is used. The rosbag is
+   * automatically closed on destruction.
    *
    * \param options Options to configure the storage
    */
@@ -51,7 +51,7 @@ public:
    * Ask whether the underlying bagfile contains at least one more message.
    *
    * \return true if storage contains at least one more message
-   * \throws runtime_error Reader is not open.
+   * \throws runtime_error if the Reader is not open.
    */
   ROSBAG2_PUBLIC
   virtual bool has_next();
@@ -63,7 +63,7 @@ public:
    * if (writer.has_next()) message = writer.read_next();
    *
    * \return next message in serialized form
-   * \throws runtime_error Reader is not open.
+   * \throws runtime_error if the Reader is not open.
    */
   ROSBAG2_PUBLIC
   virtual std::shared_ptr<SerializedBagMessage> read_next();
@@ -72,7 +72,7 @@ public:
    * Ask bagfile for all topics (including their type identifier) that were recorded.
    *
    * \return vector of topics with topic name and type as std::string
-   * \throws runtime_error Reader is not open.
+   * \throws runtime_error if the Reader is not open.
    */
   ROSBAG2_PUBLIC
   virtual std::vector<TopicWithType> get_all_topics_and_types();

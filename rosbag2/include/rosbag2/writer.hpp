@@ -39,6 +39,7 @@ public:
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * This must be called before any other function is used.
    *
    * \param options Options to configure the storage
    */
@@ -50,7 +51,7 @@ public:
    * a message which is passed to write(...).
    *
    * \param topic_with_type name and type identifier of topic to be created
-   * \throws runtime_error Writer is not open.
+   * \throws runtime_error if the Writer is not open.
    */
   ROSBAG2_PUBLIC
   virtual void create_topic(const TopicWithType & topic_with_type);
@@ -59,7 +60,7 @@ public:
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
    *
    * \param message to be written to the bagfile
-   * \throws runtime_error Writer is not open.
+   * \throws runtime_error if the Writer is not open.
    */
   ROSBAG2_PUBLIC
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
