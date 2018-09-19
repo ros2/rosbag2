@@ -81,12 +81,6 @@ public:
 #endif
   }
 
-  void push_back(const std::string & topic_name, std::shared_ptr<rcutils_char_array_t> message)
-  {
-    std::lock_guard<std::mutex> lock(write_mutex_);
-    subscribed_messages_[topic_name].push_back(message);
-  }
-
   template<typename T>
   auto create_subscriber(const std::string & topic_name, size_t expected_number_of_messages)
   {
@@ -101,7 +95,7 @@ public:
     return subscriber_node_->create_subscription<T>(
       topic_name,
       [this, topic_name](std::shared_ptr<rcutils_char_array_t> msg) {
-        this->push_back(topic_name, msg);
+        subscribed_messages_[topic_name].push_back(msg);
       }, qos_profile);
   }
 
@@ -147,7 +141,6 @@ public:
     return false;
   }
 
-  std::mutex write_mutex_;
   std::map<std::string, std::vector<std::shared_ptr<rcutils_char_array_t>>> subscribed_messages_;
   std::map<std::string, size_t> expected_topics_with_size_;
   std::string database_path_;
@@ -159,11 +152,11 @@ TEST_F(EndToEndTestFixture, play_end_to_end_test) {
     "/array_topic", 2);
   auto primitive_subscription = create_subscriber<test_msgs::msg::Primitives>("/test_topic", 3);
 
-  auto future = start_spinning_subscriptions();
+  auto await_received_messages = start_spinning_subscriptions();
 
   play_bag("ros2 bag play test.bag");
 
-  future.get();
+  await_received_messages.get();
 
   auto primitive_messages = subscribed_messages_["/test_topic"];
   auto array_messages = subscribed_messages_["/array_topic"];
