@@ -25,16 +25,23 @@
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2
 {
 /**
  * The SequentialReader allows opening and reading messages of a bag. Messages will be read
  * sequentially according to timestamp.
  */
-class SequentialReader
+class ROSBAG2_PUBLIC SequentialReader
 {
 public:
-  ROSBAG2_PUBLIC
   virtual ~SequentialReader();
 
   /**
@@ -44,7 +51,6 @@ public:
    *
    * \param options Options to configure the storage
    */
-  ROSBAG2_PUBLIC
   virtual void open(const StorageOptions & options);
 
   /**
@@ -53,7 +59,6 @@ public:
    * \return true if storage contains at least one more message
    * \throws runtime_error if the Reader is not open.
    */
-  ROSBAG2_PUBLIC
   virtual bool has_next();
 
   /**
@@ -65,7 +70,6 @@ public:
    * \return next message in serialized form
    * \throws runtime_error if the Reader is not open.
    */
-  ROSBAG2_PUBLIC
   virtual std::shared_ptr<SerializedBagMessage> read_next();
 
   /**
@@ -74,7 +78,6 @@ public:
    * \return vector of topics with topic name and type as std::string
    * \throws runtime_error if the Reader is not open.
    */
-  ROSBAG2_PUBLIC
   virtual std::vector<TopicWithType> get_all_topics_and_types();
 
 private:

@@ -24,6 +24,14 @@
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2
 {
 
@@ -31,10 +39,9 @@ namespace rosbag2
  * The Writer allows writing messages to a new bag. For every topic, information about its type
  * needs to be added before writing the first message.
  */
-class Writer
+class ROSBAG2_PUBLIC Writer
 {
 public:
-  ROSBAG2_PUBLIC
   virtual ~Writer();
 
   /**
@@ -43,7 +50,6 @@ public:
    *
    * \param options Options to configure the storage
    */
-  ROSBAG2_PUBLIC
   virtual void open(const StorageOptions & options);
 
   /**
@@ -53,7 +59,6 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  ROSBAG2_PUBLIC
   virtual void create_topic(const TopicWithType & topic_with_type);
 
   /**
@@ -62,7 +67,6 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  ROSBAG2_PUBLIC
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
 
 private:
