@@ -41,8 +41,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
   auto message_time_difference = std::chrono::seconds(1);
   auto topics_and_types = std::vector<rosbag2::TopicWithType>{{"topic1", "test_msgs/Primitives"}};
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
-  {serialize_test_message("topic1", primitive_message1),
-    serialize_test_message("topic1", primitive_message2)};
+  {serialize_test_message("topic1", 0, primitive_message1),
+    serialize_test_message("topic1", 0, primitive_message2)};
 
   messages[0]->time_stamp = 100;
   messages[1]->time_stamp =

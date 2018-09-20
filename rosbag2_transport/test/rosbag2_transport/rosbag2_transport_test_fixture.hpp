@@ -60,11 +60,15 @@ public:
     writer_(std::make_shared<MockWriter>()) {}
 
   template<typename MessageT>
-  std::shared_ptr<rosbag2::SerializedBagMessage> serialize_test_message(
-    const std::string & topic, std::shared_ptr<MessageT> message)
+  std::shared_ptr<rosbag2::SerializedBagMessage>
+  serialize_test_message(
+    const std::string & topic,
+    int64_t milliseconds,
+    std::shared_ptr<MessageT> message)
   {
     auto bag_msg = std::make_shared<rosbag2::SerializedBagMessage>();
     bag_msg->serialized_data = memory_management_.serialize_message(message);
+    bag_msg->time_stamp = milliseconds * 1000000;
     bag_msg->topic_name = topic;
 
     return bag_msg;
