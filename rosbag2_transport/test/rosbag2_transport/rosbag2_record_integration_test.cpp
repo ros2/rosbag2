@@ -34,19 +34,18 @@ TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_top
   array_message->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
   array_message->bool_values = {{true, false, true}};
   std::string array_topic = "/array_topic";
-  auto serialized_array_bag_message = serialize_test_message(array_topic, array_message);
 
   auto string_message = get_messages_primitives()[0];
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
-  auto serialized_string_bag_message = serialize_test_message(string_topic, string_message);
 
-  start_publishing<test_msgs::msg::Primitives>(serialized_string_bag_message, string_topic, 2);
-  start_publishing<test_msgs::msg::StaticArrayPrimitives>(
-    serialized_array_bag_message, array_topic, 2);
+  auto primitive_publisher = create_publisher<test_msgs::msg::Primitives>(
+    string_topic, string_message, 2);
+  auto array_publisher = create_publisher<test_msgs::msg::StaticArrayPrimitives>(
+    array_topic, array_message, 2);
 
   start_recording({string_topic, array_topic});
-  wait_for_publishers_to_stop();
+  run_publishers({primitive_publisher, array_publisher});
   stop_recording();
 
   auto recorded_messages = writer_->get_messages();

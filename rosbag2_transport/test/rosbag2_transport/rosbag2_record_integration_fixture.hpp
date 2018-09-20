@@ -63,7 +63,6 @@ public:
     future_ = std::async(
       std::launch::async, [this]() {
         rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
-        std::this_thread::sleep_for(2s);
         rosbag2_transport.record(storage_options_, {true, {}});
       });
   }
@@ -74,31 +73,35 @@ public:
     future_.get();
   }
 
-  void wait_for_publishers_to_stop()
+  template<class T>
+  auto create_publisher(
+    const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages)
   {
-    for (auto & future : publisher_futures_) {
-      future.get();
-    }
+    static int counter = 0;
+    auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
+    auto publisher = publisher_node->create_publisher<T>(topic_name);
+
+    // We need to publish one message to set up the topic for discovery
+    publisher->publish(message);
+
+    return [this, publisher, topic_name, message, expected_messages]() {
+             while (rclcpp::ok() && writer_->messages_per_topic()[topic_name] < expected_messages) {
+               publisher->publish(message);
+               // rate limiting
+               std::this_thread::sleep_for(50ms);
+             }
+           };
   }
 
-  template<typename MessageT>
-  void start_publishing(
-    std::shared_ptr<rosbag2::SerializedBagMessage> message,
-    const std::string & topic_name, size_t number_expected_messages)
+  void run_publishers(std::initializer_list<std::function<void()>> publishers)
   {
-    publisher_futures_.push_back(std::async(
-        std::launch::async, [this, message, topic_name, number_expected_messages]() {
-          auto publisher = publisher_node_->create_publisher<MessageT>(topic_name);
-
-          while (rclcpp::ok() &&
-          writer_->messages_per_topic()[topic_name] < number_expected_messages)
-          {
-            publisher->publish(message->serialized_data.get());
-            // rate limiting
-            std::this_thread::sleep_for(50ms);
-          }
-        }
-    ));
+    std::vector<std::future<void>> futures;
+    for (const auto & publisher : publishers) {
+      futures.push_back(std::async(std::launch::async, publisher));
+    }
+    for (auto & publisher_future : futures) {
+      publisher_future.get();
+    }
   }
 
   template<typename MessageT>
