@@ -32,6 +32,7 @@
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
@@ -44,7 +45,7 @@ public:
   {
     database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
     rclcpp::init(0, nullptr);
-    subscriber_node_ = std::make_shared<rclcpp::Node>("subscriber_node");
+    sub_ = std::make_unique<test_helpers::SubscriptionManager>();
   }
 
   ~EndToEndTestFixture() override
@@ -52,7 +53,7 @@ public:
     rclcpp::shutdown();
   }
 
-  void play_bag(const std::string & command)
+  void execute(const std::string & command)
   {
 #ifdef _WIN32
     size_t length = strlen(command.c_str());
@@ -81,103 +82,33 @@ public:
 #endif
   }
 
-  template<typename T>
-  auto create_subscriber(const std::string & topic_name, size_t expected_number_of_messages)
-  {
-    rmw_qos_profile_t qos_profile;
-    qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
-    qos_profile.depth = 4;
-    qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT;
-    qos_profile.durability = RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT;
-    qos_profile.avoid_ros_namespace_conventions = false;
-    expected_topics_with_size_[topic_name] = expected_number_of_messages;
-
-    return subscriber_node_->create_subscription<T>(
-      topic_name,
-      [this, topic_name](std::shared_ptr<rcutils_char_array_t> msg) {
-        subscribed_messages_[topic_name].push_back(msg);
-      }, qos_profile);
-  }
-
-  template<typename T>
-  inline
-  const rosidl_message_type_support_t * get_message_typesupport(std::shared_ptr<T>)
-  {
-    return rosidl_typesupport_cpp::get_message_type_support_handle<T>();
-  }
-
-  template<typename T>
-  inline
-  std::shared_ptr<T> deserialize_message(std::shared_ptr<rmw_serialized_message_t> serialized_msg)
-  {
-    auto message = std::make_shared<T>();
-    auto error = rmw_deserialize(
-      serialized_msg.get(),
-      get_message_typesupport(message),
-      message.get());
-    if (error != RCL_RET_OK) {
-      throw std::runtime_error("Failed to deserialize");
-    }
-    return message;
-  }
-
-  std::future<void> start_spinning_subscriptions()
-  {
-    return async(
-      std::launch::async, [this]() {
-        while (continue_spinning(expected_topics_with_size_)) {
-          rclcpp::spin_some(subscriber_node_);
-        }
-      });
-  }
-
-  bool continue_spinning(std::map<std::string, size_t> expected_topics_with_sizes)
-  {
-    for (const auto & topic_expected : expected_topics_with_sizes) {
-      if (subscribed_messages_[topic_expected.first].size() < topic_expected.second) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  std::map<std::string, std::vector<std::shared_ptr<rcutils_char_array_t>>> subscribed_messages_;
-  std::map<std::string, size_t> expected_topics_with_size_;
   std::string database_path_;
-  rclcpp::Node::SharedPtr subscriber_node_;
+  std::unique_ptr<test_helpers::SubscriptionManager> sub_;
 };
 
 TEST_F(EndToEndTestFixture, play_end_to_end_test) {
-  auto array_subscription = create_subscriber<test_msgs::msg::StaticArrayPrimitives>(
-    "/array_topic", 2);
-  auto primitive_subscription = create_subscriber<test_msgs::msg::Primitives>("/test_topic", 3);
+  sub_->add_subscription<test_msgs::msg::StaticArrayPrimitives>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::Primitives>("/test_topic", 3);
 
-  auto await_received_messages = start_spinning_subscriptions();
+  auto subscription_future = sub_->spin_subscriptions();
 
-  play_bag("ros2 bag play test.bag");
+  execute("ros2 bag play test.bag");
 
-  await_received_messages.get();
+  subscription_future.get();
 
-  auto primitive_messages = subscribed_messages_["/test_topic"];
-  auto array_messages = subscribed_messages_["/array_topic"];
+  auto primitive_messages = sub_->get_received_messages<test_msgs::msg::Primitives>("/test_topic");
+  auto array_messages = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
+    "/array_topic");
 
   ASSERT_THAT(primitive_messages, SizeIs(Ge(3u)));
-  EXPECT_THAT(deserialize_message<test_msgs::msg::Primitives>(primitive_messages[0])->string_value,
-    Eq("test"));
-  EXPECT_THAT(deserialize_message<test_msgs::msg::Primitives>(primitive_messages[1])->string_value,
-    Eq("test"));
-  EXPECT_THAT(deserialize_message<test_msgs::msg::Primitives>(primitive_messages[2])->string_value,
-    Eq("test"));
+  EXPECT_THAT(primitive_messages,
+    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
 
   ASSERT_THAT(array_messages, SizeIs(Ge(2u)));
-  auto first_array_message = deserialize_message<test_msgs::msg::StaticArrayPrimitives>(
-    array_messages[0]);
-  EXPECT_THAT(first_array_message->bool_values, ElementsAre(true, false, true));
-  EXPECT_THAT(first_array_message->string_values,
-    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3"));
-  auto second_array_message = deserialize_message<test_msgs::msg::StaticArrayPrimitives>(
-    array_messages[1]);
-  EXPECT_THAT(second_array_message->bool_values, ElementsAre(true, false, true));
-  EXPECT_THAT(second_array_message->string_values,
-    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3"));
+  EXPECT_THAT(array_messages,
+    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::bool_values,
+    ElementsAre(true, false, true)))));
+  EXPECT_THAT(array_messages,
+    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
+    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }

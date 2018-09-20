@@ -26,14 +26,13 @@
 # include <Windows.h>
 #else
 # include <unistd.h>
-# include <sys/types.h>
-# include <dirent.h>
 #endif
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
@@ -44,7 +43,7 @@ using ProcessHandle = HANDLE;
 using ProcessHandle = int;
 #endif
 
-class EndToEndTestFixture : public Test
+class EndToEndTestFixture : public TemporaryDirectoryFixture
 {
 public:
   EndToEndTestFixture()
@@ -61,68 +60,6 @@ public:
   ~EndToEndTestFixture() override
   {
     rclcpp::shutdown();
-  }
-
-  static void SetUpTestCase()
-  {
-    char template_char[] = "tmp_test_dir.XXXXXX";
-#ifdef _WIN32
-    char temp_path[255];
-    GetTempPathA(255, temp_path);
-    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
-    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
-    _mkdir(temporary_dir_path_.c_str());
-#else
-    char * dir_name = mkdtemp(template_char);
-    temporary_dir_path_ = dir_name;
-#endif
-  }
-
-  static void TearDownTestCase()
-  {
-    remove_directory_recursively(temporary_dir_path_);
-  }
-
-  static void remove_directory_recursively(const std::string & directory_path)
-  {
-#ifdef _WIN32
-    // We need a string of type PCZZTSTR, which is a double null terminated char ptr
-    size_t length = strlen(directory_path.c_str());
-    TCHAR * temp_dir = new TCHAR[length + 2];
-    memcpy(temp_dir, temporary_dir_path_.c_str(), length);
-    temp_dir[length] = 0;
-    temp_dir[length + 1] = 0;  // double null terminated
-
-    SHFILEOPSTRUCT file_options;
-    file_options.hwnd = nullptr;
-    file_options.wFunc = FO_DELETE;  // delete (recursively)
-    file_options.pFrom = temp_dir;
-    file_options.pTo = nullptr;
-    file_options.fFlags = FOF_NOCONFIRMATION | FOF_SILENT;  // do not prompt user
-    file_options.fAnyOperationsAborted = FALSE;
-    file_options.lpszProgressTitle = nullptr;
-    file_options.hNameMappings = nullptr;
-
-    SHFileOperation(&file_options);
-    delete[] temp_dir;
-#else
-    DIR * dir = opendir(directory_path.c_str());
-    if (!dir) {
-      return;
-    }
-    struct dirent * directory_entry;
-    while ((directory_entry = readdir(dir)) != nullptr) {
-      // Make sure to not call ".." or "." entries in directory (might delete everything)
-      if (strcmp(directory_entry->d_name, ".") != 0 && strcmp(directory_entry->d_name, "..") != 0) {
-        if (directory_entry->d_type == DT_DIR) {
-          remove_directory_recursively(directory_path + "/" + directory_entry->d_name);
-        }
-        remove((directory_path + "/" + directory_entry->d_name).c_str());
-      }
-    }
-    closedir(dir);
-    remove(temporary_dir_path_.c_str());
-#endif
   }
 
   void start_recording(const std::string & command)
@@ -303,10 +240,7 @@ public:
 
   ProcessHandle bag_handle_;
   std::string database_name_;
-  static std::string temporary_dir_path_;
 };
-
-std::string EndToEndTestFixture::temporary_dir_path_ = "";  // NOLINT
 
 TEST_F(EndToEndTestFixture, record_end_to_end_test) {
   auto message = get_messages_primitives()[0];
