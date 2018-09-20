@@ -38,12 +38,7 @@ public:
   void write(std::shared_ptr<rosbag2::SerializedBagMessage> message) override
   {
     messages_.push_back(message);
-
-    if (messages_per_topic_.find(message->topic_name) == messages_per_topic_.end()) {
-      messages_per_topic_.emplace(message->topic_name, 1);
-    } else {
-      messages_per_topic_[message->topic_name] += 1;
-    }
+    messages_per_topic_[message->topic_name] += 1;
   }
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> get_messages()
