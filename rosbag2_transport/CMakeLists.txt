@@ -74,7 +74,6 @@ ament_export_dependencies(rosbag2)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -84,8 +83,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_integration_test)
     target_link_libraries(rosbag2_record_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_record_integration_test test_msgs
-      rosbag2_storage_default_plugins)
+    ament_target_dependencies(rosbag2_record_integration_test test_msgs)
   endif()
 
   ament_add_gmock(rosbag2_record_all_integration_test
@@ -94,8 +92,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_record_all_integration_test)
     target_link_libraries(rosbag2_record_all_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_record_all_integration_test test_msgs
-      rosbag2_storage_default_plugins)
+    ament_target_dependencies(rosbag2_record_all_integration_test test_msgs)
   endif()
 
   ament_add_gmock(rosbag2_play_integration_test

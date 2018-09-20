@@ -27,7 +27,6 @@
 #include "test_msgs/message_fixtures.hpp"
 #include "test_memory_management.hpp"
 
-// TODO(Martin-Idel-SI): merge with other write and read tests once signal handling is sorted out
 TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   auto array_message = get_messages_static_array_primitives()[0];
@@ -39,13 +38,11 @@ TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_top
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  auto primitive_publisher = create_publisher<test_msgs::msg::Primitives>(
-    string_topic, string_message, 2);
-  auto array_publisher = create_publisher<test_msgs::msg::StaticArrayPrimitives>(
-    array_topic, array_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::Primitives>(string_topic, string_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(array_topic, array_message, 2);
 
-  start_recording_all_topics();
-  run_publishers({primitive_publisher, array_publisher});
+  start_recording({true, {}});
+  run_publishers();
   stop_recording();
 
   auto recorded_messages = writer_->get_messages();
