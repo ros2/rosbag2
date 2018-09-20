@@ -23,7 +23,6 @@
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "test_memory_management.hpp"
 
 namespace test_helpers

@@ -33,6 +33,8 @@
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "temporary_directory_fixture.hpp"
+#include "publisher_manager.hpp"
+#include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
@@ -62,7 +64,7 @@ public:
     rclcpp::shutdown();
   }
 
-  void start_recording(const std::string & command)
+  ProcessHandle start_execution(const std::string & command)
   {
 #ifdef _WIN32
     auto h_job = CreateJobObject(nullptr, nullptr);
@@ -93,18 +95,15 @@ public:
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
     delete[] command_char;
-    wait_for_db();
-    bag_handle_ = h_job;
+    return h_job;
 #else
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
       chdir(temporary_dir_path_.c_str());
       system(command.c_str());
-    } else {
-      wait_for_db();
-      bag_handle_ = process_id;
     }
+    return process_id;
 #endif
   }
 
@@ -122,44 +121,13 @@ public:
     }
   }
 
-  void stop_recording()
+  void stop_execution(ProcessHandle handle)
   {
 #ifdef _WIN32
-    CloseHandle(bag_handle_);
+    CloseHandle(handle);
 #else
-    kill(-bag_handle_, SIGTERM);
+    kill(-handle, SIGTERM);
 #endif
-  }
-
-  template<class T>
-  auto create_publisher(
-    const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages = 0)
-  {
-    static int counter = 0;
-    auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
-    auto publisher = publisher_node->create_publisher<T>(topic_name);
-
-    // We need to publish one message to set up the topic for discovery
-    publisher->publish(message);
-
-    return [this, publisher, topic_name, message, expected_messages]() {
-             rosbag2_storage_plugins::SqliteWrapper
-               db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-             if (expected_messages != 0) {
-               while (rclcpp::ok() && count_stored_messages(db, topic_name) < expected_messages) {
-                 publisher->publish(message);
-                 // rate limiting
-                 std::this_thread::sleep_for(50ms);
-               }
-             } else {
-               // Just publish a few messages - they should never be stored
-               publisher->publish(message);
-               std::this_thread::sleep_for(50ms);
-               publisher->publish(message);
-               std::this_thread::sleep_for(50ms);
-               publisher->publish(message);
-             }
-           };
   }
 
   size_t
@@ -192,15 +160,18 @@ public:
     return static_cast<size_t>(std::get<0>(message_count));
   }
 
-  void run_publishers(std::initializer_list<std::function<void()>> publishers)
+  template<typename MessageT>
+  std::vector<std::shared_ptr<MessageT>> get_messages_for_topic(const std::string & topic)
   {
-    std::vector<std::future<void>> futures;
-    for (const auto & publisher : publishers) {
-      futures.push_back(std::async(std::launch::async, publisher));
+    auto all_messages = get_messages();
+    auto topic_messages = std::vector<std::shared_ptr<MessageT>>();
+    for (const auto & msg : all_messages) {
+      if (msg->topic_name == topic) {
+        topic_messages.push_back(
+          memory_management_.deserialize_message<MessageT>(msg->serialized_data));
+      }
     }
-    for (auto & publisher_future : futures) {
-      publisher_future.get();
-    }
+    return topic_messages;
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> get_messages()
@@ -216,54 +187,37 @@ public:
     return table_msgs;
   }
 
-  template<typename T>
-  inline
-  const rosidl_message_type_support_t * get_message_typesupport(std::shared_ptr<T>)
-  {
-    return rosidl_typesupport_cpp::get_message_type_support_handle<T>();
-  }
-
-  template<typename T>
-  inline
-  std::shared_ptr<T> deserialize_message(std::shared_ptr<rmw_serialized_message_t> serialized_msg)
-  {
-    auto message = std::make_shared<T>();
-    auto error = rmw_deserialize(
-      serialized_msg.get(),
-      get_message_typesupport(message),
-      message.get());
-    if (error != RCL_RET_OK) {
-      throw std::runtime_error("Failed to deserialize");
-    }
-    return message;
-  }
-
-  ProcessHandle bag_handle_;
   std::string database_name_;
+  test_helpers::PublisherManager pub_man_;
+  test_helpers::TestMemoryManagement memory_management_;
 };
 
 TEST_F(EndToEndTestFixture, record_end_to_end_test) {
   auto message = get_messages_primitives()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
-  auto test_publisher = create_publisher("/test_topic", message, expected_test_messages);
+  pub_man_.add_publisher("/test_topic", message, expected_test_messages);
 
   auto wrong_message = get_messages_primitives()[0];
   wrong_message->string_value = "wrong_content";
-  auto wrong_publisher = create_publisher("/wrong_topic", wrong_message);
+  pub_man_.add_publisher("/wrong_topic", wrong_message);
 
-  start_recording("ros2 bag record /test_topic");
+  auto process_handle = start_execution("ros2 bag record /test_topic");
+  wait_for_db();
 
-  run_publishers({test_publisher, wrong_publisher});
+  rosbag2_storage_plugins::SqliteWrapper
+    db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  pub_man_.run_publishers([this, &db](const std::string & topic_name) {
+      return count_stored_messages(db, topic_name);
+    });
 
-  stop_recording();
+  stop_execution(process_handle);
 
-  auto recorded_messages = get_messages();
-  ASSERT_THAT(recorded_messages, SizeIs(Ge(expected_test_messages)));
-  for (const auto & recorded_message : recorded_messages) {
-    EXPECT_THAT(recorded_message->topic_name, Eq("/test_topic"));
-    auto deserialized_message = deserialize_message<test_msgs::msg::Primitives>(
-      recorded_message->serialized_data);
-    EXPECT_THAT(deserialized_message->string_value, Eq("test"));
-  }
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/test_topic");
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
+  EXPECT_THAT(test_topic_messages,
+    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
+
+  auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/wrong_topic");
+  EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }

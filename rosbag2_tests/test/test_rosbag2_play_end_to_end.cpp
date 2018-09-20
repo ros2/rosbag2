@@ -100,11 +100,11 @@ TEST_F(EndToEndTestFixture, play_end_to_end_test) {
   auto array_messages = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
     "/array_topic");
 
-  ASSERT_THAT(primitive_messages, SizeIs(Ge(3u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(primitive_messages,
     Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
 
-  ASSERT_THAT(array_messages, SizeIs(Ge(2u)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
   EXPECT_THAT(array_messages,
     Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::bool_values,
     ElementsAre(true, false, true)))));
