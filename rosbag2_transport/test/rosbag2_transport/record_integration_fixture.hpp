@@ -26,22 +26,22 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
-#include "rosbag2_test_fixture.hpp"
+#include "rosbag2_transport_test_fixture.hpp"
 #include "publisher_manager.hpp"
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-#ifndef ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
-#define ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#ifndef ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_
+#define ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_
 
-class RosBag2RecordIntegrationTestFixture : public Rosbag2TestFixture
+class RecordIntegrationTestFixture : public Rosbag2TransportTestFixture
 {
 public:
-  RosBag2RecordIntegrationTestFixture()
-  : Rosbag2TestFixture()
+  RecordIntegrationTestFixture()
+  : Rosbag2TransportTestFixture()
   {
     rclcpp::init(0, nullptr);
   }
@@ -84,9 +84,9 @@ public:
     return filtered_messages;
   }
 
-  test_helpers::TestMemoryManagement memory_;
+  test_helpers::MemoryManagement memory_;
   test_helpers::PublisherManager pub_man_;
   std::future<void> future_;
 };
 
-#endif  // ROSBAG2_TRANSPORT__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#endif  // ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_

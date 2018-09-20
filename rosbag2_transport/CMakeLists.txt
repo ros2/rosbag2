@@ -77,55 +77,55 @@ if(BUILD_TESTING)
   find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(rosbag2_record_integration_test
-    test/rosbag2_transport/rosbag2_record_integration_test.cpp
-    test/rosbag2_transport/test_memory_management.cpp
+  ament_add_gmock(test_record
+    test/rosbag2_transport/test_record.cpp
+    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_record_integration_test)
-    target_link_libraries(rosbag2_record_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_record_integration_test test_msgs)
+  if(TARGET test_record)
+    target_link_libraries(test_record rosbag2_transport)
+    ament_target_dependencies(test_record test_msgs)
   endif()
 
-  ament_add_gmock(rosbag2_record_all_integration_test
-    test/rosbag2_transport/rosbag2_record_all_integration_test.cpp
-    test/rosbag2_transport/test_memory_management.cpp
+  ament_add_gmock(test_record_all
+    test/rosbag2_transport/test_record_all.cpp
+    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_record_all_integration_test)
-    target_link_libraries(rosbag2_record_all_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_record_all_integration_test test_msgs)
+  if(TARGET test_record_all)
+    target_link_libraries(test_record_all rosbag2_transport)
+    ament_target_dependencies(test_record_all test_msgs)
   endif()
 
-  ament_add_gmock(rosbag2_play_integration_test
-    test/rosbag2_transport/rosbag2_play_integration_test.cpp
-    test/rosbag2_transport/test_memory_management.cpp
+  ament_add_gmock(test_play
+    test/rosbag2_transport/test_play.cpp
+    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_play_integration_test)
-    target_link_libraries(rosbag2_play_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_play_integration_test test_msgs)
+  if(TARGET test_play)
+    target_link_libraries(test_play rosbag2_transport)
+    ament_target_dependencies(test_play test_msgs)
   endif()
 
-  ament_add_gmock(rosbag2_play_timing_integration_test
-    test/rosbag2_transport/rosbag2_play_timing_integration_test.cpp
-    test/rosbag2_transport/test_memory_management.cpp
+  ament_add_gmock(test_play_timing
+    test/rosbag2_transport/test_play_timing.cpp
+    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_play_timing_integration_test)
-    target_link_libraries(rosbag2_play_timing_integration_test rosbag2_transport)
-    ament_target_dependencies(rosbag2_play_timing_integration_test test_msgs)
+  if(TARGET test_play_timing)
+    target_link_libraries(test_play_timing rosbag2_transport)
+    ament_target_dependencies(test_play_timing test_msgs)
   endif()
 
-  ament_add_gmock(rosbag2_rosbag_node_test
-    test/rosbag2_transport/rosbag2_rosbag_node_test.cpp
-    test/rosbag2_transport/test_memory_management.cpp
+  ament_add_gmock(test_rosbag2_node
+    test/rosbag2_transport/test_rosbag2_node.cpp
+    test/rosbag2_transport/memory_management.cpp
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
     src/rosbag2_transport/rosbag2_node.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_rosbag_node_test)
-    target_include_directories(rosbag2_rosbag_node_test
+  if(TARGET test_rosbag2_node)
+    target_include_directories(test_rosbag2_node
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
-    ament_target_dependencies(rosbag2_rosbag_node_test
+    ament_target_dependencies(test_rosbag2_node
       ament_index_cpp
       rosbag2
       rclcpp

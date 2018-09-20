@@ -22,14 +22,14 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_test_fixture.hpp"
+#include "rosbag2_transport_test_fixture.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 
-TEST_F(Rosbag2TestFixture, playing_respects_relative_timing_of_stored_messages)
+TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_messages)
 {
   rclcpp::init(0, nullptr);
   auto primitive_message1 = get_messages_primitives()[0];

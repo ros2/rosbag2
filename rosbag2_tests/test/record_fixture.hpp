@@ -37,7 +37,7 @@
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "temporary_directory_fixture.hpp"
 #include "publisher_manager.hpp"
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
@@ -192,7 +192,7 @@ public:
 
   std::string database_name_;
   test_helpers::PublisherManager pub_man_;
-  test_helpers::TestMemoryManagement memory_management_;
+  test_helpers::MemoryManagement memory_management_;
 };
 
 

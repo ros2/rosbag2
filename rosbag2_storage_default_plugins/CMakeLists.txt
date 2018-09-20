@@ -73,18 +73,18 @@ if(BUILD_TESTING)
     ${pluginlib_LIBRARIES}
   )
 
-  ament_add_gmock(sqlite_wrapper_integration_test
-    test/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper_integration_test.cpp
+  ament_add_gmock(test_sqlite_wrapper
+    test/rosbag2_storage_default_plugins/sqlite/test_sqlite_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET sqlite_wrapper_integration_test)
-    target_link_libraries(sqlite_wrapper_integration_test ${TEST_LINK_LIBRARIES})
+  if(TARGET test_sqlite_wrapper)
+    target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
   endif()
 
-  ament_add_gmock(sqlite_storage_integration_test
-    test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
+  ament_add_gmock(test_sqlite_storage
+    test/rosbag2_storage_default_plugins/sqlite/test_sqlite_storage.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET sqlite_storage_integration_test)
-    target_link_libraries(sqlite_storage_integration_test ${TEST_LINK_LIBRARIES})
+  if(TARGET test_sqlite_storage)
+    target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
   endif()
 endif()
 

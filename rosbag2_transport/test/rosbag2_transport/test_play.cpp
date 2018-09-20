@@ -27,24 +27,24 @@
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-#include "rosbag2_test_fixture.hpp"
+#include "rosbag2_transport_test_fixture.hpp"
 #include "subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-class RosBag2IntegrationTestFixture : public Rosbag2TestFixture
+class RosBag2PlayTestFixture : public Rosbag2TransportTestFixture
 {
 public:
-  RosBag2IntegrationTestFixture()
-  : Rosbag2TestFixture()
+  RosBag2PlayTestFixture()
+  : Rosbag2TransportTestFixture()
   {
     rclcpp::init(0, nullptr);
     sub_ = std::make_shared<test_helpers::SubscriptionManager>();
   }
 
-  ~RosBag2IntegrationTestFixture() override
+  ~RosBag2PlayTestFixture() override
   {
     rclcpp::shutdown();
   }
@@ -52,7 +52,7 @@ public:
   std::shared_ptr<test_helpers::SubscriptionManager> sub_;
 };
 
-TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topics)
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {
   auto primitive_message1 = get_messages_primitives()[0];
   primitive_message1->string_value = "Hello World 1";

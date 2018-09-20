@@ -20,14 +20,14 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_record_integration_fixture.hpp"
+#include "record_integration_fixture.hpp"
 #include "rosbag2/types.hpp"
+#include "memory_management.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "test_memory_management.hpp"
 
-TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
+TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   auto array_message = get_messages_static_array_primitives()[0];
   array_message->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
@@ -38,10 +38,12 @@ TEST_F(RosBag2RecordIntegrationTestFixture, published_messages_from_multiple_top
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  pub_man_.add_publisher<test_msgs::msg::Primitives>(string_topic, string_message, 2);
-  pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(array_topic, array_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::Primitives>(
+    string_topic, string_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(
+    array_topic, array_message, 2);
 
-  start_recording({true, {}});
+  start_recording({false, {string_topic, array_topic}});
   run_publishers();
   stop_recording();
 

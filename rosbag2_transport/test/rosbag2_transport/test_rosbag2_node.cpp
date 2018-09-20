@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
@@ -79,7 +79,7 @@ public:
     return memory_management_.serialize_message(string_message);
   }
 
-  test_helpers::TestMemoryManagement memory_management_;
+  test_helpers::MemoryManagement memory_management_;
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node_;
   rclcpp::Node::SharedPtr publisher_node_;
   std::vector<std::shared_ptr<rclcpp::PublisherBase>> publishers_;

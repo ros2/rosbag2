@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_MEMORY_MANAGEMENT_HPP_
-#define TEST_MEMORY_MANAGEMENT_HPP_
+#ifndef MEMORY_MANAGEMENT_HPP_
+#define MEMORY_MANAGEMENT_HPP_
 
 #include <memory>
 
@@ -21,11 +21,11 @@
 
 namespace test_helpers
 {
-class TestMemoryManagement
+class MemoryManagement
 {
 public:
-  TestMemoryManagement();
-  ~TestMemoryManagement() = default;
+  MemoryManagement();
+  ~MemoryManagement() = default;
 
   template<typename T>
   inline
@@ -73,4 +73,4 @@ private:
 
 }  // namespace test_helpers
 
-#endif  // TEST_MEMORY_MANAGEMENT_HPP_
+#endif  // MEMORY_MANAGEMENT_HPP_

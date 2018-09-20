@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__ROSBAG2_TEST_FIXTURE_HPP_
-#define ROSBAG2_TRANSPORT__ROSBAG2_TEST_FIXTURE_HPP_
+#ifndef ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_
+#define ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_
 
 #include <gtest/gtest.h>
 
@@ -38,7 +38,7 @@
 
 #include "mock_sequential_reader.hpp"
 #include "mock_writer.hpp"
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -51,10 +51,10 @@ inline char separator()
 #endif
 }
 
-class Rosbag2TestFixture : public Test
+class Rosbag2TransportTestFixture : public Test
 {
 public:
-  Rosbag2TestFixture()
+  Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id"}), play_options_({1000}),
     reader_(std::make_shared<MockSequentialReader>()),
     writer_(std::make_shared<MockWriter>()) {}
@@ -70,7 +70,7 @@ public:
     return bag_msg;
   }
 
-  test_helpers::TestMemoryManagement memory_management_;
+  test_helpers::MemoryManagement memory_management_;
 
   rosbag2_transport::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
@@ -79,4 +79,4 @@ public:
   std::shared_ptr<MockWriter> writer_;
 };
 
-#endif  // ROSBAG2_TRANSPORT__ROSBAG2_TEST_FIXTURE_HPP_
+#endif  // ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_

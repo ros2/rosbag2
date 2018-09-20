@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 
+#include <iostream>
 #include <memory>
 #include <string>
-
-#include "rosbag2_transport/logging.hpp"
 
 namespace test_helpers
 {
 
-TestMemoryManagement::TestMemoryManagement()
+MemoryManagement::MemoryManagement()
 {
   rcutils_allocator_ = rcutils_get_default_allocator();
 }
 
 std::shared_ptr<rmw_serialized_message_t>
-TestMemoryManagement::get_initialized_serialized_message(size_t capacity)
+MemoryManagement::get_initialized_serialized_message(size_t capacity)
 {
   auto msg = new rmw_serialized_message_t;
   *msg = rcutils_get_zero_initialized_char_array();
@@ -43,7 +42,7 @@ TestMemoryManagement::get_initialized_serialized_message(size_t capacity)
         int error = rcutils_char_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
-          ROSBAG2_TRANSPORT_LOG_ERROR("Leaking memory. Error: %s", rcutils_get_error_string_safe());
+          std::cout << "Leaking memory" << std::endl;
         }
       });
   return serialized_message;

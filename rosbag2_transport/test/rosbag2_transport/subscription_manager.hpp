@@ -23,7 +23,7 @@
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 
-#include "test_memory_management.hpp"
+#include "memory_management.hpp"
 
 namespace test_helpers
 {
@@ -91,7 +91,7 @@ private:
   std::map<std::string, std::vector<std::shared_ptr<rcutils_char_array_t>>> subscribed_messages_;
   std::map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
-  TestMemoryManagement memory_management_;
+  MemoryManagement memory_management_;
 };
 
 }  // namespace test_helpers
