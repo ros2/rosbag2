@@ -60,8 +60,6 @@ public:
 
   std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
 
-  rosbag2_storage::BagInfo info() override;
-
   rosbag2_storage::BagMetadata get_metadata() override;
 
 private:
@@ -75,7 +73,7 @@ private:
     std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
-  rosbag2_storage::BagInfo bag_info_;
+  rosbag2_storage::BagMetadata metadata_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
   ReadQueryResult message_result_;

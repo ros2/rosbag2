@@ -35,12 +35,15 @@ namespace rosbag2_storage_plugins
 
 SqliteStorage::SqliteStorage()
 : database_(),
-  bag_info_(),
+  metadata_(),
   write_statement_(nullptr),
   read_statement_(nullptr),
   message_result_(nullptr),
   current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
-{}
+{
+  metadata_.storage_identifier = "sqlite3";
+  metadata_.encoding = "cdr";  // TODO(greimela) Determine encoding
+}
 
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
@@ -51,7 +54,7 @@ void SqliteStorage::open(
 
   try {
     database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
-    bag_info_.uri = uri;
+    metadata_.relative_file_paths = {uri};
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
@@ -126,11 +129,6 @@ void SqliteStorage::initialize()
   database_->prepare_statement(create_table)->execute_and_reset();
 }
 
-rosbag2_storage::BagInfo SqliteStorage::info()
-{
-  return bag_info_;
-}
-
 void SqliteStorage::create_topic(const rosbag2_storage::TopicWithType & topic)
 {
   if (topics_.find(topic.name) == std::end(topics_)) {
@@ -177,13 +175,9 @@ bool SqliteStorage::database_exists(const std::string & uri)
 
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
-  rosbag2_storage::BagMetadata metadata = rosbag2_storage::BagMetadata();
-  metadata.storage_identifier = "sqlite3";
-  metadata.encoding = "cdr";  // TODO(greimela) Determine encoding
-  metadata.relative_file_paths = {bag_info_.uri};
-  metadata.combined_bag_size = 0;
-  metadata.message_count = 0;
-  metadata.topics_with_message_count = {};
+  metadata_.combined_bag_size = 0;
+  metadata_.message_count = 0;
+  metadata_.topics_with_message_count = {};
 
   auto statement = database_->prepare_statement(
     "SELECT name, type, COUNT(messages.id), MIN(messages.timestamp), MAX(messages.timestamp) "
@@ -195,20 +189,20 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
-    metadata.topics_with_message_count.push_back(
+    metadata_.topics_with_message_count.push_back(
       {
         {std::get<0>(result), std::get<1>(result)},
         static_cast<size_t>(std::get<2>(result))
       });
-    metadata.message_count += std::get<2>(result);
+    metadata_.message_count += std::get<2>(result);
     min_time = std::get<3>(result) < min_time ? std::get<3>(result) : min_time;
     max_time = std::get<4>(result) > max_time ? std::get<4>(result) : max_time;
   }
-  metadata.starting_time =
+  metadata_.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
-  metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
+  metadata_.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
 
-  return metadata;
+  return metadata_;
 }
 
 }  // namespace rosbag2_storage_plugins

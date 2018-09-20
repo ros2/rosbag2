@@ -21,7 +21,6 @@
 
 #include "pluginlib/class_list_macros.hpp"
 
-#include "rosbag2_storage/bag_info.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "test_plugin.hpp"
@@ -40,11 +39,6 @@ void TestPlugin::open(
     std::cout << "opening testplugin read write: ";
   }
   std::cout << uri << ".\n";
-}
-
-rosbag2_storage::BagInfo TestPlugin::info()
-{
-  return rosbag2_storage::BagInfo();
 }
 
 bool TestPlugin::has_next()
