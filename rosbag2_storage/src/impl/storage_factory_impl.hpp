@@ -108,8 +108,10 @@ public:
   {
     auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
 
-    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Could not load/open plugin with storage id '" << storage_id << "'.");
+    if (instance == nullptr) {
+      ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+        "Could not load/open plugin with storage id '" << storage_id << "'.");
+    }
 
     return instance;
   }
@@ -125,8 +127,10 @@ public:
         read_write_class_loader_, storage_id, uri);
     }
 
-    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Could not load/open plugin with storage id '" << storage_id << "'.");
+    if (instance == nullptr) {
+      ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+        "Could not load/open plugin with storage id '" << storage_id << "'.");
+    }
 
     return instance;
   }

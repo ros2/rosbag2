@@ -75,8 +75,6 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
-
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("Stored message");
 }
 
 bool SqliteStorage::has_next()
@@ -154,7 +152,7 @@ void SqliteStorage::prepare_for_reading()
   read_statement_ = database_->prepare_statement(
     "SELECT data, timestamp, topics.name "
     "FROM messages JOIN topics ON messages.topic_id = topics.id "
-    "ORDER BY messages.id;");
+    "ORDER BY messages.timestamp;");
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();

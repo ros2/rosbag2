@@ -21,11 +21,11 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-
+#include "test_memory_management.hpp"
+#include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/primitives.hpp"
 #include "../../src/rosbag2/rosbag2_node.hpp"
 #include "../../src/rosbag2/typesupport_helpers.hpp"
-#include "test_memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -50,7 +50,7 @@ public:
 
   void create_publisher(const std::string & topic)
   {
-    auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic);
+    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Primitives>(topic);
     publishers_.push_back(publisher);
   }
 
@@ -61,9 +61,9 @@ public:
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(topic_name, type,
         [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
-          auto string_message = memory_management_
-          .deserialize_message<std_msgs::msg::String>(message);
-          messages.push_back(string_message->data);
+          auto string_message =
+          memory_management_.deserialize_message<test_msgs::msg::Primitives>(message);
+          messages.push_back(string_message->string_value);
           counter++;
         });
 
@@ -75,8 +75,8 @@ public:
 
   std::shared_ptr<rcutils_char_array_t> serialize_string_message(const std::string & message)
   {
-    auto string_message = std::make_shared<std_msgs::msg::String>();
-    string_message->data = message;
+    auto string_message = std::make_shared<test_msgs::msg::Primitives>();
+    string_message->string_value = message;
     return memory_management_.serialize_message(string_message);
   }
 
@@ -92,7 +92,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   // We currently publish more messages because they can get lost
   std::vector<std::string> test_messages = {"Hello World", "Hello World"};
   std::string topic_name = "string_topic";
-  std::string type = "std_msgs/String";
+  std::string type = "test_msgs/Primitives";
 
   auto publisher = node_->create_generic_publisher(topic_name, type);
 
@@ -127,7 +127,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Primitives"));
 }
 
 TEST_F(RosBag2NodeFixture,
@@ -138,7 +138,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Primitives"));
 }
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
@@ -153,8 +153,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Primitives"));
 }
 
 TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
@@ -170,9 +170,9 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   auto topics_and_types = node_->get_all_topics_with_types();
 
   ASSERT_THAT(topics_and_types, SizeIs(5));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("std_msgs/String"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("std_msgs/String"));
-  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("std_msgs/String"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/Primitives"));
   // The latter two topics can usually be found on any node, so they should be subscribed here
   EXPECT_THAT(topics_and_types.find("/clock")->second, StrEq("rosgraph_msgs/Clock"));
   EXPECT_THAT(

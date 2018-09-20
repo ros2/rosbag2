@@ -34,13 +34,13 @@ using namespace ::testing;  // NOLINT
 using namespace rosbag2;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-#ifndef ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
-#define ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
+#ifndef ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
+#define ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_
 
-class RosBag2WriteIntegrationTestFixture : public Rosbag2TestFixture
+class RosBag2RecordIntegrationTestFixture : public Rosbag2TestFixture
 {
 public:
-  RosBag2WriteIntegrationTestFixture()
+  RosBag2RecordIntegrationTestFixture()
   : Rosbag2TestFixture()
   {
     rosbag2_storage_plugins::SqliteWrapper
@@ -66,7 +66,8 @@ public:
     future_ = std::async(
       std::launch::async, [this]() {
         rosbag2::Rosbag2 rosbag2;
-        rosbag2.record(database_name_, {});
+        std::this_thread::sleep_for(2s);
+        rosbag2.record(database_name_);
       });
   }
 
@@ -83,13 +84,14 @@ public:
     }
   }
 
+  template<typename MessageT>
   void start_publishing(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
     const std::string & topic_name, size_t number_expected_messages)
   {
     publisher_futures_.push_back(std::async(
         std::launch::async, [this, message, topic_name, number_expected_messages]() {
-          auto publisher = publisher_node_->create_publisher<std_msgs::msg::String>(topic_name);
+          auto publisher = publisher_node_->create_publisher<MessageT>(topic_name);
 
           rosbag2_storage_plugins::SqliteWrapper
           db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
@@ -159,4 +161,4 @@ public:
   std::future<void> future_;
 };
 
-#endif  // ROSBAG2__ROSBAG2_WRITE_INTEGRATION_FIXTURE_HPP_
+#endif  // ROSBAG2__ROSBAG2_RECORD_INTEGRATION_FIXTURE_HPP_

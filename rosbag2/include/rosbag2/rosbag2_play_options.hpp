@@ -12,23 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
+#ifndef ROSBAG2__ROSBAG2_PLAY_OPTIONS_HPP_
+#define ROSBAG2__ROSBAG2_PLAY_OPTIONS_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-#include "rosbag2/rosbag2_play_options.hpp"
-#include "rosbag2/rosbag2.hpp"
+#include <cstddef>
 
-int main(int argc, const char ** argv)
+namespace rosbag2
 {
-  rclcpp::init(argc, argv);
+struct Rosbag2PlayOptions
+{
+public:
+  size_t read_ahead_queue_size;
+};
 
-  auto options = rosbag2::Rosbag2PlayOptions();
-  options.read_ahead_queue_size = 1000;
+}  // namespace rosbag2
 
-  rosbag2::Rosbag2 rosbag2;
-  rosbag2.play("test.bag", options);
-
-  rclcpp::shutdown();
-
-  return 0;
-}
+#endif  // ROSBAG2__ROSBAG2_PLAY_OPTIONS_HPP_

@@ -54,11 +54,18 @@ public:
     auto node = rclcpp::Node::make_shared("node_" + topic);
     auto messages = std::make_shared<std::vector<typename T::ConstSharedPtr>>();
     auto messages_received = std::make_shared<size_t>(0);
+    rmw_qos_profile_t qos_profile;
+    qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
+    qos_profile.depth = 3;
+    qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT;
+    qos_profile.durability = RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT;
+    qos_profile.avoid_ros_namespace_conventions = false;
+
     auto subscription = node->create_subscription<T>(topic,
         [messages, messages_received](typename T::ConstSharedPtr message) {
           messages->push_back(message);
           ++*messages_received;
-        });
+        }, qos_profile);
     subscriptions_.push_back(subscription);
 
     return [messages, messages_received, node, expected_messages_number]() {
@@ -67,17 +74,6 @@ public:
              }
              return *messages;
            };
-  }
-
-  template<typename MessageT>
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialize_test_message(
-    const std::string & topic, std::shared_ptr<MessageT> message)
-  {
-    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    bag_msg->serialized_data = memory_management_.serialize_message(message);
-    bag_msg->topic_name = topic;
-
-    return bag_msg;
   }
 
   template<typename MessageT>
@@ -139,7 +135,7 @@ TEST_F(RosBag2IntegrationTestFixture, recorded_messages_are_played_for_all_topic
   wait_for_subscribers(2);
 
   Rosbag2 rosbag2;
-  rosbag2.play(database_name_);
+  rosbag2.play(database_name_, options_);
 
   auto replayed_test_primitives = primitive_subscriber_future.get();
   ASSERT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));

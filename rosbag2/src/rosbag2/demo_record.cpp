@@ -42,7 +42,11 @@ int main(int argc, const char ** argv)
   rclcpp::init(argc, argv);
 
   rosbag2::Rosbag2 rosbag2;
-  rosbag2.record(filename, topics);
+  if (topics.empty()) {
+    rosbag2.record(filename);
+  } else {
+    rosbag2.record(filename, topics);
+  }
 
   rclcpp::shutdown();
 
