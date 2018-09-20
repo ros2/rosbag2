@@ -139,7 +139,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.encoding, Eq("cdr"));
-  EXPECT_THAT(metadata.combined_bag_size, Eq(0u));
+  EXPECT_THAT(metadata.combined_bag_size, Gt(0u));  // File size differs between OS
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({database_name_}));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic1", "type1"}, 2u},

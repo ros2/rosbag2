@@ -14,6 +14,8 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
+#include <sys/stat.h>
+
 #include <chrono>
 #include <cstring>
 #include <iostream>
@@ -173,9 +175,22 @@ bool SqliteStorage::database_exists(const std::string & uri)
   return database.good();
 }
 
+int64_t get_file_size(const std::string & filename)
+{
+  struct stat stat_buffer;
+  int rc = stat(filename.c_str(), &stat_buffer);
+  return rc == 0 ? stat_buffer.st_size : 0;
+}
+
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   metadata_.combined_bag_size = 0;
+  for (const auto & filename : metadata_.relative_file_paths) {
+    metadata_.combined_bag_size += get_file_size(filename);
+    metadata_.combined_bag_size += get_file_size(filename + "-shm");
+    metadata_.combined_bag_size += get_file_size(filename + "-wal");
+  }
+
   metadata_.message_count = 0;
   metadata_.topics_with_message_count = {};
 
