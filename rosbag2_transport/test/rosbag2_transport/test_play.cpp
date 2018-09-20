@@ -55,18 +55,11 @@ public:
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {
   auto primitive_message1 = get_messages_primitives()[0];
-  primitive_message1->string_value = "Hello World 1";
-
-  auto primitive_message2 = get_messages_primitives()[1];
-  primitive_message2->string_value = "Hello World 2";
+  primitive_message1->string_value = "Hello World";
 
   auto complex_message1 = get_messages_static_array_primitives()[0];
   complex_message1->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
   complex_message1->bool_values = {{true, false, true}};
-
-  auto complex_message2 = get_messages_static_array_primitives()[0];
-  complex_message2->string_values = {{"Complex Hello4", "Complex Hello5", "Complex Hello6"}};
-  complex_message2->bool_values = {{false, false, true}};
 
   auto topic_types = std::vector<rosbag2::TopicWithType>{
     {"topic1", "test_msgs/Primitives"},
@@ -75,11 +68,11 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 0, primitive_message1),
-    serialize_test_message("topic1", 100, primitive_message2),
-    serialize_test_message("topic1", 200, primitive_message2),
+    serialize_test_message("topic1", 100, primitive_message1),
+    serialize_test_message("topic1", 200, primitive_message1),
     serialize_test_message("topic2", 50, complex_message1),
-    serialize_test_message("topic2", 150, complex_message2),
-    serialize_test_message("topic2", 250, complex_message2)};
+    serialize_test_message("topic2", 150, complex_message1),
+    serialize_test_message("topic2", 250, complex_message1)};
 
   reader_->prepare(messages, topic_types);
 
@@ -99,14 +92,16 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::Primitives>(
     "/topic1");
   EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_primitives[0]->string_value, Eq(primitive_message1->string_value));
-  EXPECT_THAT(replayed_test_primitives[1]->string_value, Eq(primitive_message2->string_value));
+  EXPECT_THAT(replayed_test_primitives,
+    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "Hello World"))));
 
   auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
     "/topic2");
   EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_arrays[0]->bool_values, Eq(complex_message1->bool_values));
-  EXPECT_THAT(replayed_test_arrays[0]->string_values, Eq(complex_message1->string_values));
-  EXPECT_THAT(replayed_test_arrays[1]->bool_values, Eq(complex_message2->bool_values));
-  EXPECT_THAT(replayed_test_arrays[1]->string_values, Eq(complex_message2->string_values));
+  EXPECT_THAT(replayed_test_arrays,
+    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::bool_values,
+    ElementsAre(true, false, true)))));
+  EXPECT_THAT(replayed_test_arrays,
+    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
+    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
