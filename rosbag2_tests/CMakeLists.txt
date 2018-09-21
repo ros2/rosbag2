@@ -33,8 +33,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_rosbag2_record_end_to_end
     test/test_rosbag2_record_end_to_end.cpp
     test/memory_management.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ENV ROS_DOMAIN_ID=42) # make sure this test does not interfer with transport tests
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_record_end_to_end)
     ament_target_dependencies(test_rosbag2_record_end_to_end
       rclcpp
@@ -46,8 +45,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_rosbag2_play_end_to_end
     test/test_rosbag2_play_end_to_end.cpp
     test/memory_management.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ENV ROS_DOMAIN_ID=42) # make sure this test does not interfer with transport tests
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_play_end_to_end)
     ament_target_dependencies(test_rosbag2_play_end_to_end
       rclcpp
