@@ -16,134 +16,6 @@
 
 #include <fstream>
 #include <string>
-#include <vector>
-
-#include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
-
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
-
-namespace YAML
-{
-template<>
-struct convert<rosbag2_storage::TopicWithType>
-{
-  static Node encode(const rosbag2_storage::TopicWithType & topic)
-  {
-    Node node;
-    node["name"] = topic.name;
-    node["type"] = topic.type;
-    return node;
-  }
-
-  static bool decode(const Node & node, rosbag2_storage::TopicWithType & topic)
-  {
-    topic.name = node["name"].as<std::string>();
-    topic.type = node["type"].as<std::string>();
-    return true;
-  }
-};
-
-template<>
-struct convert<rosbag2_storage::TopicMetadata>
-{
-  static Node encode(const rosbag2_storage::TopicMetadata & metadata)
-  {
-    Node node;
-    node["topic_and_type"] = metadata.topic_with_type;
-    node["message_count"] = metadata.message_count;
-    return node;
-  }
-
-  static bool decode(const Node & node, rosbag2_storage::TopicMetadata & metadata)
-  {
-    metadata.topic_with_type = node["topic_and_type"].as<rosbag2_storage::TopicWithType>();
-    metadata.message_count = node["message_count"].as<size_t>();
-    return true;
-  }
-};
-
-template<>
-struct convert<std::chrono::nanoseconds>
-{
-  static Node encode(const std::chrono::nanoseconds & time_in_ns)
-  {
-    Node node;
-    node["nanoseconds"] = time_in_ns.count();
-    return node;
-  }
-
-  static bool decode(const Node & node, std::chrono::nanoseconds & time_in_ns)
-  {
-    time_in_ns = std::chrono::nanoseconds(node["nanoseconds"].as<size_t>());
-    return true;
-  }
-};
-
-template<>
-struct convert<std::chrono::time_point<std::chrono::high_resolution_clock>>
-{
-  static Node encode(const std::chrono::time_point<std::chrono::high_resolution_clock> & start_time)
-  {
-    Node node;
-    node["nanoseconds_since_epoch"] = start_time.time_since_epoch().count();
-    return node;
-  }
-
-  static bool decode(
-    const Node & node, std::chrono::time_point<std::chrono::high_resolution_clock> & start_time)
-  {
-    start_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(node["nanoseconds_since_epoch"].as<size_t>()));
-    return true;
-  }
-};
-
-template<>
-struct convert<rosbag2_storage::BagMetadata>
-{
-  static Node encode(const rosbag2_storage::BagMetadata & metadata)
-  {
-    Node node;
-    node["storage_identifier"] = metadata.storage_identifier;
-    node["encoding"] = metadata.encoding;
-    node["relative_file_paths"] = metadata.relative_file_paths;
-    node["combined_bag_size"] = metadata.combined_bag_size;
-    node["duration"] = metadata.duration;
-    node["starting_time"] = metadata.starting_time;
-    node["message_count"] = metadata.message_count;
-    node["topics_with_message_count"] = metadata.topics_with_message_count;
-    return node;
-  }
-
-  static bool decode(const Node & node, rosbag2_storage::BagMetadata & metadata)
-  {
-    metadata.storage_identifier = node["storage_identifier"].as<std::string>();
-    metadata.encoding = node["encoding"].as<std::string>();
-    metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
-    metadata.combined_bag_size = node["combined_bag_size"].as<size_t>();
-    metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
-    metadata.starting_time = node["starting_time"]
-      .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
-    metadata.message_count = node["message_count"].as<size_t>();
-    metadata.topics_with_message_count =
-      node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicMetadata>>();
-    return true;
-  }
-};
-
-}  // namespace YAML
 
 namespace rosbag2_storage
 {
@@ -158,29 +30,32 @@ std::string separator()
 #endif
 }
 
-std::string get_metadata_file(const std::string & uri)
-{
-  std::string metadata_file = uri + separator() + "metadata.yaml";
-  return metadata_file;
+MetadataIO::MetadataIO(const std::string & uri)
+: file_name_(get_metadata_file_name(uri)) {
 }
 
-void write_metadata(const std::string & uri, BagMetadata metadata)
+void MetadataIO::write_metadata(BagMetadata metadata)
 {
-  std::string metadata_file = get_metadata_file(uri);
-
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
-  std::ofstream fout(metadata_file);
+  std::ofstream fout(file_name_);
   fout << metadata_node;
 }
 
-BagMetadata read_metadata(const std::string & uri)
+BagMetadata MetadataIO::read_metadata()
 {
-  std::string metadata_file = get_metadata_file(uri);
-
-  YAML::Node yaml_file = YAML::LoadFile(metadata_file);
+  YAML::Node yaml_file = YAML::LoadFile(file_name_);
   auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
   return metadata;
+}
+
+std::string MetadataIO::get_metadata_file_name(const std::string & uri)
+{
+  // TODO(botteroa-si): use metadata_file = uri + separator() + "metadata.yaml" once the uri is the
+  // path to the bag directory.
+  std::string metadata_file = uri + ".metadata.yaml";
+  
+  return metadata_file;
 }
 
 }  // namespace rosbag2_storage

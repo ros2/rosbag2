@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <memory>
 
 #ifdef _WIN32
 # include <direct.h>
@@ -28,7 +29,14 @@
 using namespace ::testing;  // NOLINT
 
 class MetadataFixture : public TemporaryDirectoryFixture
-{};
+{
+public:
+  MetadataFixture()
+  : metadata_io_(std::make_shared<rosbag2_storage::MetadataIO>(temporary_dir_path_))
+  {}
+
+  std::shared_ptr<rosbag2_storage::MetadataIO> metadata_io_;
+};
 
 TEST_F(MetadataFixture, test_writing_and_reading_yaml)
 {
@@ -45,8 +53,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
 
-  rosbag2_storage::write_metadata(temporary_dir_path_, metadata);
-  auto read_metadata = rosbag2_storage::read_metadata(temporary_dir_path_);
+  metadata_io_->write_metadata(metadata);
+  auto read_metadata = metadata_io_->read_metadata();
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
   EXPECT_THAT(read_metadata.encoding, Eq(metadata.encoding));

@@ -20,6 +20,7 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/metadata_io_iface.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -66,6 +67,7 @@ private:
   rosbag2::StorageOptions options_;
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  std::unique_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
 };
 
 }  // namespace rosbag2

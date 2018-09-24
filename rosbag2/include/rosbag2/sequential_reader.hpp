@@ -21,6 +21,7 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/metadata_io_iface.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -88,11 +89,12 @@ public:
    * \return rosbag2_storage::BagMetadata struct relative to the database associated with the Reader
    * \throws runtime_error if the Reader is not open.
    */
-  virtual rosbag2_storage::BagMetadata info(const std::string & uri);
+  virtual rosbag2_storage::BagMetadata info();
 
 private:
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
+  std::unique_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
 };
 
 }  // namespace rosbag2

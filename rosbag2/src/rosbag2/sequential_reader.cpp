@@ -31,6 +31,8 @@ SequentialReader::~SequentialReader()
 void SequentialReader::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_only(options.uri, options.storage_id);
+  metadata_io_ = std::make_unique<rosbag2_storage::MetadataIO>(options.uri);
+
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -60,9 +62,9 @@ std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-rosbag2_storage::BagMetadata SequentialReader::info(const std::string & uri)
+rosbag2_storage::BagMetadata SequentialReader::info()
 {
-  return rosbag2_storage::read_metadata(uri);
+  return metadata_io_->read_metadata();
 }
 
 }  // namespace rosbag2
