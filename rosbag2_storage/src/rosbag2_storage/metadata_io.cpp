@@ -148,17 +148,37 @@ struct convert<rosbag2_storage::BagMetadata>
 namespace rosbag2_storage
 {
 
-void write_metadata(std::string filename, BagMetadata metadata)
+// TODO(greimela): Move to common place (is also used in test fixture etc.)
+std::string separator()
 {
+#ifdef _WIN32
+  return "\\";
+#else
+  return "/";
+#endif
+}
+
+std::string get_metadata_file(const std::string & uri)
+{
+  std::string metadata_file = uri + separator() + "metadata.yaml";
+  return metadata_file;
+}
+
+void write_metadata(const std::string & uri, BagMetadata metadata)
+{
+  std::string metadata_file = get_metadata_file(uri);
+
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
-  std::ofstream fout(filename);
+  std::ofstream fout(metadata_file);
   fout << metadata_node;
 }
 
-BagMetadata read_metadata(std::string filename)
+BagMetadata read_metadata(const std::string & uri)
 {
-  YAML::Node yaml_file = YAML::LoadFile(filename);
+  std::string metadata_file = get_metadata_file(uri);
+
+  YAML::Node yaml_file = YAML::LoadFile(metadata_file);
   auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
   return metadata;
 }

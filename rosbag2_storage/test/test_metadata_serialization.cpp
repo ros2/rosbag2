@@ -23,71 +23,12 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 
-class MetadataFixture : public Test
-{
-public:
-  MetadataFixture()
-  : yaml_file_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".yaml")
-  {
-    std::string system_separator = "/";
-#ifdef _WIN32
-    system_separator = "\\";
-#endif
-    yaml_file_name_ = temporary_dir_path_ + system_separator + yaml_file_name_;
-    std::cout << "Yaml name: " << yaml_file_name_ << std::endl;
-  }
-
-  ~MetadataFixture() override
-  {
-#ifdef _WIN32
-    DeleteFileA(yaml_file_name_.c_str());
-#else
-    // TODO(botteroa-si): once filesystem::remove_all() can be used, this line can be removed and
-    // the ful directory can be deleted in remove_temporary_dir()
-    remove(yaml_file_name_.c_str());
-#endif
-  }
-
-  static void SetUpTestCase()
-  {
-    char template_char[] = "tmp_test_dir.XXXXXX";
-#ifdef _WIN32
-    char temp_path[255];
-    GetTempPathA(255, temp_path);
-    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
-    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
-    _mkdir(temporary_dir_path_.c_str());
-#else
-    char * dir_name = mkdtemp(template_char);
-    temporary_dir_path_ = dir_name;
-#endif
-  }
-
-  static void TearDownTestCase()
-  {
-    remove_temporary_dir();
-  }
-
-  static void remove_temporary_dir()
-  {
-#ifdef _WIN32
-    // TODO(botteroa-si): find a way to delete a not empty directory in Windows, so that we don't
-    // need the Windows line in the fixture destructor anymore.
-    RemoveDirectoryA(temporary_dir_path_.c_str());
-#else
-    remove(temporary_dir_path_.c_str());
-#endif
-  }
-
-
-  std::string yaml_file_name_;
-  static std::string temporary_dir_path_;
-};
-
-std::string MetadataFixture::temporary_dir_path_ = "";  // NOLINT
+class MetadataFixture : public TemporaryDirectoryFixture
+{};
 
 TEST_F(MetadataFixture, test_writing_and_reading_yaml)
 {
@@ -104,8 +45,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
 
-  rosbag2_storage::write_metadata(yaml_file_name_, metadata);
-  auto read_metadata = rosbag2_storage::read_metadata(yaml_file_name_);
+  rosbag2_storage::write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = rosbag2_storage::read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
   EXPECT_THAT(read_metadata.encoding, Eq(metadata.encoding));
