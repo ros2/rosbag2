@@ -23,6 +23,7 @@
 
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/writer.hpp"
+#include "rosbag2/writer_impl.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -39,14 +40,12 @@ class Player;
 class Rosbag2Transport
 {
 public:
-  /// Default constructor
+  /// Constructor
   ROSBAG2_TRANSPORT_PUBLIC
-  Rosbag2Transport();
-
-  /// Constructor for testing, allows to set the reader and writer to use
-  ROSBAG2_TRANSPORT_PUBLIC
-  Rosbag2Transport(
-    std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer);
+  explicit Rosbag2Transport(
+    std::shared_ptr<rosbag2::SequentialReader> reader =
+    std::make_shared<rosbag2::SequentialReader>(),
+    std::shared_ptr<rosbag2::Writer> writer = std::make_shared<rosbag2::WriterImpl>());
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();

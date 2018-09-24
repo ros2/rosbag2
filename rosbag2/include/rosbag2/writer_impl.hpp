@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__WRITER_HPP_
-#define ROSBAG2__WRITER_HPP_
+#ifndef ROSBAG2__WRITER_IMPL_HPP_
+#define ROSBAG2__WRITER_IMPL_HPP_
 
 #include <memory>
 #include <string>
@@ -23,6 +23,15 @@
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
+#include "rosbag2/writer.hpp"
+
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
 
 namespace rosbag2
 {
@@ -31,10 +40,10 @@ namespace rosbag2
  * The Writer allows writing messages to a new bag. For every topic, information about its type
  * needs to be added before writing the first message.
  */
-class ROSBAG2_PUBLIC Writer
+class ROSBAG2_PUBLIC WriterImpl : public Writer
 {
 public:
-  virtual ~Writer() = default;
+  ~WriterImpl() override;
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
@@ -42,7 +51,7 @@ public:
    *
    * \param options Options to configure the storage
    */
-  virtual void open(const StorageOptions & options) = 0;
+  void open(const StorageOptions & options) override;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -51,7 +60,7 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void create_topic(const TopicWithType & topic_with_type) = 0;
+  void create_topic(const TopicWithType & topic_with_type) override;
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
@@ -59,9 +68,18 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void write(std::shared_ptr<SerializedBagMessage> message) = 0;
+  void write(std::shared_ptr<SerializedBagMessage> message) override;
+
+private:
+  rosbag2::StorageOptions options_;
+  rosbag2_storage::StorageFactory factory_;
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__WRITER_HPP_
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
+#endif  // ROSBAG2__WRITER_IMPL_HPP_

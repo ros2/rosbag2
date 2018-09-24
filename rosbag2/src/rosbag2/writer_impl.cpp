@@ -12,30 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/writer.hpp"
+#include "rosbag2/writer_impl.hpp"
 
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2/storage_options.hpp"
 
 namespace rosbag2
 {
 
-Writer::~Writer()
+WriterImpl::~WriterImpl()
 {
+  rosbag2_storage::write_metadata(options_.uri + "metadata.yaml", storage_->get_metadata());
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
-void Writer::open(const StorageOptions & options)
+void WriterImpl::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_write(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
+  options_ = options;
 }
 
-void Writer::create_topic(const TopicWithType & topic_with_type)
+void WriterImpl::create_topic(const TopicWithType & topic_with_type)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
@@ -44,7 +47,7 @@ void Writer::create_topic(const TopicWithType & topic_with_type)
   storage_->create_topic(topic_with_type);
 }
 
-void Writer::write(std::shared_ptr<SerializedBagMessage> message)
+void WriterImpl::write(std::shared_ptr<SerializedBagMessage> message)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");

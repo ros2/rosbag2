@@ -30,7 +30,7 @@
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/writer.hpp"
+#include "rosbag2/writer_impl.hpp"
 
 #include "generic_subscription.hpp"
 #include "player.hpp"
@@ -39,11 +39,6 @@
 
 namespace rosbag2_transport
 {
-
-Rosbag2Transport::Rosbag2Transport()
-: reader_(std::make_shared<rosbag2::SequentialReader>()),
-  writer_(std::make_shared<rosbag2::Writer>())
-{}
 
 Rosbag2Transport::Rosbag2Transport(
   std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer)

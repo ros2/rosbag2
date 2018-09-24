@@ -26,7 +26,7 @@ find_package(rosidl_generator_cpp REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2/sequential_reader.cpp
   src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/writer.cpp)
+  src/rosbag2/writer_impl.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
@@ -70,6 +70,13 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET rosbag2_typesupport_helpers_test)
     target_link_libraries(rosbag2_typesupport_helpers_test rosbag2)
+  endif()
+
+  ament_add_gmock(test_writer
+    test/rosbag2/test_writer.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_writer)
+    target_link_libraries(test_writer rosbag2)
   endif()
 endif()
 
