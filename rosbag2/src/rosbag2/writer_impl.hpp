@@ -25,14 +25,6 @@
 #include "rosbag2/visibility_control.hpp"
 #include "rosbag2/writer.hpp"
 
-// This is necessary because of using stl types here. It is completely safe, because
-// a) the member is not accessible from the outside
-// b) there are no inline functions.
-#ifdef _WIN32
-# pragma warning(push)
-# pragma warning(disable:4251)
-#endif
-
 namespace rosbag2
 {
 
@@ -40,7 +32,7 @@ namespace rosbag2
  * The Writer allows writing messages to a new bag. For every topic, information about its type
  * needs to be added before writing the first message.
  */
-class ROSBAG2_PUBLIC WriterImpl : public Writer
+class WriterImpl : public Writer
 {
 public:
   ~WriterImpl() override;
@@ -77,9 +69,5 @@ private:
 };
 
 }  // namespace rosbag2
-
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
 
 #endif  // ROSBAG2__WRITER_IMPL_HPP_

@@ -62,6 +62,9 @@ public:
   virtual void write(std::shared_ptr<SerializedBagMessage> message) = 0;
 };
 
+ROSBAG2_PUBLIC
+std::shared_ptr<Writer> create_default_writer();
+
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__WRITER_HPP_

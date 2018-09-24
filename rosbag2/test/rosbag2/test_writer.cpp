@@ -20,7 +20,7 @@
 #include <thread>
 
 #include "rosbag2/storage_options.hpp"
-#include "rosbag2/writer_impl.hpp"
+#include "rosbag2/writer.hpp"
 #include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -29,9 +29,9 @@ using namespace std::chrono_literals;  // NOLINT
 void write_file(const std::string & uri)
 {
   rosbag2::StorageOptions options = {uri, "sqlite3"};
-  rosbag2::WriterImpl writer;
-  writer.open(options);
-  writer.create_topic({"/string_topic", "topic/Type"});
+  auto writer = rosbag2::create_default_writer();
+  writer->open(options);
+  writer->create_topic({"/string_topic", "topic/Type"});
 }
 
 std::string get_yaml_content(const std::string & filename)

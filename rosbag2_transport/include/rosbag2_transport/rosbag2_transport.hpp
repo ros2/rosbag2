@@ -23,7 +23,6 @@
 
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/writer.hpp"
-#include "rosbag2/writer_impl.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -45,7 +44,7 @@ public:
   explicit Rosbag2Transport(
     std::shared_ptr<rosbag2::SequentialReader> reader =
     std::make_shared<rosbag2::SequentialReader>(),
-    std::shared_ptr<rosbag2::Writer> writer = std::make_shared<rosbag2::WriterImpl>());
+    std::shared_ptr<rosbag2::Writer> writer = rosbag2::create_default_writer());
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();

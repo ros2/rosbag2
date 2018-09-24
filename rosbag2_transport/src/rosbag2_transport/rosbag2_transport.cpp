@@ -30,7 +30,7 @@
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/writer_impl.hpp"
+#include "rosbag2/writer.hpp"
 
 #include "generic_subscription.hpp"
 #include "player.hpp"

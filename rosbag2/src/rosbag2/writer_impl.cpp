@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/writer_impl.hpp"
+#include "writer_impl.hpp"
 
 #include <memory>
 #include <string>
