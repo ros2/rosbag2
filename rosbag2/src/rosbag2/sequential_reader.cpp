@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/metadata_io.hpp"
+
 namespace rosbag2
 {
 
@@ -56,6 +58,13 @@ std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
     return storage_->get_all_topics_and_types();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
+}
+
+rosbag2_storage::BagMetadata SequentialReader::info(const std::string & uri)
+{
+  // TODO(botteroa-si): the name of the metadata file is not the definitive one.
+  // Update when possible.
+  return rosbag2_storage::read_metadata(uri + "metadata.yaml");
 }
 
 }  // namespace rosbag2

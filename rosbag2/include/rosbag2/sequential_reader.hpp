@@ -80,6 +80,16 @@ public:
    */
   virtual std::vector<TopicWithType> get_all_topics_and_types();
 
+  /**
+   * Retrieves the metadata stored in the yaml file relative to the opened database.
+   *
+   * \param uri the path to the directory where the yaml file is.
+   *
+   * \return rosbag2_storage::BagMetadata struct relative to the database associated with the Reader
+   * \throws runtime_error if the Reader is not open.
+   */
+  virtual rosbag2_storage::BagMetadata info(const std::string & uri);
+
 private:
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
