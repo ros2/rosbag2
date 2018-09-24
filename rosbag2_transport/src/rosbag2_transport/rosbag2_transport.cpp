@@ -134,4 +134,10 @@ void Rosbag2Transport::play(
   player.play(play_options);
 }
 
+void Rosbag2Transport::print_bag_info(const std::string & uri)
+{
+  // TODO(botteroa-si): implement correct printing of metadata file content.
+  std::cout << "\nprinting bag info of ' " << uri << "'...\n";
+}
+
 }  // namespace rosbag2_transport

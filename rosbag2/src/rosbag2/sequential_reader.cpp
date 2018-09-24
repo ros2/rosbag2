@@ -62,9 +62,7 @@ std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
 
 rosbag2_storage::BagMetadata SequentialReader::info(const std::string & uri)
 {
-  // TODO(botteroa-si): the name of the metadata file is not the definitive one.
-  // Update when possible.
-  return rosbag2_storage::read_metadata(uri + "metadata.yaml");
+  return rosbag2_storage::read_metadata(uri);
 }
 
 }  // namespace rosbag2

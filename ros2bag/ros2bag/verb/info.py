@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-
 from ros2bag.verb import VerbExtension
+
+from rosbag2_transport import rosbag2_transport_py
 
 
 class InfoVerb(VerbExtension):
@@ -26,4 +26,4 @@ class InfoVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
-        print('calling ros2 bag info on', bag_file)
+        rosbag2_transport_py.info(uri=bag_file)

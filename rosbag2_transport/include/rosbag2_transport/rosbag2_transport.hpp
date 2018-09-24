@@ -71,6 +71,14 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void play(const StorageOptions & storage_options, const PlayOptions & play_options);
 
+  /**
+   * Print the bag info contained in the metadata yaml file.
+   *
+   * \param uri path to the metadata yaml file.
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void print_bag_info(const std::string & uri);
+
 private:
   std::shared_ptr<rosbag2_transport::GenericSubscription>
   create_subscription(
