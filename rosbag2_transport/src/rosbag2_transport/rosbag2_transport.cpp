@@ -40,9 +40,8 @@
 namespace rosbag2_transport
 {
 
-Rosbag2Transport::Rosbag2Transport(
-  std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer)
-: reader_(std::move(reader)), writer_(std::move(writer)) {}
+Rosbag2Transport::Rosbag2Transport(std::shared_ptr<rosbag2::Rosbag2Factory> factory)
+: factory_(std::move(factory)) {}
 
 void Rosbag2Transport::init()
 {
@@ -57,7 +56,7 @@ void Rosbag2Transport::shutdown()
 void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  writer_->open(storage_options);
+  auto writer = factory_->create_writer(storage_options);
 
   auto transport_node = setup_node();
 
@@ -73,11 +72,10 @@ void Rosbag2Transport::record(
     auto topic_name = topic_and_type.first;
     auto topic_type = topic_and_type.second;
 
-    auto subscription = create_subscription(transport_node, topic_name, topic_type);
+    auto subscription = create_subscription(transport_node, topic_name, topic_type, writer);
     if (subscription) {
       subscriptions_.push_back(subscription);
-      writer_->create_topic({topic_name, topic_type});
-      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
+      writer->create_topic({topic_name, topic_type});
     }
   }
 
@@ -101,12 +99,13 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
 std::shared_ptr<GenericSubscription>
 Rosbag2Transport::create_subscription(
   std::shared_ptr<Rosbag2Node> & node,
-  const std::string & topic_name, const std::string & topic_type) const
+  const std::string & topic_name, const std::string & topic_type,
+  std::shared_ptr<rosbag2::Writer> writer) const
 {
   auto subscription = node->create_generic_subscription(
     topic_name,
     topic_type,
-    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
+    [writer, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
       bag_message->serialized_data = message;
       bag_message->topic_name = topic_name;
@@ -118,7 +117,7 @@ Rosbag2Transport::create_subscription(
       }
       bag_message->time_stamp = time_stamp;
 
-      writer_->write(bag_message);
+      writer->write(bag_message);
     });
   return subscription;
 }
@@ -126,11 +125,10 @@ Rosbag2Transport::create_subscription(
 void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  reader_->open(storage_options);
-
+  auto reader = factory_->create_sequential_reader(storage_options);
   auto transport_node = setup_node();
 
-  Player player(reader_, transport_node);
+  Player player(reader, transport_node);
   player.play(play_options);
 }
 

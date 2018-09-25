@@ -48,13 +48,13 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
 
-  reader_->prepare(messages, topics_and_types);
+  factory_->reader_->prepare(messages, topics_and_types);
 
   // We can only assert indirectly that the relative times are respected when playing a bag. So
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  Rosbag2Transport rosbag2_transport(factory_);
   rosbag2_transport.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 

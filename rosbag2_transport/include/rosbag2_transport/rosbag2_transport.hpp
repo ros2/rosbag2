@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/sequential_reader.hpp"
-#include "rosbag2/writer.hpp"
+#include "rosbag2/rosbag2_factory.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -39,12 +38,9 @@ class Player;
 class Rosbag2Transport
 {
 public:
-  /// Constructor
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Rosbag2Transport(
-    std::shared_ptr<rosbag2::SequentialReader> reader =
-    std::make_shared<rosbag2::SequentialReader>(),
-    std::shared_ptr<rosbag2::Writer> writer = rosbag2::create_default_writer());
+    std::shared_ptr<rosbag2::Rosbag2Factory> factory = std::make_shared<rosbag2::Rosbag2Factory>());
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();
@@ -80,13 +76,13 @@ public:
   void print_bag_info(const std::string & uri);
 
 private:
-  std::shared_ptr<rosbag2_transport::GenericSubscription>
+  std::shared_ptr<GenericSubscription>
   create_subscription(
     std::shared_ptr<Rosbag2Node> & node,
-    const std::string & topic_name, const std::string & topic_type) const;
+    const std::string & topic_name, const std::string & topic_type,
+    std::shared_ptr<rosbag2::Writer> writer) const;
 
-  std::shared_ptr<rosbag2::SequentialReader> reader_;
-  std::shared_ptr<rosbag2::Writer> writer_;
+  std::shared_ptr<rosbag2::Rosbag2Factory> factory_;
 
   std::shared_ptr<Rosbag2Node> transport_node_;
 

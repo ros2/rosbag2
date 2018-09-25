@@ -44,7 +44,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   run_publishers();
   stop_recording();
 
-  auto recorded_messages = writer_->get_messages();
+  auto recorded_messages = factory_->writer_->get_messages();
 
   ASSERT_THAT(recorded_messages, SizeIs(4));
   auto string_messages = filter_messages<test_msgs::msg::Primitives>(
