@@ -19,6 +19,7 @@
 
 namespace rosbag2_transport
 {
+
 struct PlayOptions
 {
 public:

@@ -3,7 +3,7 @@
 <package format="2">
   <name>rosbag2_transport</name>
   <version>0.0.0</version>
-  <description>transport related dependencies for rosbag2</description>
+  <description>Layer encapsulating ROS middleware to allow rosbag2 to be used with or without middleware</description>
   <maintainer email="karsten.knese@googlemail.com">karsten</maintainer>
   <license>Apache License 2.0</license>
 

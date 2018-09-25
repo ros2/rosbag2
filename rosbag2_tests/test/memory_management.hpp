@@ -52,7 +52,8 @@ public:
       get_message_typesupport(message),
       message.get());
     if (error != RCL_RET_OK) {
-      throw std::runtime_error("Failed to deserialize");
+      RCUTILS_LOG_ERROR_NAMED("rosbag2_tests", "Leaking memory. Error: %s",
+        rcutils_get_error_string_safe());
     }
     return message;
   }
