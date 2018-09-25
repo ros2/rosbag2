@@ -35,7 +35,7 @@ namespace rosbag2_transport
 {
 
 Player::Player(std::shared_ptr<rosbag2::SequentialReader> reader)
-: reader_(std::move(reader)), node_(std::make_shared<Rosbag2Node>("rosbag2_node"))
+: reader_(std::move(reader)), rosbag2_transport_(std::make_shared<Rosbag2Node>("rosbag2_node"))
 {}
 
 bool Player::is_storage_completely_loaded() const
@@ -128,7 +128,7 @@ void Player::prepare_publishers()
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
     publishers_.insert(std::make_pair(
-        topic.name, node_->create_generic_publisher(topic.name, topic.type)));
+        topic.name, rosbag2_transport_->create_generic_publisher(topic.name, topic.type)));
   }
 }
 
