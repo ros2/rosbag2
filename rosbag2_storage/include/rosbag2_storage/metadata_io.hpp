@@ -27,8 +27,8 @@ namespace rosbag2_storage
 class MetadataIO : public MetadataIOIface
 {
 public:
-  explicit MetadataIO(const std::string & uri);
-  ~MetadataIO() override = default;
+  ROSBAG2_STORAGE_PUBLIC explicit MetadataIO(const std::string & uri);
+  ROSBAG2_STORAGE_PUBLIC ~MetadataIO() override = default;
 
   ROSBAG2_STORAGE_PUBLIC void write_metadata(BagMetadata metadata) override;
   ROSBAG2_STORAGE_PUBLIC BagMetadata read_metadata() override;
