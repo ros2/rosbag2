@@ -36,9 +36,4 @@ rosbag2_storage::BagMetadata Info::read_metadata(const std::string & uri)
   return metadata_io_->read_metadata(uri);
 }
 
-void Info::write_metadata(const std::string & uri, rosbag2_storage::BagMetadata metadata)
-{
-  metadata_io_->write_metadata(uri, metadata);
-}
-
 }  // namespace rosbag2

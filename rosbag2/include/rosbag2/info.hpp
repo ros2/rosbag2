@@ -32,7 +32,6 @@ public:
   explicit Info(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io);
 
   rosbag2_storage::BagMetadata read_metadata(const std::string & uri);
-  void write_metadata(const std::string & uri, rosbag2_storage::BagMetadata metadata);
 
 private:
   std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;

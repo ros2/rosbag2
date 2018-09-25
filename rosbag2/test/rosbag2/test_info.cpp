@@ -40,10 +40,3 @@ TEST_F(InfoTestFixture, read_metadata_makes_appropriate_call_to_metadata_io_meth
 
   info_->read_metadata("test/uri");
 }
-
-TEST_F(InfoTestFixture, write_metadata_makes_appropriate_call_to_metadata_io_method) {
-  rosbag2_storage::BagMetadata metadata;
-  EXPECT_CALL(*metadata_io_, write_metadata("test/uri", _));
-
-  info_->write_metadata("test/uri", metadata);
-}

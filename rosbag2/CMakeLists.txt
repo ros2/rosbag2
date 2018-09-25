@@ -67,15 +67,16 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(rosbag2_typesupport_helpers_test
-    test/rosbag2/rosbag2_typesupport_helpers_test.cpp
+  ament_add_gmock(test_typesupport_helpers
+    test/rosbag2/test_typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_typesupport_helpers_test)
-    target_link_libraries(rosbag2_typesupport_helpers_test rosbag2)
+  if(TARGET test_typesupport_helpers)
+    target_link_libraries(test_typesupport_helpers rosbag2)
   endif()
 
   ament_add_gmock(test_writer
     test/rosbag2/test_writer.cpp
+    src/rosbag2/writer_impl.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_writer)
     target_link_libraries(test_writer rosbag2)

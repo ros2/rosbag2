@@ -14,43 +14,23 @@
 
 #include <gmock/gmock.h>
 
-#include <chrono>
-#include <fstream>
+#include <memory>
 #include <string>
-#include <thread>
 
 #include "rosbag2_storage/filesystem_helpers.hpp"
 #include "rosbag2/storage_options.hpp"
-#include "rosbag2/writer.hpp"
+#include "../../src/rosbag2/writer_impl.hpp"
+#include "mock_metadata_io.hpp"
 #include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-void write_file(const std::string & uri)
-{
-  rosbag2::StorageOptions options = {uri, "sqlite3"};
-  auto writer = rosbag2::create_default_writer();
-  writer->open(options);
-  writer->create_topic({"/string_topic", "topic/Type"});
-}
+TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
+  auto metadata_io = std::make_shared<MockMetadataIO>();
 
-std::string get_yaml_content(const std::string & filename)
-{
-  std::ifstream read_file(filename);
-  std::ostringstream ss;
-  ss << read_file.rdbuf();
-  return ss.str();
-}
+  EXPECT_CALL(*metadata_io, write_metadata(_, _));
 
-TEST_F(TemporaryDirectoryFixture, writer_writes_correct_yaml_at_shutdown) {
-  write_file(temporary_dir_path_);
-
-  std::string expected_start("rosbag2_bagfile_information:"
-    "\n  storage_identifier: sqlite3"
-    "\n  encoding: cdr");
-
-  std::string actual_yaml = get_yaml_content(
-    temporary_dir_path_ + rosbag2_storage::separator() + "metadata.yaml");
-  ASSERT_THAT(actual_yaml, StartsWith(expected_start));
+  auto writer = std::make_shared<rosbag2::WriterImpl>(metadata_io);
+  writer.reset();  // this should call write_metadata
 }

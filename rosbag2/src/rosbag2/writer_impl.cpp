@@ -24,11 +24,17 @@
 namespace rosbag2
 {
 
+WriterImpl::WriterImpl(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
+: metadata_io_(metadata_io),
+  storage_(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>())
+{}
+
 WriterImpl::~WriterImpl()
 {
-  auto info = std::make_unique<rosbag2::Info>();
-  info->write_metadata(options_.uri, storage_->get_metadata());
-  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  metadata_io_->write_metadata(options_.uri, storage_->get_metadata());
+  if (storage_) {
+    storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  }
 }
 
 void WriterImpl::open(const StorageOptions & options)
