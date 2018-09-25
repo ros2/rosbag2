@@ -108,13 +108,12 @@ TEST_F(MetadataFixture, reading_a_correctly_formatted_yaml_is_successful)
     "        type: type2\n"
     "      message_count: 200");
 
-  std::ofstream fout(temporary_dir_path_ + rosbag2_storage::separator() + "test2.metadata.yaml");
+  std::ofstream fout(temporary_dir_path_ + rosbag2_storage::separator() + "metadata.yaml");
   fout << bagfile;
   fout.close();
 
   auto metadata = std::make_shared<rosbag2_storage::MetadataIO>();
-  auto read_metadata = metadata_io_->read_metadata(
-    temporary_dir_path_ + rosbag2_storage::separator() + "test2");
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(read_metadata.encoding, Eq("cdr"));
