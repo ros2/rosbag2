@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PUBLISHER_MANAGER_HPP_
-#define PUBLISHER_MANAGER_HPP_
+#ifndef ROSBAG2_TESTS__PUBLISHER_MANAGER_HPP_
+#define ROSBAG2_TESTS__PUBLISHER_MANAGER_HPP_
 
 #include <functional>
 #include <future>
@@ -80,4 +80,4 @@ private:
 
 }  // namespace test_helpers
 
-#endif  // PUBLISHER_MANAGER_HPP_
+#endif  // ROSBAG2_TESTS__PUBLISHER_MANAGER_HPP_

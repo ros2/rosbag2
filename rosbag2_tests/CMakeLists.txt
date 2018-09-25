@@ -31,8 +31,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_rosbag2_record_end_to_end
-    test/test_rosbag2_record_end_to_end.cpp
-    test/memory_management.cpp
+    test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
+    test/rosbag2_tests/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_record_end_to_end)
     ament_target_dependencies(test_rosbag2_record_end_to_end
@@ -43,8 +43,8 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_rosbag2_play_end_to_end
-    test/test_rosbag2_play_end_to_end.cpp
-    test/memory_management.cpp
+    test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
+    test/rosbag2_tests/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_play_end_to_end)
     ament_target_dependencies(test_rosbag2_play_end_to_end

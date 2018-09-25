@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMPL__STORAGE_FACTORY_IMPL_HPP_
-#define IMPL__STORAGE_FACTORY_IMPL_HPP_
+#ifndef ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
+#define ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
 
 #include <algorithm>
 #include <memory>
@@ -142,4 +142,4 @@ private:
 
 }  // namespace rosbag2_storage
 
-#endif  // IMPL__STORAGE_FACTORY_IMPL_HPP_
+#endif  // ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_

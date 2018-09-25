@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RECORD_FIXTURE_HPP_
-#define RECORD_FIXTURE_HPP_
+#ifndef ROSBAG2_TESTS__RECORD_FIXTURE_HPP_
+#define ROSBAG2_TESTS__RECORD_FIXTURE_HPP_
 
 #include <gmock/gmock.h>
 
@@ -196,4 +196,4 @@ public:
 };
 
 
-#endif  // RECORD_FIXTURE_HPP_
+#endif  // ROSBAG2_TESTS__RECORD_FIXTURE_HPP_
