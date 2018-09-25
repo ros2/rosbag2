@@ -58,7 +58,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_storage rcutils)
+ament_export_dependencies(rosbag2_storage rcutils sqlite3_vendor SQLite3)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
