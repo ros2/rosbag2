@@ -24,6 +24,7 @@ find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/rosbag2/info.cpp
   src/rosbag2/sequential_reader.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/writer.cpp
@@ -80,12 +81,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_writer rosbag2)
   endif()
 
-  ament_add_gmock(test_sequential_reader
-    test/rosbag2/test_sequential_reader.cpp
+  ament_add_gmock(test_info
+    test/rosbag2/test_info.cpp
     test/rosbag2/mock_metadata_io.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_sequential_reader)
-    target_link_libraries(test_sequential_reader rosbag2)
+  if(TARGET test_info)
+    target_link_libraries(test_info rosbag2)
   endif()
 endif()
 

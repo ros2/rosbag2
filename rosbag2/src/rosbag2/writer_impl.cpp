@@ -18,6 +18,7 @@
 #include <string>
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2/info.hpp"
 #include "rosbag2/storage_options.hpp"
 
 namespace rosbag2
@@ -25,14 +26,14 @@ namespace rosbag2
 
 WriterImpl::~WriterImpl()
 {
-  metadata_io_->write_metadata(storage_->get_metadata());
+  auto info = std::make_unique<rosbag2::Info>();
+  info->write_metadata(options_.uri, storage_->get_metadata());
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
 void WriterImpl::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_write(options.uri, options.storage_id);
-  metadata_io_ = std::make_unique<rosbag2_storage::MetadataIO>(options.uri);
 
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");

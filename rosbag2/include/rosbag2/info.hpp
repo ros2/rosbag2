@@ -12,26 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__METADATA_IO_IFACE_HPP_
-#define ROSBAG2_STORAGE__METADATA_IO_IFACE_HPP_
+#ifndef ROSBAG2__INFO_HPP_
+#define ROSBAG2__INFO_HPP_
 
+#include <memory>
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/visibility_control.hpp"
+#include "rosbag2_storage/metadata_io_iface.hpp"
+#include "visibility_control.hpp"
 
-namespace rosbag2_storage
+namespace rosbag2
 {
 
-class ROSBAG2_STORAGE_PUBLIC MetadataIOIface
+class ROSBAG2_PUBLIC Info
 {
 public:
-  virtual ~MetadataIOIface() = default;
+  Info();
+  explicit Info(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io);
 
-  virtual void write_metadata(const std::string & uri, BagMetadata metadata) = 0;
-  virtual BagMetadata read_metadata(const std::string & uri) = 0;
+  rosbag2_storage::BagMetadata read_metadata(const std::string & uri);
+  void write_metadata(const std::string & uri, rosbag2_storage::BagMetadata metadata);
+
+private:
+  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
 };
 
-}  // namespace rosbag2_storage
+}  // namespace rosbag2
 
-#endif  // ROSBAG2_STORAGE__METADATA_IO_IFACE_HPP_
+#endif  // ROSBAG2__INFO_HPP_

@@ -17,26 +17,26 @@
 #include <memory>
 
 #include "mock_metadata_io.hpp"
-#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 
-class SequentialReaderFixture : public TemporaryDirectoryFixture
+class InfoTestFixture : public TemporaryDirectoryFixture
 {
 public:
-  SequentialReaderFixture()
+  InfoTestFixture()
   : metadata_io_(std::make_shared<MockMetadataIO>()),
-    reader_(std::make_shared<rosbag2::SequentialReader>(metadata_io_)) {}
+    info_(std::make_shared<rosbag2::Info>(metadata_io_)) {}
 
   std::shared_ptr<MockMetadataIO> metadata_io_;
-  std::shared_ptr<rosbag2::SequentialReader> reader_;
+  std::shared_ptr<rosbag2::Info> info_;
 };
 
-TEST_F(SequentialReaderFixture, info_makes_appropriate_call_to_metadata_io_method) {
+TEST_F(InfoTestFixture, info_makes_appropriate_call_to_metadata_io_method) {
   rosbag2_storage::BagMetadata metadata;
-  EXPECT_CALL(*metadata_io_, read_metadata()).WillOnce(Return(metadata));
+  EXPECT_CALL(*metadata_io_, read_metadata("test/uri")).WillOnce(Return(metadata));
 
-  reader_->info();
+  info_->read_metadata("test/uri");
 }

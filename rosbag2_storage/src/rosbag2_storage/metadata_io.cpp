@@ -155,21 +155,17 @@ std::string separator()
 #endif
 }
 
-MetadataIO::MetadataIO(const std::string & uri)
-: file_name_(get_metadata_file_name(uri))
-{}
-
-void MetadataIO::write_metadata(BagMetadata metadata)
+void MetadataIO::write_metadata(const std::string & uri, BagMetadata metadata)
 {
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
-  std::ofstream fout(file_name_);
+  std::ofstream fout(get_metadata_file_name(uri));
   fout << metadata_node;
 }
 
-BagMetadata MetadataIO::read_metadata()
+BagMetadata MetadataIO::read_metadata(const std::string & uri)
 {
-  YAML::Node yaml_file = YAML::LoadFile(file_name_);
+  YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
   auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
   return metadata;
 }

@@ -23,10 +23,6 @@
 namespace rosbag2
 {
 
-SequentialReader::SequentialReader(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
-: metadata_io_(metadata_io)
-{}
-
 SequentialReader::~SequentialReader()
 {
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
@@ -35,7 +31,6 @@ SequentialReader::~SequentialReader()
 void SequentialReader::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_only(options.uri, options.storage_id);
-  metadata_io_ = std::make_shared<rosbag2_storage::MetadataIO>(options.uri);
 
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
@@ -64,11 +59,6 @@ std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
     return storage_->get_all_topics_and_types();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
-}
-
-rosbag2_storage::BagMetadata SequentialReader::info()
-{
-  return metadata_io_->read_metadata();
 }
 
 }  // namespace rosbag2
