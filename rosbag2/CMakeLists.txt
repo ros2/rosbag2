@@ -44,14 +44,14 @@ target_include_directories(${PROJECT_NAME}
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(rosbag2 PRIVATE "ROSBAG2_BUILDING_DLL")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_BUILDING_DLL")
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
 install(
-  TARGETS rosbag2
+  TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)

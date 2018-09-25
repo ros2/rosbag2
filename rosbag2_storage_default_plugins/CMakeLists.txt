@@ -41,7 +41,7 @@ target_include_directories(${PROJECT_NAME}
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(rosbag2_storage_default_plugins PRIVATE
+target_compile_definitions(${PROJECT_NAME} PRIVATE
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_BUILDING_DLL)
 
 pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)

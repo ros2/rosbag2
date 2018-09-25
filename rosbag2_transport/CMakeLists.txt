@@ -33,7 +33,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(rosbag2_transport
+ament_target_dependencies(${PROJECT_NAME}
   rcl
   rclcpp
   rcutils
@@ -52,14 +52,14 @@ target_link_libraries(rosbag2_transport_py rosbag2_transport)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(rosbag2_transport PRIVATE "ROSBAG2_TRANSPORT_BUILDING_LIBRARY")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_TRANSPORT_BUILDING_LIBRARY")
 
 install(
   DIRECTORY include/
   DESTINATION include
 )
 install(
-  TARGETS rosbag2_transport
+  TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -68,7 +68,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_interfaces(export_${PROJECT_NAME})
-ament_export_libraries(rosbag2_transport)
+ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2)
 
 if(BUILD_TESTING)
