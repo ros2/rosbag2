@@ -116,7 +116,6 @@ struct convert<rosbag2_storage::BagMetadata>
     node["storage_identifier"] = metadata.storage_identifier;
     node["encoding"] = metadata.encoding;
     node["relative_file_paths"] = metadata.relative_file_paths;
-    node["combined_bag_size"] = metadata.combined_bag_size;
     node["duration"] = metadata.duration;
     node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
@@ -129,7 +128,6 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
     metadata.encoding = node["encoding"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
-    metadata.combined_bag_size = node["combined_bag_size"].as<size_t>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]
       .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();

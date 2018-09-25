@@ -3,7 +3,6 @@ rosbag2_bagfile_information:
   encoding: cdr
   relative_file_paths:
     - test.db3
-  combined_bag_size: 0
   duration:
     nanoseconds: 155979811
   starting_time:

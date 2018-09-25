@@ -37,7 +37,6 @@ struct BagMetadata
   std::string storage_identifier;
   std::string encoding;
   std::vector<std::string> relative_file_paths;
-  size_t combined_bag_size;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   size_t message_count;

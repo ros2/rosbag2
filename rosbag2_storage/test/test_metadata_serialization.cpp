@@ -46,7 +46,6 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.encoding = "cdr";
   metadata.relative_file_paths.emplace_back("some_relative_path");
   metadata.relative_file_paths.emplace_back("some_other_relative_path");
-  metadata.combined_bag_size = 10;
   metadata.duration = std::chrono::nanoseconds(100);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
@@ -60,7 +59,6 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
   EXPECT_THAT(read_metadata.encoding, Eq(metadata.encoding));
   EXPECT_THAT(read_metadata.relative_file_paths, Eq(metadata.relative_file_paths));
-  EXPECT_THAT(read_metadata.combined_bag_size, Eq(metadata.combined_bag_size));
   EXPECT_THAT(read_metadata.duration, Eq(metadata.duration));
   EXPECT_THAT(read_metadata.starting_time, Eq(metadata.starting_time));
   EXPECT_THAT(read_metadata.message_count, Eq(metadata.message_count));

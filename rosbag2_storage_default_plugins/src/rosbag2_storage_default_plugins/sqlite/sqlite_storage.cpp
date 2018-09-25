@@ -188,13 +188,6 @@ bool SqliteStorage::database_exists(const std::string & uri)
 
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
-  metadata_.combined_bag_size = 0;
-  for (const auto & filename : metadata_.relative_file_paths) {
-    metadata_.combined_bag_size += get_file_size(filename);
-    metadata_.combined_bag_size += get_file_size(filename + "-shm");
-    metadata_.combined_bag_size += get_file_size(filename + "-wal");
-  }
-
   metadata_.message_count = 0;
   metadata_.topics_with_message_count = {};
 
