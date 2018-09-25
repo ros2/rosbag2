@@ -153,6 +153,7 @@ class MetadataIO : public MetadataIOIface
 {
 public:
   explicit MetadataIO(const std::string & uri);
+  ~MetadataIO() override = default;
 
   ROSBAG2_STORAGE_PUBLIC void write_metadata(BagMetadata metadata) override;
   ROSBAG2_STORAGE_PUBLIC BagMetadata read_metadata() override;

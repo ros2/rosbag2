@@ -31,8 +31,8 @@ std::string separator()
 }
 
 MetadataIO::MetadataIO(const std::string & uri)
-: file_name_(get_metadata_file_name(uri)) {
-}
+: file_name_(get_metadata_file_name(uri))
+{}
 
 void MetadataIO::write_metadata(BagMetadata metadata)
 {
@@ -54,7 +54,7 @@ std::string MetadataIO::get_metadata_file_name(const std::string & uri)
   // TODO(botteroa-si): use metadata_file = uri + separator() + "metadata.yaml" once the uri is the
   // path to the bag directory.
   std::string metadata_file = uri + ".metadata.yaml";
-  
+
   return metadata_file;
 }
 

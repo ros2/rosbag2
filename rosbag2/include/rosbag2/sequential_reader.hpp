@@ -43,6 +43,8 @@ namespace rosbag2
 class ROSBAG2_PUBLIC SequentialReader
 {
 public:
+  SequentialReader() = default;
+  explicit SequentialReader(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io);
   virtual ~SequentialReader();
 
   /**
@@ -94,7 +96,7 @@ public:
 private:
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
-  std::unique_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
+  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
 };
 
 }  // namespace rosbag2

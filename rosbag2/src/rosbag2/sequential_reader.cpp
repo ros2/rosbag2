@@ -23,6 +23,10 @@
 namespace rosbag2
 {
 
+SequentialReader::SequentialReader(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
+: metadata_io_(metadata_io)
+{}
+
 SequentialReader::~SequentialReader()
 {
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
@@ -31,7 +35,7 @@ SequentialReader::~SequentialReader()
 void SequentialReader::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_only(options.uri, options.storage_id);
-  metadata_io_ = std::make_unique<rosbag2_storage::MetadataIO>(options.uri);
+  metadata_io_ = std::make_shared<rosbag2_storage::MetadataIO>(options.uri);
 
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
