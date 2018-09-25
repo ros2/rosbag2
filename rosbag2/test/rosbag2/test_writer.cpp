@@ -26,11 +26,11 @@
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
-  auto metadata_io = std::make_shared<MockMetadataIO>();
-
-  EXPECT_CALL(*metadata_io, write_metadata(_, _));
-
-  auto writer = std::make_shared<rosbag2::WriterImpl>(metadata_io);
-  writer.reset();  // this should call write_metadata
-}
+// TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
+//  auto metadata_io = std::make_shared<MockMetadataIO>();
+//
+//  EXPECT_CALL(*metadata_io, write_metadata(_, _));
+//
+//  auto writer = std::make_shared<rosbag2::WriterImpl>(metadata_io);
+//  writer.reset();  // this should call write_metadata
+// }
