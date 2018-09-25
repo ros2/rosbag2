@@ -50,6 +50,6 @@ TEST_F(TemporaryDirectoryFixture, writer_writes_correct_yaml_at_shutdown) {
     "\n  encoding: cdr");
 
   // TODO(Martin-Idel-SI): This is not yet the correct file name
-  std::string actual_yaml = get_yaml_content(temporary_dir_path_ + "/test.bagmetadata.yaml");
+  std::string actual_yaml = get_yaml_content(temporary_dir_path_ + "/test.bag.metadata.yaml");
   ASSERT_THAT(actual_yaml, StartsWith(expected_start));
 }

@@ -34,8 +34,8 @@ class MetadataFixture : public TemporaryDirectoryFixture
 public:
   MetadataFixture()
   : metadata_io_(std::make_shared<rosbag2_storage::MetadataIO>(
-        temporary_dir_path_ + separator() + "test")) // TODO(botteroa-si): as soon as the uri is the
-    // path to the bag directory the ony parameter left is temporary_dir_path.
+        temporary_dir_path_ + separator() + "test"))  // TODO(botteroa-si): as soon as the uri is
+    // the path to the bag directory the ony parameter left is temporary_dir_path.
   {}
 
   // TODO(greimela): Move to common place (is also used in test fixture etc.)
