@@ -34,6 +34,7 @@
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "rosbag2_storage/filesystem_helpers.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"
@@ -54,12 +55,9 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture()
   {
-    std::string system_separator = "/";
-#ifdef _WIN32
-    system_separator = "\\";
-#endif
-    database_name_ = temporary_dir_path_ + system_separator + "test.bag";
-    std::cout << "Database name: " << database_name_ << std::endl;
+    bag_path_ = temporary_dir_path_ + rosbag2_storage::separator() + "bag";
+    database_path_ = bag_path_ + rosbag2_storage::separator() + "bag.db3";
+    std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
     rclcpp::init(0, nullptr);
   }
 
@@ -91,7 +89,7 @@ public:
       false,
       0,
       nullptr,
-      temporary_dir_path_.c_str(),
+      nullptr,
       &start_up_info,
       &process_info);
 
@@ -104,7 +102,6 @@ public:
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
-      chdir(temporary_dir_path_.c_str());
       system(command.c_str());
     }
     return process_id;
@@ -117,7 +114,7 @@ public:
       try {
         std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
         rosbag2_storage_plugins::SqliteWrapper
-          db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+          db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
         return;
       } catch (const rosbag2_storage_plugins::SqliteException & ex) {
         (void) ex;  // still waiting
@@ -182,7 +179,7 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-    storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    storage->open(bag_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
 
     while (storage->has_next()) {
       table_msgs.push_back(storage->read_next());
@@ -191,7 +188,8 @@ public:
     return table_msgs;
   }
 
-  std::string database_name_;
+  std::string bag_path_;
+  std::string database_path_;
   PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };

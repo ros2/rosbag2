@@ -37,14 +37,11 @@ class StorageTestFixture : public TemporaryDirectoryFixture
 {
 public:
   StorageTestFixture()
-  : database_name_(std::string(UnitTest::GetInstance()->current_test_info()->name()) + ".db3")
   {
     std::string system_separator = "/";
 #ifdef _WIN32
     system_separator = "\\";
 #endif
-    database_name_ = temporary_dir_path_ + system_separator + database_name_;
-    std::cout << "Database name: " << database_name_ << std::endl;
     allocator_ = rcutils_get_default_allocator();
   }
 
@@ -96,7 +93,7 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    writable_storage->open(database_name_);
+    writable_storage->open(temporary_dir_path_);
 
     for (auto msg : messages) {
       std::string topic_name = std::get<2>(msg);
@@ -115,7 +112,8 @@ public:
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-    readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    readable_storage->open(
+      temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     while (readable_storage->has_next()) {
@@ -144,9 +142,6 @@ protected:
   }
 
   rcutils_allocator_t allocator_;
-
-public:
-  std::string database_name_;
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_

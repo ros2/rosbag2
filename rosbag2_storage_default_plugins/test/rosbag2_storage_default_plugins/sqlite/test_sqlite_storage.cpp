@@ -78,7 +78,7 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_);
+  readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
   readable_storage->read_next();
@@ -94,7 +94,7 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_);
+  readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
   auto first_message = readable_storage->read_next();
@@ -108,13 +108,14 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(database_name_);
+  writable_storage->open(temporary_dir_path_);
   writable_storage->create_topic({"topic1", "type1"});
   writable_storage->create_topic({"topic2", "type2"});
   writable_storage.reset();
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  readable_storage->open(
+    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, ElementsAreArray({
@@ -134,13 +135,13 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   write_messages_to_sqlite(messages);
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  readable_storage->open(
+    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.encoding, Eq("cdr"));
-  EXPECT_THAT(metadata.combined_bag_size, Gt(0u));  // File size differs between OS
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({database_name_}));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({temporary_dir_path_ + ".db3"}));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic1", "type1"}, 2u},
     rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic2", "type2"}, 1u}

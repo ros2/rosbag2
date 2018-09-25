@@ -28,11 +28,12 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   wrong_message->string_value = "wrong_content";
   pub_man_.add_publisher("/wrong_topic", wrong_message);
 
-  auto process_handle = start_execution("ros2 bag record /test_topic");
+  auto process_handle = start_execution(
+    "ros2 bag record --uri " + bag_path_ + " /test_topic");
   wait_for_db();
 
   rosbag2_storage_plugins::SqliteWrapper
-    db(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   pub_man_.run_publishers([this, &db](const std::string & topic_name) {
       return count_stored_messages(db, topic_name);
     });

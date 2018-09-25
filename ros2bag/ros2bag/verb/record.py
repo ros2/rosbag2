@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import os
 
 from ros2bag.verb import VerbExtension
@@ -33,18 +34,24 @@ class RecordVerb(VerbExtension):
             '-a', '--all', action='store_true', help='recording all topics')
         parser.add_argument(
             'topics', nargs='*', help='topics to be recorded')
+        parser.add_argument(
+            '-u', '--uri', help='bag uniform resource identifier')
+        parser.add_argument(
+            '-s', '--storage', help='storage identifier to be used')
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
-        uri = 'test.bag'
-        if os.path.exists(uri):
-            os.remove(uri)
-            print('warning: Overwriting already existing \'test.bag\'!')
+        storage_id = args.storage if args.storage else 'sqlite3'
+        uri = args.uri if args.uri else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
-        storage_id = 'sqlite3'
+        try:
+            os.makedirs(uri)
+        except:
+            print("Could not create bag folder at {}.".format(uri))
+            return
 
         if args.all:
             rosbag2_transport_py.record(uri=uri, storage_id=storage_id, all=True)

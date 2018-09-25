@@ -92,7 +92,7 @@ TEST_F(EndToEndTestFixture, play_end_to_end_test) {
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  execute("ros2 bag play test.bag");
+  execute("ros2 bag play test");
 
   subscription_future.get();
 

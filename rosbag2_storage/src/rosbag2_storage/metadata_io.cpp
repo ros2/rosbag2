@@ -142,18 +142,10 @@ struct convert<rosbag2_storage::BagMetadata>
 
 }  // namespace YAML
 
+#include "rosbag2_storage/filesystem_helpers.hpp"
+
 namespace rosbag2_storage
 {
-
-// TODO(greimela): Move to common place (is also used in test fixture etc.)
-std::string separator()
-{
-#ifdef _WIN32
-  return "\\";
-#else
-  return "/";
-#endif
-}
 
 void MetadataIO::write_metadata(const std::string & uri, BagMetadata metadata)
 {
@@ -172,9 +164,7 @@ BagMetadata MetadataIO::read_metadata(const std::string & uri)
 
 std::string MetadataIO::get_metadata_file_name(const std::string & uri)
 {
-  // TODO(botteroa-si): use metadata_file = uri + separator() + "metadata.yaml" once the uri is the
-  // path to the bag directory.
-  std::string metadata_file = uri + ".metadata.yaml";
+  std::string metadata_file = uri + rosbag2_storage::separator() + "metadata.yaml";
 
   return metadata_file;
 }

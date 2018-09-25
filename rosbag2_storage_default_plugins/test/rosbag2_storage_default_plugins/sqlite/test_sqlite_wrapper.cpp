@@ -20,6 +20,7 @@
 
 #include "rcutils/types.h"
 
+#include "rosbag2_storage/filesystem_helpers.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"
@@ -31,7 +32,9 @@ class SqliteWrapperTestFixture : public StorageTestFixture
 public:
   SqliteWrapperTestFixture()
   : StorageTestFixture(),
-    db_(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE)
+    db_(
+      temporary_dir_path_ + rosbag2_storage::separator() + "test.db3",
+      rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE)
   {}
 
   rosbag2_storage_plugins::SqliteWrapper db_;

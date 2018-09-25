@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 
+#include "rosbag2_storage/filesystem_helpers.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/writer.hpp"
 #include "temporary_directory_fixture.hpp"
@@ -43,13 +44,13 @@ std::string get_yaml_content(const std::string & filename)
 }
 
 TEST_F(TemporaryDirectoryFixture, writer_writes_correct_yaml_at_shutdown) {
-  write_file(temporary_dir_path_ + "/test.bag");
+  write_file(temporary_dir_path_);
 
   std::string expected_start("rosbag2_bagfile_information:"
     "\n  storage_identifier: sqlite3"
     "\n  encoding: cdr");
 
-  // TODO(Martin-Idel-SI): This is not yet the correct file name
-  std::string actual_yaml = get_yaml_content(temporary_dir_path_ + "/test.bag.metadata.yaml");
+  std::string actual_yaml = get_yaml_content(
+    temporary_dir_path_ + rosbag2_storage::separator() + "metadata.yaml");
   ASSERT_THAT(actual_yaml, StartsWith(expected_start));
 }

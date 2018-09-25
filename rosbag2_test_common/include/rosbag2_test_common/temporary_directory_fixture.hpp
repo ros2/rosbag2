@@ -36,7 +36,7 @@ namespace rosbag2_test_common
 class TemporaryDirectoryFixture : public Test
 {
 public:
-  static void SetUpTestCase()
+  TemporaryDirectoryFixture()
   {
     char template_char[] = "tmp_test_dir.XXXXXX";
 #ifdef _WIN32
@@ -51,12 +51,12 @@ public:
 #endif
   }
 
-  static void TearDownTestCase()
+  ~TemporaryDirectoryFixture() override
   {
     remove_directory_recursively(temporary_dir_path_);
   }
 
-  static void remove_directory_recursively(const std::string & directory_path)
+  void remove_directory_recursively(const std::string & directory_path)
   {
 #ifdef _WIN32
     // We need a string of type PCZZTSTR, which is a double null terminated char ptr
@@ -98,10 +98,8 @@ public:
 #endif
   }
 
-  static std::string temporary_dir_path_;
+  std::string temporary_dir_path_;
 };
-
-std::string TemporaryDirectoryFixture::temporary_dir_path_ = "";  // NOLINT
 
 }  // namespace rosbag2_test_common
 

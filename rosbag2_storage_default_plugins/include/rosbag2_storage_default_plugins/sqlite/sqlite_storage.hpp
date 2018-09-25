@@ -67,6 +67,7 @@ private:
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  std::string get_database_name(const std::string & uri);
   bool database_exists(const std::string & uri);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
