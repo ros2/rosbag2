@@ -63,6 +63,7 @@ ament_export_dependencies(rosbag2_storage rcutils sqlite3_vendor SQLite3)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_commons REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   set(TEST_LINK_LIBRARIES
@@ -78,6 +79,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_wrapper)
     target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
+    ament_target_dependencies(test_sqlite_wrapper rosbag2_test_commons)
   endif()
 
   ament_add_gmock(test_sqlite_storage
@@ -85,6 +87,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_storage)
     target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
+    ament_target_dependencies(test_sqlite_storage rosbag2_test_commons)
   endif()
 endif()
 

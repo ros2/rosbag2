@@ -75,47 +75,43 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(rosbag2_test_commons REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_record
     test/rosbag2_transport/test_record.cpp
-    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record)
     target_link_libraries(test_record rosbag2_transport)
-    ament_target_dependencies(test_record test_msgs)
+    ament_target_dependencies(test_record test_msgs rosbag2_test_commons)
   endif()
 
   ament_add_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
-    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record_all)
     target_link_libraries(test_record_all rosbag2_transport)
-    ament_target_dependencies(test_record_all test_msgs)
+    ament_target_dependencies(test_record_all test_msgs rosbag2_test_commons)
   endif()
 
   ament_add_gmock(test_play
     test/rosbag2_transport/test_play.cpp
-    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_play)
     target_link_libraries(test_play rosbag2_transport)
-    ament_target_dependencies(test_play test_msgs)
+    ament_target_dependencies(test_play test_msgs rosbag2_test_commons)
   endif()
 
   ament_add_gmock(test_play_timing
     test/rosbag2_transport/test_play_timing.cpp
-    test/rosbag2_transport/memory_management.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_play_timing)
     target_link_libraries(test_play_timing rosbag2_transport)
-    ament_target_dependencies(test_play_timing test_msgs)
+    ament_target_dependencies(test_play_timing test_msgs rosbag2_test_commons)
   endif()
 
   ament_add_gmock(test_rosbag2_node
     test/rosbag2_transport/test_rosbag2_node.cpp
-    test/rosbag2_transport/memory_management.cpp
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
     src/rosbag2_transport/rosbag2_node.cpp
@@ -129,7 +125,8 @@ if(BUILD_TESTING)
       ament_index_cpp
       rosbag2
       rclcpp
-      test_msgs)
+      test_msgs
+      rosbag2_test_commons)
   endif()
 endif()
 

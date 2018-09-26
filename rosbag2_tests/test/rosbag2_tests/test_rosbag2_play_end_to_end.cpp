@@ -32,7 +32,7 @@
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
-#include "subscription_manager.hpp"
+#include "rosbag2_test_commons/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__MEMORY_MANAGEMENT_HPP_
-#define ROSBAG2_TRANSPORT__MEMORY_MANAGEMENT_HPP_
+#ifndef ROSBAG2_TEST_COMMONS__MEMORY_MANAGEMENT_HPP_
+#define ROSBAG2_TEST_COMMONS__MEMORY_MANAGEMENT_HPP_
 
 #include <memory>
 
@@ -24,7 +24,11 @@ namespace test_helpers
 class MemoryManagement
 {
 public:
-  MemoryManagement();
+  MemoryManagement()
+  {
+    rcutils_allocator_ = rcutils_get_default_allocator();
+  }
+
   ~MemoryManagement() = default;
 
   template<typename T>
@@ -52,14 +56,13 @@ public:
       get_message_typesupport(message),
       message.get());
     if (error != RCL_RET_OK) {
-      throw std::runtime_error("Failed to deserialize");
+      RCUTILS_LOG_ERROR_NAMED("rosbag2_tests", "Leaking memory. Error: %s",
+        rcutils_get_error_string_safe());
     }
     return message;
   }
 
 private:
-  std::shared_ptr<rmw_serialized_message_t> get_initialized_serialized_message(size_t capacity);
-
   template<typename T>
   inline
   const rosidl_message_type_support_t * get_message_typesupport(std::shared_ptr<T>)
@@ -67,10 +70,32 @@ private:
     return rosidl_typesupport_cpp::get_message_type_support_handle<T>();
   }
 
+  std::shared_ptr<rmw_serialized_message_t>
+  get_initialized_serialized_message(size_t capacity)
+  {
+    auto msg = new rmw_serialized_message_t;
+    *msg = rcutils_get_zero_initialized_char_array();
+    auto ret = rcutils_char_array_init(msg, capacity, &rcutils_allocator_);
+    if (ret != RCUTILS_RET_OK) {
+      throw std::runtime_error("Error allocating resources for serialized message: " +
+        std::string(rcutils_get_error_string_safe()));
+    }
+
+    auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
+      [](rmw_serialized_message_t * msg) {
+        int error = rcutils_char_array_fini(msg);
+        delete msg;
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED("rosbag2_test_commons", "Leaking memory. Error: %s",
+            rcutils_get_error_string_safe());
+        }
+      });
+    return serialized_message;
+  }
+
   rcutils_allocator_t rcutils_allocator_;
 };
 
-
 }  // namespace test_helpers
 
-#endif  // ROSBAG2_TRANSPORT__MEMORY_MANAGEMENT_HPP_
+#endif  // ROSBAG2_TEST_COMMONS__MEMORY_MANAGEMENT_HPP_

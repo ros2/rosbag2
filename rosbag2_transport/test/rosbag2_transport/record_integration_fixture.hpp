@@ -25,10 +25,10 @@
 #include "rosbag2/types.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_test_commons/memory_management.hpp"
+#include "rosbag2_test_commons/publisher_manager.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
-#include "publisher_manager.hpp"
-#include "memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT

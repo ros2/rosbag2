@@ -28,7 +28,7 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
-#include "subscription_manager.hpp"
+#include "rosbag2_test_commons/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT

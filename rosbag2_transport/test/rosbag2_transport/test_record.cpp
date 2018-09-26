@@ -22,7 +22,6 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "record_integration_fixture.hpp"
 #include "rosbag2/types.hpp"
-#include "memory_management.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"

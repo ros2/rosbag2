@@ -35,9 +35,9 @@
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
-#include "temporary_directory_fixture.hpp"
-#include "publisher_manager.hpp"
-#include "memory_management.hpp"
+#include "rosbag2_test_commons/temporary_directory_fixture.hpp"
+#include "rosbag2_test_commons/publisher_manager.hpp"
+#include "rosbag2_test_commons/memory_management.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT

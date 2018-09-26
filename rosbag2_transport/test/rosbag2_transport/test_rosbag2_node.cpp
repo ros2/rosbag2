@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "memory_management.hpp"
+#include "rosbag2_test_commons/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
