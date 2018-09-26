@@ -41,6 +41,7 @@
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
+using namespace rosbag2_test_commons;  // NOLINT
 
 #ifdef _WIN32
 using ProcessHandle = HANDLE;
@@ -191,8 +192,8 @@ public:
   }
 
   std::string database_name_;
-  test_helpers::PublisherManager pub_man_;
-  test_helpers::MemoryManagement memory_management_;
+  PublisherManager pub_man_;
+  MemoryManagement memory_management_;
 };
 
 

@@ -27,6 +27,7 @@
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_commons;  // NOLINT
 
 class RosBag2NodeFixture : public Test
 {
@@ -79,7 +80,7 @@ public:
     return memory_management_.serialize_message(string_message);
   }
 
-  test_helpers::MemoryManagement memory_management_;
+  MemoryManagement memory_management_;
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node_;
   rclcpp::Node::SharedPtr publisher_node_;
   std::vector<std::shared_ptr<rclcpp::PublisherBase>> publishers_;

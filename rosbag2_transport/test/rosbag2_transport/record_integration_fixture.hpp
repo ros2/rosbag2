@@ -84,8 +84,8 @@ public:
     return filtered_messages;
   }
 
-  test_helpers::MemoryManagement memory_;
-  test_helpers::PublisherManager pub_man_;
+  MemoryManagement memory_;
+  PublisherManager pub_man_;
   std::future<void> future_;
 };
 

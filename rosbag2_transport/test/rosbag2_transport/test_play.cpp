@@ -33,6 +33,7 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
+using namespace rosbag2_test_commons;  // NOLINT
 
 class RosBag2PlayTestFixture : public Rosbag2TransportTestFixture
 {
@@ -41,7 +42,7 @@ public:
   : Rosbag2TransportTestFixture()
   {
     rclcpp::init(0, nullptr);
-    sub_ = std::make_shared<test_helpers::SubscriptionManager>();
+    sub_ = std::make_shared<SubscriptionManager>();
   }
 
   ~RosBag2PlayTestFixture() override
@@ -49,7 +50,7 @@ public:
     rclcpp::shutdown();
   }
 
-  std::shared_ptr<test_helpers::SubscriptionManager> sub_;
+  std::shared_ptr<SubscriptionManager> sub_;
 };
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)

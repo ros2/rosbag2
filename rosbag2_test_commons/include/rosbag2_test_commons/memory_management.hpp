@@ -16,10 +16,11 @@
 #define ROSBAG2_TEST_COMMONS__MEMORY_MANAGEMENT_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
-namespace test_helpers
+namespace rosbag2_test_commons
 {
 class MemoryManagement
 {
@@ -78,24 +79,24 @@ private:
     auto ret = rcutils_char_array_init(msg, capacity, &rcutils_allocator_);
     if (ret != RCUTILS_RET_OK) {
       throw std::runtime_error("Error allocating resources for serialized message: " +
-        std::string(rcutils_get_error_string_safe()));
+              std::string(rcutils_get_error_string_safe()));
     }
 
     auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
-      [](rmw_serialized_message_t * msg) {
-        int error = rcutils_char_array_fini(msg);
-        delete msg;
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED("rosbag2_test_commons", "Leaking memory. Error: %s",
+        [](rmw_serialized_message_t * msg) {
+          int error = rcutils_char_array_fini(msg);
+          delete msg;
+          if (error != RCUTILS_RET_OK) {
+            RCUTILS_LOG_ERROR_NAMED("rosbag2_test_commons", "Leaking memory. Error: %s",
             rcutils_get_error_string_safe());
-        }
-      });
+          }
+        });
     return serialized_message;
   }
 
   rcutils_allocator_t rcutils_allocator_;
 };
 
-}  // namespace test_helpers
+}  // namespace rosbag2_test_commons
 
 #endif  // ROSBAG2_TEST_COMMONS__MEMORY_MANAGEMENT_HPP_

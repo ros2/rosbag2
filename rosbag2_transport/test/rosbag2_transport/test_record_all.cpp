@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-#include "record_integration_fixture.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "record_integration_fixture.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2/types.hpp"
 #include "test_msgs/msg/primitives.hpp"

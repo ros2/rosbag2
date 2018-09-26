@@ -40,6 +40,7 @@
 #include "mock_writer.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_commons; // NOLINT
 
 inline char separator()
 {
@@ -73,7 +74,7 @@ public:
     return bag_msg;
   }
 
-  test_helpers::MemoryManagement memory_management_;
+  MemoryManagement memory_management_;
 
   rosbag2_transport::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;

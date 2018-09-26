@@ -31,6 +31,7 @@
 #include "rosbag2_test_commons/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_commons; // NOLINT
 
 class StorageTestFixture : public TemporaryDirectoryFixture
 {

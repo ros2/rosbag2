@@ -30,6 +30,9 @@
 
 using namespace ::testing;  // NOLINT
 
+namespace rosbag2_test_commons
+{
+
 class TemporaryDirectoryFixture : public Test
 {
 public:
@@ -99,5 +102,7 @@ public:
 };
 
 std::string TemporaryDirectoryFixture::temporary_dir_path_ = "";  // NOLINT
+
+}  // namespace rosbag2_test_commons
 
 #endif  // ROSBAG2_TEST_COMMONS__TEMPORARY_DIRECTORY_FIXTURE_HPP_

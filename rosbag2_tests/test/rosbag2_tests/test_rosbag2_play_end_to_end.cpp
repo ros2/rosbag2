@@ -36,7 +36,7 @@
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
-
+using namespace rosbag2_test_commons;  // NOLINT
 
 class EndToEndTestFixture : public Test
 {
@@ -45,7 +45,7 @@ public:
   {
     database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
     rclcpp::init(0, nullptr);
-    sub_ = std::make_unique<test_helpers::SubscriptionManager>();
+    sub_ = std::make_unique<SubscriptionManager>();
   }
 
   ~EndToEndTestFixture() override
@@ -83,7 +83,7 @@ public:
   }
 
   std::string database_path_;
-  std::unique_ptr<test_helpers::SubscriptionManager> sub_;
+  std::unique_ptr<SubscriptionManager> sub_;
 };
 
 TEST_F(EndToEndTestFixture, play_end_to_end_test) {

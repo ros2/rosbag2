@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "record_integration_fixture.hpp"
+#include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2/types.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"

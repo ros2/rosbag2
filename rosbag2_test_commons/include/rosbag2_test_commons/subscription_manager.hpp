@@ -25,7 +25,7 @@
 
 #include "memory_management.hpp"
 
-namespace test_helpers
+namespace rosbag2_test_commons
 {
 
 class SubscriptionManager
@@ -94,6 +94,6 @@ private:
   MemoryManagement memory_management_;
 };
 
-}  // namespace test_helpers
+}  // namespace rosbag2_test_commons
 
 #endif  // ROSBAG2_TEST_COMMONS__SUBSCRIPTION_MANAGER_HPP_

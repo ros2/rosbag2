@@ -25,7 +25,7 @@
 
 using namespace std::chrono_literals;  // NOLINT
 
-namespace test_helpers
+namespace rosbag2_test_commons
 {
 
 using CountFunction = std::function<size_t(const std::string &)>;
@@ -78,6 +78,6 @@ private:
   std::vector<std::function<void(CountFunction)>> publishers_;
 };
 
-}  // namespace test_helpers
+}  // namespace rosbag2_test_commons
 
 #endif  // ROSBAG2_TEST_COMMONS__PUBLISHER_MANAGER_HPP_
