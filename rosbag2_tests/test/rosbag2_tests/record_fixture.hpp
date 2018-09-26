@@ -45,7 +45,13 @@ using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
 #ifdef _WIN32
-using ProcessHandle = HANDLE;
+struct Process
+{
+  PROCESS_INFORMATION process_info;
+  HANDLE job_handle;
+};
+
+using ProcessHandle = Process;
 #else
 using ProcessHandle = int;
 #endif
@@ -94,15 +100,20 @@ public:
       &process_info);
 
     AssignProcessToJobObject(h_job, process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    Process process;
+    process.process_info = process_info;
+    process.job_handle = h_job;
+
     delete[] command_char;
-    return h_job;
+    return process;
 #else
     auto process_id = fork();
     if (process_id == 0) {
       setpgid(getpid(), getpid());
-      system(command.c_str());
+      int return_code = system(command.c_str());
+      EXPECT_THAT(return_code, Eq(0));  // this call will make sure that the process does execute
+      // without issues before it is killed by the user in the test or, in case it runs until
+      // completion, that it has correctly executed.
     }
     return process_id;
 #endif
@@ -125,7 +136,15 @@ public:
   void stop_execution(ProcessHandle handle)
   {
 #ifdef _WIN32
-    CloseHandle(handle);
+    DWORD exit_code;
+    GetExitCodeProcess(handle.process_info.hProcess, &exit_code);
+    // 259 indicates that the process is still active: we want to make sure that the process is
+    // still running properly before killing it.
+    EXPECT_THAT(exit_code, Eq(259));
+
+    CloseHandle(handle.process_info.hProcess);
+    CloseHandle(handle.process_info.hThread);
+    CloseHandle(handle.job_handle);
 #else
     kill(-handle, SIGTERM);
 #endif

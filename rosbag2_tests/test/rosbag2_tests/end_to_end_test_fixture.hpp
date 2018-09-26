@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef END_TO_END_TEST_FIXTURE_HPP_
+#define END_TO_END_TEST_FIXTURE_HPP_
+
 #include <gmock/gmock.h>
 
 #include <string>
@@ -23,12 +26,11 @@
 #endif
 
 using namespace ::testing;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 
-class InfoEndToEndTestFixture : public Test
+class EndToEndTestFixture : public Test
 {
 public:
-  InfoEndToEndTestFixture()
+  EndToEndTestFixture()
   {
     database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
   }
@@ -53,25 +55,22 @@ public:
       database_path_.c_str(),
       &start_up_info,
       &process_info);
+    DWORD exit_code = 259;  // 259 is the code one gets if the proces is still active.
+    while (exit_code == 259) {
+      GetExitCodeProcess(process_info.hProcess, &exit_code);
+    }
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
+    EXPECT_THAT(exit_code, Eq(0));
     delete[] command_char;
 #else
     chdir(database_path_.c_str());
-    system(command.c_str());
+    int exit_code = system(command.c_str());
+    EXPECT_THAT(exit_code, Eq(0));
 #endif
   }
 
   std::string database_path_;
 };
 
-TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
-  internal::CaptureStdout();
-  execute("ros2 bag info test.bag");
-  // We wait before retrieving the captured stdout to make sure that the info have been printed.
-  std::this_thread::sleep_for(2s);
-  std::string output = internal::GetCapturedStdout();
-
-  // TODO(botteroa-si): update once correct pretty printing of baginfo is available.
-  EXPECT_THAT(output, HasSubstr("printing bag info of 'test.bag'..."));
-}
+#endif  // END_TO_END_TEST_FIXTURE_HPP_

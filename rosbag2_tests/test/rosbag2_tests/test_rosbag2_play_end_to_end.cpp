@@ -21,12 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
-
-#ifdef _WIN32
-# include <direct.h>
-# include <Windows.h>
-#endif
+#include "rclcpp/rclcpp.hpp"
+#include "end_to_end_test_fixture.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
@@ -38,55 +34,24 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class EndToEndTestFixture : public Test
+class PlayEndToEndTestFixture : public EndToEndTestFixture
 {
 public:
-  EndToEndTestFixture()
+  PlayEndToEndTestFixture()
   {
-    database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
     rclcpp::init(0, nullptr);
     sub_ = std::make_unique<SubscriptionManager>();
   }
 
-  ~EndToEndTestFixture() override
+  ~PlayEndToEndTestFixture() override
   {
     rclcpp::shutdown();
   }
 
-  void execute(const std::string & command)
-  {
-#ifdef _WIN32
-    size_t length = strlen(command.c_str());
-    TCHAR * command_char = new TCHAR[length + 1];
-    memcpy(command_char, command.c_str(), length + 1);
-
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-    CreateProcess(
-      nullptr,
-      command_char,
-      nullptr,
-      nullptr,
-      false,
-      0,
-      nullptr,
-      database_path_.c_str(),
-      &start_up_info,
-      &process_info);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
-    delete[] command_char;
-#else
-    chdir(database_path_.c_str());
-    system(command.c_str());
-#endif
-  }
-
-  std::string database_path_;
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
-TEST_F(EndToEndTestFixture, play_end_to_end_test) {
+TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::StaticArrayPrimitives>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::Primitives>("/test_topic", 3);
 
