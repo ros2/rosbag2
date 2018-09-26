@@ -68,8 +68,10 @@ public:
 TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
   execute("ros2 bag info test.bag");
+  // We wait before retrieving the captured stdout to make sure that the info have been printed.
+  std::this_thread::sleep_for(2s);
   std::string output = internal::GetCapturedStdout();
 
-  // TODO(botteroa-si): update once printing of baginfo is available.
-  EXPECT_THAT(output, Eq("\nprinting bag info of 'test.bag'...\n"));
+  // TODO(botteroa-si): update once correct pretty printing of baginfo is available.
+  EXPECT_THAT(output, HasSubstr("printing bag info of 'test.bag'..."));
 }
