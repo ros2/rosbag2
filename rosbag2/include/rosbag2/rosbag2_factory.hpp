@@ -29,6 +29,7 @@ namespace rosbag2
 class ROSBAG2_PUBLIC Rosbag2Factory
 {
 public:
+  virtual ~Rosbag2Factory() = default;
   /**
    * Open a new writer with the given storage options. The bagfile folder will be created and
    * must not already exist and the storage will be opened for writing. On destruction, the
