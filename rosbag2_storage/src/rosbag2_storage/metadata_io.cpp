@@ -155,9 +155,13 @@ void MetadataIo::write_metadata(const std::string & uri, BagMetadata metadata)
 
 BagMetadata MetadataIo::read_metadata(const std::string & uri)
 {
-  YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
-  auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
-  return metadata;
+  try {
+    YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
+    auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
+    return metadata;
+  } catch (const YAML::Exception & ex) {
+    throw std::runtime_error(std::string("Exception on parsing info file: ") + ex.what());
+  }
 }
 
 std::string MetadataIo::get_metadata_file_name(const std::string & uri)

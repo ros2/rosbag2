@@ -81,6 +81,14 @@ if(BUILD_TESTING)
   if(TARGET test_writer)
     target_link_libraries(test_writer rosbag2)
   endif()
+
+  ament_add_gmock(test_info
+    test/rosbag2/test_info.cpp
+    test/rosbag2/mock_metadata_io.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_info)
+    target_link_libraries(test_info rosbag2)
+  endif()
 endif()
 
 ament_package()
