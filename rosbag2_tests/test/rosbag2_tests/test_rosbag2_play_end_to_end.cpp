@@ -21,8 +21,9 @@
 #include <string>
 #include <vector>
 
+// rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
-#include "end_to_end_test_fixture.hpp"
+#include "process_execution_helpers.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
@@ -31,15 +32,15 @@
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class PlayEndToEndTestFixture : public EndToEndTestFixture
+class PlayEndToEndTestFixture : public Test
 {
 public:
   PlayEndToEndTestFixture()
   {
     rclcpp::init(0, nullptr);
+    database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
     sub_ = std::make_unique<SubscriptionManager>();
   }
 
@@ -48,6 +49,7 @@ public:
     rclcpp::shutdown();
   }
 
+  std::string database_path_;
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
@@ -57,7 +59,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  execute("ros2 bag play test");
+  execute_and_wait_until_completion("ros2 bag play test", database_path_);
 
   subscription_future.get();
 

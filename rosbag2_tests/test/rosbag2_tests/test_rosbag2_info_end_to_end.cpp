@@ -17,15 +17,24 @@
 #include <string>
 #include <thread>
 
-#include "end_to_end_test_fixture.hpp"
+#include "process_execution_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 
+class InfoEndToEndTestFixture : public Test
+{
+public:
+  InfoEndToEndTestFixture()
+  {
+    database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
+  }
 
-TEST_F(EndToEndTestFixture, info_end_to_end_test) {
+  std::string database_path_;
+};
+
+TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
-  execute("ros2 bag info test.bag");
+  execute_and_wait_until_completion("ros2 bag info test.bag", database_path_);
   std::string output = internal::GetCapturedStdout();
 
   // TODO(botteroa-si): update once correct pretty printing of baginfo is available.

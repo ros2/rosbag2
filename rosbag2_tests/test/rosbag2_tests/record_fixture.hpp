@@ -22,14 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
-
-#ifdef _WIN32
-# include <direct.h>
-# include <Windows.h>
-#else
-# include <unistd.h>
-#endif
+#include "rclcpp/rclcpp.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
@@ -43,18 +36,6 @@
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
-
-#ifdef _WIN32
-struct Process
-{
-  PROCESS_INFORMATION process_info;
-  HANDLE job_handle;
-};
-
-using ProcessHandle = Process;
-#else
-using ProcessHandle = int;
-#endif
 
 class RecordFixture : public TemporaryDirectoryFixture
 {
@@ -72,53 +53,6 @@ public:
     rclcpp::shutdown();
   }
 
-  ProcessHandle start_execution(const std::string & command)
-  {
-#ifdef _WIN32
-    auto h_job = CreateJobObject(nullptr, nullptr);
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
-    info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
-
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-
-    size_t length = strlen(command.c_str());
-    TCHAR * command_char = new TCHAR[length + 1];
-    memcpy(command_char, command.c_str(), length + 1);
-
-    CreateProcess(
-      nullptr,
-      command_char,
-      nullptr,
-      nullptr,
-      false,
-      0,
-      nullptr,
-      nullptr,
-      &start_up_info,
-      &process_info);
-
-    AssignProcessToJobObject(h_job, process_info.hProcess);
-    Process process;
-    process.process_info = process_info;
-    process.job_handle = h_job;
-
-    delete[] command_char;
-    return process;
-#else
-    auto process_id = fork();
-    if (process_id == 0) {
-      setpgid(getpid(), getpid());
-      int return_code = system(command.c_str());
-      EXPECT_THAT(return_code, Eq(0));  // this call will make sure that the process does execute
-      // without issues before it is killed by the user in the test or, in case it runs until
-      // completion, that it has correctly executed.
-    }
-    return process_id;
-#endif
-  }
-
   void wait_for_db()
   {
     while (true) {
@@ -133,25 +67,8 @@ public:
     }
   }
 
-  void stop_execution(ProcessHandle handle)
-  {
-#ifdef _WIN32
-    DWORD exit_code;
-    GetExitCodeProcess(handle.process_info.hProcess, &exit_code);
-    // 259 indicates that the process is still active: we want to make sure that the process is
-    // still running properly before killing it.
-    EXPECT_THAT(exit_code, Eq(259));
-
-    CloseHandle(handle.process_info.hProcess);
-    CloseHandle(handle.process_info.hThread);
-    CloseHandle(handle.job_handle);
-#else
-    kill(-handle, SIGTERM);
-#endif
-  }
-
-  size_t
-  count_stored_messages(rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
+  size_t count_stored_messages(
+    rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
   {
     // protect against concurrent writes (from recording) that may make the count query throw.
     while (true) {
@@ -212,6 +129,5 @@ public:
   PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };
-
 
 #endif  // ROSBAG2_TESTS__RECORD_FIXTURE_HPP_

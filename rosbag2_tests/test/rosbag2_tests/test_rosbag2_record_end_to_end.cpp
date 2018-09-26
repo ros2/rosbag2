@@ -16,7 +16,9 @@
 
 #include <string>
 
+// The record_fixture.hpp must be included before process_execution_helpers.hpp
 #include "record_fixture.hpp"
+#include "process_execution_helpers.hpp"
 
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_primitives()[0];
