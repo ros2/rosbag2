@@ -210,6 +210,12 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
     min_time = std::get<3>(result) < min_time ? std::get<3>(result) : min_time;
     max_time = std::get<4>(result) > max_time ? std::get<4>(result) : max_time;
   }
+
+  if (metadata_.message_count == 0) {
+    min_time = 0;
+    max_time = 0;
+  }
+
   metadata_.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata_.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);

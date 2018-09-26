@@ -155,3 +155,24 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   ));
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(2)));
 }
+
+TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
+  write_messages_to_sqlite({});
+
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  readable_storage->open(
+    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  auto metadata = readable_storage->get_metadata();
+
+  EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
+  EXPECT_THAT(metadata.encoding, Eq("cdr"));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
+  }));
+  EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
+  EXPECT_THAT(metadata.message_count, Eq(0u));
+  EXPECT_THAT(metadata.starting_time, Eq(
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::seconds(0))
+  ));
+  EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(0)));
+}
