@@ -21,7 +21,7 @@ class InfoVerb(VerbExtension):
     """ros2 bag info."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        arg = parser.add_argument(
+        parser.add_argument(
             'bag_file', help='bag file to introspect')
 
     def main(self, *, args):  # noqa: D102
