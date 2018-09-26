@@ -35,16 +35,18 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             'topics', nargs='*', help='topics to be recorded')
         parser.add_argument(
-            '-u', '--uri', help='bag uniform resource identifier')
+            '-u', '--uri', 
+            help='destination of the bagfile to create, \
+            defaults to a timestamped folder in the current directory')
         parser.add_argument(
-            '-s', '--storage', help='storage identifier to be used')
+            '-s', '--storage', default='sqlite3',
+            help='storage identifier to be used, defaults to "sqlite3"')
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
-        storage_id = args.storage if args.storage else 'sqlite3'
         uri = args.uri if args.uri else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
         try:
@@ -54,8 +56,8 @@ class RecordVerb(VerbExtension):
             return
 
         if args.all:
-            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, all=True)
+            rosbag2_transport_py.record(uri=uri, storage_id=args.storage, all=True)
         elif args.topics and len(args.topics) > 0:
-            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, topics=args.topics)
+            rosbag2_transport_py.record(uri=uri, storage_id=args.storage, topics=args.topics)
         else:
             self._subparser.print_help()
