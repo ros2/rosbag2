@@ -12,44 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__WRITER_IMPL_HPP_
-#define ROSBAG2__WRITER_IMPL_HPP_
+#ifndef ROSBAG2__SEQUENTIAL_READER_IMPL_HPP_
+#define ROSBAG2__SEQUENTIAL_READER_IMPL_HPP_
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/metadata_io_iface.hpp"
+#include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
-#include "rosbag2/writer.hpp"
 
 namespace rosbag2
 {
 
-class WriterImpl : public Writer
+class SequentialReaderImpl : public SequentialReader
 {
 public:
-  explicit WriterImpl(
-    const StorageOptions & options,
-    std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io =
-    std::make_shared<rosbag2_storage::MetadataIO>());
+  explicit SequentialReaderImpl(const StorageOptions & options);
 
-  ~WriterImpl() override;
+  ~SequentialReaderImpl() override;
 
-  void create_topic(const TopicWithType & topic_with_type) override;
+  bool has_next() override;
 
-  void write(std::shared_ptr<SerializedBagMessage> message) override;
+  std::shared_ptr<SerializedBagMessage> read_next() override;
+
+  std::vector<TopicWithType> get_all_topics_and_types() override;
 
 private:
-  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
-  rosbag2::StorageOptions options_;
   rosbag2_storage::StorageFactory factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__WRITER_IMPL_HPP_
+#endif  // ROSBAG2__SEQUENTIAL_READER_IMPL_HPP_

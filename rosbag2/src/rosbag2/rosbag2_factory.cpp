@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "sequential_reader_impl.hpp"
 #include "writer_impl.hpp"
 
 namespace rosbag2
@@ -23,17 +24,13 @@ namespace rosbag2
 
 std::shared_ptr<Writer> Rosbag2Factory::create_writer(const StorageOptions & options)
 {
-  auto writer = std::make_shared<WriterImpl>();
-  writer->open(options);
-  return writer;
+  return std::make_shared<WriterImpl>(options);
 }
 
 std::shared_ptr<SequentialReader> Rosbag2Factory::create_sequential_reader(
   const StorageOptions & options)
 {
-  auto reader = std::make_shared<SequentialReader>();
-  reader->open(options);
-  return reader;
+  return std::make_shared<SequentialReaderImpl>(options);
 }
 
 std::shared_ptr<Info> Rosbag2Factory::create_info()

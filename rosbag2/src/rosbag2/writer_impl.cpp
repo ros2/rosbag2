@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2/info.hpp"
@@ -24,20 +25,11 @@
 namespace rosbag2
 {
 
-WriterImpl::WriterImpl(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
-: metadata_io_(metadata_io),
+WriterImpl::WriterImpl(
+  const StorageOptions & options,
+  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
+: metadata_io_(std::move(metadata_io)),
   storage_(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>())
-{}
-
-WriterImpl::~WriterImpl()
-{
-  metadata_io_->write_metadata(options_.uri, storage_->get_metadata());
-  if (storage_) {
-    storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
-  }
-}
-
-void WriterImpl::open(const StorageOptions & options)
 {
   storage_ = factory_.open_read_write(options.uri, options.storage_id);
 
@@ -45,6 +37,12 @@ void WriterImpl::open(const StorageOptions & options)
     throw std::runtime_error("No storage could be initialized. Abort");
   }
   options_ = options;
+}
+
+WriterImpl::~WriterImpl()
+{
+  metadata_io_->write_metadata(options_.uri, storage_->get_metadata());
+  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
 void WriterImpl::create_topic(const TopicWithType & topic_with_type)

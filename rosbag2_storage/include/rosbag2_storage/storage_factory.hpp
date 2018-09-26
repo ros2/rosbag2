@@ -44,12 +44,10 @@ public:
   virtual ~StorageFactory();
 
   std::shared_ptr<storage_interfaces::ReadOnlyInterface>
-  open_read_only(
-    const std::string & uri, const std::string & storage_id);
+  open_read_only(const std::string & uri, const std::string & storage_id);
 
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(
-    const std::string & uri, const std::string & storage_id);
+  open_read_write(const std::string & uri, const std::string & storage_id);
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;

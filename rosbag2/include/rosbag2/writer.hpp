@@ -18,9 +18,6 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
@@ -35,14 +32,6 @@ class ROSBAG2_PUBLIC Writer
 {
 public:
   virtual ~Writer() = default;
-
-  /**
-   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
-   * This must be called before any other function is used.
-   *
-   * \param options Options to configure the storage
-   */
-  virtual void open(const StorageOptions & options) = 0;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -61,9 +50,6 @@ public:
    */
   virtual void write(std::shared_ptr<SerializedBagMessage> message) = 0;
 };
-
-ROSBAG2_PUBLIC
-std::shared_ptr<Writer> create_default_writer();
 
 }  // namespace rosbag2
 

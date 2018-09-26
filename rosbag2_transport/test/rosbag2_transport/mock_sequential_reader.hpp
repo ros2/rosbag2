@@ -24,11 +24,6 @@
 class MockSequentialReader : public rosbag2::SequentialReader
 {
 public:
-  void open(const rosbag2::StorageOptions & options) override
-  {
-    (void) options;
-  }
-
   bool has_next() override
   {
     return num_read_ < messages_.size();

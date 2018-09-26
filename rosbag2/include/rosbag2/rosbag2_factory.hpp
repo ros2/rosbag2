@@ -21,15 +21,29 @@
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/writer.hpp"
+#include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
 
-class Rosbag2Factory
+class ROSBAG2_PUBLIC Rosbag2Factory
 {
 public:
+  /**
+   * Open a new writer with the given storage options. The bagfile folder will be created and
+   * must not already exist and the storage will be opened for writing. On destruction, the
+   * writer will write a metadata yaml file.
+   *
+   * @param options Storage options including uri and storage identifier
+   */
   virtual std::shared_ptr<Writer> create_writer(const StorageOptions & options);
 
+  /**
+   * Open a bagfile to read all messages sequentially according to their timestamp.
+   *
+   * @param options Storage options including uri and storage identifier
+   * @return
+   */
   virtual std::shared_ptr<SequentialReader> create_sequential_reader(
     const StorageOptions & options);
 

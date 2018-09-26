@@ -28,11 +28,6 @@ public:
   MockWriter() = default;
   ~MockWriter() override = default;
 
-  void open(const rosbag2::StorageOptions & options) override
-  {
-    (void) options;
-  }
-
   void create_topic(const rosbag2::TopicWithType & topic_with_type) override
   {
     topics_.emplace(topic_with_type.name, topic_with_type);
