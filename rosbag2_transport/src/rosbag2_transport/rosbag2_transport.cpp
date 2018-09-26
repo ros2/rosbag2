@@ -64,11 +64,11 @@ void Rosbag2Transport::record(
 {
   writer_->open(storage_options);
 
-  auto rosbag2_transport = std::make_shared<Rosbag2Node>("rosbag2");
+  auto transport_node = setup_node();
 
   auto topics_and_types = record_options.all ?
-    rosbag2_transport->get_all_topics_with_types() :
-    rosbag2_transport->get_topics_with_types(record_options.topics);
+    transport_node->get_all_topics_with_types() :
+    transport_node->get_topics_with_types(record_options.topics);
 
   if (topics_and_types.empty()) {
     throw std::runtime_error("No topics found. Abort");
@@ -78,7 +78,7 @@ void Rosbag2Transport::record(
     auto topic_name = topic_and_type.first;
     auto topic_type = topic_and_type.second;
 
-    auto subscription = create_subscription(rosbag2_transport, topic_name, topic_type);
+    auto subscription = create_subscription(transport_node, topic_name, topic_type);
     if (subscription) {
       subscriptions_.push_back(subscription);
       writer_->create_topic({topic_name, topic_type});
@@ -91,9 +91,17 @@ void Rosbag2Transport::record(
 
   ROSBAG2_TRANSPORT_LOG_INFO("Waiting for messages...");
   while (rclcpp::ok()) {
-    rclcpp::spin(rosbag2_transport);
+    rclcpp::spin(transport_node);
   }
   subscriptions_.clear();
+}
+
+std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
+{
+  if (!transport_node_) {
+    transport_node_ = std::make_shared<Rosbag2Node>("rosbag2");
+  }
+  return transport_node_;
 }
 
 std::shared_ptr<GenericSubscription>
@@ -126,9 +134,9 @@ void Rosbag2Transport::play(
 {
   reader_->open(storage_options);
 
-  auto rosbag2_transport = std::make_shared<Rosbag2Node>("rosbag2");
+  auto transport_node = setup_node();
 
-  Player player(reader_, rosbag2_transport);
+  Player player(reader_, transport_node);
   player.play(play_options);
 }
 
