@@ -20,17 +20,20 @@
 #include "rosbag2_storage/filesystem_helpers.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "../../src/rosbag2/writer_impl.hpp"
+#include "mock_storage_factory.hpp"
 #include "mock_metadata_io.hpp"
 #include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
-// TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
-//  auto metadata_io = std::make_shared<MockMetadataIO>();
-//
-//  EXPECT_CALL(*metadata_io, write_metadata(_, _));
-//
-//  auto writer = std::make_shared<rosbag2::WriterImpl>(metadata_io);
-//  writer.reset();  // this should call write_metadata
-// }
+TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
+  auto metadata_io = std::make_shared<MockMetadataIO>();
+  auto storage = std::make_shared<MockStorageFactory>(metadata_io);
+
+  EXPECT_CALL(*metadata_io, write_metadata(_, _));
+
+  rosbag2::StorageOptions options{};
+  auto writer = std::make_shared<rosbag2::WriterImpl>(options, storage);
+  writer.reset();  // this should call write_metadata
+}

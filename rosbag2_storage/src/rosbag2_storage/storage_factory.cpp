@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
@@ -34,7 +35,7 @@ StorageFactory::StorageFactory()
 {}
 
 // needed explicit destructor because of unique_ptr for pimpl
-StorageFactory::~StorageFactory() {}
+StorageFactory::~StorageFactory() = default;
 
 std::shared_ptr<ReadOnlyInterface> StorageFactory::open_read_only(
   const std::string & uri, const std::string & storage_id)
@@ -47,4 +48,10 @@ std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
 {
   return impl_->open_read_write(uri, storage_id);
 }
+
+std::shared_ptr<MetadataIOIface> StorageFactory::create_metadata_io()
+{
+  return std::make_shared<MetadataIO>();
+}
+
 }  // namespace rosbag2_storage

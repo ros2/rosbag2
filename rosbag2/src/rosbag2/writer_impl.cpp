@@ -27,11 +27,10 @@ namespace rosbag2
 
 WriterImpl::WriterImpl(
   const StorageOptions & options,
-  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
-: metadata_io_(std::move(metadata_io)),
-  storage_(std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>())
+  std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory)
+: factory_(storage_factory)
 {
-  storage_ = factory_.open_read_write(options.uri, options.storage_id);
+  storage_ = factory_->open_read_write(options.uri, options.storage_id);
 
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
@@ -41,7 +40,7 @@ WriterImpl::WriterImpl(
 
 WriterImpl::~WriterImpl()
 {
-  metadata_io_->write_metadata(options_.uri, storage_->get_metadata());
+  factory_->create_metadata_io()->write_metadata(options_.uri, storage_->get_metadata());
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
