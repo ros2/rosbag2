@@ -35,7 +35,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             'topics', nargs='*', help='topics to be recorded')
         parser.add_argument(
-            '-u', '--uri', 
+            '-o', '--output', 
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
@@ -47,7 +47,7 @@ class RecordVerb(VerbExtension):
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
-        uri = args.uri if args.uri else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+        uri = args.output if args.output else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
         try:
             os.makedirs(uri)

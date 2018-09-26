@@ -28,7 +28,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   wrong_message->string_value = "wrong_content";
   pub_man_.add_publisher("/wrong_topic", wrong_message);
 
-  auto process_handle = start_execution("ros2 bag record --uri " + bag_path_ + " /test_topic");
+  auto process_handle = start_execution("ros2 bag record --output " + bag_path_ + " /test_topic");
   wait_for_db();
 
   rosbag2_storage_plugins::SqliteWrapper
