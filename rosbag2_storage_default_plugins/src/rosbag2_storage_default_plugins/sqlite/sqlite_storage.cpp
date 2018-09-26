@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_storage/filesystem_helpers.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
@@ -52,7 +52,7 @@ void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
   std::string database_name = get_database_name(uri);
-  std::string database_path = uri + rosbag2_storage::separator() + database_name;
+  std::string database_path = rosbag2_storage::FilesystemHelper::concat({uri, database_name});
 
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY &&
     !database_exists(database_path))
@@ -177,7 +177,7 @@ void SqliteStorage::fill_topics_and_types()
 
 std::string SqliteStorage::get_database_name(const std::string & uri)
 {
-  return rosbag2_storage::get_leaf_directory(uri) + ".db3";
+  return rosbag2_storage::FilesystemHelper::get_folder_name(uri) + ".db3";
 }
 
 bool SqliteStorage::database_exists(const std::string & uri)

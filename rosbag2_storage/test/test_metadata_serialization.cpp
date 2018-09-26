@@ -27,24 +27,25 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2_storage/filesystem_helpers.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_storage;  // NOLINT
 
 class MetadataFixture : public TemporaryDirectoryFixture
 {
 public:
   MetadataFixture()
-  : metadata_io_(std::make_shared<rosbag2_storage::MetadataIo>())
-  {}
+  : metadata_io_(std::make_shared<MetadataIo>()) {}
 
-  std::shared_ptr<rosbag2_storage::MetadataIo> metadata_io_;
+  std::shared_ptr<MetadataIo> metadata_io_;
 };
 
 TEST_F(MetadataFixture, test_writing_and_reading_yaml)
 {
-  rosbag2_storage::BagMetadata metadata{};
+  BagMetadata metadata{};
+  metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
   metadata.encoding = "cdr";
   metadata.relative_file_paths.emplace_back("some_relative_path");
@@ -59,6 +60,7 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
+  EXPECT_THAT(read_metadata.version, Eq(metadata.version));
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
   EXPECT_THAT(read_metadata.encoding, Eq(metadata.encoding));
   EXPECT_THAT(read_metadata.relative_file_paths, Eq(metadata.relative_file_paths));

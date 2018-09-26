@@ -34,7 +34,7 @@
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "rosbag2_storage/filesystem_helpers.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"
@@ -61,8 +61,8 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture()
   {
-    bag_path_ = temporary_dir_path_ + rosbag2_storage::separator() + "bag";
-    database_path_ = bag_path_ + rosbag2_storage::separator() + "bag.db3";
+    bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
+    database_path_ = rosbag2_storage::FilesystemHelper::concat({bag_path_, "bag.db3"});
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
     rclcpp::init(0, nullptr);
   }

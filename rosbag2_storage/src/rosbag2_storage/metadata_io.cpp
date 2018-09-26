@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/filesystem_helper.hpp"
+
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
@@ -113,6 +115,7 @@ struct convert<rosbag2_storage::BagMetadata>
   static Node encode(const rosbag2_storage::BagMetadata & metadata)
   {
     Node node;
+    node["version"] = metadata.version;
     node["storage_identifier"] = metadata.storage_identifier;
     node["encoding"] = metadata.encoding;
     node["relative_file_paths"] = metadata.relative_file_paths;
@@ -125,6 +128,7 @@ struct convert<rosbag2_storage::BagMetadata>
 
   static bool decode(const Node & node, rosbag2_storage::BagMetadata & metadata)
   {
+    metadata.version = node["version"].as<int>();
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
     metadata.encoding = node["encoding"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
@@ -139,8 +143,6 @@ struct convert<rosbag2_storage::BagMetadata>
 };
 
 }  // namespace YAML
-
-#include "rosbag2_storage/filesystem_helpers.hpp"
 
 namespace rosbag2_storage
 {
@@ -166,7 +168,7 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
 
 std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 {
-  std::string metadata_file = uri + rosbag2_storage::separator() + "metadata.yaml";
+  std::string metadata_file = rosbag2_storage::FilesystemHelper::concat({uri, metadata_filename});
 
   return metadata_file;
 }

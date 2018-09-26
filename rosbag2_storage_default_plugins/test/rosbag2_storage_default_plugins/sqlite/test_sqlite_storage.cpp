@@ -22,7 +22,7 @@
 
 #include "rcutils/snprintf.h"
 
-#include "rosbag2_storage/filesystem_helpers.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "storage_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -143,7 +143,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.encoding, Eq("cdr"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::get_leaf_directory(temporary_dir_path_) + ".db3"
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic1", "type1"}, 2u},

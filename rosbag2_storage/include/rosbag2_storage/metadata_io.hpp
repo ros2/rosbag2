@@ -27,6 +27,8 @@ namespace rosbag2_storage
 class MetadataIo : public MetadataIoIface
 {
 public:
+  static constexpr const char * const metadata_filename = "metadata.yaml";
+
   ROSBAG2_STORAGE_PUBLIC ~MetadataIo() override = default;
 
   ROSBAG2_STORAGE_PUBLIC void write_metadata(

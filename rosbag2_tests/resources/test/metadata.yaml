@@ -1,4 +1,5 @@
 rosbag2_bagfile_information:
+  version: 1
   storage_identifier: sqlite3
   encoding: cdr
   relative_file_paths:

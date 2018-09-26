@@ -34,6 +34,7 @@ struct TopicMetadata
 
 struct BagMetadata
 {
+  int version = 1;
   std::string storage_identifier;
   std::string encoding;
   std::vector<std::string> relative_file_paths;

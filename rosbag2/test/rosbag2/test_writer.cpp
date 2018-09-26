@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/filesystem_helpers.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "../../src/rosbag2/writer_impl.hpp"
 #include "mock_storage_factory.hpp"

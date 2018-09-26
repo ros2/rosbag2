@@ -22,14 +22,15 @@
 #include "mock_metadata_io.hpp"
 #include "rosbag2/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "temporary_directory_fixture.hpp"
-#include "rosbag2_storage/filesystem_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metadata_io_method) {
   std::string bagfile(
     "rosbag2_bagfile_information:\n"
+    "  version: 1\n"
     "  storage_identifier: sqlite3\n"
     "  encoding: cdr\n"
     "  relative_file_paths:\n"
@@ -51,7 +52,10 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "        type: type2\n"
     "      message_count: 200");
 
-  std::ofstream fout(temporary_dir_path_ + rosbag2_storage::separator() + "metadata.yaml");
+  std::ofstream fout(
+    rosbag2_storage::FilesystemHelper::concat({
+    temporary_dir_path_, rosbag2_storage::MetadataIo::metadata_filename
+  }));
   fout << bagfile;
   fout.close();
 
