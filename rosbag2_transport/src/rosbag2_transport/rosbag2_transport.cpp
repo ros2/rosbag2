@@ -89,7 +89,7 @@ void Rosbag2Transport::record(
     throw std::runtime_error("No topics could be subscribed. Abort");
   }
 
-  ROSBAG2_TRANSPORT_LOG_INFO("Waiting for messages...");
+  ROSBAG2_TRANSPORT_LOG_INFO("Subscription setup complete.");
   while (rclcpp::ok()) {
     rclcpp::spin(transport_node);
   }
