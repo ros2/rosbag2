@@ -38,7 +38,9 @@ class Rosbag2Node;
 class Player
 {
 public:
-  explicit Player(std::shared_ptr<rosbag2::SequentialReader> reader);
+  explicit Player(
+    std::shared_ptr<rosbag2::SequentialReader> reader,
+    std::shared_ptr<Rosbag2Node> rosbag2_transport);
 
   void play(const PlayOptions & options);
 

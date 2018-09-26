@@ -126,7 +126,9 @@ void Rosbag2Transport::play(
 {
   reader_->open(storage_options);
 
-  Player player(reader_);
+  auto rosbag2_transport = std::make_shared<Rosbag2Node>("rosbag2");
+
+  Player player(reader_, rosbag2_transport);
   player.play(play_options);
 }
 

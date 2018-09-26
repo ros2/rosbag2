@@ -34,8 +34,9 @@
 namespace rosbag2_transport
 {
 
-Player::Player(std::shared_ptr<rosbag2::SequentialReader> reader)
-: reader_(std::move(reader)), rosbag2_transport_(std::make_shared<Rosbag2Node>("rosbag2_node"))
+Player::Player(
+  std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
+: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
 {}
 
 bool Player::is_storage_completely_loaded() const

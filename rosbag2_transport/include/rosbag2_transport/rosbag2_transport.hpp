@@ -82,6 +82,8 @@ private:
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   std::shared_ptr<rosbag2::Writer> writer_;
 
+  std::shared_ptr<Rosbag2Node> rosbag2_transport_;
+
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
 };
 
