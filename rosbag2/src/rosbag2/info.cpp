@@ -16,24 +16,20 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "rosbag2_storage/metadata_io.hpp"
 
 namespace rosbag2
 {
 
-Info::Info()
-{
-  metadata_io_ = std::make_shared<rosbag2_storage::MetadataIO>();
-}
-
-Info::Info(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io)
-: metadata_io_(metadata_io)
+Info::Info(std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory)
+: storage_factory_(std::move(storage_factory))
 {}
 
 rosbag2_storage::BagMetadata Info::read_metadata(const std::string & uri)
 {
-  return metadata_io_->read_metadata(uri);
+  return storage_factory_->create_metadata_io()->read_metadata(uri);
 }
 
 }  // namespace rosbag2

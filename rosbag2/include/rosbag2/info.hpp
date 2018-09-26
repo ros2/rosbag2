@@ -19,7 +19,10 @@
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/storage_factory_iface.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/metadata_io_iface.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -36,13 +39,14 @@ namespace rosbag2
 class ROSBAG2_PUBLIC Info
 {
 public:
-  Info();
-  explicit Info(std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io);
+  explicit Info(
+    std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory =
+    std::make_shared<rosbag2_storage::StorageFactory>());
 
   rosbag2_storage::BagMetadata read_metadata(const std::string & uri);
 
 private:
-  std::shared_ptr<rosbag2_storage::MetadataIOIface> metadata_io_;
+  std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory_;
 };
 
 }  // namespace rosbag2
