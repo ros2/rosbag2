@@ -22,6 +22,14 @@
 #include "rosbag2_storage/metadata_io_iface.hpp"
 #include "visibility_control.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2
 {
 
@@ -38,5 +46,9 @@ private:
 };
 
 }  // namespace rosbag2
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2__INFO_HPP_
