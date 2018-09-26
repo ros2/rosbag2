@@ -18,6 +18,7 @@
 #include "rosbag2/info.hpp"
 #include "mock_sequential_reader.hpp"
 #include "mock_writer.hpp"
+#include "mock_info.hpp"
 
 #ifndef ROSBAG2_TRANSPORT__MOCK_ROSBAG2_FACTORY_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_ROSBAG2_FACTORY_HPP_
@@ -26,7 +27,10 @@ class MockRosbag2Factory : public rosbag2::Rosbag2Factory
 {
 public:
   MockRosbag2Factory()
-  : writer_(std::make_shared<MockWriter>()), reader_(std::make_shared<MockSequentialReader>()) {}
+  : writer_(std::make_shared<MockWriter>()),
+    reader_(std::make_shared<MockSequentialReader>()),
+    info_(std::make_shared<MockInfo>())
+  {}
 
   std::shared_ptr<rosbag2::Writer> create_writer(
     const rosbag2::StorageOptions & options) override
@@ -42,14 +46,14 @@ public:
     return reader_;
   }
 
-  // TODO(Martin-Idel-SI): Correctly mock info class
   std::shared_ptr<rosbag2::Info> create_info() override
   {
-    return std::make_shared<rosbag2::Info>();
+    return info_;
   }
 
   std::shared_ptr<MockWriter> writer_;
   std::shared_ptr<MockSequentialReader> reader_;
+  std::shared_ptr<MockInfo> info_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_ROSBAG2_FACTORY_HPP_

@@ -31,7 +31,7 @@ using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
 using rosbag2_storage::storage_interfaces::ReadWriteInterface;
 
 StorageFactory::StorageFactory()
-: impl_(new StorageFactoryImpl())
+: impl_(std::make_unique<StorageFactoryImpl>())
 {}
 
 // needed explicit destructor because of unique_ptr for pimpl

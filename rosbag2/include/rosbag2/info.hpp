@@ -23,6 +23,7 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/metadata_io_iface.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2/types.hpp"
 #include "visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -42,8 +43,9 @@ public:
   explicit Info(
     std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory =
     std::make_shared<rosbag2_storage::StorageFactory>());
+  virtual ~Info() = default;
 
-  rosbag2_storage::BagMetadata read_metadata(const std::string & uri);
+  virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
 
 private:
   std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory_;

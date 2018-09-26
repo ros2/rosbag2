@@ -57,7 +57,8 @@ class Rosbag2TransportTestFixture : public Test
 {
 public:
   Rosbag2TransportTestFixture()
-  : storage_options_({"uri", "storage_id"}), play_options_({1000}),
+  : storage_options_({"uri", "storage_id"}),
+    play_options_({1000}),
     factory_(std::make_shared<MockRosbag2Factory>()) {}
 
   template<typename MessageT>

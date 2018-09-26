@@ -134,8 +134,27 @@ void Rosbag2Transport::play(
 
 void Rosbag2Transport::print_bag_info(const std::string & uri)
 {
-  // TODO(botteroa-si): implement correct printing of metadata file content.
-  std::cout << "\nprinting bag info of '" << uri << "'..." << std::endl;
+  auto metadata = factory_->create_info()->read_metadata(uri);
+  std::stringstream ss;
+  ss << "Storage identifier:  " << metadata.storage_identifier << "\n";
+  ss << "File encoding:       " << metadata.encoding << "\n";
+  ss << "Associated files (relative paths):\n";
+  for (const auto & file : metadata.relative_file_paths) {
+    ss << "        - " << file << "\n";
+  }
+  ss << "Starting time:       " << metadata.starting_time.time_since_epoch().count() << "\n";
+  ss << "End time:            " <<
+  (metadata.starting_time.time_since_epoch() + metadata.duration).count() << "\n";
+  ss << "Duration:            " << metadata.duration.count() << "\n";
+  ss << "Total message count: " << metadata.message_count << "\n";
+  ss << "Topics with Type and message count:\n";
+  for (const auto & topic_with_type_and_count : metadata.topics_with_message_count) {
+    ss << "        - " << topic_with_type_and_count.topic_with_type.name <<
+      " ; " << topic_with_type_and_count.topic_with_type.type <<
+      " ; " << topic_with_type_and_count.message_count << "\n";
+  }
+
+  std::cout << ss.str() << std::endl;
 }
 
 }  // namespace rosbag2_transport

@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/info.hpp"
+#ifndef ROSBAG2_TRANSPORT__MOCK_INFO_HPP_
+#define ROSBAG2_TRANSPORT__MOCK_INFO_HPP_
 
-#include <memory>
+#include <gmock/gmock.h>
+
 #include <string>
-#include <utility>
 
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2/info.hpp"
+#include "rosbag2/types.hpp"
 
-namespace rosbag2
+class MockInfo : public rosbag2::Info
 {
+public:
+  MOCK_METHOD1(read_metadata, rosbag2::BagMetadata(const std::string &));
+};
 
-Info::Info(std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory)
-: storage_factory_(std::move(storage_factory))
-{}
-
-rosbag2::BagMetadata Info::read_metadata(const std::string & uri)
-{
-  return storage_factory_->metadata_io()->read_metadata(uri);
-}
-
-}  // namespace rosbag2
+#endif  // ROSBAG2_TRANSPORT__MOCK_INFO_HPP_
