@@ -29,7 +29,7 @@ Info::Info(std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory
 
 rosbag2_storage::BagMetadata Info::read_metadata(const std::string & uri)
 {
-  return storage_factory_->create_metadata_io()->read_metadata(uri);
+  return storage_factory_->metadata_io()->read_metadata(uri);
 }
 
 }  // namespace rosbag2

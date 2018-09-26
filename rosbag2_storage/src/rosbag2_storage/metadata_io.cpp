@@ -145,7 +145,7 @@ struct convert<rosbag2_storage::BagMetadata>
 namespace rosbag2_storage
 {
 
-void MetadataIO::write_metadata(const std::string & uri, BagMetadata metadata)
+void MetadataIo::write_metadata(const std::string & uri, BagMetadata metadata)
 {
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
@@ -153,14 +153,14 @@ void MetadataIO::write_metadata(const std::string & uri, BagMetadata metadata)
   fout << metadata_node;
 }
 
-BagMetadata MetadataIO::read_metadata(const std::string & uri)
+BagMetadata MetadataIo::read_metadata(const std::string & uri)
 {
   YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
   auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
   return metadata;
 }
 
-std::string MetadataIO::get_metadata_file_name(const std::string & uri)
+std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 {
   std::string metadata_file = uri + rosbag2_storage::separator() + "metadata.yaml";
 

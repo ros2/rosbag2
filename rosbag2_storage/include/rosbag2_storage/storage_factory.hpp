@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory_iface.hpp"
@@ -50,10 +51,11 @@ public:
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
   open_read_write(const std::string & uri, const std::string & storage_id) override;
 
-  std::shared_ptr<MetadataIOIface> create_metadata_io() override;
+  std::shared_ptr<MetadataIoIface> metadata_io() override;
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;
+  std::shared_ptr<MetadataIo> metadata_io_;
 };
 
 }  // namespace rosbag2_storage

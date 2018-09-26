@@ -40,7 +40,7 @@ WriterImpl::WriterImpl(
 
 WriterImpl::~WriterImpl()
 {
-  factory_->create_metadata_io()->write_metadata(options_.uri, storage_->get_metadata());
+  factory_->metadata_io()->write_metadata(options_.uri, storage_->get_metadata());
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 

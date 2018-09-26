@@ -23,10 +23,10 @@
 namespace rosbag2_storage
 {
 
-class ROSBAG2_STORAGE_PUBLIC MetadataIOIface
+class ROSBAG2_STORAGE_PUBLIC MetadataIoIface
 {
 public:
-  virtual ~MetadataIOIface() = default;
+  virtual ~MetadataIoIface() = default;
 
   virtual void write_metadata(const std::string & uri, BagMetadata metadata) = 0;
   virtual BagMetadata read_metadata(const std::string & uri) = 0;

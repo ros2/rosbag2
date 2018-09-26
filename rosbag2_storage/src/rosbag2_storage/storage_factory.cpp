@@ -49,9 +49,12 @@ std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
   return impl_->open_read_write(uri, storage_id);
 }
 
-std::shared_ptr<MetadataIOIface> StorageFactory::create_metadata_io()
+std::shared_ptr<MetadataIoIface> StorageFactory::metadata_io()
 {
-  return std::make_shared<MetadataIO>();
+  if (!metadata_io_) {
+    metadata_io_ = std::make_shared<MetadataIo>();
+  }
+  return metadata_io_;
 }
 
 }  // namespace rosbag2_storage

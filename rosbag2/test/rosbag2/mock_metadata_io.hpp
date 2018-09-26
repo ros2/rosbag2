@@ -24,7 +24,7 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io_iface.hpp"
 
-class MockMetadataIO : public rosbag2_storage::MetadataIOIface
+class MockMetadataIo : public rosbag2_storage::MetadataIoIface
 {
 public:
   MOCK_METHOD2(write_metadata, void(const std::string &, rosbag2_storage::BagMetadata));

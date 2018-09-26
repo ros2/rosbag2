@@ -28,7 +28,7 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 
 TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
-  auto metadata_io = std::make_shared<MockMetadataIO>();
+  auto metadata_io = std::make_shared<MockMetadataIo>();
   auto storage = std::make_shared<MockStorageFactory>(metadata_io);
 
   EXPECT_CALL(*metadata_io, write_metadata(_, _));

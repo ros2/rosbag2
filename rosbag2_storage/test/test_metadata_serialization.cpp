@@ -36,10 +36,10 @@ class MetadataFixture : public TemporaryDirectoryFixture
 {
 public:
   MetadataFixture()
-  : metadata_io_(std::make_shared<rosbag2_storage::MetadataIO>())
+  : metadata_io_(std::make_shared<rosbag2_storage::MetadataIo>())
   {}
 
-  std::shared_ptr<rosbag2_storage::MetadataIO> metadata_io_;
+  std::shared_ptr<rosbag2_storage::MetadataIo> metadata_io_;
 };
 
 TEST_F(MetadataFixture, test_writing_and_reading_yaml)
@@ -112,7 +112,7 @@ TEST_F(MetadataFixture, reading_a_correctly_formatted_yaml_is_successful)
   fout << bagfile;
   fout.close();
 
-  auto metadata = std::make_shared<rosbag2_storage::MetadataIO>();
+  auto metadata = std::make_shared<rosbag2_storage::MetadataIo>();
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
