@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEMPORARY_DIRECTORY_FIXTURE_HPP_
-#define TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#ifndef ROSBAG2_STORAGE__TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#define ROSBAG2_STORAGE__TEMPORARY_DIRECTORY_FIXTURE_HPP_
 
 #include <gmock/gmock.h>
 
@@ -98,4 +98,4 @@ public:
   std::string temporary_dir_path_;
 };
 
-#endif  // TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#endif  // ROSBAG2_STORAGE__TEMPORARY_DIRECTORY_FIXTURE_HPP_

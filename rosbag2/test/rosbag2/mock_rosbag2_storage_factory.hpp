@@ -15,19 +15,19 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_factory_iface.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory.hpp"
 #include "mock_storage.hpp"
 
-#ifndef ROSBAG2__MOCK_STORAGE_FACTORY_HPP_
-#define ROSBAG2__MOCK_STORAGE_FACTORY_HPP_
+#ifndef ROSBAG2__MOCK_ROSBAG2_STORAGE_FACTORY_HPP_
+#define ROSBAG2__MOCK_ROSBAG2_STORAGE_FACTORY_HPP_
 
-class MockStorageFactory : public rosbag2_storage::StorageFactoryIface
+class MockRosbag2StorageFactory : public rosbag2_storage::Rosbag2StorageFactory
 {
 public:
-  explicit MockStorageFactory(std::shared_ptr<rosbag2_storage::MetadataIoIface> metadata_io)
+  explicit MockRosbag2StorageFactory(std::shared_ptr<rosbag2_storage::MetadataIo> metadata_io)
   : metadata_io_(metadata_io) {}
 
-  ~MockStorageFactory() override = default;
+  ~MockRosbag2StorageFactory() override = default;
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
   open_read_only(const std::string & uri, const std::string & storage_id) override
@@ -45,13 +45,13 @@ public:
     return std::make_shared<MockStorage>();
   }
 
-  std::shared_ptr<rosbag2_storage::MetadataIoIface> metadata_io() override
+  std::shared_ptr<rosbag2_storage::MetadataIo> metadata_io() override
   {
     return metadata_io_;
   }
 
 private:
-  std::shared_ptr<rosbag2_storage::MetadataIoIface> metadata_io_;
+  std::shared_ptr<rosbag2_storage::MetadataIo> metadata_io_;
 };
 
-#endif  // ROSBAG2__MOCK_STORAGE_FACTORY_HPP_
+#endif  // ROSBAG2__MOCK_ROSBAG2_STORAGE_FACTORY_HPP_

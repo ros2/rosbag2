@@ -54,7 +54,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
 
   std::ofstream fout(
     rosbag2_storage::FilesystemHelper::concat({
-    temporary_dir_path_, rosbag2_storage::MetadataIo::metadata_filename
+    temporary_dir_path_, rosbag2_storage::MetadataIoImpl::metadata_filename
   }));
   fout << bagfile;
   fout.close();

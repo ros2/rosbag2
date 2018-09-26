@@ -23,7 +23,7 @@
 namespace rosbag2
 {
 
-Info::Info(std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory)
+Info::Info(std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory)
 : storage_factory_(std::move(storage_factory))
 {}
 

@@ -27,7 +27,7 @@ namespace rosbag2
 
 WriterImpl::WriterImpl(
   const StorageOptions & options,
-  std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory)
+  std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory)
 : factory_(storage_factory)
 {
   storage_ = factory_->open_read_write(options.uri, options.storage_id);

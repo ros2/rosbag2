@@ -19,9 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/metadata_io_iface.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
@@ -43,7 +42,7 @@ public:
   std::vector<TopicWithType> get_all_topics_and_types() override;
 
 private:
-  rosbag2_storage::StorageFactory factory_;
+  rosbag2_storage::Rosbag2StorageFactoryImpl factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
 };
 

@@ -22,9 +22,9 @@
 #include <vector>
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/metadata_io_iface.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 
-class MockMetadataIo : public rosbag2_storage::MetadataIoIface
+class MockMetadataIo : public rosbag2_storage::MetadataIo
 {
 public:
   MOCK_METHOD2(write_metadata, void(const std::string &, rosbag2_storage::BagMetadata));

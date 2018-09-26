@@ -20,7 +20,7 @@
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "../../src/rosbag2/writer_impl.hpp"
-#include "mock_storage_factory.hpp"
+#include "mock_rosbag2_storage_factory.hpp"
 #include "mock_metadata_io.hpp"
 #include "temporary_directory_fixture.hpp"
 
@@ -29,7 +29,7 @@ using namespace std::chrono_literals;  // NOLINT
 
 TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
   auto metadata_io = std::make_shared<MockMetadataIo>();
-  auto storage = std::make_shared<MockStorageFactory>(metadata_io);
+  auto storage = std::make_shared<MockRosbag2StorageFactory>(metadata_io);
 
   EXPECT_CALL(*metadata_io, write_metadata(_, _));
 

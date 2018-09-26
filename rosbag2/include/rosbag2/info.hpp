@@ -19,10 +19,8 @@
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/storage_factory_iface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/metadata_io_iface.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
 #include "rosbag2/types.hpp"
 #include "visibility_control.hpp"
 
@@ -41,14 +39,14 @@ class ROSBAG2_PUBLIC Info
 {
 public:
   explicit Info(
-    std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory =
-    std::make_shared<rosbag2_storage::StorageFactory>());
+    std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory =
+    std::make_shared<rosbag2_storage::Rosbag2StorageFactoryImpl>());
   virtual ~Info() = default;
 
   virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
 
 private:
-  std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory_;
+  std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory_;
 };
 
 }  // namespace rosbag2

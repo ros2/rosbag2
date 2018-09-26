@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/metadata_io_impl.hpp"
 
 #include <fstream>
 #include <string>
@@ -147,7 +147,7 @@ struct convert<rosbag2_storage::BagMetadata>
 namespace rosbag2_storage
 {
 
-void MetadataIo::write_metadata(const std::string & uri, BagMetadata metadata)
+void MetadataIoImpl::write_metadata(const std::string & uri, BagMetadata metadata)
 {
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
@@ -155,7 +155,7 @@ void MetadataIo::write_metadata(const std::string & uri, BagMetadata metadata)
   fout << metadata_node;
 }
 
-BagMetadata MetadataIo::read_metadata(const std::string & uri)
+BagMetadata MetadataIoImpl::read_metadata(const std::string & uri)
 {
   try {
     YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
@@ -166,7 +166,7 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
   }
 }
 
-std::string MetadataIo::get_metadata_file_name(const std::string & uri)
+std::string MetadataIoImpl::get_metadata_file_name(const std::string & uri)
 {
   std::string metadata_file = rosbag2_storage::FilesystemHelper::concat({uri, metadata_filename});
 

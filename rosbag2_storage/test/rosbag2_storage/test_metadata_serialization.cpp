@@ -26,7 +26,7 @@
 #endif
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/metadata_io_impl.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "temporary_directory_fixture.hpp"
 
@@ -37,9 +37,9 @@ class MetadataFixture : public TemporaryDirectoryFixture
 {
 public:
   MetadataFixture()
-  : metadata_io_(std::make_shared<MetadataIo>()) {}
+  : metadata_io_(std::make_shared<MetadataIoImpl>()) {}
 
-  std::shared_ptr<MetadataIo> metadata_io_;
+  std::shared_ptr<MetadataIoImpl> metadata_io_;
 };
 
 TEST_F(MetadataFixture, test_writing_and_reading_yaml)

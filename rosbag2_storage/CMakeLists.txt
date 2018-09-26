@@ -23,9 +23,9 @@ find_package(rviz_yaml_cpp_vendor REQUIRED)
 add_library(
   rosbag2_storage
   SHARED
-  src/rosbag2_storage/metadata_io.cpp
+  src/rosbag2_storage/metadata_io_impl.cpp
   src/rosbag2_storage/ros_helper.cpp
-  src/rosbag2_storage/storage_factory.cpp)
+  src/rosbag2_storage/rosbag2_storage_factory_impl.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
@@ -91,7 +91,7 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_metadata_serialization
-    test/test_metadata_serialization.cpp)
+    test/rosbag2_storage/test_metadata_serialization.cpp)
   if(TARGET test_metadata_serialization)
     target_include_directories(test_metadata_serialization PRIVATE include)
     target_link_libraries(test_metadata_serialization rosbag2_storage)

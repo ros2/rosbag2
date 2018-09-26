@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
 
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/metadata_io_impl.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
@@ -30,29 +30,29 @@ namespace rosbag2_storage
 using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
 using rosbag2_storage::storage_interfaces::ReadWriteInterface;
 
-StorageFactory::StorageFactory()
+Rosbag2StorageFactoryImpl::Rosbag2StorageFactoryImpl()
 : impl_(std::make_unique<StorageFactoryImpl>())
 {}
 
 // needed explicit destructor because of unique_ptr for pimpl
-StorageFactory::~StorageFactory() = default;
+Rosbag2StorageFactoryImpl::~Rosbag2StorageFactoryImpl() = default;
 
-std::shared_ptr<ReadOnlyInterface> StorageFactory::open_read_only(
+std::shared_ptr<ReadOnlyInterface> Rosbag2StorageFactoryImpl::open_read_only(
   const std::string & uri, const std::string & storage_id)
 {
   return impl_->open_read_only(uri, storage_id);
 }
 
-std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
+std::shared_ptr<ReadWriteInterface> Rosbag2StorageFactoryImpl::open_read_write(
   const std::string & uri, const std::string & storage_id)
 {
   return impl_->open_read_write(uri, storage_id);
 }
 
-std::shared_ptr<MetadataIoIface> StorageFactory::metadata_io()
+std::shared_ptr<MetadataIo> Rosbag2StorageFactoryImpl::metadata_io()
 {
   if (!metadata_io_) {
-    metadata_io_ = std::make_shared<MetadataIo>();
+    metadata_io_ = std::make_shared<MetadataIoImpl>();
   }
   return metadata_io_;
 }

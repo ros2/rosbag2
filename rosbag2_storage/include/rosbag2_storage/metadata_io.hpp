@@ -17,26 +17,19 @@
 
 #include <string>
 
-#include "rosbag2_storage/metadata_io_iface.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
 
-class MetadataIo : public MetadataIoIface
+class ROSBAG2_STORAGE_PUBLIC MetadataIo
 {
 public:
-  static constexpr const char * const metadata_filename = "metadata.yaml";
+  virtual ~MetadataIo() = default;
 
-  ROSBAG2_STORAGE_PUBLIC ~MetadataIo() override = default;
-
-  ROSBAG2_STORAGE_PUBLIC void write_metadata(
-    const std::string & uri, BagMetadata metadata) override;
-  ROSBAG2_STORAGE_PUBLIC BagMetadata read_metadata(const std::string & uri) override;
-
-private:
-  std::string get_metadata_file_name(const std::string & uri);
+  virtual void write_metadata(const std::string & uri, BagMetadata metadata) = 0;
+  virtual BagMetadata read_metadata(const std::string & uri) = 0;
 };
 
 }  // namespace rosbag2_storage

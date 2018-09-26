@@ -18,10 +18,10 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/metadata_io_iface.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/storage_factory_iface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/writer.hpp"
@@ -34,8 +34,8 @@ class WriterImpl : public Writer
 public:
   explicit WriterImpl(
     const StorageOptions & options,
-    std::shared_ptr<rosbag2_storage::StorageFactoryIface> storage_factory =
-    std::make_shared<rosbag2_storage::StorageFactory>());
+    std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory =
+    std::make_shared<rosbag2_storage::Rosbag2StorageFactoryImpl>());
 
   ~WriterImpl() override;
 
@@ -45,7 +45,7 @@ public:
 
 private:
   rosbag2::StorageOptions options_;
-  std::shared_ptr<rosbag2_storage::StorageFactoryIface> factory_;
+  std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 };
 
