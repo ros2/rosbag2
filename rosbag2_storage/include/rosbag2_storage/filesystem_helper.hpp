@@ -90,7 +90,9 @@ public:
     HANDLE handle = FindFirstFile(concat({directory_path, "*"}).c_str(), &data);
     if (handle != INVALID_HANDLE_VALUE) {
       do {
-        dir_size += get_file_size(concat({directory_path, data.cFileName}));
+        if (strcmp(data.cFileName, ".") != 0 && strcmp(data.cFileName, "..") != 0) {
+          dir_size += get_file_size(concat({directory_path, data.cFileName}));
+        }
       } while (FindNextFile(handle, &data));
       FindClose(handle);
     }
