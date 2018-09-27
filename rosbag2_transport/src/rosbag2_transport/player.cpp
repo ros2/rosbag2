@@ -34,6 +34,9 @@
 namespace rosbag2_transport
 {
 
+const std::chrono::milliseconds
+Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
+
 Player::Player(
   std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
 : reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
@@ -67,7 +70,7 @@ void Player::wait_for_filled_queue(const PlayOptions & options) const
     message_queue_.size_approx() < options.read_ahead_queue_size &&
     !is_storage_completely_loaded())
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(queue_read_wait_period_);
   }
 }
 

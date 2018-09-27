@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__PLAYER_HPP_
 #define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
+#include <chrono>
 #include <future>
 #include <map>
 #include <memory>
@@ -53,6 +54,7 @@ private:
   void prepare_publishers();
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
+  static const std::chrono::milliseconds queue_read_wait_period_;
 
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;

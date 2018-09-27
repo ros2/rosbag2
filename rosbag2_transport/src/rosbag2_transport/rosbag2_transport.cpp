@@ -82,6 +82,7 @@ void Rosbag2Transport::record(
     if (subscription) {
       subscriptions_.push_back(subscription);
       writer_->create_topic({topic_name, topic_type});
+      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
     }
   }
 
