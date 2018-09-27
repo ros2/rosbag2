@@ -76,19 +76,10 @@ public:
   void print_bag_info(const std::string & uri);
 
 private:
-  std::shared_ptr<GenericSubscription>
-  create_subscription(
-    std::shared_ptr<Rosbag2Node> & node,
-    const std::string & topic_name, const std::string & topic_type,
-    std::shared_ptr<rosbag2::Writer> writer) const;
+  std::shared_ptr<Rosbag2Node> setup_node();
 
   std::shared_ptr<rosbag2::Rosbag2Factory> factory_;
-
   std::shared_ptr<Rosbag2Node> transport_node_;
-
-  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
-
-  std::shared_ptr<Rosbag2Node> setup_node();
 };
 
 }  // namespace rosbag2_transport
