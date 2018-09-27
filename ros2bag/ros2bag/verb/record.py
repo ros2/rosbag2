@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from ros2bag.verb import VerbExtension
 
 from ros2cli.node.strategy import NodeStrategy
@@ -38,6 +40,10 @@ class RecordVerb(VerbExtension):
             return
 
         uri = 'test.bag'
+        if os.path.exists(uri):
+            os.remove(uri)
+            print('warning: Overwriting already existing \'test.bag\'!')
+
         storage_id = 'sqlite3'
 
         if args.all:
