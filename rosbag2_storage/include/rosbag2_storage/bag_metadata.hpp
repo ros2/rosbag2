@@ -35,6 +35,7 @@ struct TopicMetadata
 struct BagMetadata
 {
   int version = 1;
+  size_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::string encoding;
   std::vector<std::string> relative_file_paths;

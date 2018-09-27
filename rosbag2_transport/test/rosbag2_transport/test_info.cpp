@@ -47,6 +47,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   std::string expected_output(
     "Storage identifier:  sqlite3\n"
     "File encoding:       cdr\n"
+    "Bag size:            0\n"
     "Associated files (relative paths):\n"
     "        - some_relative_path\n"
     "        - some_other_relative_path\n"

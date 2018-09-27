@@ -81,6 +81,7 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   std::stringstream ss;
   ss << "Storage identifier:  " << metadata.storage_identifier << "\n";
   ss << "File encoding:       " << metadata.encoding << "\n";
+  ss << "Bag size:            " << metadata.bag_size << "\n";
   ss << "Associated files (relative paths):\n";
   for (const auto & file : metadata.relative_file_paths) {
     ss << "        - " << file << "\n";

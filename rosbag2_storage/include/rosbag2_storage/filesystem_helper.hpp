@@ -88,7 +88,6 @@ public:
     HANDLE handle = FindFirstFile(concat({directory_path, "*"}).c_str(), &data);
     if (handle != INVALID_HANDLE_VALUE) {
       do {
-        printf("%s\n", data.cFileName);
         dir_size += get_file_size(concat({directory_path, data.cFileName}));
       } while (FindNextFile(handle, &data));
       FindClose(handle);
@@ -100,7 +99,6 @@ public:
     if ((dir = opendir(directory_path.c_str())) != nullptr) {
       while ((entry = readdir(dir)) != nullptr) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-          printf("%s\n", entry->d_name);
           dir_size += get_file_size(concat({directory_path, entry->d_name}));
         }
       }
