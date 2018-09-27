@@ -44,14 +44,13 @@ std::map<std::string, std::string> Info::format_duration(
     std::chrono::duration_cast<std::chrono::milliseconds>(time_point);
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
   std::time_t std_time_point = seconds.count();
-  tm time;
-  localtime_r(&std_time_point, &time);
+  auto time = localtime(&std_time_point);  // NOLINT (it wants localtime_r, not available on Win)
   std::string fractional_seconds = std::to_string(m_seconds.count() % 1000);
 
   char formatted_time_char[50];
-  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%b %d %Y", &time);
+  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%b %d %Y", time);
   formatted_duration["date"] = std::string(formatted_time_char);
-  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%H:%M:%S", &time);
+  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%H:%M:%S", time);
   formatted_duration["time"] = std::string(formatted_time_char);
   formatted_duration["time_in_sec"] = std::to_string(seconds.count()) + "." + fractional_seconds;
   formatted_duration["fractional_seconds"] = fractional_seconds;
