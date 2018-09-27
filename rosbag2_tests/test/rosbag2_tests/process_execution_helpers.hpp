@@ -38,16 +38,50 @@ using ProcessHandle = Process;
 using ProcessHandle = int;
 #endif
 
+#ifdef _WIN32
+PROCESS_INFORMATION create_process(TCHAR * command, const char * path = nullptr)
+{
+  STARTUPINFO start_up_info{};
+  PROCESS_INFORMATION process_info{};
+
+  CreateProcess(
+    nullptr,
+    command,
+    nullptr,
+    nullptr,
+    false,
+    0,
+    nullptr,
+    path,
+    &start_up_info,
+    &process_info);
+
+  return process_info;
+}
+
+void close_process_handles(const PROCESS_INFORMATION & process)
+{
+  CloseHandle(process.hProcess);
+  CloseHandle(process.hThread);
+}
+
+void const_char_to_tchar(const char * source, TCHAR * destination)
+{
+  size_t length = strlen(source);
+  memcpy(destination, source, length + 1);
+}
+#endif
+
 void execute_and_wait_until_completion(const std::string & command, const std::string & path)
 {
 #ifdef _WIN32
   TCHAR * command_char = new TCHAR[strlen(command.c_str()) + 1];
-  const_char_to_tchar(command.c_str());
+  const_char_to_tchar(command.c_str(), command_char);
 
   auto process = create_process(command_char, path.c_str());
   DWORD exit_code = 259;  // 259 is the code one gets if the proces is still active.
   while (exit_code == 259) {
-    GetExitCodeProcess(process_info.hProcess, &exit_code);
+    GetExitCodeProcess(process.hProcess, &exit_code);
   }
   close_process_handles(process);
 
@@ -69,7 +103,7 @@ ProcessHandle start_execution(const std::string & command)
   SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
 
   TCHAR * command_char = new TCHAR[strlen(command.c_str()) + 1];
-  const_char_to_tchar(command.c_str());
+  const_char_to_tchar(command.c_str(), command_char);
 
   auto process_info = create_process(command_char);
 
@@ -109,39 +143,5 @@ void stop_execution(const ProcessHandle & handle)
   kill(-handle, SIGTERM);
 #endif
 }
-
-#ifdef _WIN32
-PROCESS_INFORMATION create_process(TCHAR * command, const char * path = nullptr)
-{
-  STARTUPINFO start_up_info{};
-  PROCESS_INFORMATION process_info{};
-
-  CreateProcess(
-    nullptr,
-    command_char,
-    nullptr,
-    nullptr,
-    false,
-    0,
-    nullptr,
-    database_path_.c_str(),
-    &start_up_info,
-    &process_info);
-
-  return process_info;
-}
-
-void close_process_handles(const PROCESS_INFORMATION & process)
-{
-  CloseHandle(process.hProcess);
-  CloseHandle(process.hThread);
-}
-
-void const_char_to_tchar(const char * source, TCHAR * destination)
-{
-  size_t length = strlen(source);
-  memcpy(destination, source, length + 1);
-}
-#endif
 
 #endif  // ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_HPP_
