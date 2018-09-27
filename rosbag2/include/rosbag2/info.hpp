@@ -15,6 +15,8 @@
 #ifndef ROSBAG2__INFO_HPP_
 #define ROSBAG2__INFO_HPP_
 
+#include <chrono>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -44,6 +46,11 @@ public:
   virtual ~Info() = default;
 
   virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
+
+  std::map<std::string, std::string> format_duration(
+    std::chrono::high_resolution_clock::duration time_point);
+  std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
+  std::string format_file_size(double file_size);
 
 private:
   std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory_;

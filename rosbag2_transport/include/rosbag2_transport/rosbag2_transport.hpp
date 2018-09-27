@@ -15,7 +15,6 @@
 #ifndef ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_HPP_
 #define ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_HPP_
 
-#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -78,11 +77,6 @@ public:
 
 private:
   std::shared_ptr<Rosbag2Node> setup_node();
-
-  std::map<std::string, std::string> format_duration(
-    std::chrono::high_resolution_clock::duration time_point);
-  std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
-  std::string format_file_size(double file_size);
 
   std::shared_ptr<rosbag2::Rosbag2Factory> factory_;
   std::shared_ptr<Rosbag2Node> transport_node_;
