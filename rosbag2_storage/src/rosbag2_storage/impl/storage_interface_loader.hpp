@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
-#define ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
+#ifndef ROSBAG2_STORAGE__IMPL__STORAGE_INTERFACE_LOADER_HPP_
+#define ROSBAG2_STORAGE__IMPL__STORAGE_INTERFACE_LOADER_HPP_
 
 #include <algorithm>
 #include <memory>
@@ -44,15 +44,10 @@ get_class_loader()
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_storage", lookup_name);
 }
 
-template<
-  typename InterfaceT,
-  storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
->
+template<typename InterfaceT>
 std::shared_ptr<InterfaceT>
 get_interface_instance(
-  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
-  const std::string & storage_id,
-  const std::string & uri)
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader, const std::string & storage_id)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
@@ -71,20 +66,13 @@ get_interface_instance(
     return nullptr;
   }
 
-  try {
-    instance->open(uri, flag);
-    return instance;
-  } catch (const std::runtime_error & ex) {
-    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Could not open '" << uri << "' with '" << storage_id << "'. Error: " << ex.what());
-    return nullptr;
-  }
+  return instance;
 }
 
-class StorageFactoryImpl
+class StorageInterfaceLoader
 {
 public:
-  StorageFactoryImpl()
+  StorageInterfaceLoader()
   {
     try {
       read_write_class_loader_ = get_class_loader<ReadWriteInterface>();
@@ -101,45 +89,30 @@ public:
     }
   }
 
-  virtual ~StorageFactoryImpl() = default;
+  virtual ~StorageInterfaceLoader() = default;
 
-  std::shared_ptr<ReadWriteInterface> open_read_write(
-    const std::string & uri, const std::string & storage_id)
-  {
-    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
-
-    if (instance == nullptr) {
-      ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-        "Could not load/open plugin with storage id '" << storage_id << "'.");
-    }
-
-    return instance;
-  }
-
-  std::shared_ptr<ReadOnlyInterface> open_read_only(
-    const std::string & uri, const std::string & storage_id)
-  {
-    // try to load the instance as read_only interface
-    auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri);
-    // try to load as read_write if not successful
-    if (instance == nullptr) {
-      instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
-        read_write_class_loader_, storage_id, uri);
-    }
-
-    if (instance == nullptr) {
-      ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-        "Could not load/open plugin with storage id '" << storage_id << "'.");
-    }
-
-    return instance;
-  }
+  template<typename InterfaceT>
+  std::shared_ptr<InterfaceT>
+  load_instance(const std::string & storage_id);
 
 private:
   std::shared_ptr<pluginlib::ClassLoader<ReadWriteInterface>> read_write_class_loader_;
   std::shared_ptr<pluginlib::ClassLoader<ReadOnlyInterface>> read_only_class_loader_;
 };
 
+template<>
+std::shared_ptr<ReadWriteInterface> StorageInterfaceLoader::load_instance(
+  const std::string & storage_id)
+{
+  return get_interface_instance<ReadWriteInterface>(read_write_class_loader_, storage_id);
+}
+
+template<>
+std::shared_ptr<ReadOnlyInterface> StorageInterfaceLoader::load_instance(
+  const std::string & storage_id)
+{
+  return get_interface_instance<ReadOnlyInterface>(read_only_class_loader_, storage_id);
+}
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
+#endif  // ROSBAG2_STORAGE__IMPL__STORAGE_INTERFACE_LOADER_HPP_

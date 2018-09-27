@@ -22,6 +22,7 @@
 #include "rosbag2_storage/metadata_io_impl.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/rosbag2_storage_factory.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -36,7 +37,7 @@
 namespace rosbag2_storage
 {
 
-class StorageFactoryImpl;
+class StorageInterfaceLoader;
 
 /// Factory to create instances of various storage interfaces
 class ROSBAG2_STORAGE_PUBLIC Rosbag2StorageFactoryImpl : public Rosbag2StorageFactory
@@ -54,7 +55,14 @@ public:
   std::shared_ptr<MetadataIo> metadata_io() override;
 
 private:
-  std::unique_ptr<StorageFactoryImpl> impl_;
+  template<
+    typename InterfaceT,
+    storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
+  >
+  std::shared_ptr<InterfaceT>
+  open_instance(const std::string & storage_id, const std::string & uri);
+
+  std::unique_ptr<StorageInterfaceLoader> impl_;
   std::shared_ptr<MetadataIoImpl> metadata_io_;
 };
 
