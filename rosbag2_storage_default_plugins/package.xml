@@ -17,6 +17,7 @@
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
+  <test_depend>rclcpp</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
