@@ -65,13 +65,6 @@ public:
       return path.substr(last_separator == std::string::npos ? 0 : last_separator, path.length());
     }
   }
-
-private:
-  static bool ends_with_separator(const std::string & path)
-  {
-    auto last_separator = path.rfind(separator);
-    return last_separator == path.size() - 1;
-  }
 };
 
 }  // namespace rosbag2_storage
