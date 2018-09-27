@@ -34,9 +34,9 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   bagfile.encoding = "cdr";
   bagfile.relative_file_paths.emplace_back("some_relative_path");
   bagfile.relative_file_paths.emplace_back("some_other_relative_path");
-  bagfile.duration = std::chrono::nanoseconds(100);
-  bagfile.starting_time =
-    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
+  bagfile.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(1538051985348887471));    // corresponds to Sept 27 14:39:45.348
+  bagfile.duration = std::chrono::nanoseconds(50000000);
   bagfile.message_count = 50;
   bagfile.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   bagfile.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
@@ -45,19 +45,17 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   auto transport = rosbag2_transport::Rosbag2Transport(factory_);
   transport.print_bag_info("test");
   std::string expected_output(
-    "Storage identifier:  sqlite3\n"
-    "File encoding:       cdr\n"
-    "Bag size:            0\n"
-    "Associated files (relative paths):\n"
-    "        - some_relative_path\n"
-    "        - some_other_relative_path\n"
-    "Starting time:       1000000\n"
-    "End time:            1000100\n"
-    "Duration:            100\n"
-    "Total message count: 50\n"
-    "Topics with Type and message count:\n"
-    "        - topic1 ; type1 ; 100\n"
-    "        - topic2 ; type2 ; 200\n");
+    "\nFiles:            some_relative_path\n"
+    "                  some_other_relative_path\n"
+    "Bag size:         0.00 B\n"
+    "Storage id:       sqlite3\n"
+    "Storage format:   cdr\n"
+    "Duration:         0.50s\n"
+    "Start:            Sep 27 2018 14:39:45.348 (1538051985.348)\n"
+    "End               Sep 27 2018 14:39:45.398 (1538051985.398)\n"
+    "Messages:         50\n"
+    "Topics with Type: topic1; type1; 100 msgs\n"
+    "                  topic2; type2; 200 msgs\n\n");
 
   std::string output = internal::GetCapturedStdout();
   EXPECT_THAT(output, HasSubstr(expected_output));
