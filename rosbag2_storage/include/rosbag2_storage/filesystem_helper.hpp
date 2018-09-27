@@ -15,6 +15,14 @@
 #ifndef ROSBAG2_STORAGE__FILESYSTEM_HELPER_HPP_
 #define ROSBAG2_STORAGE__FILESYSTEM_HELPER_HPP_
 
+#ifdef _WIN32
+# include <windows.h>
+#else
+# include <dirent.h>
+#endif
+
+#include <sys/stat.h>
+
 #include <sstream>
 #include <string>
 
@@ -64,6 +72,49 @@ public:
     } else {
       return path.substr(last_separator == std::string::npos ? 0 : last_separator, path.length());
     }
+  }
+
+  /**
+   * Calculates the size of a directory by summarizing the file size of all files
+   * Note: This operation is not recursive
+   * \param directory_path The directory path to calculate the size of
+   * \return The size of the directory
+   */
+  static size_t calculate_directory_size(const std::string & directory_path)
+  {
+    size_t dir_size = 0;
+#ifdef _WIN32
+    WIN32_FIND_DATA data;
+    HANDLE handle = FindFirstFile(concat({directory_path, "*"}).c_str(), &data);
+    if (handle != INVALID_HANDLE_VALUE) {
+      do {
+        printf("%s\n", data.cFileName);
+        dir_size += get_file_size(concat({directory_path, data.cFileName}));
+      } while (FindNextFile(handle, &data));
+      FindClose(handle);
+    }
+    return dir_size;
+#else
+    DIR * dir;
+    dirent * entry;
+    if ((dir = opendir(directory_path.c_str())) != nullptr) {
+      while ((entry = readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+          printf("%s\n", entry->d_name);
+          dir_size += get_file_size(concat({directory_path, entry->d_name}));
+        }
+      }
+      closedir(dir);
+    }
+    return dir_size;
+#endif
+  }
+
+  static size_t get_file_size(const std::string & file_path)
+  {
+    struct stat stat_buffer {};
+    int rc = stat(file_path.c_str(), &stat_buffer);
+    return rc == 0 ? static_cast<size_t>(stat_buffer.st_size) : 0;
   }
 };
 
