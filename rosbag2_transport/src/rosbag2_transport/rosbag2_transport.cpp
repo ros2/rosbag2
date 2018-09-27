@@ -95,11 +95,16 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   info_stream << "Start:            " << info->format_time_point(start_time) << "\n";
   info_stream << "End               " << info->format_time_point(end_time) << "\n";
   info_stream << "Messages:         " << metadata.message_count << "\n";
-  info_stream << "Topics with Type: " <<
-    metadata.topics_with_message_count[0].topic_with_type.name <<
-    "; " << metadata.topics_with_message_count[0].topic_with_type.type << "; " <<
-    std::to_string(metadata.topics_with_message_count[0].message_count) + " msgs\n";
-  metadata.topics_with_message_count.erase(metadata.topics_with_message_count.begin());
+  info_stream << "Topics with Type: ";
+
+  if (!metadata.topics_with_message_count.empty()) {
+    info_stream << metadata.topics_with_message_count[0].topic_with_type.name <<
+      "; " << metadata.topics_with_message_count[0].topic_with_type.type << "; " <<
+      std::to_string(metadata.topics_with_message_count[0].message_count) + " msgs\n";
+    metadata.topics_with_message_count.erase(metadata.topics_with_message_count.begin());
+  } else {
+    info_stream << "\n";
+  }
   for (const auto & topic_with_type_and_count : metadata.topics_with_message_count) {
     info_stream << "                  " << topic_with_type_and_count.topic_with_type.name <<
       "; " << topic_with_type_and_count.topic_with_type.type <<
