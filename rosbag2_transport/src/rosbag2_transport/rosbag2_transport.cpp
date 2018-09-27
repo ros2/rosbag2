@@ -91,9 +91,7 @@ void Rosbag2Transport::record(
   }
 
   ROSBAG2_TRANSPORT_LOG_INFO("Subscription setup complete.");
-  while (rclcpp::ok()) {
-    rclcpp::spin(transport_node);
-  }
+  rclcpp::spin(transport_node);
   subscriptions_.clear();
 }
 
