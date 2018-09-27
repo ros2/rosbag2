@@ -32,11 +32,20 @@ public:
   std::string database_path_;
 };
 
-TEST_F(InfoEndToEndTestFixture, DISABLED_info_end_to_end_test) {
+TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
-  execute_and_wait_until_completion("ros2 bag info test.bag", database_path_);
+  execute_and_wait_until_completion("ros2 bag info test", database_path_);
   std::string output = internal::GetCapturedStdout();
 
-  // TODO(botteroa-si): update once correct pretty printing of baginfo is available.
-  EXPECT_THAT(output, HasSubstr("printing bag info of 'test.bag'..."));
+  // We have two asserts because the bag size depends on the os and, therefore, cannot be asserted.
+  EXPECT_THAT(output, HasSubstr("\nFiles:            test.db3\n"));
+  EXPECT_THAT(output, HasSubstr(
+      "\nStorage id:       sqlite3"
+      "\nStorage format:   cdr"
+      "\nDuration:         0.155s"
+      "\nStart:            Sep 18 2018 16:56:44.241 (1537282604.241)"
+      "\nEnd               Sep 18 2018 16:56:44.397 (1537282604.397)"
+      "\nMessages:         7"
+      "\nTopics with Type: /test_topic; test_msgs/Primitives; 3 msgs"
+      "\n                  /array_topic; test_msgs/StaticArrayPrimitives; 4 msgs"));
 }
