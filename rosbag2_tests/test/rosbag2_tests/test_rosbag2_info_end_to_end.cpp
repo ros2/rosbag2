@@ -32,7 +32,7 @@ public:
   std::string database_path_;
 };
 
-TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
+TEST_F(InfoEndToEndTestFixture, DISABLED_info_end_to_end_test) {
   internal::CaptureStdout();
   execute_and_wait_until_completion("ros2 bag info test.bag", database_path_);
   std::string output = internal::GetCapturedStdout();
