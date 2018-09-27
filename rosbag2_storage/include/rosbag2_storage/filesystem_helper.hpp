@@ -19,6 +19,7 @@
 # include <windows.h>
 #else
 # include <dirent.h>
+# include <string.h>
 #endif
 
 #include <sys/stat.h>
