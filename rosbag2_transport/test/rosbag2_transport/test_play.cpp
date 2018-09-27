@@ -28,12 +28,12 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
-#include "rosbag2_test_commons/subscription_manager.hpp"
+#include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
-using namespace rosbag2_test_commons;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
 
 class RosBag2PlayTestFixture : public Rosbag2TransportTestFixture
 {

@@ -28,10 +28,10 @@
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
-#include "rosbag2_test_commons/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2_test_commons; // NOLINT
+using namespace rosbag2_test_common; // NOLINT
 
 class StorageTestFixture : public TemporaryDirectoryFixture
 {

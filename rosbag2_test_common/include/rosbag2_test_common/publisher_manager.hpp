@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TEST_COMMONS__PUBLISHER_MANAGER_HPP_
-#define ROSBAG2_TEST_COMMONS__PUBLISHER_MANAGER_HPP_
+#ifndef ROSBAG2_TEST_COMMON__PUBLISHER_MANAGER_HPP_
+#define ROSBAG2_TEST_COMMON__PUBLISHER_MANAGER_HPP_
 
 #include <functional>
 #include <future>
@@ -25,7 +25,7 @@
 
 using namespace std::chrono_literals;  // NOLINT
 
-namespace rosbag2_test_commons
+namespace rosbag2_test_common
 {
 
 using CountFunction = std::function<size_t(const std::string &)>;
@@ -78,6 +78,6 @@ private:
   std::vector<std::function<void(CountFunction)>> publishers_;
 };
 
-}  // namespace rosbag2_test_commons
+}  // namespace rosbag2_test_common
 
-#endif  // ROSBAG2_TEST_COMMONS__PUBLISHER_MANAGER_HPP_
+#endif  // ROSBAG2_TEST_COMMON__PUBLISHER_MANAGER_HPP_

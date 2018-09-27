@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TEST_COMMONS__TEMPORARY_DIRECTORY_FIXTURE_HPP_
-#define ROSBAG2_TEST_COMMONS__TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#ifndef ROSBAG2_TEST_COMMON__TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#define ROSBAG2_TEST_COMMON__TEMPORARY_DIRECTORY_FIXTURE_HPP_
 
 #include <gmock/gmock.h>
 
@@ -30,7 +30,7 @@
 
 using namespace ::testing;  // NOLINT
 
-namespace rosbag2_test_commons
+namespace rosbag2_test_common
 {
 
 class TemporaryDirectoryFixture : public Test
@@ -103,6 +103,6 @@ public:
 
 std::string TemporaryDirectoryFixture::temporary_dir_path_ = "";  // NOLINT
 
-}  // namespace rosbag2_test_commons
+}  // namespace rosbag2_test_common
 
-#endif  // ROSBAG2_TEST_COMMONS__TEMPORARY_DIRECTORY_FIXTURE_HPP_
+#endif  // ROSBAG2_TEST_COMMON__TEMPORARY_DIRECTORY_FIXTURE_HPP_

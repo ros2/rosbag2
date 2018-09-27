@@ -25,8 +25,8 @@
 #include "rosbag2/types.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_test_commons/memory_management.hpp"
-#include "rosbag2_test_commons/publisher_manager.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
+#include "rosbag2_test_common/publisher_manager.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
 

@@ -27,7 +27,7 @@ if(BUILD_TESTING)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
-  find_package(rosbag2_test_commons REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
@@ -39,7 +39,7 @@ if(BUILD_TESTING)
       rclcpp
       rosbag2_storage
       rosbag2_storage_default_plugins
-      rosbag2_test_commons
+      rosbag2_test_common
       test_msgs)
   endif()
 
@@ -51,7 +51,7 @@ if(BUILD_TESTING)
       rclcpp
       rosbag2_storage
       rosbag2_storage_default_plugins
-      rosbag2_test_commons
+      rosbag2_test_common
       test_msgs)
   endif()
 

@@ -75,7 +75,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
-  find_package(rosbag2_test_commons REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_record
@@ -83,7 +83,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record)
     target_link_libraries(test_record rosbag2_transport)
-    ament_target_dependencies(test_record test_msgs rosbag2_test_commons)
+    ament_target_dependencies(test_record test_msgs rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_record_all
@@ -91,7 +91,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record_all)
     target_link_libraries(test_record_all rosbag2_transport)
-    ament_target_dependencies(test_record_all test_msgs rosbag2_test_commons)
+    ament_target_dependencies(test_record_all test_msgs rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_play
@@ -99,7 +99,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_play)
     target_link_libraries(test_play rosbag2_transport)
-    ament_target_dependencies(test_play test_msgs rosbag2_test_commons)
+    ament_target_dependencies(test_play test_msgs rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_play_timing
@@ -107,7 +107,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_play_timing)
     target_link_libraries(test_play_timing rosbag2_transport)
-    ament_target_dependencies(test_play_timing test_msgs rosbag2_test_commons)
+    ament_target_dependencies(test_play_timing test_msgs rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_rosbag2_node
@@ -126,7 +126,7 @@ if(BUILD_TESTING)
       rosbag2
       rclcpp
       test_msgs
-      rosbag2_test_commons)
+      rosbag2_test_common)
   endif()
 endif()
 

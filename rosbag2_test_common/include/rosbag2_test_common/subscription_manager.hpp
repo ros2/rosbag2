@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TEST_COMMONS__SUBSCRIPTION_MANAGER_HPP_
-#define ROSBAG2_TEST_COMMONS__SUBSCRIPTION_MANAGER_HPP_
+#ifndef ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_
+#define ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_
 
 #include <future>
 #include <map>
@@ -25,7 +25,7 @@
 
 #include "memory_management.hpp"
 
-namespace rosbag2_test_commons
+namespace rosbag2_test_common
 {
 
 class SubscriptionManager
@@ -94,6 +94,6 @@ private:
   MemoryManagement memory_management_;
 };
 
-}  // namespace rosbag2_test_commons
+}  // namespace rosbag2_test_common
 
-#endif  // ROSBAG2_TEST_COMMONS__SUBSCRIPTION_MANAGER_HPP_
+#endif  // ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_

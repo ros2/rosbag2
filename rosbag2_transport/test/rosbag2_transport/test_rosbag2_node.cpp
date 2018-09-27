@@ -21,13 +21,13 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rosbag2_test_commons/memory_management.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2_test_commons;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
 
 class RosBag2NodeFixture : public Test
 {

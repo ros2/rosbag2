@@ -35,12 +35,12 @@
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/writer.hpp"
-#include "rosbag2_test_commons/memory_management.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
 #include "mock_sequential_reader.hpp"
 #include "mock_writer.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2_test_commons; // NOLINT
+using namespace rosbag2_test_common; // NOLINT
 
 inline char separator()
 {
