@@ -96,6 +96,13 @@ if(BUILD_TESTING)
     target_include_directories(test_metadata_serialization PRIVATE include)
     target_link_libraries(test_metadata_serialization rosbag2_storage)
   endif()
+
+  ament_add_gmock(test_filesystem_helper
+    test/rosbag2_storage/test_filesystem_helper.cpp)
+  if(TARGET test_filesystem_helper)
+    target_include_directories(test_filesystem_helper PRIVATE include)
+    target_link_libraries(test_filesystem_helper rosbag2_storage)
+  endif()
 endif()
 
 ament_package(

@@ -19,11 +19,11 @@
 # include <windows.h>
 #else
 # include <dirent.h>
-# include <string.h>
 #endif
 
 #include <sys/stat.h>
 
+#include <cstring>
 #include <sstream>
 #include <string>
 
@@ -68,10 +68,11 @@ public:
   {
     auto last_separator = path.rfind(separator);
     if (last_separator == path.size() - 1) {
-      auto start = path.rfind(separator, path.size() - 1);
-      return path.substr(start + 1, path.size() - 1);
+      auto start = path.rfind(separator, last_separator - 1);
+      return path.substr(start + 1, last_separator - (start + 1));
     } else {
-      return path.substr(last_separator == std::string::npos ? 0 : last_separator, path.length());
+      return path.substr(
+        last_separator == std::string::npos ? 0 : last_separator + 1, path.length());
     }
   }
 
