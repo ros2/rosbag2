@@ -16,7 +16,7 @@
 
 #include <string>
 
-// The record_fixture.hpp must be included before process_execution_helpers.hpp
+// rclcpp.hpp included in record_fixture.hpp must be included before process_execution_helpers.hpp
 #include "record_fixture.hpp"
 #include "process_execution_helpers.hpp"
 
