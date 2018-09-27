@@ -169,12 +169,8 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
 
   auto topics_and_types = node_->get_all_topics_with_types();
 
-  ASSERT_THAT(topics_and_types, SizeIs(5));
+  ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));
   EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Primitives"));
   EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Primitives"));
   EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/Primitives"));
-  // The latter two topics can usually be found on any node, so they should be subscribed here
-  EXPECT_THAT(topics_and_types.find("/clock")->second, StrEq("rosgraph_msgs/Clock"));
-  EXPECT_THAT(
-    topics_and_types.find("/parameter_events")->second, StrEq("rcl_interfaces/ParameterEvent"));
 }
