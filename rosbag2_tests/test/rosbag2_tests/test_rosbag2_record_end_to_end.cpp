@@ -49,3 +49,25 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/wrong_topic");
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
+
+TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
+  database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
+
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag record --output test -a", database_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  EXPECT_THAT(error_output, HasSubstr("Could not create bag folder 'test'"));
+}
+
+TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag record -a /some_topic", temporary_dir_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  EXPECT_THAT(error_output, HasSubstr("Can not specify topics and -a at the same time."));
+}
