@@ -22,11 +22,12 @@
 #include <vector>
 
 #include "rosbag2/types.hpp"
+#include "visibility_control.hpp"
 
 namespace rosbag2
 {
 
-class Formatter
+class ROSBAG2_PUBLIC Formatter
 {
 public:
   std::map<std::string, std::string> format_duration(

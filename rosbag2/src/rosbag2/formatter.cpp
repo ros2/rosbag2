@@ -21,6 +21,10 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+#include <time.h>
+#endif
+
 namespace rosbag2
 {
 
@@ -30,17 +34,22 @@ std::map<std::string, std::string> Formatter::format_duration(
   std::map<std::string, std::string> formatted_duration;
   auto m_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
-  std::time_t std_time_point = seconds.count();
-  auto time = localtime(&std_time_point);  // NOLINT (it wants localtime_r, not available on Win)
   std::string fractional_seconds = std::to_string(m_seconds.count() % 1000);
+  std::time_t std_time_point = seconds.count();
+  tm time;
+#ifdef _WIN32
+  localtime_s(&time, &std_time_point);
+#else
+  localtime_r(&std_time_point, &time);
+#endif
 
-  char formatted_time_char[50];
-  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%b %d %Y", time);
-  formatted_duration["date"] = std::string(formatted_time_char);
-  strftime(formatted_time_char, sizeof(formatted_time_char) - 1, "%H:%M:%S", time);
-  formatted_duration["time"] = std::string(formatted_time_char);
+  std::stringstream formatted_date;
+  std::stringstream formatted_time;
+  formatted_date << std::put_time(&time, "%b %e %Y");
+  formatted_time << std::put_time(&time, "%H:%M:%S") << "." << fractional_seconds;
+  formatted_duration["date"] = formatted_date.str();
+  formatted_duration["time"] = formatted_time.str();
   formatted_duration["time_in_sec"] = std::to_string(seconds.count()) + "." + fractional_seconds;
-  formatted_duration["fractional_seconds"] = fractional_seconds;
 
   return formatted_duration;
 }
@@ -49,8 +58,8 @@ std::string Formatter::format_time_point(
   std::chrono::high_resolution_clock::duration duration)
 {
   auto formatted_duration = format_duration(duration);
-  return formatted_duration["date"] + " " + formatted_duration["time"] + "." +
-         formatted_duration["fractional_seconds"] + " (" + formatted_duration["time_in_sec"] + ")";
+  return formatted_duration["date"] + " " + formatted_duration["time"] +
+         " (" + formatted_duration["time_in_sec"] + ")";
 }
 
 std::string Formatter::format_file_size(size_t file_size)
