@@ -40,12 +40,16 @@ class PlayEndToEndTestFixture : public Test
 public:
   PlayEndToEndTestFixture()
   {
-    rclcpp::init(0, nullptr);
     database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
     sub_ = std::make_unique<SubscriptionManager>();
   }
 
-  ~PlayEndToEndTestFixture() override
+  static void SetUpTestCase()
+  {
+    rclcpp::init(0, nullptr);
+  }
+
+  static void TearDownTestCase()
   {
     rclcpp::shutdown();
   }
@@ -81,4 +85,14 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   EXPECT_THAT(array_messages,
     Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
     ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+}
+
+TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play does_not_exist", database_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
 }
