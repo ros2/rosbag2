@@ -66,6 +66,8 @@ ament_export_dependencies(rosbag2_storage)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
+
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_typesupport_helpers
@@ -81,6 +83,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_writer)
     target_link_libraries(test_writer rosbag2)
+    ament_target_dependencies(test_writer rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_info
@@ -89,6 +92,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
     target_link_libraries(test_info rosbag2)
+    ament_target_dependencies(test_info rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_formatter

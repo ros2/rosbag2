@@ -23,9 +23,10 @@
 #include "rosbag2/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
-#include "temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metadata_io_method) {
   std::string bagfile(

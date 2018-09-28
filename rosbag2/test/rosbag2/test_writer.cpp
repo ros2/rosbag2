@@ -22,10 +22,11 @@
 #include "../../src/rosbag2/writer_impl.hpp"
 #include "mock_rosbag2_storage_factory.hpp"
 #include "mock_metadata_io.hpp"
-#include "temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
 
 TEST(WriterTests, writer_writes_stored_metadata_on_shutdown) {
   auto metadata_io = std::make_shared<MockMetadataIo>();
