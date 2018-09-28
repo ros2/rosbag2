@@ -82,11 +82,8 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   auto end_time = start_time + metadata.duration;
   std::stringstream info_stream;
 
-  info_stream << "\nFiles:            " << metadata.relative_file_paths[0] << "\n";
-  metadata.relative_file_paths.erase(metadata.relative_file_paths.begin());
-  for (const auto & file : metadata.relative_file_paths) {
-    info_stream << "                  " << file << "\n";
-  }
+  info_stream << "\nFiles:            ";
+  info->format_file_paths(metadata.relative_file_paths, info_stream);
   info_stream << "Bag size:         " << info->format_file_size(metadata.bag_size) << "\n";
   info_stream << "Storage id:       " << metadata.storage_identifier << "\n";
   info_stream << "Storage format:   " << metadata.encoding << "\n";
@@ -96,20 +93,7 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   info_stream << "End               " << info->format_time_point(end_time) << "\n";
   info_stream << "Messages:         " << metadata.message_count << "\n";
   info_stream << "Topics with Type: ";
-
-  if (!metadata.topics_with_message_count.empty()) {
-    info_stream << metadata.topics_with_message_count[0].topic_with_type.name <<
-      "; " << metadata.topics_with_message_count[0].topic_with_type.type << "; " <<
-      std::to_string(metadata.topics_with_message_count[0].message_count) + " msgs\n";
-    metadata.topics_with_message_count.erase(metadata.topics_with_message_count.begin());
-  } else {
-    info_stream << "\n";
-  }
-  for (const auto & topic_with_type_and_count : metadata.topics_with_message_count) {
-    info_stream << "                  " << topic_with_type_and_count.topic_with_type.name <<
-      "; " << topic_with_type_and_count.topic_with_type.type <<
-      "; " << topic_with_type_and_count.message_count << " msgs\n";
-  }
+  info->format_topics_with_type(metadata.topics_with_message_count, info_stream);
 
   std::cout << info_stream.str() << std::endl;
 }

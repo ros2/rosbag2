@@ -25,6 +25,7 @@ find_package(rosidl_generator_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2/info.cpp
+  src/rosbag2/formatter.cpp
   src/rosbag2/rosbag2_factory.cpp
   src/rosbag2/sequential_reader_impl.cpp
   src/rosbag2/typesupport_helpers.cpp
