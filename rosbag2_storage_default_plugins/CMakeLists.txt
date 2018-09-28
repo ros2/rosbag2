@@ -39,18 +39,12 @@ target_include_directories(${PROJECT_NAME}
   $<INSTALL_INTERFACE:include>
 )
 
-ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(
-  rosbag2_storage
-  sqlite3_vendor
-  SQLite3
-  rcutils)
-
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(rosbag2_storage_default_plugins PRIVATE
+target_compile_definitions(${PROJECT_NAME} PRIVATE
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_BUILDING_DLL)
+
+pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
 
 install(
   DIRECTORY include/
@@ -62,12 +56,14 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_export_dependencies(rosbag2_storage rcutils sqlite3_vendor SQLite3)
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   set(TEST_LINK_LIBRARIES
@@ -78,18 +74,20 @@ if(BUILD_TESTING)
     ${pluginlib_LIBRARIES}
   )
 
-  ament_add_gmock(sqlite_wrapper_integration_test
-    test/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper_integration_test.cpp
+  ament_add_gmock(test_sqlite_wrapper
+    test/rosbag2_storage_default_plugins/sqlite/test_sqlite_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET sqlite_wrapper_integration_test)
-    target_link_libraries(sqlite_wrapper_integration_test ${TEST_LINK_LIBRARIES})
+  if(TARGET test_sqlite_wrapper)
+    target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
+    ament_target_dependencies(test_sqlite_wrapper rosbag2_test_common)
   endif()
 
-  ament_add_gmock(sqlite_storage_integration_test
-    test/rosbag2_storage_default_plugins/sqlite/sqlite_storage_integration_test.cpp
+  ament_add_gmock(test_sqlite_storage
+    test/rosbag2_storage_default_plugins/sqlite/test_sqlite_storage.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET sqlite_storage_integration_test)
-    target_link_libraries(sqlite_storage_integration_test ${TEST_LINK_LIBRARIES})
+  if(TARGET test_sqlite_storage)
+    target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
+    ament_target_dependencies(test_sqlite_storage rosbag2_test_common)
   endif()
 endif()
 

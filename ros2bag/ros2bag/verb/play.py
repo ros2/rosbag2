@@ -14,6 +14,8 @@
 
 from ros2bag.verb import VerbExtension
 
+from rosbag2_transport import rosbag2_transport_py
+
 
 class PlayVerb(VerbExtension):
     """ros2 bag play."""
@@ -24,4 +26,4 @@ class PlayVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
-        print('calling ros2 bag play on', bag_file)
+        rosbag2_transport_py.play(uri=bag_file, storage_id='sqlite3')

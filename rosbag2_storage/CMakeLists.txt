@@ -23,7 +23,7 @@ add_library(
   rosbag2_storage
   SHARED
   src/rosbag2_storage/ros_helper.cpp
-  src/storage_factory.cpp)
+  src/rosbag2_storage/storage_factory.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
@@ -51,6 +51,9 @@ install(
   DIRECTORY cmake
   DESTINATION share/${PROJECT_NAME})
 
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
@@ -60,32 +63,30 @@ if(BUILD_TESTING)
   add_library(
     test_plugin
     SHARED
-    test/test_plugin.cpp
-    test/test_read_only_plugin.cpp)
+    test/rosbag2_storage/test_plugin.cpp
+    test/rosbag2_storage/test_read_only_plugin.cpp)
   target_link_libraries(test_plugin rosbag2_storage)
   install(
     TARGETS test_plugin
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
-  pluginlib_export_plugin_description_file(rosbag2_storage test/test_plugin.xml)
+  pluginlib_export_plugin_description_file(rosbag2_storage test/rosbag2_storage/test_plugin.xml)
 
   ament_add_gmock(test_storage_factory
-    test/test_storage_factory.cpp)
+    test/rosbag2_storage/test_storage_factory.cpp)
   if(TARGET test_storage_factory)
     target_include_directories(test_storage_factory PRIVATE include)
     target_link_libraries(test_storage_factory rosbag2_storage)
   endif()
 
   ament_add_gmock(test_ros_helper
-    test/test_ros_helper.cpp)
+    test/rosbag2_storage/test_ros_helper.cpp)
   if(TARGET test_ros_helper)
     target_include_directories(test_ros_helper PRIVATE include)
     target_link_libraries(test_ros_helper rosbag2_storage)
   endif()
 endif()
 
-ament_export_include_directories(include)
-ament_export_libraries(rosbag2_storage)
 ament_package(
   CONFIG_EXTRAS cmake/rosbag2_storage_register_storage_plugin.cmake)

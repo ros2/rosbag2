@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import time
-
-from ros2cli.node.strategy import add_arguments
-from ros2cli.node.strategy import NodeStrategy
+import os
 
 from ros2bag.verb import VerbExtension
+
+from ros2cli.node.strategy import NodeStrategy
+from ros2cli.node.strategy import add_arguments
+
+from rosbag2_transport import rosbag2_transport_py
 
 
 class RecordVerb(VerbExtension):
     """ros2 bag record."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        self._subparser = parser
+
         add_arguments(parser)
         parser.add_argument(
             '-a', '--all', action='store_true', help='recording all topics')
@@ -36,11 +39,16 @@ class RecordVerb(VerbExtension):
             print('invalid choice: Can not specify topics and -a at the same time')
             return
 
-        with NodeStrategy(args) as node:
-            if args.all:
-                t_and_n = node.get_topic_names_and_types()
-                print(t_and_n)
-                topics = [t for t,n in node.get_topic_names_and_types()]
-            if args.topics:
-                topics = args.topics
-            print('topics to be recorded:', topics)
+        uri = 'test.bag'
+        if os.path.exists(uri):
+            os.remove(uri)
+            print('warning: Overwriting already existing \'test.bag\'!')
+
+        storage_id = 'sqlite3'
+
+        if args.all:
+            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, all=True)
+        elif args.topics and len(args.topics) > 0:
+            rosbag2_transport_py.record(uri=uri, storage_id=storage_id, topics=args.topics)
+        else:
+            self._subparser.print_help()
