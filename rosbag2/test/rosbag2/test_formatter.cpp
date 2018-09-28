@@ -45,11 +45,11 @@ TEST_F(FormatterTestFixture, format_file_size_returns_correct_format) {
 
   EXPECT_THAT(formatter_->format_file_size(zero_bytes), Eq("0 B"));
   EXPECT_THAT(formatter_->format_file_size(thirty_bytes), Eq("30.0 B"));
-  EXPECT_THAT(formatter_->format_file_size(two_kilobytes), Eq("2.0 KB"));
-  EXPECT_THAT(formatter_->format_file_size(two_point_twelve_kilobytes), Eq("3.1 KB"));
-  EXPECT_THAT(formatter_->format_file_size(one_and_a_half_megabytes), Eq("1.5 MB"));
-  EXPECT_THAT(formatter_->format_file_size(one_terabite), Eq("1.0 TB"));
-  EXPECT_THAT(formatter_->format_file_size(one_petabyte), Eq("1024.0 TB"));
+  EXPECT_THAT(formatter_->format_file_size(two_kilobytes), Eq("2.0 KiB"));
+  EXPECT_THAT(formatter_->format_file_size(two_point_twelve_kilobytes), Eq("3.1 KiB"));
+  EXPECT_THAT(formatter_->format_file_size(one_and_a_half_megabytes), Eq("1.5 MiB"));
+  EXPECT_THAT(formatter_->format_file_size(one_terabite), Eq("1.0 TiB"));
+  EXPECT_THAT(formatter_->format_file_size(one_petabyte), Eq("1024.0 TiB"));
 }
 
 TEST_F(FormatterTestFixture, format_files_correctly_layouts_more_paths) {

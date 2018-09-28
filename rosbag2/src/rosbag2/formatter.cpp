@@ -69,7 +69,7 @@ std::string Formatter::format_file_size(size_t file_size)
   }
 
   double size = static_cast<double>(file_size);
-  static const char * units[] = {"B", "KB", "MB", "GB", "TB"};
+  static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
   double reference_number_bytes = 1024;
   int index = 0;
   while (size >= reference_number_bytes && index < 4) {
