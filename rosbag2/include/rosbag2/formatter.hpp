@@ -30,9 +30,9 @@ class Formatter
 {
 public:
   std::map<std::string, std::string> format_duration(
-    std::chrono::high_resolution_clock::duration time_point);
+    std::chrono::high_resolution_clock::duration duration);
   std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
-  std::string format_file_size(double file_size);
+  std::string format_file_size(size_t file_size);
   void format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream);
   void format_topics_with_type(std::vector<TopicMetadata>, std::stringstream & info_stream);
 };

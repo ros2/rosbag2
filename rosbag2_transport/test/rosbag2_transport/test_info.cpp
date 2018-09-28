@@ -47,7 +47,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   std::string expected_output(
     "\nFiles:            some_relative_path\n"
     "                  some_other_relative_path\n"
-    "Bag size:         0.00 B\n"
+    "Bag size:         0 B\n"
     "Storage id:       sqlite3\n"
     "Storage format:   cdr\n"
     "Duration:         0.50s\n"

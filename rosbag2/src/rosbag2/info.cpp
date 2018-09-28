@@ -36,9 +36,9 @@ rosbag2::BagMetadata Info::read_metadata(const std::string & uri)
 }
 
 std::map<std::string, std::string> Info::format_duration(
-  std::chrono::high_resolution_clock::duration time_point)
+  std::chrono::high_resolution_clock::duration duration)
 {
-  return formatter_->format_duration(time_point);
+  return formatter_->format_duration(duration);
 }
 
 std::string Info::format_time_point(std::chrono::high_resolution_clock::duration duration)
@@ -46,7 +46,7 @@ std::string Info::format_time_point(std::chrono::high_resolution_clock::duration
   return formatter_->format_time_point(duration);
 }
 
-std::string Info::format_file_size(double file_size)
+std::string Info::format_file_size(size_t file_size)
 {
   return formatter_->format_file_size(file_size);
 }

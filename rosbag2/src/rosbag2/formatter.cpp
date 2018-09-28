@@ -25,11 +25,10 @@ namespace rosbag2
 {
 
 std::map<std::string, std::string> Formatter::format_duration(
-  std::chrono::high_resolution_clock::duration time_point)
+  std::chrono::high_resolution_clock::duration duration)
 {
   std::map<std::string, std::string> formatted_duration;
-  auto m_seconds =
-    std::chrono::duration_cast<std::chrono::milliseconds>(time_point);
+  auto m_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
   std::time_t std_time_point = seconds.count();
   auto time = localtime(&std_time_point);  // NOLINT (it wants localtime_r, not available on Win)
@@ -54,18 +53,23 @@ std::string Formatter::format_time_point(
          formatted_duration["fractional_seconds"] + " (" + formatted_duration["time_in_sec"] + ")";
 }
 
-std::string Formatter::format_file_size(double file_size)
+std::string Formatter::format_file_size(size_t file_size)
 {
+  if (file_size == 0) {
+    return "0 B";
+  }
+
+  double size = static_cast<double>(file_size);
   static const char * units[] = {"B", "KB", "MB", "GB", "TB"};
   double reference_number_bytes = 1024;
   int index = 0;
-  while (file_size > reference_number_bytes && index < 5) {
-    file_size /= reference_number_bytes;
+  while (size >= reference_number_bytes && index < 4) {
+    size /= reference_number_bytes;
     index++;
   }
 
   std::stringstream rounded_size;
-  rounded_size << std::setprecision(2) << std::fixed << file_size;  // round to 2 decimal digits.
+  rounded_size << std::setprecision(1) << std::fixed << size;  // round to 1 decimal digits.
   return rounded_size.str() + " " + units[index];
 }
 
