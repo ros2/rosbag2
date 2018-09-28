@@ -18,6 +18,10 @@
 #include <gmock/gmock.h>
 
 #include <signal.h>
+#include <stdlib.h>
+
+#include <chrono>
+#include <cstdlib>
 #include <string>
 
 using namespace ::testing;  // NOLINT
@@ -72,7 +76,7 @@ void const_char_to_tchar(const char * source, TCHAR * destination)
 }
 #endif
 
-void execute_and_wait_until_completion(const std::string & command, const std::string & path)
+int execute_and_wait_until_completion(const std::string & command, const std::string & path)
 {
 #ifdef _WIN32
   TCHAR * command_char = new TCHAR[strlen(command.c_str()) + 1];
@@ -82,15 +86,16 @@ void execute_and_wait_until_completion(const std::string & command, const std::s
   DWORD exit_code = 259;  // 259 is the code one gets if the proces is still active.
   while (exit_code == 259) {
     GetExitCodeProcess(process.hProcess, &exit_code);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   close_process_handles(process);
 
-  EXPECT_THAT(exit_code, Eq(0));
   delete[] command_char;
+  return static_cast<int>(exit_code);
 #else
   chdir(path.c_str());
-  int exit_code = system(command.c_str());
-  EXPECT_THAT(exit_code, Eq(0));
+  auto exitcode = std::system(command.c_str());
+  return WEXITSTATUS(exitcode);
 #endif
 }
 

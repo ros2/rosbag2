@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdlib>
 #include <string>
 #include <thread>
 
@@ -34,9 +35,10 @@ public:
 
 TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
-  execute_and_wait_until_completion("ros2 bag info test", database_path_);
+  auto exit_code = execute_and_wait_until_completion("ros2 bag info test", database_path_);
   std::string output = internal::GetCapturedStdout();
 
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   // We have two asserts because the bag size depends on the os and, therefore, cannot be asserted.
   EXPECT_THAT(output, HasSubstr("\nFiles:            test.db3\n"));
   EXPECT_THAT(output, HasSubstr(

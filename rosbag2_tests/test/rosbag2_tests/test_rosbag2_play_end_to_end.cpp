@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdlib>
 #include <future>
 #include <iostream>
 #include <map>
@@ -59,13 +60,15 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  execute_and_wait_until_completion("ros2 bag play test", database_path_);
+  auto exit_code = execute_and_wait_until_completion("ros2 bag play test", database_path_);
 
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::Primitives>("/test_topic");
   auto array_messages = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
     "/array_topic");
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(primitive_messages,
