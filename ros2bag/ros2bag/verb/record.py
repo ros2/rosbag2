@@ -14,6 +14,7 @@
 
 import datetime
 import os
+import sys
 
 from ros2bag.verb import VerbExtension
 
@@ -44,16 +45,14 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
-            print('invalid choice: Can not specify topics and -a at the same time')
-            return
+            sys.exit('Invalid choice: Can not specify topics and -a at the same time.')
 
         uri = args.output if args.output else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
         try:
             os.makedirs(uri)
         except:
-            print("Could not create bag folder at {}.".format(uri))
-            return
+            sys.exit("Error: Could not create bag folder '{}'.".format(uri))
 
         if args.all:
             rosbag2_transport_py.record(uri=uri, storage_id=args.storage, all=True)
