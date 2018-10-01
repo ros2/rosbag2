@@ -25,6 +25,7 @@ find_package(shared_queues_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
+  src/rosbag2_transport/formatter.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/recorder.cpp
@@ -136,6 +137,14 @@ if(BUILD_TESTING)
       rclcpp
       test_msgs
       rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_formatter
+    test/rosbag2_transport/test_formatter.cpp
+    src/rosbag2_transport/formatter.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_formatter)
+    target_link_libraries(test_formatter rosbag2_transport)
   endif()
 endif()
 

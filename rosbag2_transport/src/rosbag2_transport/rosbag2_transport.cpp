@@ -27,6 +27,7 @@
 #include "rosbag2/types.hpp"
 #include "rosbag2_transport/logging.hpp"
 
+#include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
 
@@ -76,24 +77,28 @@ void Rosbag2Transport::play(
 
 void Rosbag2Transport::print_bag_info(const std::string & uri)
 {
-  auto info = factory_->create_info();
-  auto metadata = info->read_metadata(uri);
+  auto metadata = factory_->create_info()->read_metadata(uri);
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
+  auto formatter = std::make_unique<Formatter>();
   std::stringstream info_stream;
+  int indentation_spaces = 18;  // just the longest info field (Topics with Type:) plus one space.
 
-  info_stream << "\nFiles:            ";
-  info->format_file_paths(metadata.relative_file_paths, info_stream);
-  info_stream << "Bag size:         " << info->format_file_size(metadata.bag_size) << std::endl;
+  info_stream << std::endl;
+  info_stream << "Files:            ";
+  formatter->format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
+  info_stream << "Bag size:         " << formatter->format_file_size(
+    metadata.bag_size) << std::endl;
   info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
   info_stream << "Storage format:   " << metadata.storage_format << std::endl;
-  info_stream << "Duration:         " << info->format_duration(metadata.duration)["time_in_sec"] <<
-    "s" << std::endl;
-  info_stream << "Start:            " << info->format_time_point(start_time) << std::endl;
-  info_stream << "End               " << info->format_time_point(end_time) << std::endl;
+  info_stream << "Duration:         " << formatter->format_duration(
+    metadata.duration)["time_in_sec"] << "s" << std::endl;
+  info_stream << "Start:            " << formatter->format_time_point(start_time) << std::endl;
+  info_stream << "End               " << formatter->format_time_point(end_time) << std::endl;
   info_stream << "Messages:         " << metadata.message_count << std::endl;
   info_stream << "Topics with Type: ";
-  info->format_topics_with_type(metadata.topics_with_message_count, info_stream);
+  formatter->format_topics_with_type(
+    metadata.topics_with_message_count, info_stream, indentation_spaces);
 
   std::cout << info_stream.str() << std::endl;
 }

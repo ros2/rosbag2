@@ -27,39 +27,12 @@ namespace rosbag2
 {
 
 Info::Info(std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory)
-: storage_factory_(std::move(storage_factory)), formatter_(std::make_unique<Formatter>())
+: storage_factory_(std::move(storage_factory))
 {}
 
 rosbag2::BagMetadata Info::read_metadata(const std::string & uri)
 {
   return storage_factory_->metadata_io()->read_metadata(uri);
-}
-
-std::map<std::string, std::string> Info::format_duration(
-  std::chrono::high_resolution_clock::duration duration)
-{
-  return formatter_->format_duration(duration);
-}
-
-std::string Info::format_time_point(std::chrono::high_resolution_clock::duration duration)
-{
-  return formatter_->format_time_point(duration);
-}
-
-std::string Info::format_file_size(size_t file_size)
-{
-  return formatter_->format_file_size(file_size);
-}
-
-void Info::format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream)
-{
-  formatter_->format_file_paths(paths, info_stream);
-}
-
-void Info::format_topics_with_type(
-  std::vector<rosbag2::TopicMetadata> topics, std::stringstream & info_stream)
-{
-  formatter_->format_topics_with_type(topics, info_stream);
 }
 
 }  // namespace rosbag2

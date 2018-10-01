@@ -24,7 +24,6 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/rosbag2_storage_factory.hpp"
 #include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
-#include "rosbag2/formatter.hpp"
 #include "rosbag2/types.hpp"
 #include "visibility_control.hpp"
 
@@ -49,16 +48,8 @@ public:
 
   virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
 
-  std::map<std::string, std::string> format_duration(
-    std::chrono::high_resolution_clock::duration duration);
-  std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
-  std::string format_file_size(size_t file_size);
-  void format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream);
-  void format_topics_with_type(std::vector<TopicMetadata>, std::stringstream & info_stream);
-
 private:
   std::shared_ptr<rosbag2_storage::Rosbag2StorageFactory> storage_factory_;
-  std::unique_ptr<Formatter> formatter_;
 };
 
 }  // namespace rosbag2

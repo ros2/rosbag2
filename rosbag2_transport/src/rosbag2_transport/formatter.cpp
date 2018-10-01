@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/formatter.hpp"
+#include "formatter.hpp"
 
 #include <chrono>
 #include <iomanip>
@@ -25,7 +25,7 @@
 #include <time.h>
 #endif
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
 std::map<std::string, std::string> Formatter::format_duration(
@@ -64,10 +64,6 @@ std::string Formatter::format_time_point(
 
 std::string Formatter::format_file_size(size_t file_size)
 {
-  if (file_size == 0) {
-    return "0 B";
-  }
-
   double size = static_cast<double>(file_size);
   static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
   double reference_number_bytes = 1024;
@@ -78,11 +74,13 @@ std::string Formatter::format_file_size(size_t file_size)
   }
 
   std::stringstream rounded_size;
-  rounded_size << std::setprecision(1) << std::fixed << size;  // round to 1 decimal digits.
+  int size_format_precision = index == 0 ? 0 : 1;
+  rounded_size << std::setprecision(size_format_precision) << std::fixed << size;
   return rounded_size.str() + " " + units[index];
 }
 
-void Formatter::format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream)
+void Formatter::format_file_paths(
+  std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces)
 {
   if (paths.empty()) {
     info_stream << std::endl;
@@ -94,13 +92,16 @@ void Formatter::format_file_paths(std::vector<std::string> paths, std::stringstr
     if (i == 0) {
       info_stream << paths[i] << std::endl;
     } else {
-      info_stream << "                  " << paths[i] << std::endl;
+      indent(info_stream, indentation_spaces);
+      info_stream << paths[i] << std::endl;
     }
   }
 }
 
 void Formatter::format_topics_with_type(
-  std::vector<rosbag2::TopicMetadata> topics, std::stringstream & info_stream)
+  std::vector<rosbag2::TopicMetadata> topics,
+  std::stringstream & info_stream,
+  int indentation_spaces)
 {
   if (topics.empty()) {
     info_stream << std::endl;
@@ -114,9 +115,17 @@ void Formatter::format_topics_with_type(
     if (j == 0) {
       info_stream << topic_with_type;
     } else {
-      info_stream << "                  " << topic_with_type;
+      indent(info_stream, indentation_spaces);
+      info_stream << topic_with_type;
     }
   }
 }
 
-}  // namespace rosbag2
+void Formatter::indent(std::stringstream & info_stream, int number_of_spaces)
+{
+  for (int i = 0; i < number_of_spaces; i++) {
+    info_stream << " ";
+  }
+}
+
+}  // namespace rosbag2_transport

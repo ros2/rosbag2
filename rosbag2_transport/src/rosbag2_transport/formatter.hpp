@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__FORMATTER_HPP_
-#define ROSBAG2__FORMATTER_HPP_
+#ifndef ROSBAG2_TRANSPORT__FORMATTER_HPP_
+#define ROSBAG2_TRANSPORT__FORMATTER_HPP_
 
 #include <chrono>
 #include <map>
@@ -22,22 +22,26 @@
 #include <vector>
 
 #include "rosbag2/types.hpp"
-#include "visibility_control.hpp"
 
-namespace rosbag2
+namespace rosbag2_transport
 {
 
-class ROSBAG2_PUBLIC Formatter
+class Formatter
 {
 public:
-  std::map<std::string, std::string> format_duration(
+  static std::map<std::string, std::string> format_duration(
     std::chrono::high_resolution_clock::duration duration);
-  std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
-  std::string format_file_size(size_t file_size);
-  void format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream);
-  void format_topics_with_type(std::vector<TopicMetadata>, std::stringstream & info_stream);
+  static std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
+  static std::string format_file_size(size_t file_size);
+  static void format_file_paths(
+    std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces);
+  static void format_topics_with_type(
+    std::vector<rosbag2::TopicMetadata>, std::stringstream & info_stream, int indentation_spaces);
+
+private:
+  static void indent(std::stringstream & info_stream, int number_of_spaces);
 };
 
-}  // namespace rosbag2
+}  // namespace rosbag2_transport
 
-#endif  // ROSBAG2__FORMATTER_HPP_
+#endif  // ROSBAG2_TRANSPORT__FORMATTER_HPP_
