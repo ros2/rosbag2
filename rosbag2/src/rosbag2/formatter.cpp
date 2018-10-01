@@ -85,16 +85,16 @@ std::string Formatter::format_file_size(size_t file_size)
 void Formatter::format_file_paths(std::vector<std::string> paths, std::stringstream & info_stream)
 {
   if (paths.empty()) {
-    info_stream << "\n";
+    info_stream << std::endl;
     return;
   }
 
   size_t number_of_files = paths.size();
   for (size_t i = 0; i < number_of_files; i++) {
     if (i == 0) {
-      info_stream << paths[i] << "\n";
+      info_stream << paths[i] << std::endl;
     } else {
-      info_stream << "                  " << paths[i] << "\n";
+      info_stream << "                  " << paths[i] << std::endl;
     }
   }
 }
@@ -103,7 +103,7 @@ void Formatter::format_topics_with_type(
   std::vector<rosbag2::TopicMetadata> topics, std::stringstream & info_stream)
 {
   if (topics.empty()) {
-    info_stream << "\n";
+    info_stream << std::endl;
     return;
   }
 

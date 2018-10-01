@@ -84,14 +84,14 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
 
   info_stream << "\nFiles:            ";
   info->format_file_paths(metadata.relative_file_paths, info_stream);
-  info_stream << "Bag size:         " << info->format_file_size(metadata.bag_size) << "\n";
-  info_stream << "Storage id:       " << metadata.storage_identifier << "\n";
-  info_stream << "Storage format:   " << metadata.storage_format << "\n";
+  info_stream << "Bag size:         " << info->format_file_size(metadata.bag_size) << std::endl;
+  info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
+  info_stream << "Storage format:   " << metadata.storage_format << std::endl;
   info_stream << "Duration:         " << info->format_duration(metadata.duration)["time_in_sec"] <<
-    "s\n";
-  info_stream << "Start:            " << info->format_time_point(start_time) << "\n";
-  info_stream << "End               " << info->format_time_point(end_time) << "\n";
-  info_stream << "Messages:         " << metadata.message_count << "\n";
+    "s" << std::endl;
+  info_stream << "Start:            " << info->format_time_point(start_time) << std::endl;
+  info_stream << "End               " << info->format_time_point(end_time) << std::endl;
+  info_stream << "Messages:         " << metadata.message_count << std::endl;
   info_stream << "Topics with Type: ";
   info->format_topics_with_type(metadata.topics_with_message_count, info_stream);
 
