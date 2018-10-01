@@ -31,7 +31,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
 
   rosbag2::BagMetadata bagfile;
   bagfile.storage_identifier = "sqlite3";
-  bagfile.encoding = "cdr";
+  bagfile.storage_format = "cdr";
   bagfile.relative_file_paths.emplace_back("some_relative_path");
   bagfile.relative_file_paths.emplace_back("some_other_relative_path");
   bagfile.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(

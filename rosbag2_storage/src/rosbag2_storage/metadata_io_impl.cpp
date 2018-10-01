@@ -117,7 +117,7 @@ struct convert<rosbag2_storage::BagMetadata>
     Node node;
     node["version"] = metadata.version;
     node["storage_identifier"] = metadata.storage_identifier;
-    node["encoding"] = metadata.encoding;
+    node["storage_format"] = metadata.storage_format;
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["duration"] = metadata.duration;
     node["starting_time"] = metadata.starting_time;
@@ -130,7 +130,7 @@ struct convert<rosbag2_storage::BagMetadata>
   {
     metadata.version = node["version"].as<int>();
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
-    metadata.encoding = node["encoding"].as<std::string>();
+    metadata.storage_format = node["storage_format"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]

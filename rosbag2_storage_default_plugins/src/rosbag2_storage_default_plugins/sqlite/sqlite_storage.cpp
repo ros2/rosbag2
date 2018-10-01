@@ -45,7 +45,7 @@ SqliteStorage::SqliteStorage()
   current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {
   metadata_.storage_identifier = "sqlite3";
-  metadata_.encoding = "cdr";  // TODO(greimela) Determine encoding
+  metadata_.storage_format = "cdr";  // TODO(greimela) Determine format (i.e. data encoding)
 }
 
 void SqliteStorage::open(
