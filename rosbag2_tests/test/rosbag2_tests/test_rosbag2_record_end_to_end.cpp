@@ -51,15 +51,15 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 }
 
 TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
-  database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
+  auto database_path = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
 
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record --output test -a", database_path_);
+    execute_and_wait_until_completion("ros2 bag record --output test -a", database_path);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(error_output, HasSubstr("Could not create bag folder 'test'"));
+  EXPECT_THAT(error_output, HasSubstr("Output folder 'test' already exists"));
 }
 
 TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {

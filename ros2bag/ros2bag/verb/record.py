@@ -49,6 +49,9 @@ class RecordVerb(VerbExtension):
 
         uri = args.output if args.output else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
+        if os.path.isdir(uri):
+            sys.exit("Error: Output folder '{}' already exists.".format(uri))
+
         try:
             os.makedirs(uri)
         except:
