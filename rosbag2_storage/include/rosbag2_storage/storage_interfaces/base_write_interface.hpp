@@ -19,7 +19,7 @@
 #include <string>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/bag_info.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -36,6 +36,8 @@ public:
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
   virtual void create_topic(const TopicWithType & topic) = 0;
+
+  virtual BagMetadata get_metadata() = 0;
 };
 
 }  // namespace storage_interfaces

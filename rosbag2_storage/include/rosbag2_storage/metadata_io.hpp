@@ -1,4 +1,4 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
-#define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
+#ifndef ROSBAG2_STORAGE__METADATA_IO_HPP_
+#define ROSBAG2_STORAGE__METADATA_IO_HPP_
 
-#include "rosbag2_storage/bag_info.hpp"
+#include <string>
+
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
 {
-namespace storage_interfaces
-{
 
-class ROSBAG2_STORAGE_PUBLIC BaseInfoInterface
+class ROSBAG2_STORAGE_PUBLIC MetadataIo
 {
 public:
-  virtual ~BaseInfoInterface() = default;
-  virtual BagInfo info() = 0;
+  virtual ~MetadataIo() = default;
+
+  virtual void write_metadata(const std::string & uri, BagMetadata metadata) = 0;
+  virtual BagMetadata read_metadata(const std::string & uri) = 0;
 };
 
-}  // namespace storage_interfaces
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
+#endif  // ROSBAG2_STORAGE__METADATA_IO_HPP_

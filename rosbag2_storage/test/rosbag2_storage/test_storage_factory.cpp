@@ -20,7 +20,7 @@
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
-#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory_impl.hpp"
 
 using rosbag2_storage::storage_interfaces::ReadWriteInterface;
 using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
@@ -29,7 +29,7 @@ using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
 class StorageFactoryTest : public ::testing::Test
 {
 public:
-  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::Rosbag2StorageFactoryImpl factory;
 
   std::string bag_file_path = "file/to/be/loaded.bag";
   std::string test_plugin_id = "my_test_plugin";

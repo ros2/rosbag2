@@ -15,12 +15,15 @@
 #ifndef ROSBAG2__TYPES_HPP_
 #define ROSBAG2__TYPES_HPP_
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/topic_with_type.hpp"
 
 namespace rosbag2
 {
+using BagMetadata = rosbag2_storage::BagMetadata;
 using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
+using TopicMetadata = rosbag2_storage::TopicMetadata;
 using TopicWithType = rosbag2_storage::TopicWithType;
 }  // namespace rosbag2
 

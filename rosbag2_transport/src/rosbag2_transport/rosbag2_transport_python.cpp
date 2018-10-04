@@ -98,6 +98,24 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   Py_RETURN_NONE;
 }
 
+static PyObject *
+rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
+{
+  static const char * kwlist[] = {"uri", nullptr};
+
+  char * char_uri;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", const_cast<char **>(kwlist), &char_uri)) {
+    return nullptr;
+  }
+
+  std::string uri = std::string(char_uri);
+
+  rosbag2_transport::Rosbag2Transport transport;
+  transport.print_bag_info(uri);
+
+  Py_RETURN_NONE;
+}
+
 /// Define the public methods of this module
 static PyMethodDef rosbag2_transport_methods[] = {
   {
@@ -107,6 +125,10 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "play", reinterpret_cast<PyCFunction>(rosbag2_transport_play), METH_VARARGS | METH_KEYWORDS,
     "Play bag"
+  },
+  {
+    "info", reinterpret_cast<PyCFunction>(rosbag2_transport_info), METH_VARARGS | METH_KEYWORDS,
+    "Print bag info"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

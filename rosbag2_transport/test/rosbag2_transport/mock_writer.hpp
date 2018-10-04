@@ -25,10 +25,8 @@
 class MockWriter : public rosbag2::Writer
 {
 public:
-  void open(const rosbag2::StorageOptions & options) override
-  {
-    (void) options;
-  }
+  MockWriter() = default;
+  ~MockWriter() override = default;
 
   void create_topic(const rosbag2::TopicWithType & topic_with_type) override
   {

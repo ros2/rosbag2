@@ -12,23 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__BAG_INFO_HPP_
-#define ROSBAG2_STORAGE__BAG_INFO_HPP_
+#include "rosbag2/rosbag2_factory.hpp"
 
-#include <string>
+#include <memory>
 
-namespace rosbag2_storage
+#include "sequential_reader_impl.hpp"
+#include "writer_impl.hpp"
+
+namespace rosbag2
 {
 
-/**
- * Struct to hold the storage information.
- */
-struct BagInfo
+std::shared_ptr<Writer> Rosbag2Factory::create_writer(const StorageOptions & options)
 {
-  std::string uri;
-  // TODO(greimela-si/botteroa-si): Add remaining info fields.
-};
+  return std::make_shared<WriterImpl>(options);
+}
 
-}  // namespace rosbag2_storage
+std::shared_ptr<SequentialReader> Rosbag2Factory::create_sequential_reader(
+  const StorageOptions & options)
+{
+  return std::make_shared<SequentialReaderImpl>(options);
+}
 
-#endif  // ROSBAG2_STORAGE__BAG_INFO_HPP_
+std::shared_ptr<Info> Rosbag2Factory::create_info()
+{
+  return std::make_shared<Info>();
+}
+
+}  // namespace rosbag2

@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 find_package(ament_cmake REQUIRED)
@@ -25,8 +25,10 @@ find_package(shared_queues_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
+  src/rosbag2_transport/formatter.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
+  src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -78,6 +80,14 @@ if(BUILD_TESTING)
   find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
+  ament_add_gmock(test_info
+    test/rosbag2_transport/test_info.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_info)
+    target_link_libraries(test_info rosbag2_transport)
+    ament_target_dependencies(test_info rosbag2_test_common)
+  endif()
+
   ament_add_gmock(test_record
     test/rosbag2_transport/test_record.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -127,6 +137,14 @@ if(BUILD_TESTING)
       rclcpp
       test_msgs
       rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_formatter
+    test/rosbag2_transport/test_formatter.cpp
+    src/rosbag2_transport/formatter.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_formatter)
+    target_link_libraries(test_formatter rosbag2_transport)
   endif()
 endif()
 

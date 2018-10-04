@@ -12,29 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/sequential_reader.hpp"
+#include "sequential_reader_impl.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/metadata_io.hpp"
+
 namespace rosbag2
 {
 
-SequentialReader::~SequentialReader()
-{
-  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
-}
-
-void SequentialReader::open(const StorageOptions & options)
+SequentialReaderImpl::SequentialReaderImpl(const StorageOptions & options)
 {
   storage_ = factory_.open_read_only(options.uri, options.storage_id);
+
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 }
 
-bool SequentialReader::has_next()
+SequentialReaderImpl::~SequentialReaderImpl()
+{
+  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+}
+
+bool SequentialReaderImpl::has_next()
 {
   if (storage_) {
     return storage_->has_next();
@@ -42,7 +45,7 @@ bool SequentialReader::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
+std::shared_ptr<SerializedBagMessage> SequentialReaderImpl::read_next()
 {
   if (storage_) {
     return storage_->read_next();
@@ -50,7 +53,7 @@ std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
+std::vector<TopicWithType> SequentialReaderImpl::get_all_topics_and_types()
 {
   if (storage_) {
     return storage_->get_all_topics_and_types();

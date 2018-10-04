@@ -18,19 +18,8 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
-
-// This is necessary because of using stl types here. It is completely safe, because
-// a) the member is not accessible from the outside
-// b) there are no inline functions.
-#ifdef _WIN32
-# pragma warning(push)
-# pragma warning(disable:4251)
-#endif
 
 namespace rosbag2
 {
@@ -42,15 +31,7 @@ namespace rosbag2
 class ROSBAG2_PUBLIC Writer
 {
 public:
-  virtual ~Writer();
-
-  /**
-   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
-   * This must be called before any other function is used.
-   *
-   * \param options Options to configure the storage
-   */
-  virtual void open(const StorageOptions & options);
+  virtual ~Writer() = default;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -59,7 +40,7 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void create_topic(const TopicWithType & topic_with_type);
+  virtual void create_topic(const TopicWithType & topic_with_type) = 0;
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
@@ -67,11 +48,7 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void write(std::shared_ptr<SerializedBagMessage> message);
-
-private:
-  rosbag2_storage::StorageFactory factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  virtual void write(std::shared_ptr<SerializedBagMessage> message) = 0;
 };
 
 }  // namespace rosbag2

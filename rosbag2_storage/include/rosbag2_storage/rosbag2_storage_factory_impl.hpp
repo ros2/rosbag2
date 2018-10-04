@@ -13,14 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__STORAGE_FACTORY_HPP_
-#define ROSBAG2_STORAGE__STORAGE_FACTORY_HPP_
+#ifndef ROSBAG2_STORAGE__ROSBAG2_STORAGE_FACTORY_IMPL_HPP_
+#define ROSBAG2_STORAGE__ROSBAG2_STORAGE_FACTORY_IMPL_HPP_
 
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/metadata_io_impl.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_traits.hpp"
+#include "rosbag2_storage/rosbag2_storage_factory.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -34,25 +37,33 @@
 namespace rosbag2_storage
 {
 
-class StorageFactoryImpl;
+class StorageInterfaceLoader;
 
 /// Factory to create instances of various storage interfaces
-class ROSBAG2_STORAGE_PUBLIC StorageFactory
+class ROSBAG2_STORAGE_PUBLIC Rosbag2StorageFactoryImpl : public Rosbag2StorageFactory
 {
 public:
-  StorageFactory();
-  virtual ~StorageFactory();
+  Rosbag2StorageFactoryImpl();
+  ~Rosbag2StorageFactoryImpl() override;
 
   std::shared_ptr<storage_interfaces::ReadOnlyInterface>
-  open_read_only(
-    const std::string & uri, const std::string & storage_id);
+  open_read_only(const std::string & uri, const std::string & storage_id) override;
 
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(
-    const std::string & uri, const std::string & storage_id);
+  open_read_write(const std::string & uri, const std::string & storage_id) override;
+
+  std::shared_ptr<MetadataIo> metadata_io() override;
 
 private:
-  std::unique_ptr<StorageFactoryImpl> impl_;
+  template<
+    typename InterfaceT,
+    storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
+  >
+  std::shared_ptr<InterfaceT>
+  open_instance(const std::string & storage_id, const std::string & uri);
+
+  std::unique_ptr<StorageInterfaceLoader> impl_;
+  std::shared_ptr<MetadataIoImpl> metadata_io_;
 };
 
 }  // namespace rosbag2_storage
@@ -61,4 +72,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_STORAGE__STORAGE_FACTORY_HPP_
+#endif  // ROSBAG2_STORAGE__ROSBAG2_STORAGE_FACTORY_IMPL_HPP_

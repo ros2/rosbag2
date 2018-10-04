@@ -24,9 +24,11 @@ find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-  src/rosbag2/sequential_reader.cpp
+  src/rosbag2/info.cpp
+  src/rosbag2/rosbag2_factory.cpp
+  src/rosbag2/sequential_reader_impl.cpp
   src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/writer.cpp)
+  src/rosbag2/writer_impl.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
@@ -63,13 +65,33 @@ ament_export_dependencies(rosbag2_storage)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
+
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(rosbag2_typesupport_helpers_test
-    test/rosbag2/rosbag2_typesupport_helpers_test.cpp
+  ament_add_gmock(test_typesupport_helpers
+    test/rosbag2/test_typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET rosbag2_typesupport_helpers_test)
-    target_link_libraries(rosbag2_typesupport_helpers_test rosbag2)
+  if(TARGET test_typesupport_helpers)
+    target_link_libraries(test_typesupport_helpers rosbag2)
+  endif()
+
+  ament_add_gmock(test_writer
+    test/rosbag2/test_writer.cpp
+    src/rosbag2/writer_impl.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_writer)
+    target_link_libraries(test_writer rosbag2)
+    ament_target_dependencies(test_writer rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_info
+    test/rosbag2/test_info.cpp
+    test/rosbag2/mock_metadata_io.hpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_info)
+    target_link_libraries(test_info rosbag2)
+    ament_target_dependencies(test_info rosbag2_test_common)
   endif()
 endif()
 

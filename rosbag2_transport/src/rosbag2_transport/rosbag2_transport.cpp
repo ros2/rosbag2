@@ -14,7 +14,6 @@
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
-#include <chrono>
 #include <map>
 #include <memory>
 #include <queue>
@@ -22,32 +21,21 @@
 #include <utility>
 #include <vector>
 
-#include "rcl/graph.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rcutils/time.h"
 
-#include "rosbag2_transport/logging.hpp"
-#include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/writer.hpp"
+#include "rosbag2_transport/logging.hpp"
 
-#include "generic_subscription.hpp"
+#include "formatter.hpp"
 #include "player.hpp"
-#include "replayable_message.hpp"
-#include "rosbag2_node.hpp"
+#include "recorder.hpp"
 
 namespace rosbag2_transport
 {
 
-Rosbag2Transport::Rosbag2Transport()
-: reader_(std::make_shared<rosbag2::SequentialReader>()),
-  writer_(std::make_shared<rosbag2::Writer>())
-{}
-
-Rosbag2Transport::Rosbag2Transport(
-  std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer)
-: reader_(std::move(reader)), writer_(std::move(writer)) {}
+Rosbag2Transport::Rosbag2Transport(std::shared_ptr<rosbag2::Rosbag2Factory> factory)
+: factory_(std::move(factory)) {}
 
 void Rosbag2Transport::init()
 {
@@ -62,37 +50,11 @@ void Rosbag2Transport::shutdown()
 void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  writer_->open(storage_options);
-
+  auto writer = factory_->create_writer(storage_options);
   auto transport_node = setup_node();
 
-  auto topics_and_types = record_options.all ?
-    transport_node->get_all_topics_with_types() :
-    transport_node->get_topics_with_types(record_options.topics);
-
-  if (topics_and_types.empty()) {
-    throw std::runtime_error("No topics found. Abort");
-  }
-
-  for (const auto & topic_and_type : topics_and_types) {
-    auto topic_name = topic_and_type.first;
-    auto topic_type = topic_and_type.second;
-
-    auto subscription = create_subscription(transport_node, topic_name, topic_type);
-    if (subscription) {
-      subscriptions_.push_back(subscription);
-      writer_->create_topic({topic_name, topic_type});
-      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
-    }
-  }
-
-  if (subscriptions_.empty()) {
-    throw std::runtime_error("No topics could be subscribed. Abort");
-  }
-
-  ROSBAG2_TRANSPORT_LOG_INFO("Subscription setup complete.");
-  rclcpp::spin(transport_node);
-  subscriptions_.clear();
+  Recorder recorder(writer, transport_node);
+  recorder.record(record_options);
 }
 
 std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
@@ -103,40 +65,42 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
   return transport_node_;
 }
 
-std::shared_ptr<GenericSubscription>
-Rosbag2Transport::create_subscription(
-  std::shared_ptr<Rosbag2Node> & node,
-  const std::string & topic_name, const std::string & topic_type) const
-{
-  auto subscription = node->create_generic_subscription(
-    topic_name,
-    topic_type,
-    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
-      auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
-      bag_message->serialized_data = message;
-      bag_message->topic_name = topic_name;
-      rcutils_time_point_value_t time_stamp;
-      int error = rcutils_system_time_now(&time_stamp);
-      if (error != RCUTILS_RET_OK) {
-        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-          "Error getting current time. Error:" << rcutils_get_error_string_safe());
-      }
-      bag_message->time_stamp = time_stamp;
-
-      writer_->write(bag_message);
-    });
-  return subscription;
-}
-
 void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  reader_->open(storage_options);
-
+  auto reader = factory_->create_sequential_reader(storage_options);
   auto transport_node = setup_node();
 
-  Player player(reader_, transport_node);
+  Player player(reader, transport_node);
   player.play(play_options);
+}
+
+void Rosbag2Transport::print_bag_info(const std::string & uri)
+{
+  auto metadata = factory_->create_info()->read_metadata(uri);
+  auto start_time = metadata.starting_time.time_since_epoch();
+  auto end_time = start_time + metadata.duration;
+  auto formatter = std::make_unique<Formatter>();
+  std::stringstream info_stream;
+  int indentation_spaces = 18;  // just the longest info field (Topics with Type:) plus one space.
+
+  info_stream << std::endl;
+  info_stream << "Files:            ";
+  formatter->format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
+  info_stream << "Bag size:         " << formatter->format_file_size(
+    metadata.bag_size) << std::endl;
+  info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
+  info_stream << "Storage format:   " << metadata.storage_format << std::endl;
+  info_stream << "Duration:         " << formatter->format_duration(
+    metadata.duration)["time_in_sec"] << "s" << std::endl;
+  info_stream << "Start:            " << formatter->format_time_point(start_time) << std::endl;
+  info_stream << "End               " << formatter->format_time_point(end_time) << std::endl;
+  info_stream << "Messages:         " << metadata.message_count << std::endl;
+  info_stream << "Topics with Type: ";
+  formatter->format_topics_with_type(
+    metadata.topics_with_message_count, info_stream, indentation_spaces);
+
+  std::cout << info_stream.str() << std::endl;
 }
 
 }  // namespace rosbag2_transport

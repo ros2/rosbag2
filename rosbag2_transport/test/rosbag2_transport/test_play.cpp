@@ -75,7 +75,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
     serialize_test_message("topic2", 150, complex_message1),
     serialize_test_message("topic2", 250, complex_message1)};
 
-  reader_->prepare(messages, topic_types);
+  factory_->reader_->prepare(messages, topic_types);
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
@@ -85,7 +85,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  Rosbag2Transport rosbag2_transport(factory_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();

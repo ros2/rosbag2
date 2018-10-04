@@ -51,7 +51,7 @@ public:
     // the future object returned from std::async needs to be stored not to block the execution
     future_ = std::async(
       std::launch::async, [this, options]() {
-        rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
+        rosbag2_transport::Rosbag2Transport rosbag2_transport(factory_);
         rosbag2_transport.record(storage_options_, options);
       });
   }
@@ -65,7 +65,7 @@ public:
   void run_publishers()
   {
     pub_man_.run_publishers([this](const std::string & topic_name) {
-        return writer_->messages_per_topic()[topic_name];
+        return factory_->writer_->messages_per_topic()[topic_name];
       });
   }
 
