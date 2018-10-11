@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2/info.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/writer.hpp"
 #include "rosbag2_transport/play_options.hpp"
@@ -46,7 +47,9 @@ public:
   /// Constructor for testing, allows to set the reader and writer to use
   ROSBAG2_TRANSPORT_PUBLIC
   Rosbag2Transport(
-    std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<rosbag2::Writer> writer);
+    std::shared_ptr<rosbag2::SequentialReader> reader,
+    std::shared_ptr<rosbag2::Writer> writer,
+    std::shared_ptr<rosbag2::Info> info);
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();
@@ -73,11 +76,20 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void play(const StorageOptions & storage_options, const PlayOptions & play_options);
 
+  /**
+   * Print the bag info contained in the metadata yaml file.
+   *
+   * \param uri path to the metadata yaml file.
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void print_bag_info(const std::string & uri);
+
 private:
   std::shared_ptr<Rosbag2Node> setup_node();
 
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   std::shared_ptr<rosbag2::Writer> writer_;
+  std::shared_ptr<rosbag2::Info> info_;
 
   std::shared_ptr<Rosbag2Node> transport_node_;
 };

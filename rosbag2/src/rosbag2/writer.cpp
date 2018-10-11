@@ -16,7 +16,10 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2/info.hpp"
 #include "rosbag2/storage_options.hpp"
 
 namespace rosbag2
@@ -24,6 +27,11 @@ namespace rosbag2
 
 Writer::~Writer()
 {
+  if (!uri_.empty()) {
+    rosbag2_storage::MetadataIo metadata_io;
+    metadata_io.write_metadata(uri_, storage_->get_metadata());
+  }
+
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
@@ -33,6 +41,7 @@ void Writer::open(const StorageOptions & options)
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
+  uri_ = options.uri;
 }
 
 void Writer::create_topic(const TopicWithType & topic_with_type)

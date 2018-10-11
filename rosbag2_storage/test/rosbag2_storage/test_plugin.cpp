@@ -21,7 +21,6 @@
 
 #include "pluginlib/class_list_macros.hpp"
 
-#include "rosbag2_storage/bag_info.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "test_plugin.hpp"
@@ -40,11 +39,6 @@ void TestPlugin::open(
     std::cout << "opening testplugin read write: ";
   }
   std::cout << uri << ".\n";
-}
-
-rosbag2_storage::BagInfo TestPlugin::info()
-{
-  return rosbag2_storage::BagInfo();
 }
 
 bool TestPlugin::has_next()
@@ -73,6 +67,12 @@ std::vector<rosbag2_storage::TopicWithType> TestPlugin::get_all_topics_and_types
 {
   std::cout << "\nreading topics and types\n";
   return std::vector<rosbag2_storage::TopicWithType>();
+}
+
+rosbag2_storage::BagMetadata TestPlugin::get_metadata()
+{
+  std::cout << "\nreturning metadata\n";
+  return rosbag2_storage::BagMetadata();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

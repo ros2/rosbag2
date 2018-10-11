@@ -70,6 +70,7 @@ public:
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
 
 private:
+  std::string uri_;
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 };

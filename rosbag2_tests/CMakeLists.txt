@@ -55,6 +55,14 @@ if(BUILD_TESTING)
       test_msgs)
   endif()
 
+  ament_add_gmock(test_rosbag2_info_end_to_end
+    test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_rosbag2_info_end_to_end)
+    ament_target_dependencies(test_rosbag2_info_end_to_end
+      rosbag2_storage)
+  endif()
+
 endif()
 
 ament_package()

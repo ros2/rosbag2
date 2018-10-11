@@ -12,19 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__TYPES_HPP_
-#define ROSBAG2__TYPES_HPP_
+#ifndef ROSBAG2__INFO_HPP_
+#define ROSBAG2__INFO_HPP_
 
-#include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
+#include <string>
+
+#include "rosbag2/types.hpp"
+#include "visibility_control.hpp"
 
 namespace rosbag2
 {
-using BagMetadata = rosbag2_storage::BagMetadata;
-using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
-using TopicMetadata = rosbag2_storage::TopicMetadata;
-using TopicWithType = rosbag2_storage::TopicWithType;
+
+class ROSBAG2_PUBLIC Info
+{
+public:
+  virtual ~Info() = default;
+
+  virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
+};
+
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__TYPES_HPP_
+#endif  // ROSBAG2__INFO_HPP_

@@ -38,11 +38,6 @@ void TestReadOnlyPlugin::open(
   std::cout << uri << ".\n";
 }
 
-rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
-{
-  return rosbag2_storage::BagInfo();
-}
-
 bool TestReadOnlyPlugin::has_next()
 {
   return true;
