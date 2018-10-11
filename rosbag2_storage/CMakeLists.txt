@@ -57,6 +57,7 @@ ament_export_libraries(${PROJECT_NAME})
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
@@ -85,6 +86,14 @@ if(BUILD_TESTING)
   if(TARGET test_ros_helper)
     target_include_directories(test_ros_helper PRIVATE include)
     target_link_libraries(test_ros_helper rosbag2_storage)
+  endif()
+
+  ament_add_gmock(test_filesystem_helper
+    test/rosbag2_storage/test_filesystem_helper.cpp)
+  if(TARGET test_filesystem_helper)
+    target_include_directories(test_filesystem_helper PRIVATE include)
+    target_link_libraries(test_filesystem_helper rosbag2_storage)
+    ament_target_dependencies(test_filesystem_helper rosbag2_test_common)
   endif()
 endif()
 

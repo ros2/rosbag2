@@ -22,9 +22,25 @@
 
 #include "rcutils/snprintf.h"
 
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "storage_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+
+namespace rosbag2_storage
+{
+
+bool operator==(const TopicWithType & lhs, const TopicWithType & rhs)
+{
+  return lhs.name == rhs.name && lhs.type == rhs.type;
+}
+
+bool operator!=(const TopicWithType & lhs, const TopicWithType & rhs)
+{
+  return !(lhs == rhs);
+}
+
+}  // namespace rosbag2_storage
 
 TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqlite3_storage) {
   std::vector<std::string> string_messages = {"first message", "second message", "third message"};
@@ -52,7 +68,7 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_);
+  readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
   readable_storage->read_next();
@@ -68,7 +84,7 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_);
+  readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
   auto first_message = readable_storage->read_next();
@@ -82,18 +98,18 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(database_name_);
+  writable_storage->open(temporary_dir_path_);
   writable_storage->create_topic({"topic1", "type1"});
   writable_storage->create_topic({"topic2", "type2"});
   writable_storage.reset();
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(database_name_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  readable_storage->open(
+    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
-  EXPECT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types[0].name, Eq("topic1"));
-  EXPECT_THAT(topics_and_types[0].type, Eq("type1"));
-  EXPECT_THAT(topics_and_types[1].name, Eq("topic2"));
-  EXPECT_THAT(topics_and_types[1].type, Eq("type2"));
+  EXPECT_THAT(topics_and_types, ElementsAreArray({
+    rosbag2_storage::TopicWithType{"topic1", "type1"},
+    rosbag2_storage::TopicWithType{"topic2", "type2"}
+  }));
 }
