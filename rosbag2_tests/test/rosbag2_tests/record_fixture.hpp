@@ -22,18 +22,12 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
-
-#ifdef _WIN32
-# include <direct.h>
-# include <Windows.h>
-#else
-# include <unistd.h>
-#endif
+#include "rclcpp/rclcpp.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"
@@ -43,72 +37,24 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-#ifdef _WIN32
-using ProcessHandle = HANDLE;
-#else
-using ProcessHandle = int;
-#endif
-
 class RecordFixture : public TemporaryDirectoryFixture
 {
 public:
   RecordFixture()
   {
-    std::string system_separator = "/";
-#ifdef _WIN32
-    system_separator = "\\";
-#endif
-    bag_path_ = temporary_dir_path_ + system_separator + "test";
-    database_path_ = bag_path_ + system_separator + "test.db3";
+    bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
+    database_path_ = rosbag2_storage::FilesystemHelper::concat({bag_path_, "bag.db3"});
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
+  }
+
+  static void SetUpTestCase()
+  {
     rclcpp::init(0, nullptr);
   }
 
-  ~RecordFixture() override
+  static void TearDownTestCase()
   {
     rclcpp::shutdown();
-  }
-
-  ProcessHandle start_execution(const std::string & command)
-  {
-#ifdef _WIN32
-    auto h_job = CreateJobObject(nullptr, nullptr);
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION info{};
-    info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    SetInformationJobObject(h_job, JobObjectExtendedLimitInformation, &info, sizeof(info));
-
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-
-    size_t length = strlen(command.c_str());
-    TCHAR * command_char = new TCHAR[length + 1];
-    memcpy(command_char, command.c_str(), length + 1);
-
-    CreateProcess(
-      nullptr,
-      command_char,
-      nullptr,
-      nullptr,
-      false,
-      0,
-      nullptr,
-      temporary_dir_path_.c_str(),
-      &start_up_info,
-      &process_info);
-
-    AssignProcessToJobObject(h_job, process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
-    delete[] command_char;
-    return h_job;
-#else
-    auto process_id = fork();
-    if (process_id == 0) {
-      setpgid(getpid(), getpid());
-      system(command.c_str());
-    }
-    return process_id;
-#endif
   }
 
   void wait_for_db()
@@ -125,17 +71,8 @@ public:
     }
   }
 
-  void stop_execution(ProcessHandle handle)
-  {
-#ifdef _WIN32
-    CloseHandle(handle);
-#else
-    kill(-handle, SIGTERM);
-#endif
-  }
-
-  size_t
-  count_stored_messages(rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
+  size_t count_stored_messages(
+    rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
   {
     // protect against concurrent writes (from recording) that may make the count query throw.
     while (true) {
@@ -196,6 +133,5 @@ public:
   PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };
-
 
 #endif  // ROSBAG2_TESTS__RECORD_FIXTURE_HPP_

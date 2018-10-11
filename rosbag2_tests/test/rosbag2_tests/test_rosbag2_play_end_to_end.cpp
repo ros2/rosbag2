@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdlib>
 #include <future>
 #include <iostream>
 #include <map>
@@ -21,12 +22,9 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
-
-#ifdef _WIN32
-# include <direct.h>
-# include <Windows.h>
-#endif
+// rclcpp must be included before process_execution_helpers.hpp
+#include "rclcpp/rclcpp.hpp"
+#include "process_execution_helpers.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
@@ -35,70 +33,46 @@
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class EndToEndTestFixture : public Test
+class PlayEndToEndTestFixture : public Test
 {
 public:
-  EndToEndTestFixture()
+  PlayEndToEndTestFixture()
   {
     database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
-    rclcpp::init(0, nullptr);
     sub_ = std::make_unique<SubscriptionManager>();
   }
 
-  ~EndToEndTestFixture() override
+  static void SetUpTestCase()
   {
-    rclcpp::shutdown();
+    rclcpp::init(0, nullptr);
   }
 
-  void execute(const std::string & command)
+  static void TearDownTestCase()
   {
-#ifdef _WIN32
-    size_t length = strlen(command.c_str());
-    TCHAR * command_char = new TCHAR[length + 1];
-    memcpy(command_char, command.c_str(), length + 1);
-
-    STARTUPINFO start_up_info{};
-    PROCESS_INFORMATION process_info{};
-    CreateProcess(
-      nullptr,
-      command_char,
-      nullptr,
-      nullptr,
-      false,
-      0,
-      nullptr,
-      database_path_.c_str(),
-      &start_up_info,
-      &process_info);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
-    delete[] command_char;
-#else
-    chdir(database_path_.c_str());
-    system(command.c_str());
-#endif
+    rclcpp::shutdown();
   }
 
   std::string database_path_;
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
-TEST_F(EndToEndTestFixture, play_end_to_end_test) {
+TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::StaticArrayPrimitives>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::Primitives>("/test_topic", 3);
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  execute("ros2 bag play test");
+  auto exit_code = execute_and_wait_until_completion("ros2 bag play test", database_path_);
 
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::Primitives>("/test_topic");
   auto array_messages = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
     "/array_topic");
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(primitive_messages,
@@ -111,4 +85,14 @@ TEST_F(EndToEndTestFixture, play_end_to_end_test) {
   EXPECT_THAT(array_messages,
     Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
     ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+}
+
+TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play does_not_exist", database_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
 }
