@@ -21,16 +21,29 @@
 #include "rcutils/types/char_array.h"
 #include "rcutils/time.h"
 
-namespace rosbag2_storage
+extern "C"
 {
 
-struct SerializedBagMessage
+typedef struct rosbag2_storage_serialized_bag_message_t
 {
-  std::shared_ptr<rcutils_char_array_t> serialized_data;
+  rcutils_char_array_t * serialized_data;
   rcutils_time_point_value_t time_stamp;
-  std::string topic_name;
-};
+  rcutils_char_array_t topic_name;
+  rcutils_allocator_t allocator;
+} rosbag2_storage_serialized_bag_message_t;
 
-}  // namespace rosbag2_storage
+rosbag2_storage_serialized_bag_message_t rosbag2_get_zero_initialized_serialized_bag_message();
+
+RCUTILS_WARN_UNUSED
+int rosbag2_serialized_bag_message_init(
+  rosbag2_storage_serialized_bag_message_t * message,
+  int64_t time_stamp,
+  char * topic_name,
+  const rcutils_allocator_t * allocator);
+
+RCUTILS_WARN_UNUSED
+int rosbag2_serialized_bag_message_fini(rosbag2_storage_serialized_bag_message_t * message);
+
+};
 
 #endif  // ROSBAG2_STORAGE__SERIALIZED_BAG_MESSAGE_HPP_
