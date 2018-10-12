@@ -47,7 +47,7 @@ class RecordVerb(VerbExtension):
         if args.all and args.topics:
             return 'Invalid choice: Can not specify topics and -a at the same time.'
 
-        uri = args.output if args.output else datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+        uri = args.output if args.output else datetime.datetime.now().strftime("rosbag2_%Y_%m_%d-%H_%M_%S")
 
         if os.path.isdir(uri):
             return "Error: Output folder '{}' already exists.".format(uri)
