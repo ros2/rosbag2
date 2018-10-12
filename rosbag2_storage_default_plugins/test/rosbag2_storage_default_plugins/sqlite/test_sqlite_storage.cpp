@@ -112,6 +112,7 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   writable_storage->open(temporary_dir_path_);
   writable_storage->create_topic({"topic1", "type1"});
   writable_storage->create_topic({"topic2", "type2"});
+  metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   writable_storage.reset();
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
