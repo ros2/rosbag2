@@ -74,19 +74,12 @@ public:
   void play(const StorageOptions & storage_options, const PlayOptions & play_options);
 
 private:
-  std::shared_ptr<rosbag2_transport::GenericSubscription>
-  create_subscription(
-    std::shared_ptr<Rosbag2Node> & node,
-    const std::string & topic_name, const std::string & topic_type) const;
+  std::shared_ptr<Rosbag2Node> setup_node();
 
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   std::shared_ptr<rosbag2::Writer> writer_;
 
   std::shared_ptr<Rosbag2Node> transport_node_;
-
-  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
-
-  std::shared_ptr<Rosbag2Node> setup_node();
 };
 
 }  // namespace rosbag2_transport

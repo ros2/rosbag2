@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 find_package(ament_cmake REQUIRED)
@@ -27,6 +27,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
+  src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
