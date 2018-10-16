@@ -18,13 +18,19 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rosbag2 REQUIRED)
+find_package(rosidl_generator_cpp REQUIRED)
+find_package(rcutils REQUIRED)
+find_package(rmw REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   pluginlib
-  rosbag2)
+  rosbag2
+  rcutils
+  rmw
+  rosidl_generator_cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -32,10 +38,6 @@ target_include_directories(${PROJECT_NAME}
   $<INSTALL_INTERFACE:include>)
 
 pluginlib_export_plugin_description_file(rosbag2 plugin_description.xml)
-
-install(
-  DIRECTORY include/
-  DESTINATION include)
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -48,10 +50,27 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  set(ament_cmake_copyright_FOUND TRUE)
-  set(ament_cmake_cpplint_FOUND TRUE)
+  find_package(rcutils REQUIRED)
+  find_package(rosbag2 REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
+  find_package(test_msgs REQUIRED)
+
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gmock(test_cdr_converter
+    test/rosbag2_converter_default_plugins/cdr/test_cdr_converter.cpp
+    src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_cdr_converter)
+    ament_target_dependencies(test_cdr_converter
+      pluginlib
+      rosbag2
+      rosbag2_test_common
+      rcutils
+      test_msgs)
+  endif()
 endif()
 
 ament_package()
