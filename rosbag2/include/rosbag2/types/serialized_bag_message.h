@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__SERIALIZED_BAG_MESSAGE_H_
-#define ROSBAG2__SERIALIZED_BAG_MESSAGE_H_
+#ifndef ROSBAG2__TYPES__SERIALIZED_BAG_MESSAGE_H_
+#define ROSBAG2__TYPES__SERIALIZED_BAG_MESSAGE_H_
 
 #include "rcutils/types.h"
 #include "rcutils/time.h"
@@ -29,7 +29,7 @@ rosbag2_serialized_bag_message_t rosbag2_get_zero_initialized_serialized_bag_mes
 RCUTILS_WARN_UNUSED
 int rosbag2_serialized_bag_message_init(
   rosbag2_serialized_bag_message_t * message,
-  int64_t time_stamp,
+  rcutils_time_point_value_t time_stamp,
   char * topic_name,
   const rcutils_allocator_t * allocator);
 
@@ -38,4 +38,4 @@ int rosbag2_serialized_bag_message_fini(rosbag2_serialized_bag_message_t * messa
 
 };
 
-#endif //ROSBAG2__SERIALIZED_BAG_MESSAGE_H_
+#endif // ROSBAG2__TYPES__SERIALIZED_BAG_MESSAGE_H_

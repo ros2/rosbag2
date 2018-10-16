@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__SEQUENTIAL_READER_H_
-#define ROSBAG2__SEQUENTIAL_READER_H_
+#ifndef ROSBAG2__TYPES__SEQUENTIAL_READER_H_
+#define ROSBAG2__TYPES__SEQUENTIAL_READER_H_
 
 #include "rosbag2/types/bag_handle.h"
 #include "rosbag2/types/serialized_bag_message.h"
@@ -48,4 +48,4 @@ int rosbag2_read_all_topics_and_types(
   rosbag2_sequential_reader_t * reader, rmw_names_and_types_t * topics_and_types);
 };
 
-#endif  // ROSBAG2__SEQUENTIAL_READER_H_
+#endif  // ROSBAG2__TYPES__SEQUENTIAL_READER_H_

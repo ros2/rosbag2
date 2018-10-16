@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__TYPES_HPP_
-#define ROSBAG2__TYPES_HPP_
+#ifndef ROSBAG2__TYPES__BAG_METADATA_H_
+#define ROSBAG2__TYPES__BAG_METADATA_H_
 
 #include "rcutils/strdup.h"
 
@@ -90,4 +90,4 @@ int rosbag2_topic_metadata_array_fini(rosbag2_topic_metadata_array_t * topic_met
 
 };
 
-#endif  // ROSBAG2__TYPES_HPP_
+#endif  // ROSBAG2__TYPES_BAG_METADATA_H_

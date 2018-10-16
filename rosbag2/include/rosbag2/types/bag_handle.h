@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__BAG_HANDLE_H_
-#define ROSBAG2__BAG_HANDLE_H_
+#ifndef ROSBAG2__TYPES__BAG_HANDLE_H_
+#define ROSBAG2__TYPES__BAG_HANDLE_H_
 
 #include "rcutils/types.h"
 #include "rosbag2/visibility_control.hpp"
@@ -46,4 +46,4 @@ int rosbag2_bag_handle_fini(rosbag2_bag_handle_t * bag_handle);
 
 };
 
-#endif //ROSBAG2__BAG_HANDLE_H_
+#endif // ROSBAG2__TYPES__BAG_HANDLE_H_

@@ -37,7 +37,7 @@ rosbag2_storage_serialized_bag_message_t rosbag2_get_zero_initialized_serialized
 RCUTILS_WARN_UNUSED
 int rosbag2_serialized_bag_message_init(
   rosbag2_storage_serialized_bag_message_t * message,
-  int64_t time_stamp,
+  rcutils_time_point_value_t time_stamp,
   char * topic_name,
   const rcutils_allocator_t * allocator);
 

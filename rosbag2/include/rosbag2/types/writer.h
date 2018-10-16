@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__WRITER_H_
-#define ROSBAG2__WRITER_H_
+#ifndef ROSBAG2__TYPES__WRITER_H_
+#define ROSBAG2__TYPES__WRITER_H_
 
 #include "rosbag2/types/bag_handle.h"
 
@@ -44,4 +44,4 @@ int rosbag2_write(
   rosbag2_writer_t * writer, rosbag2_serialized_bag_message_t * message);
 };
 
-#endif  // ROSBAG2__WRITER_H_
+#endif  // ROSBAG2__TYPES__WRITER_H_
