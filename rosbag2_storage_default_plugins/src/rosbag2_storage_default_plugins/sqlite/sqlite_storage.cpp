@@ -14,6 +14,7 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
+#include <sys/stat.h>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -23,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
@@ -44,13 +46,18 @@ SqliteStorage::SqliteStorage()
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY && !database_exists(uri)) {
-    throw std::runtime_error("Failed to read from bag '" + uri + "': file does not exist.");
+  std::string database_name = get_database_name(uri);
+  std::string database_path = rosbag2_storage::FilesystemHelper::concat({uri, database_name});
+
+  if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY &&
+    !database_exists(database_path))
+  {
+    throw std::runtime_error("Failed to read from bag '" + uri + "': Folder does not exist.");
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
-    bag_info_.uri = uri;
+    database_ = std::make_unique<SqliteWrapper>(database_path, io_flag);
+    bag_info_.uri = database_name;
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
@@ -166,6 +173,11 @@ void SqliteStorage::fill_topics_and_types()
   for (auto result : query_results) {
     all_topics_and_types_.push_back({std::get<0>(result), std::get<1>(result)});
   }
+}
+
+std::string SqliteStorage::get_database_name(const std::string & uri)
+{
+  return rosbag2_storage::FilesystemHelper::get_folder_name(uri) + ".db3";
 }
 
 bool SqliteStorage::database_exists(const std::string & uri)

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import sys
+
 from ros2bag.verb import VerbExtension
 
 from rosbag2_transport import rosbag2_transport_py
@@ -26,4 +29,7 @@ class PlayVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
+        if not os.path.exists(bag_file):
+            return "Error: bag file '{}' does not exist!".format(bag_file)
+
         rosbag2_transport_py.play(uri=bag_file, storage_id='sqlite3')
