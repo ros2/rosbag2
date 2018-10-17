@@ -17,6 +17,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(poco_vendor)
 find_package(Poco COMPONENTS Foundation)
 find_package(rcutils REQUIRED)
@@ -25,11 +26,13 @@ find_package(rosidl_generator_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2/sequential_reader.cpp
+  src/rosbag2/format_converter_factory_impl.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/writer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
+  pluginlib
   Poco
   rcutils
   rosbag2_storage
@@ -45,6 +48,9 @@ target_include_directories(${PROJECT_NAME}
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_BUILDING_DLL")
+
+# prevent pluginlib from using boost
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 install(
   DIRECTORY include/
@@ -70,6 +76,26 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_typesupport_helpers)
     target_link_libraries(test_typesupport_helpers rosbag2)
+  endif()
+
+
+  add_library(
+    converter_test_plugin
+    SHARED
+    test/rosbag2/converter_test_plugin.cpp)
+  target_link_libraries(converter_test_plugin rosbag2)
+  install(
+    TARGETS converter_test_plugin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin)
+  pluginlib_export_plugin_description_file(rosbag2 test/rosbag2/converter_test_plugin.xml)
+
+  ament_add_gmock(test_converter_factory
+    test/rosbag2/test_converter_factory.cpp)
+  if(TARGET test_converter_factory)
+    target_include_directories(test_converter_factory PRIVATE include)
+    target_link_libraries(test_converter_factory rosbag2)
   endif()
 endif()
 

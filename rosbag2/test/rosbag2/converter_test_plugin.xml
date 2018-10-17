@@ -1,0 +1,9 @@
+<library path="converter_test_plugin">
+  <class
+    name="a_converter"
+    type="ConverterTestPlugin"
+    base_class_type="rosbag2::FormatConverterInterface"
+  >
+    <description>This is a test format converter plugin.</description>
+  </class>
+</library>
