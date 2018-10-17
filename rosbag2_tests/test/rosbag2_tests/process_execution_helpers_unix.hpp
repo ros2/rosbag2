@@ -39,19 +39,20 @@ ProcessHandle start_execution(const std::string & command)
 {
   auto process_id = fork();
   if (process_id == 0) {
-    setpgid(getpid(), getpid());
-    int return_code = system(command.c_str());
-
-    // this call will make sure that the process does execute without issues before it is killed by
-    // the user in the test or, in case it runs until completion, that it has correctly executed.
-    EXPECT_THAT(return_code, Eq(0));
+    setpgid(0, 0);
+    execl("/bin/sh", "sh", "-c", command.c_str(), static_cast<char *>(nullptr));
   }
   return process_id;
 }
 
 void stop_execution(const ProcessHandle & handle)
 {
-  kill(-handle, SIGTERM);
+  killpg(handle, SIGINT);
+  int child_return_code;
+  waitpid(handle, &child_return_code, 0);
+  // this call will make sure that the process does execute without issues before it is killed by
+  // the user in the test or, in case it runs until completion, that it has correctly executed.
+  EXPECT_THAT(WEXITSTATUS(child_return_code), Not(Eq(EXIT_FAILURE)));
 }
 
 #endif  // ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
