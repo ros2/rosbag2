@@ -191,7 +191,7 @@ std::unique_ptr<rosbag2_storage::BagMetadata> SqliteStorage::load_metadata(const
     rosbag2_storage::MetadataIo metadata_io;
     return std::make_unique<rosbag2_storage::BagMetadata>(metadata_io.read_metadata(uri));
   } catch (std::exception & e) {
-    (void) e;
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR("Failed to load metadata: %s", e.what());
     return std::unique_ptr<rosbag2_storage::BagMetadata>();
   }
 }

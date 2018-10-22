@@ -147,7 +147,7 @@ struct convert<rosbag2_storage::BagMetadata>
 namespace rosbag2_storage
 {
 
-void MetadataIo::write_metadata(const std::string & uri, BagMetadata metadata)
+void MetadataIo::write_metadata(const std::string & uri, const BagMetadata & metadata)
 {
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
