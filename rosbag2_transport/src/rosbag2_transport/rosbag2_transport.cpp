@@ -62,12 +62,16 @@ void Rosbag2Transport::shutdown()
 void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  writer_->open(storage_options);
+  try {
+    writer_->open(storage_options);
 
-  auto transport_node = setup_node();
+    auto transport_node = setup_node();
 
-  Recorder recorder(writer_, transport_node);
-  recorder.record(record_options);
+    Recorder recorder(writer_, transport_node);
+    recorder.record(record_options);
+  } catch (std::runtime_error & e) {
+    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to record: %s", e.what());
+  }
 }
 
 std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
@@ -81,12 +85,16 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
 void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  reader_->open(storage_options);
+  try {
+    reader_->open(storage_options);
 
-  auto transport_node = setup_node();
+    auto transport_node = setup_node();
 
-  Player player(reader_, transport_node);
-  player.play(play_options);
+    Player player(reader_, transport_node);
+    player.play(play_options);
+  } catch (std::runtime_error & e) {
+    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
+  }
 }
 
 void Rosbag2Transport::print_bag_info(const std::string & uri)
