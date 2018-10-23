@@ -34,6 +34,8 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
   std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
+
+  rosbag2_storage::BagMetadata get_metadata() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_READ_ONLY_PLUGIN_HPP_

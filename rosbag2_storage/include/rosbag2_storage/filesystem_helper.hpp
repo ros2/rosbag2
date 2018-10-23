@@ -118,6 +118,12 @@ public:
     int rc = stat(file_path.c_str(), &stat_buffer);
     return rc == 0 ? static_cast<size_t>(stat_buffer.st_size) : 0;
   }
+
+  static bool file_exists(const std::string & file_path)
+  {
+    struct stat stat_buffer {};
+    return stat(file_path.c_str(), &stat_buffer) == 0;
+  }
 };
 
 }  // namespace rosbag2_storage

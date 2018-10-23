@@ -18,6 +18,7 @@
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -31,8 +32,12 @@ public:
 
   ROSBAG2_STORAGE_PUBLIC
   void write_metadata(const std::string & uri, const BagMetadata & metadata);
+
   ROSBAG2_STORAGE_PUBLIC
   BagMetadata read_metadata(const std::string & uri);
+
+  ROSBAG2_STORAGE_PUBLIC
+  bool metadata_file_exists(const std::string & uri);
 
 private:
   std::string get_metadata_file_name(const std::string & uri);

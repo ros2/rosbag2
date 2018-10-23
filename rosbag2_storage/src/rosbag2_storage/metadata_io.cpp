@@ -174,4 +174,10 @@ std::string MetadataIo::get_metadata_file_name(const std::string & uri)
   return metadata_file;
 }
 
+bool MetadataIo::metadata_file_exists(const std::string & uri)
+{
+  return rosbag2_storage::FilesystemHelper::file_exists(
+    rosbag2_storage::FilesystemHelper::concat({uri, metadata_filename}));
+}
+
 }  // namespace rosbag2_storage

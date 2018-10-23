@@ -55,4 +55,9 @@ std::vector<rosbag2_storage::TopicWithType> TestReadOnlyPlugin::get_all_topics_a
   return std::vector<rosbag2_storage::TopicWithType>();
 }
 
+rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()
+{
+  return rosbag2_storage::BagMetadata();
+}
+
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

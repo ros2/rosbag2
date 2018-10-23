@@ -25,7 +25,7 @@
 class MockInfo : public rosbag2::Info
 {
 public:
-  MOCK_METHOD1(read_metadata, rosbag2::BagMetadata(const std::string &));
+  MOCK_METHOD2(read_metadata, rosbag2::BagMetadata(const std::string &, const std::string &));
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_INFO_HPP_

@@ -31,6 +31,7 @@ class ROSBAG2_STORAGE_PUBLIC ReadWriteInterface
 {
 public:
   ~ReadWriteInterface() override = default;
+
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
 };
 

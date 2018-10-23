@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
@@ -27,10 +28,11 @@ namespace storage_interfaces
 {
 
 class ROSBAG2_STORAGE_PUBLIC ReadOnlyInterface
-  : public BaseIOInterface, public BaseReadInterface
+  : public BaseInfoInterface, public BaseIOInterface, public BaseReadInterface
 {
 public:
   virtual ~ReadOnlyInterface() = default;
+
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 };
 

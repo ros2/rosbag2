@@ -28,7 +28,8 @@ class ROSBAG2_PUBLIC Info
 public:
   virtual ~Info() = default;
 
-  virtual rosbag2::BagMetadata read_metadata(const std::string & uri);
+  virtual rosbag2::BagMetadata read_metadata(
+    const std::string & uri, const std::string & storage_id = "");
 };
 
 }  // namespace rosbag2

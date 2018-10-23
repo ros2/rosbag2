@@ -14,17 +14,35 @@
 
 #include "rosbag2/info.hpp"
 
+#include <memory>
 #include <string>
 
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2
 {
 
-rosbag2::BagMetadata Info::read_metadata(const std::string & uri)
+rosbag2::BagMetadata Info::read_metadata(const std::string & uri, const std::string & storage_id)
 {
   rosbag2_storage::MetadataIo metadata_io;
-  return metadata_io.read_metadata(uri);
+  if (metadata_io.metadata_file_exists(uri)) {
+    return metadata_io.read_metadata(uri);
+  }
+  if (!storage_id.empty()) {
+    rosbag2_storage::StorageFactory factory;
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage;
+    storage = factory.open_read_only(uri, storage_id);
+    if (!storage) {
+      throw std::runtime_error("The metadata.yaml file does not exist and the bag could not be "
+              "opened.");
+    }
+    auto bag_metadata = storage->get_metadata();
+    bag_metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(uri);
+    return bag_metadata;
+  }
+  throw std::runtime_error("The metadata.yaml file does not exist. Please specify a the "
+          "storage id of the bagfile to query it directly");
 }
-
 }  // namespace rosbag2

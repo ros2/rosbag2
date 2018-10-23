@@ -1,4 +1,5 @@
 // Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018 Bosch Software Innovations, GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
-#define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
+#ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
+#define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 
-#include <memory>
-#include <string>
-
-#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
@@ -28,17 +24,15 @@ namespace rosbag2_storage
 namespace storage_interfaces
 {
 
-class ROSBAG2_STORAGE_PUBLIC BaseWriteInterface
+class ROSBAG2_STORAGE_PUBLIC BaseInfoInterface
 {
 public:
-  virtual ~BaseWriteInterface() = default;
+  virtual ~BaseInfoInterface() = default;
 
-  virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
-
-  virtual void create_topic(const TopicWithType & topic) = 0;
+  virtual BagMetadata get_metadata() = 0;
 };
 
 }  // namespace storage_interfaces
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
+#endif  // ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_

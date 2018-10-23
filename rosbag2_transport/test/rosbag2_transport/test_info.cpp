@@ -41,7 +41,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   bagfile.message_count = 50;
   bagfile.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
   bagfile.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
-  EXPECT_CALL(*info_, read_metadata(_)).WillOnce(Return(bagfile));
+  EXPECT_CALL(*info_, read_metadata(_, _)).WillOnce(Return(bagfile));
 
   // the expected output uses a regex to handle different time zones.
   rosbag2_transport::Rosbag2Transport transport(reader_, writer_, info_);
