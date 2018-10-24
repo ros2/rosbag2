@@ -75,9 +75,11 @@ public:
   rcutils_allocator_t allocator_;
 };
 
-TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message) {
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_primitives) {
   auto message = get_messages_primitives()[0];
   message->string_value = "test_deserialize";
+  message->float64_value = 102.34;
+  message->int32_value = 10101010;
   auto serialized_data = memory_management_->serialize_message(message);
   auto serialized_message = std::make_shared<SerializedBagMessage>();
   serialized_message->serialized_data = serialized_data;
@@ -92,16 +94,18 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message) {
   converter_->deserialize(ros_message, serialized_message, type_support);
 
   auto cast_message = static_cast<test_msgs::msg::Primitives *>(ros_message->message);
-  EXPECT_THAT(cast_message->string_value, StrEq("test_deserialize"));
+  EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name.buffer, StrEq(serialized_message->topic_name));
 }
 
-TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr) {
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_primitives) {
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->timestamp = 1;
   auto message = get_messages_primitives()[0];
   message->string_value = "test_serialize";
+  message->float64_value = 102.34;
+  message->int32_value = 10101010;
   ros_message->message = message.get();
 
   auto serialized_message = std::make_shared<SerializedBagMessage>();
@@ -112,7 +116,109 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr) {
 
   auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::Primitives>(
     serialized_message->serialized_data);
-  EXPECT_THAT(deserialized_msg->string_value, StrEq("test_serialize"));
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
+  EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
+}
+
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_static_array) {
+  auto message = get_messages_static_array_primitives()[0];
+  message->string_values = {"test_deserialize", "another string", "the third one"};
+  message->float64_values = {102.34, 1.9, 1236.011};
+  message->int32_values = {11, 36, 219};
+  auto serialized_data = memory_management_->serialize_message(message);
+  auto serialized_message = std::make_shared<SerializedBagMessage>();
+  serialized_message->serialized_data = serialized_data;
+  serialized_message->topic_name = topic_name_;
+  serialized_message->time_stamp = 1;
+
+  auto ros_message = make_shared_ros_message();
+  test_msgs::msg::StaticArrayPrimitives primitive_test_msg;
+  ros_message->message = &primitive_test_msg;
+  auto type_support = rosbag2::get_typesupport("test_msgs/StaticArrayPrimitives");
+
+  converter_->deserialize(ros_message, serialized_message, type_support);
+
+  auto cast_message = static_cast<test_msgs::msg::StaticArrayPrimitives *>(ros_message->message);
+  EXPECT_THAT(*cast_message, Eq(*message));
+  EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->topic_name.buffer, StrEq(serialized_message->topic_name));
+}
+
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_static_array) {
+  auto ros_message = make_shared_ros_message(topic_name_);
+  ros_message->timestamp = 1;
+  auto message = get_messages_static_array_primitives()[0];
+  message->string_values = {"test_deserialize", "another string", "the third one"};
+  message->float64_values = {102.34, 1.9, 1236.011};
+  message->int32_values = {11, 36, 219};
+  ros_message->message = message.get();
+
+  auto serialized_message = std::make_shared<SerializedBagMessage>();
+  serialized_message->serialized_data = memory_management_->make_initialized_message();
+  auto type_support = rosbag2::get_typesupport("test_msgs/StaticArrayPrimitives");
+
+  converter_->serialize(serialized_message, ros_message, type_support);
+
+  auto deserialized_msg = memory_management_->
+    deserialize_message<test_msgs::msg::StaticArrayPrimitives>(serialized_message->serialized_data);
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
+  EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
+}
+
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dynamic_array_nest) {
+  auto message = get_messages_dynamic_array_nested()[0];
+  test_msgs::msg::Primitives first_primitive_message;
+  first_primitive_message.string_value = "I am the first";
+  first_primitive_message.float32_value = 35.7f;
+  test_msgs::msg::Primitives second_primitive_message;
+  second_primitive_message.string_value = "I am the second";
+  second_primitive_message.float32_value = 135.72f;
+  message->primitive_values.push_back(first_primitive_message);
+  message->primitive_values.push_back(second_primitive_message);
+  auto serialized_data = memory_management_->serialize_message(message);
+  auto serialized_message = std::make_shared<SerializedBagMessage>();
+  serialized_message->serialized_data = serialized_data;
+  serialized_message->topic_name = topic_name_;
+  serialized_message->time_stamp = 1;
+
+  auto ros_message = make_shared_ros_message();
+  test_msgs::msg::DynamicArrayNested dynamic_nested_message;
+  ros_message->message = &dynamic_nested_message;
+  auto type_support = rosbag2::get_typesupport("test_msgs/DynamicArrayNested");
+
+  converter_->deserialize(ros_message, serialized_message, type_support);
+
+  auto cast_message = static_cast<test_msgs::msg::DynamicArrayNested *>(ros_message->message);
+  EXPECT_THAT(*cast_message, Eq(*message));
+  EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->topic_name.buffer, StrEq(serialized_message->topic_name));
+}
+
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dynamic_array_nest) {
+  auto ros_message = make_shared_ros_message(topic_name_);
+  ros_message->timestamp = 1;
+  auto message = get_messages_dynamic_array_nested()[0];
+  test_msgs::msg::Primitives first_primitive_message;
+  first_primitive_message.string_value = "I am the first";
+  first_primitive_message.float32_value = 35.7f;
+  test_msgs::msg::Primitives second_primitive_message;
+  second_primitive_message.string_value = "I am the second";
+  second_primitive_message.float32_value = 135.72f;
+  message->primitive_values.push_back(first_primitive_message);
+  message->primitive_values.push_back(second_primitive_message);
+  ros_message->message = message.get();
+
+  auto serialized_message = std::make_shared<SerializedBagMessage>();
+  serialized_message->serialized_data = memory_management_->make_initialized_message();
+  auto type_support = rosbag2::get_typesupport("test_msgs/DynamicArrayNested");
+
+  converter_->serialize(serialized_message, ros_message, type_support);
+
+  auto deserialized_msg = memory_management_->
+    deserialize_message<test_msgs::msg::DynamicArrayNested>(serialized_message->serialized_data);
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
   EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
 }
