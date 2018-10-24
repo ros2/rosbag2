@@ -48,7 +48,9 @@ SqliteStorage::SqliteStorage()
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  auto metadata = load_metadata(uri);
+  auto metadata = is_read_only(io_flag) ?
+    load_metadata(uri) :
+    std::unique_ptr<rosbag2_storage::BagMetadata>();
 
   if (metadata) {
     if (metadata->relative_file_paths.empty()) {
