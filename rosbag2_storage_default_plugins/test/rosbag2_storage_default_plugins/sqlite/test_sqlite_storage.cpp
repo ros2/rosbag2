@@ -142,7 +142,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.storage_format, Eq("cdr"));
+  EXPECT_THAT(metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
     rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));
@@ -166,7 +166,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.storage_format, Eq("cdr"));
+  EXPECT_THAT(metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
     rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));

@@ -32,7 +32,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
 
   rosbag2::BagMetadata bagfile;
   bagfile.storage_identifier = "sqlite3";
-  bagfile.storage_format = "cdr";
+  bagfile.serialization_format = "cdr";
   bagfile.relative_file_paths.emplace_back("some_relative_path");
   bagfile.relative_file_paths.emplace_back("some_other_relative_path");
   bagfile.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
@@ -47,17 +47,17 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   rosbag2_transport::Rosbag2Transport transport(reader_, writer_, info_);
   transport.print_bag_info("test");
   std::string expected_output(
-    "\nFiles:            some_relative_path\n"
-    "                  some_other_relative_path\n"
-    "Bag size:         0 B\n"
-    "Storage id:       sqlite3\n"
-    "Storage format:   cdr\n"
-    "Duration:         0\\.50s\n"
-    "Start:            Sep .+ 2018 .+:.+:45\\.348 \\(1538051985\\.348\\)\n"
-    "End               Sep .+ 2018 .+:.+:45\\.398 \\(1538051985\\.398\\)\n"
-    "Messages:         50\n"
-    "Topics with Type: topic1; type1; 100 msgs\n"
-    "                  topic2; type2; 200 msgs\n\n");
+    "\nFiles:                some_relative_path\n"
+    "                      some_other_relative_path\n"
+    "Bag size:             0 B\n"
+    "Storage id:           sqlite3\n"
+    "Serialization format: cdr\n"
+    "Duration:             0\\.50s\n"
+    "Start:                Sep .+ 2018 .+:.+:45\\.348 \\(1538051985\\.348\\)\n"
+    "End                   Sep .+ 2018 .+:.+:45\\.398 \\(1538051985\\.398\\)\n"
+    "Messages:             50\n"
+    "Topics with Type:     topic1; type1; 100 msgs\n"
+    "                      topic2; type2; 200 msgs\n\n");
 
   std::string output = internal::GetCapturedStdout();
   EXPECT_THAT(output, ContainsRegex(expected_output));

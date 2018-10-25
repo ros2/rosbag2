@@ -34,7 +34,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "rosbag2_bagfile_information:\n"
     "  version: 1\n"
     "  storage_identifier: sqlite3\n"
-    "  storage_format: cdr\n"
+    "  serialization_format: cdr\n"
     "  relative_file_paths:\n"
     "    - some_relative_path\n"
     "    - some_other_relative_path\n"
@@ -65,7 +65,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   auto read_metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(read_metadata.storage_format, Eq("cdr"));
+  EXPECT_THAT(read_metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(read_metadata.relative_file_paths,
     Eq(std::vector<std::string>({"some_relative_path", "some_other_relative_path"})));
   EXPECT_THAT(read_metadata.duration, Eq(std::chrono::nanoseconds(100)));

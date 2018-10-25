@@ -213,7 +213,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = "sqlite3";
-  metadata.storage_format = "cdr";  // TODO(greimela) Determine format (i.e. data encoding)
+  metadata.serialization_format = "cdr";  // TODO(greimela) Determine format (i.e. data encoding)
   metadata.relative_file_paths = {database_name_};
 
   metadata.message_count = 0;

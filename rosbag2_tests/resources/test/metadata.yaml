@@ -1,7 +1,7 @@
 rosbag2_bagfile_information:
   version: 1
   storage_identifier: sqlite3
-  storage_format: cdr
+  serialization_format: cdr
   relative_file_paths:
     - test.db3
   duration:

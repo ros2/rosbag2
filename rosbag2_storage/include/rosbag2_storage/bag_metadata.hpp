@@ -37,7 +37,7 @@ struct BagMetadata
   int version = 1;  // upgrade this number when changing the content of the struct
   size_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
-  std::string storage_format;
+  std::string serialization_format;
   std::vector<std::string> relative_file_paths;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
