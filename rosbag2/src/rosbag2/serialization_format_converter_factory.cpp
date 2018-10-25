@@ -36,7 +36,7 @@ SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 
 SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
 
-std::shared_ptr<SerializationFormatConverterInterface>
+std::unique_ptr<SerializationFormatConverterInterface>
 SerializationFormatConverterFactory::load_converter(const std::string & format)
 {
   auto converter_id = format + "_converter";
@@ -49,7 +49,7 @@ SerializationFormatConverterFactory::load_converter(const std::string & format)
   }
 
   try {
-    return std::shared_ptr<SerializationFormatConverterInterface>(
+    return std::unique_ptr<SerializationFormatConverterInterface>(
       class_loader_->createUnmanagedInstance(converter_id));
   } catch (const std::runtime_error & ex) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());

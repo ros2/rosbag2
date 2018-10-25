@@ -22,6 +22,7 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2/converter.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/storage_options.hpp"
@@ -92,10 +93,10 @@ public:
   virtual std::vector<TopicWithType> get_all_topics_and_types();
 
 private:
-  std::string rmw_serialization_format_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
+  std::unique_ptr<Converter> converter_;
 };
 
 }  // namespace rosbag2

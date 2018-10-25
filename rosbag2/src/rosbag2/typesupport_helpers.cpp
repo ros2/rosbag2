@@ -74,13 +74,13 @@ const std::pair<std::string, std::string> extract_type_and_package(const std::st
   return {package_name, type_name};
 }
 
-const rosidl_message_type_support_t * get_typesupport(const std::string & type)
+const rosidl_message_type_support_t *
+get_typesupport(const std::string & type, const std::string & typesupport_identifier)
 {
   std::string package_name;
   std::string type_name;
   std::tie(package_name, type_name) = extract_type_and_package(type);
 
-  std::string typesupport_identifier = "rosidl_typesupport_cpp";
   std::string poco_dynamic_loading_error = "Something went wrong loading the typesupport library "
     "for message type " + package_name + "/" + type_name + ".";
 

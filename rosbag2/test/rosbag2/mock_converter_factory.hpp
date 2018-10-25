@@ -26,7 +26,7 @@ class MockConverterFactory : public rosbag2::SerializationFormatConverterFactory
 {
 public:
   MOCK_METHOD1(load_converter,
-    std::shared_ptr<rosbag2::SerializationFormatConverterInterface>(const std::string &));
+    std::unique_ptr<rosbag2::SerializationFormatConverterInterface>(const std::string &));
 };
 
 #endif  // ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
