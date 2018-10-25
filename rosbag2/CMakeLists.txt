@@ -100,11 +100,16 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_info
     test/rosbag2/test_info.cpp
-    test/rosbag2/mock_metadata_io.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
     target_link_libraries(test_info rosbag2)
     ament_target_dependencies(test_info rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_sequential_reader
+    test/rosbag2/test_sequential_reader.cpp)
+  if(TARGET test_sequential_reader)
+    target_link_libraries(test_sequential_reader rosbag2)
   endif()
 endif()
 

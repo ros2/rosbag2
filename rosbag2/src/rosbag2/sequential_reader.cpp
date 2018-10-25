@@ -23,8 +23,9 @@ namespace rosbag2
 {
 
 SequentialReader::SequentialReader(
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory)
-: factory_(std::move(factory))
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
+: storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory))
 {}
 
 SequentialReader::~SequentialReader()
@@ -36,7 +37,7 @@ void
 SequentialReader::open(const StorageOptions & options, const std::string & rmw_serialization_format)
 {
   rmw_serialization_format_ = rmw_serialization_format;
-  storage_ = factory_->open_read_only(options.uri, options.storage_id);
+  storage_ = storage_factory_->open_read_only(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
