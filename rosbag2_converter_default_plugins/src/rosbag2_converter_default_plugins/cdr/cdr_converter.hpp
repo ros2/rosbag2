@@ -26,8 +26,6 @@ namespace rosbag2_converter_default_plugins
 class CdrConverter : public rosbag2::SerializationFormatConverterInterface
 {
 public:
-  CdrConverter();
-
   void deserialize(
     std::shared_ptr<rosbag2_ros2_message_t> ros_message,
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
@@ -37,9 +35,6 @@ public:
     std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
     std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
     const rosidl_message_type_support_t * type_support) override;
-
-private:
-  const std::string rmw_identifier_;
 };
 
 }  // namespace rosbag2_converter_default_plugins

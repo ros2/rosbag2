@@ -18,13 +18,11 @@
 #include <string>
 
 #include "rcutils/strdup.h"
+#include "rmw/rmw.h"
 #include "../logging.hpp"
 
 namespace rosbag2_converter_default_plugins
 {
-
-CdrConverter::CdrConverter()
-: rmw_identifier_("rmw_fastrtps_cpp") {}
 
 void CdrConverter::deserialize(
   std::shared_ptr<rosbag2_ros2_message_t> ros_message,
@@ -34,8 +32,11 @@ void CdrConverter::deserialize(
   ros_message->topic_name = serialized_message->topic_name.c_str();
   ros_message->timestamp = serialized_message->time_stamp;
 
-  auto deserialize = rosbag2::get_deserialize_function(rmw_identifier_);
-  deserialize(serialized_message->serialized_data.get(), type_support, ros_message->message);
+  auto ret =
+    rmw_deserialize(serialized_message->serialized_data.get(), type_support, ros_message->message);
+  if (ret != RMW_RET_OK) {
+    ROSBAG2_CONVERTER_DEFAULT_PLUGINS_LOG_ERROR("Failed to deserialize message.");
+  }
 }
 
 void CdrConverter::serialize(
@@ -43,11 +44,14 @@ void CdrConverter::serialize(
   const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
   const rosidl_message_type_support_t * type_support)
 {
-  auto serialize = rosbag2::get_serialize_function(rmw_identifier_);
-  serialize(ros_message->message, type_support, serialized_message->serialized_data.get());
-
   serialized_message->topic_name = std::string(ros_message->topic_name);
   serialized_message->time_stamp = ros_message->timestamp;
+
+  auto ret = rmw_serialize(
+    ros_message->message, type_support, serialized_message->serialized_data.get());
+  if (ret != RMW_RET_OK) {
+    ROSBAG2_CONVERTER_DEFAULT_PLUGINS_LOG_ERROR("Failed to serialize message.");
+  }
 }
 
 }  // namespace rosbag2_converter_default_plugins

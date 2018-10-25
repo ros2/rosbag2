@@ -14,6 +14,7 @@
   <depend>rcutils</depend>
   <depend>rmw</depend>
   <depend>rosbag2</depend>
+  <depend>rmw_fastrtps_cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -21,6 +21,7 @@ find_package(rosbag2 REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rmw_fastrtps_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp)
@@ -30,6 +31,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2
   rcutils
   rmw
+  rmw_fastrtps_cpp
   rosidl_generator_cpp)
 
 target_include_directories(${PROJECT_NAME}
