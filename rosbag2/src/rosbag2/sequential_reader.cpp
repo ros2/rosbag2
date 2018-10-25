@@ -16,10 +16,16 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rosbag2
 {
+
+SequentialReader::SequentialReader(
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory)
+: factory_(std::move(factory))
+{}
 
 SequentialReader::~SequentialReader()
 {
@@ -30,7 +36,7 @@ void
 SequentialReader::open(const StorageOptions & options, const std::string & rmw_serialization_format)
 {
   rmw_serialization_format_ = rmw_serialization_format;
-  storage_ = factory_.open_read_only(options.uri, options.storage_id);
+  storage_ = factory_->open_read_only(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }

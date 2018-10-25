@@ -25,6 +25,10 @@
 namespace rosbag2
 {
 
+Writer::Writer(std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory)
+: factory_(std::move(factory))
+{}
+
 Writer::~Writer()
 {
   if (!uri_.empty()) {
@@ -37,7 +41,7 @@ Writer::~Writer()
 
 void Writer::open(const StorageOptions & options)
 {
-  storage_ = factory_.open_read_write(options.uri, options.storage_id);
+  storage_ = factory_->open_read_write(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }

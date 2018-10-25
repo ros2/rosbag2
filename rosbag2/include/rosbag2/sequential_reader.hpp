@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
@@ -42,6 +43,10 @@ namespace rosbag2
 class ROSBAG2_PUBLIC SequentialReader
 {
 public:
+  explicit
+  SequentialReader(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory =
+    std::make_unique<rosbag2_storage::StorageFactory>());
   virtual ~SequentialReader();
 
   /**
@@ -84,7 +89,7 @@ public:
 
 private:
   std::string rmw_serialization_format_;
-  rosbag2_storage::StorageFactory factory_;
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
 };
 
