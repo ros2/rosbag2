@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__FORMAT_CONVERTER_FACTORY_IMPL_HPP_
-#define ROSBAG2__FORMAT_CONVERTER_FACTORY_IMPL_HPP_
+#ifndef ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_HPP_
+#define ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_HPP_
 
-#include "rosbag2/format_converter_factory.hpp"
+#include "rosbag2/serialization_format_converter_factory_interface.hpp"
 
 #include <memory>
 #include <string>
 
-#include "rosbag2/format_converter_interface.hpp"
+#include "rosbag2/serialization_format_converter_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -42,17 +42,19 @@ class ClassLoader;
 namespace rosbag2
 {
 
-class ROSBAG2_PUBLIC FormatConverterFactoryImpl : public FormatConverterFactory
+class ROSBAG2_PUBLIC SerializationFormatConverterFactoryImpl
+  : public SerializationFormatConverterFactoryInterface
 {
 public:
-  FormatConverterFactoryImpl();
+  SerializationFormatConverterFactoryImpl();
 
-  ~FormatConverterFactoryImpl() override;
+  ~SerializationFormatConverterFactoryImpl() override;
 
-  std::shared_ptr<FormatConverterInterface> load_converter(const std::string & format) override;
+  std::shared_ptr<SerializationFormatConverterInterface>
+  load_converter(const std::string & format) override;
 
 private:
-  std::unique_ptr<pluginlib::ClassLoader<FormatConverterInterface>> class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>> class_loader_;
 };
 
 }  // namespace rosbag2
@@ -61,4 +63,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2__FORMAT_CONVERTER_FACTORY_IMPL_HPP_
+#endif  // ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_HPP_

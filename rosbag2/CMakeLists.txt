@@ -26,7 +26,7 @@ find_package(rosidl_generator_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2/sequential_reader.cpp
-  src/rosbag2/format_converter_factory_impl.cpp
+  src/rosbag2/serialization_format_converter_factory.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/writer.cpp)
 

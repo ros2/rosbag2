@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/format_converter_factory_impl.hpp"
+#include "rosbag2/serialization_format_converter_factory.hpp"
 
 #include <memory>
 #include <string>
@@ -23,22 +23,21 @@
 namespace rosbag2
 {
 
-FormatConverterFactoryImpl::FormatConverterFactoryImpl()
+SerializationFormatConverterFactoryImpl::SerializationFormatConverterFactoryImpl()
 {
   try {
-    class_loader_ = std::make_unique<pluginlib::ClassLoader<FormatConverterInterface>>(
-      "rosbag2", "rosbag2::FormatConverterInterface");
+    class_loader_ = std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
+      "rosbag2", "rosbag2::SerializationFormatConverterInterface");
   } catch (const std::exception & e) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to create class loader instance: " << e.what());
     throw e;
   }
 }
 
-// needed explicit destructor because of unique_ptr for pimpl
-FormatConverterFactoryImpl::~FormatConverterFactoryImpl() = default;
+SerializationFormatConverterFactoryImpl::~SerializationFormatConverterFactoryImpl() = default;
 
-std::shared_ptr<FormatConverterInterface> FormatConverterFactoryImpl::load_converter(
-  const std::string & format)
+std::shared_ptr<SerializationFormatConverterInterface>
+SerializationFormatConverterFactoryImpl::load_converter(const std::string & format)
 {
   auto converter_id = format + "_converter";
 
@@ -50,7 +49,7 @@ std::shared_ptr<FormatConverterInterface> FormatConverterFactoryImpl::load_conve
   }
 
   try {
-    return std::shared_ptr<FormatConverterInterface>(
+    return std::shared_ptr<SerializationFormatConverterInterface>(
       class_loader_->createUnmanagedInstance(converter_id));
   } catch (const std::runtime_error & ex) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());

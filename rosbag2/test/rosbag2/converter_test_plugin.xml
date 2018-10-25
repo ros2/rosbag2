@@ -2,7 +2,7 @@
   <class
     name="a_converter"
     type="ConverterTestPlugin"
-    base_class_type="rosbag2::FormatConverterInterface"
+    base_class_type="rosbag2::SerializationFormatConverterInterface"
   >
     <description>This is a test format converter plugin.</description>
   </class>

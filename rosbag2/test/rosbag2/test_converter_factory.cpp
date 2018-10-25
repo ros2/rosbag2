@@ -17,14 +17,14 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/format_converter_factory_impl.hpp"
+#include "rosbag2/serialization_format_converter_factory.hpp"
 
-using rosbag2::FormatConverterInterface;
+using rosbag2::SerializationFormatConverterInterface;
 
 class ConverterFactoryTest : public ::testing::Test
 {
 public:
-  rosbag2::FormatConverterFactoryImpl factory;
+  rosbag2::SerializationFormatConverterFactoryImpl factory;
 };
 
 TEST_F(ConverterFactoryTest, load_test_plugin) {

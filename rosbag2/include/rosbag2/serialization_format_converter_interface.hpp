@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__FORMAT_CONVERTER_INTERFACE_HPP_
-#define ROSBAG2__FORMAT_CONVERTER_INTERFACE_HPP_
+#ifndef ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#define ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
 
 #include "rosbag2/types/ros2_message.hpp"
+#include "rosbag2/types.hpp"
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 
-using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
-
 namespace rosbag2
 {
 
-class FormatConverterInterface
+class SerializationFormatConverterInterface
 {
 public:
-  virtual ~FormatConverterInterface() = default;
+  virtual ~SerializationFormatConverterInterface() = default;
 
   virtual void deserialize(
     std::shared_ptr<rosbag2_ros2_message_t> ros_message,
@@ -46,4 +45,4 @@ public:
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__FORMAT_CONVERTER_INTERFACE_HPP_
+#endif  // ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_

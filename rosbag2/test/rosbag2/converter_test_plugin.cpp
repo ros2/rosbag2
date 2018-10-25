@@ -16,14 +16,12 @@
 #include <memory>
 #include <string>
 
-#include "pluginlib/class_list_macros.hpp"
-
 #include "converter_test_plugin.hpp"
 
 void ConverterTestPlugin::deserialize(
 
   std::shared_ptr<rosbag2_ros2_message_t> ros_message,
-  const std::shared_ptr<const SerializedBagMessage> serialized_message,
+  const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
   const rosidl_message_type_support_t * type_support)
 {
   (void) ros_message;
@@ -32,7 +30,7 @@ void ConverterTestPlugin::deserialize(
 }
 
 void ConverterTestPlugin::serialize(
-  std::shared_ptr<SerializedBagMessage> serialized_message,
+  std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
   const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
   const rosidl_message_type_support_t * type_support)
 {
@@ -41,4 +39,5 @@ void ConverterTestPlugin::serialize(
   (void) type_support;
 }
 
-PLUGINLIB_EXPORT_CLASS(ConverterTestPlugin, rosbag2::FormatConverterInterface)
+#include "pluginlib/class_list_macros.hpp"  // NOLINT
+PLUGINLIB_EXPORT_CLASS(ConverterTestPlugin, rosbag2::SerializationFormatConverterInterface)

@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__FORMAT_CONVERTER_FACTORY_HPP_
-#define ROSBAG2__FORMAT_CONVERTER_FACTORY_HPP_
+#ifndef ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
+#define ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
 
-#include "rosbag2/format_converter_interface.hpp"
+#include "rosbag2/serialization_format_converter_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
 
-class ROSBAG2_PUBLIC FormatConverterFactory
+class ROSBAG2_PUBLIC SerializationFormatConverterFactoryInterface
 {
 public:
-  virtual ~FormatConverterFactory() = default;
+  virtual ~SerializationFormatConverterFactoryInterface() = default;
 
-  virtual std::shared_ptr<FormatConverterInterface> load_converter(const std::string & format) = 0;
+  virtual std::shared_ptr<SerializationFormatConverterInterface>
+  load_converter(const std::string & format) = 0;
 };
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__FORMAT_CONVERTER_FACTORY_HPP_
+#endif  // ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
