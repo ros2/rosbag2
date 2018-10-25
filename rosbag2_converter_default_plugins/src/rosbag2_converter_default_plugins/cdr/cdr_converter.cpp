@@ -17,9 +17,8 @@
 #include <memory>
 #include <string>
 
-#include "pluginlib/class_list_macros.hpp"
-#include "rosbag2/rmw_helpers.hpp"
-#include "rcutils/logging_macros.h"
+#include "rcutils/strdup.h"
+#include "../logging.hpp"
 
 namespace rosbag2_converter_default_plugins
 {
@@ -28,18 +27,11 @@ CdrConverter::CdrConverter()
 : rmw_identifier_("rmw_fastrtps_cpp") {}
 
 void CdrConverter::deserialize(
-  std::shared_ptr<rosbag2::Ros2Message> ros_message,
-  const std::shared_ptr<const SerializedBagMessage> serialized_message,
+  std::shared_ptr<rosbag2_ros2_message_t> ros_message,
+  const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
   const rosidl_message_type_support_t * type_support)
 {
-  auto topic_name_length = strlen(serialized_message->topic_name.c_str()) + 1;
-  auto ret = rcutils_char_array_resize(&ros_message->topic_name, topic_name_length);
-  if (ret != RCUTILS_RET_OK) {
-    ROSBAG2_CONVERTER_DEFAULT_PLUGINS_LOG_ERROR(
-      "rosbag2_converter_default_plugins", "Resizing of topic_name failed %i", ret);
-  }
-  memcpy(ros_message->topic_name.buffer, serialized_message->topic_name.c_str(), topic_name_length);
-  ros_message->topic_name.buffer_length = topic_name_length;
+  ros_message->topic_name = serialized_message->topic_name.c_str();
   ros_message->timestamp = serialized_message->time_stamp;
 
   auto deserialize = rosbag2::get_deserialize_function(rmw_identifier_);
@@ -47,14 +39,14 @@ void CdrConverter::deserialize(
 }
 
 void CdrConverter::serialize(
-  std::shared_ptr<SerializedBagMessage> serialized_message,
-  const std::shared_ptr<const rosbag2::Ros2Message> ros_message,
+  std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
+  const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
   const rosidl_message_type_support_t * type_support)
 {
   auto serialize = rosbag2::get_serialize_function(rmw_identifier_);
   serialize(ros_message->message, type_support, serialized_message->serialized_data.get());
 
-  serialized_message->topic_name = std::string(ros_message->topic_name.buffer);
+  serialized_message->topic_name = std::string(ros_message->topic_name);
   serialized_message->time_stamp = ros_message->timestamp;
 }
 
@@ -62,4 +54,4 @@ void CdrConverter::serialize(
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_converter_default_plugins::CdrConverter,
-  rosbag2::FormatConverterInterface)
+  rosbag2::SerializationFormatConverterInterface)

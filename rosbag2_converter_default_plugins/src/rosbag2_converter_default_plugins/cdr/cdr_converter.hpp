@@ -18,24 +18,24 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/format_converter_interface.hpp"
+#include "rosbag2/serialization_format_converter_interface.hpp"
 
 namespace rosbag2_converter_default_plugins
 {
 
-class CdrConverter : public rosbag2::FormatConverterInterface
+class CdrConverter : public rosbag2::SerializationFormatConverterInterface
 {
 public:
   CdrConverter();
 
   void deserialize(
-    std::shared_ptr<rosbag2::Ros2Message> ros_message,
-    std::shared_ptr<const SerializedBagMessage> serialized_message,
+    std::shared_ptr<rosbag2_ros2_message_t> ros_message,
+    std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support) override;
 
   void serialize(
-    std::shared_ptr<SerializedBagMessage> serialized_message,
-    std::shared_ptr<const rosbag2::Ros2Message> ros_message,
+    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
+    std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
     const rosidl_message_type_support_t * type_support) override;
 
 private:
