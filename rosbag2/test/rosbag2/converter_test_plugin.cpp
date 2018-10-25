@@ -22,7 +22,7 @@
 
 void ConverterTestPlugin::deserialize(
 
-  std::shared_ptr<rosbag2::Ros2Message> ros_message,
+  std::shared_ptr<rosbag2_ros2_message_t> ros_message,
   const std::shared_ptr<const SerializedBagMessage> serialized_message,
   const rosidl_message_type_support_t * type_support)
 {
@@ -33,7 +33,7 @@ void ConverterTestPlugin::deserialize(
 
 void ConverterTestPlugin::serialize(
   std::shared_ptr<SerializedBagMessage> serialized_message,
-  const std::shared_ptr<const rosbag2::Ros2Message> ros_message,
+  const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
   const rosidl_message_type_support_t * type_support)
 {
   (void) serialized_message;

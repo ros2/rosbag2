@@ -78,7 +78,6 @@ if(BUILD_TESTING)
     target_link_libraries(test_typesupport_helpers rosbag2)
   endif()
 
-
   add_library(
     converter_test_plugin
     SHARED

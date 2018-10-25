@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2/types/ros2_message.hpp"
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
@@ -27,27 +28,19 @@ using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
 namespace rosbag2
 {
 
-struct Ros2Message
-{
-  void * message;
-  rcutils_char_array_t topic_name;
-  rcutils_time_point_value_t timestamp;
-  rcutils_allocator_t allocator;
-};
-
 class FormatConverterInterface
 {
 public:
   virtual ~FormatConverterInterface() = default;
 
   virtual void deserialize(
-    std::shared_ptr<Ros2Message> ros_message,
+    std::shared_ptr<rosbag2_ros2_message_t> ros_message,
     std::shared_ptr<const SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support) = 0;
 
   virtual void serialize(
     std::shared_ptr<SerializedBagMessage> serialized_message,
-    std::shared_ptr<const Ros2Message> ros_message,
+    std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
     const rosidl_message_type_support_t * type_support) = 0;
 };
 
