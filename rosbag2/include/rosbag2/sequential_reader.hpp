@@ -50,9 +50,9 @@ public:
    * automatically closed on destruction.
    *
    * \param options Options to configure the storage
-   * \param rmw_format Messages will be serialized in this format
+   * \param rmw_serialization_format Messages will be serialized in this format
    */
-  virtual void open(const StorageOptions & options, const std::string & rmw_format);
+  virtual void open(const StorageOptions & options, const std::string & rmw_serialization_format);
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.
@@ -83,7 +83,7 @@ public:
   virtual std::vector<TopicWithType> get_all_topics_and_types();
 
 private:
-  std::string rmw_format_;
+  std::string rmw_serialization_format_;
   rosbag2_storage::StorageFactory factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
 };

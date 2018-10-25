@@ -26,9 +26,10 @@ SequentialReader::~SequentialReader()
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
-void SequentialReader::open(const StorageOptions & options, const std::string & rmw_format)
+void
+SequentialReader::open(const StorageOptions & options, const std::string & rmw_serialization_format)
 {
-  rmw_format_ = rmw_format;
+  rmw_serialization_format_ = rmw_serialization_format;
   storage_ = factory_.open_read_only(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
