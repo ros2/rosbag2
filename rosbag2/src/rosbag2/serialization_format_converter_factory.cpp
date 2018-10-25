@@ -23,7 +23,7 @@
 namespace rosbag2
 {
 
-SerializationFormatConverterFactoryImpl::SerializationFormatConverterFactoryImpl()
+SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 {
   try {
     class_loader_ = std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
@@ -34,10 +34,10 @@ SerializationFormatConverterFactoryImpl::SerializationFormatConverterFactoryImpl
   }
 }
 
-SerializationFormatConverterFactoryImpl::~SerializationFormatConverterFactoryImpl() = default;
+SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
 
 std::shared_ptr<SerializationFormatConverterInterface>
-SerializationFormatConverterFactoryImpl::load_converter(const std::string & format)
+SerializationFormatConverterFactory::load_converter(const std::string & format)
 {
   auto converter_id = format + "_converter";
 

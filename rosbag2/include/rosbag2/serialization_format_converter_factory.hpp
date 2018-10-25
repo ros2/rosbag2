@@ -42,13 +42,13 @@ class ClassLoader;
 namespace rosbag2
 {
 
-class ROSBAG2_PUBLIC SerializationFormatConverterFactoryImpl
+class ROSBAG2_PUBLIC SerializationFormatConverterFactory
   : public SerializationFormatConverterFactoryInterface
 {
 public:
-  SerializationFormatConverterFactoryImpl();
+  SerializationFormatConverterFactory();
 
-  ~SerializationFormatConverterFactoryImpl() override;
+  ~SerializationFormatConverterFactory() override;
 
   std::shared_ptr<SerializationFormatConverterInterface>
   load_converter(const std::string & format) override;

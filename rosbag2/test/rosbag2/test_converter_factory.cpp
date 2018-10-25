@@ -24,7 +24,7 @@ using rosbag2::SerializationFormatConverterInterface;
 class ConverterFactoryTest : public ::testing::Test
 {
 public:
-  rosbag2::SerializationFormatConverterFactoryImpl factory;
+  rosbag2::SerializationFormatConverterFactory factory;
 };
 
 TEST_F(ConverterFactoryTest, load_test_plugin) {
