@@ -95,7 +95,7 @@ void deallocate_ros2_message_part(
 
 void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
-  // TODO(karsten1987): how can we obtain the C++ types?
+  // TODO(karsten1987): how can we obtain the C++ types of the vector elements?
   switch (member.type_id_) {
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL: {
         auto data_vector = static_cast<std::vector<bool> *>(data);

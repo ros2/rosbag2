@@ -24,6 +24,7 @@
 #include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/types/ros2_message.hpp"
+#include "test_msgs/msg/bounded_array_nested.hpp"
 #include "test_msgs/msg/bounded_array_primitives.hpp"
 #include "test_msgs/msg/dynamic_array_nested.hpp"
 #include "test_msgs/msg/dynamic_array_primitives.hpp"
@@ -128,6 +129,15 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_nested_mes
   auto message = get_allocated_message("test_msgs/DynamicArrayNested");
 
   auto data = static_cast<test_msgs::msg::DynamicArrayNested *>(message->message);
+
+  data->primitive_values.push_back(*get_messages_primitives()[1]);
+  data->primitive_values.push_back(*get_messages_primitives()[2]);
+}
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_nested_message) {
+  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
+
+  auto data = static_cast<test_msgs::msg::BoundedArrayNested *>(message->message);
 
   data->primitive_values.push_back(*get_messages_primitives()[1]);
   data->primitive_values.push_back(*get_messages_primitives()[2]);
