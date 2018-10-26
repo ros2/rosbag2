@@ -118,7 +118,7 @@ void Player::play_messages_from_queue()
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  while (message_queue_.size_approx() != 0 || !is_storage_completely_loaded()) {
+  while ((message_queue_.size_approx() != 0 || !is_storage_completely_loaded()) && rclcpp::ok()) {
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message)) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
