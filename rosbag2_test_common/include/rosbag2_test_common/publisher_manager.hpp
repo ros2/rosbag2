@@ -41,9 +41,6 @@ public:
     auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
     auto publisher = publisher_node->create_publisher<T>(topic_name);
 
-    // We need to publish one message to set up the topic for discovery
-    publisher->publish(message);
-
     publishers_.push_back([publisher, topic_name, message, expected_messages](
         CountFunction count_stored_messages) {
         if (expected_messages != 0) {

@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_HPP_
 
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,10 +43,12 @@ public:
 private:
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
+  std::future<void> launch_topics_discovery(std::vector<std::string> topics = {});
 
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::vector<std::string> subscribed_topics_;
 };
 
 }  // namespace rosbag2_transport

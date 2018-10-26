@@ -37,12 +37,12 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
+  start_recording({false, {string_topic, array_topic}});
+
   pub_man_.add_publisher<test_msgs::msg::Primitives>(
     string_topic, string_message, 2);
   pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(
     array_topic, array_message, 2);
-
-  start_recording({false, {string_topic, array_topic}, "rmw_format"});
   run_publishers();
   stop_recording();
 

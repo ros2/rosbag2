@@ -79,6 +79,12 @@ public:
     return memory_management_.serialize_message(string_message);
   }
 
+  void sleep_to_allow_topics_discovery()
+  {
+    // This is a short sleep to allow the node some time to discover the topic
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
   MemoryManagement memory_management_;
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node_;
   rclcpp::Node::SharedPtr publisher_node_;
@@ -113,6 +119,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_empty_if_topic_does_not_exist) {
   create_publisher("string_topic");
 
+  sleep_to_allow_topics_discovery();
   auto topics_and_types = node_->get_topics_with_types({"/wrong_topic"});
 
   ASSERT_THAT(topics_and_types, IsEmpty());
@@ -123,6 +130,7 @@ TEST_F(RosBag2NodeFixture,
 {
   create_publisher("string_topic");
 
+  sleep_to_allow_topics_discovery();
   auto topics_and_types = node_->get_topics_with_types({"string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
@@ -134,6 +142,7 @@ TEST_F(RosBag2NodeFixture,
 {
   create_publisher("string_topic");
 
+  sleep_to_allow_topics_discovery();
   auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
@@ -149,6 +158,7 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   create_publisher(second_topic);
   create_publisher(third_topic);
 
+  sleep_to_allow_topics_discovery();
   auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
@@ -166,6 +176,7 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   create_publisher(second_topic);
   create_publisher(third_topic);
 
+  sleep_to_allow_topics_discovery();
   auto topics_and_types = node_->get_all_topics_with_types();
 
   ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));

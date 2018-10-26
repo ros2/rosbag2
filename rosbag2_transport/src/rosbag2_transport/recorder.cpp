@@ -14,9 +14,12 @@
 
 #include "recorder.hpp"
 
+#include <algorithm>
+#include <future>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "rosbag2/writer.hpp"
 #include "rosbag2_transport/logging.hpp"
@@ -30,32 +33,10 @@ Recorder::Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosb
 
 void Recorder::record(const RecordOptions & record_options)
 {
-  auto topics_and_types = record_options.all ?
-    node_->get_all_topics_with_types() :
-    node_->get_topics_with_types(record_options.topics);
-
-  if (topics_and_types.empty()) {
-    throw std::runtime_error("No topics found. Abort");
-  }
-
-  for (const auto & topic_and_type : topics_and_types) {
-    auto topic_name = topic_and_type.first;
-    auto topic_type = topic_and_type.second;
-
-    auto subscription = create_subscription(topic_name, topic_type);
-    if (subscription) {
-      subscriptions_.push_back(subscription);
-      writer_->create_topic({topic_name, topic_type, record_options.rmw_serialization_format});
-      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
-    }
-  }
-
-  if (subscriptions_.empty()) {
-    throw std::runtime_error("No topics could be subscribed. Abort");
-  }
-
-  ROSBAG2_TRANSPORT_LOG_INFO("Subscription setup complete.");
+  ROSBAG2_TRANSPORT_LOG_INFO("Setup complete. Listening for topics...");
+  auto discovery_future = launch_topics_discovery(record_options.topics);
   rclcpp::spin(node_);
+  discovery_future.wait();
   subscriptions_.clear();
 }
 
@@ -81,6 +62,40 @@ Recorder::create_subscription(
       writer_->write(bag_message);
     });
   return subscription;
+}
+
+std::future<void> Recorder::launch_topics_discovery(std::vector<std::string> topics)
+{
+  auto subscribe_to_topics = [this, topics] {
+      while (rclcpp::ok()) {
+        auto all_topics_and_types = topics.empty() ?
+          node_->get_all_topics_with_types() :
+          node_->get_topics_with_types(topics);
+
+        for (const auto & topic_with_type : all_topics_and_types) {
+          std::string topic_name = topic_with_type.first;
+          bool already_subscribed = std::find(
+            subscribed_topics_.begin(),
+            subscribed_topics_.end(),
+            topic_with_type.first) != subscribed_topics_.end();
+
+          if (!already_subscribed) {
+            std::string topic_type = topic_with_type.second;
+            auto subscription = create_subscription(topic_name, topic_type);
+            if (subscription) {
+              subscribed_topics_.push_back(topic_name);
+              subscriptions_.push_back(subscription);
+              writer_->create_topic({topic_name, topic_type});
+              ROSBAG2_TRANSPORT_LOG_INFO_STREAM(
+                "Subscribed to topic '" << topic_name << "'");
+            }
+          }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    };
+
+  return std::async(std::launch::async, subscribe_to_topics);
 }
 
 }  // namespace rosbag2_transport
