@@ -63,10 +63,12 @@ void deallocate_ros2_message_part(
             if (member.is_array_ && member.array_size_ > 0) {
               auto string_array = static_cast<std::string *>(message_member);
               for (size_t j = 0; j < member.array_size_; ++j) {
-                delete string_array[j].data();
+                std::string empty;
+                string_array[j].swap(empty);
               }
             } else {
-              delete static_cast<std::string *>(message_member)->data();
+              std::string empty;
+              static_cast<std::string *>(message_member)->swap(empty);
             }
             break;
           }
@@ -97,86 +99,86 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
   switch (member.type_id_) {
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL: {
         auto data_vector = static_cast<std::vector<bool> *>(data);
-        std::vector<bool> empty{};
+        std::vector<bool> empty;
         data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE: {
         auto data_vector = static_cast<std::vector<uint8_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<uint8_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR: {
         auto data_vector = static_cast<std::vector<char> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<char> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT32: {
         auto data_vector = static_cast<std::vector<float> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<float> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT64: {
         auto data_vector = static_cast<std::vector<double> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<double> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8: {
         auto data_vector = static_cast<std::vector<int8_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<int8_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8: {
         auto data_vector = static_cast<std::vector<uint8_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<uint8_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT16: {
         auto data_vector = static_cast<std::vector<int16_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<int16_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT16: {
         auto data_vector = static_cast<std::vector<uint16_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<uint16_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT32: {
         auto data_vector = static_cast<std::vector<int32_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<int32_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT32: {
         auto data_vector = static_cast<std::vector<uint32_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<uint32_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_INT64: {
         auto data_vector = static_cast<std::vector<int64_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<int64_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT64: {
         auto data_vector = static_cast<std::vector<uint64_t> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<uint64_t> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING: {
         auto data_vector = static_cast<std::vector<std::string> *>(data);
-        data_vector->clear();
-        delete data_vector->data();
+        std::vector<std::string> empty;
+        data_vector->swap(empty);
         break;
       }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE: {
@@ -188,8 +190,7 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
         auto size = member.size_function(data);
 
         for (size_t j = 0; j < size; ++j) {
-          auto nested_member = static_cast<uint8_t *>(data_vector->data()) + j *
-            nested_ts->size_of_;
+          auto nested_member = data_vector->data() + j * nested_ts->size_of_;
           deallocate_ros2_message_part(nested_member, nested_ts);
         }
 

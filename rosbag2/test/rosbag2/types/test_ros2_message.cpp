@@ -19,6 +19,11 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
+#include "rosbag2/types/ros2_message.hpp"
 #include "test_msgs/msg/bounded_array_primitives.hpp"
 #include "test_msgs/msg/dynamic_array_nested.hpp"
 #include "test_msgs/msg/dynamic_array_primitives.hpp"
@@ -27,11 +32,6 @@
 #include "test_msgs/msg/static_array_nested.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "rosbag2/sequential_reader.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/types/ros2_message.hpp"
-#include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
 
 using namespace testing;  // NOLINT
 
@@ -41,7 +41,7 @@ using namespace testing;  // NOLINT
 class Ros2MessageTest : public Test
 {
 public:
-  std::shared_ptr<rosbag2_ros2_message_t> get_allocated_message(const std::string & message_type)
+  auto get_allocated_message(const std::string & message_type)
   {
     auto introspection_ts =
       rosbag2::get_typesupport(message_type, "rosidl_typesupport_introspection_cpp");
