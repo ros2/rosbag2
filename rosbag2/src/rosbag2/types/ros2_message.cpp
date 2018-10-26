@@ -57,38 +57,42 @@ void deallocate_ros2_message_part(
 
     if ((member.is_array_ && member.array_size_ == 0) || member.is_upper_bound_) {
       cleanup_vector(message_member, member);
+    } else if (member.is_array_ && member.array_size_ > 0) {
+      cleanup_array(message_member, member);
     } else {
-      switch (member.type_id_) {
-        case rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING: {
-            if (member.is_array_ && member.array_size_ > 0) {
-              auto string_array = static_cast<std::string *>(message_member);
-              for (size_t j = 0; j < member.array_size_; ++j) {
-                std::string empty;
-                string_array[j].swap(empty);
-              }
-            } else {
-              std::string empty;
-              static_cast<std::string *>(message_member)->swap(empty);
-            }
-            break;
-          }
-        case rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE:
-          if (member.is_array_ && member.array_size_ > 0) {
-            auto nested_ts =
-              static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-              member.members_->data);
-            for (size_t j = 0; j < member.array_size_; ++j) {
-              auto nested_member = static_cast<uint8_t *>(message_member) + j * nested_ts->size_of_;
-              deallocate_ros2_message_part(nested_member, nested_ts);
-            }
-          } else {
-            deallocate_ros2_message_part(
-              message_member,
-              static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-                member.members_->data));
-          }
-          break;
-      }
+      cleanup_element(message_member, member);
+    }
+  }
+}
+
+void cleanup_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+{
+  if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    std::string empty;
+    static_cast<std::string *>(data)->swap(empty);
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
+    deallocate_ros2_message_part(
+      data,
+      static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+        member.members_->data));
+  }
+}
+
+void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+{
+  if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    auto string_array = static_cast<std::string *>(data);
+    for (size_t i = 0; i < member.array_size_; ++i) {
+      std::string empty;
+      string_array[i].swap(empty);
+    }
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
+    auto nested_ts =
+      static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+      member.members_->data);
+    for (size_t j = 0; j < member.array_size_; ++j) {
+      auto nested_member = static_cast<uint8_t *>(data) + j * nested_ts->size_of_;
+      deallocate_ros2_message_part(nested_member, nested_ts);
     }
   }
 }
