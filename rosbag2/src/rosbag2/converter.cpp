@@ -56,21 +56,13 @@ std::shared_ptr<SerializedBagMessage> Converter::convert(
   auto introspection_ts =
     get_typesupport(topics_and_types_[message->topic_name], "rosidl_typesupport_introspection_cpp");
   std::shared_ptr<rosbag2_ros2_message_t> allocated_ros_message =
-    allocate_ros2_message(ts, introspection_ts);
+    allocate_ros2_message(introspection_ts);
+
   input_converter_->deserialize(allocated_ros_message, message, ts);
   auto output_message = std::make_shared<rosbag2::SerializedBagMessage>();
   output_message->serialized_data = rosbag2_storage::make_empty_serialized_message(0);
   output_converter_->serialize(output_message, allocated_ros_message, ts);
   return output_message;
-}
-
-std::shared_ptr<rosbag2_ros2_message_t> Converter::allocate_ros2_message(
-  const rosidl_message_type_support_t * ts,
-  const rosidl_message_type_support_t * introspection_ts)
-{
-  (void) ts;
-  (void) introspection_ts;
-  return std::make_shared<rosbag2_ros2_message_t>();
 }
 
 }  // namespace rosbag2

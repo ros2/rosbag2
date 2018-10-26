@@ -64,10 +64,6 @@ public:
   std::shared_ptr<SerializedBagMessage>
   convert(std::shared_ptr<const SerializedBagMessage> message);
 
-  std::shared_ptr<rosbag2_ros2_message_t> allocate_ros2_message(
-    const rosidl_message_type_support_t * ts,
-    const rosidl_message_type_support_t * introspection_ts);
-
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::unique_ptr<SerializationFormatConverterInterface> input_converter_;

@@ -15,6 +15,10 @@
 #ifndef ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
 #define ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
 
+#include <memory>
+
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "rcutils/time.h"
 #include "rcutils/allocator.h"
 
@@ -25,5 +29,19 @@ typedef struct rosbag2_ros2_message_t
   rcutils_time_point_value_t timestamp;
   rcutils_allocator_t allocator;
 } rosbag2_ros2_message_t;
+
+namespace rosbag2
+{
+
+std::shared_ptr<rosbag2_ros2_message_t>
+allocate_ros2_message(const rosidl_message_type_support_t * introspection_ts);
+
+void deallocate_ros2_message_part(
+  void * msg,
+  const rosidl_typesupport_introspection_cpp::MessageMembers * members);
+
+void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member);
+
+}  // namespace rosbag2
 
 #endif  // ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
