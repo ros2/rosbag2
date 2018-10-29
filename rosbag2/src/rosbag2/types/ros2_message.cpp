@@ -205,11 +205,21 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
       }
   }
 }
+
+void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+{
+  // This is necessary because initialization otherwise fails for MSVC++ compiled builds
+  if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL) {
+    new (data) std::vector<bool>();
+  }
+}
+
 void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     auto string_array = static_cast<std::string *>(data);
     for (size_t i = 0; i < member.array_size_; ++i) {
+      // This is necessary because initialization of empty strings fails for g++ compiled builds
       new (&string_array[i]) std::string("");
     }
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
@@ -225,6 +235,7 @@ void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMe
 void allocate_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    // This is necessary because initialization of empty strings fails for g++ compiled builds
     new (data) std::string("");
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     allocate_internal_types(
@@ -242,7 +253,7 @@ void allocate_internal_types(
     void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
 
     if ((member.is_array_ && member.array_size_ == 0) || member.is_upper_bound_) {
-      // allocate_vector(message_member, member);
+      allocate_vector(message_member, member);
     } else if (member.is_array_ && member.array_size_ > 0) {
       allocate_array(message_member, member);
     } else {
