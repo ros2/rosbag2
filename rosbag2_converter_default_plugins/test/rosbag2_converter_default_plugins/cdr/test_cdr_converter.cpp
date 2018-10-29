@@ -109,9 +109,9 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_prim
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_static_array) {
   auto message = get_messages_static_array_primitives()[0];
-  message->string_values = {"test_deserialize", "another string", "the third one"};
-  message->float64_values = {102.34, 1.9, 1236.011};
-  message->int32_values = {11, 36, 219};
+  message->string_values = {{"test_deserialize", "another string", "the third one"}};
+  message->float64_values = {{102.34, 1.9, 1236.011}};
+  message->int32_values = {{11, 36, 219}};
   auto serialized_data = memory_management_->serialize_message(message);
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = serialized_data;
@@ -135,9 +135,9 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->timestamp = 1;
   auto message = get_messages_static_array_primitives()[0];
-  message->string_values = {"test_deserialize", "another string", "the third one"};
-  message->float64_values = {102.34, 1.9, 1236.011};
-  message->int32_values = {11, 36, 219};
+  message->string_values = {{"test_deserialize", "another string", "the third one"}};
+  message->float64_values = {{102.34, 1.9, 1236.011}};
+  message->int32_values = {{11, 36, 219}};
   ros_message->message = message.get();
 
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
