@@ -14,6 +14,7 @@
 
 #include "rosbag2/types/ros2_message.hpp"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,6 +35,7 @@ allocate_ros2_message(const rosidl_message_type_support_t * introspection_ts)
   raw_ros2_message->allocator = rcutils_get_default_allocator();
   raw_ros2_message->message = raw_ros2_message->allocator.zero_allocate(
     1, intro_ts_members->size_of_, raw_ros2_message->allocator.state);
+  allocate_internal_types(raw_ros2_message->message, intro_ts_members);
 
   auto deleter = [intro_ts_members](rosbag2_ros2_message_t * msg) {
       deallocate_ros2_message_part(msg->message, intro_ts_members);
@@ -201,6 +203,51 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
         delete data_vector->data();
         break;
       }
+  }
+}
+void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+{
+  if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    auto string_array = static_cast<std::string *>(data);
+    for (size_t i = 0; i < member.array_size_; ++i) {
+      new (&string_array[i]) std::string("");
+    }
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
+    auto nested_ts = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+      member.members_->data);
+    for (size_t j = 0; j < member.array_size_; ++j) {
+      auto nested_member = static_cast<uint8_t *>(data) + j * nested_ts->size_of_;
+      allocate_internal_types(nested_member, nested_ts);
+    }
+  }
+}
+
+void allocate_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+{
+  if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    new (data) std::string("");
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
+    allocate_internal_types(
+      data,
+      static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+        member.members_->data));
+  }
+}
+
+void allocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members)
+{
+  for (size_t i = 0; i < members->member_count_; ++i) {
+    auto member = members->members_[i];
+    void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
+
+    if ((member.is_array_ && member.array_size_ == 0) || member.is_upper_bound_) {
+      // allocate_vector(message_member, member);
+    } else if (member.is_array_ && member.array_size_ > 0) {
+      allocate_array(message_member, member);
+    } else {
+      allocate_element(message_member, member);
+    }
   }
 }
 

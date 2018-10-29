@@ -61,8 +61,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message) {
   data->int16_value = 144;
 }
 
-TEST_F(Ros2MessageTest,
-  DISABLED_allocate_ros2_message_allocates_primitive_message_with_empty_string) {
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message_with_empty_string) {
   auto message = get_allocated_message("test_msgs/Primitives");
 
   auto data = static_cast<test_msgs::msg::Primitives *>(message->message);
@@ -89,6 +88,16 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message) {
 
   data->bool_values = {true, false, true};
   data->string_values = {"eins", "zwei", "drei"};
+  data->int32_values = {11, 22, 33};
+}
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message_with_empty_string) {
+  auto message = get_allocated_message("test_msgs/StaticArrayPrimitives");
+
+  auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
+
+  data->bool_values = {true, false, true};
+  data->string_values = {"", "zwei", ""};
   data->int32_values = {11, 22, 33};
 }
 

@@ -38,6 +38,9 @@ ROSBAG2_PUBLIC
 std::shared_ptr<rosbag2_ros2_message_t>
 allocate_ros2_message(const rosidl_message_type_support_t * introspection_ts);
 
+void allocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
+
 void deallocate_ros2_message_part(
   void * msg,
   const rosidl_typesupport_introspection_cpp::MessageMembers * members);
