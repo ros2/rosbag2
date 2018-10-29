@@ -19,9 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/sequential_reader.hpp"
-#include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/types/ros2_message.hpp"
 #include "test_msgs/msg/bounded_array_nested.hpp"
