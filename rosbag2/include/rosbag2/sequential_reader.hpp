@@ -59,6 +59,10 @@ public:
    * opened. This must be called before any other function is used. The rosbag is
    * automatically closed on destruction.
    *
+   * If the rmw_serialization_format is not the same as the format of the underlying storage, a
+   * converter will be used to automatically convert the functions. Throws if the converter
+   * plugin does not exist
+   *
    * \param options Options to configure the storage
    * \param rmw_serialization_format Messages will be serialized in this format
    */

@@ -88,6 +88,20 @@ TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_
   reader_->read_next();
 }
 
+TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exist) {
+  std::string storage_serialization_format = "rmw1_format";
+  std::string output_format = "rmw2_format";
+  set_storage_serialization_format(storage_serialization_format);
+
+  auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
+  EXPECT_CALL(*converter_factory_, load_converter(storage_serialization_format))
+  .WillOnce(Return(ByMove(std::move(format1_converter))));
+  EXPECT_CALL(*converter_factory_, load_converter(output_format))
+  .WillOnce(Return(ByMove(nullptr)));
+
+  EXPECT_ANY_THROW(reader_->open(rosbag2::StorageOptions(), output_format));
+}
+
 TEST_F(SequentialReaderTest,
   read_next_does_not_use_converters_if_input_and_output_format_are_equal)
 {

@@ -40,6 +40,12 @@ Converter::Converter(
   }
   input_converter_ = converter_factory_->load_converter(input_format);
   output_converter_ = converter_factory_->load_converter(output_format);
+  if (!input_converter_) {
+    throw std::runtime_error("Could not find converter for format " + input_format);
+  }
+  if (!output_converter_) {
+    throw std::runtime_error("Could not find converter for format " + output_format);
+  }
 }
 
 Converter::~Converter()
