@@ -51,6 +51,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     &uri,
     &storage_id,
     &serilization_format,
+    &node_prefix,
     &all,
     &no_discovery,
     &polling_interval_ms,
