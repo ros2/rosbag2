@@ -85,7 +85,7 @@ public:
   void print_bag_info(const std::string & uri, const std::string & storage_id);
 
 private:
-  std::shared_ptr<Rosbag2Node> setup_node();
+  std::shared_ptr<Rosbag2Node> setup_node(std::string node_prefix = "");
 
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   std::shared_ptr<rosbag2::Writer> writer_;

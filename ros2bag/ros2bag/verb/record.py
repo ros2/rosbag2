@@ -19,7 +19,7 @@ from ros2bag.verb import VerbExtension
 
 from ros2cli.node.strategy import NodeStrategy
 from ros2cli.node.strategy import add_arguments
-
+from ros2cli.node import CLI_NODE_NAME_PREFIX
 from rosbag2_transport import rosbag2_transport_py
 
 
@@ -75,6 +75,7 @@ class RecordVerb(VerbExtension):
                 uri=uri,
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
+                node_prefix=CLI_NODE_NAME_PREFIX,
                 all=True,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval)
@@ -83,6 +84,7 @@ class RecordVerb(VerbExtension):
                 uri=uri,
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
+                node_prefix=CLI_NODE_NAME_PREFIX,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 topics=args.topics)
