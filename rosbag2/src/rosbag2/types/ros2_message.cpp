@@ -200,6 +200,8 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
           deallocate_ros2_message_part(nested_member, nested_ts);
         }
 
+        data_vector->resize(0);
+        data_vector->shrink_to_fit();
         delete data_vector->data();
         break;
       }
