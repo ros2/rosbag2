@@ -51,6 +51,11 @@ void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMem
 
 void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member);
 
+void allocate_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member);
+
+void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member);
+
+void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member);
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__TYPES__ROS2_MESSAGE_HPP_

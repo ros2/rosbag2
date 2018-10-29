@@ -151,3 +151,11 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_nested_mes
   data->primitive_values.push_back(*get_messages_primitives()[1]);
   data->primitive_values.push_back(*get_messages_primitives()[2]);
 }
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
+  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
+
+  message->topic_name = "Topic name";
+
+  EXPECT_THAT(message->topic_name, StrEq("Topic name"));
+}

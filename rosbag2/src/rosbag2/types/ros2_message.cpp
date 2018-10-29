@@ -35,12 +35,13 @@ allocate_ros2_message(const rosidl_message_type_support_t * introspection_ts)
   raw_ros2_message->allocator = rcutils_get_default_allocator();
   raw_ros2_message->message = raw_ros2_message->allocator.zero_allocate(
     1, intro_ts_members->size_of_, raw_ros2_message->allocator.state);
+  // TODO(Martin-Idel-SI): Use custom allocator to make sure all memory is obtained that way
   allocate_internal_types(raw_ros2_message->message, intro_ts_members);
 
   auto deleter = [intro_ts_members](rosbag2_ros2_message_t * msg) {
+      // TODO(Martin-Idel-SI): Use custom deallocate
       deallocate_ros2_message_part(msg->message, intro_ts_members);
       msg->allocator.deallocate(msg->message, msg->allocator.state);
-      // TODO(Martin-Idel-SI) topic_name
       delete msg;
     };
 
@@ -52,8 +53,7 @@ void deallocate_ros2_message_part(
   const rosidl_typesupport_introspection_cpp::MessageMembers * members)
 {
   for (size_t i = 0; i < members->member_count_; ++i) {
-    // TODO(Karsten1987): do we really need to do this? Or more to the point: WHY do we need
-    // to do this?
+    // TODO(Karsten1987): Do we really need to do this?
     auto member = members->members_[i];
     void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
 
@@ -101,7 +101,7 @@ void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMem
 
 void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
-  // TODO(karsten1987): how can we obtain the C++ types of the vector elements?
+  // TODO(karsten1987): How can we obtain the C++ types of the vector elements?
   switch (member.type_id_) {
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL: {
         auto data_vector = static_cast<std::vector<bool> *>(data);
@@ -206,6 +206,23 @@ void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMe
   }
 }
 
+void allocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members)
+{
+  for (size_t i = 0; i < members->member_count_; ++i) {
+    auto member = members->members_[i];
+    void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
+
+    if ((member.is_array_ && member.array_size_ == 0) || member.is_upper_bound_) {
+      allocate_vector(message_member, member);
+    } else if (member.is_array_ && member.array_size_ > 0) {
+      allocate_array(message_member, member);
+    } else {
+      allocate_element(message_member, member);
+    }
+  }
+}
+
 void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
   // This is necessary because initialization otherwise fails for MSVC++ compiled builds
@@ -242,23 +259,6 @@ void allocate_element(void * data, rosidl_typesupport_introspection_cpp::Message
       data,
       static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
         member.members_->data));
-  }
-}
-
-void allocate_internal_types(
-  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members)
-{
-  for (size_t i = 0; i < members->member_count_; ++i) {
-    auto member = members->members_[i];
-    void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
-
-    if ((member.is_array_ && member.array_size_ == 0) || member.is_upper_bound_) {
-      allocate_vector(message_member, member);
-    } else if (member.is_array_ && member.array_size_ > 0) {
-      allocate_array(message_member, member);
-    } else {
-      allocate_element(message_member, member);
-    }
   }
 }
 
