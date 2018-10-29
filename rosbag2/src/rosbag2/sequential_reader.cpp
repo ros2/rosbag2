@@ -31,7 +31,7 @@ SequentialReader::SequentialReader(
 
 SequentialReader::~SequentialReader()
 {
-  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
 }
 
 void
@@ -41,7 +41,7 @@ SequentialReader::open(const StorageOptions & options, const std::string & rmw_s
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  auto storage_serialization_format = storage_->get_metadata().storage_format;
+  auto storage_serialization_format = storage_->get_metadata().serialization_format;
   if (rmw_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,

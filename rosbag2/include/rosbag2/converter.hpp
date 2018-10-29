@@ -36,10 +36,6 @@
 
 namespace rosbag2
 {
-/**
- * The SequentialReader allows opening and reading messages of a bag. Messages will be read
- * sequentially according to timestamp.
- */
 class ROSBAG2_PUBLIC Converter
 {
 public:

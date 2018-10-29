@@ -59,7 +59,7 @@ public:
   void set_storage_serialization_format(const std::string & format)
   {
     rosbag2_storage::BagMetadata metadata;
-    metadata.storage_format = format;
+    metadata.serialization_format = format;
     EXPECT_CALL(*storage_, get_metadata()).WillOnce(Return(metadata));
   }
 
