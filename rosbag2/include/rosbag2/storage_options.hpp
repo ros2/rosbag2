@@ -25,6 +25,7 @@ struct StorageOptions
 public:
   std::string uri;
   std::string storage_id;
+  std::string rmw_serialization_format;
 };
 
 }  // namespace rosbag2

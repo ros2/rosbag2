@@ -43,6 +43,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  // TODO(botteroa-si): get this from CLI.
+  storage_options.rmw_serialization_format = "cdr";
   record_options.all = all;
 
   if (topics) {

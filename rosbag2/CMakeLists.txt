@@ -125,6 +125,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_ros2_message rosbag2)
     ament_target_dependencies(test_ros2_message test_msgs)
   endif()
+
+  ament_add_gmock(test_writer
+    test/rosbag2/test_writer.cpp)
+  if(TARGET test_writer)
+    target_link_libraries(test_writer rosbag2)
+  endif()
 endif()
 
 ament_package()

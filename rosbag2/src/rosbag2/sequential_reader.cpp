@@ -46,8 +46,11 @@ SequentialReader::open(const StorageOptions & options, const std::string & rmw_s
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
       rmw_serialization_format,
-      storage_->get_all_topics_and_types(),
       converter_factory_);
+    auto topics = storage_->get_all_topics_and_types();
+    for (const auto & topic_with_type : topics) {
+      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+    }
   }
 }
 

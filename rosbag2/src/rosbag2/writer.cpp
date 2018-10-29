@@ -17,41 +17,58 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <iostream>
 
-#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2/info.hpp"
 #include "rosbag2/storage_options.hpp"
 
 namespace rosbag2
 {
 
-Writer::Writer(std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory)
-: factory_(std::move(factory))
+Writer::Writer(
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+: storage_factory_(std::move(storage_factory)),
+  converter_factory_(std::move(converter_factory)),
+  metadata_io_(std::move(metadata_io)),
+  converter_(nullptr)
 {}
 
 Writer::~Writer()
 {
   if (!uri_.empty()) {
-    rosbag2_storage::MetadataIo metadata_io;
-    metadata_io.write_metadata(uri_, storage_->get_metadata());
+    metadata_io_->write_metadata(uri_, storage_->get_metadata());
   }
 
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
-void Writer::open(const StorageOptions & options)
+void Writer::open(const StorageOptions & options, const std::string & input_serialization_format)
 {
-  storage_ = factory_->open_read_write(options.uri, options.storage_id);
+  storage_ = storage_factory_->open_read_write(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
   uri_ = options.uri;
+
+  std::string output_rmw_format = options.rmw_serialization_format;
+  if (output_rmw_format != input_serialization_format) {
+    converter_ = std::make_unique<Converter>(
+      input_serialization_format,
+      output_rmw_format,
+      converter_factory_);
+  }
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
+  }
+
+  if (converter_) {
+    converter_->add_topic(topic_with_type.name, topic_with_type.type);
   }
 
   storage_->create_topic(topic_with_type);
@@ -63,7 +80,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  storage_->write(message);
+  storage_->write(converter_ ? converter_->convert(message) : message);
 }
 
 }  // namespace rosbag2
