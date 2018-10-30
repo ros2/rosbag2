@@ -53,6 +53,7 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\n                      /array_topic; test_msgs/StaticArrayPrimitives; 4 msgs"));
 }
 
+// TODO(Martin-Idel-SI): Revisit exit code non-zero here, gracefully should be exit code zero
 TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
@@ -61,4 +62,14 @@ TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_bag_does_not_exist) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
   EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
+}
+
+TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_metadata_yaml_file_does_not_exist) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag info " + database_path_, database_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(error_output, HasSubstr("Could not read metadata for " + database_path_));
 }
