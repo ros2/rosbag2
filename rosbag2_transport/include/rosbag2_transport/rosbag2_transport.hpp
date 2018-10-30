@@ -32,10 +32,7 @@
 namespace rosbag2_transport
 {
 
-class GenericPublisher;
-class GenericSubscription;
 class Rosbag2Node;
-class Player;
 
 class Rosbag2Transport
 {
