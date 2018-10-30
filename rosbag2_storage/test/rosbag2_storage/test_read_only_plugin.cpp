@@ -38,11 +38,6 @@ void TestReadOnlyPlugin::open(
   std::cout << uri << ".\n";
 }
 
-rosbag2_storage::BagInfo TestReadOnlyPlugin::info()
-{
-  return rosbag2_storage::BagInfo();
-}
-
 bool TestReadOnlyPlugin::has_next()
 {
   return true;
@@ -58,6 +53,11 @@ std::vector<rosbag2_storage::TopicWithType> TestReadOnlyPlugin::get_all_topics_a
 {
   std::cout << "\nreading topics and types\n";
   return std::vector<rosbag2_storage::TopicWithType>();
+}
+
+rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()
+{
+  return rosbag2_storage::BagMetadata();
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

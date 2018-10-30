@@ -32,6 +32,7 @@ class ROSBAG2_STORAGE_PUBLIC ReadOnlyInterface
 {
 public:
   virtual ~ReadOnlyInterface() = default;
+
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 };
 

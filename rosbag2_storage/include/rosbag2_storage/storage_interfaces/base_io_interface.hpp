@@ -35,6 +35,7 @@ class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 {
 public:
   virtual ~BaseIOInterface() = default;
+
   virtual void open(const std::string & uri, IOFlag io_flag) = 0;
 };
 

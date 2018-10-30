@@ -18,17 +18,20 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(
   rosbag2_storage
   SHARED
+  src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
   src/rosbag2_storage/storage_factory.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
   pluginlib
-  rcutils)
+  rcutils
+  yaml_cpp_vendor)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
@@ -86,6 +89,14 @@ if(BUILD_TESTING)
   if(TARGET test_ros_helper)
     target_include_directories(test_ros_helper PRIVATE include)
     target_link_libraries(test_ros_helper rosbag2_storage)
+  endif()
+
+  ament_add_gmock(test_metadata_serialization
+    test/rosbag2_storage/test_metadata_serialization.cpp)
+  if(TARGET test_metadata_serialization)
+    target_include_directories(test_metadata_serialization PRIVATE include)
+    target_link_libraries(test_metadata_serialization rosbag2_storage)
+    ament_target_dependencies(test_metadata_serialization rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_filesystem_helper

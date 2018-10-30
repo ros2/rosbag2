@@ -54,7 +54,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
   rosbag2_transport.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 

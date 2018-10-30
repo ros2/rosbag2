@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/bag_info.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -33,8 +32,6 @@ public:
 
   void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
-  rosbag2_storage::BagInfo info() override;
-
   void create_topic(const rosbag2_storage::TopicWithType & topic) override;
 
   bool has_next() override;
@@ -44,6 +41,8 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
+
+  rosbag2_storage::BagMetadata get_metadata() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_

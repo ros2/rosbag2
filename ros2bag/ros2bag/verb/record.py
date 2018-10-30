@@ -43,6 +43,12 @@ class RecordVerb(VerbExtension):
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
 
+    def create_bag_directory(self, uri):
+        try:
+            os.makedirs(uri)
+        except:
+            return "Error: Could not create bag folder '{}'.".format(uri)
+
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
             return 'Invalid choice: Can not specify topics and -a at the same time.'
@@ -52,10 +58,7 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return "Error: Output folder '{}' already exists.".format(uri)
 
-        try:
-            os.makedirs(uri)
-        except:
-            return "Error: Could not create bag folder '{}'.".format(uri)
+        self.create_bag_directory(uri)
 
         if args.all:
             rosbag2_transport_py.record(uri=uri, storage_id=args.storage, all=True)
@@ -63,3 +66,6 @@ class RecordVerb(VerbExtension):
             rosbag2_transport_py.record(uri=uri, storage_id=args.storage, topics=args.topics)
         else:
             self._subparser.print_help()
+
+        if os.path.isdir(uri) and not os.listdir(uri):
+            os.rmdir(uri)

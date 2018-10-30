@@ -60,21 +60,23 @@ public:
 
   std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
 
-  rosbag2_storage::BagInfo info() override;
+  rosbag2_storage::BagMetadata get_metadata() override;
 
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
-  std::string get_database_name(const std::string & uri);
+
+  std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
   bool database_exists(const std::string & uri);
+  bool is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
-  rosbag2_storage::BagInfo bag_info_;
+  std::string database_name_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
   ReadQueryResult message_result_;

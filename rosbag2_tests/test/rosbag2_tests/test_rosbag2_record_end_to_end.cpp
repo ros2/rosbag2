@@ -19,6 +19,7 @@
 // rclcpp.hpp included in record_fixture.hpp must be included before process_execution_helpers.hpp
 #include "record_fixture.hpp"
 #include "process_execution_helpers.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_primitives()[0];
@@ -40,6 +41,22 @@ TEST_F(RecordFixture, record_end_to_end_test) {
     });
 
   stop_execution(process_handle);
+
+  // TODO(Martin-Idel-SI): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef _WIN32
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 1;
+  metadata.storage_identifier = "sqlite3";
+  metadata.serialization_format = "cdr";
+  metadata.relative_file_paths.emplace_back("bag.db3");
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(bag_path_, metadata);
+#endif
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));

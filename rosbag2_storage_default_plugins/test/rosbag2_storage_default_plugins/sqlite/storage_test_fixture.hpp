@@ -27,6 +27,7 @@
 
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
@@ -101,6 +102,8 @@ public:
       bag_message->topic_name = topic_name;
       writable_storage->write(bag_message);
     }
+
+    metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
@@ -138,6 +141,7 @@ protected:
   }
 
   rcutils_allocator_t allocator_;
+  rosbag2_storage::MetadataIo metadata_io_;
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_

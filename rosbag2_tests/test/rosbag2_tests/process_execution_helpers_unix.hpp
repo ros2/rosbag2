@@ -30,8 +30,13 @@ using ProcessHandle = int;
 
 int execute_and_wait_until_completion(const std::string & command, const std::string & path)
 {
+  char previous_dir[PATH_MAX];
+  getcwd(previous_dir, PATH_MAX);
+
   chdir(path.c_str());
   auto exitcode = std::system(command.c_str());
+  chdir(previous_dir);
+
   return WEXITSTATUS(exitcode);
 }
 

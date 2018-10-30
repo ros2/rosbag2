@@ -1,0 +1,20 @@
+rosbag2_bagfile_information:
+  version: 1
+  storage_identifier: sqlite3
+  serialization_format: cdr
+  relative_file_paths:
+    - test.db3
+  duration:
+    nanoseconds: 155979811
+  starting_time:
+    nanoseconds_since_epoch: 1537282604241440135
+  message_count: 7
+  topics_with_message_count:
+    - topic_and_type:
+        name: /test_topic
+        type: test_msgs/Primitives
+      message_count: 3
+    - topic_and_type:
+        name: /array_topic
+        type: test_msgs/StaticArrayPrimitives
+      message_count: 4

@@ -41,6 +41,18 @@ TEST_F(FilesystemHelperFixture, calculate_directory_size_adds_size_of_two_direct
   EXPECT_THAT(size, Eq(13u));
 }
 
+TEST_F(FilesystemHelperFixture, file_exists_shows_whether_file_exists)
+{
+  std::ofstream out(FilesystemHelper::concat({temporary_dir_path_, "file1.txt"}));
+  out << "test";
+  out.close();
+
+  EXPECT_TRUE(FilesystemHelper::file_exists(
+      FilesystemHelper::concat({temporary_dir_path_, "file1.txt"})));
+  EXPECT_FALSE(FilesystemHelper::file_exists(
+      FilesystemHelper::concat({temporary_dir_path_, "file2.txt"})));
+}
+
 TEST(FilesystemHelper, concat_joins_string_list_with_directory_separators)
 {
   auto sep = std::string(FilesystemHelper::separator);

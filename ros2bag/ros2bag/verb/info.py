@@ -12,18 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 
 from ros2bag.verb import VerbExtension
+
+from rosbag2_transport import rosbag2_transport_py
 
 
 class InfoVerb(VerbExtension):
     """ros2 bag info."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        arg = parser.add_argument(
+        parser.add_argument(
             'bag_file', help='bag file to introspect')
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
-        print('calling ros2 bag info on', bag_file)
+        if not os.path.exists(bag_file):
+            return "Error: bag file '{}' does not exist!".format(bag_file)
+
+        rosbag2_transport_py.info(uri=bag_file)
