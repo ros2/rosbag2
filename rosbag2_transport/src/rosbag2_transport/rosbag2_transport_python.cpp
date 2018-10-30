@@ -26,15 +26,17 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   rosbag2_transport::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
 
-  static const char * kwlist[] = {"uri", "storage_id", "all", "topics", nullptr};
+  static const char * kwlist[] = {"uri", "storage_id", "encoding", "all", "topics", nullptr};
 
   char * uri = nullptr;
   char * storage_id = nullptr;
+  char * encoding = nullptr;
   bool all = false;
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|bO", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
+    &encoding,
     &all,
     &topics))
   {
@@ -43,8 +45,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
-  // TODO(botteroa-si): get this from CLI.
-  storage_options.rmw_serialization_format = "cdr";
+  storage_options.rmw_serialization_format = std::string(encoding).empty() ? "cdr" : encoding;
   record_options.all = all;
 
   if (topics) {

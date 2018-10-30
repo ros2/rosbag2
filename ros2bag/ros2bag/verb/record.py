@@ -42,6 +42,10 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
+        parser.add_argument(
+            '-e', '--encoding', default='',
+            help='rmw serialization format in which the messages are saved, defaults to the'
+             ' rmw currently in use')
 
     def create_bag_directory(self, uri):
         try:
@@ -61,9 +65,11 @@ class RecordVerb(VerbExtension):
         self.create_bag_directory(uri)
 
         if args.all:
-            rosbag2_transport_py.record(uri=uri, storage_id=args.storage, all=True)
+            rosbag2_transport_py.record(
+                uri=uri, storage_id=args.storage, encoding=args.encoding, all=True)
         elif args.topics and len(args.topics) > 0:
-            rosbag2_transport_py.record(uri=uri, storage_id=args.storage, topics=args.topics)
+            rosbag2_transport_py.record(
+                uri=uri, storage_id=args.storage, encoding=args.encoding, topics=args.topics)
         else:
             self._subparser.print_help()
 
