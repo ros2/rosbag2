@@ -63,8 +63,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2::TopicMetadata>{
-    {"topic1", "test_msgs/Primitives"},
-    {"topic2", "test_msgs/StaticArrayPrimitives"},
+    {"topic1", "test_msgs/Primitives", ""},
+    {"topic2", "test_msgs/StaticArrayPrimitives", ""},
   };
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =

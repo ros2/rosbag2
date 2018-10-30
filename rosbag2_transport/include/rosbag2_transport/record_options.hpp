@@ -25,6 +25,7 @@ struct RecordOptions
 public:
   bool all;
   std::vector<std::string> topics;
+  std::string rmw_serialization_format;
 };
 
 }  // namespace rosbag2_transport

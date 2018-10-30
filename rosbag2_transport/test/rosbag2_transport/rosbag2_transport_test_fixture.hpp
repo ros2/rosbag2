@@ -57,7 +57,7 @@ class Rosbag2TransportTestFixture : public Test
 {
 public:
   Rosbag2TransportTestFixture()
-  : storage_options_({"uri", "storage_id", "rmw_serialization_format"}), play_options_({1000}),
+  : storage_options_({"uri", "storage_id"}), play_options_({1000}),
     reader_(std::make_shared<MockSequentialReader>()),
     writer_(std::make_shared<MockWriter>()),
     info_(std::make_shared<MockInfo>()) {}

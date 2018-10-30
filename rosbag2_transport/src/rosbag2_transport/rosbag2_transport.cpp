@@ -63,7 +63,8 @@ void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
-    writer_->open(storage_options, rmw_get_serialization_format());
+    writer_->open(
+      storage_options, rmw_get_serialization_format(), record_options.rmw_serialization_format);
 
     auto transport_node = setup_node();
 
@@ -119,9 +120,8 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   formatter->format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
   info_stream << "Bag size:             " << formatter->format_file_size(
     metadata.bag_size) << std::endl;
-  info_stream << "Storage id:           " << metadata.storage_identifier << std::endl;
-  info_stream << "Serialization format: " << metadata.serialization_format << std::endl;
-  info_stream << "Duration:             " << formatter->format_duration(
+  info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
+  info_stream << "Duration:         " << formatter->format_duration(
     metadata.duration)["time_in_sec"] << "s" << std::endl;
   info_stream << "Start:                " << formatter->format_time_point(start_time) <<
     std::endl;

@@ -85,7 +85,7 @@ public:
   }
 
   void write_messages_to_sqlite(
-    std::vector<std::tuple<std::string, int64_t, std::string, std::string>> messages)
+    std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages)
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
@@ -95,7 +95,8 @@ public:
     for (auto msg : messages) {
       std::string topic_name = std::get<2>(msg);
       std::string type_name = std::get<3>(msg);
-      writable_storage->create_topic({topic_name, type_name});
+      std::string rmw_format = std::get<4>(msg);
+      writable_storage->create_topic({topic_name, type_name, rmw_format});
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
       bag_message->time_stamp = std::get<1>(msg);

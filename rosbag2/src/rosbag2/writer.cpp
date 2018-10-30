@@ -44,7 +44,10 @@ Writer::~Writer()
   storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
 }
 
-void Writer::open(const StorageOptions & options, const std::string & input_serialization_format)
+void Writer::open(
+  const StorageOptions & options,
+  const std::string & input_serialization_format,
+  const std::string & output_serialization_format)
 {
   storage_ = storage_factory_->open_read_write(options.uri, options.storage_id);
   if (!storage_) {
@@ -52,11 +55,10 @@ void Writer::open(const StorageOptions & options, const std::string & input_seri
   }
   uri_ = options.uri;
 
-  std::string output_rmw_format = options.rmw_serialization_format;
-  if (output_rmw_format != input_serialization_format) {
+  if (output_serialization_format != input_serialization_format) {
     converter_ = std::make_unique<Converter>(
       input_serialization_format,
-      output_rmw_format,
+      output_serialization_format,
       converter_factory_);
   }
 }

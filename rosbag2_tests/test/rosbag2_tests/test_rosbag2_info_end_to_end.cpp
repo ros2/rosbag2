@@ -41,16 +41,15 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   // The bag size depends on the os and is not asserted, the time is asserted time zone independent
   EXPECT_THAT(output, ContainsRegex(
-      "\nFiles:                test\\.db3"
-      "\nBag size:             .*B"
-      "\nStorage id:           sqlite3"
-      "\nSerialization format: cdr"
-      "\nDuration:             0\\.155s"
-      "\nStart:                Sep .+ 2018 .+:.+:44\\.241 \\(1537282604\\.241\\)"
-      "\nEnd                   Sep .+ 2018 .+:.+:44\\.397 \\(1537282604\\.397\\)"
-      "\nMessages:             7"
-      "\nTopics with Type:     /test_topic; test_msgs/Primitives; 3 msgs"
-      "\n                      /array_topic; test_msgs/StaticArrayPrimitives; 4 msgs"));
+      "\nFiles:            test\\.db3"
+      "\nBag size:         .*B"
+      "\nStorage id:       sqlite3"
+      "\nDuration:         0\\.155s"
+      "\nStart:            Sep .+ 2018 .+:.+:44\\.241 \\(1537282604\\.241\\)"
+      "\nEnd               Sep .+ 2018 .+:.+:44\\.397 \\(1537282604\\.397\\)"
+      "\nMessages:         7"
+      "\nTopics with Type: /test_topic; test_msgs/Primitives; 3 msgs; cdr"
+      "\n                  /array_topic; test_msgs/StaticArrayPrimitives; 4 msgs; cdr"));
 }
 
 // TODO(Martin-Idel-SI): Revisit exit code non-zero here, gracefully should be exit code zero

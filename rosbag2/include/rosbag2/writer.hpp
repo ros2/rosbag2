@@ -64,7 +64,10 @@ public:
    * \param input_serialization_format The serialization format corresponding to the currently
    * used rmw
    */
-  virtual void open(const StorageOptions & options, const std::string & input_serialization_format);
+  virtual void open(
+    const StorageOptions & options,
+    const std::string & input_serialization_format,
+    const std::string & output_serialization_format);
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within

@@ -113,7 +113,8 @@ void Formatter::format_topics_with_type(
   size_t number_of_topics = topics.size();
   for (size_t j = 0; j < number_of_topics; ++j) {
     std::string topic_with_type = topics[j].topic_with_type.name + "; " +
-      topics[j].topic_with_type.type + "; " + std::to_string(topics[j].message_count) + " msgs\n";
+      topics[j].topic_with_type.type + "; " + std::to_string(topics[j].message_count) + " msgs; " +
+      topics[j].topic_with_type.serialization_format + "\n";
     if (j == 0) {
       info_stream << topic_with_type;
     } else {

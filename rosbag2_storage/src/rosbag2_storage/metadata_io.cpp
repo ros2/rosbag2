@@ -43,6 +43,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     Node node;
     node["name"] = topic.name;
     node["type"] = topic.type;
+    node["serialization_format"] = topic.serialization_format;
     return node;
   }
 
@@ -50,6 +51,8 @@ struct convert<rosbag2_storage::TopicMetadata>
   {
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
+    topic.serialization_format = node["serialization_format"].as<std::string>();
+
     return true;
   }
 };
@@ -117,7 +120,6 @@ struct convert<rosbag2_storage::BagMetadata>
     Node node;
     node["version"] = metadata.version;
     node["storage_identifier"] = metadata.storage_identifier;
-    node["serialization_format"] = metadata.serialization_format;
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["duration"] = metadata.duration;
     node["starting_time"] = metadata.starting_time;
@@ -130,7 +132,6 @@ struct convert<rosbag2_storage::BagMetadata>
   {
     metadata.version = node["version"].as<int>();
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
-    metadata.serialization_format = node["serialization_format"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]

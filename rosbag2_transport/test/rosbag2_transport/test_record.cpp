@@ -42,7 +42,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(
     array_topic, array_message, 2);
 
-  start_recording({false, {string_topic, array_topic}});
+  start_recording({false, {string_topic, array_topic}, ""});
   run_publishers();
   stop_recording();
 

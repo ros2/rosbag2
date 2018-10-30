@@ -139,7 +139,8 @@ void SqliteStorage::initialize()
   std::string create_table = "CREATE TABLE topics(" \
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
-    "type TEXT NOT NULL);";
+    "type TEXT NOT NULL," \
+    "serialization_format TEXT NOT NULL);";
   database_->prepare_statement(create_table)->execute_and_reset();
   create_table = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
@@ -153,8 +154,9 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
-      database_->prepare_statement("INSERT INTO topics (name, type) VALUES (?, ?)");
-    insert_topic->bind(topic.name, topic.type);
+      database_->prepare_statement(
+      "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
+    insert_topic->bind(topic.name, topic.type, topic.serialization_format);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
@@ -179,11 +181,13 @@ void SqliteStorage::prepare_for_reading()
 
 void SqliteStorage::fill_topics_and_types()
 {
-  auto statement = database_->prepare_statement("SELECT name, type FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<std::string, std::string>();
+  auto statement = database_->prepare_statement(
+    "SELECT name, type, serialization_format FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string, std::string>();
 
   for (auto result : query_results) {
-    all_topics_and_types_.push_back({std::get<0>(result), std::get<1>(result)});
+    all_topics_and_types_.push_back(
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
   }
 }
 
@@ -213,30 +217,32 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = "sqlite3";
-  metadata.serialization_format = "cdr";  // TODO(greimela) Determine format (i.e. data encoding)
   metadata.relative_file_paths = {database_name_};
 
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
 
   auto statement = database_->prepare_statement(
-    "SELECT name, type, COUNT(messages.id), MIN(messages.timestamp), MAX(messages.timestamp) "
+    "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
+    "MAX(messages.timestamp) "
     "FROM messages JOIN topics on topics.id = messages.topic_id "
     "GROUP BY topics.name;");
   auto query_results = statement->execute_query<
-    std::string, std::string, int, rcutils_time_point_value_t, rcutils_time_point_value_t>();
+    std::string, std::string, std::string, int, rcutils_time_point_value_t,
+    rcutils_time_point_value_t>();
 
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result)},
-        static_cast<size_t>(std::get<2>(result))
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        static_cast<size_t>(std::get<3>(result))
       });
-    metadata.message_count += std::get<2>(result);
-    min_time = std::get<3>(result) < min_time ? std::get<3>(result) : min_time;
-    max_time = std::get<4>(result) > max_time ? std::get<4>(result) : max_time;
+
+    metadata.message_count += std::get<3>(result);
+    min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
+    max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
   }
 
   if (metadata.message_count == 0) {

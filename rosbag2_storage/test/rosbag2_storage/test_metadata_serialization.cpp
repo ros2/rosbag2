@@ -48,22 +48,20 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.serialization_format = "cdr";
   metadata.relative_file_paths.emplace_back("some_relative_path");
   metadata.relative_file_paths.emplace_back("some_other_relative_path");
   metadata.duration = std::chrono::nanoseconds(100);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
-  metadata.topics_with_message_count.push_back({{"topic1", "type1"}, 100});
-  metadata.topics_with_message_count.push_back({{"topic2", "type2"}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1"}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2"}, 200});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.version, Eq(metadata.version));
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
-  EXPECT_THAT(read_metadata.serialization_format, Eq(metadata.serialization_format));
   EXPECT_THAT(read_metadata.relative_file_paths, Eq(metadata.relative_file_paths));
   EXPECT_THAT(read_metadata.duration, Eq(metadata.duration));
   EXPECT_THAT(read_metadata.starting_time, Eq(metadata.starting_time));
@@ -76,6 +74,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
     Eq(expected_first_topic.topic_with_type.name));
   EXPECT_THAT(actual_first_topic.topic_with_type.type,
     Eq(expected_first_topic.topic_with_type.type));
+  EXPECT_THAT(actual_first_topic.topic_with_type.serialization_format,
+    Eq(expected_first_topic.topic_with_type.serialization_format));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
   auto expected_second_topic = metadata.topics_with_message_count[1];
@@ -83,5 +83,7 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
     Eq(expected_second_topic.topic_with_type.name));
   EXPECT_THAT(actual_second_topic.topic_with_type.type,
     Eq(expected_second_topic.topic_with_type.type));
+  EXPECT_THAT(actual_second_topic.topic_with_type.serialization_format,
+    Eq(expected_second_topic.topic_with_type.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 }
