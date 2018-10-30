@@ -32,7 +32,7 @@ public:
 
   void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
-  void create_topic(const rosbag2_storage::TopicWithType & topic) override;
+  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
   bool has_next() override;
 
@@ -40,7 +40,7 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
-  std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
 };

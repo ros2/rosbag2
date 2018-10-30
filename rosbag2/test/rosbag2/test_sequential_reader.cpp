@@ -39,10 +39,10 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
 
-    rosbag2_storage::TopicWithType topic_with_type;
+    rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
     topic_with_type.type = "test_msgs/Primitives";
-    auto topics_and_types = std::vector<rosbag2_storage::TopicWithType>{topic_with_type};
+    auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
 

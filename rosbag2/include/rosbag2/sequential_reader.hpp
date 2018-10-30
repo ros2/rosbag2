@@ -94,7 +94,7 @@ public:
    * \return vector of topics with topic name and type as std::string
    * \throws runtime_error if the Reader is not open.
    */
-  virtual std::vector<TopicWithType> get_all_topics_and_types();
+  virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;

@@ -62,7 +62,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
   complex_message1->bool_values = {{true, false, true}};
 
-  auto topic_types = std::vector<rosbag2::TopicWithType>{
+  auto topic_types = std::vector<rosbag2::TopicMetadata>{
     {"topic1", "test_msgs/Primitives"},
     {"topic2", "test_msgs/StaticArrayPrimitives"},
   };

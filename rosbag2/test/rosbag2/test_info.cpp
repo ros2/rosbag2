@@ -76,14 +76,14 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_THAT(read_metadata.topics_with_message_count,
     SizeIs(2u));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
-  rosbag2_storage::TopicMetadata expected_first_topic = {{"topic1", "type1"}, 100};
+  rosbag2_storage::TopicInformation expected_first_topic = {{"topic1", "type1"}, 100};
   EXPECT_THAT(actual_first_topic.topic_with_type.name,
     Eq(expected_first_topic.topic_with_type.name));
   EXPECT_THAT(actual_first_topic.topic_with_type.type,
     Eq(expected_first_topic.topic_with_type.type));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
-  rosbag2_storage::TopicMetadata expected_second_topic = {{"topic2", "type2"}, 200};
+  rosbag2_storage::TopicInformation expected_second_topic = {{"topic2", "type2"}, 200};
   EXPECT_THAT(actual_second_topic.topic_with_type.name,
     Eq(expected_second_topic.topic_with_type.name));
   EXPECT_THAT(actual_second_topic.topic_with_type.type,

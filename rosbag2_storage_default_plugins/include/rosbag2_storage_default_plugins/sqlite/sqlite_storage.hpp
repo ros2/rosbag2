@@ -50,7 +50,7 @@ public:
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
-  void create_topic(const rosbag2_storage::TopicWithType & topic) override;
+  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
@@ -58,7 +58,7 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override;
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
@@ -82,7 +82,7 @@ private:
   ReadQueryResult message_result_;
   ReadQueryResult::Iterator current_message_row_;
   std::map<std::string, int> topics_;
-  std::vector<rosbag2_storage::TopicWithType> all_topics_and_types_;
+  std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
 };
 
 }  // namespace rosbag2_storage_plugins

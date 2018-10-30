@@ -99,7 +99,7 @@ void Formatter::format_file_paths(
 }
 
 void Formatter::format_topics_with_type(
-  std::vector<rosbag2::TopicMetadata> topics,
+  std::vector<rosbag2::TopicInformation> topics,
   std::stringstream & info_stream,
   int indentation_spaces)
 {

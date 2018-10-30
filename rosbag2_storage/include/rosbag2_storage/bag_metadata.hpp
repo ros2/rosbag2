@@ -26,9 +26,9 @@
 namespace rosbag2_storage
 {
 
-struct TopicMetadata
+struct TopicInformation
 {
-  TopicWithType topic_with_type;
+  TopicMetadata topic_with_type;
   size_t message_count;
 };
 
@@ -42,7 +42,7 @@ struct BagMetadata
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   size_t message_count;
-  std::vector<TopicMetadata> topics_with_message_count;
+  std::vector<TopicInformation> topics_with_message_count;
 };
 
 }  // namespace rosbag2_storage

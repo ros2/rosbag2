@@ -35,7 +35,7 @@ public:
 
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
-  virtual void create_topic(const TopicWithType & topic) = 0;
+  virtual void create_topic(const TopicMetadata & topic) = 0;
 };
 
 }  // namespace storage_interfaces

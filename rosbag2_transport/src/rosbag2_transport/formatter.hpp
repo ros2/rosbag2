@@ -36,7 +36,8 @@ public:
   static void format_file_paths(
     std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces);
   static void format_topics_with_type(
-    std::vector<rosbag2::TopicMetadata>, std::stringstream & info_stream, int indentation_spaces);
+    std::vector<rosbag2::TopicInformation>, std::stringstream & info_stream,
+    int indentation_spaces);
 
 private:
   static void indent(std::stringstream & info_stream, int number_of_spaces);

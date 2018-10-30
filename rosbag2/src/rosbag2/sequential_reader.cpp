@@ -68,7 +68,7 @@ std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<TopicWithType> SequentialReader::get_all_topics_and_types()
+std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
 {
   if (storage_) {
     return storage_->get_all_topics_and_types();

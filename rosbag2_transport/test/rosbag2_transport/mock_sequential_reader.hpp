@@ -41,14 +41,14 @@ public:
     return messages_[num_read_++];
   }
 
-  std::vector<rosbag2::TopicWithType> get_all_topics_and_types() override
+  std::vector<rosbag2::TopicMetadata> get_all_topics_and_types() override
   {
     return topics_;
   }
 
   void prepare(
     std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages,
-    std::vector<rosbag2::TopicWithType> topics)
+    std::vector<rosbag2::TopicMetadata> topics)
   {
     messages_ = std::move(messages);
     topics_ = std::move(topics);
@@ -56,7 +56,7 @@ public:
 
 private:
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages_;
-  std::vector<rosbag2::TopicWithType> topics_;
+  std::vector<rosbag2::TopicMetadata> topics_;
   size_t num_read_;
 };
 
