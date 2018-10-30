@@ -25,9 +25,9 @@ namespace rosbag2_converter_default_plugins
 {
 
 void CdrConverter::deserialize(
-  std::shared_ptr<rosbag2_ros2_message_t> ros_message,
   const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
-  const rosidl_message_type_support_t * type_support)
+  const rosidl_message_type_support_t * type_support,
+  std::shared_ptr<rosbag2_ros2_message_t> ros_message)
 {
   ros_message->topic_name = serialized_message->topic_name.c_str();
   ros_message->timestamp = serialized_message->time_stamp;
@@ -40,9 +40,9 @@ void CdrConverter::deserialize(
 }
 
 void CdrConverter::serialize(
-  std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
   const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
-  const rosidl_message_type_support_t * type_support)
+  const rosidl_message_type_support_t * type_support,
+  std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message)
 {
   serialized_message->topic_name = std::string(ros_message->topic_name);
   serialized_message->time_stamp = ros_message->timestamp;

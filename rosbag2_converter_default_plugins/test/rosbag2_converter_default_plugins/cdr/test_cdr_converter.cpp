@@ -77,7 +77,7 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
   ros_message->message = &primitive_test_msg;
   auto type_support = rosbag2::get_typesupport("test_msgs/Primitives");
 
-  converter_->deserialize(ros_message, serialized_message, type_support);
+  converter_->deserialize(serialized_message, type_support, ros_message);
 
   auto cast_message = static_cast<test_msgs::msg::Primitives *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
@@ -98,7 +98,7 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_prim
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport("test_msgs/Primitives");
 
-  converter_->serialize(serialized_message, ros_message, type_support);
+  converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::Primitives>(
     serialized_message->serialized_data);
@@ -123,7 +123,7 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
   ros_message->message = &primitive_test_msg;
   auto type_support = rosbag2::get_typesupport("test_msgs/StaticArrayPrimitives");
 
-  converter_->deserialize(ros_message, serialized_message, type_support);
+  converter_->deserialize(serialized_message, type_support, ros_message);
 
   auto cast_message = static_cast<test_msgs::msg::StaticArrayPrimitives *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
@@ -144,7 +144,7 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport("test_msgs/StaticArrayPrimitives");
 
-  converter_->serialize(serialized_message, ros_message, type_support);
+  converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->
     deserialize_message<test_msgs::msg::StaticArrayPrimitives>(serialized_message->serialized_data);
@@ -174,7 +174,7 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dy
   ros_message->message = &dynamic_nested_message;
   auto type_support = rosbag2::get_typesupport("test_msgs/DynamicArrayNested");
 
-  converter_->deserialize(ros_message, serialized_message, type_support);
+  converter_->deserialize(serialized_message, type_support, ros_message);
 
   auto cast_message = static_cast<test_msgs::msg::DynamicArrayNested *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
@@ -200,7 +200,7 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dyna
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport("test_msgs/DynamicArrayNested");
 
-  converter_->serialize(serialized_message, ros_message, type_support);
+  converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->
     deserialize_message<test_msgs::msg::DynamicArrayNested>(serialized_message->serialized_data);

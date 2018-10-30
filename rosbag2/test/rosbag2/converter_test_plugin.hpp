@@ -25,14 +25,14 @@ class ConverterTestPlugin : public rosbag2::SerializationFormatConverterInterfac
 {
 public:
   void deserialize(
-    std::shared_ptr<rosbag2_ros2_message_t> ros_message,
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
-    const rosidl_message_type_support_t * type_support) override;
+    const rosidl_message_type_support_t * type_support,
+    std::shared_ptr<rosbag2_ros2_message_t> ros_message) override;
 
   void serialize(
-    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message,
     std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
-    const rosidl_message_type_support_t * type_support) override;
+    const rosidl_message_type_support_t * type_support,
+    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) override;
 };
 
 #endif  // ROSBAG2__CONVERTER_TEST_PLUGIN_HPP_
