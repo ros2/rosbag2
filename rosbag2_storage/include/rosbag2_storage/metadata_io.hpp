@@ -30,14 +30,16 @@ class MetadataIo
 public:
   static constexpr const char * const metadata_filename = "metadata.yaml";
 
-  ROSBAG2_STORAGE_PUBLIC
-  void write_metadata(const std::string & uri, const BagMetadata & metadata);
+  virtual ~MetadataIo() = default;
 
   ROSBAG2_STORAGE_PUBLIC
-  BagMetadata read_metadata(const std::string & uri);
+  virtual void write_metadata(const std::string & uri, const BagMetadata & metadata);
 
   ROSBAG2_STORAGE_PUBLIC
-  bool metadata_file_exists(const std::string & uri);
+  virtual BagMetadata read_metadata(const std::string & uri);
+
+  ROSBAG2_STORAGE_PUBLIC
+  virtual bool metadata_file_exists(const std::string & uri);
 
 private:
   std::string get_metadata_file_name(const std::string & uri);
