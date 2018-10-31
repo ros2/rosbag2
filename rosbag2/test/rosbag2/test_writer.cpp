@@ -40,6 +40,7 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<StrictMock<MockMetadataIo>>();
+    storage_options_.uri = "uri";
 
     EXPECT_CALL(*storage_factory_, open_read_write(_, _)).WillOnce(Return(storage_));
     EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
@@ -53,6 +54,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2::Writer> writer_;
+  rosbag2::StorageOptions storage_options_;
 };
 
 TEST_F(WriterTest,
@@ -72,9 +74,7 @@ TEST_F(WriterTest,
 
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
-  rosbag2::StorageOptions options;
-  options.uri = "uri";
-  writer_->open(options, input_format, storage_serialization_format);
+  writer_->open(storage_options_, input_format, storage_serialization_format);
   writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
   writer_->write(message);
 }
@@ -86,9 +86,20 @@ TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_
 
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
-  rosbag2::StorageOptions options;
-  options.uri = "uri";
-  writer_->open(options, storage_serialization_format, storage_serialization_format);
+  writer_->open(storage_options_, storage_serialization_format, storage_serialization_format);
   writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
   writer_->write(message);
+}
+
+TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
+  std::string input_format = "rmw1_format";
+  std::string output_format = "rmw2_format";
+
+  auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
+  EXPECT_CALL(*converter_factory_, load_converter(input_format))
+  .WillOnce(Return(ByMove(std::move(format1_converter))));
+  EXPECT_CALL(*converter_factory_, load_converter(output_format))
+  .WillOnce(Return(ByMove(nullptr)));
+
+  EXPECT_ANY_THROW(writer_->open(storage_options_, input_format, output_format));
 }
