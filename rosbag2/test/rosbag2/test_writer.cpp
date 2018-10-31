@@ -39,14 +39,11 @@ public:
     storage_factory_ = std::make_unique<StrictMock<MockStorageFactory>>();
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
-    metadata_io_ = std::make_unique<StrictMock<MockMetadataIo>>();
+    metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
     storage_options_.uri = "uri";
 
-    EXPECT_CALL(*storage_factory_, open_read_write(_, _)).WillOnce(Return(storage_));
-    EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
-
-    writer_ = std::make_unique<rosbag2::Writer>(
-      std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+    EXPECT_CALL(
+      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -59,6 +56,9 @@ public:
 
 TEST_F(WriterTest,
   write_uses_converters_to_convert_serialization_format_if_input_and_output_format_are_different) {
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
   std::string storage_serialization_format = "rmw1_format";
   std::string input_format = "rmw2_format";
 
@@ -80,6 +80,9 @@ TEST_F(WriterTest,
 }
 
 TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_equal) {
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
   std::string storage_serialization_format = "rmw_format";
 
   EXPECT_CALL(*converter_factory_, load_converter(storage_serialization_format)).Times(0);
@@ -91,7 +94,21 @@ TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_
   writer_->write(message);
 }
 
+TEST_F(WriterTest, metadata_io_writes_metadata_file_in_destructor) {
+  EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  std::string rmw_format = "rmw_format";
+
+  writer_->open(storage_options_, rmw_format, rmw_format);
+  writer_.reset();
+}
+
 TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
   std::string input_format = "rmw1_format";
   std::string output_format = "rmw2_format";
 
