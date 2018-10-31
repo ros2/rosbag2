@@ -26,17 +26,18 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   rosbag2_transport::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
 
-  static const char * kwlist[] = {"uri", "storage_id", "encoding", "all", "topics", nullptr};
+  static const char * kwlist[] = {
+    "uri", "storage_id", "serialization_format", "all", "topics", nullptr};
 
   char * uri = nullptr;
   char * storage_id = nullptr;
-  char * encoding = nullptr;
+  char * serilization_format = nullptr;
   bool all = false;
   PyObject * topics = nullptr;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
-    &encoding,
+    &serilization_format,
     &all,
     &topics))
   {
@@ -59,7 +60,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       Py_DECREF(topic_iterator);
     }
   }
-  record_options.rmw_serialization_format = encoding;
+  record_options.rmw_serialization_format = serilization_format;
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();

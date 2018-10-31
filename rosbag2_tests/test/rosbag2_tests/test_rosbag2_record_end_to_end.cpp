@@ -91,7 +91,7 @@ TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
 TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record -a -e some_rmw", temporary_dir_path_);
+    execute_and_wait_until_completion("ros2 bag record -a -f some_rmw", temporary_dir_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
