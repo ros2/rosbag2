@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <iostream>
 
 #include "rosbag2/info.hpp"
 #include "rosbag2/storage_options.hpp"
@@ -41,7 +40,8 @@ Writer::~Writer()
     metadata_io_->write_metadata(uri_, storage_->get_metadata());
   }
 
-  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
+  storage_factory_.reset();
 }
 
 void Writer::open(

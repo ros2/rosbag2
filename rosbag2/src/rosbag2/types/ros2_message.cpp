@@ -14,7 +14,6 @@
 
 #include "rosbag2/types/ros2_message.hpp"
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

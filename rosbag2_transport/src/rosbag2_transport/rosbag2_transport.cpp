@@ -25,6 +25,7 @@
 #include "rcutils/time.h"
 
 #include "rosbag2_transport/logging.hpp"
+#include "rosbag2/info.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
@@ -33,6 +34,7 @@
 #include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
+#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
@@ -64,7 +66,11 @@ void Rosbag2Transport::record(
 {
   try {
     writer_->open(
-      storage_options, rmw_get_serialization_format(), record_options.rmw_serialization_format);
+      storage_options,
+      rmw_get_serialization_format(),
+      record_options.rmw_serialization_format.empty() ?
+      rmw_get_serialization_format() :
+      record_options.rmw_serialization_format);
 
     auto transport_node = setup_node();
 

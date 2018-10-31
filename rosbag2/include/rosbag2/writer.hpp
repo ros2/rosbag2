@@ -61,8 +61,8 @@ public:
    * This must be called before any other function is used.
    *
    * \param options Options to configure the storage
-   * \param input_serialization_format The serialization format corresponding to the currently
-   * used rmw
+   * \param input_serialization_format The serialization format of the messages to write
+   * \param output_serialization_format The serialization format in which the messages must be saved
    */
   virtual void open(
     const StorageOptions & options,

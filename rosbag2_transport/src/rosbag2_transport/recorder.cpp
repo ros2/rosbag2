@@ -18,7 +18,10 @@
 #include <string>
 #include <utility>
 
+#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/logging.hpp"
+#include "generic_subscription.hpp"
+#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {

@@ -59,7 +59,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       Py_DECREF(topic_iterator);
     }
   }
-  record_options.rmw_serialization_format = std::string(encoding).empty() ? "cdr" : encoding;
+  record_options.rmw_serialization_format = encoding;
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/topic_with_type.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 
 #ifdef _WIN32
