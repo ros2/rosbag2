@@ -35,13 +35,13 @@ public:
 
 TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
-  auto exit_code = execute_and_wait_until_completion("ros2 bag info test", database_path_);
+  auto exit_code = execute_and_wait_until_completion("ros2 bag info cdr_test", database_path_);
   std::string output = internal::GetCapturedStdout();
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   // The bag size depends on the os and is not asserted, the time is asserted time zone independent
   EXPECT_THAT(output, ContainsRegex(
-      "\nFiles:            test\\.db3"
+      "\nFiles:            cdr_test\\.db3"
       "\nBag size:         .*B"
       "\nStorage id:       sqlite3"
       "\nDuration:         0\\.155s"
