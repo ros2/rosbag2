@@ -16,22 +16,25 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+find_package(poco_vendor REQUIRED)
+find_package(Poco COMPONENTS Foundation)
 find_package(pluginlib REQUIRED)
 find_package(rosbag2 REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
-find_package(rmw_fastrtps_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
+  ament_index_cpp
   pluginlib
+  Poco
   rosbag2
   rcutils
   rmw
-  rmw_fastrtps_cpp
   rosidl_generator_cpp)
 
 target_include_directories(${PROJECT_NAME}

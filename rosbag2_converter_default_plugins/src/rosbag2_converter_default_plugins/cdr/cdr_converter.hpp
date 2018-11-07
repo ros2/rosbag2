@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 
+#include "rmw/types.h"
+
 #include "rosbag2/serialization_format_converter_interface.hpp"
 
 namespace rosbag2_converter_default_plugins
@@ -26,6 +28,8 @@ namespace rosbag2_converter_default_plugins
 class CdrConverter : public rosbag2::SerializationFormatConverterInterface
 {
 public:
+  CdrConverter();
+
   void deserialize(
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support,
@@ -35,6 +39,17 @@ public:
     std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
     const rosidl_message_type_support_t * type_support,
     std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) override;
+
+protected:
+  rmw_ret_t (* serialize_fcn_)(
+    const void *,
+    const rosidl_message_type_support_t *,
+    rmw_serialized_message_t *) = nullptr;
+
+  rmw_ret_t (* deserialize_fcn_)(
+    const rmw_serialized_message_t *,
+    const rosidl_message_type_support_t *,
+    void *) = nullptr;
 };
 
 }  // namespace rosbag2_converter_default_plugins
