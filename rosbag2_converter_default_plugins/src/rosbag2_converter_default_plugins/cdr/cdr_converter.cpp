@@ -117,7 +117,6 @@ void CdrConverter::serialize(
   serialized_message->topic_name = std::string(ros_message->topic_name);
   serialized_message->time_stamp = ros_message->timestamp;
 
-  printf("this should be a call to FASTRTPS\n");
   auto ret = serialize_fcn_(
     ros_message->message, type_support, serialized_message->serialized_data.get());
   if (ret != RMW_RET_OK) {
