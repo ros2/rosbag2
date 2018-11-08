@@ -71,7 +71,7 @@ Recorder::create_subscription(
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
         ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-          "Error getting current time. Error:" << rcutils_get_error_string_safe());
+          "Error getting current time. Error:" << rcutils_get_error_string().str);
       }
       bag_message->time_stamp = time_stamp;
 

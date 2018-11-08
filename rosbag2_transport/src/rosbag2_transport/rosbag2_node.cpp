@@ -109,7 +109,7 @@ std::string Rosbag2Node::expand_topic_name(const std::string & topic_name)
   if (ret != RCL_RET_OK) {
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
       "Failed to expand topic name " << topic_name << " with error: " <<
-        rcutils_get_error_string_safe());
+        rcutils_get_error_string().str);
     return "";
   }
   std::string expanded_topic_name_std(expanded_topic_name);

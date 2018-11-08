@@ -33,7 +33,7 @@ make_serialized_message(const void * data, size_t size)
   auto ret = rcutils_char_array_init(msg, size, &allocator);
   if (ret != RCUTILS_RET_OK) {
     throw std::runtime_error("Error allocating resources for serialized message: " +
-            std::string(rcutils_get_error_string_safe()));
+            std::string(rcutils_get_error_string().str));
   }
 
   auto serialized_message = std::shared_ptr<rcutils_char_array_t>(msg,
@@ -42,7 +42,7 @@ make_serialized_message(const void * data, size_t size)
         delete msg;
         if (error != RCUTILS_RET_OK) {
           ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-            "Leaking memory. Error: " << rcutils_get_error_string_safe());
+            "Leaking memory. Error: " << rcutils_get_error_string().str);
         }
       });
 

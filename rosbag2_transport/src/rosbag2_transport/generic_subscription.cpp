@@ -101,7 +101,7 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
         delete msg;
         if (fini_return != RCL_RET_OK) {
           ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-            "Failed to destroy serialized message: " << rcl_get_error_string_safe());
+            "Failed to destroy serialized message: " << rcl_get_error_string().str);
         }
       });
 
