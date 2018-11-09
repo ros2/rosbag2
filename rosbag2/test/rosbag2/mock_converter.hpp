@@ -27,15 +27,15 @@ class MockConverter : public rosbag2::SerializationFormatConverterInterface
 public:
   MOCK_METHOD3(deserialize,
     void(
-      std::shared_ptr<rosbag2_ros2_message_t>,
       std::shared_ptr<const rosbag2::SerializedBagMessage>,
-      const rosidl_message_type_support_t *));
+      const rosidl_message_type_support_t *,
+      std::shared_ptr<rosbag2_ros2_message_t>));
 
   MOCK_METHOD3(serialize,
     void(
-      std::shared_ptr<rosbag2::SerializedBagMessage>,
       std::shared_ptr<const rosbag2_ros2_message_t>,
-      const rosidl_message_type_support_t *));
+      const rosidl_message_type_support_t *,
+      std::shared_ptr<rosbag2::SerializedBagMessage>));
 };
 
 #endif  // ROSBAG2__MOCK_CONVERTER_HPP_

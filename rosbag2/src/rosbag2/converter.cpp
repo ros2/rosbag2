@@ -64,10 +64,10 @@ std::shared_ptr<SerializedBagMessage> Converter::convert(
   std::shared_ptr<rosbag2_ros2_message_t> allocated_ros_message =
     allocate_ros2_message(introspection_ts);
 
-  input_converter_->deserialize(allocated_ros_message, message, ts);
+  input_converter_->deserialize(message, ts, allocated_ros_message);
   auto output_message = std::make_shared<rosbag2::SerializedBagMessage>();
   output_message->serialized_data = rosbag2_storage::make_empty_serialized_message(0);
-  output_converter_->serialize(output_message, allocated_ros_message, ts);
+  output_converter_->serialize(allocated_ros_message, ts, output_message);
   return output_message;
 }
 
