@@ -27,12 +27,13 @@ namespace rosbag2
 {
 
 std::shared_ptr<rosbag2_ros2_message_t>
-allocate_ros2_message(const rosidl_message_type_support_t * introspection_ts)
+allocate_ros2_message(
+  const rosidl_message_type_support_t * introspection_ts, const rcutils_allocator_t * allocator)
 {
   auto intro_ts_members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
     introspection_ts->data);
   auto raw_ros2_message = new rosbag2_ros2_message_t();
-  raw_ros2_message->allocator = rcutils_get_default_allocator();
+  raw_ros2_message->allocator = *allocator;
   raw_ros2_message->message = raw_ros2_message->allocator.zero_allocate(
     1, intro_ts_members->size_of_, raw_ros2_message->allocator.state);
   // TODO(Martin-Idel-SI): Use custom allocator to make sure all memory is obtained that way

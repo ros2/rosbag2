@@ -39,13 +39,20 @@ using namespace testing;  // NOLINT
 class Ros2MessageTest : public Test
 {
 public:
+  Ros2MessageTest()
+  {
+    allocator_ = rcutils_get_default_allocator();
+  }
+
   auto get_allocated_message(const std::string & message_type)
   {
     auto introspection_ts =
       rosbag2::get_typesupport(message_type, "rosidl_typesupport_introspection_cpp");
 
-    return rosbag2::allocate_ros2_message(introspection_ts);
+    return rosbag2::allocate_ros2_message(introspection_ts, &allocator_);
   }
+
+  rcutils_allocator_t allocator_;
 };
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message) {
