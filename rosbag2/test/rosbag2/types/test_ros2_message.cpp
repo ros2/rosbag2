@@ -83,9 +83,9 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message) {
 
   auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
 
-  data->bool_values = {true, false, true};
-  data->string_values = {"eins", "zwei", "drei"};
-  data->int32_values = {11, 22, 33};
+  data->bool_values = {{true, false, true}};
+  data->string_values = {{"eins", "zwei", "drei"}};
+  data->int32_values = {{11, 22, 33}};
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message_with_empty_string) {
@@ -93,9 +93,9 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message_wit
 
   auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
 
-  data->bool_values = {true, false, true};
-  data->string_values = {"", "zwei", ""};
-  data->int32_values = {11, 22, 33};
+  data->bool_values = {{true, false, true}};
+  data->string_values = {{"", "zwei", ""}};
+  data->int32_values = {{11, 22, 33}};
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_message) {
@@ -103,9 +103,9 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_message) {
 
   auto data = static_cast<test_msgs::msg::DynamicArrayPrimitives *>(message->message);
 
-  data->bool_values = {true, false, true, false};
-  data->string_values = {"eins", "zwei"};
-  data->int32_values = {11, 22, 33, 44, 55};
+  data->bool_values = {{true, false, true, false}};
+  data->string_values = {{"eins", "zwei", ""}};
+  data->int32_values = {{11, 22, 33, 44, 55}};
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_message) {
@@ -113,8 +113,8 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_message) {
 
   auto data = static_cast<test_msgs::msg::BoundedArrayPrimitives *>(message->message);
 
-  data->bool_values = {true, false, true};
-  data->string_values = {"eins", "zwei"};
+  data->bool_values = {{true, false, true}};
+  data->string_values = {{"eins", "zwei", ""}};
   data->int32_values = {11};
 }
 

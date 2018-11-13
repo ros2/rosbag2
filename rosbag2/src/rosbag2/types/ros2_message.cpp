@@ -53,7 +53,6 @@ void deallocate_ros2_message_part(
   const rosidl_typesupport_introspection_cpp::MessageMembers * members)
 {
   for (size_t i = 0; i < members->member_count_; ++i) {
-    // TODO(Karsten1987): Do we really need to do this?
     auto member = members->members_[i];
     void * message_member = static_cast<uint8_t *>(msg) + member.offset_;
 
@@ -101,7 +100,6 @@ void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMem
 
 void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
 {
-  // TODO(karsten1987): How can we obtain the C++ types of the vector elements?
   switch (member.type_id_) {
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL: {
         auto data_vector = static_cast<std::vector<bool> *>(data);
