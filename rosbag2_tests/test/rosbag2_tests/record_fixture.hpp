@@ -128,6 +128,16 @@ public:
     return table_msgs;
   }
 
+  std::string get_rwm_format_for_topic(
+    const std::string & topic_name, rosbag2_storage_plugins::SqliteWrapper & db)
+  {
+    auto topic_format = db.prepare_statement(
+      "SELECT serialization_format "
+      "FROM topics "
+      "WHERE name = ?;")->bind(topic_name)->execute_query<std::string>().get_single_line();
+    return std::get<0>(topic_format);
+  }
+
   std::string bag_path_;
   std::string database_path_;
   PublisherManager pub_man_;

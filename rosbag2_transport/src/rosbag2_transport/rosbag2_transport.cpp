@@ -66,11 +66,7 @@ void Rosbag2Transport::record(
 {
   try {
     writer_->open(
-      storage_options,
-      rmw_get_serialization_format(),
-      record_options.rmw_serialization_format.empty() ?
-      rmw_get_serialization_format() :
-      record_options.rmw_serialization_format);
+      storage_options, rmw_get_serialization_format(), record_options.rmw_serialization_format);
 
     auto transport_node = setup_node();
 

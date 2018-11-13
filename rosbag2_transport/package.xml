@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>rosbag2</depend>
+  <depend>rmw</depend>
   <depend>shared_queues_vendor</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>

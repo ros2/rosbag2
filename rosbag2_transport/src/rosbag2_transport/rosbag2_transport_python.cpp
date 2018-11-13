@@ -19,6 +19,7 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
+#include "rmw/rmw.h"
 
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
@@ -60,7 +61,9 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       Py_DECREF(topic_iterator);
     }
   }
-  record_options.rmw_serialization_format = serilization_format;
+  record_options.rmw_serialization_format = std::string(serilization_format).empty() ?
+    rmw_get_serialization_format() :
+    serilization_format;
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();

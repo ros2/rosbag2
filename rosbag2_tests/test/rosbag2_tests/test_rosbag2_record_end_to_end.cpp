@@ -61,6 +61,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
   EXPECT_THAT(test_topic_messages,
     Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
+  EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/wrong_topic");
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
