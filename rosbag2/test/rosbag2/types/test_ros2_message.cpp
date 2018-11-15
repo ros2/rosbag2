@@ -75,6 +75,16 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message_with_e
   data->int16_value = 144;
 }
 
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message_with_big_string_no_SSO) {
+  auto message = get_allocated_message("test_msgs/Primitives");
+
+  auto data = static_cast<test_msgs::msg::Primitives *>(message->message);
+
+  data->bool_value = true;
+  data->string_value = std::string(1000, 's');
+  data->int16_value = 144;
+}
+
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_message) {
   auto message = get_allocated_message("test_msgs/Nested");
 
@@ -91,7 +101,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message) {
   auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
 
   data->bool_values = {{true, false, true}};
-  data->string_values = {{"eins", "zwei", "drei"}};
+  data->string_values = {{"eins", "zwei", std::string(1000, 'd')}};
   data->int32_values = {{11, 22, 33}};
 }
 
@@ -101,7 +111,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message_wit
   auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
 
   data->bool_values = {{true, false, true}};
-  data->string_values = {{"", "zwei", ""}};
+  data->string_values = {{"", "zwei", std::string(1000, 'a')}};
   data->int32_values = {{11, 22, 33}};
 }
 
@@ -111,7 +121,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_message) {
   auto data = static_cast<test_msgs::msg::DynamicArrayPrimitives *>(message->message);
 
   data->bool_values = {{true, false, true, false}};
-  data->string_values = {{"eins", "zwei", ""}};
+  data->string_values = {{"eins", std::string(1000, 'b'), ""}};
   data->int32_values = {{11, 22, 33, 44, 55}};
 }
 
@@ -121,7 +131,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_message) {
   auto data = static_cast<test_msgs::msg::BoundedArrayPrimitives *>(message->message);
 
   data->bool_values = {{true, false, true}};
-  data->string_values = {{"eins", "zwei", ""}};
+  data->string_values = {{"eins", std::string(1000, 'z'), ""}};
   data->int32_values = {11};
 }
 
@@ -134,7 +144,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_nested_mess
   data->primitive_values[0].string_value = "eins";
   data->primitive_values[0].int64_value = 123;
   data->primitive_values[1].bool_value = false;
-  data->primitive_values[1].string_value = "zwei";
+  data->primitive_values[1].string_value = std::string(1000, '2');
   data->primitive_values[1].int64_value = 123;
 }
 
