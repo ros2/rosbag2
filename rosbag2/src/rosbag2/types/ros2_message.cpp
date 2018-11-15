@@ -229,6 +229,9 @@ void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageM
   // This is necessary because initialization otherwise fails for MSVC++ compiled builds
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL) {
     new (data) std::vector<bool>();
+  } else {
+    // Properly initialize the zero allocated memory with a vector of size 0.
+    new (data) std::vector<uint8_t>();
   }
 }
 
