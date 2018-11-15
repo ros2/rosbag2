@@ -22,9 +22,12 @@
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/types/ros2_message.hpp"
 #include "test_msgs/msg/bounded_array_nested.hpp"
+#include "test_msgs/msg/bounded_array_primitives_nested.hpp"
 #include "test_msgs/msg/bounded_array_primitives.hpp"
+#include "test_msgs/msg/dynamic_array_primitives_nested.hpp"
 #include "test_msgs/msg/dynamic_array_nested.hpp"
 #include "test_msgs/msg/dynamic_array_primitives.hpp"
+#include "test_msgs/msg/dynamic_array_static_array_primitives_nested.hpp"
 #include "test_msgs/msg/nested.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_nested.hpp"
@@ -164,6 +167,42 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_nested_mes
 
   data->primitive_values.push_back(*get_messages_primitives()[1]);
   data->primitive_values.push_back(*get_messages_primitives()[2]);
+}
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_static_array_nested_message) {
+  auto message = get_allocated_message("test_msgs/DynamicArrayStaticArrayPrimitivesNested");
+
+  auto data =
+    static_cast<test_msgs::msg::DynamicArrayStaticArrayPrimitivesNested *>(message->message);
+
+  data->dynamic_array_static_array_primitive_values
+    .push_back(*get_messages_static_array_primitives()[0]);
+  data->dynamic_array_static_array_primitive_values
+    .push_back(*get_messages_static_array_primitives()[0]);
+}
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_dynamic_array_nested_message) {
+  auto message = get_allocated_message("test_msgs/DynamicArrayPrimitivesNested");
+
+  auto data =
+    static_cast<test_msgs::msg::DynamicArrayPrimitivesNested *>(message->message);
+
+  data->dynamic_array_primitive_values
+    .push_back(*get_messages_dynamic_array_primitives()[1]);
+  data->dynamic_array_primitive_values
+    .push_back(*get_messages_dynamic_array_primitives()[2]);
+}
+
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nested_message) {
+  auto message = get_allocated_message("test_msgs/BoundedArrayPrimitivesNested");
+
+  auto data =
+    static_cast<test_msgs::msg::BoundedArrayPrimitivesNested *>(message->message);
+
+  data->bounded_array_primitive_values
+    .push_back(*get_messages_bounded_array_primitives()[0]);
+  data->bounded_array_primitive_values
+    .push_back(*get_messages_bounded_array_primitives()[1]);
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
