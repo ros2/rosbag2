@@ -96,7 +96,13 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_transport::PlayOptions play_options{};
   rosbag2_transport::StorageOptions storage_options{};
 
-  static const char * kwlist[] = {"uri", "storage_id", "node_prefix", "read_ahead_queue_size", nullptr};
+  static const char * kwlist[] = {
+    "uri",
+    "storage_id",
+    "node_prefix",
+    "read_ahead_queue_size",
+    nullptr
+  };
 
   char * uri;
   char * storage_id;
