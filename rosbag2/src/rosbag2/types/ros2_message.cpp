@@ -85,10 +85,10 @@ void cleanup_array(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
-    auto string_array = static_cast<std::string *>(data);
     for (size_t i = 0; i < member.array_size_; ++i) {
       std::string empty;
-      string_array[i].swap(empty);
+      auto * element = static_cast<std::string *>(member.get_function(data, i));
+      element->swap(empty);
     }
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     auto nested_ts =
@@ -243,10 +243,10 @@ void allocate_array(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
-    auto string_array = static_cast<std::string *>(data);
     for (size_t i = 0; i < member.array_size_; ++i) {
+      auto * element = static_cast<std::string *>(member.get_function(data, i));
       // This is necessary because initialization of empty strings fails for g++ compiled builds
-      new (&string_array[i]) std::string("");
+      new (element) std::string("");
     }
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     auto nested_ts = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
