@@ -39,19 +39,22 @@ allocate_ros2_message(
   // TODO(Martin-Idel-SI): Use custom allocator to make sure all memory is obtained that way
   allocate_internal_types(raw_ros2_message->message, intro_ts_members);
 
-  auto deleter = [intro_ts_members](rosbag2_ros2_message_t * msg) {
-      // TODO(Martin-Idel-SI): Use custom deallocate
-      deallocate_ros2_message_part(msg->message, intro_ts_members);
-      msg->allocator.deallocate(msg->message, msg->allocator.state);
-      delete msg;
-    };
+  auto deleter = std::bind(&deallocate_ros2_message, std::placeholders::_1, intro_ts_members);
 
   return std::shared_ptr<rosbag2_ros2_message_t>(raw_ros2_message, deleter);
 }
 
-void deallocate_ros2_message_part(
-  void * msg,
+void deallocate_ros2_message(
+  rosbag2_ros2_message_t * msg,
   const rosidl_typesupport_introspection_cpp::MessageMembers * members)
+{
+  deallocate_internal_types(msg->message, members);
+  msg->allocator.deallocate(msg->message, msg->allocator.state);
+  delete msg;
+}
+
+void deallocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members)
 {
   for (size_t i = 0; i < members->member_count_; ++i) {
     auto member = members->members_[i];
@@ -74,7 +77,7 @@ void cleanup_element(
     std::string empty;
     static_cast<std::string *>(data)->swap(empty);
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
-    deallocate_ros2_message_part(
+    deallocate_internal_types(
       data,
       static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
         member.members_->data));
@@ -96,7 +99,7 @@ void cleanup_array(
       member.members_->data);
     for (size_t j = 0; j < member.array_size_; ++j) {
       auto nested_member = static_cast<uint8_t *>(data) + j * nested_ts->size_of_;
-      deallocate_ros2_message_part(nested_member, nested_ts);
+      deallocate_internal_types(nested_member, nested_ts);
     }
   }
 }
@@ -199,7 +202,7 @@ void cleanup_vector(
 
         for (size_t j = 0; j < size; ++j) {
           auto nested_member = data_vector->data() + j * nested_ts->size_of_;
-          deallocate_ros2_message_part(nested_member, nested_ts);
+          deallocate_internal_types(nested_member, nested_ts);
         }
 
         data_vector->resize(0);
