@@ -1,8 +1,8 @@
 <library path="rosbag2_converter_default_plugins">
 <class
         name="cdr_converter"
-        type="CdrConverterPlugin"
-        base_class_type="rosbag2::FormatConverterInterface"
+        type="rosbag2_converter_default_plugins::CdrConverter"
+        base_class_type="rosbag2::SerializationFormatConverterInterface"
 >
   <description>This is a converter plugin for cdr format.</description>
 </class>
