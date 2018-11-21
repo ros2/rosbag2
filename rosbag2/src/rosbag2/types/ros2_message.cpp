@@ -67,7 +67,8 @@ void deallocate_ros2_message_part(
   }
 }
 
-void cleanup_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void cleanup_element(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     std::string empty;
@@ -80,7 +81,8 @@ void cleanup_element(void * data, rosidl_typesupport_introspection_cpp::MessageM
   }
 }
 
-void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void cleanup_array(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     auto string_array = static_cast<std::string *>(data);
@@ -99,7 +101,8 @@ void cleanup_array(void * data, rosidl_typesupport_introspection_cpp::MessageMem
   }
 }
 
-void cleanup_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void cleanup_vector(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   switch (member.type_id_) {
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL: {
@@ -224,7 +227,8 @@ void allocate_internal_types(
   }
 }
 
-void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void allocate_vector(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   // This is necessary because initialization otherwise fails for MSVC++ compiled builds
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL) {
@@ -235,7 +239,8 @@ void allocate_vector(void * data, rosidl_typesupport_introspection_cpp::MessageM
   }
 }
 
-void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void allocate_array(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     auto string_array = static_cast<std::string *>(data);
@@ -253,7 +258,8 @@ void allocate_array(void * data, rosidl_typesupport_introspection_cpp::MessageMe
   }
 }
 
-void allocate_element(void * data, rosidl_typesupport_introspection_cpp::MessageMember member)
+void allocate_element(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member)
 {
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     // This is necessary because initialization of empty strings fails for g++ compiled builds
