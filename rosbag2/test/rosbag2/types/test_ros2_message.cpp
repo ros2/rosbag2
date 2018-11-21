@@ -175,10 +175,10 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_static_array_nest
   auto data =
     static_cast<test_msgs::msg::DynamicArrayStaticArrayPrimitivesNested *>(message->message);
 
-  data->dynamic_array_static_array_primitive_values
-    .push_back(*get_messages_static_array_primitives()[0]);
-  data->dynamic_array_static_array_primitive_values
-    .push_back(*get_messages_static_array_primitives()[0]);
+  data->dynamic_array_static_array_primitive_values.push_back(
+    *get_messages_static_array_primitives()[0]);
+  data->dynamic_array_static_array_primitive_values.push_back(
+    *get_messages_static_array_primitives()[0]);
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_dynamic_array_nested_message) {
@@ -187,10 +187,10 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_dynamic_array_nes
   auto data =
     static_cast<test_msgs::msg::DynamicArrayPrimitivesNested *>(message->message);
 
-  data->dynamic_array_primitive_values
-    .push_back(*get_messages_dynamic_array_primitives()[1]);
-  data->dynamic_array_primitive_values
-    .push_back(*get_messages_dynamic_array_primitives()[2]);
+  data->dynamic_array_primitive_values.push_back(
+    *get_messages_dynamic_array_primitives()[1]);
+  data->dynamic_array_primitive_values.push_back(
+    *get_messages_dynamic_array_primitives()[2]);
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nested_message) {
@@ -199,10 +199,10 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nes
   auto data =
     static_cast<test_msgs::msg::BoundedArrayPrimitivesNested *>(message->message);
 
-  data->bounded_array_primitive_values
-    .push_back(*get_messages_bounded_array_primitives()[0]);
-  data->bounded_array_primitive_values
-    .push_back(*get_messages_bounded_array_primitives()[1]);
+  data->bounded_array_primitive_values.push_back(
+    *get_messages_bounded_array_primitives()[0]);
+  data->bounded_array_primitive_values.push_back(
+    *get_messages_bounded_array_primitives()[1]);
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
