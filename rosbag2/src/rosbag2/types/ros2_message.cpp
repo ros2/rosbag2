@@ -39,8 +39,9 @@ allocate_ros2_message(
   // TODO(Martin-Idel-SI): Use custom allocator to make sure all memory is obtained that way
   allocate_internal_types(raw_ros2_message->message, intro_ts_members);
 
-  auto deleter = std::bind(&deallocate_ros2_message, std::placeholders::_1, intro_ts_members);
-
+  auto deleter = [intro_ts_members](rosbag2_ros2_message_t * msg) {
+      deallocate_ros2_message(msg, intro_ts_members);
+    };
   return std::shared_ptr<rosbag2_ros2_message_t>(raw_ros2_message, deleter);
 }
 
