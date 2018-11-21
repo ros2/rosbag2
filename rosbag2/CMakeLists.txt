@@ -119,11 +119,28 @@ if(BUILD_TESTING)
     target_link_libraries(test_sequential_reader rosbag2)
   endif()
 
+  # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
-    test/rosbag2/types/test_ros2_message.cpp)
+    test/rosbag2/types/test_ros2_message.cpp
+    src/rosbag2/typesupport_helpers.cpp
+    src/rosbag2/types/ros2_message.cpp)
   if(TARGET test_ros2_message)
-    target_link_libraries(test_ros2_message rosbag2)
-    ament_target_dependencies(test_ros2_message test_msgs)
+    target_compile_definitions(test_ros2_message PRIVATE "ROSBAG2_BUILDING_DLL")
+    target_compile_options(test_ros2_message PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
+    target_link_libraries(test_ros2_message $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
+    target_include_directories(test_ros2_message
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+    ament_target_dependencies(test_ros2_message
+      ament_index_cpp
+      Poco
+      rcutils
+      rosbag2_storage
+      rosidl_generator_cpp
+      rosidl_typesupport_introspection_cpp
+      rosidl_typesupport_cpp
+      test_msgs)
   endif()
 
   ament_add_gmock(test_writer
