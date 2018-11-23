@@ -15,6 +15,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
+
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -126,8 +128,10 @@ if(BUILD_TESTING)
     src/rosbag2/types/ros2_message.cpp)
   if(TARGET test_ros2_message)
     target_compile_definitions(test_ros2_message PRIVATE "ROSBAG2_BUILDING_DLL")
-    target_compile_options(test_ros2_message PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
-    target_link_libraries(test_ros2_message $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
+    if(NOT DISABLE_SANITIZERS)
+      target_compile_options(test_ros2_message PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
+      target_link_libraries(test_ros2_message $<$<CXX_COMPILER_ID:GNU>:-fsanitize=leak>)
+    endif()
     target_include_directories(test_ros2_message
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
