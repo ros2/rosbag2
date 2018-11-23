@@ -23,13 +23,17 @@ find_package(Poco COMPONENTS Foundation)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
+find_package(rosidl_typesupport_cpp REQUIRED)
+find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/rosbag2/converter.cpp
   src/rosbag2/info.cpp
   src/rosbag2/sequential_reader.cpp
   src/rosbag2/serialization_format_converter_factory.cpp
   src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/writer.cpp)
+  src/rosbag2/writer.cpp
+  src/rosbag2/types/ros2_message.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
@@ -38,6 +42,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rcutils
   rosbag2_storage
   rosidl_generator_cpp
+  rosidl_typesupport_introspection_cpp
+  rosidl_typesupport_cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -65,11 +71,12 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_storage)
+ament_export_dependencies(rosbag2_storage rosidl_typesupport_introspection_cpp)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
@@ -100,11 +107,23 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_info
     test/rosbag2/test_info.cpp
-    test/rosbag2/mock_metadata_io.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
     target_link_libraries(test_info rosbag2)
     ament_target_dependencies(test_info rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_sequential_reader
+    test/rosbag2/test_sequential_reader.cpp)
+  if(TARGET test_sequential_reader)
+    target_link_libraries(test_sequential_reader rosbag2)
+  endif()
+
+  ament_add_gmock(test_ros2_message
+    test/rosbag2/types/test_ros2_message.cpp)
+  if(TARGET test_ros2_message)
+    target_link_libraries(test_ros2_message rosbag2)
+    ament_target_dependencies(test_ros2_message test_msgs)
   endif()
 endif()
 

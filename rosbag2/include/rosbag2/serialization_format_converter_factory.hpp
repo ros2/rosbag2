@@ -50,7 +50,7 @@ public:
 
   ~SerializationFormatConverterFactory() override;
 
-  std::shared_ptr<SerializationFormatConverterInterface>
+  std::unique_ptr<SerializationFormatConverterInterface>
   load_converter(const std::string & format) override;
 
 private:

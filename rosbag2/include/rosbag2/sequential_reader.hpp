@@ -20,7 +20,11 @@
 #include <vector>
 
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2/converter.hpp"
+#include "rosbag2/serialization_format_converter_factory.hpp"
+#include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -42,6 +46,12 @@ namespace rosbag2
 class ROSBAG2_PUBLIC SequentialReader
 {
 public:
+  explicit
+  SequentialReader(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
+    std::make_unique<rosbag2_storage::StorageFactory>(),
+    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<SerializationFormatConverterFactory>());
   virtual ~SequentialReader();
 
   /**
@@ -49,9 +59,14 @@ public:
    * opened. This must be called before any other function is used. The rosbag is
    * automatically closed on destruction.
    *
+   * If the rmw_serialization_format is not the same as the format of the underlying storage, a
+   * converter will be used to automatically convert the functions. Throws if the converter
+   * plugin does not exist
+   *
    * \param options Options to configure the storage
+   * \param rmw_serialization_format Messages will be serialized in this format
    */
-  virtual void open(const StorageOptions & options);
+  virtual void open(const StorageOptions & options, const std::string & rmw_serialization_format);
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.
@@ -63,6 +78,7 @@ public:
 
   /**
    * Read next message from storage. Will throw if no more messages are available.
+   * The message will be serialized in the format given to `open`.
    *
    * Expected usage:
    * if (writer.has_next()) message = writer.read_next();
@@ -81,8 +97,10 @@ public:
   virtual std::vector<TopicWithType> get_all_topics_and_types();
 
 private:
-  rosbag2_storage::StorageFactory factory_;
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
+  std::unique_ptr<Converter> converter_;
 };
 
 }  // namespace rosbag2

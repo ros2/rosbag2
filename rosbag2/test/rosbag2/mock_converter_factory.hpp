@@ -1,4 +1,4 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__ROS_HELPER_HPP_
-#define ROSBAG2_STORAGE__ROS_HELPER_HPP_
+#ifndef ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
+#define ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
+
+#include <gmock/gmock.h>
 
 #include <memory>
+#include <string>
 
-#include "rcutils/types.h"
+#include "rosbag2/serialization_format_converter_factory_interface.hpp"
 
-#include "rosbag2_storage/visibility_control.hpp"
-
-namespace rosbag2_storage
+class MockConverterFactory : public rosbag2::SerializationFormatConverterFactoryInterface
 {
+public:
+  MOCK_METHOD1(load_converter,
+    std::unique_ptr<rosbag2::SerializationFormatConverterInterface>(const std::string &));
+};
 
-ROSBAG2_STORAGE_PUBLIC
-std::shared_ptr<rcutils_char_array_t>
-make_serialized_message(const void * data, size_t size);
-
-ROSBAG2_STORAGE_PUBLIC
-std::shared_ptr<rcutils_char_array_t>
-make_empty_serialized_message(size_t size);
-
-
-}  // namespace rosbag2_storage
-
-#endif  // ROSBAG2_STORAGE__ROS_HELPER_HPP_
+#endif  // ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_

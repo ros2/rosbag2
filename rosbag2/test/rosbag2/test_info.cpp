@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "mock_metadata_io.hpp"
 #include "rosbag2/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2/writer.hpp"
 

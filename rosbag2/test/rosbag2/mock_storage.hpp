@@ -15,6 +15,8 @@
 #ifndef ROSBAG2__MOCK_STORAGE_HPP_
 #define ROSBAG2__MOCK_STORAGE_HPP_
 
+#include <gmock/gmock.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,37 +29,13 @@
 class MockStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  ~MockStorage() override = default;
-
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override
-  {
-    (void) uri;
-    (void) flag;
-  }
-
-  void create_topic(const rosbag2_storage::TopicWithType & topic) override
-  {
-    (void) topic;
-  }
-
-  bool has_next() override {return true;}
-
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override {return nullptr;}
-
-  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override
-  {
-    (void) msg;
-  }
-
-  std::vector<rosbag2_storage::TopicWithType> get_all_topics_and_types() override
-  {
-    return std::vector<rosbag2_storage::TopicWithType>();
-  }
-
-  rosbag2_storage::BagMetadata get_metadata() override
-  {
-    return rosbag2_storage::BagMetadata();
-  }
+  MOCK_METHOD2(open, void(const std::string &, rosbag2_storage::storage_interfaces::IOFlag));
+  MOCK_METHOD1(create_topic, void(const rosbag2_storage::TopicWithType &));
+  MOCK_METHOD0(has_next, bool());
+  MOCK_METHOD0(read_next, std::shared_ptr<rosbag2_storage::SerializedBagMessage>());
+  MOCK_METHOD1(write, void(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));
+  MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicWithType>());
+  MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
 };
 
 #endif  // ROSBAG2__MOCK_STORAGE_HPP_

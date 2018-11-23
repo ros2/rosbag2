@@ -16,21 +16,38 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rosbag2
 {
 
+SequentialReader::SequentialReader(
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
+: storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory)),
+  converter_(nullptr)
+{}
+
 SequentialReader::~SequentialReader()
 {
-  storage_.reset();  // Necessary to ensure that the writer is destroyed before the factory
+  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
 }
 
-void SequentialReader::open(const StorageOptions & options)
+void
+SequentialReader::open(const StorageOptions & options, const std::string & rmw_serialization_format)
 {
-  storage_ = factory_.open_read_only(options.uri, options.storage_id);
+  storage_ = storage_factory_->open_read_only(options.uri, options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
+  }
+  auto storage_serialization_format = storage_->get_metadata().serialization_format;
+  if (rmw_serialization_format != storage_serialization_format) {
+    converter_ = std::make_unique<Converter>(
+      storage_serialization_format,
+      rmw_serialization_format,
+      storage_->get_all_topics_and_types(),
+      converter_factory_);
   }
 }
 
@@ -45,7 +62,8 @@ bool SequentialReader::has_next()
 std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
-    return storage_->read_next();
+    auto message = storage_->read_next();
+    return converter_ ? converter_->convert(message) : message;
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }

@@ -49,11 +49,13 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package
 }
 
 TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
-  EXPECT_THROW(rosbag2::get_typesupport("invalid/message"), ament_index_cpp::PackageNotFoundError);
+  EXPECT_THROW(rosbag2::get_typesupport("invalid/message", "rosidl_typesupport_cpp"),
+    ament_index_cpp::PackageNotFoundError);
 }
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
-  auto string_typesupport = rosbag2::get_typesupport("test_msgs/Primitives");
+  auto string_typesupport =
+    rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
 
   EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));

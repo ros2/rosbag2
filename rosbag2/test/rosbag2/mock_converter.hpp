@@ -1,4 +1,4 @@
-// Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2018, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
-#define ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
+#ifndef ROSBAG2__MOCK_CONVERTER_HPP_
+#define ROSBAG2__MOCK_CONVERTER_HPP_
+
+#include <gmock/gmock.h>
 
 #include <memory>
 #include <string>
 
 #include "rosbag2/serialization_format_converter_interface.hpp"
-#include "rosbag2/visibility_control.hpp"
 
-namespace rosbag2
-{
-
-class ROSBAG2_PUBLIC SerializationFormatConverterFactoryInterface
+class MockConverter : public rosbag2::SerializationFormatConverterInterface
 {
 public:
-  virtual ~SerializationFormatConverterFactoryInterface() = default;
+  MOCK_METHOD3(deserialize,
+    void(
+      std::shared_ptr<const rosbag2::SerializedBagMessage>,
+      const rosidl_message_type_support_t *,
+      std::shared_ptr<rosbag2_ros2_message_t>));
 
-  virtual std::unique_ptr<SerializationFormatConverterInterface>
-  load_converter(const std::string & format) = 0;
+  MOCK_METHOD3(serialize,
+    void(
+      std::shared_ptr<const rosbag2_ros2_message_t>,
+      const rosidl_message_type_support_t *,
+      std::shared_ptr<rosbag2::SerializedBagMessage>));
 };
 
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_FACTORY_INTERFACE_HPP_
+#endif  // ROSBAG2__MOCK_CONVERTER_HPP_

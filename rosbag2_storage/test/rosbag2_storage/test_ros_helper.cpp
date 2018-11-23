@@ -32,3 +32,12 @@ TEST(ros_helper, make_serialized_message_contains_correct_data) {
   ASSERT_THAT(serialized_message->buffer_capacity, Eq(size));
   ASSERT_THAT(reinterpret_cast<double *>(serialized_message->buffer), Pointee(data_value));
 }
+
+TEST(ros_helper, make_empty_serialized_message_is_correctly_built) {
+  auto size = 32u;
+
+  auto empty_serialized_message = rosbag2_storage::make_empty_serialized_message(size);
+
+  ASSERT_THAT(empty_serialized_message->buffer_length, Eq(0u));
+  ASSERT_THAT(empty_serialized_message->buffer_capacity, Eq(size));
+}

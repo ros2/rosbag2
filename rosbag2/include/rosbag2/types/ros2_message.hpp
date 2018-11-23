@@ -15,8 +15,13 @@
 #ifndef ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
 #define ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
 
+#include <memory>
+
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "rcutils/time.h"
 #include "rcutils/allocator.h"
+#include "rosbag2/visibility_control.hpp"
 
 typedef struct rosbag2_ros2_message_t
 {
@@ -25,5 +30,52 @@ typedef struct rosbag2_ros2_message_t
   rcutils_time_point_value_t timestamp;
   rcutils_allocator_t allocator;
 } rosbag2_ros2_message_t;
+
+namespace rosbag2
+{
+
+ROSBAG2_PUBLIC
+std::shared_ptr<rosbag2_ros2_message_t>
+allocate_ros2_message(
+  const rosidl_message_type_support_t * introspection_ts, const rcutils_allocator_t * allocator);
+
+ROSBAG2_PUBLIC
+void allocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
+
+ROSBAG2_PUBLIC
+void allocate_element(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+ROSBAG2_PUBLIC
+void allocate_array(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+ROSBAG2_PUBLIC
+void allocate_vector(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+ROSBAG2_PUBLIC
+void deallocate_ros2_message(
+  rosbag2_ros2_message_t * msg,
+  const rosidl_typesupport_introspection_cpp::MessageMembers * members);
+
+ROSBAG2_PUBLIC
+void deallocate_internal_types(
+  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
+
+ROSBAG2_PUBLIC
+void cleanup_element(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+ROSBAG2_PUBLIC
+void cleanup_array(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+ROSBAG2_PUBLIC
+void cleanup_vector(
+  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+
+}  // namespace rosbag2
 
 #endif  // ROSBAG2__TYPES__ROS2_MESSAGE_HPP_

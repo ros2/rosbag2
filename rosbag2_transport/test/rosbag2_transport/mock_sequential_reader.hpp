@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -24,9 +25,10 @@
 class MockSequentialReader : public rosbag2::SequentialReader
 {
 public:
-  void open(const rosbag2::StorageOptions & options) override
+  void open(const rosbag2::StorageOptions & options, const std::string & rmw_format) override
   {
     (void) options;
+    (void) rmw_format;
   }
 
   bool has_next() override

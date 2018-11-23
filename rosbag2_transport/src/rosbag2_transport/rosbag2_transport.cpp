@@ -86,7 +86,7 @@ void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
-    reader_->open(storage_options);
+    reader_->open(storage_options, rmw_get_serialization_format());
 
     auto transport_node = setup_node();
 
