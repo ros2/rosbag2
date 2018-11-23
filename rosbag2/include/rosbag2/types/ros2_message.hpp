@@ -39,31 +39,40 @@ std::shared_ptr<rosbag2_ros2_message_t>
 allocate_ros2_message(
   const rosidl_message_type_support_t * introspection_ts, const rcutils_allocator_t * allocator);
 
+ROSBAG2_PUBLIC
 void allocate_internal_types(
   void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
 
+ROSBAG2_PUBLIC
 void allocate_element(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
+ROSBAG2_PUBLIC
 void allocate_array(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
+ROSBAG2_PUBLIC
 void allocate_vector(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
+ROSBAG2_PUBLIC
 void deallocate_ros2_message(
   rosbag2_ros2_message_t * msg,
   const rosidl_typesupport_introspection_cpp::MessageMembers * members);
 
+ROSBAG2_PUBLIC
 void deallocate_internal_types(
   void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
 
+ROSBAG2_PUBLIC
 void cleanup_element(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
+ROSBAG2_PUBLIC
 void cleanup_array(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
+ROSBAG2_PUBLIC
 void cleanup_vector(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
