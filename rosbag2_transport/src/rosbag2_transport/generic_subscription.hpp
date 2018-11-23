@@ -48,7 +48,7 @@ public:
     std::shared_ptr<rcl_node_t> node_handle,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
-    std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback);
+    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
@@ -77,7 +77,7 @@ private:
 
   std::shared_ptr<rmw_serialized_message_t> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
-  std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback_;
+  std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback_;
 };
 
 }  // namespace rosbag2_transport

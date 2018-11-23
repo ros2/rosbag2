@@ -187,7 +187,7 @@ private:
   std::shared_ptr<SqliteStatementWrapper> bind(rcutils_time_point_value_t value);
   std::shared_ptr<SqliteStatementWrapper> bind(double value);
   std::shared_ptr<SqliteStatementWrapper> bind(const std::string & value);
-  std::shared_ptr<SqliteStatementWrapper> bind(std::shared_ptr<rcutils_char_array_t> value);
+  std::shared_ptr<SqliteStatementWrapper> bind(std::shared_ptr<rcutils_uint8_array_t> value);
 
   std::shared_ptr<SqliteStatementWrapper> reset();
 
@@ -199,7 +199,7 @@ private:
   void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;
   void obtain_column_value(size_t index, double & value) const;
   void obtain_column_value(size_t index, std::string & value) const;
-  void obtain_column_value(size_t index, std::shared_ptr<rcutils_char_array_t> & value) const;
+  void obtain_column_value(size_t index, std::shared_ptr<rcutils_uint8_array_t> & value) const;
 
   template<typename T>
   void check_and_report_bind_error(int return_code, T value);
@@ -207,7 +207,7 @@ private:
 
   sqlite3_stmt * statement_;
   int last_bound_parameter_index_;
-  std::vector<std::shared_ptr<rcutils_char_array_t>> written_blobs_cache_;
+  std::vector<std::shared_ptr<rcutils_uint8_array_t>> written_blobs_cache_;
 };
 
 template<typename T1, typename T2, typename ... Params>

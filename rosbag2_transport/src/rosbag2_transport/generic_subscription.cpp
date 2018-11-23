@@ -29,7 +29,7 @@ GenericSubscription::GenericSubscription(
   std::shared_ptr<rcl_node_t> node_handle,
   const rosidl_message_type_support_t & ts,
   const std::string & topic_name,
-  std::function<void(std::shared_ptr<rcutils_char_array_t>)> callback)
+  std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 : SubscriptionBase(
     node_handle,
     ts,
@@ -54,13 +54,13 @@ void GenericSubscription::handle_message(
   std::shared_ptr<void> & message, const rmw_message_info_t & message_info)
 {
   (void) message_info;
-  auto typed_message = std::static_pointer_cast<rcutils_char_array_t>(message);
+  auto typed_message = std::static_pointer_cast<rmw_serialized_message_t>(message);
   callback_(typed_message);
 }
 
 void GenericSubscription::return_message(std::shared_ptr<void> & message)
 {
-  auto typed_message = std::static_pointer_cast<rcutils_char_array_t>(message);
+  auto typed_message = std::static_pointer_cast<rmw_serialized_message_t>(message);
   return_serialized_message(typed_message);
 }
 

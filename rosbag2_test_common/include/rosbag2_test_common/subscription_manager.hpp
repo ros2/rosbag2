@@ -50,7 +50,7 @@ public:
     subscriptions_.push_back(
       subscriber_node_->create_subscription<MessageT>(
         topic_name,
-        [this, topic_name](std::shared_ptr<rcutils_char_array_t> msg) {
+        [this, topic_name](std::shared_ptr<rmw_serialized_message_t> msg) {
           subscribed_messages_[topic_name].push_back(msg);
         }, qos_profile));
   }
@@ -88,7 +88,8 @@ private:
   }
 
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
-  std::map<std::string, std::vector<std::shared_ptr<rcutils_char_array_t>>> subscribed_messages_;
+  std::map<std::string,
+    std::vector<std::shared_ptr<rmw_serialized_message_t>>> subscribed_messages_;
   std::map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
   MemoryManagement memory_management_;

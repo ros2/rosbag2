@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "rcutils/types.h"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -25,11 +25,11 @@ namespace rosbag2_storage
 {
 
 ROSBAG2_STORAGE_PUBLIC
-std::shared_ptr<rcutils_char_array_t>
+std::shared_ptr<rcutils_uint8_array_t>
 make_serialized_message(const void * data, size_t size);
 
 ROSBAG2_STORAGE_PUBLIC
-std::shared_ptr<rcutils_char_array_t>
+std::shared_ptr<rcutils_uint8_array_t>
 make_empty_serialized_message(size_t size);
 
 

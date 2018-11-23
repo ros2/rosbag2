@@ -25,7 +25,7 @@ namespace rosbag2_storage
 
 static rcutils_allocator_t allocator = rcutils_get_default_allocator();
 
-std::shared_ptr<rcutils_char_array_t>
+std::shared_ptr<rcutils_uint8_array_t>
 make_serialized_message(const void * data, size_t size)
 {
   auto serialized_message = make_empty_serialized_message(size);
@@ -35,20 +35,20 @@ make_serialized_message(const void * data, size_t size)
   return serialized_message;
 }
 
-std::shared_ptr<rcutils_char_array_t>
+std::shared_ptr<rcutils_uint8_array_t>
 make_empty_serialized_message(size_t size)
 {
-  auto msg = new rcutils_char_array_t;
-  *msg = rcutils_get_zero_initialized_char_array();
-  auto ret = rcutils_char_array_init(msg, size, &allocator);
+  auto msg = new rcutils_uint8_array_t;
+  *msg = rcutils_get_zero_initialized_uint8_array();
+  auto ret = rcutils_uint8_array_init(msg, size, &allocator);
   if (ret != RCUTILS_RET_OK) {
     throw std::runtime_error("Error allocating resources for serialized message: " +
             std::string(rcutils_get_error_string().str));
   }
 
-  auto serialized_message = std::shared_ptr<rcutils_char_array_t>(msg,
-      [](rcutils_char_array_t * msg) {
-        int error = rcutils_char_array_fini(msg);
+  auto serialized_message = std::shared_ptr<rcutils_uint8_array_t>(msg,
+      [](rcutils_uint8_array_t * msg) {
+        int error = rcutils_uint8_array_fini(msg);
         delete msg;
         if (error != RCUTILS_RET_OK) {
           ROSBAG2_STORAGE_LOG_ERROR_STREAM(

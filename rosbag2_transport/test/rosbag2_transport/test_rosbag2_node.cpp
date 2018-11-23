@@ -73,7 +73,7 @@ public:
     return messages;
   }
 
-  std::shared_ptr<rcutils_char_array_t> serialize_string_message(const std::string & message)
+  std::shared_ptr<rmw_serialized_message_t> serialize_string_message(const std::string & message)
   {
     auto string_message = std::make_shared<test_msgs::msg::Primitives>();
     string_message->string_value = message;
