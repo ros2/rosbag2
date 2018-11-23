@@ -47,8 +47,8 @@ public:
     auto introspection_type_support = rosbag2::get_typesupport(
       "test_msgs/DynamicArrayNested", "rosidl_typesupport_introspection_cpp");
     auto ros_message = rosbag2::allocate_ros2_message(introspection_type_support, &allocator_);
-    ros_message->timestamp = 1;
-    ros_message->topic_name = topic_name_.c_str();
+    ros_message->time_stamp = 1;
+    rosbag2::ros2_message_set_topic_name(ros_message.get(), topic_name_.c_str());
     return ros_message;
   }
 

@@ -49,7 +49,7 @@ public:
     ros_message->allocator = allocator_;
 
     if (!topic_name.empty()) {
-      ros_message->topic_name = topic_name.c_str();
+      rosbag2::ros2_message_set_topic_name(ros_message.get(), topic_name.c_str());
     }
 
     return ros_message;
