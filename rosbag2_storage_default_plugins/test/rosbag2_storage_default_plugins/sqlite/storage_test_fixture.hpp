@@ -42,22 +42,22 @@ public:
     allocator_ = rcutils_get_default_allocator();
   }
 
-  std::shared_ptr<rcutils_char_array_t> make_serialized_message(std::string message)
+  std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(std::string message)
   {
     int message_size = get_buffer_capacity(message);
     message_size++;  // need to account for terminating null character
     assert(message_size > 0);
 
-    auto msg = new rcutils_char_array_t;
-    *msg = rcutils_get_zero_initialized_char_array();
-    auto ret = rcutils_char_array_init(msg, message_size, &allocator_);
+    auto msg = new rcutils_uint8_array_t;
+    *msg = rcutils_get_zero_initialized_uint8_array();
+    auto ret = rcutils_uint8_array_init(msg, message_size, &allocator_);
     if (ret != RCUTILS_RET_OK) {
       throw std::runtime_error("Error allocating resources " + std::to_string(ret));
     }
 
-    auto serialized_data = std::shared_ptr<rcutils_char_array_t>(msg,
-        [](rcutils_char_array_t * msg) {
-          int error = rcutils_char_array_fini(msg);
+    auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(msg,
+        [](rcutils_uint8_array_t * msg) {
+          int error = rcutils_uint8_array_fini(msg);
           delete msg;
           if (error != RCUTILS_RET_OK) {
             RCUTILS_LOG_ERROR_NAMED(
@@ -73,12 +73,12 @@ public:
     return serialized_data;
   }
 
-  std::string deserialize_message(std::shared_ptr<rcutils_char_array_t> serialized_message)
+  std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
-    char * copied = new char[serialized_message->buffer_length];
+    uint8_t * copied = new uint8_t[serialized_message->buffer_length];
     auto string_length = serialized_message->buffer_length - 8;
     memcpy(copied, &serialized_message->buffer[8], string_length);
-    std::string message_content(copied);
+    std::string message_content(reinterpret_cast<char *>(copied));
     // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
     delete[] copied;
     return message_content;
@@ -129,11 +129,11 @@ protected:
   }
 
   int write_data_to_serialized_string_message(
-    char * buffer, size_t buffer_capacity, const std::string & message)
+    uint8_t * buffer, size_t buffer_capacity, const std::string & message)
   {
     // This function also writes the final null charachter, which is absent in the CDR format.
     // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
-    return rcutils_snprintf(buffer,
+    return rcutils_snprintf(reinterpret_cast<char *>(buffer),
              buffer_capacity,
              "%c%c%c%c%c%c%c%c%s",
              0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,

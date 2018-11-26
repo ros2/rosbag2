@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-#include "rcutils/types/char_array.h"
+#include "rcutils/types/uint8_array.h"
 #include "rcutils/time.h"
 
 namespace rosbag2_storage
@@ -26,7 +26,7 @@ namespace rosbag2_storage
 
 struct SerializedBagMessage
 {
-  std::shared_ptr<rcutils_char_array_t> serialized_data;
+  std::shared_ptr<rcutils_uint8_array_t> serialized_data;
   rcutils_time_point_value_t time_stamp;
   std::string topic_name;
 };

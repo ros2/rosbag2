@@ -94,7 +94,7 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::bind(const std::
 }
 
 std::shared_ptr<SqliteStatementWrapper>
-SqliteStatementWrapper::bind(std::shared_ptr<rcutils_char_array_t> value)
+SqliteStatementWrapper::bind(std::shared_ptr<rcutils_uint8_array_t> value)
 {
   written_blobs_cache_.push_back(value);
   auto return_code = sqlite3_bind_blob(
@@ -147,7 +147,7 @@ void SqliteStatementWrapper::obtain_column_value(size_t index, std::string & val
 }
 
 void SqliteStatementWrapper::obtain_column_value(
-  size_t index, std::shared_ptr<rcutils_char_array_t> & value) const
+  size_t index, std::shared_ptr<rcutils_uint8_array_t> & value) const
 {
   auto data = sqlite3_column_blob(statement_, static_cast<int>(index));
   auto size = static_cast<size_t>(sqlite3_column_bytes(statement_, static_cast<int>(index)));

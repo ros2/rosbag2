@@ -173,7 +173,7 @@ void SqliteStorage::prepare_for_reading()
     "FROM messages JOIN topics ON messages.topic_id = topics.id "
     "ORDER BY messages.timestamp;");
   message_result_ = read_statement_->execute_query<
-    std::shared_ptr<rcutils_char_array_t>, rcutils_time_point_value_t, std::string>();
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
 }
 

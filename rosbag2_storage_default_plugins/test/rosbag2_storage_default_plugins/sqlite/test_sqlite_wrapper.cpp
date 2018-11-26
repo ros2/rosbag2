@@ -123,12 +123,12 @@ TEST_F(SqliteWrapperTestFixture, ros_specific_types_are_supported_for_reading_an
   db_.prepare_statement("CREATE TABLE test (timestamp INTEGER, data BLOB);")->execute_and_reset();
   rcutils_time_point_value_t time = 1099511627783;
   auto msg_content = "message";
-  std::shared_ptr<rcutils_char_array_t> message = make_serialized_message(msg_content);
+  std::shared_ptr<rcutils_uint8_array_t> message = make_serialized_message(msg_content);
 
   db_.prepare_statement("INSERT INTO test (timestamp, data) VALUES (?, ?);")
   ->bind(time, message)->execute_and_reset();
   auto row_iter = db_.prepare_statement("SELECT timestamp, data FROM test")
-    ->execute_query<rcutils_time_point_value_t, std::shared_ptr<rcutils_char_array_t>>().begin();
+    ->execute_query<rcutils_time_point_value_t, std::shared_ptr<rcutils_uint8_array_t>>().begin();
 
   ASSERT_THAT(std::get<0>(*row_iter), Eq(time));
   ASSERT_THAT(deserialize_message(std::get<1>(*row_iter)), StrEq(msg_content));
