@@ -16,10 +16,14 @@
 #define ROSBAG2_TRANSPORT__RECORDER_HPP_
 
 #include <future>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
+#include "rosbag2/types.hpp"
+#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
 namespace rosbag2
@@ -44,7 +48,13 @@ private:
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
   std::future<void> launch_topics_discovery(
-    std::chrono::milliseconds topic_polling_frequency, std::vector<std::string> topics = {});
+    std::chrono::milliseconds topic_polling_interval,
+    const std::vector<std::string> & topics_to_record = {});
+  void subscribe_all_missing_topics(
+    const std::map<std::string, std::string> & all_topics_and_types);
+  void subscribe_topic(const rosbag2::TopicWithType & topic_with_type);
+  bool is_every_topic_subscribed(const std::vector<std::string> & topics_to_record) const;
+  void record_messages() const;
 
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;

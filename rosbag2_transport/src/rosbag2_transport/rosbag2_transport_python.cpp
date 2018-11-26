@@ -49,7 +49,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
   record_options.all = all;
-  record_options.topic_polling_frequency = std::chrono::milliseconds(100);
+  record_options.topic_polling_interval = std::chrono::milliseconds(100);
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

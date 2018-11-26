@@ -27,7 +27,7 @@ public:
   bool all;
   std::vector<std::string> topics;
   std::string rmw_serialization_format;
-  std::chrono::milliseconds topic_polling_frequency;
+  std::chrono::milliseconds topic_polling_interval;
 };
 
 }  // namespace rosbag2_transport
