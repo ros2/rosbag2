@@ -74,6 +74,10 @@ std::future<void> Recorder::launch_topics_discovery(
           node_->get_all_topics_with_types() :
           node_->get_topics_with_types(topics);
 
+        if (!topics.empty() && subscriptions_.size() == topics.size()) {
+          return;
+        }
+
         for (const auto & topic_with_type : all_topics_and_types) {
           std::string topic_name = topic_with_type.first;
           bool already_subscribed = std::find(
