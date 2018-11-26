@@ -37,10 +37,12 @@ public:
   static std::string format_file_size(size_t file_size);
 
   static void format_file_paths(
-    std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces);
+    const std::vector<std::string> & paths,
+    std::stringstream & info_stream,
+    int indentation_spaces);
 
   static void format_topics_with_type(
-    std::vector<rosbag2::TopicInformation>,
+    const std::vector<rosbag2::TopicInformation> & topics,
     std::stringstream & info_stream,
     int indentation_spaces);
 
