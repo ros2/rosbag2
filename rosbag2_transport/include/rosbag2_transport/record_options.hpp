@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_
 #define ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_
 
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@ public:
   bool all;
   std::vector<std::string> topics;
   std::string rmw_serialization_format;
+  std::chrono::milliseconds topic_polling_frequency;
 };
 
 }  // namespace rosbag2_transport

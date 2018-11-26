@@ -43,7 +43,8 @@ public:
 private:
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
-  std::future<void> launch_topics_discovery(std::vector<std::string> topics = {});
+  std::future<void> launch_topics_discovery(
+    std::chrono::milliseconds topic_polling_frequency, std::vector<std::string> topics = {});
 
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;

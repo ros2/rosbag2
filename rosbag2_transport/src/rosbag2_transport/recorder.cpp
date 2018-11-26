@@ -34,7 +34,8 @@ Recorder::Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosb
 void Recorder::record(const RecordOptions & record_options)
 {
   ROSBAG2_TRANSPORT_LOG_INFO("Setup complete. Listening for topics...");
-  auto discovery_future = launch_topics_discovery(record_options.topics);
+  auto discovery_future = launch_topics_discovery(
+    record_options.topic_polling_frequency, record_options.topics);
   rclcpp::spin(node_);
   discovery_future.wait();
   subscriptions_.clear();
@@ -64,9 +65,10 @@ Recorder::create_subscription(
   return subscription;
 }
 
-std::future<void> Recorder::launch_topics_discovery(std::vector<std::string> topics)
+std::future<void> Recorder::launch_topics_discovery(
+  std::chrono::milliseconds topic_polling_frequency, std::vector<std::string> topics)
 {
-  auto subscribe_to_topics = [this, topics] {
+  auto subscribe_to_topics = [this, topics, topic_polling_frequency] {
       while (rclcpp::ok()) {
         auto all_topics_and_types = topics.empty() ?
           node_->get_all_topics_with_types() :
@@ -91,7 +93,7 @@ std::future<void> Recorder::launch_topics_discovery(std::vector<std::string> top
             }
           }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(topic_polling_frequency);
       }
     };
 

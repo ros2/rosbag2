@@ -37,7 +37,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  start_recording({false, {string_topic, array_topic}});
+  start_recording({false, {string_topic, array_topic}, 100ms});
 
   pub_man_.add_publisher<test_msgs::msg::Primitives>(
     string_topic, string_message, 2);
