@@ -10,10 +10,10 @@
 
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
+  <depend>rmw</depend>
+  <depend>ros1_rosbag_storage_vendor</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosbag2</depend>
-  <depend>rosbag</depend>
-  <depend>rmw</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

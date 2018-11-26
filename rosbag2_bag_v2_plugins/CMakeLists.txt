@@ -21,7 +21,7 @@ if(UNIX)
   find_package(rcutils REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2 REQUIRED)
-  find_package(rosbag REQUIRED)
+  find_package(ros1_rosbag_storage REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(ros1_bridge REQUIRED)
   find_package(rclcpp REQUIRED)
@@ -29,14 +29,20 @@ if(UNIX)
   set(generated_path "${CMAKE_BINARY_DIR}/generated")
   set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 
-  add_library(${PROJECT_NAME} SHARED src/rosbag2_bag_v2_plugins/storage/rosbag1_storage.cpp)
+  add_library(
+    ${PROJECT_NAME} SHARED
+    src/rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.cpp
+    ${generated_files})
 
   ament_target_dependencies(${PROJECT_NAME}
+    ros1_rosbag_storage
     rclcpp
     rosbag2_storage
-    rosbag
-    rcutils
-    pluginlib)
+    rosbag2
+    ros1_bridge
+    pluginlib
+    ${ros2_message_packages}
+    ${prefixed_ros1_message_packages})
 
   target_include_directories(${PROJECT_NAME}
     PUBLIC
@@ -64,7 +70,7 @@ if(UNIX)
   ament_export_include_directories(include)
   ament_export_libraries(${PROJECT_NAME})
   ament_export_dependencies(rosbag2_storage)
-  ament_export_dependencies(rosbag2)
+  ament_export_dependencies(rosbag2 ros1_rosbag_storage)
 
   add_custom_command(
     OUTPUT ${generated_files}

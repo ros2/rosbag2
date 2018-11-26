@@ -1,7 +1,7 @@
 <library path="rosbag2_bag_v2_plugins">
     <class
-            name="rosbag1_storage"
-            type="Rosbag1Storage"
+            name="rosbag_v2"
+            type="rosbag2_bag_v2_plugins::RosbagV2Storage"
             base_class_type="rosbag2_storage::storage_interfaces::ReadOnlyInterface"
     >
         <description>This is a storge plugin which allows to read rosbag v2 bagfiles.</description>

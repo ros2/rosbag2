@@ -59,8 +59,7 @@ convert_1_to_2(rosbag::MessageInstance msg_instance)
     auto typesupport = rosbag2::get_typesupport(
       "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)", "rosidl_typesupport_cpp");
     serialized_message->topic_name = msg_instance.getTopic();
-    // TODO(Martin-Idel-SI): Copy timestamp
-    // serialized_message.timestamp = convert_time(msg_instance.getTime())
+    serialized_message->time_stamp = msg_instance.getTime().toNSec();
 
     auto ret =
       rmw_serialize(&ros2_message, typesupport, serialized_message->serialized_data.get());
