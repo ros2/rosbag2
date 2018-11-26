@@ -31,12 +31,17 @@ class Formatter
 public:
   static std::map<std::string, std::string> format_duration(
     std::chrono::high_resolution_clock::duration duration);
+
   static std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
+
   static std::string format_file_size(size_t file_size);
+
   static void format_file_paths(
     std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces);
+
   static void format_topics_with_type(
-    std::vector<rosbag2::TopicInformation>, std::stringstream & info_stream,
+    std::vector<rosbag2::TopicInformation>,
+    std::stringstream & info_stream,
     int indentation_spaces);
 
 private:
