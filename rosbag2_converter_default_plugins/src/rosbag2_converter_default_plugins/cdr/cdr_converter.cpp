@@ -99,7 +99,7 @@ void CdrConverter::deserialize(
   std::shared_ptr<rosbag2_ros2_message_t> ros_message)
 {
   ros_message->topic_name = serialized_message->topic_name.c_str();
-  ros_message->timestamp = serialized_message->time_stamp;
+  ros_message->time_stamp = serialized_message->time_stamp;
 
   printf("this should be a call to FASTRTPS\n");
   auto ret =
@@ -115,7 +115,7 @@ void CdrConverter::serialize(
   std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message)
 {
   serialized_message->topic_name = std::string(ros_message->topic_name);
-  serialized_message->time_stamp = ros_message->timestamp;
+  serialized_message->time_stamp = ros_message->time_stamp;
 
   auto ret = serialize_fcn_(
     ros_message->message, type_support, serialized_message->serialized_data.get());

@@ -20,7 +20,7 @@
 namespace rosbag2_storage
 {
 
-struct TopicWithType
+struct TopicMetadata
 {
   std::string name;
   std::string type;

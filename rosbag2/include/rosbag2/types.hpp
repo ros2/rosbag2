@@ -23,8 +23,8 @@ namespace rosbag2
 {
 using BagMetadata = rosbag2_storage::BagMetadata;
 using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
+using TopicInformation = rosbag2_storage::TopicInformation;
 using TopicMetadata = rosbag2_storage::TopicMetadata;
-using TopicWithType = rosbag2_storage::TopicWithType;
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__TYPES_HPP_

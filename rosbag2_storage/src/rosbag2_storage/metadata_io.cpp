@@ -36,9 +36,9 @@
 namespace YAML
 {
 template<>
-struct convert<rosbag2_storage::TopicWithType>
+struct convert<rosbag2_storage::TopicMetadata>
 {
-  static Node encode(const rosbag2_storage::TopicWithType & topic)
+  static Node encode(const rosbag2_storage::TopicMetadata & topic)
   {
     Node node;
     node["name"] = topic.name;
@@ -46,7 +46,7 @@ struct convert<rosbag2_storage::TopicWithType>
     return node;
   }
 
-  static bool decode(const Node & node, rosbag2_storage::TopicWithType & topic)
+  static bool decode(const Node & node, rosbag2_storage::TopicMetadata & topic)
   {
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
@@ -55,9 +55,9 @@ struct convert<rosbag2_storage::TopicWithType>
 };
 
 template<>
-struct convert<rosbag2_storage::TopicMetadata>
+struct convert<rosbag2_storage::TopicInformation>
 {
-  static Node encode(const rosbag2_storage::TopicMetadata & metadata)
+  static Node encode(const rosbag2_storage::TopicInformation & metadata)
   {
     Node node;
     node["topic_and_type"] = metadata.topic_with_type;
@@ -65,9 +65,9 @@ struct convert<rosbag2_storage::TopicMetadata>
     return node;
   }
 
-  static bool decode(const Node & node, rosbag2_storage::TopicMetadata & metadata)
+  static bool decode(const Node & node, rosbag2_storage::TopicInformation & metadata)
   {
-    metadata.topic_with_type = node["topic_and_type"].as<rosbag2_storage::TopicWithType>();
+    metadata.topic_with_type = node["topic_and_type"].as<rosbag2_storage::TopicMetadata>();
     metadata.message_count = node["message_count"].as<size_t>();
     return true;
   }
@@ -137,7 +137,7 @@ struct convert<rosbag2_storage::BagMetadata>
       .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
     metadata.message_count = node["message_count"].as<size_t>();
     metadata.topics_with_message_count =
-      node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicMetadata>>();
+      node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicInformation>>();
     return true;
   }
 };

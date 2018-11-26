@@ -52,7 +52,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestPlugin::read_next()
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-void TestPlugin::create_topic(const rosbag2_storage::TopicWithType & topic)
+void TestPlugin::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   std::cout << "Created topic with name =" << topic.name << " and type =" << topic.type << ".\n";
 }
@@ -63,10 +63,10 @@ void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBa
   std::cout << "\nwriting\n";
 }
 
-std::vector<rosbag2_storage::TopicWithType> TestPlugin::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicMetadata> TestPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::vector<rosbag2_storage::TopicWithType>();
+  return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
 rosbag2_storage::BagMetadata TestPlugin::get_metadata()

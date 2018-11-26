@@ -31,7 +31,7 @@ namespace rosbag2
 Converter::Converter(
   const std::string & input_format,
   const std::string & output_format,
-  const std::vector<TopicWithType> & topics_and_types,
+  const std::vector<TopicMetadata> & topics_and_types,
   std::shared_ptr<rosbag2::SerializationFormatConverterFactoryInterface> converter_factory)
 : converter_factory_(converter_factory)
 {

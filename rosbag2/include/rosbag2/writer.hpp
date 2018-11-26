@@ -64,7 +64,7 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void create_topic(const TopicWithType & topic_with_type);
+  virtual void create_topic(const TopicMetadata & topic_with_type);
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.

@@ -44,7 +44,7 @@ public:
     const std::string & topic_name = "")
   {
     auto ros_message = std::make_shared<rosbag2_ros2_message_t>();
-    ros_message->timestamp = 0;
+    ros_message->time_stamp = 0;
     ros_message->message = nullptr;
     ros_message->allocator = allocator_;
 
@@ -81,13 +81,13 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
 
   auto cast_message = static_cast<test_msgs::msg::Primitives *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
-  EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
 }
 
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_primitives) {
   auto ros_message = make_shared_ros_message(topic_name_);
-  ros_message->timestamp = 1;
+  ros_message->time_stamp = 1;
   auto message = get_messages_primitives()[0];
   message->string_value = "test_serialize";
   message->float64_value = 102.34;
@@ -104,7 +104,7 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_prim
     serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
-  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
 }
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_static_array) {
@@ -128,13 +128,13 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
 
   auto cast_message = static_cast<test_msgs::msg::StaticArrayPrimitives *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
-  EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
 }
 
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_static_array) {
   auto ros_message = make_shared_ros_message(topic_name_);
-  ros_message->timestamp = 1;
+  ros_message->time_stamp = 1;
   auto message = get_messages_static_array_primitives()[0];
   message->string_values = {{"test_deserialize", "another string", "the third one"}};
   message->float64_values = {{102.34, 1.9, 1236.011}};
@@ -152,7 +152,7 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
     deserialize_message<test_msgs::msg::StaticArrayPrimitives>(serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
-  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
 }
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dynamic_array_nest) {
@@ -181,13 +181,13 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dy
 
   auto cast_message = static_cast<test_msgs::msg::DynamicArrayNested *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
-  EXPECT_THAT(ros_message->timestamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
 }
 
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dynamic_array_nest) {
   auto ros_message = make_shared_ros_message(topic_name_);
-  ros_message->timestamp = 1;
+  ros_message->time_stamp = 1;
   auto message = get_messages_dynamic_array_nested()[0];
   test_msgs::msg::Primitives first_primitive_message;
   first_primitive_message.string_value = "I am the first";
@@ -210,5 +210,5 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dyna
     deserialize_message<test_msgs::msg::DynamicArrayNested>(serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
-  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->timestamp));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
 }

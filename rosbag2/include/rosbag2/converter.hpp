@@ -43,7 +43,7 @@ public:
   Converter(
     const std::string & input_format,
     const std::string & output_format,
-    const std::vector<TopicWithType> & topics_and_types,
+    const std::vector<TopicMetadata> & topics_and_types,
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<SerializationFormatConverterFactory>());
 

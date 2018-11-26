@@ -30,23 +30,23 @@ using namespace ::testing;  // NOLINT
 namespace rosbag2_storage
 {
 
-bool operator==(const TopicWithType & lhs, const TopicWithType & rhs)
+bool operator==(const TopicMetadata & lhs, const TopicMetadata & rhs)
 {
   return lhs.name == rhs.name && lhs.type == rhs.type;
 }
 
-bool operator!=(const TopicWithType & lhs, const TopicWithType & rhs)
+bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
 {
   return !(lhs == rhs);
 }
 
-bool operator==(const TopicMetadata & lhs, const TopicMetadata & rhs)
+bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 {
   return lhs.topic_with_type == rhs.topic_with_type &&
          lhs.message_count == rhs.message_count;
 }
 
-bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
+bool operator!=(const TopicInformation & lhs, const TopicInformation & rhs)
 {
   return !(lhs == rhs);
 }
@@ -121,8 +121,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, ElementsAreArray({
-    rosbag2_storage::TopicWithType{"topic1", "type1"},
-    rosbag2_storage::TopicWithType{"topic2", "type2"}
+    rosbag2_storage::TopicMetadata{"topic1", "type1"},
+    rosbag2_storage::TopicMetadata{"topic2", "type2"}
   }));
 }
 
@@ -147,8 +147,8 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
     rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
-    rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic1", "type1"}, 2u},
-    rosbag2_storage::TopicMetadata{rosbag2_storage::TopicWithType{"topic2", "type2"}, 1u}
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{"topic1", "type1"}, 2u},
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{"topic2", "type2"}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
   EXPECT_THAT(metadata.starting_time, Eq(

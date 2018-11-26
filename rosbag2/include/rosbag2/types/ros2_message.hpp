@@ -27,7 +27,7 @@ typedef struct rosbag2_ros2_message_t
 {
   void * message;
   const char * topic_name;
-  rcutils_time_point_value_t timestamp;
+  rcutils_time_point_value_t time_stamp;
   rcutils_allocator_t allocator;
 } rosbag2_ros2_message_t;
 

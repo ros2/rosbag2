@@ -49,10 +49,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-std::vector<rosbag2_storage::TopicWithType> TestReadOnlyPlugin::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::vector<rosbag2_storage::TopicWithType>();
+  return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
 rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()

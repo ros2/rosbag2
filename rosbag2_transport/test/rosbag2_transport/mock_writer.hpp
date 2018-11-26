@@ -30,7 +30,7 @@ public:
     (void) options;
   }
 
-  void create_topic(const rosbag2::TopicWithType & topic_with_type) override
+  void create_topic(const rosbag2::TopicMetadata & topic_with_type) override
   {
     topics_.emplace(topic_with_type.name, topic_with_type);
   }
@@ -51,13 +51,13 @@ public:
     return messages_per_topic_;
   }
 
-  std::map<std::string, rosbag2::TopicWithType> get_topics()
+  std::map<std::string, rosbag2::TopicMetadata> get_topics()
   {
     return topics_;
   }
 
 private:
-  std::map<std::string, rosbag2::TopicWithType> topics_;
+  std::map<std::string, rosbag2::TopicMetadata> topics_;
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages_;
   std::map<std::string, size_t> messages_per_topic_;
 };

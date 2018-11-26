@@ -80,7 +80,9 @@ std::string Formatter::format_file_size(size_t file_size)
 }
 
 void Formatter::format_file_paths(
-  std::vector<std::string> paths, std::stringstream & info_stream, int indentation_spaces)
+  const std::vector<std::string> & paths,
+  std::stringstream & info_stream,
+  int indentation_spaces)
 {
   if (paths.empty()) {
     info_stream << std::endl;
@@ -99,7 +101,7 @@ void Formatter::format_file_paths(
 }
 
 void Formatter::format_topics_with_type(
-  std::vector<rosbag2::TopicMetadata> topics,
+  const std::vector<rosbag2::TopicInformation> & topics,
   std::stringstream & info_stream,
   int indentation_spaces)
 {

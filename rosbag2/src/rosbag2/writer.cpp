@@ -48,7 +48,7 @@ void Writer::open(const StorageOptions & options)
   uri_ = options.uri;
 }
 
-void Writer::create_topic(const TopicWithType & topic_with_type)
+void Writer::create_topic(const TopicMetadata & topic_with_type)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
