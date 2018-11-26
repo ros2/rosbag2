@@ -88,5 +88,5 @@ TEST_F(ConverterTestFixture, cdr_converter_plugin_can_serialize_and_deserialize_
     *static_cast<test_msgs::msg::DynamicArrayNested *>(final_roundtrip_ros_message->message),
     Eq(*static_cast<test_msgs::msg::DynamicArrayNested *>(initial_ros_message->message)));
   EXPECT_THAT(final_roundtrip_ros_message->topic_name, StrEq(initial_ros_message->topic_name));
-  EXPECT_THAT(final_roundtrip_ros_message->timestamp, Eq(initial_ros_message->timestamp));
+  EXPECT_THAT(final_roundtrip_ros_message->time_stamp, Eq(initial_ros_message->time_stamp));
 }
