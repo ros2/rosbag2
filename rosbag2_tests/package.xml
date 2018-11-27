@@ -16,11 +16,13 @@
   <test_depend>ament_lint_common</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
   <test_depend>rosbag2_converter_default_plugins</test_depend>
+  <test_depend>rosbag2_bag_v2_plugins</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>rosbag2_storage</test_depend>
   <test_depend>rosbag2</test_depend>
   <test_depend>ros2bag</test_depend>
   <test_depend>rclcpp</test_depend>
+  <test_depend>std_msgs</test_depend>
   <test_depend>test_msgs</test_depend>
 
   <export>
