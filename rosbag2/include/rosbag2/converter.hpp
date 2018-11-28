@@ -15,9 +15,9 @@
 #ifndef ROSBAG2__CONVERTER_HPP_
 #define ROSBAG2__CONVERTER_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rosbag2/serialization_format_converter_factory.hpp"
@@ -74,7 +74,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::unique_ptr<SerializationFormatConverterInterface> input_converter_;
   std::unique_ptr<SerializationFormatConverterInterface> output_converter_;
-  std::map<std::string, ConverterTypeSupport> topics_and_types_;
+  std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
 };
 
 }  // namespace rosbag2

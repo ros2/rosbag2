@@ -16,7 +16,6 @@
 #define ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_HPP_
 
 #include <functional>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>

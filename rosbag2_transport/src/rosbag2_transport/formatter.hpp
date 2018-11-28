@@ -16,9 +16,9 @@
 #define ROSBAG2_TRANSPORT__FORMATTER_HPP_
 
 #include <chrono>
-#include <map>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rosbag2/types.hpp"
@@ -29,7 +29,7 @@ namespace rosbag2_transport
 class Formatter
 {
 public:
-  static std::map<std::string, std::string> format_duration(
+  static std::unordered_map<std::string, std::string> format_duration(
     std::chrono::high_resolution_clock::duration duration);
 
   static std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);

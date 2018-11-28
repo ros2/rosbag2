@@ -16,9 +16,9 @@
 
 #include <chrono>
 #include <iomanip>
-#include <map>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #ifdef _WIN32
@@ -28,10 +28,10 @@
 namespace rosbag2_transport
 {
 
-std::map<std::string, std::string> Formatter::format_duration(
+std::unordered_map<std::string, std::string> Formatter::format_duration(
   std::chrono::high_resolution_clock::duration duration)
 {
-  std::map<std::string, std::string> formatted_duration;
+  std::unordered_map<std::string, std::string> formatted_duration;
   auto m_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
   std::string fractional_seconds = std::to_string(m_seconds.count() % 1000);

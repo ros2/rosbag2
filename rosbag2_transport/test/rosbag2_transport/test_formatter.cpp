@@ -14,7 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <map>
 #include <memory>
 #include <sstream>
 #include <string>

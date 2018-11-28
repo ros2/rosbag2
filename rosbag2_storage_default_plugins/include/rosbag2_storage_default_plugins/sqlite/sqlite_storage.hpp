@@ -15,9 +15,9 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rcutils/types.h"
@@ -81,7 +81,7 @@ private:
   SqliteStatement read_statement_;
   ReadQueryResult message_result_;
   ReadQueryResult::Iterator current_message_row_;
-  std::map<std::string, int> topics_;
+  std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
 };
 

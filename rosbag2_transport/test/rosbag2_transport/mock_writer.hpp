@@ -15,9 +15,9 @@
 #ifndef ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rosbag2/writer.hpp"
@@ -51,20 +51,20 @@ public:
     return messages_;
   }
 
-  std::map<std::string, size_t> messages_per_topic()
+  std::unordered_map<std::string, size_t> messages_per_topic()
   {
     return messages_per_topic_;
   }
 
-  std::map<std::string, rosbag2::TopicMetadata> get_topics()
+  std::unordered_map<std::string, rosbag2::TopicMetadata> get_topics()
   {
     return topics_;
   }
 
 private:
-  std::map<std::string, rosbag2::TopicMetadata> topics_;
+  std::unordered_map<std::string, rosbag2::TopicMetadata> topics_;
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages_;
-  std::map<std::string, size_t> messages_per_topic_;
+  std::unordered_map<std::string, size_t> messages_per_topic_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
