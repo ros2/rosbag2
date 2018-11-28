@@ -72,7 +72,8 @@ class RecordVerb(VerbExtension):
                 all=True)
         elif args.topics and len(args.topics) > 0:
             rosbag2_transport_py.record(
-                uri=uri, storage_id=args.storage,
+                uri=uri,
+                storage_id=args.storage,
                 serialization_format=args.serialization_format,
                 topics=args.topics)
         else:

@@ -50,6 +50,7 @@ void ros2_message_set_topic_name(rosbag2_ros2_message_t * msg, const char * topi
 {
   if (msg->topic_name) {
     msg->allocator.deallocate(msg->topic_name, msg->allocator.state);
+    msg->topic_name = nullptr;
   }
   msg->topic_name = rcutils_strdup(topic_name, msg->allocator);
 }

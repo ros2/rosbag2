@@ -37,7 +37,13 @@
 namespace rosbag2
 {
 
-struct ConverterTypeSupport;
+// Convenience struct to keep both type supports (rmw and introspection) together.
+// Only used internally.
+struct ConverterTypeSupport
+{
+  const rosidl_message_type_support_t * cpp_type_support;
+  const rosidl_message_type_support_t * introspection_type_support;
+};
 
 class ROSBAG2_PUBLIC Converter
 {

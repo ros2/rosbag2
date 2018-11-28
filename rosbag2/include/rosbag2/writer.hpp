@@ -54,6 +54,7 @@ public:
     std::make_shared<SerializationFormatConverterFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
+
   virtual ~Writer();
 
   /**
