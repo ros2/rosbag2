@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rosbag2/converter_options.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/serialization_format_converter_interface.hpp"
@@ -52,6 +53,11 @@ public:
   Converter(
     const std::string & input_format,
     const std::string & output_format,
+    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<SerializationFormatConverterFactory>());
+
+  Converter(
+    const rosbag2::ConverterOptions & converter_options,
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<SerializationFormatConverterFactory>());
 

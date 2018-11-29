@@ -26,13 +26,11 @@ class MockWriter : public rosbag2::Writer
 {
 public:
   void open(
-    const rosbag2::StorageOptions & options,
-    const std::string & input_serialization_format,
-    const std::string & output_serialization_format) override
+    const rosbag2::StorageOptions & storage_options,
+    const rosbag2::ConverterOptions & converter_options) override
   {
-    (void) options;
-    (void) input_serialization_format;
-    (void) output_serialization_format;
+    (void) storage_options;
+    (void) converter_options;
   }
 
   void create_topic(const rosbag2::TopicMetadata & topic_with_type) override

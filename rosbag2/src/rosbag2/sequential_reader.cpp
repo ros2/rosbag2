@@ -37,9 +37,10 @@ SequentialReader::~SequentialReader()
 }
 
 void
-SequentialReader::open(const StorageOptions & options, const std::string & rmw_serialization_format)
+SequentialReader::open(
+  const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  storage_ = storage_factory_->open_read_only(options.uri, options.storage_id);
+  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -57,10 +58,10 @@ SequentialReader::open(const StorageOptions & options, const std::string & rmw_s
     }
   }
 
-  if (rmw_serialization_format != storage_serialization_format) {
+  if (converter_options.output_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
-      rmw_serialization_format,
+      converter_options.output_serialization_format,
       converter_factory_);
     auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {

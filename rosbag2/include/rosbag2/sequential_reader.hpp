@@ -52,6 +52,7 @@ public:
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<SerializationFormatConverterFactory>());
+
   virtual ~SequentialReader();
 
   /**
@@ -59,14 +60,16 @@ public:
    * opened. This must be called before any other function is used. The rosbag is
    * automatically closed on destruction.
    *
-   * If the rmw_serialization_format is not the same as the format of the underlying storage, a
-   * converter will be used to automatically convert the functions. Throws if the converter
-   * plugin does not exist
+   * If the `output_serialization_format` within the `converter_options` is not the same as the
+   * format of the underlying stored data, a converter will be used to automatically convert the
+   * data to the specified output format.
+   * Throws if the converter plugin does not exist.
    *
-   * \param options Options to configure the storage
-   * \param rmw_serialization_format Messages will be serialized in this format
+   * \param storage_options Options to configure the storage
+   * \param converter_options Options for specifying the output data format
    */
-  virtual void open(const StorageOptions & options, const std::string & rmw_serialization_format);
+  virtual void open(
+    const StorageOptions & storage_options, const ConverterOptions & converter_options);
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.
