@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
-#define ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
+#ifndef ROSBAG2__TYPES__INTROSPECTION_MESSAGE_HPP_
+#define ROSBAG2__TYPES__INTROSPECTION_MESSAGE_HPP_
 
 #include <memory>
 
@@ -23,7 +23,7 @@
 #include "rcutils/allocator.h"
 #include "rosbag2/visibility_control.hpp"
 
-typedef struct rosbag2_ros2_message_t
+typedef struct rosbag2_introspection_message_t
 {
   void * message;
   char * topic_name;
@@ -35,12 +35,13 @@ namespace rosbag2
 {
 
 ROSBAG2_PUBLIC
-std::shared_ptr<rosbag2_ros2_message_t>
-allocate_ros2_message(
+std::shared_ptr<rosbag2_introspection_message_t>
+allocate_introspection_message(
   const rosidl_message_type_support_t * introspection_ts, const rcutils_allocator_t * allocator);
 
 ROSBAG2_PUBLIC
-void ros2_message_set_topic_name(rosbag2_ros2_message_t * msg, const char * topic_name);
+void introspection_message_set_topic_name(
+  rosbag2_introspection_message_t * msg, const char * topic_name);
 
 ROSBAG2_PUBLIC
 void allocate_internal_types(
@@ -59,8 +60,8 @@ void allocate_vector(
   void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
 
 ROSBAG2_PUBLIC
-void deallocate_ros2_message(
-  rosbag2_ros2_message_t * msg,
+void deallocate_introspection_message(
+  rosbag2_introspection_message_t * msg,
   const rosidl_typesupport_introspection_cpp::MessageMembers * members);
 
 ROSBAG2_PUBLIC
@@ -81,4 +82,4 @@ void cleanup_vector(
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__TYPES__ROS2_MESSAGE_HPP_
+#endif  // ROSBAG2__TYPES__INTROSPECTION_MESSAGE_HPP_

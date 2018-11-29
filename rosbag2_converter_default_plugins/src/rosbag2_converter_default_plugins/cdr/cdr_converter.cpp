@@ -23,6 +23,8 @@
 #include "Poco/SharedLibrary.h"
 
 #include "rcutils/strdup.h"
+#include "rosbag2/types/introspection_message.hpp"
+#include "rosidl_generator_cpp/message_type_support_decl.hpp"
 
 #include "../logging.hpp"
 
@@ -96,28 +98,29 @@ CdrConverter::CdrConverter()
 void CdrConverter::deserialize(
   const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
   const rosidl_message_type_support_t * type_support,
-  std::shared_ptr<rosbag2_ros2_message_t> ros_message)
+  std::shared_ptr<rosbag2_introspection_message_t> introspection_message)
 {
-  rosbag2::ros2_message_set_topic_name(ros_message.get(), serialized_message->topic_name.c_str());
-  ros_message->time_stamp = serialized_message->time_stamp;
+  rosbag2::introspection_message_set_topic_name(
+    introspection_message.get(), serialized_message->topic_name.c_str());
+  introspection_message->time_stamp = serialized_message->time_stamp;
 
-  auto ret =
-    deserialize_fcn_(serialized_message->serialized_data.get(), type_support, ros_message->message);
+  auto ret = deserialize_fcn_(
+    serialized_message->serialized_data.get(), type_support, introspection_message->message);
   if (ret != RMW_RET_OK) {
     ROSBAG2_CONVERTER_DEFAULT_PLUGINS_LOG_ERROR("Failed to deserialize message.");
   }
 }
 
 void CdrConverter::serialize(
-  const std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
+  const std::shared_ptr<const rosbag2_introspection_message_t> introspection_message,
   const rosidl_message_type_support_t * type_support,
   std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message)
 {
-  serialized_message->topic_name = std::string(ros_message->topic_name);
-  serialized_message->time_stamp = ros_message->time_stamp;
+  serialized_message->topic_name = std::string(introspection_message->topic_name);
+  serialized_message->time_stamp = introspection_message->time_stamp;
 
   auto ret = serialize_fcn_(
-    ros_message->message, type_support, serialized_message->serialized_data.get());
+    introspection_message->message, type_support, serialized_message->serialized_data.get());
   if (ret != RMW_RET_OK) {
     ROSBAG2_CONVERTER_DEFAULT_PLUGINS_LOG_ERROR("Failed to serialize message.");
   }

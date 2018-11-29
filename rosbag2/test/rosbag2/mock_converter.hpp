@@ -33,7 +33,7 @@ public:
 
   MOCK_METHOD3(serialize,
     void(
-      std::shared_ptr<const rosbag2_ros2_message_t>,
+      std::shared_ptr<const rosbag2_introspection_message_t>,
       const rosidl_message_type_support_t *,
       std::shared_ptr<rosbag2::SerializedBagMessage>));
 };
