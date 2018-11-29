@@ -1,11 +1,3 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-new file mode 100644
-index 000000000..8cadbcabb
---- /dev/null
-+++ b/CMakeLists.txt
-@@ -0,0 +1,2 @@
-+cmake_minimum_required(VERSION 3.5)
-+add_subdirectory(tools/rosbag_storage)
 diff --git a/tools/rosbag_storage/CMakeLists.txt b/tools/rosbag_storage/CMakeLists.txt
 index ad2769817..9720ccb92 100644
 --- a/tools/rosbag_storage/CMakeLists.txt

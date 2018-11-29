@@ -35,8 +35,10 @@ ExternalProject_Add(ros1_rosbag_storage
   URL https://github.com/ros/ros_comm/archive/melodic-devel.zip
   URL_MD5 cfa0b16433e119616e28ed26be9712c2
   TIMEOUT 60
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/sources
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install
-  PATCH_COMMAND ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_patch.diff
+  PATCH_COMMAND ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_patch.diff &&
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
 )
 
 install(
