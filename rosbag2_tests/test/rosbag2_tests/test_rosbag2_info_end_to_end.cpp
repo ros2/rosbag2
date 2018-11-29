@@ -45,14 +45,15 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        sqlite3"
       "\nDuration:          0\\.155s"
-      "\nStart:             Sep .+ 2018 .+:.+:44\\.241 \\(1537282604\\.241\\)"
-      "\nEnd                Sep .+ 2018 .+:.+:44\\.397 \\(1537282604\\.397\\)"
+      "\nStart:             Sep 18 2018 .*:.*:44.241 \\(1537282604\\.241\\)"
+      "\nEnd                Sep 18 2018 .*:.*:44.397 \\(1537282604\\.397\\)"
       "\nMessages:          7"
-      "\nTopic information: "
-      "Topic: /test_topic | Type: test_msgs/Primitives | Count:  3 | Serialization Format: cdr\n"
-      "                   "
-      "Topic: /array_topic | Type: test_msgs/StaticArrayPrimitives | "
-      "Count: 4 | Serialization Format: cdr"));
+      "\nTopic information: "));
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: /test_topic | Type: test_msgs/Primitives | Count: 3 | Serialization Format: cdr\n"));
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: /array_topic | Type: test_msgs/StaticArrayPrimitives | Count: 4 | "
+      "Serialization Format: cdr"));
 }
 
 // TODO(Martin-Idel-SI): Revisit exit code non-zero here, gracefully should be exit code zero

@@ -136,7 +136,7 @@ void Formatter::format_topics_with_type(
   }
 
   auto print_topic_info =
-    [&info_stream, &indentation_spaces](const rosbag2::TopicInformation & ti) -> void {
+    [&info_stream](const rosbag2::TopicInformation & ti) -> void {
       info_stream << "Topic: " << ti.topic_metadata.name << " | ";
       info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";

@@ -44,18 +44,20 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   // the expected output uses a regex to handle different time zones.
   rosbag2_transport::Rosbag2Transport transport(reader_, writer_, info_);
   transport.print_bag_info("test");
-  std::string expected_output(
-    "\nFiles:             some_relative_path\n"
-    "                   some_other_relative_path\n"
-    "Bag size:          0 B\n"
-    "Storage id:        sqlite3\n"
-    "Duration:          0\\.50s\n"
-    "Start:             Sep .+ 2018 .+:.+:45\\.348 \\(1538051985\\.348\\)\n"
-    "End                Sep .+ 2018 .+:.+:45\\.398 \\(1538051985\\.398\\)\n"
-    "Messages:          50\n"
-    "Topics with Type:  Topic: topic1 | Type: type1 | Count: 100 | Serialization Format: rmw1\n"
-    "                   Topic: topic2 | Type: type2 | Count: 200 | Serialization Format: rmw2\n\n");
 
   std::string output = internal::GetCapturedStdout();
-  EXPECT_THAT(output, ContainsRegex(expected_output));
+  EXPECT_THAT(output, ContainsRegex(
+      "\nFiles:             some_relative_path\n"
+      "                   some_other_relative_path\n"
+      "Bag size:          0 B\n"
+      "Storage id:        sqlite3\n"
+      "Duration:          0\\.50s\n"
+      "Start:             Sep 27 2018 .*:.*:45.348 \\(1538051985\\.348\\)\n"
+      "End                Sep 27 2018 .*:.*:45.398 \\(1538051985\\.398\\)\n"
+      "Messages:          50\n"
+      "Topic information: "));
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: topic1 | Type: type1 | Count: 100 | Serialization Format: rmw1"));
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: topic2 | Type: type2 | Count: 200 | Serialization Format: rmw2\n\n"));
 }
