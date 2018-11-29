@@ -15,6 +15,7 @@
 #include "formatter.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -27,6 +28,33 @@
 
 namespace rosbag2_transport
 {
+
+void Formatter::format_bag_meta_data(const rosbag2::BagMetadata & metadata)
+{
+  auto start_time = metadata.starting_time.time_since_epoch();
+  auto end_time = start_time + metadata.duration;
+  std::stringstream info_stream;
+  int indentation_spaces = 19;  // The longest info field (Topics with Type:) plus one space.
+
+  info_stream << std::endl;
+  info_stream << "Files:             ";
+  format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
+  info_stream << "Bag size:          " << format_file_size(
+    metadata.bag_size) << std::endl;
+  info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;
+  info_stream << "Duration:          " << format_duration(
+    metadata.duration)["time_in_sec"] << "s" << std::endl;
+  info_stream << "Start:             " << format_time_point(start_time) <<
+    std::endl;
+  info_stream << "End                " << format_time_point(end_time) << std::endl;
+  info_stream << "Messages:          " << metadata.message_count << std::endl;
+  info_stream << "Topic information: ";
+  format_topics_with_type(
+    metadata.topics_with_message_count, info_stream, indentation_spaces);
+
+  // print to console
+  std::cout << info_stream.str() << std::endl;
+}
 
 std::unordered_map<std::string, std::string> Formatter::format_duration(
   std::chrono::high_resolution_clock::duration duration)
@@ -89,14 +117,11 @@ void Formatter::format_file_paths(
     return;
   }
 
+  info_stream << paths[0] << std::endl;
   size_t number_of_files = paths.size();
-  for (size_t i = 0; i < number_of_files; i++) {
-    if (i == 0) {
-      info_stream << paths[i] << std::endl;
-    } else {
-      indent(info_stream, indentation_spaces);
-      info_stream << paths[i] << std::endl;
-    }
+  for (size_t i = 1; i < number_of_files; i++) {
+    indent(info_stream, indentation_spaces);
+    info_stream << paths[i] << std::endl;
   }
 }
 
@@ -110,25 +135,26 @@ void Formatter::format_topics_with_type(
     return;
   }
 
+  auto print_topic_info =
+    [&info_stream, &indentation_spaces](const rosbag2::TopicInformation & ti) -> void {
+      info_stream << "Topic: " << ti.topic_with_type.name << " | ";
+      info_stream << "Type: " << ti.topic_with_type.type << " | ";
+      info_stream << "Count: " << ti.message_count << " | ";
+      info_stream << "Serialization Format: " << ti.topic_with_type.serialization_format;
+      info_stream << std::endl;
+    };
+
+  print_topic_info(topics[0]);
   size_t number_of_topics = topics.size();
-  for (size_t j = 0; j < number_of_topics; ++j) {
-    std::string topic_with_type = topics[j].topic_with_type.name + "; " +
-      topics[j].topic_with_type.type + "; " + std::to_string(topics[j].message_count) + " msgs; " +
-      topics[j].topic_with_type.serialization_format + "\n";
-    if (j == 0) {
-      info_stream << topic_with_type;
-    } else {
-      indent(info_stream, indentation_spaces);
-      info_stream << topic_with_type;
-    }
+  for (size_t j = 1; j < number_of_topics; ++j) {
+    indent(info_stream, indentation_spaces);
+    print_topic_info(topics[j]);
   }
 }
 
 void Formatter::indent(std::stringstream & info_stream, int number_of_spaces)
 {
-  for (int i = 0; i < number_of_spaces; i++) {
-    info_stream << " ";
-  }
+  info_stream << std::string(number_of_spaces, ' ');
 }
 
 }  // namespace rosbag2_transport

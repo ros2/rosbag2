@@ -110,29 +110,8 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
       "the path to the folder containing an existing 'metadata.yaml' file");
     return;
   }
-  auto start_time = metadata.starting_time.time_since_epoch();
-  auto end_time = start_time + metadata.duration;
-  auto formatter = std::make_unique<Formatter>();
-  std::stringstream info_stream;
-  int indentation_spaces = 18;  // The longest info field (Topics with Type:) plus one space.
 
-  info_stream << std::endl;
-  info_stream << "Files:            ";
-  formatter->format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
-  info_stream << "Bag size:         " << formatter->format_file_size(
-    metadata.bag_size) << std::endl;
-  info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
-  info_stream << "Duration:         " << formatter->format_duration(
-    metadata.duration)["time_in_sec"] << "s" << std::endl;
-  info_stream << "Start:            " << formatter->format_time_point(start_time) <<
-    std::endl;
-  info_stream << "End               " << formatter->format_time_point(end_time) << std::endl;
-  info_stream << "Messages:         " << metadata.message_count << std::endl;
-  info_stream << "Topics with Type: ";
-  formatter->format_topics_with_type(
-    metadata.topics_with_message_count, info_stream, indentation_spaces);
-
-  std::cout << info_stream.str() << std::endl;
+  Formatter::format_bag_meta_data(metadata);
 }
 
 }  // namespace rosbag2_transport
