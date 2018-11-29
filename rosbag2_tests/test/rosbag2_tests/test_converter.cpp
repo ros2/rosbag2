@@ -20,7 +20,7 @@
 #include "rcutils/strdup.h"
 #include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/types/ros2_message.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
@@ -42,17 +42,18 @@ public:
       rosbag2::get_typesupport("test_msgs/DynamicArrayNested", "rosidl_typesupport_cpp");
   }
 
-  std::shared_ptr<rosbag2_ros2_message_t> allocate_empty_dynamic_array_message()
+  std::shared_ptr<rosbag2_introspection_message_t> allocate_empty_dynamic_array_message()
   {
     auto introspection_type_support = rosbag2::get_typesupport(
       "test_msgs/DynamicArrayNested", "rosidl_typesupport_introspection_cpp");
-    auto ros_message = rosbag2::allocate_ros2_message(introspection_type_support, &allocator_);
-    ros_message->time_stamp = 1;
-    rosbag2::ros2_message_set_topic_name(ros_message.get(), topic_name_.c_str());
-    return ros_message;
+    auto introspection_message =
+      rosbag2::allocate_introspection_message(introspection_type_support, &allocator_);
+    introspection_message->time_stamp = 1;
+    rosbag2::introspection_message_set_topic_name(introspection_message.get(), topic_name_.c_str());
+    return introspection_message;
   }
 
-  void fill_dynamic_array_message(std::shared_ptr<rosbag2_ros2_message_t> message)
+  void fill_dynamic_array_message(std::shared_ptr<rosbag2_introspection_message_t> message)
   {
     auto correctly_typed_ros_message =
       reinterpret_cast<test_msgs::msg::DynamicArrayNested *>(message->message);

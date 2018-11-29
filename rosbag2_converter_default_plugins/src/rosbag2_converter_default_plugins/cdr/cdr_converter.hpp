@@ -20,7 +20,9 @@
 
 #include "rmw/types.h"
 
+#include "rosidl_generator_cpp/message_type_support_decl.hpp"
 #include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_converter_default_plugins
 {
@@ -33,10 +35,10 @@ public:
   void deserialize(
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support,
-    std::shared_ptr<rosbag2_ros2_message_t> ros_message) override;
+    std::shared_ptr<rosbag2_introspection_message_t> introspection_message) override;
 
   void serialize(
-    std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
+    std::shared_ptr<const rosbag2_introspection_message_t> introspection_message,
     const rosidl_message_type_support_t * type_support,
     std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) override;
 

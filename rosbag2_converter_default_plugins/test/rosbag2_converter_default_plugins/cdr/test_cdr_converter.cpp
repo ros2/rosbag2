@@ -22,6 +22,7 @@
 #include "rcutils/strdup.h"
 #include "rosbag2/serialization_format_converter_interface.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
@@ -40,16 +41,16 @@ public:
     allocator_ = rcutils_get_default_allocator();
   }
 
-  std::shared_ptr<rosbag2_ros2_message_t> make_shared_ros_message(
+  std::shared_ptr<rosbag2_introspection_message_t> make_shared_ros_message(
     const std::string & topic_name = "")
   {
-    auto ros_message = std::make_shared<rosbag2_ros2_message_t>();
+    auto ros_message = std::make_shared<rosbag2_introspection_message_t>();
     ros_message->time_stamp = 0;
     ros_message->message = nullptr;
     ros_message->allocator = allocator_;
 
     if (!topic_name.empty()) {
-      rosbag2::ros2_message_set_topic_name(ros_message.get(), topic_name.c_str());
+      rosbag2::introspection_message_set_topic_name(ros_message.get(), topic_name.c_str());
     }
 
     return ros_message;

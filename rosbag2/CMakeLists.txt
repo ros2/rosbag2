@@ -35,7 +35,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2/serialization_format_converter_factory.cpp
   src/rosbag2/typesupport_helpers.cpp
   src/rosbag2/writer.cpp
-  src/rosbag2/types/ros2_message.cpp)
+  src/rosbag2/types/introspection_message.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
@@ -125,7 +125,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_ros2_message
     test/rosbag2/types/test_ros2_message.cpp
     src/rosbag2/typesupport_helpers.cpp
-    src/rosbag2/types/ros2_message.cpp)
+    src/rosbag2/types/introspection_message.cpp)
   if(TARGET test_ros2_message)
     target_compile_definitions(test_ros2_message PRIVATE "ROSBAG2_BUILDING_DLL")
     if(NOT DISABLE_SANITIZERS)

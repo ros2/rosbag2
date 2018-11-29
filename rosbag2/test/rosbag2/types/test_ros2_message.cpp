@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/types/ros2_message.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 #include "test_msgs/msg/bounded_array_nested.hpp"
 #include "test_msgs/msg/bounded_array_primitives_nested.hpp"
 #include "test_msgs/msg/bounded_array_primitives.hpp"
@@ -52,7 +52,7 @@ public:
     auto introspection_ts =
       rosbag2::get_typesupport(message_type, "rosidl_typesupport_introspection_cpp");
 
-    return rosbag2::allocate_ros2_message(introspection_ts, &allocator_);
+    return rosbag2::allocate_introspection_message(introspection_ts, &allocator_);
   }
 
   rcutils_allocator_t allocator_;
@@ -208,7 +208,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nes
 TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
   auto message = get_allocated_message("test_msgs/BoundedArrayNested");
 
-  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
+  rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
 
   EXPECT_THAT(message->topic_name, StrEq("Topic name"));
 }
@@ -216,8 +216,8 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) 
 TEST_F(Ros2MessageTest, duplicate_set_topic_does_not_leak) {
   auto message = get_allocated_message("test_msgs/BoundedArrayNested");
 
-  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
-  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
+  rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
+  rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
 
   EXPECT_THAT(message->topic_name, StrEq("Topic name"));
 }

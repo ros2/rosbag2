@@ -67,8 +67,8 @@ std::shared_ptr<SerializedBagMessage> Converter::convert(
   auto ts = topics_and_types_.at(message->topic_name).rmw_type_support;
   auto introspection_ts = topics_and_types_.at(message->topic_name).introspection_type_support;
   auto allocator = rcutils_get_default_allocator();
-  std::shared_ptr<rosbag2_ros2_message_t> allocated_ros_message =
-    allocate_ros2_message(introspection_ts, &allocator);
+  std::shared_ptr<rosbag2_introspection_message_t> allocated_ros_message =
+    allocate_introspection_message(introspection_ts, &allocator);
 
   input_converter_->deserialize(message, ts, allocated_ros_message);
   auto output_message = std::make_shared<rosbag2::SerializedBagMessage>();

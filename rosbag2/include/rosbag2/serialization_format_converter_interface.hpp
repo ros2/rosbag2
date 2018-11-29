@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/types/ros2_message.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 #include "rosbag2/types.hpp"
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -35,10 +35,10 @@ public:
   virtual void deserialize(
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support,
-    std::shared_ptr<rosbag2_ros2_message_t> ros_message) = 0;
+    std::shared_ptr<rosbag2_introspection_message_t> ros_message) = 0;
 
   virtual void serialize(
-    std::shared_ptr<const rosbag2_ros2_message_t> ros_message,
+    std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
     const rosidl_message_type_support_t * type_support,
     std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) = 0;
 };
