@@ -6,23 +6,11 @@ index 000000000..8cadbcabb
 @@ -0,0 +1,2 @@
 +cmake_minimum_required(VERSION 3.5)
 +add_subdirectory(tools/rosbag_storage)
-diff --git a/clients/COLCON_IGNORE b/clients/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/ros_comm/COLCON_IGNORE b/ros_comm/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/test/COLCON_IGNORE b/test/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosbag/COLCON_IGNORE b/tools/rosbag/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
 diff --git a/tools/rosbag_storage/CMakeLists.txt b/tools/rosbag_storage/CMakeLists.txt
-index ad2769817..9e23a826f 100644
+index ad2769817..f4a33a398 100644
 --- a/tools/rosbag_storage/CMakeLists.txt
 +++ b/tools/rosbag_storage/CMakeLists.txt
-@@ -1,77 +1,150 @@
+@@ -1,77 +1,154 @@
 -cmake_minimum_required(VERSION 2.8.3)
 +cmake_minimum_required(VERSION 3.5)
  
@@ -143,7 +131,11 @@ index ad2769817..9e23a826f 100644
 +  ${BZIP2_INCLUDE_DIR})
 +
 +target_link_libraries(rosbag_default_encryption_plugins
-+  ${Boost_LIBRARIES} ${BZIP2_LIBRARIES} ${console_bridge_LIBRARIES} ${AES_ENCRYPT_LIBRARIES})
++  ros1_rosbag_storage
++  ${Boost_LIBRARIES}
++  ${BZIP2_LIBRARIES}
++  ${console_bridge_LIBRARIES}
++  ${AES_ENCRYPT_LIBRARIES})
 +
 +ament_target_dependencies(rosbag_default_encryption_plugins
 +  cpp_common
@@ -851,48 +843,3 @@ index 7de167cf0..0a9c8abdb 100644
  #include "rosbag/view.h"
  
  const char *GPG_KEY_USER = "Foo00";
-diff --git a/tools/rosgraph/COLCON_IGNORE b/tools/rosgraph/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/roslaunch/COLCON_IGNORE b/tools/roslaunch/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosmaster/COLCON_IGNORE b/tools/rosmaster/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosmsg/COLCON_IGNORE b/tools/rosmsg/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosnode/COLCON_IGNORE b/tools/rosnode/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosout/COLCON_IGNORE b/tools/rosout/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosparam/COLCON_IGNORE b/tools/rosparam/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rosservice/COLCON_IGNORE b/tools/rosservice/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rostest/COLCON_IGNORE b/tools/rostest/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/rostopic/COLCON_IGNORE b/tools/rostopic/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/tools/topic_tools/COLCON_IGNORE b/tools/topic_tools/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/utilities/message_filters/COLCON_IGNORE b/utilities/message_filters/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/utilities/roswtf/COLCON_IGNORE b/utilities/roswtf/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/utilities/roswtf/COLCON_IGNORe b/utilities/roswtf/COLCON_IGNORe
-new file mode 100644
-index 000000000..e69de29bb
-diff --git a/utilities/xmlrpcpp/COLCON_IGNORE b/utilities/xmlrpcpp/COLCON_IGNORE
-new file mode 100644
-index 000000000..e69de29bb

@@ -24,9 +24,9 @@ if(WIN32)
 endif()
 
 if(WIN32)
-  set(patch_exe patch.exe)
+  set(git_apply git.exe apply)
 else()
-  set(patch_exe patch)
+  set(git_apply git apply)
 endif()
 
 include(ExternalProject)
@@ -36,7 +36,7 @@ ExternalProject_Add(ros1_rosbag_storage
   URL_MD5 cfa0b16433e119616e28ed26be9712c2
   TIMEOUT 60
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install
-  PATCH_COMMAND ${patch_exe} -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_patch.diff
+  PATCH_COMMAND ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_patch.diff
 )
 
 install(
