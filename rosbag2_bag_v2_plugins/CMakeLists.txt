@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 if(UNIX)
@@ -20,12 +20,19 @@ if(UNIX)
   find_package(pluginlib REQUIRED)
   find_package(rcutils REQUIRED)
   find_package(rosbag2_storage REQUIRED)
+  find_package(rosbag2 REQUIRED)
   find_package(rosbag REQUIRED)
   find_package(std_msgs REQUIRED)
+  find_package(ros1_bridge REQUIRED)
+  find_package(rclcpp REQUIRED)
+
+  set(generated_path "${CMAKE_BINARY_DIR}/generated")
+  set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 
   add_library(${PROJECT_NAME} SHARED src/rosbag2_bag_v2_plugins/storage/rosbag1_storage.cpp)
 
   ament_target_dependencies(${PROJECT_NAME}
+    rclcpp
     rosbag2_storage
     rosbag
     rcutils
@@ -40,7 +47,7 @@ if(UNIX)
   # Causes the visibility macros to use dllexport rather than dllimport,
   # which is appropriate when building the dll but not consuming it.
   target_compile_definitions(${PROJECT_NAME} PRIVATE
-    ROSBAG1_DEFAULT_PLUGINS_BUILDING_DLL)
+    ROSBAG2_BAG_V2_PLUGINS_BUILDING_DLL)
 
   pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
 
@@ -59,21 +66,36 @@ if(UNIX)
   ament_export_dependencies(rosbag2_storage)
   ament_export_dependencies(rosbag2)
 
-  include_directories(${rosbag_INCLUDE_DIRS})
-  add_executable(example_rosbag_v2 src/example_rosbag_v2.cpp)
-  target_link_libraries(example_rosbag_v2 ${rosbag_LIBRARIES})
+  add_custom_command(
+    OUTPUT ${generated_files}
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/generate_coverter_cpp.py
+    --output-path "${generated_path}" --template-dir ${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins/storage
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
+  # find ROS 1 packages with messages
+  find_package(PkgConfig)
+  include(${ros1_bridge_DIR}/find_ros1_interface_packages.cmake)
+  include(${ros1_bridge_DIR}/find_ros1_package.cmake)
+  find_ros1_interface_packages(ros1_message_packages)
+
+  set(prefixed_ros1_message_packages "")
+  foreach(ros1_message_package ${ros1_message_packages})
+    find_ros1_package(${ros1_message_package} REQUIRED)
+    list(APPEND prefixed_ros1_message_packages "ros1_${ros1_message_package}")
+  endforeach()
+
+  # generate conversion methods
+  ament_index_get_resources(ros2_message_packages "rosidl_interfaces")
+  foreach(message_package ${ros2_message_packages})
+    find_package(${message_package} REQUIRED)
+    message(STATUS "Found ${message_package}: ${${message_package}_VERSION} (${${message_package}_DIR})")
+  endforeach()
 
   if(BUILD_TESTING)
     find_package(ament_cmake_gmock REQUIRED)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
-
-    set(TEST_LINK_LIBRARIES
-      ${PROJECT_NAME}
-      ${rosbag2_storage_LIBRARIES}
-      ${rcutils_LIBRARIES}
-      ${pluginlib_LIBRARIES}
-    )
   endif()
 
   ament_package()
