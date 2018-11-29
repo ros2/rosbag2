@@ -21,12 +21,11 @@
 #include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 
-
 namespace rosbag2_bag_v2_plugins
 {
 
 RosbagV2Storage::RosbagV2Storage()
-: ros_v2_bag_(std::make_unique<rosbag::Bag>()), bag_view_(nullptr) {}
+: ros_v2_bag_(std::make_unique<rosbag::Bag>()), bag_view_of_replayable_messages_(nullptr) {}
 
 RosbagV2Storage::~RosbagV2Storage()
 {
@@ -41,27 +40,41 @@ void RosbagV2Storage::open(
   }
 
   ros_v2_bag_->open(uri);
-  bag_view_ = std::make_unique<rosbag::View>(*ros_v2_bag_);
-  bag_iterator_ = bag_view_->begin();
+  auto bag_view = std::make_unique<rosbag::View>(*ros_v2_bag_);
+
+  std::vector<std::string> topics_valid_in_ros2;
+  auto connection_info = bag_view->getConnections();
+  for (const auto & connection : connection_info) {
+    std::string ros2_type_name;
+    if (get_1to2_mapping(connection->datatype, ros2_type_name)) {
+      topics_valid_in_ros2.push_back(connection->topic);
+    } else {
+      // TODO(Martin-Idel-SI): Logging
+    }
+  }
+
+  bag_view_of_replayable_messages_ = std::make_unique<rosbag::View>(
+    *ros_v2_bag_, rosbag::TopicQuery(topics_valid_in_ros2));
+  bag_iterator_ = bag_view_of_replayable_messages_->begin();
 }
 
 bool RosbagV2Storage::has_next()
 {
-  return bag_iterator_ != bag_view_->end();
+  return bag_iterator_ != bag_view_of_replayable_messages_->end();
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> RosbagV2Storage::read_next()
 {
   auto message = convert_1_to_2(*bag_iterator_);
   bag_iterator_++;
-
   return message;
 }
 
 std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_types()
 {
+  auto bag_view = std::make_unique<rosbag::View>(*ros_v2_bag_);
   std::vector<rosbag2_storage::TopicMetadata> topics_with_type;
-  auto connection_info = bag_view_->getConnections();
+  auto connection_info = bag_view->getConnections();
 
   for (const auto & connection : connection_info) {
     rosbag2_storage::TopicMetadata topic_metadata;
@@ -78,16 +91,19 @@ std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_
 
 rosbag2_storage::BagMetadata RosbagV2Storage::get_metadata()
 {
-  std::string bag_name = ros_v2_bag_->getFileName();
+  auto bag_view = std::make_unique<rosbag::View>(*ros_v2_bag_);
+  auto full_file_path = ros_v2_bag_->getFileName();
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = "rosbag_v2";
-  metadata.bag_size = rosbag2_storage::FilesystemHelper::get_file_size(bag_name);
-  metadata.relative_file_paths = {bag_name};
+  metadata.bag_size = rosbag2_storage::FilesystemHelper::get_file_size(full_file_path);
+  metadata.relative_file_paths = {
+    rosbag2_storage::FilesystemHelper::get_file_name(full_file_path)
+  };
   metadata.duration = std::chrono::nanoseconds(
-    bag_view_->getEndTime().toNSec() - bag_view_->getBeginTime().toNSec());
+    bag_view->getEndTime().toNSec() - bag_view->getBeginTime().toNSec());
   metadata.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds(bag_view_->getBeginTime().toNSec()));
-  metadata.message_count = bag_view_->size();
+    std::chrono::nanoseconds(bag_view->getBeginTime().toNSec()));
+  metadata.message_count = bag_view->size();
   metadata.topics_with_message_count = get_topic_information();
 
   return metadata;

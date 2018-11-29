@@ -16,11 +16,17 @@
 #define ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rosbag/message_instance.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
+namespace rosbag2_bag_v2_plugins
+{
+bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_message_type);
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
 convert_1_to_2(rosbag::MessageInstance msg_instance);
+}  // namespace rosbag2_bag_v2_plugins
 
 #endif  // ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_

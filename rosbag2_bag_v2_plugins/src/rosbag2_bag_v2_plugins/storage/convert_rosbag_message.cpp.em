@@ -31,6 +31,14 @@ from ros1_bridge import camel_case_to_lower_case_underscore
 #include "@(m.ros2_msg.package_name)/msg/@(camel_case_to_lower_case_underscore(m.ros2_msg.message_name)).hpp"
 @[end for]@
 
+namespace rosbag2_bag_v2_plugins
+{
+
+bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_message_type)
+{
+  return ros1_bridge::get_1to2_mapping(ros1_message_type, ros2_message_type);
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
 convert_1_to_2(rosbag::MessageInstance msg_instance)
 {
@@ -70,3 +78,4 @@ convert_1_to_2(rosbag::MessageInstance msg_instance)
 
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
+}  // end namespace rosbag2_bag_v2_plugin

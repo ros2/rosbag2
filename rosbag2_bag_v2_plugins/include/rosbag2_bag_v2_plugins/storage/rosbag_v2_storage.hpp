@@ -47,7 +47,7 @@ private:
   std::vector<rosbag2_storage::TopicInformation> get_topic_information();
 
   std::unique_ptr<rosbag::Bag> ros_v2_bag_;
-  std::unique_ptr<rosbag::View> bag_view_;
+  std::unique_ptr<rosbag::View> bag_view_of_replayable_messages_;
   rosbag::View::iterator bag_iterator_;
 };
 

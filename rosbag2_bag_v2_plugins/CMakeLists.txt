@@ -75,7 +75,7 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_storage)
-ament_export_dependencies(rosbag2 ros1_rosbag_storage)
+ament_export_dependencies(rosbag2 ros1_rosbag_storage rosbag2_storage)
 
 add_custom_command(
   OUTPUT ${generated_files}
@@ -106,7 +106,24 @@ endforeach()
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
+
   ament_lint_auto_find_test_dependencies()
+
+  add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+
+  ament_add_gmock(test_rosbag_v2_storage
+    test/rosbag2_bag_v2_plugins/test_rosbag_v2_storage.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_rosbag_v2_storage)
+    target_include_directories(test_rosbag_v2_storage
+      PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+    target_link_libraries(test_rosbag_v2_storage ${PROJECT_NAME})
+    ament_target_dependencies(test_rosbag_v2_storage
+      rosbag2_test_common)
+  endif()
 endif()
 
 ament_package()
