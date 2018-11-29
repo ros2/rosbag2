@@ -50,9 +50,9 @@ SequentialReader::open(
   }
 
   // Currently a bag file can only be played if all topics have the same serialization format.
-  auto storage_serialization_format = topics[0].topic_with_type.serialization_format;
+  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
   for (const auto & topic : topics) {
-    if (topic.topic_with_type.serialization_format != storage_serialization_format) {
+    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       throw std::runtime_error("Topics with different rwm serialization format have been found. "
               "All topics must have the same serialization format.");
     }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__TOPIC_WITH_TYPE_HPP_
-#define ROSBAG2_STORAGE__TOPIC_WITH_TYPE_HPP_
+#ifndef ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
+#define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
 #include <string>
 
@@ -29,4 +29,4 @@ struct TopicMetadata
 
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__TOPIC_WITH_TYPE_HPP_
+#endif  // ROSBAG2_STORAGE__TOPIC_METADATA_HPP_

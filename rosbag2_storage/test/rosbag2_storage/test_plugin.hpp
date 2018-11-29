@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 class TestPlugin : public rosbag2_storage::storage_interfaces::ReadWriteInterface

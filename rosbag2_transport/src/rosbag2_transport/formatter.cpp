@@ -137,10 +137,10 @@ void Formatter::format_topics_with_type(
 
   auto print_topic_info =
     [&info_stream, &indentation_spaces](const rosbag2::TopicInformation & ti) -> void {
-      info_stream << "Topic: " << ti.topic_with_type.name << " | ";
-      info_stream << "Type: " << ti.topic_with_type.type << " | ";
+      info_stream << "Topic: " << ti.topic_metadata.name << " | ";
+      info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";
-      info_stream << "Serialization Format: " << ti.topic_with_type.serialization_format;
+      info_stream << "Serialization Format: " << ti.topic_metadata.serialization_format;
       info_stream << std::endl;
     };
 
