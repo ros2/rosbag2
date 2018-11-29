@@ -65,7 +65,7 @@ void Rosbag2Transport::record(
 {
   try {
     writer_->open(
-      storage_options, rmw_get_serialization_format(), record_options.rmw_serialization_format);
+      storage_options, {rmw_get_serialization_format(), record_options.rmw_serialization_format});
 
     auto transport_node = setup_node();
 
@@ -88,7 +88,7 @@ void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
-    reader_->open(storage_options, rmw_get_serialization_format());
+    reader_->open(storage_options, {"", rmw_get_serialization_format()});
 
     auto transport_node = setup_node();
 

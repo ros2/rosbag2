@@ -25,10 +25,12 @@
 class MockSequentialReader : public rosbag2::SequentialReader
 {
 public:
-  void open(const rosbag2::StorageOptions & options, const std::string & rmw_format) override
+  void open(
+    const rosbag2::StorageOptions & storage_options,
+    const rosbag2::ConverterOptions & converter_options) override
   {
-    (void) options;
-    (void) rmw_format;
+    (void) storage_options;
+    (void) converter_options;
   }
 
   bool has_next() override

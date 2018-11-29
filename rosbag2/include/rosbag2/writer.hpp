@@ -61,14 +61,12 @@ public:
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
    * This must be called before any other function is used.
    *
-   * \param options Options to configure the storage
-   * \param input_serialization_format The serialization format of the messages to write
-   * \param output_serialization_format The serialization format in which the messages must be saved
-   */
+   * \param storage_options Options to configure the storage
+   * \param converter_options options to define in which format incoming messages are stored
+   **/
   virtual void open(
-    const StorageOptions & options,
-    const std::string & input_serialization_format,
-    const std::string & output_serialization_format);
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options);
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within

@@ -84,7 +84,7 @@ TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_
   EXPECT_CALL(*converter_factory_, load_converter(output_format))
   .WillOnce(Return(ByMove(std::move(format2_converter))));
 
-  reader_->open(rosbag2::StorageOptions(), output_format);
+  reader_->open(rosbag2::StorageOptions(), {"", output_format});
   reader_->read_next();
 }
 
@@ -99,7 +99,7 @@ TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exis
   EXPECT_CALL(*converter_factory_, load_converter(output_format))
   .WillOnce(Return(ByMove(nullptr)));
 
-  EXPECT_ANY_THROW(reader_->open(rosbag2::StorageOptions(), output_format));
+  EXPECT_ANY_THROW(reader_->open(rosbag2::StorageOptions(), {"", output_format}));
 }
 
 TEST_F(SequentialReaderTest,
@@ -110,6 +110,6 @@ TEST_F(SequentialReaderTest,
 
   EXPECT_CALL(*converter_factory_, load_converter(storage_serialization_format)).Times(0);
 
-  reader_->open(rosbag2::StorageOptions(), storage_serialization_format);
+  reader_->open(rosbag2::StorageOptions(), {"", storage_serialization_format});
   reader_->read_next();
 }

@@ -74,7 +74,7 @@ TEST_F(WriterTest,
 
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
-  writer_->open(storage_options_, input_format, storage_serialization_format);
+  writer_->open(storage_options_, {input_format, storage_serialization_format});
   writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
   writer_->write(message);
 }
@@ -89,7 +89,7 @@ TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_
 
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
-  writer_->open(storage_options_, storage_serialization_format, storage_serialization_format);
+  writer_->open(storage_options_, {storage_serialization_format, storage_serialization_format});
   writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
   writer_->write(message);
 }
@@ -101,7 +101,7 @@ TEST_F(WriterTest, metadata_io_writes_metadata_file_in_destructor) {
 
   std::string rmw_format = "rmw_format";
 
-  writer_->open(storage_options_, rmw_format, rmw_format);
+  writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_.reset();
 }
 
@@ -118,5 +118,5 @@ TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
   EXPECT_CALL(*converter_factory_, load_converter(output_format))
   .WillOnce(Return(ByMove(nullptr)));
 
-  EXPECT_ANY_THROW(writer_->open(storage_options_, input_format, output_format));
+  EXPECT_ANY_THROW(writer_->open(storage_options_, {input_format, output_format}));
 }

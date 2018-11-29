@@ -32,15 +32,25 @@ Converter::Converter(
   const std::string & input_format,
   const std::string & output_format,
   std::shared_ptr<rosbag2::SerializationFormatConverterFactoryInterface> converter_factory)
-: converter_factory_(converter_factory)
+: Converter({input_format, output_format}, converter_factory)
+{}
+
+Converter::Converter(
+  const rosbag2::ConverterOptions & converter_options,
+  std::shared_ptr<rosbag2::SerializationFormatConverterFactoryInterface> converter_factory)
+: converter_factory_(converter_factory),
+  input_converter_(converter_factory_->load_converter(
+      converter_options.input_serialization_format)),
+  output_converter_(converter_factory_->load_converter(
+      converter_options.output_serialization_format))
 {
-  input_converter_ = converter_factory_->load_converter(input_format);
-  output_converter_ = converter_factory_->load_converter(output_format);
   if (!input_converter_) {
-    throw std::runtime_error("Could not find converter for format " + input_format);
+    throw std::runtime_error(
+            "Could not find converter for format " + converter_options.input_serialization_format);
   }
   if (!output_converter_) {
-    throw std::runtime_error("Could not find converter for format " + output_format);
+    throw std::runtime_error(
+            "Could not find converter for format " + converter_options.output_serialization_format);
   }
 }
 

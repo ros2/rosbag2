@@ -45,22 +45,20 @@ Writer::~Writer()
 }
 
 void Writer::open(
-  const StorageOptions & options,
-  const std::string & input_serialization_format,
-  const std::string & output_serialization_format)
+  const StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
-  if (output_serialization_format != input_serialization_format) {
-    converter_ = std::make_unique<Converter>(
-      input_serialization_format,
-      output_serialization_format,
-      converter_factory_);
+  if (converter_options.output_serialization_format !=
+    converter_options.input_serialization_format)
+  {
+    converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  storage_ = storage_factory_->open_read_write(options.uri, options.storage_id);
+  storage_ = storage_factory_->open_read_write(storage_options.uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  uri_ = options.uri;
+  uri_ = storage_options.uri;
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
