@@ -63,7 +63,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   fout.close();
 
   rosbag2::Info info;
-  auto read_metadata = info.read_metadata(temporary_dir_path_);
+  auto read_metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(read_metadata.relative_file_paths,

@@ -43,7 +43,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
 
   // the expected output uses a regex to handle different time zones.
   rosbag2_transport::Rosbag2Transport transport(reader_, writer_, info_);
-  transport.print_bag_info("test");
+  transport.print_bag_info("test", "sqlite3");
 
   std::string output = internal::GetCapturedStdout();
   EXPECT_THAT(output, ContainsRegex(
