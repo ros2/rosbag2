@@ -1,0 +1,298 @@
+diff --git a/tools/rosbag_storage/CMakeLists.txt b/tools/rosbag_storage/CMakeLists.txt
+index dc49e2250..a440b7eda 100644
+--- a/tools/rosbag_storage/CMakeLists.txt
++++ b/tools/rosbag_storage/CMakeLists.txt
+@@ -1,28 +1,55 @@
+-cmake_minimum_required(VERSION 2.8.3)
++cmake_minimum_required(VERSION 3.5)
+ 
+-project(rosbag_storage)
++project(ros1_rosbag_storage)
++
++# Default to C99
++if(NOT CMAKE_C_STANDARD)
++  set(CMAKE_C_STANDARD 99)
++endif()
++
++# Default to C++14
++if(NOT CMAKE_CXX_STANDARD)
++  set(CMAKE_CXX_STANDARD 14)
++endif()
+ 
+ if(NOT WIN32)
+-  set_directory_properties(PROPERTIES COMPILE_OPTIONS "-Wall;-Wextra")
++  add_compile_options(-Wall -Wextra)
+ endif()
+ 
++find_package(ament_cmake REQUIRED)
++find_package(pluginlib REQUIRED)
+ find_package(console_bridge REQUIRED)
+-find_package(catkin REQUIRED COMPONENTS cpp_common pluginlib roscpp_serialization roscpp_traits rostime roslz4)
+ find_package(Boost REQUIRED COMPONENTS date_time filesystem program_options regex)
+ find_package(BZip2 REQUIRED)
+ 
+-catkin_package(
+-  CFG_EXTRAS rosbag_storage-extras.cmake
+-  INCLUDE_DIRS include
+-  LIBRARIES rosbag_storage
+-  CATKIN_DEPENDS pluginlib roslz4
+-  DEPENDS console_bridge Boost
+-)
++find_package(ros1_bridge REQUIRED)
++include(${ros1_bridge_DIR}/find_ros1_interface_packages.cmake)
++include(${ros1_bridge_DIR}/find_ros1_package.cmake)
++
++find_package(PkgConfig)
++if(NOT PKG_CONFIG_FOUND)
++  message(WARNING "Failed to find PkgConfig, skipping...")
++  # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
++  ament_package()
++  return()
++endif()
++
++find_ros1_package(cpp_common)
++if(NOT ros1_cpp_common_FOUND)
++  message(WARNING "Failed to find ROS 1 roscpp, skipping...")
++  # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
++  ament_package()
++  return()
++endif()
++
++find_ros1_package(roscpp_serialization)
++find_ros1_package(roscpp_traits)
++find_ros1_package(rostime)
++find_ros1_package(roslz4)
+ 
+ # Support large bags (>2GB) on 32-bit systems
+ add_definitions(-D_FILE_OFFSET_BITS=64)
+ 
+-include_directories(include ${catkin_INCLUDE_DIRS} ${console_bridge_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${BZIP2_INCLUDE_DIR})
+ add_definitions(${BZIP2_DEFINITIONS})
+ 
+ set(AES_ENCRYPT_SOURCE "")
+@@ -32,7 +59,7 @@ if(NOT WIN32)
+   set(AES_ENCRYPT_LIBRARIES "crypto" "gpgme")
+ endif()
+ 
+-add_library(rosbag_storage
++add_library(ros1_rosbag_storage SHARED
+   src/bag.cpp
+   src/bag_player.cpp
+   src/buffer.cpp
+@@ -45,44 +72,97 @@ add_library(rosbag_storage
+   src/view.cpp
+   src/uncompressed_stream.cpp
+ )
+-target_link_libraries(rosbag_storage ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${BZIP2_LIBRARIES} ${console_bridge_LIBRARIES} ${AES_ENCRYPT_LIBRARIES})
+ 
+-install(TARGETS rosbag_storage
+-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
++target_include_directories(ros1_rosbag_storage PUBLIC
++  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++  $<INSTALL_INTERFACE:include>
++  ${console_bridge_INCLUDE_DIRS}
++  ${Boost_INCLUDE_DIRS}
++  ${BZIP2_INCLUDE_DIR})
++
++# prevent pluginlib from using boost because using boost seems to not work correctly
++target_compile_definitions(ros1_rosbag_storage PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
++
++target_link_libraries(ros1_rosbag_storage
++  ${Boost_LIBRARIES} ${BZIP2_LIBRARIES} ${console_bridge_LIBRARIES} ${AES_ENCRYPT_LIBRARIES})
++
++pluginlib_export_plugin_description_file(ros1_rosbag_storage encryptor_plugins.xml)
++
++ament_target_dependencies(ros1_rosbag_storage
++  pluginlib
++  ros1_cpp_common
++  ros1_roslz4
++  ros1_roscpp_traits
++  ros1_roscpp_serialization
++  ros1_rostime
++)
++
++install(TARGETS ros1_rosbag_storage
++  ARCHIVE DESTINATION lib
++  LIBRARY DESTINATION lib
++  RUNTIME DESTINATION bin
+ )
+ 
+-add_library(rosbag_default_encryption_plugins
++add_library(rosbag_default_encryption_plugins SHARED
+   ${AES_ENCRYPT_SOURCE}
+   src/no_encryptor.cpp
+ )
+ 
+-target_link_libraries(rosbag_default_encryption_plugins ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${AES_ENCRYPT_LIBRARIES})
++target_include_directories(rosbag_default_encryption_plugins PUBLIC
++  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++  $<INSTALL_INTERFACE:include>
++  ${console_bridge_INCLUDE_DIRS}
++  ${Boost_INCLUDE_DIRS}
++  ${BZIP2_INCLUDE_DIR})
++
++target_link_libraries(rosbag_default_encryption_plugins
++  ros1_rosbag_storage
++  ${Boost_LIBRARIES}
++  ${BZIP2_LIBRARIES}
++  ${console_bridge_LIBRARIES}
++  ${AES_ENCRYPT_LIBRARIES})
++
++ament_target_dependencies(rosbag_default_encryption_plugins
++  pluginlib
++  ros1_cpp_common
++  ros1_roslz4
++  ros1_roscpp_traits
++  ros1_roscpp_serialization
++  ros1_rostime
++)
+ 
+ install(TARGETS rosbag_default_encryption_plugins
+-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
++  ARCHIVE DESTINATION lib
++  LIBRARY DESTINATION lib
++  RUNTIME DESTINATION bin
+ )
+ 
+ install(DIRECTORY include/
+-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+-  FILES_MATCHING PATTERN "*.h"
++  DESTINATION include
+ )
+ 
+ if(NOT WIN32)
+   install(FILES encryptor_plugins.xml
+-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
++    DESTINATION share/
+   )
+ 
+-  if(CATKIN_ENABLE_TESTING)
+-    find_package(rostest)
+-
+-    catkin_add_gtest(test_aes_encryptor test/test_aes_encryptor.cpp src/gpgme_utils.cpp
+-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+-    if(TARGET test_aes_encryptor)
+-      target_link_libraries(test_aes_encryptor rosbag_storage ${BZIP2_LIBRARIES}  ${AES_ENCRYPT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+-    endif()
+-  endif()
++#  if(BUILD_TESTING)
++#    find_package(ament_cmake_gmock)
++#
++#    catkin_add_gtest(test_aes_encryptor test/test_aes_encryptor.cpp
++#      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
++#    if(TARGET test_aes_encryptor)
++#      target_link_libraries(test_aes_encryptor rosbag_storage ${catkin_LIBRARIES} ${Boost_LIBRARIES})
++#    endif()
++#  endif()
+ endif()
++
++ament_export_include_directories(include)
++ament_export_libraries(ros1_rosbag_storage)
++ament_export_dependencies(
++  console_bridge
++  pluginlib
++  BZip2
++)
++
++ament_package()
+diff --git a/tools/rosbag_storage/encryptor_plugins.xml b/tools/rosbag_storage/encryptor_plugins.xml
+index 3128ec9a5..fb66f450c 100644
+--- a/tools/rosbag_storage/encryptor_plugins.xml
++++ b/tools/rosbag_storage/encryptor_plugins.xml
+@@ -1,4 +1,4 @@
+-<library path="lib/librosbag_default_encryption_plugins">
++<library path="rosbag_default_encryption_plugins">
+   <class name="rosbag/NoEncryptor" type="rosbag::NoEncryptor" base_class_type="rosbag::EncryptorBase">
+     <description>This is a plugin for no encryption.</description>
+   </class>
+diff --git a/tools/rosbag_storage/package.xml b/tools/rosbag_storage/package.xml
+index 502f5308b..3f28d00f1 100644
+--- a/tools/rosbag_storage/package.xml
++++ b/tools/rosbag_storage/package.xml
+@@ -1,5 +1,5 @@
+-<package>
+-  <name>rosbag_storage</name>
++<package format="2">
++  <name>ros1_rosbag_storage</name>
+   <version>1.14.3</version>
+   <description>
+     This is a set of tools for recording from and playing back ROS
+@@ -8,35 +8,25 @@
+   <maintainer email="dthomas@osrfoundation.org">Dirk Thomas</maintainer>
+   <license>BSD</license>
+ 
+-  <buildtool_depend>catkin</buildtool_depend>
++  <buildtool_depend>ament_cmake</buildtool_depend>
+ 
++  <build_depend>ros1_bridge</build_depend>
+   <build_depend>boost</build_depend>
+   <build_depend>bzip2</build_depend>
+-  <build_depend version_gte="0.3.17">cpp_common</build_depend>
++  <build_depend>cpp_common</build_depend>
+   <build_depend>libconsole-bridge-dev</build_depend>
+   <build_depend>libgpgme-dev</build_depend>
+   <build_depend>libssl-dev</build_depend>
+   <build_depend>pluginlib</build_depend>
+-  <build_depend>roscpp_serialization</build_depend>
+-  <build_depend version_gte="0.3.17">roscpp_traits</build_depend>
+-  <build_depend>rostest</build_depend>
+-  <build_depend>rostime</build_depend>
+-  <build_depend>roslz4</build_depend>
+ 
+-  <run_depend>boost</run_depend>
+-  <run_depend>bzip2</run_depend>
+-  <run_depend version_gte="0.3.17">cpp_common</run_depend>
+-  <run_depend>libconsole-bridge-dev</run_depend>
+-  <run_depend>libgpgme-dev</run_depend>
+-  <run_depend>libssl-dev</run_depend>
+-  <run_depend>pluginlib</run_depend>
+-  <run_depend>roscpp_serialization</run_depend>
+-  <run_depend version_gte="0.3.17">roscpp_traits</run_depend>
+-  <run_depend>rostime</run_depend>
+-  <run_depend>roslz4</run_depend>
++  <exec_depend>boost</exec_depend>
++  <exec_depend>bzip2</exec_depend>
++  <exec_depend>libconsole-bridge-dev</exec_depend>
++  <exec_depend>libgpgme-dev</exec_depend>
++  <exec_depend>libssl-dev</exec_depend>
++  <exec_depend>pluginlib</exec_depend>
+ 
+   <export>
+-    <rosdoc config="${prefix}/rosdoc.yaml"/>
+-    <rosbag_storage plugin="${prefix}/encryptor_plugins.xml" />
++    <build_type>ament_cmake</build_type>
+   </export>
+ </package>
+diff --git a/tools/rosbag_storage/src/bag.cpp b/tools/rosbag_storage/src/bag.cpp
+index 073072934..13a7fc8fc 100644
+--- a/tools/rosbag_storage/src/bag.cpp
++++ b/tools/rosbag_storage/src/bag.cpp
+@@ -58,12 +58,13 @@ using ros::Time;
+ 
+ namespace rosbag {
+ 
+-Bag::Bag() : encryptor_loader_("rosbag_storage", "rosbag::EncryptorBase")
++Bag::Bag() : encryptor_loader_("ros1_rosbag_storage", "rosbag::EncryptorBase")
+ {
+     init();
+ }
+ 
+-Bag::Bag(string const& filename, uint32_t mode) : encryptor_loader_("rosbag_storage", "rosbag::EncryptorBase")
++Bag::Bag(string const& filename, uint32_t mode)
++: encryptor_loader_("ros1_rosbag_storage", "rosbag::EncryptorBase")
+ {
+     init();
+     open(filename, mode);
+@@ -71,7 +72,7 @@ Bag::Bag(string const& filename, uint32_t mode) : encryptor_loader_("rosbag_stor
+ 
+ #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+ 
+-Bag::Bag(Bag&& other) : encryptor_loader_("rosbag_storage", "rosbag::EncryptorBase") {
++Bag::Bag(Bag&& other) : encryptor_loader_("ros1_rosbag_storage", "rosbag::EncryptorBase") {
+     init();
+     swap(other);
+ }

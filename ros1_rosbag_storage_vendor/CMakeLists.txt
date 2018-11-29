@@ -23,22 +23,29 @@ if(WIN32)
   return()
 endif()
 
-if(WIN32)
-  set(git_apply git.exe apply)
-else()
-  set(git_apply git apply)
-endif()
+set(git_apply git apply)
 
 include(ExternalProject)
+# We have to include a number of patches to the rosbag
+# 1. rosbag1_encryption_patch includes https://github.com/ros/ros_comm/pull/1499, without it, pluginlib won't link
+# 2. rosbag1_for_ros2_patch patches the pluginlib usage:
+#    Missing boost/bind include
+#    Using pluginlib with boost results in compile errors on some systems, so we need to switch to pluginlib without boost
+# 3. rosbag1_ament_patch.diff patches the catkin package to ament and renames it
+#    Patching to ament is necessary as otherwise colcon needs to build a catkin package together with an ament package, which is impossible
+#    Renaming the package is necessary on some systems to not confuse the linker
 ExternalProject_Add(ros1_rosbag_storage
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download
-  URL https://github.com/ros/ros_comm/archive/melodic-devel.zip
-  URL_MD5 cfa0b16433e119616e28ed26be9712c2
+  URL https://github.com/ros/ros_comm/archive/669fbd32d2f92cc295f4b024fcb2f982fddec0f0.zip
+  URL_MD5 4c8b4c33165b223870f5d77bb697bef6
   TIMEOUT 60
   SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/sources
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install
-  PATCH_COMMAND ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_patch.diff &&
-    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
+  PATCH_COMMAND
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_encryption_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_for_ros2_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_ament_patch.diff &&
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
 )
 
 install(
