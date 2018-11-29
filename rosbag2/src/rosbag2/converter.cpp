@@ -64,7 +64,7 @@ Converter::~Converter()
 std::shared_ptr<SerializedBagMessage> Converter::convert(
   std::shared_ptr<const rosbag2::SerializedBagMessage> message)
 {
-  auto ts = topics_and_types_.at(message->topic_name).cpp_type_support;
+  auto ts = topics_and_types_.at(message->topic_name).rmw_type_support;
   auto introspection_ts = topics_and_types_.at(message->topic_name).introspection_type_support;
   auto allocator = rcutils_get_default_allocator();
   std::shared_ptr<rosbag2_ros2_message_t> allocated_ros_message =
@@ -80,7 +80,7 @@ std::shared_ptr<SerializedBagMessage> Converter::convert(
 void Converter::add_topic(const std::string & topic, const std::string & type)
 {
   ConverterTypeSupport type_support;
-  type_support.cpp_type_support = get_typesupport(type, "rosidl_typesupport_cpp");
+  type_support.rmw_type_support = get_typesupport(type, "rosidl_typesupport_cpp");
   type_support.introspection_type_support =
     get_typesupport(type, "rosidl_typesupport_introspection_cpp");
 

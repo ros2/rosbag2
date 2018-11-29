@@ -42,7 +42,7 @@ namespace rosbag2
 // Only used internally.
 struct ConverterTypeSupport
 {
-  const rosidl_message_type_support_t * cpp_type_support;
+  const rosidl_message_type_support_t * rmw_type_support;
   const rosidl_message_type_support_t * introspection_type_support;
 };
 
