@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2/info.hpp"
+
 namespace rosbag2
 {
 
@@ -41,13 +43,29 @@ SequentialReader::open(const StorageOptions & options, const std::string & rmw_s
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  auto storage_serialization_format = storage_->get_metadata().serialization_format;
+  auto topics = storage_->get_metadata().topics_with_message_count;
+  if (topics.empty()) {
+    return;
+  }
+
+  // Currently a bag file can only be played if all topics have the same serialization format.
+  auto storage_serialization_format = topics[0].topic_with_type.serialization_format;
+  for (const auto & topic : topics) {
+    if (topic.topic_with_type.serialization_format != storage_serialization_format) {
+      throw std::runtime_error("Topics with different rwm serialization format have been found. "
+              "All topics must have the same serialization format.");
+    }
+  }
+
   if (rmw_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
       rmw_serialization_format,
-      storage_->get_all_topics_and_types(),
       converter_factory_);
+    auto topics = storage_->get_all_topics_and_types();
+    for (const auto & topic_with_type : topics) {
+      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+    }
   }
 }
 

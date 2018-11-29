@@ -14,11 +14,11 @@
 
 #include "rosbag2/types/ros2_message.hpp"
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "rcutils/strdup.h"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "rosidl_typesupport_introspection_cpp/field_types.hpp"
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
@@ -34,6 +34,7 @@ allocate_ros2_message(
     introspection_ts->data);
   auto raw_ros2_message = new rosbag2_ros2_message_t();
   raw_ros2_message->allocator = *allocator;
+  raw_ros2_message->topic_name = nullptr;
   raw_ros2_message->message = raw_ros2_message->allocator.zero_allocate(
     1, intro_ts_members->size_of_, raw_ros2_message->allocator.state);
   // TODO(Martin-Idel-SI): Use custom allocator to make sure all memory is obtained that way
@@ -45,12 +46,22 @@ allocate_ros2_message(
   return std::shared_ptr<rosbag2_ros2_message_t>(raw_ros2_message, deleter);
 }
 
+void ros2_message_set_topic_name(rosbag2_ros2_message_t * msg, const char * topic_name)
+{
+  if (msg->topic_name) {
+    msg->allocator.deallocate(msg->topic_name, msg->allocator.state);
+    msg->topic_name = nullptr;
+  }
+  msg->topic_name = rcutils_strdup(topic_name, msg->allocator);
+}
+
 void deallocate_ros2_message(
   rosbag2_ros2_message_t * msg,
   const rosidl_typesupport_introspection_cpp::MessageMembers * members)
 {
   deallocate_internal_types(msg->message, members);
   msg->allocator.deallocate(msg->message, msg->allocator.state);
+  msg->allocator.deallocate(msg->topic_name, msg->allocator.state);
   delete msg;
 }
 

@@ -56,10 +56,11 @@ bool operator!=(const TopicInformation & lhs, const TopicInformation & rhs)
 TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqlite3_storage) {
   std::vector<std::string> string_messages = {"first message", "second message", "third message"};
   std::vector<std::string> topics = {"topic1", "topic2", "topic3"};
-  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> messages =
-  {std::make_tuple(string_messages[0], 1, topics[0], "type1"),
-    std::make_tuple(string_messages[1], 2, topics[1], "type2"),
-    std::make_tuple(string_messages[2], 3, topics[2], "type3")};
+  std::vector<std::string> rmw_formats = {"rmw1", "rmw2", "rmw3"};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages =
+  {std::make_tuple(string_messages[0], 1, topics[0], "type1", rmw_formats[0]),
+    std::make_tuple(string_messages[1], 2, topics[1], "type2", rmw_formats[1]),
+    std::make_tuple(string_messages[2], 3, topics[2], "type3", rmw_formats[2])};
 
   write_messages_to_sqlite(messages);
   auto read_messages = read_all_messages_from_sqlite();
@@ -73,8 +74,10 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
 }
 
 TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) {
-  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> string_messages =
-  {std::make_tuple("first message", 1, "", ""), std::make_tuple("second message", 2, "", "")};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
+  string_messages =
+  {std::make_tuple("first message", 1, "", "", ""),
+    std::make_tuple("second message", 2, "", "", "")};
 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
@@ -89,8 +92,10 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
 }
 
 TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
-  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> string_messages =
-  {std::make_tuple("first_message", 6, "", ""), std::make_tuple("second_message", 2, "", "")};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
+  string_messages =
+  {std::make_tuple("first message", 2, "", "", ""),
+    std::make_tuple("second message", 6, "", "", "")};
 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
@@ -110,8 +115,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   writable_storage->open(temporary_dir_path_);
-  writable_storage->create_topic({"topic1", "type1"});
-  writable_storage->create_topic({"topic2", "type2"});
+  writable_storage->create_topic({"topic1", "type1", "rmw1"});
+  writable_storage->create_topic({"topic2", "type2", "rmw2"});
   metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   writable_storage.reset();
 
@@ -121,18 +126,21 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, ElementsAreArray({
-    rosbag2_storage::TopicMetadata{"topic1", "type1"},
-    rosbag2_storage::TopicMetadata{"topic2", "type2"}
+    rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1"},
+    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2"}
   }));
 }
 
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   std::vector<std::string> string_messages = {"first message", "second message", "third message"};
   std::vector<std::string> topics = {"topic1", "topic2"};
-  std::vector<std::tuple<std::string, int64_t, std::string, std::string>> messages =
-  {std::make_tuple(string_messages[0], static_cast<int64_t>(1e9), topics[0], "type1"),
-    std::make_tuple(string_messages[1], static_cast<int64_t>(2e9), topics[0], "type1"),
-    std::make_tuple(string_messages[2], static_cast<int64_t>(3e9), topics[1], "type2")};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages =
+  {std::make_tuple(
+      string_messages[0], static_cast<int64_t>(1e9), topics[0], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[1], static_cast<int64_t>(2e9), topics[0], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[2], static_cast<int64_t>(3e9), topics[1], "type2", "rmw_format")};
 
   write_messages_to_sqlite(messages);
 
@@ -142,13 +150,14 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
     rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
-    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{"topic1", "type1"}, 2u},
-    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{"topic2", "type2"}, 1u}
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
+        "topic1", "type1", "rmw_format"}, 2u},
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
+        "topic2", "type2", "rmw_format"}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
   EXPECT_THAT(metadata.starting_time, Eq(
@@ -166,7 +175,6 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
     rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
   }));

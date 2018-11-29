@@ -63,6 +63,15 @@ if(BUILD_TESTING)
       rosbag2_storage)
   endif()
 
+  ament_add_gmock(test_converter
+    test/rosbag2_tests/test_converter.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_converter)
+    ament_target_dependencies(test_converter
+      rosbag2
+      rosbag2_test_common
+      test_msgs)
+  endif()
 endif()
 
 ament_package()

@@ -64,7 +64,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  auto exit_code = execute_and_wait_until_completion("ros2 bag play test", database_path_);
+  auto exit_code = execute_and_wait_until_completion("ros2 bag play cdr_test", database_path_);
 
   subscription_future.get();
 
@@ -95,4 +95,15 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
   EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
+}
+
+TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_does_not_exist) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play wrong_rmw_test", database_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    error_output, HasSubstr("Requested converter id 'wrong_format_converter' does not exist"));
 }

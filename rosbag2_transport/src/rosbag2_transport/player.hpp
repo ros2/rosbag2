@@ -24,11 +24,15 @@
 
 #include "moodycamel/readerwriterqueue.h"
 #include "replayable_message.hpp"
-#include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2_transport/play_options.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+
+namespace rosbag2
+{
+class SequentialReader;
+}  // namespace rosbag2
 
 namespace rosbag2_transport
 {

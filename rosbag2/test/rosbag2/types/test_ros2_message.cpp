@@ -208,7 +208,16 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nes
 TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
   auto message = get_allocated_message("test_msgs/BoundedArrayNested");
 
-  message->topic_name = "Topic name";
+  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
+
+  EXPECT_THAT(message->topic_name, StrEq("Topic name"));
+}
+
+TEST_F(Ros2MessageTest, duplicate_set_topic_does_not_leak) {
+  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
+
+  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
+  rosbag2::ros2_message_set_topic_name(message.get(), "Topic name");
 
   EXPECT_THAT(message->topic_name, StrEq("Topic name"));
 }

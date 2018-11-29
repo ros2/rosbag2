@@ -98,10 +98,9 @@ void CdrConverter::deserialize(
   const rosidl_message_type_support_t * type_support,
   std::shared_ptr<rosbag2_ros2_message_t> ros_message)
 {
-  ros_message->topic_name = serialized_message->topic_name.c_str();
+  rosbag2::ros2_message_set_topic_name(ros_message.get(), serialized_message->topic_name.c_str());
   ros_message->time_stamp = serialized_message->time_stamp;
 
-  printf("this should be a call to FASTRTPS\n");
   auto ret =
     deserialize_fcn_(serialized_message->serialized_data.get(), type_support, ros_message->message);
   if (ret != RMW_RET_OK) {

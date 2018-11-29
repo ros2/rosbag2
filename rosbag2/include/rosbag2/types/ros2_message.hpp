@@ -26,7 +26,7 @@
 typedef struct rosbag2_ros2_message_t
 {
   void * message;
-  const char * topic_name;
+  char * topic_name;
   rcutils_time_point_value_t time_stamp;
   rcutils_allocator_t allocator;
 } rosbag2_ros2_message_t;
@@ -38,6 +38,9 @@ ROSBAG2_PUBLIC
 std::shared_ptr<rosbag2_ros2_message_t>
 allocate_ros2_message(
   const rosidl_message_type_support_t * introspection_ts, const rcutils_allocator_t * allocator);
+
+ROSBAG2_PUBLIC
+void ros2_message_set_topic_name(rosbag2_ros2_message_t * msg, const char * topic_name);
 
 ROSBAG2_PUBLIC
 void allocate_internal_types(

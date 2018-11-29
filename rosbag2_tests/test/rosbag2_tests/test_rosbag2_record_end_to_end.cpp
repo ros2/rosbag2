@@ -48,7 +48,6 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.serialization_format = "cdr";
   metadata.relative_file_paths.emplace_back("bag.db3");
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
@@ -62,6 +61,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
   EXPECT_THAT(test_topic_messages,
     Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
+  EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::Primitives>("/wrong_topic");
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
@@ -72,11 +72,11 @@ TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
 
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record --output test -a", database_path);
+    execute_and_wait_until_completion("ros2 bag record --output cdr_test -a", database_path);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(error_output, HasSubstr("Output folder 'test' already exists"));
+  EXPECT_THAT(error_output, HasSubstr("Output folder 'cdr_test' already exists"));
 }
 
 TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
@@ -87,4 +87,15 @@ TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
   EXPECT_THAT(error_output, HasSubstr("Can not specify topics and -a at the same time."));
+}
+
+TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag record -a -f some_rmw", temporary_dir_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    error_output, HasSubstr("Requested converter id 'some_rmw_converter' does not exist"));
 }

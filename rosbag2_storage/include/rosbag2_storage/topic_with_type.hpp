@@ -24,8 +24,9 @@ struct TopicMetadata
 {
   std::string name;
   std::string type;
+  std::string serialization_format;
 };
 
-}
+}  // namespace rosbag2_storage
 
 #endif  // ROSBAG2_STORAGE__TOPIC_WITH_TYPE_HPP_

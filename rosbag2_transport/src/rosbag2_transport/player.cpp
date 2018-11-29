@@ -26,10 +26,11 @@
 #include "rcl/graph.h"
 #include "rcutils/time.h"
 
+#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2_transport/logging.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
 
 namespace rosbag2_transport
 {

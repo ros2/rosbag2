@@ -42,12 +42,16 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(
     array_topic, array_message, 2);
 
-  start_recording({false, {string_topic, array_topic}});
+  start_recording({false, {string_topic, array_topic}, "rmw_format"});
   run_publishers();
   stop_recording();
 
   auto recorded_messages = writer_->get_messages();
+  auto recorded_topics = writer_->get_topics();
 
+  ASSERT_THAT(recorded_topics, SizeIs(2));
+  EXPECT_THAT(recorded_topics.at(string_topic).serialization_format, Eq("rmw_format"));
+  EXPECT_THAT(recorded_topics.at(array_topic).serialization_format, Eq("rmw_format"));
   ASSERT_THAT(recorded_messages, SizeIs(4));
   auto string_messages = filter_messages<test_msgs::msg::Primitives>(
     recorded_messages, string_topic);

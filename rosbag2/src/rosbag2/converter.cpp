@@ -31,13 +31,9 @@ namespace rosbag2
 Converter::Converter(
   const std::string & input_format,
   const std::string & output_format,
-  const std::vector<TopicMetadata> & topics_and_types,
   std::shared_ptr<rosbag2::SerializationFormatConverterFactoryInterface> converter_factory)
 : converter_factory_(converter_factory)
 {
-  for (const auto & topic_with_type : topics_and_types) {
-    topics_and_types_.insert({topic_with_type.name, topic_with_type.type});
-  }
   input_converter_ = converter_factory_->load_converter(input_format);
   output_converter_ = converter_factory_->load_converter(output_format);
   if (!input_converter_) {
@@ -58,9 +54,8 @@ Converter::~Converter()
 std::shared_ptr<SerializedBagMessage> Converter::convert(
   std::shared_ptr<const rosbag2::SerializedBagMessage> message)
 {
-  auto ts = get_typesupport(topics_and_types_[message->topic_name], "rosidl_typesupport_cpp");
-  auto introspection_ts =
-    get_typesupport(topics_and_types_[message->topic_name], "rosidl_typesupport_introspection_cpp");
+  auto ts = topics_and_types_.at(message->topic_name).cpp_type_support;
+  auto introspection_ts = topics_and_types_.at(message->topic_name).introspection_type_support;
   auto allocator = rcutils_get_default_allocator();
   std::shared_ptr<rosbag2_ros2_message_t> allocated_ros_message =
     allocate_ros2_message(introspection_ts, &allocator);
@@ -70,6 +65,16 @@ std::shared_ptr<SerializedBagMessage> Converter::convert(
   output_message->serialized_data = rosbag2_storage::make_empty_serialized_message(0);
   output_converter_->serialize(allocated_ros_message, ts, output_message);
   return output_message;
+}
+
+void Converter::add_topic(const std::string & topic, const std::string & type)
+{
+  ConverterTypeSupport type_support;
+  type_support.cpp_type_support = get_typesupport(type, "rosidl_typesupport_cpp");
+  type_support.introspection_type_support =
+    get_typesupport(type, "rosidl_typesupport_introspection_cpp");
+
+  topics_and_types_.insert({topic, type_support});
 }
 
 }  // namespace rosbag2

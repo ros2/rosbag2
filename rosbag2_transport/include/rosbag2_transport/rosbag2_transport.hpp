@@ -21,13 +21,17 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/info.hpp"
-#include "rosbag2/sequential_reader.hpp"
-#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+
+namespace rosbag2
+{
+class Info;
+class SequentialReader;
+class Writer;
+}  // namespace rosbag2
 
 namespace rosbag2_transport
 {

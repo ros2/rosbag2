@@ -18,7 +18,10 @@
 #include <string>
 #include <utility>
 
+#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/logging.hpp"
+#include "generic_subscription.hpp"
+#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
@@ -42,7 +45,7 @@ void Recorder::record(const RecordOptions & record_options)
     auto subscription = create_subscription(topic_name, topic_type);
     if (subscription) {
       subscriptions_.push_back(subscription);
-      writer_->create_topic({topic_name, topic_type});
+      writer_->create_topic({topic_name, topic_type, record_options.rmw_serialization_format});
       ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
     }
   }

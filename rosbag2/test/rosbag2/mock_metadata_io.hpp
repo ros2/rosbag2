@@ -27,8 +27,9 @@
 class MockMetadataIo : public rosbag2_storage::MetadataIo
 {
 public:
-  MOCK_METHOD2(write_metadata, void(const std::string &, rosbag2_storage::BagMetadata));
+  MOCK_METHOD2(write_metadata, void(const std::string &, const rosbag2_storage::BagMetadata &));
   MOCK_METHOD1(read_metadata, rosbag2_storage::BagMetadata(const std::string &));
+  MOCK_METHOD1(metadata_file_exists, bool(const std::string &));
 };
 
 #endif  // ROSBAG2__MOCK_METADATA_IO_HPP_

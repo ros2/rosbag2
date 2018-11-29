@@ -25,6 +25,7 @@
 #include "rcutils/time.h"
 
 #include "rosbag2_transport/logging.hpp"
+#include "rosbag2/info.hpp"
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
@@ -33,6 +34,7 @@
 #include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
+#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
@@ -63,7 +65,8 @@ void Rosbag2Transport::record(
   const StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
-    writer_->open(storage_options);
+    writer_->open(
+      storage_options, rmw_get_serialization_format(), record_options.rmw_serialization_format);
 
     auto transport_node = setup_node();
 
@@ -112,22 +115,21 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   auto end_time = start_time + metadata.duration;
   auto formatter = std::make_unique<Formatter>();
   std::stringstream info_stream;
-  int indentation_spaces = 22;  // The longest info field (Serialization format:) plus one space.
+  int indentation_spaces = 18;  // The longest info field (Topics with Type:) plus one space.
 
   info_stream << std::endl;
-  info_stream << "Files:                ";
+  info_stream << "Files:            ";
   formatter->format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
-  info_stream << "Bag size:             " << formatter->format_file_size(
+  info_stream << "Bag size:         " << formatter->format_file_size(
     metadata.bag_size) << std::endl;
-  info_stream << "Storage id:           " << metadata.storage_identifier << std::endl;
-  info_stream << "Serialization format: " << metadata.serialization_format << std::endl;
-  info_stream << "Duration:             " << formatter->format_duration(
+  info_stream << "Storage id:       " << metadata.storage_identifier << std::endl;
+  info_stream << "Duration:         " << formatter->format_duration(
     metadata.duration)["time_in_sec"] << "s" << std::endl;
-  info_stream << "Start:                " << formatter->format_time_point(start_time) <<
+  info_stream << "Start:            " << formatter->format_time_point(start_time) <<
     std::endl;
-  info_stream << "End                   " << formatter->format_time_point(end_time) << std::endl;
-  info_stream << "Messages:             " << metadata.message_count << std::endl;
-  info_stream << "Topics with Type:     ";
+  info_stream << "End               " << formatter->format_time_point(end_time) << std::endl;
+  info_stream << "Messages:         " << metadata.message_count << std::endl;
+  info_stream << "Topics with Type: ";
   formatter->format_topics_with_type(
     metadata.topics_with_message_count, info_stream, indentation_spaces);
 

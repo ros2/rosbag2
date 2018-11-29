@@ -19,14 +19,18 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
-#include "generic_subscription.hpp"
-#include "rosbag2_node.hpp"
+namespace rosbag2
+{
+class Writer;
+}
 
 namespace rosbag2_transport
 {
+
+class GenericSubscription;
+class Rosbag2Node;
 
 class Recorder
 {

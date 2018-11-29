@@ -18,9 +18,12 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2/converter.hpp"
+#include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -45,8 +48,13 @@ class ROSBAG2_PUBLIC Writer
 public:
   explicit
   Writer(
-    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory =
-    std::make_unique<rosbag2_storage::StorageFactory>());
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
+    std::make_unique<rosbag2_storage::StorageFactory>(),
+    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<SerializationFormatConverterFactory>(),
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
+    std::make_unique<rosbag2_storage::MetadataIo>());
+
   virtual ~Writer();
 
   /**
@@ -54,8 +62,13 @@ public:
    * This must be called before any other function is used.
    *
    * \param options Options to configure the storage
+   * \param input_serialization_format The serialization format of the messages to write
+   * \param output_serialization_format The serialization format in which the messages must be saved
    */
-  virtual void open(const StorageOptions & options);
+  virtual void open(
+    const StorageOptions & options,
+    const std::string & input_serialization_format,
+    const std::string & output_serialization_format);
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -76,8 +89,11 @@ public:
 
 private:
   std::string uri_;
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> factory_;
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
+  std::unique_ptr<Converter> converter_;
 };
 
 }  // namespace rosbag2

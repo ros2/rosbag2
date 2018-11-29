@@ -34,7 +34,6 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "rosbag2_bagfile_information:\n"
     "  version: 1\n"
     "  storage_identifier: sqlite3\n"
-    "  serialization_format: cdr\n"
     "  relative_file_paths:\n"
     "    - some_relative_path\n"
     "    - some_other_relative_path\n"
@@ -48,10 +47,12 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "    - topic_and_type:\n"
     "        name: topic1\n"
     "        type: type1\n"
+    "        serialization_format: rmw1\n"
     "      message_count: 100\n"
     "    - topic_and_type:\n"
     "        name: topic2\n"
     "        type: type2\n"
+    "        serialization_format: rmw2\n"
     "      message_count: 200");
 
   std::ofstream fout(
@@ -65,7 +66,6 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   auto read_metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(read_metadata.serialization_format, Eq("cdr"));
   EXPECT_THAT(read_metadata.relative_file_paths,
     Eq(std::vector<std::string>({"some_relative_path", "some_other_relative_path"})));
   EXPECT_THAT(read_metadata.duration, Eq(std::chrono::nanoseconds(100)));
@@ -76,17 +76,21 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_THAT(read_metadata.topics_with_message_count,
     SizeIs(2u));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
-  rosbag2_storage::TopicInformation expected_first_topic = {{"topic1", "type1"}, 100};
+  rosbag2_storage::TopicInformation expected_first_topic = {{"topic1", "type1", "rmw1"}, 100};
   EXPECT_THAT(actual_first_topic.topic_with_type.name,
     Eq(expected_first_topic.topic_with_type.name));
   EXPECT_THAT(actual_first_topic.topic_with_type.type,
     Eq(expected_first_topic.topic_with_type.type));
+  EXPECT_THAT(actual_first_topic.topic_with_type.serialization_format,
+    Eq(expected_first_topic.topic_with_type.serialization_format));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
-  rosbag2_storage::TopicInformation expected_second_topic = {{"topic2", "type2"}, 200};
+  rosbag2_storage::TopicInformation expected_second_topic = {{"topic2", "type2", "rmw2"}, 200};
   EXPECT_THAT(actual_second_topic.topic_with_type.name,
     Eq(expected_second_topic.topic_with_type.name));
   EXPECT_THAT(actual_second_topic.topic_with_type.type,
     Eq(expected_second_topic.topic_with_type.type));
+  EXPECT_THAT(actual_second_topic.topic_with_type.serialization_format,
+    Eq(expected_second_topic.topic_with_type.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 }

@@ -74,13 +74,13 @@ TEST_F(FormatterTestFixture, format_files_prints_newline_if_there_are_no_paths) 
 
 TEST_F(FormatterTestFixture, format_topics_with_type_correctly_layouts_more_topics) {
   std::vector<rosbag2::TopicInformation> topics;
-  topics.push_back({{"topic1", "type1"}, 100});
-  topics.push_back({{"topic2", "type2"}, 200});
+  topics.push_back({{"topic1", "type1", "rmw1"}, 100});
+  topics.push_back({{"topic2", "type2", "rmw2"}, 200});
   std::stringstream formatted_output;
 
   formatter_->format_topics_with_type(topics, formatted_output, indentation_spaces_);
-  EXPECT_THAT(formatted_output.str(), Eq("topic1; type1; 100 msgs\n"
-    "                  topic2; type2; 200 msgs\n"));
+  EXPECT_THAT(formatted_output.str(), Eq("topic1; type1; 100 msgs; rmw1\n"
+    "                  topic2; type2; 200 msgs; rmw2\n"));
 }
 
 TEST_F(FormatterTestFixture, format_topics_with_type_prints_newline_if_there_are_no_topics) {

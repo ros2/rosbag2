@@ -36,6 +36,15 @@
 
 namespace rosbag2
 {
+
+// Convenience struct to keep both type supports (rmw and introspection) together.
+// Only used internally.
+struct ConverterTypeSupport
+{
+  const rosidl_message_type_support_t * cpp_type_support;
+  const rosidl_message_type_support_t * introspection_type_support;
+};
+
 class ROSBAG2_PUBLIC Converter
 {
 public:
@@ -43,7 +52,6 @@ public:
   Converter(
     const std::string & input_format,
     const std::string & output_format,
-    const std::vector<TopicMetadata> & topics_and_types,
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<SerializationFormatConverterFactory>());
 
@@ -60,11 +68,13 @@ public:
   std::shared_ptr<SerializedBagMessage>
   convert(std::shared_ptr<const SerializedBagMessage> message);
 
+  void add_topic(const std::string & topic, const std::string & type);
+
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::unique_ptr<SerializationFormatConverterInterface> input_converter_;
   std::unique_ptr<SerializationFormatConverterInterface> output_converter_;
-  std::map<std::string, std::string> topics_and_types_;
+  std::map<std::string, ConverterTypeSupport> topics_and_types_;
 };
 
 }  // namespace rosbag2
