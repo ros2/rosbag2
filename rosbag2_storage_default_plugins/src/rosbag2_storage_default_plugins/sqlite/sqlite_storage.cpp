@@ -252,6 +252,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
+  metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(database_name_);
 
   return metadata;
 }
