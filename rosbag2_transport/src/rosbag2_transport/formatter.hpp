@@ -29,6 +29,9 @@ namespace rosbag2_transport
 class Formatter
 {
 public:
+=======
+  static void format_bag_meta_data(const rosbag2::BagMetadata & metadata);
+
   static std::unordered_map<std::string, std::string> format_duration(
     std::chrono::high_resolution_clock::duration duration);
 

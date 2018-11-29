@@ -28,7 +28,7 @@ class FormatterTestFixture : public Test
 {
 public:
   FormatterTestFixture()
-  : formatter_(std::make_unique<rosbag2_transport::Formatter>()), indentation_spaces_(18) {}
+  : formatter_(std::make_unique<rosbag2_transport::Formatter>()), indentation_spaces_(19) {}
 
   std::unique_ptr<rosbag2_transport::Formatter> formatter_;
   int indentation_spaces_;
@@ -57,10 +57,11 @@ TEST_F(FormatterTestFixture, format_files_correctly_layouts_more_paths) {
   std::stringstream formatted_output;
 
   formatter_->format_file_paths(paths, formatted_output, indentation_spaces_);
-  EXPECT_THAT(formatted_output.str(), Eq(
-      "first/file/path\n"
-      "                  second/file\n"
-      "                  third/path/\n"));
+
+  auto expected = std::string("first/file/path\n") +
+    std::string(indentation_spaces_, ' ') + "second/file\n" +
+    std::string(indentation_spaces_, ' ') + "third/path/\n";
+  EXPECT_EQ(expected, formatted_output.str());
 }
 
 TEST_F(FormatterTestFixture, format_files_prints_newline_if_there_are_no_paths) {
@@ -78,8 +79,11 @@ TEST_F(FormatterTestFixture, format_topics_with_type_correctly_layouts_more_topi
   std::stringstream formatted_output;
 
   formatter_->format_topics_with_type(topics, formatted_output, indentation_spaces_);
-  EXPECT_THAT(formatted_output.str(), Eq("topic1; type1; 100 msgs; rmw1\n"
-    "                  topic2; type2; 200 msgs; rmw2\n"));
+  auto expected =
+    std::string("Topic: topic1 | Type: type1 | Count: 100 | Serialization Format: rmw1\n") +
+    std::string(indentation_spaces_, ' ') +
+    std::string("Topic: topic2 | Type: type2 | Count: 200 | Serialization Format: rmw2\n");
+  EXPECT_EQ(expected, formatted_output.str());
 }
 
 TEST_F(FormatterTestFixture, format_topics_with_type_prints_newline_if_there_are_no_topics) {

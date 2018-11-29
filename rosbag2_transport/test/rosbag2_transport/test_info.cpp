@@ -45,16 +45,16 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   rosbag2_transport::Rosbag2Transport transport(reader_, writer_, info_);
   transport.print_bag_info("test");
   std::string expected_output(
-    "\nFiles:            some_relative_path\n"
-    "                  some_other_relative_path\n"
-    "Bag size:         0 B\n"
-    "Storage id:       sqlite3\n"
-    "Duration:         0\\.50s\n"
-    "Start:            Sep .+ 2018 .+:.+:45\\.348 \\(1538051985\\.348\\)\n"
-    "End               Sep .+ 2018 .+:.+:45\\.398 \\(1538051985\\.398\\)\n"
-    "Messages:         50\n"
-    "Topics with Type: topic1; type1; 100 msgs; rmw1\n"
-    "                  topic2; type2; 200 msgs; rmw2\n\n");
+    "\nFiles:             some_relative_path\n"
+    "                   some_other_relative_path\n"
+    "Bag size:          0 B\n"
+    "Storage id:        sqlite3\n"
+    "Duration:          0\\.50s\n"
+    "Start:             Sep .+ 2018 .+:.+:45\\.348 \\(1538051985\\.348\\)\n"
+    "End                Sep .+ 2018 .+:.+:45\\.398 \\(1538051985\\.398\\)\n"
+    "Messages:          50\n"
+    "Topics with Type:  Topic: topic1 | Type: type1 | Count: 100 | Serialization Format: rmw1\n"
+    "                   Topic: topic2 | Type: type2 | Count: 200 | Serialization Format: rmw2\n\n");
 
   std::string output = internal::GetCapturedStdout();
   EXPECT_THAT(output, ContainsRegex(expected_output));
