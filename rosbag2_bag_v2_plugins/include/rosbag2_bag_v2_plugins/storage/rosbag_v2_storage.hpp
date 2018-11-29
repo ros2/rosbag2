@@ -44,7 +44,7 @@ public:
   rosbag2_storage::BagMetadata get_metadata() override;
 
 private:
-  std::vector<rosbag2_storage::TopicInformation> get_topics_information();
+  std::vector<rosbag2_storage::TopicInformation> get_topic_information();
 
   std::unique_ptr<rosbag::Bag> ros_v2_bag_;
   std::unique_ptr<rosbag::View> bag_view_;

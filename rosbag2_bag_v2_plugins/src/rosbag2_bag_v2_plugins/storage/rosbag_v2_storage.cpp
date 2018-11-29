@@ -14,7 +14,6 @@
 
 #include "rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.hpp"
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,8 +37,7 @@ void RosbagV2Storage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
-    std::cout << "The rosbag_v2 storage plugin can only be used to read!";
-    return;
+    throw std::runtime_error("The rosbag_v2 storage plugin can only be used to read");
   }
 
   ros_v2_bag_->open(uri);
@@ -66,12 +64,13 @@ std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_
   auto connection_info = bag_view_->getConnections();
 
   for (const auto & connection : connection_info) {
-    rosbag2_storage::TopicMetadata topic_with_type;
-    topic_with_type.name = connection->topic;
-    topic_with_type.type = connection->datatype;
-    topic_with_type.serialization_format = "";
+    rosbag2_storage::TopicMetadata topic_metadata;
+    topic_metadata.name = connection->topic;
+    topic_metadata.type = connection->datatype;
+    // TODO(Martin-Idel-SI) add correct format when splitting up plugin
+    topic_metadata.serialization_format = "";
 
-    topics_with_type.push_back(topic_with_type);
+    topics_with_type.push_back(topic_metadata);
   }
 
   return topics_with_type;
@@ -89,14 +88,14 @@ rosbag2_storage::BagMetadata RosbagV2Storage::get_metadata()
   metadata.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(bag_view_->getBeginTime().toNSec()));
   metadata.message_count = bag_view_->size();
-  metadata.topics_with_message_count = get_topics_information();
+  metadata.topics_with_message_count = get_topic_information();
 
   return metadata;
 }
 
-std::vector<rosbag2_storage::TopicInformation> RosbagV2Storage::get_topics_information()
+std::vector<rosbag2_storage::TopicInformation> RosbagV2Storage::get_topic_information()
 {
-  std::vector<rosbag2_storage::TopicInformation> topics_information;
+  std::vector<rosbag2_storage::TopicInformation> topic_information;
   auto topics_with_type = get_all_topics_and_types();
 
   for (const auto & topic : topics_with_type) {
@@ -105,10 +104,10 @@ std::vector<rosbag2_storage::TopicInformation> RosbagV2Storage::get_topics_infor
     topic_info.topic_metadata = topic;
     topic_info.message_count = view_with_topic_query.size();
 
-    topics_information.push_back(topic_info);
+    topic_information.push_back(topic_info);
   }
 
-  return topics_information;
+  return topic_information;
 }
 
 }  // namespace rosbag2_bag_v2_plugins
