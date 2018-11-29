@@ -24,7 +24,7 @@ if(NOT UNIX)
 endif()
 
 find_package(pluginlib REQUIRED)
-find_package(rcl REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2 REQUIRED)
 find_package(rosbag2_storage REQUIRED)
@@ -41,7 +41,7 @@ add_library(
 
 ament_target_dependencies(${PROJECT_NAME}
   ros1_rosbag_storage
-  rcl
+  rclcpp
   rosbag2_storage
   rosbag2
   ros1_bridge
