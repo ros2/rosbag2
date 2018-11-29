@@ -10,7 +10,7 @@
 
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
-  <depend>rmw</depend>
+  <depend>rcl</depend>
   <depend>ros1_rosbag_storage_vendor</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosbag2</depend>
