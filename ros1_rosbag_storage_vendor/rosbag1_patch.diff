@@ -7,7 +7,7 @@ index 000000000..8cadbcabb
 +cmake_minimum_required(VERSION 3.5)
 +add_subdirectory(tools/rosbag_storage)
 diff --git a/tools/rosbag_storage/CMakeLists.txt b/tools/rosbag_storage/CMakeLists.txt
-index ad2769817..f4a33a398 100644
+index ad2769817..9720ccb92 100644
 --- a/tools/rosbag_storage/CMakeLists.txt
 +++ b/tools/rosbag_storage/CMakeLists.txt
 @@ -1,77 +1,154 @@
@@ -671,7 +671,7 @@ index e0fcb807e..73f88de5a 100644
  /*!
   * \return Encrypted string
 diff --git a/tools/rosbag_storage/src/bag.cpp b/tools/rosbag_storage/src/bag.cpp
-index 7e2e67171..56787fc54 100644
+index 7e2e67171..0f1dba9e4 100644
 --- a/tools/rosbag_storage/src/bag.cpp
 +++ b/tools/rosbag_storage/src/bag.cpp
 @@ -40,6 +40,7 @@
@@ -707,11 +707,13 @@ index 7e2e67171..56787fc54 100644
      init();
      swap(other);
  }
-@@ -222,7 +224,7 @@ void Bag::setEncryptorPlugin(std::string const& plugin_name, std::string const&
+@@ -222,7 +224,9 @@ void Bag::setEncryptorPlugin(std::string const& plugin_name, std::string const&
      if (!chunks_.empty()) {
          throw BagException("Cannot set encryption plugin after chunks are written");
      }
 -    encryptor_ = encryptor_loader_.createInstance(plugin_name);
++    auto unmanaged_instance = encryptor_loader_.createUnmanagedInstance(plugin_name);
++    encryptor_ = std::shared_ptr<rosbag::EncryptorBase>(unmanaged_instance);
 +    encryptor_ = encryptor_loader_.createSharedInstance(plugin_name);
      encryptor_->initialize(*this, plugin_param);
  }
