@@ -16,11 +16,11 @@
 #define ROSBAG2_TRANSPORT__RECORDER_HPP_
 
 #include <future>
-#include <map>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rosbag2/types.hpp"
 #include "rosbag2/writer.hpp"
@@ -51,8 +51,8 @@ private:
     std::chrono::milliseconds topic_polling_interval,
     const std::vector<std::string> & topics_to_record = {});
   void subscribe_all_missing_topics(
-    const std::map<std::string, std::string> & all_topics_and_types);
-  void subscribe_topic(const rosbag2::TopicWithType & topic_with_type);
+    const std::unordered_map<std::string, std::string> & all_topics_and_types);
+  void subscribe_topic(const rosbag2::TopicMetadata & topic);
   bool is_every_topic_subscribed(const std::vector<std::string> & topics_to_record) const;
   void record_messages() const;
 
@@ -60,6 +60,7 @@ private:
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::vector<std::string> subscribed_topics_;
+  std::string serialization_format_;
 };
 
 }  // namespace rosbag2_transport

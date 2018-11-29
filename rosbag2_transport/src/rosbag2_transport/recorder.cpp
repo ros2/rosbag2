@@ -16,9 +16,10 @@
 
 #include <algorithm>
 #include <future>
-#include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -34,7 +35,11 @@ Recorder::Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosb
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  if (record_options.rmw_serialization_format.empty()) {
+    throw std::runtime_error("No serialization format specified!");
+  }
   ROSBAG2_TRANSPORT_LOG_INFO("Setup complete. Listening for topics...");
+  serialization_format_ = record_options.rmw_serialization_format;
   auto discovery_future = launch_topics_discovery(
     record_options.topic_polling_interval, record_options.topics);
 
@@ -97,7 +102,7 @@ bool Recorder::is_every_topic_subscribed(
 }
 
 void Recorder::subscribe_all_missing_topics(
-  const std::map<std::string, std::string> & all_topics_and_types)
+  const std::unordered_map<std::string, std::string> & all_topics_and_types)
 {
   for (const auto & topic_with_type : all_topics_and_types) {
     bool already_subscribed = find(
@@ -106,12 +111,12 @@ void Recorder::subscribe_all_missing_topics(
       topic_with_type.first) != subscribed_topics_.end();
 
     if (!already_subscribed) {
-      subscribe_topic({topic_with_type.first, topic_with_type.second});
+      subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
     }
   }
 }
 
-void Recorder::subscribe_topic(const rosbag2::TopicWithType & topic)
+void Recorder::subscribe_topic(const rosbag2::TopicMetadata & topic)
 {
   auto subscription = create_subscription(topic.name, topic.type);
   if (subscription) {
