@@ -48,7 +48,13 @@ std::string get_typesupport_library_path(
   dynamic_library_folder = "/lib/";
 #endif
 
-  auto package_prefix = ament_index_cpp::get_package_prefix(package_name);
+  std::string package_prefix;
+  try {
+    package_prefix = ament_index_cpp::get_package_prefix(package_name);
+  } catch (ament_index_cpp::PackageNotFoundError & e) {
+    throw std::runtime_error(e.what());
+  }
+
   auto library_path = package_prefix + dynamic_library_folder + filename_prefix +
     package_name + "__" + typesupport_identifier + filename_extension;
   return library_path;
