@@ -15,7 +15,6 @@
 #include <gmock/gmock.h>
 
 #include <future>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>

@@ -17,10 +17,10 @@
 
 #include <chrono>
 #include <future>
-#include <map>
 #include <memory>
 #include <queue>
 #include <string>
+#include <unordered_map>
 
 #include "moodycamel/readerwriterqueue.h"
 #include "replayable_message.hpp"
@@ -64,7 +64,7 @@ private:
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
-  std::map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
 };
 
 }  // namespace rosbag2_transport

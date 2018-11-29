@@ -16,9 +16,9 @@
 #define ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_
 
 #include <future>
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
@@ -77,7 +77,7 @@ public:
   }
 
 private:
-  bool continue_spinning(std::map<std::string, size_t> expected_topics_with_sizes)
+  bool continue_spinning(std::unordered_map<std::string, size_t> expected_topics_with_sizes)
   {
     for (const auto & topic_expected : expected_topics_with_sizes) {
       if (subscribed_messages_[topic_expected.first].size() < topic_expected.second) {
@@ -88,9 +88,9 @@ private:
   }
 
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
-  std::map<std::string,
+  std::unordered_map<std::string,
     std::vector<std::shared_ptr<rmw_serialized_message_t>>> subscribed_messages_;
-  std::map<std::string, size_t> expected_topics_with_size_;
+  std::unordered_map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
   MemoryManagement memory_management_;
 };

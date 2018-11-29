@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/node.hpp"
@@ -43,14 +44,14 @@ public:
     const std::string & type,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
-  std::map<std::string, std::string>
+  std::unordered_map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);
 
   std::string expand_topic_name(const std::string & topic_name);
 
-  std::map<std::string, std::string> get_all_topics_with_types();
+  std::unordered_map<std::string, std::string> get_all_topics_with_types();
 
-  std::map<std::string, std::string> filter_topics_with_more_than_one_type(
+  std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_type(
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };
 

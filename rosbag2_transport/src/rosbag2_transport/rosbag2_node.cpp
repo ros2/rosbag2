@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 
 #include "rcl/expand_topic_name.h"
@@ -117,7 +118,7 @@ std::string Rosbag2Node::expand_topic_name(const std::string & topic_name)
   return expanded_topic_name_std;
 }
 
-std::map<std::string, std::string> Rosbag2Node::get_topics_with_types(
+std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
   const std::vector<std::string> & topic_names)
 {
   std::vector<std::string> sanitized_topic_names;
@@ -145,7 +146,7 @@ std::map<std::string, std::string> Rosbag2Node::get_topics_with_types(
   return filter_topics_with_more_than_one_type(filtered_topics_and_types);
 }
 
-std::map<std::string, std::string>
+std::unordered_map<std::string, std::string>
 Rosbag2Node::get_all_topics_with_types()
 {
   // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
@@ -154,10 +155,10 @@ Rosbag2Node::get_all_topics_with_types()
   return filter_topics_with_more_than_one_type(this->get_topic_names_and_types());
 }
 
-std::map<std::string, std::string> Rosbag2Node::filter_topics_with_more_than_one_type(
+std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_more_than_one_type(
   std::map<std::string, std::vector<std::string>> topics_and_types)
 {
-  std::map<std::string, std::string> filtered_topics_and_types;
+  std::unordered_map<std::string, std::string> filtered_topics_and_types;
   for (const auto & topic_and_type : topics_and_types) {
     if (topic_and_type.second.size() > 1) {
       ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Topic '" << topic_and_type.first <<

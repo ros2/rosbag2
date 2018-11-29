@@ -14,7 +14,6 @@
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
-#include <map>
 #include <memory>
 #include <queue>
 #include <string>

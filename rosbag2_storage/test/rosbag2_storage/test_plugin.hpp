@@ -16,7 +16,6 @@
 #ifndef ROSBAG2_STORAGE__TEST_PLUGIN_HPP_
 #define ROSBAG2_STORAGE__TEST_PLUGIN_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
