@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 
 #ifdef _WIN32
@@ -64,14 +64,14 @@ struct convert<rosbag2_storage::TopicInformation>
   static Node encode(const rosbag2_storage::TopicInformation & metadata)
   {
     Node node;
-    node["topic_and_type"] = metadata.topic_with_type;
+    node["topic_metadata"] = metadata.topic_metadata;
     node["message_count"] = metadata.message_count;
     return node;
   }
 
   static bool decode(const Node & node, rosbag2_storage::TopicInformation & metadata)
   {
-    metadata.topic_with_type = node["topic_and_type"].as<rosbag2_storage::TopicMetadata>();
+    metadata.topic_metadata = node["topic_metadata"].as<rosbag2_storage::TopicMetadata>();
     metadata.message_count = node["message_count"].as<size_t>();
     return true;
   }

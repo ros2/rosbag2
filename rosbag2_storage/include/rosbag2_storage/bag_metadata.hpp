@@ -20,14 +20,14 @@
 #include <vector>
 #include <utility>
 
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_storage
 {
 
 struct TopicInformation
 {
-  TopicMetadata topic_with_type;
+  TopicMetadata topic_metadata;
   size_t message_count;
 };
 

@@ -42,7 +42,7 @@ bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
 
 bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 {
-  return lhs.topic_with_type == rhs.topic_with_type &&
+  return lhs.topic_metadata == rhs.topic_metadata &&
          lhs.message_count == rhs.message_count;
 }
 

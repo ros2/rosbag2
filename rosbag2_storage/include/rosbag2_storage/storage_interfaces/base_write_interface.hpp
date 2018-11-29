@@ -20,7 +20,7 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage

@@ -21,7 +21,7 @@
 
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_with_type.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
