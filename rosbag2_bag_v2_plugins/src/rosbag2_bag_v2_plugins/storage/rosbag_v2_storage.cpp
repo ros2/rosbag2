@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_bag_v2_plugins/storage/logging.hpp"
 #include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 
@@ -49,7 +50,9 @@ void RosbagV2Storage::open(
     if (get_1to2_mapping(connection->datatype, ros2_type_name)) {
       topics_valid_in_ros2.push_back(connection->topic);
     } else {
-      // TODO(Martin-Idel-SI): Logging
+      ROSBAG2_BAG_V2_PLUGINS_LOG_INFO_STREAM("No ROS 2 type available for topic '" <<
+        connection->topic << "' which is of type '" << connection->datatype <<
+        "'. Skipping messages of this topic when replaying.");
     }
   }
 
