@@ -45,6 +45,13 @@ find_package(rosbag2 REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(ros1_rosbag_storage REQUIRED)  # provided by ros1_rosbag_storage_vendor
 
+# Find transitive ros1 dependencies for ros1_rosbag_storage
+find_ros1_package(cpp_common)
+find_ros1_package(roscpp_serialization)
+find_ros1_package(roscpp_traits)
+find_ros1_package(rostime)
+find_ros1_package(roslz4)
+
 set(generated_path "${CMAKE_BINARY_DIR}/generated")
 set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 
@@ -60,6 +67,12 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2
   ros1_bridge
   pluginlib
+  ros1_cpp_common
+  ros1_roscpp
+  ros1_roscpp_serialization
+  ros1_roscpp_traits
+  ros1_rostime
+  ros1_roslz4
   ${ros2_message_packages}
   ${prefixed_ros1_message_packages})
 
