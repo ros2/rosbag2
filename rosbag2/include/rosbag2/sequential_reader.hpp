@@ -108,4 +108,8 @@ private:
 
 }  // namespace rosbag2
 
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 #endif  // ROSBAG2__SEQUENTIAL_READER_HPP_

@@ -96,4 +96,8 @@ private:
 
 }  // namespace rosbag2
 
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 #endif  // ROSBAG2__WRITER_HPP_
