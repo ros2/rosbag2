@@ -20,7 +20,25 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+  find_package(ros1_bridge REQUIRED)
+  include(${ros1_bridge_DIR}/find_ros1_interface_packages.cmake)
+  include(${ros1_bridge_DIR}/find_ros1_package.cmake)
+  find_ros1_package(roscpp)
+  if(NOT ros1_roscpp_FOUND)
+    set(SKIP_ROS1_TESTS "SKIP_TEST")
+    message(WARNING "Skipping build of tests for rosbag_v2 plugin. ROS 1 not found")
+  endif()
+else()
+  set(SKIP_ROS1_TESTS "SKIP_TEST")
+  message(WARNING "Skipping build of tests for rosbag_v2 plugin. ROS 1 not found")
+endif()
+
 if(BUILD_TESTING)
+  include(cmake/skip_ros1_tests_if_necessary.cmake)
+  skip_ros1_tests_if_necessary()
+
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
@@ -75,28 +93,28 @@ if(BUILD_TESTING)
       test_msgs)
   endif()
 
-  if(rosbag2_bag_v2_plugins_FOUND)
-    ament_add_gmock(test_rosbag2_play_rosbag_v2_end_to_end
-      test/rosbag2_tests/test_rosbag2_play_rosbag_v2_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_play_rosbag_v2_end_to_end)
-      ament_target_dependencies(test_rosbag2_play_rosbag_v2_end_to_end
-        rosbag2_storage
-        rclcpp
-        rosbag2_test_common
-        std_msgs)
-    endif()
+  ament_add_gmock(test_rosbag2_play_rosbag_v2_end_to_end
+    test/rosbag2_tests/test_rosbag2_play_rosbag_v2_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_ROS1_TESTS})
+  if(TARGET test_rosbag2_play_rosbag_v2_end_to_end)
+    ament_target_dependencies(test_rosbag2_play_rosbag_v2_end_to_end
+      rosbag2_storage
+      rclcpp
+      rosbag2_test_common
+      std_msgs)
+  endif()
 
-    ament_add_gmock(test_rosbag2_info_rosbag_v2_end_to_end
-      test/rosbag2_tests/test_rosbag2_info_rosbag_v2_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_info_rosbag_v2_end_to_end)
-      ament_target_dependencies(test_rosbag2_info_rosbag_v2_end_to_end
-        rosbag2_storage
-        rclcpp
-        rosbag2_test_common
-        std_msgs)
-    endif()
+  ament_add_gmock(test_rosbag2_info_rosbag_v2_end_to_end
+    test/rosbag2_tests/test_rosbag2_info_rosbag_v2_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_ROS1_TESTS})
+  if(TARGET test_rosbag2_info_rosbag_v2_end_to_end)
+    ament_target_dependencies(test_rosbag2_info_rosbag_v2_end_to_end
+      rosbag2_storage
+      rclcpp
+      rosbag2_test_common
+      std_msgs)
   endif()
 endif()
 
