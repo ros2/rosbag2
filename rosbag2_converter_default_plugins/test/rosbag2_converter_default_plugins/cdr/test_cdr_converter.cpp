@@ -20,7 +20,7 @@
 #include "../../../src/rosbag2_converter_default_plugins/cdr/cdr_converter.hpp"
 #include "../../../src/rosbag2_converter_default_plugins/logging.hpp"
 #include "rcutils/strdup.h"
-#include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 #include "rosbag2_test_common/memory_management.hpp"

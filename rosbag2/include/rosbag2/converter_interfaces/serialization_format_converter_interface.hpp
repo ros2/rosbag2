@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
-#define ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#ifndef ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#define ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
@@ -23,26 +23,20 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_serializer_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_deserializer_interface.hpp"
 
+/**
+ * This is a convenience class for plugin developers. When developing a plugin to both write and
+ * read a specified serialization format, inherit from this class
+ */
 namespace rosbag2
 {
 
 class SerializationFormatConverterInterface
-{
-public:
-  virtual ~SerializationFormatConverterInterface() = default;
-
-  virtual void deserialize(
-    std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
-    const rosidl_message_type_support_t * type_support,
-    std::shared_ptr<rosbag2_introspection_message_t> ros_message) = 0;
-
-  virtual void serialize(
-    std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
-    const rosidl_message_type_support_t * type_support,
-    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) = 0;
-};
+  : public SerializationFormatSerializerInterface, public SerializationFormatDeserializerInterface
+{};
 
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_

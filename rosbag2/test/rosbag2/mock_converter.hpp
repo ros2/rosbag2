@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
 
 class MockConverter : public rosbag2::SerializationFormatConverterInterface
 {

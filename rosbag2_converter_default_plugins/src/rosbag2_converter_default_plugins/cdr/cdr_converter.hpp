@@ -21,7 +21,7 @@
 #include "rmw/types.h"
 
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
-#include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_converter_default_plugins
