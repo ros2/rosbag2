@@ -21,9 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "pluginlib/class_loader.hpp"
-#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
-#include "rosbag2/logging.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -36,6 +33,8 @@
 
 namespace rosbag2
 {
+
+class SerializationFormatConverterFactoryImpl;
 
 class ROSBAG2_PUBLIC SerializationFormatConverterFactory
   : public SerializationFormatConverterFactoryInterface
@@ -52,53 +51,7 @@ public:
   load_serializer(const std::string & format) override;
 
 private:
-  bool check_that_plugin_is_registered(
-    std::string converter_id,
-    const std::vector<std::string> & registered_converter_classes,
-    const std::vector<std::string> & registered_interface_classes);
-
-  template<typename SerializationFormatIface>
-  std::unique_ptr<SerializationFormatIface>
-  load_interface(
-    const std::string & format,
-    std::shared_ptr<pluginlib::ClassLoader<SerializationFormatIface>> class_loader)
-  {
-    auto converter_id = format + "_converter";
-
-    if (check_that_plugin_is_registered(
-        converter_id,
-        converter_class_loader_->getDeclaredClasses(),
-        class_loader->getDeclaredClasses()))
-    {
-      ROSBAG2_LOG_ERROR_STREAM("Requested converter for format '" << format << "' does not exist");
-      return nullptr;
-    }
-
-    try {
-      return std::unique_ptr<SerializationFormatIface>(
-        class_loader->createUnmanagedInstance(converter_id));
-    } catch (const std::runtime_error & ex) {
-      (void) ex;  // Ignore, try to load converter instead
-    }
-
-    try {
-      return std::unique_ptr<converter_interfaces::SerializationFormatConverterInterface>(
-        converter_class_loader_->createUnmanagedInstance(converter_id));
-    } catch (const std::runtime_error & ex) {
-      ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
-      return nullptr;
-    }
-  }
-
-  std::unique_ptr<
-    pluginlib::ClassLoader<converter_interfaces::SerializationFormatConverterInterface>>
-  converter_class_loader_;
-  std::shared_ptr<
-    pluginlib::ClassLoader<converter_interfaces::SerializationFormatSerializerInterface>>
-  serializer_class_loader_;
-  std::shared_ptr<
-    pluginlib::ClassLoader<converter_interfaces::SerializationFormatDeserializerInterface>>
-  deserializer_class_loader_;
+  std::unique_ptr<SerializationFormatConverterFactoryImpl> impl_;
 };
 
 }  // namespace rosbag2

@@ -18,57 +18,27 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/logging.hpp"
+#include "./serialization_format_converter_factory_impl.hpp"
 
 namespace rosbag2
 {
 
 SerializationFormatConverterFactory::SerializationFormatConverterFactory()
-{
-  try {
-    converter_class_loader_ =
-      std::make_unique<pluginlib::ClassLoader<
-          converter_interfaces::SerializationFormatConverterInterface>>(
-      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatConverterInterface");
-    serializer_class_loader_ =
-      std::make_shared<pluginlib::ClassLoader<
-          converter_interfaces::SerializationFormatSerializerInterface>>(
-      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatSerializerInterface");
-    deserializer_class_loader_ =
-      std::make_shared<pluginlib::ClassLoader<
-          converter_interfaces::SerializationFormatDeserializerInterface>>(
-      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatDeserializerInterface");
-  } catch (const std::exception & e) {
-    ROSBAG2_LOG_ERROR_STREAM("Unable to create class loader instance: " << e.what());
-    throw e;
-  }
-}
+: impl_(std::make_unique<SerializationFormatConverterFactoryImpl>())
+{}
 
 SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
-
-bool SerializationFormatConverterFactory::check_that_plugin_is_registered(
-  std::string converter_id,
-  const std::vector<std::string> & registered_converter_classes,
-  const std::vector<std::string> & registered_interface_classes)
-{
-  auto class_exists_in_converters = std::find(registered_converter_classes.begin(),
-      registered_converter_classes.end(), converter_id);
-  auto class_exists_in_deserializers = std::find(registered_interface_classes.begin(),
-      registered_interface_classes.end(), converter_id);
-  return class_exists_in_converters == registered_converter_classes.end() &&
-         class_exists_in_deserializers == registered_interface_classes.end();
-}
 
 std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
 SerializationFormatConverterFactory::load_deserializer(const std::string & format)
 {
-  return load_interface(format, deserializer_class_loader_);
+  return impl_->load_deserializer(format);
 }
 
 std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
 SerializationFormatConverterFactory::load_serializer(const std::string & format)
 {
-  return load_interface(format, serializer_class_loader_);
+  return impl_->load_serializer(format);
 }
 
 }  // namespace rosbag2
