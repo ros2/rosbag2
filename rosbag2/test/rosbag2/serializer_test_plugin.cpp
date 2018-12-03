@@ -1,5 +1,4 @@
-// Copyright 2018,  Open Source Robotics Foundation, Inc.
-// Copyright 2018,  Bosch Software Innovations GmbH.
+// Copyright 2018, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,21 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "converter_test_plugin.hpp"
+#include "serializer_test_plugin.hpp"
 
 #include <memory>
 
-void ConverterTestPlugin::deserialize(
-  const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
-  const rosidl_message_type_support_t * type_support,
-  std::shared_ptr<rosbag2_introspection_message_t> ros_message)
-{
-  (void) ros_message;
-  (void) serialized_message;
-  (void) type_support;
-}
-
-void ConverterTestPlugin::serialize(
+void SerializerTestPlugin::serialize(
   const std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
   const rosidl_message_type_support_t * type_support,
   std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message)
@@ -38,4 +27,4 @@ void ConverterTestPlugin::serialize(
 }
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(ConverterTestPlugin, rosbag2::SerializationFormatConverterInterface)
+PLUGINLIB_EXPORT_CLASS(SerializerTestPlugin, rosbag2::SerializationFormatSerializerInterface)

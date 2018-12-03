@@ -82,12 +82,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
-    converter_test_plugin
+    converter_test_plugins
     SHARED
+    test/rosbag2/serializer_test_plugin.cpp
     test/rosbag2/converter_test_plugin.cpp)
-  target_link_libraries(converter_test_plugin rosbag2)
+  target_link_libraries(converter_test_plugins rosbag2)
   install(
-    TARGETS converter_test_plugin
+    TARGETS converter_test_plugins
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
