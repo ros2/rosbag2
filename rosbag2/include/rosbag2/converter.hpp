@@ -78,8 +78,8 @@ public:
 
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::unique_ptr<SerializationFormatDeserializerInterface> input_converter_;
-  std::unique_ptr<SerializationFormatSerializerInterface> output_converter_;
+  std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface> input_converter_;
+  std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface> output_converter_;
   std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
 };
 

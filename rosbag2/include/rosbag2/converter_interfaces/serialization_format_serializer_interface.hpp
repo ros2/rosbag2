@@ -23,6 +23,9 @@
 namespace rosbag2
 {
 
+namespace converter_interfaces
+{
+
 class SerializationFormatSerializerInterface
 {
 public:
@@ -34,6 +37,7 @@ public:
     std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) = 0;
 };
 
+}  // namespace converter_interfaces
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_SERIALIZER_INTERFACE_HPP_

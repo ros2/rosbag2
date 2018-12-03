@@ -27,4 +27,5 @@ void SerializerTestPlugin::serialize(
 }
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(SerializerTestPlugin, rosbag2::SerializationFormatSerializerInterface)
+PLUGINLIB_EXPORT_CLASS(SerializerTestPlugin,
+  rosbag2::converter_interfaces::SerializationFormatSerializerInterface)

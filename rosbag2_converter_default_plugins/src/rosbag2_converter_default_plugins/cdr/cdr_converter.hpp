@@ -27,7 +27,7 @@
 namespace rosbag2_converter_default_plugins
 {
 
-class CdrConverter : public rosbag2::SerializationFormatConverterInterface
+class CdrConverter : public rosbag2::converter_interfaces::SerializationFormatConverterInterface
 {
 public:
   CdrConverter();

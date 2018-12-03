@@ -33,10 +33,14 @@
 namespace rosbag2
 {
 
+namespace converter_interfaces
+{
+
 class SerializationFormatConverterInterface
   : public SerializationFormatSerializerInterface, public SerializationFormatDeserializerInterface
 {};
 
+}  // namespace converter_interfaces
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_

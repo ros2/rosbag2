@@ -26,7 +26,7 @@
 #include "rosbag2_test_common/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-using rosbag2::SerializationFormatConverterInterface;
+using rosbag2::converter_interfaces::SerializationFormatConverterInterface;
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
@@ -56,7 +56,7 @@ public:
     return ros_message;
   }
 
-  std::unique_ptr<rosbag2::SerializationFormatConverterInterface> converter_;
+  std::unique_ptr<SerializationFormatConverterInterface> converter_;
   std::unique_ptr<MemoryManagement> memory_management_;
   std::string topic_name_;
   rcutils_allocator_t allocator_;

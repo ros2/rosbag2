@@ -29,10 +29,10 @@ class ROSBAG2_PUBLIC SerializationFormatConverterFactoryInterface
 public:
   virtual ~SerializationFormatConverterFactoryInterface() = default;
 
-  virtual std::unique_ptr<SerializationFormatDeserializerInterface>
+  virtual std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
   load_deserializer(const std::string & format) = 0;
 
-  virtual std::unique_ptr<SerializationFormatSerializerInterface>
+  virtual std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
   load_serializer(const std::string & format) = 0;
 };
 

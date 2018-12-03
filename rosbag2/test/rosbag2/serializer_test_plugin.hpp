@@ -19,7 +19,8 @@
 
 #include "rosbag2/converter_interfaces/serialization_format_serializer_interface.hpp"
 
-class SerializerTestPlugin : public rosbag2::SerializationFormatSerializerInterface
+class SerializerTestPlugin
+  : public rosbag2::converter_interfaces::SerializationFormatSerializerInterface
 {
 public:
   void serialize(

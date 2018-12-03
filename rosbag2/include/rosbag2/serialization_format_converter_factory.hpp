@@ -45,10 +45,10 @@ public:
 
   ~SerializationFormatConverterFactory() override;
 
-  std::unique_ptr<SerializationFormatDeserializerInterface>
+  std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
   load_deserializer(const std::string & format) override;
 
-  std::unique_ptr<SerializationFormatSerializerInterface>
+  std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
   load_serializer(const std::string & format) override;
 
 private:
@@ -82,7 +82,7 @@ private:
     }
 
     try {
-      return std::unique_ptr<SerializationFormatConverterInterface>(
+      return std::unique_ptr<converter_interfaces::SerializationFormatConverterInterface>(
         converter_class_loader_->createUnmanagedInstance(converter_id));
     } catch (const std::runtime_error & ex) {
       ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
@@ -90,11 +90,14 @@ private:
     }
   }
 
-  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>>
+  std::unique_ptr<
+    pluginlib::ClassLoader<converter_interfaces::SerializationFormatConverterInterface>>
   converter_class_loader_;
-  std::shared_ptr<pluginlib::ClassLoader<SerializationFormatSerializerInterface>>
+  std::shared_ptr<
+    pluginlib::ClassLoader<converter_interfaces::SerializationFormatSerializerInterface>>
   serializer_class_loader_;
-  std::shared_ptr<pluginlib::ClassLoader<SerializationFormatDeserializerInterface>>
+  std::shared_ptr<
+    pluginlib::ClassLoader<converter_interfaces::SerializationFormatDeserializerInterface>>
   deserializer_class_loader_;
 };
 

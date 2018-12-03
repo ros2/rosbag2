@@ -27,14 +27,17 @@ SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 {
   try {
     converter_class_loader_ =
-      std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
-      "rosbag2", "rosbag2::SerializationFormatConverterInterface");
+      std::make_unique<pluginlib::ClassLoader<
+          converter_interfaces::SerializationFormatConverterInterface>>(
+      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatConverterInterface");
     serializer_class_loader_ =
-      std::make_shared<pluginlib::ClassLoader<SerializationFormatSerializerInterface>>(
-      "rosbag2", "rosbag2::SerializationFormatSerializerInterface");
+      std::make_shared<pluginlib::ClassLoader<
+          converter_interfaces::SerializationFormatSerializerInterface>>(
+      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatSerializerInterface");
     deserializer_class_loader_ =
-      std::make_shared<pluginlib::ClassLoader<SerializationFormatDeserializerInterface>>(
-      "rosbag2", "rosbag2::SerializationFormatDeserializerInterface");
+      std::make_shared<pluginlib::ClassLoader<
+          converter_interfaces::SerializationFormatDeserializerInterface>>(
+      "rosbag2", "rosbag2::converter_interfaces::SerializationFormatDeserializerInterface");
   } catch (const std::exception & e) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to create class loader instance: " << e.what());
     throw e;
@@ -56,13 +59,13 @@ bool SerializationFormatConverterFactory::check_that_plugin_is_registered(
          class_exists_in_deserializers == registered_interface_classes.end();
 }
 
-std::unique_ptr<SerializationFormatDeserializerInterface>
+std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
 SerializationFormatConverterFactory::load_deserializer(const std::string & format)
 {
   return load_interface(format, deserializer_class_loader_);
 }
 
-std::unique_ptr<SerializationFormatSerializerInterface>
+std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
 SerializationFormatConverterFactory::load_serializer(const std::string & format)
 {
   return load_interface(format, serializer_class_loader_);

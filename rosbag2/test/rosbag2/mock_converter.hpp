@@ -22,7 +22,7 @@
 
 #include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
 
-class MockConverter : public rosbag2::SerializationFormatConverterInterface
+class MockConverter : public rosbag2::converter_interfaces::SerializationFormatConverterInterface
 {
 public:
   MOCK_METHOD3(deserialize,

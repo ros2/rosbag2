@@ -65,8 +65,10 @@ public:
   }
 
   std::unique_ptr<rosbag2::SerializationFormatConverterFactory> factory_;
-  std::unique_ptr<rosbag2::SerializationFormatSerializerInterface> cdr_serializer_;
-  std::unique_ptr<rosbag2::SerializationFormatDeserializerInterface> cdr_deserializer_;
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializerInterface>
+  cdr_serializer_;
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializerInterface>
+  cdr_deserializer_;
   std::unique_ptr<MemoryManagement> memory_management_;
   std::string topic_name_;
   rcutils_allocator_t allocator_;

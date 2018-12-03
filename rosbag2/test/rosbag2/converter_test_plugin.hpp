@@ -20,7 +20,8 @@
 
 #include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
 
-class ConverterTestPlugin : public rosbag2::SerializationFormatConverterInterface
+class ConverterTestPlugin
+  : public rosbag2::converter_interfaces::SerializationFormatConverterInterface
 {
 public:
   void deserialize(
