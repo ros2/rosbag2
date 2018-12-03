@@ -26,8 +26,15 @@ namespace rosbag2
 SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 {
   try {
-    class_loader_ = std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
+    converter_class_loader_ =
+      std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
       "rosbag2", "rosbag2::SerializationFormatConverterInterface");
+    serializer_class_loader_ =
+      std::make_unique<pluginlib::ClassLoader<SerializationFormatSerializerInterface>>(
+      "rosbag2", "rosbag2::SerializationFormatSerializerInterface");
+    deserializer_class_loader_ =
+      std::make_unique<pluginlib::ClassLoader<SerializationFormatDeserializerInterface>>(
+      "rosbag2", "rosbag2::SerializationFormatDeserializerInterface");
   } catch (const std::exception & e) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to create class loader instance: " << e.what());
     throw e;
@@ -41,16 +48,29 @@ SerializationFormatConverterFactory::load_deserializer(const std::string & forma
 {
   auto converter_id = format + "_converter";
 
-  const auto & registered_classes = class_loader_->getDeclaredClasses();
-  auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), converter_id);
-  if (class_exists == registered_classes.end()) {
-    ROSBAG2_LOG_ERROR_STREAM("Requested converter id '" << converter_id << "' does not exist");
+  const auto & registered_converter_classes = converter_class_loader_->getDeclaredClasses();
+  const auto & registered_deserializer_classes = deserializer_class_loader_->getDeclaredClasses();
+  auto class_exists_in_converters = std::find(registered_converter_classes.begin(),
+      registered_converter_classes.end(), converter_id);
+  auto class_exists_in_deserializers = std::find(registered_deserializer_classes.begin(),
+      registered_deserializer_classes.end(), converter_id);
+  if (class_exists_in_converters == registered_converter_classes.end() &&
+    class_exists_in_deserializers == registered_deserializer_classes.end())
+  {
+    ROSBAG2_LOG_ERROR_STREAM("Requested converter for format '" << format << "' does not exist");
     return nullptr;
   }
 
   try {
+    return std::unique_ptr<SerializationFormatDeserializerInterface>(
+      deserializer_class_loader_->createUnmanagedInstance(converter_id));
+  } catch (const std::runtime_error & ex) {
+    (void) ex;  // Ignore, try to load converter instead
+  }
+
+  try {
     return std::unique_ptr<SerializationFormatConverterInterface>(
-      class_loader_->createUnmanagedInstance(converter_id));
+      converter_class_loader_->createUnmanagedInstance(converter_id));
   } catch (const std::runtime_error & ex) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
     return nullptr;
@@ -62,16 +82,29 @@ SerializationFormatConverterFactory::load_serializer(const std::string & format)
 {
   auto converter_id = format + "_converter";
 
-  const auto & registered_classes = class_loader_->getDeclaredClasses();
-  auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), converter_id);
-  if (class_exists == registered_classes.end()) {
-    ROSBAG2_LOG_ERROR_STREAM("Requested converter id '" << converter_id << "' does not exist");
+  const auto & registered_converter_classes = converter_class_loader_->getDeclaredClasses();
+  const auto & registered_serializer_classes = serializer_class_loader_->getDeclaredClasses();
+  auto class_exists_in_converters = std::find(registered_converter_classes.begin(),
+      registered_converter_classes.end(), converter_id);
+  auto class_exists_in_serializers = std::find(registered_serializer_classes.begin(),
+      registered_serializer_classes.end(), converter_id);
+  if (class_exists_in_converters == registered_converter_classes.end() &&
+    class_exists_in_serializers == registered_serializer_classes.end())
+  {
+    ROSBAG2_LOG_ERROR_STREAM("Requested converter for format '" << format << "' does not exist");
     return nullptr;
   }
 
   try {
+    return std::unique_ptr<SerializationFormatSerializerInterface>(
+      serializer_class_loader_->createUnmanagedInstance(converter_id));
+  } catch (const std::runtime_error & ex) {
+    (void) ex;  // Ignore, try to load converter instead
+  }
+
+  try {
     return std::unique_ptr<SerializationFormatConverterInterface>(
-      class_loader_->createUnmanagedInstance(converter_id));
+      converter_class_loader_->createUnmanagedInstance(converter_id));
   } catch (const std::runtime_error & ex) {
     ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
     return nullptr;

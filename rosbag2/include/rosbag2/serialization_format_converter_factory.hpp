@@ -57,7 +57,12 @@ public:
   load_serializer(const std::string & format) override;
 
 private:
-  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>> class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>>
+  converter_class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatSerializerInterface>>
+  serializer_class_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatDeserializerInterface>>
+  deserializer_class_loader_;
 };
 
 }  // namespace rosbag2
