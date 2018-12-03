@@ -36,8 +36,29 @@ SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 
 SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
 
-std::unique_ptr<SerializationFormatConverterInterface>
-SerializationFormatConverterFactory::load_converter(const std::string & format)
+std::unique_ptr<SerializationFormatDeserializerInterface>
+SerializationFormatConverterFactory::load_deserializer(const std::string & format)
+{
+  auto converter_id = format + "_converter";
+
+  const auto & registered_classes = class_loader_->getDeclaredClasses();
+  auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), converter_id);
+  if (class_exists == registered_classes.end()) {
+    ROSBAG2_LOG_ERROR_STREAM("Requested converter id '" << converter_id << "' does not exist");
+    return nullptr;
+  }
+
+  try {
+    return std::unique_ptr<SerializationFormatConverterInterface>(
+      class_loader_->createUnmanagedInstance(converter_id));
+  } catch (const std::runtime_error & ex) {
+    ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
+    return nullptr;
+  }
+}
+
+std::unique_ptr<SerializationFormatSerializerInterface>
+SerializationFormatConverterFactory::load_serializer(const std::string & format)
 {
   auto converter_id = format + "_converter";
 

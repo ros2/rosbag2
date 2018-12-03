@@ -50,8 +50,11 @@ public:
 
   ~SerializationFormatConverterFactory() override;
 
-  std::unique_ptr<SerializationFormatConverterInterface>
-  load_converter(const std::string & format) override;
+  std::unique_ptr<SerializationFormatDeserializerInterface>
+  load_deserializer(const std::string & format) override;
+
+  std::unique_ptr<SerializationFormatSerializerInterface>
+  load_serializer(const std::string & format) override;
 
 private:
   std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>> class_loader_;

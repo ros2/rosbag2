@@ -39,9 +39,9 @@ Converter::Converter(
   const rosbag2::ConverterOptions & converter_options,
   std::shared_ptr<rosbag2::SerializationFormatConverterFactoryInterface> converter_factory)
 : converter_factory_(converter_factory),
-  input_converter_(converter_factory_->load_converter(
+  input_converter_(converter_factory_->load_deserializer(
       converter_options.input_serialization_format)),
-  output_converter_(converter_factory_->load_converter(
+  output_converter_(converter_factory_->load_serializer(
       converter_options.output_serialization_format))
 {
   if (!input_converter_) {

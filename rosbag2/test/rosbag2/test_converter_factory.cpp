@@ -28,11 +28,11 @@ public:
 };
 
 TEST_F(ConverterFactoryTest, load_test_plugin) {
-  auto converter = factory.load_converter("a");
+  auto converter = factory.load_deserializer("a");
   ASSERT_NE(nullptr, converter);
 }
 
 TEST_F(ConverterFactoryTest, load_converrters_returns_nullptr_if_plugin_does_not_exist) {
-  auto converter = factory.load_converter("wrong_format");
+  auto converter = factory.load_deserializer("wrong_format");
   ASSERT_EQ(nullptr, converter);
 }
