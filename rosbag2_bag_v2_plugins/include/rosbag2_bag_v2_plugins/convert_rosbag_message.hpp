@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
-#define ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
+#ifndef ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_
+#define ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_
 
 #include <memory>
 #include <string>
@@ -28,8 +28,10 @@ bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_
 
 void
 convert_1_to_2(
-  const rosbag::MessageInstance * msg_instance,
+  std::string ros1_type_name,
+  uint8_t * ros1_buffer,
+  size_t ros1_buffer_capacity,
   std::shared_ptr<rosbag2_introspection_message_t> ros2_message);
 }  // namespace rosbag2_bag_v2_plugins
 
-#endif  // ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
+#endif  // ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_

@@ -109,7 +109,7 @@ ament_export_dependencies(rosbag2 ros1_rosbag_storage rosbag2_storage)
 add_custom_command(
   OUTPUT ${generated_files}
   COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/generate_coverter_cpp.py
-  --output-path "${generated_path}" --template-dir ${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins/storage
+  --output-path "${generated_path}" --template-dir ${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

@@ -15,10 +15,11 @@
 from ros1_bridge import camel_case_to_lower_case_underscore
 }@
 
-#include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
+#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
 
-#include <string>
+#include <cstdint>
 #include <memory>
+#include <string>
 
 #include "ros1_bridge/bridge.hpp"
 #include "ros1_bridge/factory_interface.hpp"
@@ -44,15 +45,18 @@ bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_
 
 void
 convert_1_to_2(
-  const rosbag::MessageInstance * msg_instance,
+  std::string ros1_type_name,
+  uint8_t * ros1_buffer,
+  size_t ros1_buffer_capacity,
   std::shared_ptr<rosbag2_introspection_message_t> ros2_message)
 {
   @[if not mappings]@
+  (void) ros1_type_name;
+  (void) ros1_buffer;
+  (void) ros1_buffer_capacity;
   (void) ros2_message;
-  (void)msg_instance;
   @[end if]@
 
-  std::string ros1_type_name = msg_instance->getDataType();
   std::string ros2_type_name;
   ros1_bridge::get_1to2_mapping(ros1_type_name, ros2_type_name);
 
@@ -60,13 +64,17 @@ convert_1_to_2(
   if (ros1_type_name == "@(m.ros1_msg.package_name)/@(m.ros1_msg.message_name)"
     && ros2_type_name == "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)")
   {
-    auto ros1_message =
-      msg_instance->instantiate<@(m.ros1_msg.package_name)::@(m.ros1_msg.message_name)>();
+    @(m.ros1_msg.package_name)::@(m.ros1_msg.message_name) typed_ros1_message;
+    ros::serialization::IStream stream(ros1_buffer, ros1_buffer_capacity);
+
+    ros::serialization
+      ::Serializer<@(m.ros1_msg.package_name)::@(m.ros1_msg.message_name)>
+      ::read(stream, typed_ros1_message);
 
     auto factory = ros1_bridge::get_factory(
       "@(m.ros1_msg.package_name)/@(m.ros1_msg.message_name)",
       "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)");
-    factory->convert_1_to_2(ros1_message.get(), ros2_message->message);
+    factory->convert_1_to_2(&typed_ros1_message, ros2_message->message);
   }
   @[end for]@
 }

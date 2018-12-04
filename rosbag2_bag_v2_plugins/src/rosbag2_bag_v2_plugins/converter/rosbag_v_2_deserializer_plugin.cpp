@@ -15,10 +15,11 @@
 #include "rosbag_v_2_deserializer_plugin.hpp"
 
 #include <memory>
+#include <string>
 
 #include "rosbag/message_instance.h"
 
-#include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
+#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_bag_v2_plugins
@@ -30,8 +31,14 @@ void RosbagV2DeserializerPlugin::deserialize(
 {
   (void) type_support;
 
+  auto ros1_data_type = std::string(
+    reinterpret_cast<char *>(serialized_message->serialized_data->buffer));
+  size_t data_type_zero_terminated_length = ros1_data_type.length() + 1;
+
   convert_1_to_2(
-    reinterpret_cast<rosbag::MessageInstance *>(serialized_message->serialized_data->buffer),
+    ros1_data_type,
+    serialized_message->serialized_data->buffer + data_type_zero_terminated_length,
+    serialized_message->serialized_data->buffer_length - data_type_zero_terminated_length,
     ros_message);
 
   ros_message->time_stamp = serialized_message->time_stamp;
