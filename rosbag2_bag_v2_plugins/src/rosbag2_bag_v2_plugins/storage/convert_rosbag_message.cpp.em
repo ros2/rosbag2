@@ -18,13 +18,16 @@ from ros1_bridge import camel_case_to_lower_case_underscore
 #include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
 
 #include <string>
+#include <memory>
 
 #include "ros1_bridge/bridge.hpp"
 #include "ros1_bridge/factory_interface.hpp"
 
+#include "rclcpp/rclcpp.hpp"
+#include "rcutils/allocator.h"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 
 @[for m in mappings]@
 #include "@(m.ros1_msg.package_name)/@(m.ros1_msg.message_name).h"
@@ -39,14 +42,17 @@ bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_
   return ros1_bridge::get_1to2_mapping(ros1_message_type, ros2_message_type);
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-convert_1_to_2(rosbag::MessageInstance msg_instance)
+void
+convert_1_to_2(
+  const rosbag::MessageInstance * msg_instance,
+  std::shared_ptr<rosbag2_introspection_message_t> ros2_message)
 {
   @[if not mappings]@
+  (void) ros2_message;
   (void)msg_instance;
   @[end if]@
 
-  std::string ros1_type_name = msg_instance.getDataType();
+  std::string ros1_type_name = msg_instance->getDataType();
   std::string ros2_type_name;
   ros1_bridge::get_1to2_mapping(ros1_type_name, ros2_type_name);
 
@@ -55,27 +61,13 @@ convert_1_to_2(rosbag::MessageInstance msg_instance)
     && ros2_type_name == "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)")
   {
     auto ros1_message =
-      msg_instance.instantiate<@(m.ros1_msg.package_name)::@(m.ros1_msg.message_name)>();
-    @(m.ros2_msg.package_name)::msg::@(m.ros2_msg.message_name) ros2_message;
+      msg_instance->instantiate<@(m.ros1_msg.package_name)::@(m.ros1_msg.message_name)>();
+
     auto factory = ros1_bridge::get_factory(
       "@(m.ros1_msg.package_name)/@(m.ros1_msg.message_name)",
       "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)");
-    factory->convert_1_to_2(ros1_message.get(), &ros2_message);
-
-    auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    serialized_message->serialized_data = rosbag2_storage::make_empty_serialized_message(0);
-    auto typesupport = rosbag2::get_typesupport(
-      "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)", "rosidl_typesupport_cpp");
-    serialized_message->topic_name = msg_instance.getTopic();
-    serialized_message->time_stamp = msg_instance.getTime().toNSec();
-
-    auto ret =
-      rmw_serialize(&ros2_message, typesupport, serialized_message->serialized_data.get());
-
-    return ret == RMW_RET_OK ? serialized_message : nullptr;
+    factory->convert_1_to_2(ros1_message.get(), ros2_message->message);
   }
   @[end for]@
-
-  return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 }  // end namespace rosbag2_bag_v2_plugin

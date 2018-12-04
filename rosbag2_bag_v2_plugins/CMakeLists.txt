@@ -58,6 +58,7 @@ set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 add_library(
   ${PROJECT_NAME} SHARED
   src/rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.cpp
+  src/rosbag2_bag_v2_plugins/converter/rosbag_v_2_deserializer_plugin.cpp
   ${generated_files})
 
 ament_target_dependencies(${PROJECT_NAME}

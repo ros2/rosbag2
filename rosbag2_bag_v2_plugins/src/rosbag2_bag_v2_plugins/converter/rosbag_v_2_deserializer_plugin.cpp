@@ -12,24 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
-#define ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
+#include "rosbag_v_2_deserializer_plugin.hpp"
 
 #include <memory>
-#include <string>
 
 #include "rosbag/message_instance.h"
-#include "rosbag2/types.hpp"
+
+#include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {
-bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_message_type);
+void RosbagV2DeserializerPlugin::deserialize(
+  std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
+  const rosidl_message_type_support_t * type_support,
+  std::shared_ptr<rosbag2_introspection_message_t> ros_message)
+{
+  (void) type_support;
 
-void
-convert_1_to_2(
-  const rosbag::MessageInstance * msg_instance,
-  std::shared_ptr<rosbag2_introspection_message_t> ros2_message);
+  convert_1_to_2(
+    reinterpret_cast<rosbag::MessageInstance *>(serialized_message->serialized_data->buffer),
+    ros_message);
+
+  ros_message->time_stamp = serialized_message->time_stamp;
+  rosbag2::introspection_message_set_topic_name(
+    ros_message.get(), serialized_message->topic_name.c_str());
+}
 }  // namespace rosbag2_bag_v2_plugins
-
-#endif  // ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_

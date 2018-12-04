@@ -12,24 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
-#define ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
+#ifndef ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_
+#define ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_
 
 #include <memory>
-#include <string>
 
-#include "rosbag/message_instance.h"
+#include "rosbag2/converter_interfaces/serialization_format_deserializer_interface.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {
-bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_message_type);
+class RosbagV2DeserializerPlugin : public
+  rosbag2::converter_interfaces::SerializationFormatDeserializerInterface
+{
+public:
+  RosbagV2DeserializerPlugin() = default;
+  virtual ~RosbagV2DeserializerPlugin() = default;
 
-void
-convert_1_to_2(
-  const rosbag::MessageInstance * msg_instance,
-  std::shared_ptr<rosbag2_introspection_message_t> ros2_message);
+  void deserialize(
+    std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
+    const rosidl_message_type_support_t * type_support,
+    std::shared_ptr<rosbag2_introspection_message_t> ros_message) override;
+};
+
 }  // namespace rosbag2_bag_v2_plugins
 
-#endif  // ROSBAG2_BAG_V2_PLUGINS__STORAGE__CONVERT_ROSBAG_MESSAGE_HPP_
+#endif  // ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_

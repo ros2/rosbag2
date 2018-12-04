@@ -21,6 +21,7 @@
 #include "rosbag2_bag_v2_plugins/storage/logging.hpp"
 #include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {
@@ -68,9 +69,20 @@ bool RosbagV2Storage::has_next()
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> RosbagV2Storage::read_next()
 {
-  auto message = convert_1_to_2(*bag_iterator_);
+  auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  auto message_instance = *bag_iterator_;
+  serialized_message->topic_name = message_instance.getTopic();
+  serialized_message->time_stamp = message_instance.getTime().toNSec();
+
+  auto message = rosbag2_storage::make_empty_serialized_message(0);
+  message->buffer = reinterpret_cast<uint8_t *>(&message_instance);
+  // TODO(Martin-Idel-SI): This won't work correctly when destroying the message
+  serialized_message->serialized_data = message;
+  serialized_message->serialized_data->buffer_capacity = 0;
+  serialized_message->serialized_data->buffer_length = 0;
+
   bag_iterator_++;
-  return message;
+  return serialized_message;
 }
 
 std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_types()
