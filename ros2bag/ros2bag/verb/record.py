@@ -46,6 +46,9 @@ class RecordVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
              ' rmw currently in use')
+        parser.add_argument(
+            '--no-discovery', action='store_true',
+            help='disables topic auto discovery during recording')
 
     def create_bag_directory(self, uri):
         try:
@@ -69,12 +72,14 @@ class RecordVerb(VerbExtension):
                 uri=uri,
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
-                all=True)
+                all=True,
+                no_discovery=args.no_discovery)
         elif args.topics and len(args.topics) > 0:
             rosbag2_transport_py.record(
                 uri=uri,
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
+                no_discovery=args.no_discovery,
                 topics=args.topics)
         else:
             self._subparser.print_help()

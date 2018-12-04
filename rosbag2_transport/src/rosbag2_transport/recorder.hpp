@@ -49,6 +49,7 @@ private:
     const std::string & topic_name, const std::string & topic_type);
   std::future<void> launch_topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
+    bool is_discovery_disabled,
     const std::vector<std::string> & topics_to_record = {});
   void subscribe_all_missing_topics(
     const std::unordered_map<std::string, std::string> & all_topics_and_types);

@@ -41,7 +41,9 @@ void Recorder::record(const RecordOptions & record_options)
   ROSBAG2_TRANSPORT_LOG_INFO("Setup complete. Listening for topics...");
   serialization_format_ = record_options.rmw_serialization_format;
   auto discovery_future = launch_topics_discovery(
-    record_options.topic_polling_interval, record_options.topics);
+    record_options.topic_polling_interval,
+    record_options.is_discovery_disabled,
+    record_options.topics);
 
   record_messages();
 
@@ -75,10 +77,12 @@ Recorder::create_subscription(
 
 std::future<void> Recorder::launch_topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
+  bool is_discovery_disabled,
   const std::vector<std::string> & topics_to_record)
 {
-  auto subscribe_to_topics = [this, topics_to_record, topic_polling_interval] {
-      while (rclcpp::ok()) {
+  auto subscribe_to_topics =
+    [this, topics_to_record, topic_polling_interval, is_discovery_disabled] {
+      do {
         auto all_topics_and_types_to_subscribe = topics_to_record.empty() ?
           node_->get_all_topics_with_types() :
           node_->get_topics_with_types(topics_to_record);
@@ -89,7 +93,7 @@ std::future<void> Recorder::launch_topics_discovery(
 
         subscribe_all_missing_topics(all_topics_and_types_to_subscribe);
         std::this_thread::sleep_for(topic_polling_interval);
-      }
+      } while (rclcpp::ok() && !is_discovery_disabled);
     };
 
   return std::async(std::launch::async, subscribe_to_topics);
