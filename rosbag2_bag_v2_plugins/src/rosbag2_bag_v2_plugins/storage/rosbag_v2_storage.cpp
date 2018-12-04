@@ -18,10 +18,13 @@
 #include <string>
 #include <vector>
 
+#include "rosbag/message_instance.h"
+
 #include "rosbag2_bag_v2_plugins/storage/logging.hpp"
-#include "rosbag2_bag_v2_plugins/storage/convert_rosbag_message.hpp"
+#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag_output_stream.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {
@@ -74,12 +77,9 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> RosbagV2Storage::read_nex
   serialized_message->topic_name = message_instance.getTopic();
   serialized_message->time_stamp = message_instance.getTime().toNSec();
 
-  auto message = rosbag2_storage::make_empty_serialized_message(0);
-  message->buffer = reinterpret_cast<uint8_t *>(&message_instance);
-  // TODO(Martin-Idel-SI): This won't work correctly when destroying the message
-  serialized_message->serialized_data = message;
-  serialized_message->serialized_data->buffer_capacity = 0;
-  serialized_message->serialized_data->buffer_length = 0;
+  auto output_stream = RosbagOutputStream(message_instance.getDataType());
+  message_instance.write(output_stream);
+  serialized_message->serialized_data = output_stream.get_content();
 
   bag_iterator_++;
   return serialized_message;
