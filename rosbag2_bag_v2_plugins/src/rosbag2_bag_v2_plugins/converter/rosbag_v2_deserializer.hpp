@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_
-#define ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_
+#ifndef ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V2_DESERIALIZER_HPP_
+#define ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V2_DESERIALIZER_HPP_
 
 #include <memory>
 
@@ -23,12 +23,12 @@
 
 namespace rosbag2_bag_v2_plugins
 {
-class RosbagV2DeserializerPlugin : public
+class RosbagV2Deserializer : public
   rosbag2::converter_interfaces::SerializationFormatDeserializerInterface
 {
 public:
-  RosbagV2DeserializerPlugin() = default;
-  virtual ~RosbagV2DeserializerPlugin() = default;
+  RosbagV2Deserializer() = default;
+  virtual ~RosbagV2Deserializer() = default;
 
   void deserialize(
     std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
@@ -38,4 +38,4 @@ public:
 
 }  // namespace rosbag2_bag_v2_plugins
 
-#endif  // ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V_2_DESERIALIZER_PLUGIN_HPP_
+#endif  // ROSBAG2_BAG_V2_PLUGINS__CONVERTER__ROSBAG_V2_DESERIALIZER_HPP_

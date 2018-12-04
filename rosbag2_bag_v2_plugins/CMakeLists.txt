@@ -57,7 +57,7 @@ set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 
 add_library(
   ${PROJECT_NAME} SHARED
-  src/rosbag2_bag_v2_plugins/converter/rosbag_v_2_deserializer_plugin.cpp
+  src/rosbag2_bag_v2_plugins/converter/rosbag_v2_deserializer.cpp
   src/rosbag2_bag_v2_plugins/storage/rosbag_output_stream.cpp
   src/rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.cpp
   ${generated_files})
@@ -89,7 +89,8 @@ target_include_directories(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   ROSBAG2_BAG_V2_PLUGINS_BUILDING_DLL)
 
-pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
+pluginlib_export_plugin_description_file(rosbag2_storage storage_plugin_description.xml)
+pluginlib_export_plugin_description_file(rosbag2 converter_plugin_description.xml)
 
 install(
   DIRECTORY include/

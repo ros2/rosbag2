@@ -28,9 +28,8 @@ bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_
 
 void
 convert_1_to_2(
-  std::string ros1_type_name,
-  uint8_t * ros1_buffer,
-  size_t ros1_buffer_capacity,
+  const std::string & ros1_type_name,
+  ros::serialization::IStream & ros1_message_stream,
   std::shared_ptr<rosbag2_introspection_message_t> ros2_message);
 }  // namespace rosbag2_bag_v2_plugins
 

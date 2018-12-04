@@ -45,15 +45,13 @@ bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_
 
 void
 convert_1_to_2(
-  std::string ros1_type_name,
-  uint8_t * ros1_buffer,
-  size_t ros1_buffer_capacity,
+  const std::string & ros1_type_name,
+  ros::serialization::IStream & ros1_message_stream,
   std::shared_ptr<rosbag2_introspection_message_t> ros2_message)
 {
   @[if not mappings]@
   (void) ros1_type_name;
-  (void) ros1_buffer;
-  (void) ros1_buffer_capacity;
+  (void) ros1_message_stream;
   (void) ros2_message;
   @[end if]@
 
@@ -65,11 +63,10 @@ convert_1_to_2(
     && ros2_type_name == "@(m.ros2_msg.package_name)/@(m.ros2_msg.message_name)")
   {
     @(m.ros1_msg.package_name)::@(m.ros1_msg.message_name) typed_ros1_message;
-    ros::serialization::IStream stream(ros1_buffer, ros1_buffer_capacity);
 
     ros::serialization
       ::Serializer<@(m.ros1_msg.package_name)::@(m.ros1_msg.message_name)>
-      ::read(stream, typed_ros1_message);
+      ::read(ros1_message_stream, typed_ros1_message);
 
     auto factory = ros1_bridge::get_factory(
       "@(m.ros1_msg.package_name)/@(m.ros1_msg.message_name)",

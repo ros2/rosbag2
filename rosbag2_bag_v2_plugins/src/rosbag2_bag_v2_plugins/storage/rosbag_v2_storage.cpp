@@ -95,8 +95,7 @@ std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_
     rosbag2_storage::TopicMetadata topic_metadata;
     topic_metadata.name = connection->topic;
     topic_metadata.type = connection->datatype;
-    // TODO(Martin-Idel-SI) add correct format when splitting up plugin
-    topic_metadata.serialization_format = "";
+    topic_metadata.serialization_format = "rosbag_v2";
 
     topics_with_type.push_back(topic_metadata);
   }
