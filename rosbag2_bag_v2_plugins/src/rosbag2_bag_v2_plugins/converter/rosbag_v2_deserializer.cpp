@@ -21,7 +21,7 @@
 
 #include "rosbag2/converter_interfaces/serialization_format_deserializer_interface.hpp"
 #include "rosbag2/types/introspection_message.hpp"
-#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
+#include "../convert_rosbag_message.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {

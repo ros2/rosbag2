@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.hpp"
+#include "rosbag_v2_storage.hpp"
 
 #include <memory>
 #include <string>
@@ -20,11 +20,11 @@
 
 #include "rosbag/message_instance.h"
 
-#include "rosbag2_bag_v2_plugins/storage/logging.hpp"
-#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag_output_stream.hpp"
+#include "../logging.hpp"
+#include "../convert_rosbag_message.hpp"
 
 namespace rosbag2_bag_v2_plugins
 {

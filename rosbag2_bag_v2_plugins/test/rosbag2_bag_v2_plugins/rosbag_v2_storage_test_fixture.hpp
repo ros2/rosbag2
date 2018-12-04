@@ -21,7 +21,7 @@
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
-#include "rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.hpp"
+#include "../../src/rosbag2_bag_v2_plugins/storage/rosbag_v2_storage.hpp"
 #include "rosbag/bag.h"
 #include "rosbag/view.h"
 

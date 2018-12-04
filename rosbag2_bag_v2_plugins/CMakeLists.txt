@@ -80,8 +80,7 @@ ament_target_dependencies(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins>
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -93,16 +92,11 @@ pluginlib_export_plugin_description_file(rosbag2_storage storage_plugin_descript
 pluginlib_export_plugin_description_file(rosbag2 converter_plugin_description.xml)
 
 install(
-  DIRECTORY include/
-  DESTINATION include)
-
-install(
   TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_storage)
 ament_export_dependencies(rosbag2 ros1_rosbag_storage rosbag2_storage)
@@ -144,8 +138,7 @@ if(BUILD_TESTING)
   if(TARGET test_rosbag_v2_storage)
     target_include_directories(test_rosbag_v2_storage
       PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
     target_link_libraries(test_rosbag_v2_storage ${PROJECT_NAME})
     ament_target_dependencies(test_rosbag_v2_storage
       rosbag2_test_common)
@@ -157,8 +150,7 @@ if(BUILD_TESTING)
   if(TARGET test_rosbag_output_stream)
     target_include_directories(test_rosbag_output_stream
       PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<INSTALL_INTERFACE:include>)
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
     target_link_libraries(test_rosbag_output_stream ${PROJECT_NAME})
     ament_target_dependencies(test_rosbag_output_stream
       rosbag2_test_common)

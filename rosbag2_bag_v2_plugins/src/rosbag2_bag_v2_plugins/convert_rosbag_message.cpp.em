@@ -15,7 +15,7 @@
 from ros1_bridge import camel_case_to_lower_case_underscore
 }@
 
-#include "rosbag2_bag_v2_plugins/convert_rosbag_message.hpp"
+#include "convert_rosbag_message.hpp"
 
 #include <cstdint>
 #include <memory>
