@@ -32,7 +32,9 @@ namespace rosbag2_storage
 
 bool operator==(const TopicMetadata & lhs, const TopicMetadata & rhs)
 {
-  return lhs.name == rhs.name && lhs.type == rhs.type;
+  return lhs.name == rhs.name &&
+         lhs.type == rhs.type &&
+         lhs.serialization_format == rhs.serialization_format;
 }
 
 bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
@@ -55,9 +57,9 @@ bool operator!=(const TopicInformation & lhs, const TopicInformation & rhs)
 
 TEST_F(RosbagV2StorageTestFixture, get_all_topics_and_types_returns_list_of_recorded_bag_file) {
   std::vector<rosbag2_storage::TopicMetadata> expected_topic_metadata = {
-    {"/rosout", "rosgraph_msgs/Log", ""},
-    {"/test_topic", "std_msgs/String", ""},
-    {"/test_topic2", "std_msgs/String", ""},
+    {"/rosout", "rosgraph_msgs/Log", "rosbag_v2"},
+    {"/test_topic", "std_msgs/String", "rosbag_v2"},
+    {"/test_topic2", "std_msgs/String", "rosbag_v2"},
   };
 
   auto topic_metadata = storage_->get_all_topics_and_types();
@@ -70,9 +72,9 @@ TEST_F(RosbagV2StorageTestFixture, get_all_topics_and_types_returns_list_of_reco
 TEST_F(RosbagV2StorageTestFixture, get_metadata_returns_bagfile_description)
 {
   std::vector<rosbag2_storage::TopicInformation> expected_topics_with_message_count = {
-    {{"/rosout", "rosgraph_msgs/Log", ""}, 3},
-    {{"/test_topic", "std_msgs/String", ""}, 1},
-    {{"/test_topic2", "std_msgs/String", ""}, 1}
+    {{"/rosout", "rosgraph_msgs/Log", "rosbag_v2"}, 3},
+    {{"/test_topic", "std_msgs/String", "rosbag_v2"}, 1},
+    {{"/test_topic2", "std_msgs/String", "rosbag_v2"}, 1}
   };
 
   auto bag_metadata = storage_->get_metadata();
