@@ -118,15 +118,18 @@ void Player::play_messages_from_queue()
 {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  while ((message_queue_.size_approx() != 0 || !is_storage_completely_loaded()) && rclcpp::ok()) {
+  do {
     ReplayableMessage message;
-    if (message_queue_.try_dequeue(message)) {
+    while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
       if (rclcpp::ok()) {
         publishers_[message.message->topic_name]->publish(message.message->serialized_data);
       }
     }
-  }
+    if (!is_storage_completely_loaded() && rclcpp::ok()) {
+      ROSBAG2_TRANSPORT_LOG_WARN("Message queue starved. Messages will be delayed.");
+    }
+  } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
 void Player::prepare_publishers()
