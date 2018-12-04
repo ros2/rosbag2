@@ -30,13 +30,6 @@ using namespace std::chrono_literals;  // NOLINT
 namespace rosbag2_storage
 {
 
-bool operator==(const TopicMetadata & lhs, const TopicMetadata & rhs)
-{
-  return lhs.name == rhs.name &&
-         lhs.type == rhs.type &&
-         lhs.serialization_format == rhs.serialization_format;
-}
-
 bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
 {
   return !(lhs == rhs);
@@ -57,7 +50,6 @@ bool operator!=(const TopicInformation & lhs, const TopicInformation & rhs)
 
 TEST_F(RosbagV2StorageTestFixture, get_all_topics_and_types_returns_list_of_recorded_bag_file) {
   std::vector<rosbag2_storage::TopicMetadata> expected_topic_metadata = {
-    {"/rosout", "rosgraph_msgs/Log", "rosbag_v2"},
     {"/test_topic", "std_msgs/String", "rosbag_v2"},
     {"/test_topic2", "std_msgs/String", "rosbag_v2"},
   };
@@ -128,4 +120,25 @@ TEST_F(RosbagV2StorageTestFixture, read_next_will_produce_messages_ordered_by_ti
   auto second_message = storage_->read_next();
 
   EXPECT_THAT(second_message->time_stamp, Ge(first_message->time_stamp));
+}
+
+TEST_F(RosbagV2StorageTestFixture, get_topics_and_types_will_only_return_one_entry_per_topic)
+{
+  bag_path_ = rosbag2_storage::FilesystemHelper::concat(
+    {database_path_, "test_bag_multiple_connections.bag"});
+  storage_ = std::make_shared<rosbag2_bag_v2_plugins::RosbagV2Storage>();
+  storage_->open(bag_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+
+  std::vector<rosbag2_storage::TopicMetadata> expected_topic_metadata = {
+    {"/test_topic", "std_msgs/String", "rosbag_v2"},
+    {"/int_test_topic", "std_msgs/Int32", "rosbag_v2"},
+  };
+
+  auto topic_metadata = storage_->get_all_topics_and_types();
+
+  EXPECT_THAT(topic_metadata, SizeIs(expected_topic_metadata.size()));
+
+  for (size_t i = 0; i < expected_topic_metadata.size(); ++i) {
+    EXPECT_THAT(topic_metadata[i], expected_topic_metadata[i]);
+  }
 }

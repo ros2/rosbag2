@@ -44,6 +44,12 @@ public:
   rosbag2_storage::BagMetadata get_metadata() override;
 
 private:
+  template<typename T>
+  bool vector_has_already_element(std::vector<T> vector, const T & element)
+  {
+    return std::find(vector.begin(), vector.end(), element) != vector.end();
+  }
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types_including_ros1_topics();
   std::vector<rosbag2_storage::TopicInformation> get_topic_information();
 
   std::unique_ptr<rosbag::Bag> ros_v2_bag_;

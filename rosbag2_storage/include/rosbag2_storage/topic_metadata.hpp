@@ -25,6 +25,11 @@ struct TopicMetadata
   std::string name;
   std::string type;
   std::string serialization_format;
+
+  bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
+  {
+    return name == rhs.name && type == rhs.type && serialization_format == rhs.serialization_format;
+  }
 };
 
 }  // namespace rosbag2_storage

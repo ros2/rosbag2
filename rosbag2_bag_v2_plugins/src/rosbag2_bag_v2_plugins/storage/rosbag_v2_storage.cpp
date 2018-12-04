@@ -52,7 +52,9 @@ void RosbagV2Storage::open(
   for (const auto & connection : connection_info) {
     std::string ros2_type_name;
     if (get_1to2_mapping(connection->datatype, ros2_type_name)) {
-      topics_valid_in_ros2.push_back(connection->topic);
+      if (!vector_has_already_element<std::string>(topics_valid_in_ros2, connection->topic)) {
+        topics_valid_in_ros2.push_back(connection->topic);
+      }
     } else {
       ROSBAG2_BAG_V2_PLUGINS_LOG_INFO_STREAM("No ROS 2 type available for topic '" <<
         connection->topic << "' which is of type '" << connection->datatype <<
@@ -87,17 +89,14 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> RosbagV2Storage::read_nex
 
 std::vector<rosbag2_storage::TopicMetadata> RosbagV2Storage::get_all_topics_and_types()
 {
-  auto bag_view = std::make_unique<rosbag::View>(*ros_v2_bag_);
+  auto topics_with_type_including_ros1 = get_all_topics_and_types_including_ros1_topics();
+
   std::vector<rosbag2_storage::TopicMetadata> topics_with_type;
-  auto connection_info = bag_view->getConnections();
-
-  for (const auto & connection : connection_info) {
-    rosbag2_storage::TopicMetadata topic_metadata;
-    topic_metadata.name = connection->topic;
-    topic_metadata.type = connection->datatype;
-    topic_metadata.serialization_format = "rosbag_v2";
-
-    topics_with_type.push_back(topic_metadata);
+  for (const auto & topic_with_type : topics_with_type_including_ros1) {
+    std::string ros2_type_name;
+    if (get_1to2_mapping(topic_with_type.type, ros2_type_name)) {
+      topics_with_type.push_back(topic_with_type);
+    }
   }
 
   return topics_with_type;
@@ -126,7 +125,7 @@ rosbag2_storage::BagMetadata RosbagV2Storage::get_metadata()
 std::vector<rosbag2_storage::TopicInformation> RosbagV2Storage::get_topic_information()
 {
   std::vector<rosbag2_storage::TopicInformation> topic_information;
-  auto topics_with_type = get_all_topics_and_types();
+  auto topics_with_type = get_all_topics_and_types_including_ros1_topics();
 
   for (const auto & topic : topics_with_type) {
     rosbag2_storage::TopicInformation topic_info;
@@ -138,6 +137,29 @@ std::vector<rosbag2_storage::TopicInformation> RosbagV2Storage::get_topic_inform
   }
 
   return topic_information;
+}
+
+std::vector<rosbag2_storage::TopicMetadata>
+RosbagV2Storage::get_all_topics_and_types_including_ros1_topics()
+{
+  auto bag_view = std::make_unique<rosbag::View>(*ros_v2_bag_);
+  std::vector<rosbag2_storage::TopicMetadata> topics_with_type;
+  auto connection_info = bag_view->getConnections();
+
+  for (const auto & connection : connection_info) {
+    rosbag2_storage::TopicMetadata topic_metadata;
+    topic_metadata.name = connection->topic;
+    topic_metadata.type = connection->datatype;
+    topic_metadata.serialization_format = "rosbag_v2";
+
+    if (!vector_has_already_element<rosbag2_storage::TopicMetadata>(
+        topics_with_type, topic_metadata))
+    {
+      topics_with_type.push_back(topic_metadata);
+    }
+  }
+
+  return topics_with_type;
 }
 
 }  // namespace rosbag2_bag_v2_plugins
