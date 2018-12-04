@@ -58,9 +58,7 @@ SequentialReader::open(
     }
   }
 
-  if (converter_options.output_serialization_format != storage_serialization_format &&
-    !storage_serialization_format.empty())
-  {
+  if (converter_options.output_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
       converter_options.output_serialization_format,
