@@ -36,31 +36,37 @@ public:
 TEST_F(InfoV2EndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
   auto exit_code = execute_and_wait_until_completion(
-    "ros2 bag info rosbag_v2_test.bag -s rosbag_v2", database_path_);
+    "ros2 bag info test_bag.bag -s rosbag_v2", database_path_);
   std::string output = internal::GetCapturedStdout();
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 // The bag size depends on the os and is not asserted, the time is asserted time zone independent
   EXPECT_THAT(output, ContainsRegex(
-      "\nFiles:             rosbag_v2_test\\.bag"
+      "\nFiles:             test_bag\\.bag"
       "\nBag size:          .*B"
       "\nStorage id:        rosbag_v2"
-      "\nDuration:          4\\.15s"
-      "\nStart:             Nov .+ 2018 .+:.+:09\\.557 \\(1543335369\\.557\\)"
-      "\nEnd                Nov .+ 2018 .+:.+:13\\.573 \\(1543335373\\.573\\)"
-      "\nMessages:          5"
-      "\nTopic information: "
-      "Topic: string_test_topic | Type: std_msgs/String | Count:  3 | Serialization Format: \n"
-      "Topic: int_test_topic | Type: std_msgs/Int32 | Count: 2 | Serialization Format: "));
+      "\nDuration:          3\\.0s"
+      "\nStart:             Dec .+ 2018 .+:.+:06\\.974 \\(1544000766\\.974\\)"
+      "\nEnd                Dec .+ 2018 .+:.+:09\\.975 \\(1544000769\\.975\\)"
+      "\nMessages:          11"
+      "\nTopic information: "));
+
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: rosout | Type: rosgraph_msgs/Log | Count: 5 | Serialization Format: rosbag_v2\n"));
+  EXPECT_THAT(output, HasSubstr("Topic: string_topic | Type: std_msgs/String | Count: 3 | "
+    "Serialization Format: rosbag_v2\n"));
+  EXPECT_THAT(output, HasSubstr(
+      "Topic: int_topic | Type: std_msgs/Int32 | Count: 3 | Serialization Format: rosbag_v2"
+  ));
 }
 
 
 TEST_F(InfoV2EndToEndTestFixture, info_fails_gracefully_if_storage_format_is_not_specified) {
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag info rosbag_v2_test.bag", database_path_);
+    execute_and_wait_until_completion("ros2 bag info test_bag.bag", database_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
-  EXPECT_THAT(error_output, HasSubstr("Could not read metadata for rosbag_v2_test.bag"));
+  EXPECT_THAT(error_output, HasSubstr("Could not read metadata for test_bag.bag"));
 }
