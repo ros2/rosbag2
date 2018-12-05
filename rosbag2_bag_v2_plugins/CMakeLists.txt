@@ -55,6 +55,28 @@ find_ros1_package(roslz4)
 set(generated_path "${CMAKE_BINARY_DIR}/generated")
 set(generated_files "${generated_path}/convert_rosbag_message.cpp")
 
+add_custom_command(
+  OUTPUT ${generated_files}
+  COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/generate_coverter_cpp.py
+  --output-path "${generated_path}" --template-dir ${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+find_ros1_interface_packages(ros1_message_packages)
+
+set(prefixed_ros1_message_packages "")
+foreach(ros1_message_package ${ros1_message_packages})
+  find_ros1_package(${ros1_message_package} REQUIRED)
+  list(APPEND prefixed_ros1_message_packages "ros1_${ros1_message_package}")
+endforeach()
+
+# generate conversion methods
+ament_index_get_resources(ros2_message_packages "rosidl_interfaces")
+foreach(message_package ${ros2_message_packages})
+  find_package(${message_package} REQUIRED)
+  message(STATUS "Found ${message_package}: ${${message_package}_VERSION} (${${message_package}_DIR})")
+endforeach()
+
 add_library(
   ${PROJECT_NAME} SHARED
   src/rosbag2_bag_v2_plugins/converter/rosbag_v2_deserializer.cpp
@@ -101,27 +123,6 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_storage)
 ament_export_dependencies(rosbag2 ros1_rosbag_storage rosbag2_storage)
 
-add_custom_command(
-  OUTPUT ${generated_files}
-  COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/generate_coverter_cpp.py
-  --output-path "${generated_path}" --template-dir ${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-find_ros1_interface_packages(ros1_message_packages)
-
-set(prefixed_ros1_message_packages "")
-foreach(ros1_message_package ${ros1_message_packages})
-  find_ros1_package(${ros1_message_package} REQUIRED)
-  list(APPEND prefixed_ros1_message_packages "ros1_${ros1_message_package}")
-endforeach()
-
-# generate conversion methods
-ament_index_get_resources(ros2_message_packages "rosidl_interfaces")
-foreach(message_package ${ros2_message_packages})
-  find_package(${message_package} REQUIRED)
-  message(STATUS "Found ${message_package}: ${${message_package}_VERSION} (${${message_package}_DIR})")
-endforeach()
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
