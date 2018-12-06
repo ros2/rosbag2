@@ -37,7 +37,8 @@ public:
     memory_management_ = std::make_unique<MemoryManagement>();
     topic_name_ = "test_topic";
     allocator_ = rcutils_get_default_allocator();
-    cdr_converter_ = factory_->load_converter("cdr");
+    cdr_serializer_ = factory_->load_serializer("cdr");
+    cdr_deserializer_ = factory_->load_deserializer("cdr");
     type_support_ =
       rosbag2::get_typesupport("test_msgs/DynamicArrayNested", "rosidl_typesupport_cpp");
   }
@@ -64,7 +65,10 @@ public:
   }
 
   std::unique_ptr<rosbag2::SerializationFormatConverterFactory> factory_;
-  std::unique_ptr<rosbag2::SerializationFormatConverterInterface> cdr_converter_;
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializer>
+  cdr_serializer_;
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializer>
+  cdr_deserializer_;
   std::unique_ptr<MemoryManagement> memory_management_;
   std::string topic_name_;
   rcutils_allocator_t allocator_;
@@ -78,11 +82,11 @@ TEST_F(ConverterTestFixture, cdr_converter_plugin_can_serialize_and_deserialize_
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
 
-  cdr_converter_->serialize(initial_ros_message, type_support_, serialized_message);
+  cdr_serializer_->serialize(initial_ros_message, type_support_, serialized_message);
 
   auto final_roundtrip_ros_message = allocate_empty_dynamic_array_message();
 
-  cdr_converter_->deserialize(serialized_message, type_support_, final_roundtrip_ros_message);
+  cdr_deserializer_->deserialize(serialized_message, type_support_, final_roundtrip_ros_message);
   serialized_message.reset();
 
   EXPECT_THAT(

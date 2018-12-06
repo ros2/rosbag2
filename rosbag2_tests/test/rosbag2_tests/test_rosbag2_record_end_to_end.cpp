@@ -97,5 +97,5 @@ TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   EXPECT_THAT(
-    error_output, HasSubstr("Requested converter id 'some_rmw_converter' does not exist"));
+    error_output, HasSubstr("Requested converter for format 'some_rmw' does not exist"));
 }

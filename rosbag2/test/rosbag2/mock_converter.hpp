@@ -20,9 +20,9 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter.hpp"
 
-class MockConverter : public rosbag2::SerializationFormatConverterInterface
+class MockConverter : public rosbag2::converter_interfaces::SerializationFormatConverter
 {
 public:
   MOCK_METHOD3(deserialize,

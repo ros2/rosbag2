@@ -16,45 +16,29 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "pluginlib/class_loader.hpp"
-#include "rosbag2/logging.hpp"
+#include "./serialization_format_converter_factory_impl.hpp"
 
 namespace rosbag2
 {
 
 SerializationFormatConverterFactory::SerializationFormatConverterFactory()
-{
-  try {
-    class_loader_ = std::make_unique<pluginlib::ClassLoader<SerializationFormatConverterInterface>>(
-      "rosbag2", "rosbag2::SerializationFormatConverterInterface");
-  } catch (const std::exception & e) {
-    ROSBAG2_LOG_ERROR_STREAM("Unable to create class loader instance: " << e.what());
-    throw e;
-  }
-}
+: impl_(std::make_unique<SerializationFormatConverterFactoryImpl>())
+{}
 
 SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
 
-std::unique_ptr<SerializationFormatConverterInterface>
-SerializationFormatConverterFactory::load_converter(const std::string & format)
+std::unique_ptr<converter_interfaces::SerializationFormatDeserializer>
+SerializationFormatConverterFactory::load_deserializer(const std::string & format)
 {
-  auto converter_id = format + "_converter";
+  return impl_->load_deserializer(format);
+}
 
-  const auto & registered_classes = class_loader_->getDeclaredClasses();
-  auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), converter_id);
-  if (class_exists == registered_classes.end()) {
-    ROSBAG2_LOG_ERROR_STREAM("Requested converter id '" << converter_id << "' does not exist");
-    return nullptr;
-  }
-
-  try {
-    return std::unique_ptr<SerializationFormatConverterInterface>(
-      class_loader_->createUnmanagedInstance(converter_id));
-  } catch (const std::runtime_error & ex) {
-    ROSBAG2_LOG_ERROR_STREAM("Unable to load instance of converter interface: " << ex.what());
-    return nullptr;
-  }
+std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
+SerializationFormatConverterFactory::load_serializer(const std::string & format)
+{
+  return impl_->load_serializer(format);
 }
 
 }  // namespace rosbag2

@@ -23,7 +23,7 @@
 #include "rosbag2/converter_options.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
@@ -78,8 +78,8 @@ public:
 
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::unique_ptr<SerializationFormatConverterInterface> input_converter_;
-  std::unique_ptr<SerializationFormatConverterInterface> output_converter_;
+  std::unique_ptr<converter_interfaces::SerializationFormatDeserializer> input_converter_;
+  std::unique_ptr<converter_interfaces::SerializationFormatSerializer> output_converter_;
   std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
 };
 

@@ -12,26 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
-#define ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
-
-#include <gmock/gmock.h>
+#ifndef ROSBAG2__SERIALIZER_TEST_PLUGIN_HPP_
+#define ROSBAG2__SERIALIZER_TEST_PLUGIN_HPP_
 
 #include <memory>
-#include <string>
 
-#include "rosbag2/serialization_format_converter_factory_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_serializer.hpp"
 
-class MockConverterFactory : public rosbag2::SerializationFormatConverterFactoryInterface
+class SerializerTestPlugin
+  : public rosbag2::converter_interfaces::SerializationFormatSerializer
 {
 public:
-  MOCK_METHOD1(load_serializer,
-    std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializer>(
-      const std::string &));
-
-  MOCK_METHOD1(load_deserializer,
-    std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializer>(
-      const std::string &));
+  void serialize(
+    std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
+    const rosidl_message_type_support_t * type_support,
+    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) override;
 };
 
-#endif  // ROSBAG2__MOCK_CONVERTER_FACTORY_HPP_
+#endif  // ROSBAG2__SERIALIZER_TEST_PLUGIN_HPP_

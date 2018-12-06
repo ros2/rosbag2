@@ -19,8 +19,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "rosbag2/serialization_format_converter_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -31,16 +31,10 @@
 # pragma warning(disable:4251)
 #endif
 
-namespace pluginlib
-{
-
-template<class T>
-class ClassLoader;
-
-}  // namespace pluginlib
-
 namespace rosbag2
 {
+
+class SerializationFormatConverterFactoryImpl;
 
 class ROSBAG2_PUBLIC SerializationFormatConverterFactory
   : public SerializationFormatConverterFactoryInterface
@@ -50,11 +44,14 @@ public:
 
   ~SerializationFormatConverterFactory() override;
 
-  std::unique_ptr<SerializationFormatConverterInterface>
-  load_converter(const std::string & format) override;
+  std::unique_ptr<converter_interfaces::SerializationFormatDeserializer>
+  load_deserializer(const std::string & format) override;
+
+  std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
+  load_serializer(const std::string & format) override;
 
 private:
-  std::unique_ptr<pluginlib::ClassLoader<SerializationFormatConverterInterface>> class_loader_;
+  std::unique_ptr<SerializationFormatConverterFactoryImpl> impl_;
 };
 
 }  // namespace rosbag2
