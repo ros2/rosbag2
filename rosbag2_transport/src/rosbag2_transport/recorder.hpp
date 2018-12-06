@@ -46,12 +46,12 @@ public:
   void record(const RecordOptions & record_options);
 
 private:
-  std::shared_ptr<GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type);
   std::future<void> launch_topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
     const std::vector<std::string> & topics_to_record = {});
   bool subscribe_topics(const std::vector<std::string> & topics_to_record);
+  std::shared_ptr<GenericSubscription> create_subscription(
+    const std::string & topic_name, const std::string & topic_type);
   void subscribe_all_missing_topics(
     const std::unordered_map<std::string, std::string> & all_topics_and_types);
   void subscribe_topic(const rosbag2::TopicMetadata & topic);

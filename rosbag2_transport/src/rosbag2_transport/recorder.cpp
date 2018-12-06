@@ -39,7 +39,7 @@ void Recorder::record(const RecordOptions & record_options)
     throw std::runtime_error("No serialization format specified!");
   }
   serialization_format_ = record_options.rmw_serialization_format;
-  ROSBAG2_TRANSPORT_LOG_INFO("Setup complete. Listening for topics...");
+  ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
   subscribe_topics(record_options.topics);
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
@@ -55,29 +55,6 @@ void Recorder::record(const RecordOptions & record_options)
   subscriptions_.clear();
 }
 
-std::shared_ptr<GenericSubscription>
-Recorder::create_subscription(
-  const std::string & topic_name, const std::string & topic_type)
-{
-  auto subscription = node_->create_generic_subscription(
-    topic_name,
-    topic_type,
-    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
-      auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
-      bag_message->serialized_data = message;
-      bag_message->topic_name = topic_name;
-      rcutils_time_point_value_t time_stamp;
-      int error = rcutils_system_time_now(&time_stamp);
-      if (error != RCUTILS_RET_OK) {
-        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-          "Error getting current time. Error:" << rcutils_get_error_string().str);
-      }
-      bag_message->time_stamp = time_stamp;
-
-      writer_->write(bag_message);
-    });
-  return subscription;
-}
 
 std::future<void> Recorder::launch_topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
@@ -138,6 +115,30 @@ void Recorder::subscribe_topic(const rosbag2::TopicMetadata & topic)
     writer_->create_topic(topic);
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic.name << "'");
   }
+}
+
+std::shared_ptr<GenericSubscription>
+Recorder::create_subscription(
+  const std::string & topic_name, const std::string & topic_type)
+{
+  auto subscription = node_->create_generic_subscription(
+    topic_name,
+    topic_type,
+    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
+      auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
+      bag_message->serialized_data = message;
+      bag_message->topic_name = topic_name;
+      rcutils_time_point_value_t time_stamp;
+      int error = rcutils_system_time_now(&time_stamp);
+      if (error != RCUTILS_RET_OK) {
+        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+          "Error getting current time. Error:" << rcutils_get_error_string().str);
+      }
+      bag_message->time_stamp = time_stamp;
+
+      writer_->write(bag_message);
+    });
+  return subscription;
 }
 
 void Recorder::record_messages() const
