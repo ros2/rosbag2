@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 
 # We don't need to build on Windows for now
 if(WIN32)
+  message("Replay ROS1 rosbags is currently not supported on Windows systems")
   return()
 endif()
 
