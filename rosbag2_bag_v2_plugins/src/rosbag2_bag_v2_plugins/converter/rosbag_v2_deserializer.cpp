@@ -19,7 +19,7 @@
 
 #include "rosbag/message_instance.h"
 
-#include "rosbag2/converter_interfaces/serialization_format_deserializer_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_deserializer.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 #include "../convert_rosbag_message.hpp"
 
@@ -53,4 +53,4 @@ void RosbagV2Deserializer::deserialize(
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_bag_v2_plugins::RosbagV2Deserializer,
-  rosbag2::converter_interfaces::SerializationFormatDeserializerInterface)
+  rosbag2::converter_interfaces::SerializationFormatDeserializer)

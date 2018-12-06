@@ -2,7 +2,7 @@
     <class
             name="rosbag_v2_converter"
             type="rosbag2_bag_v2_plugins::RosbagV2Deserializer"
-            base_class_type="rosbag2::converter_interfaces::SerializationFormatDeserializerInterface"
+            base_class_type="rosbag2::converter_interfaces::SerializationFormatDeserializer"
     >
         <description>
             This is a deserializer plugin which allows to convert ROS 1 messages via the
