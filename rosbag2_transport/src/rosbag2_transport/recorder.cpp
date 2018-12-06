@@ -40,7 +40,8 @@ void Recorder::record(const RecordOptions & record_options)
   }
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
-  subscribe_topics(record_options.topics);
+  subscribe_topics(get_requested_or_available_topics(record_options.topics));
+
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
     discovery_future = launch_topics_discovery(
@@ -55,54 +56,53 @@ void Recorder::record(const RecordOptions & record_options)
   subscriptions_.clear();
 }
 
-
 std::future<void> Recorder::launch_topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
-  const std::vector<std::string> & topics_to_record)
+  const std::vector<std::string> & requested_topics)
 {
-  auto subscribe_to_topics =
-    [this, topics_to_record, topic_polling_interval] {
+  auto discover_and_subscribe_topics =
+    [this, requested_topics, topic_polling_interval] {
       while (rclcpp::ok()) {
-        if (subscribe_topics(topics_to_record)) {
+        auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
+        auto missing_topics = get_missing_topics(topics_to_subscribe);
+        subscribe_topics(missing_topics);
+
+        if (!requested_topics.empty() && subscribed_topics_.size() == requested_topics.size()) {
+          ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
           return;
         }
         std::this_thread::sleep_for(topic_polling_interval);
       }
     };
 
-  return std::async(std::launch::async, subscribe_to_topics);
+  return std::async(std::launch::async, discover_and_subscribe_topics);
 }
 
-bool Recorder::subscribe_topics(const std::vector<std::string> & topics_to_record)
+std::unordered_map<std::string, std::string>
+Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
 {
-  auto all_topics_and_types_to_subscribe = topics_to_record.empty() ?
-    node_->get_all_topics_with_types() :
-    node_->get_topics_with_types(topics_to_record);
-
-  if (is_every_topic_subscribed(topics_to_record)) {
-    return true;
-  }
-
-  subscribe_all_missing_topics(all_topics_and_types_to_subscribe);
-  return false;
+  return requested_topics.empty() ?
+         node_->get_all_topics_with_types() :
+         node_->get_topics_with_types(requested_topics);
 }
 
-bool Recorder::is_every_topic_subscribed(
-  const std::vector<std::string> & topics_to_record) const
+std::unordered_map<std::string, std::string>
+Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & topics)
 {
-  return !topics_to_record.empty() && subscriptions_.size() == topics_to_record.size();
-}
-
-void Recorder::subscribe_all_missing_topics(
-  const std::unordered_map<std::string, std::string> & all_topics_and_types)
-{
-  for (const auto & topic_with_type : all_topics_and_types) {
-    bool already_subscribed =
-      subscribed_topics_.find(topic_with_type.first) != subscribed_topics_.end();
-
-    if (!already_subscribed) {
-      subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
+  std::unordered_map<std::string, std::string> missing_topics;
+  for (const auto & i : topics) {
+    if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
+      missing_topics.emplace(i.first, i.second);
     }
+  }
+  return missing_topics;
+}
+
+void Recorder::subscribe_topics(
+  const std::unordered_map<std::string, std::string> & topics_and_types)
+{
+  for (const auto & topic_with_type : topics_and_types) {
+    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
   }
 }
 

@@ -48,14 +48,16 @@ public:
 private:
   std::future<void> launch_topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
-    const std::vector<std::string> & topics_to_record = {});
-  bool subscribe_topics(const std::vector<std::string> & topics_to_record);
+    const std::vector<std::string> & requested_topics = {});
+  std::unordered_map<std::string, std::string>
+  get_requested_or_available_topics(const std::vector<std::string> & requested_topics);
+  std::unordered_map<std::string, std::string>
+  get_missing_topics(const std::unordered_map<std::string, std::string> & topics);
+  void subscribe_topics(
+    const std::unordered_map<std::string, std::string> & topics_and_types);
+  void subscribe_topic(const rosbag2::TopicMetadata & topic);
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
-  void subscribe_all_missing_topics(
-    const std::unordered_map<std::string, std::string> & all_topics_and_types);
-  void subscribe_topic(const rosbag2::TopicMetadata & topic);
-  bool is_every_topic_subscribed(const std::vector<std::string> & topics_to_record) const;
   void record_messages() const;
 
   std::shared_ptr<rosbag2::Writer> writer_;
