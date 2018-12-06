@@ -46,7 +46,7 @@ public:
   void record(const RecordOptions & record_options);
 
 private:
-  void launch_topics_discovery(
+  void topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
     const std::vector<std::string> & requested_topics = {});
 

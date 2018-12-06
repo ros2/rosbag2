@@ -44,10 +44,10 @@ void Recorder::record(const RecordOptions & record_options)
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
-    auto launch_discovery = std::bind(
-      &Recorder::launch_topics_discovery, this,
+    auto discovery = std::bind(
+      &Recorder::topics_discovery, this,
       record_options.topic_polling_interval, record_options.topics);
-    discovery_future = std::async(std::launch::async, launch_discovery);
+    discovery_future = std::async(std::launch::async, discovery);
   }
 
   record_messages();
@@ -59,7 +59,7 @@ void Recorder::record(const RecordOptions & record_options)
   subscriptions_.clear();
 }
 
-void Recorder::launch_topics_discovery(
+void Recorder::topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
   const std::vector<std::string> & requested_topics)
 {
