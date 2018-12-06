@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_SERIALIZER_INTERFACE_HPP_
-#define ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_SERIALIZER_INTERFACE_HPP_
+#ifndef ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_DESERIALIZER_HPP_
+#define ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_DESERIALIZER_HPP_
 
 #include <memory>
 
@@ -26,18 +26,19 @@ namespace rosbag2
 namespace converter_interfaces
 {
 
-class SerializationFormatSerializerInterface
+class SerializationFormatDeserializer
 {
 public:
-  virtual ~SerializationFormatSerializerInterface() = default;
+  virtual ~SerializationFormatDeserializer() = default;
 
-  virtual void serialize(
-    std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
+  virtual void deserialize(
+    std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support,
-    std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message) = 0;
+    std::shared_ptr<rosbag2_introspection_message_t> ros_message) = 0;
 };
+
 
 }  // namespace converter_interfaces
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_SERIALIZER_INTERFACE_HPP_
+#endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_DESERIALIZER_HPP_

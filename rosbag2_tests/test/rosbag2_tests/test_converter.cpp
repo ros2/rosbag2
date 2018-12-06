@@ -65,9 +65,9 @@ public:
   }
 
   std::unique_ptr<rosbag2::SerializationFormatConverterFactory> factory_;
-  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializerInterface>
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializer>
   cdr_serializer_;
-  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializerInterface>
+  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializer>
   cdr_deserializer_;
   std::unique_ptr<MemoryManagement> memory_management_;
   std::string topic_name_;

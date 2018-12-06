@@ -44,10 +44,10 @@ public:
 
   ~SerializationFormatConverterFactory() override;
 
-  std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
+  std::unique_ptr<converter_interfaces::SerializationFormatDeserializer>
   load_deserializer(const std::string & format) override;
 
-  std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
+  std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
   load_serializer(const std::string & format) override;
 
 private:

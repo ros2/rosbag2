@@ -18,10 +18,10 @@
 
 #include <memory>
 
-#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter.hpp"
 
 class ConverterTestPlugin
-  : public rosbag2::converter_interfaces::SerializationFormatConverterInterface
+  : public rosbag2::converter_interfaces::SerializationFormatConverter
 {
 public:
   void deserialize(

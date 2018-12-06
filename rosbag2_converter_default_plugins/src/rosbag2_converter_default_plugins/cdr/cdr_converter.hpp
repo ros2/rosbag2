@@ -21,13 +21,13 @@
 #include "rmw/types.h"
 
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
-#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2/types/introspection_message.hpp"
 
 namespace rosbag2_converter_default_plugins
 {
 
-class CdrConverter : public rosbag2::converter_interfaces::SerializationFormatConverterInterface
+class CdrConverter : public rosbag2::converter_interfaces::SerializationFormatConverter
 {
 public:
   CdrConverter();

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
-#define ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#ifndef ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_HPP_
+#define ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_HPP_
 
 #include <memory>
 #include <string>
@@ -23,8 +23,8 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "rosbag2/converter_interfaces/serialization_format_serializer_interface.hpp"
-#include "rosbag2/converter_interfaces/serialization_format_deserializer_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_serializer.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_deserializer.hpp"
 
 /**
  * This is a convenience class for plugin developers. When developing a plugin to both write and
@@ -36,11 +36,11 @@ namespace rosbag2
 namespace converter_interfaces
 {
 
-class SerializationFormatConverterInterface
-  : public SerializationFormatSerializerInterface, public SerializationFormatDeserializerInterface
+class SerializationFormatConverter
+  : public SerializationFormatSerializer, public SerializationFormatDeserializer
 {};
 
 }  // namespace converter_interfaces
 }  // namespace rosbag2
 
-#endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_INTERFACE_HPP_
+#endif  // ROSBAG2__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_HPP_

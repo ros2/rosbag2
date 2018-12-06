@@ -39,4 +39,4 @@ void ConverterTestPlugin::serialize(
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(ConverterTestPlugin,
-  rosbag2::converter_interfaces::SerializationFormatConverterInterface)
+  rosbag2::converter_interfaces::SerializationFormatConverter)

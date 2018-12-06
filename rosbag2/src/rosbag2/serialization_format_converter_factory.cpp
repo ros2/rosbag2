@@ -29,13 +29,13 @@ SerializationFormatConverterFactory::SerializationFormatConverterFactory()
 
 SerializationFormatConverterFactory::~SerializationFormatConverterFactory() = default;
 
-std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
+std::unique_ptr<converter_interfaces::SerializationFormatDeserializer>
 SerializationFormatConverterFactory::load_deserializer(const std::string & format)
 {
   return impl_->load_deserializer(format);
 }
 
-std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
+std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
 SerializationFormatConverterFactory::load_serializer(const std::string & format)
 {
   return impl_->load_serializer(format);

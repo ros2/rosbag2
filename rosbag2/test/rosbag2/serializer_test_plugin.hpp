@@ -17,10 +17,10 @@
 
 #include <memory>
 
-#include "rosbag2/converter_interfaces/serialization_format_serializer_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_serializer.hpp"
 
 class SerializerTestPlugin
-  : public rosbag2::converter_interfaces::SerializationFormatSerializerInterface
+  : public rosbag2::converter_interfaces::SerializationFormatSerializer
 {
 public:
   void serialize(

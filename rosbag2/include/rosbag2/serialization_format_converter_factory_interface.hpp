@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2/converter_interfaces/serialization_format_converter_interface.hpp"
+#include "rosbag2/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
@@ -29,10 +29,10 @@ class ROSBAG2_PUBLIC SerializationFormatConverterFactoryInterface
 public:
   virtual ~SerializationFormatConverterFactoryInterface() = default;
 
-  virtual std::unique_ptr<converter_interfaces::SerializationFormatDeserializerInterface>
+  virtual std::unique_ptr<converter_interfaces::SerializationFormatDeserializer>
   load_deserializer(const std::string & format) = 0;
 
-  virtual std::unique_ptr<converter_interfaces::SerializationFormatSerializerInterface>
+  virtual std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
   load_serializer(const std::string & format) = 0;
 };
 
