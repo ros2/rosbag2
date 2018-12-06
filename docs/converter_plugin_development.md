@@ -10,7 +10,7 @@ Rosbag2 is shipped with a default converter plugin to convert between ROS 2 mess
 
 ## Writing converter plugins for both serialization and deserialization
 
-Most converter plugins will be needed to convert between a custom serialization format in both directions, i.e. serialization and deserialization.
+Most converter plugins are used to convert between a custom serialization format in both directions, i.e. serialization and deserialization.
 To write a plugin `MyConverter` supporting conversion to and from a custom serialization format, implement the interface `rosbag2::converter_interfaces::SerializationFormatConverterInterface`.
 
 The plugin interface provides two functions: 
@@ -52,7 +52,7 @@ The first argument `rosbag2` denotes the ament index key we add our plugin to (t
 ## Writing converter plugins for only serialization or deserialization
 
 It is possible to write a plugin which only supports converting to OR from a custom serialization format.
-For example, the default plugin for rosbags from ROS 1 supports only conversion from ROS 1 to ROS 2 format (deserialization), since rosbag2 is not intended to be used to write rosbags in the old format.
+For example, the default plugin for legacy ROS1 rosbags  supports only conversion from a ROS 1 to a ROS 2 message format (deserialization), since rosbag2 is not intended to be used to write rosbags in the old format.
 When a similar use case applies, it is possible to provide a plugin which supports only one direction (serialization or deserialization).
 
 In order to write a plugin `MyDeserializer` supporting conversion from a custom serialization format, implement the interface `rosbag2::converter_interfaces::SerializationFormatSerializerInterface`.
