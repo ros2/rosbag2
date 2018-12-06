@@ -44,38 +44,36 @@ void Recorder::record(const RecordOptions & record_options)
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
-    discovery_future = launch_topics_discovery(
+    auto launch_discovery = std::bind(
+      &Recorder::launch_topics_discovery, this,
       record_options.topic_polling_interval, record_options.topics);
+    discovery_future = std::async(std::launch::async, launch_discovery);
   }
 
   record_messages();
 
-  if (!record_options.is_discovery_disabled) {
+  if (discovery_future.valid()) {
     discovery_future.wait();
   }
+
   subscriptions_.clear();
 }
 
-std::future<void> Recorder::launch_topics_discovery(
+void Recorder::launch_topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
   const std::vector<std::string> & requested_topics)
 {
-  auto discover_and_subscribe_topics =
-    [this, requested_topics, topic_polling_interval] {
-      while (rclcpp::ok()) {
-        auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
-        auto missing_topics = get_missing_topics(topics_to_subscribe);
-        subscribe_topics(missing_topics);
+  while (rclcpp::ok()) {
+    auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
+    auto missing_topics = get_missing_topics(topics_to_subscribe);
+    subscribe_topics(missing_topics);
 
-        if (!requested_topics.empty() && subscribed_topics_.size() == requested_topics.size()) {
-          ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
-          return;
-        }
-        std::this_thread::sleep_for(topic_polling_interval);
-      }
-    };
-
-  return std::async(std::launch::async, discover_and_subscribe_topics);
+    if (!requested_topics.empty() && subscribed_topics_.size() == requested_topics.size()) {
+      ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
+      return;
+    }
+    std::this_thread::sleep_for(topic_polling_interval);
+  }
 }
 
 std::unordered_map<std::string, std::string>
