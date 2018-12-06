@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -49,8 +50,8 @@ private:
     const std::string & topic_name, const std::string & topic_type);
   std::future<void> launch_topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
-    bool is_discovery_disabled,
     const std::vector<std::string> & topics_to_record = {});
+  bool subscribe_topics(const std::vector<std::string> & topics_to_record);
   void subscribe_all_missing_topics(
     const std::unordered_map<std::string, std::string> & all_topics_and_types);
   void subscribe_topic(const rosbag2::TopicMetadata & topic);
@@ -60,7 +61,7 @@ private:
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
-  std::vector<std::string> subscribed_topics_;
+  std::unordered_set<std::string> subscribed_topics_;
   std::string serialization_format_;
 };
 
