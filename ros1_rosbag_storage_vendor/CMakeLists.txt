@@ -43,9 +43,9 @@ ExternalProject_Add(ros1_rosbag_storage
   SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/sources
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install
   PATCH_COMMAND
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_encryption_patch.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_for_ros2_patch.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/rosbag1_ament_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_encryption_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_for_ros2_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_ament_patch.diff &&
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
 )
 
