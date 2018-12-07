@@ -129,9 +129,6 @@ std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
     }
   }
 
-  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
-  // This should be replaced by an auto-discovery system in the future
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   auto topics_and_types = this->get_topic_names_and_types();
 
   std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
@@ -149,9 +146,6 @@ std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
 std::unordered_map<std::string, std::string>
 Rosbag2Node::get_all_topics_with_types()
 {
-  // TODO(Martin-Idel-SI): This is a short sleep to allow the node some time to discover the topic
-  // This should be replaced by an auto-discovery system in the future
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   return filter_topics_with_more_than_one_type(this->get_topic_names_and_types());
 }
 

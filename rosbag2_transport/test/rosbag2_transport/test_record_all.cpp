@@ -14,14 +14,9 @@
 
 #include <gmock/gmock.h>
 
-#include <memory>
 #include <string>
-#include <vector>
 
-#include "rclcpp/rclcpp.hpp"
 #include "record_integration_fixture.hpp"
-#include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2/types.hpp"
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -40,7 +35,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_man_.add_publisher<test_msgs::msg::Primitives>(string_topic, string_message, 2);
   pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(array_topic, array_message, 2);
 
-  start_recording({true, {}, ""});
+  start_recording({true, false, {}, "rmw_format", 100ms});
   run_publishers();
   stop_recording();
 

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <Python.h>
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -28,18 +29,29 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   rosbag2_transport::RecordOptions record_options{};
 
   static const char * kwlist[] = {
-    "uri", "storage_id", "serialization_format", "all", "topics", nullptr};
+    "uri",
+    "storage_id",
+    "serialization_format",
+    "all",
+    "no_discovery",
+    "polling_interval",
+    "topics",
+    nullptr};
 
   char * uri = nullptr;
   char * storage_id = nullptr;
   char * serilization_format = nullptr;
   bool all = false;
+  bool no_discovery = false;
+  uint64_t polling_interval_ms = 100;
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bO", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bbKO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &serilization_format,
     &all,
+    &no_discovery,
+    &polling_interval_ms,
     &topics))
   {
     return nullptr;
@@ -48,6 +60,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
   record_options.all = all;
+  record_options.is_discovery_disabled = no_discovery;
+  record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

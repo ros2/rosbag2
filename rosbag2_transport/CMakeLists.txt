@@ -106,6 +106,14 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_record_all test_msgs rosbag2_test_common)
   endif()
 
+  ament_add_gmock(test_record_all_no_discovery
+    test/rosbag2_transport/test_record_all_no_discovery.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_record_all_no_discovery)
+    target_link_libraries(test_record_all_no_discovery rosbag2_transport)
+    ament_target_dependencies(test_record_all_no_discovery test_msgs rosbag2_test_common)
+  endif()
+
   ament_add_gmock(test_play
     test/rosbag2_transport/test_play.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

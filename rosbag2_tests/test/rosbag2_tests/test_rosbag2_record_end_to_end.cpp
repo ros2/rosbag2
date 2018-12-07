@@ -25,14 +25,15 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_primitives()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
-  pub_man_.add_publisher("/test_topic", message, expected_test_messages);
 
   auto wrong_message = get_messages_primitives()[0];
   wrong_message->string_value = "wrong_content";
-  pub_man_.add_publisher("/wrong_topic", wrong_message);
 
   auto process_handle = start_execution("ros2 bag record --output " + bag_path_ + " /test_topic");
   wait_for_db();
+
+  pub_man_.add_publisher("/test_topic", message, expected_test_messages);
+  pub_man_.add_publisher("/wrong_topic", wrong_message);
 
   rosbag2_storage_plugins::SqliteWrapper
     db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);

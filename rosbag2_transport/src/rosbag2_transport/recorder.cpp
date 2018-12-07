@@ -14,9 +14,14 @@
 
 #include "recorder.hpp"
 
+#include <algorithm>
+#include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rosbag2/writer.hpp"
 #include "rosbag2_transport/logging.hpp"
@@ -30,33 +35,84 @@ Recorder::Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosb
 
 void Recorder::record(const RecordOptions & record_options)
 {
-  auto topics_and_types = record_options.all ?
-    node_->get_all_topics_with_types() :
-    node_->get_topics_with_types(record_options.topics);
+  if (record_options.rmw_serialization_format.empty()) {
+    throw std::runtime_error("No serialization format specified!");
+  }
+  serialization_format_ = record_options.rmw_serialization_format;
+  ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
+  subscribe_topics(get_requested_or_available_topics(record_options.topics));
 
-  if (topics_and_types.empty()) {
-    throw std::runtime_error("No topics found. Abort");
+  std::future<void> discovery_future;
+  if (!record_options.is_discovery_disabled) {
+    auto discovery = std::bind(
+      &Recorder::topics_discovery, this,
+      record_options.topic_polling_interval, record_options.topics);
+    discovery_future = std::async(std::launch::async, discovery);
   }
 
-  for (const auto & topic_and_type : topics_and_types) {
-    auto topic_name = topic_and_type.first;
-    auto topic_type = topic_and_type.second;
+  record_messages();
 
-    auto subscription = create_subscription(topic_name, topic_type);
-    if (subscription) {
-      subscriptions_.push_back(subscription);
-      writer_->create_topic({topic_name, topic_type, record_options.rmw_serialization_format});
-      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic_name << "'");
+  if (discovery_future.valid()) {
+    discovery_future.wait();
+  }
+
+  subscriptions_.clear();
+}
+
+void Recorder::topics_discovery(
+  std::chrono::milliseconds topic_polling_interval,
+  const std::vector<std::string> & requested_topics)
+{
+  while (rclcpp::ok()) {
+    auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
+    auto missing_topics = get_missing_topics(topics_to_subscribe);
+    subscribe_topics(missing_topics);
+
+    if (!requested_topics.empty() && subscribed_topics_.size() == requested_topics.size()) {
+      ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
+      return;
+    }
+    std::this_thread::sleep_for(topic_polling_interval);
+  }
+}
+
+std::unordered_map<std::string, std::string>
+Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
+{
+  return requested_topics.empty() ?
+         node_->get_all_topics_with_types() :
+         node_->get_topics_with_types(requested_topics);
+}
+
+std::unordered_map<std::string, std::string>
+Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & topics)
+{
+  std::unordered_map<std::string, std::string> missing_topics;
+  for (const auto & i : topics) {
+    if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
+      missing_topics.emplace(i.first, i.second);
     }
   }
+  return missing_topics;
+}
 
-  if (subscriptions_.empty()) {
-    throw std::runtime_error("No topics could be subscribed. Abort");
+void Recorder::subscribe_topics(
+  const std::unordered_map<std::string, std::string> & topics_and_types)
+{
+  for (const auto & topic_with_type : topics_and_types) {
+    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
   }
+}
 
-  ROSBAG2_TRANSPORT_LOG_INFO("Subscription setup complete.");
-  rclcpp::spin(node_);
-  subscriptions_.clear();
+void Recorder::subscribe_topic(const rosbag2::TopicMetadata & topic)
+{
+  auto subscription = create_subscription(topic.name, topic.type);
+  if (subscription) {
+    subscribed_topics_.insert(topic.name);
+    subscriptions_.push_back(subscription);
+    writer_->create_topic(topic);
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic.name << "'");
+  }
 }
 
 std::shared_ptr<GenericSubscription>
@@ -81,6 +137,11 @@ Recorder::create_subscription(
       writer_->write(bag_message);
     });
   return subscription;
+}
+
+void Recorder::record_messages() const
+{
+  spin(node_);
 }
 
 }  // namespace rosbag2_transport

@@ -15,10 +15,16 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_HPP_
 
+#include <future>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include "rosbag2/types.hpp"
+#include "rosbag2/writer.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
 namespace rosbag2
@@ -40,12 +46,31 @@ public:
   void record(const RecordOptions & record_options);
 
 private:
+  void topics_discovery(
+    std::chrono::milliseconds topic_polling_interval,
+    const std::vector<std::string> & requested_topics = {});
+
+  std::unordered_map<std::string, std::string>
+  get_requested_or_available_topics(const std::vector<std::string> & requested_topics);
+
+  std::unordered_map<std::string, std::string>
+  get_missing_topics(const std::unordered_map<std::string, std::string> & topics);
+
+  void subscribe_topics(
+    const std::unordered_map<std::string, std::string> & topics_and_types);
+
+  void subscribe_topic(const rosbag2::TopicMetadata & topic);
+
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
+
+  void record_messages() const;
 
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::unordered_set<std::string> subscribed_topics_;
+  std::string serialization_format_;
 };
 
 }  // namespace rosbag2_transport
