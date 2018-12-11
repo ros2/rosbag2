@@ -1,37 +1,15 @@
-diff --git a/tools/rosbag_storage/include/rosbag/bag.h b/tools/rosbag_storage/include/rosbag/bag.h
-index c65533011..e75ef9c78 100644
---- a/tools/rosbag_storage/include/rosbag/bag.h
-+++ b/tools/rosbag_storage/include/rosbag/bag.h
-@@ -35,6 +35,8 @@
- #ifndef ROSBAG_BAG_H
- #define ROSBAG_BAG_H
- 
-+#include <memory>
-+
- #include "rosbag/macros.h"
- 
- #include "rosbag/buffer.h"
-@@ -354,7 +356,7 @@ private:
-     // Encryptor plugin loader
-     pluginlib::ClassLoader<rosbag::EncryptorBase> encryptor_loader_;
-     // Active encryptor
--    boost::shared_ptr<rosbag::EncryptorBase> encryptor_;
-+    std::shared_ptr<rosbag::EncryptorBase> encryptor_;
- };
- 
- } // namespace rosbag
 diff --git a/tools/rosbag_storage/src/bag.cpp b/tools/rosbag_storage/src/bag.cpp
 index 7e2e67171..073072934 100644
 --- a/tools/rosbag_storage/src/bag.cpp
 +++ b/tools/rosbag_storage/src/bag.cpp
 @@ -40,6 +40,7 @@
  #include <iomanip>
- 
+
  #include <boost/foreach.hpp>
 +#include <boost/bind.hpp>
- 
+
  #include "console_bridge/console.h"
- 
+
 @@ -222,7 +223,8 @@ void Bag::setEncryptorPlugin(std::string const& plugin_name, std::string const&
      if (!chunks_.empty()) {
          throw BagException("Cannot set encryption plugin after chunks are written");
@@ -41,4 +19,4 @@ index 7e2e67171..073072934 100644
 +    encryptor_ = std::shared_ptr<rosbag::EncryptorBase>(unmanaged_instance);
      encryptor_->initialize(*this, plugin_param);
  }
- 
+

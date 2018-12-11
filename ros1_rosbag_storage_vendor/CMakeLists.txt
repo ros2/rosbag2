@@ -29,10 +29,10 @@ set(git_apply git apply)
 include(ExternalProject)
 # We have to include a number of patches to the rosbag
 # 1. rosbag1_encryption_patch includes https://github.com/ros/ros_comm/pull/1499, without it, pluginlib won't link
-# 2. rosbag1_for_ros2_patch patches the pluginlib usage:
+# 2. The next two patches patch the pluginlib usage:
 #    Missing boost/bind include
 #    Using pluginlib with boost results in compile errors on some systems, so we need to switch to pluginlib without boost
-# 3. rosbag1_ament_patch.diff patches the catkin package to ament and renames it
+# 3. The next patches patch the catkin package to ament and renames it
 #    Patching to ament is necessary as otherwise colcon needs to build a catkin package together with an ament package, which is impossible
 #    Renaming the package is necessary on some systems to not confuse the linker
 #
@@ -50,8 +50,12 @@ ExternalProject_Add(ros1_rosbag_storage
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install -DCMAKE_NO_SYSTEM_FROM_IMPORTED=1
   PATCH_COMMAND
     ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_encryption_patch.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_for_ros2_patch.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_ament_patch.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagh.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp_name.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/plugin_descriptionxml.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/packagexml.diff &&
+    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/cmakeliststxt.diff &&
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
 )
 

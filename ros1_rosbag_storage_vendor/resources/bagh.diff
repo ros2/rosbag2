@@ -1,0 +1,22 @@
+diff --git a/tools/rosbag_storage/include/rosbag/bag.h b/tools/rosbag_storage/include/rosbag/bag.h
+index c65533011..e75ef9c78 100644
+--- a/tools/rosbag_storage/include/rosbag/bag.h
++++ b/tools/rosbag_storage/include/rosbag/bag.h
+@@ -35,6 +35,8 @@
+ #ifndef ROSBAG_BAG_H
+ #define ROSBAG_BAG_H
+ 
++#include <memory>
++
+ #include "rosbag/macros.h"
+ 
+ #include "rosbag/buffer.h"
+@@ -354,7 +356,7 @@ private:
+     // Encryptor plugin loader
+     pluginlib::ClassLoader<rosbag::EncryptorBase> encryptor_loader_;
+     // Active encryptor
+-    boost::shared_ptr<rosbag::EncryptorBase> encryptor_;
++    std::shared_ptr<rosbag::EncryptorBase> encryptor_;
+ };
+ 
+ } // namespace rosbag
