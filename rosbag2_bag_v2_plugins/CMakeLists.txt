@@ -107,6 +107,12 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_bag_v2_plugins>
 )
 
+# This is necessary on some systems where CMake declares ros2 paths as "system paths" thereby
+# messing up the include order. This results in this package being built with the wrong pluginlib
+# i.e. the pluginlib from ROS 1. Symptoms of this problem are missing symbols for class loader
+# classes (i.e. class_loader::impl::...) when linking the tests in this package
+set_target_properties(${PROJECT_NAME} PROPERTIES NO_SYSTEM_FROM_IMPORTED 1)
+
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE
