@@ -25,7 +25,7 @@ index dc49e2250..a440b7eda 100644
  endif()
  
 +find_package(ament_cmake REQUIRED)
-+find_package(pluginlib REQUIRED)
++find_package(pluginlib 2.0 REQUIRED)
  find_package(console_bridge REQUIRED)
 -find_package(catkin REQUIRED COMPONENTS cpp_common pluginlib roscpp_serialization roscpp_traits rostime roslz4)
  find_package(Boost REQUIRED COMPONENTS date_time filesystem program_options regex)
