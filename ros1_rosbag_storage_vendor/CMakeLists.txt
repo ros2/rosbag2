@@ -35,13 +35,19 @@ include(ExternalProject)
 # 3. rosbag1_ament_patch.diff patches the catkin package to ament and renames it
 #    Patching to ament is necessary as otherwise colcon needs to build a catkin package together with an ament package, which is impossible
 #    Renaming the package is necessary on some systems to not confuse the linker
+#
+# Note that we need to build with CMAKE_NO_SYSTEM_FROM_IMPORTED. This prohibits cmake from
+# declaring any paths as "internal" (flagged with -isystem instead of -I) which can result in this
+# vendor package building against the wrong pluginlib, because the paths get switched.
+# Symptoms of wrong paths: The build of the rosbag for ROS 1 plugins fails with missing symbols
+# like ros::package::getPlugins(...) when linking the vendor package
 ExternalProject_Add(ros1_rosbag_storage
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download
   URL https://github.com/ros/ros_comm/archive/669fbd32d2f92cc295f4b024fcb2f982fddec0f0.zip
   URL_MD5 4c8b4c33165b223870f5d77bb697bef6
   TIMEOUT 60
   SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/sources
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install -DCMAKE_NO_SYSTEM_FROM_IMPORTED=1
   PATCH_COMMAND
     ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_encryption_patch.diff &&
     ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_for_ros2_patch.diff &&
