@@ -1,0 +1,14 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package rosbag2_converter_default_plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* Split converters (`#70 <https://github.com/ros2/rosbag2/issues/70>`_)
+* Fix master build and small renamings (`#67 <https://github.com/ros2/rosbag2/issues/67>`_)
+* Use converters when recording a bag file (`#57 <https://github.com/ros2/rosbag2/issues/57>`_)
+* Renaming struct members for consistency (`#64 <https://github.com/ros2/rosbag2/issues/64>`_)
+  * GH-118 Rename rosbag2_storage::TopicMetadata to TopicInformation and rosbag2_storage::TopicwithType to TopicMetadata
+* Use converters when playing back files (`#56 <https://github.com/ros2/rosbag2/issues/56>`_)
+* Implement converter plugin for CDR format and add converter plugins package (`#48 <https://github.com/ros2/rosbag2/issues/48>`_)
+* Contributors: Alessandro Bottero, Andreas Holzner, Martin Idel
