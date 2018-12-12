@@ -2,6 +2,12 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* do not ignore return values
+* update maintainer email
+* Contributors: Karsten Knese, root
+
 0.0.1 (2018-12-11)
 ------------------
 * Auto discovery of new topics (`#63 <https://github.com/ros2/rosbag2/issues/63>`_)

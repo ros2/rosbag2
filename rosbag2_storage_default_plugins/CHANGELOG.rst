@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update maintainer email
+* fix unused variable warning when in release
+* Contributors: Karsten Knese
+
 0.0.1 (2018-12-11)
 ------------------
 * rename topic_with_types to topic_metadata

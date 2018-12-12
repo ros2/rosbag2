@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update maintainer email
+* Contributors: Karsten Knese
+
 0.0.1 (2018-12-11)
 ------------------
 * rename topic_with_types to topic_metadata

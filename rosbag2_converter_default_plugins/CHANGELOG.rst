@@ -2,6 +2,11 @@
 Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update maintainer email
+* Contributors: Karsten Knese
+
 0.0.1 (2018-12-11)
 ------------------
 * Split converters (`#70 <https://github.com/ros2/rosbag2/issues/70>`_)
