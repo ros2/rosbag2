@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2018-12-12)
+------------------
 * do not ignore return values
 * update maintainer email
 * Contributors: Karsten Knese, root

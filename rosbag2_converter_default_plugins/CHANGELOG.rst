@@ -2,8 +2,8 @@
 Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.2 (2018-12-12)
+------------------
 * update maintainer email
 * Contributors: Karsten Knese
 
