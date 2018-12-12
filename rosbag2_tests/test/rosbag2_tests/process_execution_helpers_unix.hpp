@@ -31,11 +31,20 @@ using ProcessHandle = int;
 int execute_and_wait_until_completion(const std::string & command, const std::string & path)
 {
   char previous_dir[PATH_MAX];
-  getcwd(previous_dir, PATH_MAX);
+  auto ret_get_cwd = getcwd(previous_dir, PATH_MAX);
+  if (ret_get_cwd == NULL) {
+    return EXIT_FAILURE;
+  }
 
-  chdir(path.c_str());
+  auto ret_ch_dir = chdir(path.c_str());
+  if (ret_ch_dir != 0) {
+    return EXIT_FAILURE;
+  }
   auto exitcode = std::system(command.c_str());
-  chdir(previous_dir);
+  ret_ch_dir = chdir(previous_dir);
+  if (ret_ch_dir != 0) {
+    return EXIT_FAILURE;
+  }
 
   return WEXITSTATUS(exitcode);
 }
