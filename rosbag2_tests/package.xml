@@ -4,7 +4,7 @@
   <name>rosbag2_tests</name>
   <version>0.0.1</version>
   <description>Tests package for rosbag2</description>
-  <maintainer email="karsten.knese@googlemail.com">Karsten Knese</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -6,7 +6,7 @@
   <description>
     Entry point for rosbag in ROS 2
   </description>
-  <maintainer email="karsten@osrfoundation.org">Karsten Knese</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <depend>ros2cli</depend>

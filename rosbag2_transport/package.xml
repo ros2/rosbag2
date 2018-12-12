@@ -4,7 +4,7 @@
   <name>rosbag2_transport</name>
   <version>0.0.1</version>
   <description>Layer encapsulating ROS middleware to allow rosbag2 to be used with or without middleware</description>
-  <maintainer email="karsten.knese@googlemail.com">karsten</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
