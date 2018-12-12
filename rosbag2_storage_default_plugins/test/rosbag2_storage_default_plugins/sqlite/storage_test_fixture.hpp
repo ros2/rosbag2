@@ -70,6 +70,7 @@ public:
       serialized_data->buffer, serialized_data->buffer_capacity, message);
 
     assert(written_size == message_size - 1);  // terminated null character not counted
+    (void) written_size;
     return serialized_data;
   }
 
