@@ -2,8 +2,8 @@
 Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * Split converters (`#70 <https://github.com/ros2/rosbag2/issues/70>`_)
 * Fix master build and small renamings (`#67 <https://github.com/ros2/rosbag2/issues/67>`_)
 * Use converters when recording a bag file (`#57 <https://github.com/ros2/rosbag2/issues/57>`_)

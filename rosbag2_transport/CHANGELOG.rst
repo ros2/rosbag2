@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * Auto discovery of new topics (`#63 <https://github.com/ros2/rosbag2/issues/63>`_)
 * Fix master build and small renamings (`#67 <https://github.com/ros2/rosbag2/issues/67>`_)
 * rename topic_with_types to topic_metadata

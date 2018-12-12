@@ -2,8 +2,8 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * Auto discovery of new topics (`#63 <https://github.com/ros2/rosbag2/issues/63>`_)
 * GH-142 replace map with unordered map where possible (`#65 <https://github.com/ros2/rosbag2/issues/65>`_)
 * use uint8 for serialized message (`#61 <https://github.com/ros2/rosbag2/issues/61>`_)

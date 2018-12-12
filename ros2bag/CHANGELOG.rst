@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * Auto discovery of new topics (`#63 <https://github.com/ros2/rosbag2/issues/63>`_)
 * Use converters when recording a bag file (`#57 <https://github.com/ros2/rosbag2/issues/57>`_)
 * Display bag summary using `ros2 bag info` (`#45 <https://github.com/ros2/rosbag2/issues/45>`_)

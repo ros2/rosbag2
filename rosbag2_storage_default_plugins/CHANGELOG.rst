@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * rename topic_with_types to topic_metadata
 * GH-142 replace map with unordered map where possible (`#65 <https://github.com/ros2/rosbag2/issues/65>`_)
 * Use converters when recording a bag file (`#57 <https://github.com/ros2/rosbag2/issues/57>`_)

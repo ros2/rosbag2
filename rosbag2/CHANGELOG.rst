@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2018-12-11)
+------------------
 * Split converters (`#70 <https://github.com/ros2/rosbag2/issues/70>`_)
 * GH-144 Add missing pop for warning pragma (`#68 <https://github.com/ros2/rosbag2/issues/68>`_)
 * Fix master build and small renamings (`#67 <https://github.com/ros2/rosbag2/issues/67>`_)
