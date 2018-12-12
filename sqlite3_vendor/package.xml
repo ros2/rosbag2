@@ -4,7 +4,7 @@
   <name>sqlite3_vendor</name>
   <version>0.0.1</version>
   <description>SQLite 3 vendor package</description>
-  <maintainer email="karsten.knese@googlemail.com">Karsten Knese</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>cmake</buildtool_depend>
