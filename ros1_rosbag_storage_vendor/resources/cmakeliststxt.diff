@@ -79,7 +79,7 @@ index dc49e2250..a440b7eda 100644
    src/bag.cpp
    src/bag_player.cpp
    src/buffer.cpp
-@@ -45,44 +72,97 @@ add_library(rosbag_storage
+@@ -45,44 +72,99 @@ add_library(rosbag_storage
    src/view.cpp
    src/uncompressed_stream.cpp
  )
@@ -119,6 +119,7 @@ index dc49e2250..a440b7eda 100644
 +  RUNTIME DESTINATION bin
  )
  
++find_package(OpenSSL REQUIRED)
 -add_library(rosbag_default_encryption_plugins
 +add_library(rosbag_default_encryption_plugins SHARED
    ${AES_ENCRYPT_SOURCE}
@@ -131,7 +132,8 @@ index dc49e2250..a440b7eda 100644
 +  $<INSTALL_INTERFACE:include>
 +  ${console_bridge_INCLUDE_DIRS}
 +  ${Boost_INCLUDE_DIRS}
-+  ${BZIP2_INCLUDE_DIR})
++  ${BZIP2_INCLUDE_DIR}
++  ${OPENSSL_INCLUDE_DIR})
 +
 +target_link_libraries(rosbag_default_encryption_plugins
 +  ros1_rosbag_storage
