@@ -60,7 +60,7 @@ class RecordVerb(VerbExtension):
         try:
             os.makedirs(uri)
         except:
-            return "Error: Could not create bag folder '{}'.".format(uri)
+            return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -69,7 +69,7 @@ class RecordVerb(VerbExtension):
         uri = args.output if args.output else datetime.datetime.now().strftime("rosbag2_%Y_%m_%d-%H_%M_%S")
 
         if os.path.isdir(uri):
-            return "Error: Output folder '{}' already exists.".format(uri)
+            return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
 
         self.create_bag_directory(uri)
 
