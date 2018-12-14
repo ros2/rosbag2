@@ -109,7 +109,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
 
-  play_options.read_ahead_queue_size = read_ahead_queue_size ? read_ahead_queue_size : 1000;
+  play_options.read_ahead_queue_size = read_ahead_queue_size;
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();

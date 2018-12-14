@@ -68,7 +68,7 @@ void Player::wait_for_filled_queue(const PlayOptions & options) const
 {
   while (
     message_queue_.size_approx() < options.read_ahead_queue_size &&
-    !is_storage_completely_loaded())
+    !is_storage_completely_loaded() && rclcpp::ok())
   {
     std::this_thread::sleep_for(queue_read_wait_period_);
   }
@@ -90,7 +90,7 @@ void Player::load_storage_content(const PlayOptions & options)
     static_cast<size_t>(options.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = options.read_ahead_queue_size;
 
-  while (reader_->has_next()) {
+  while (reader_->has_next() && rclcpp::ok()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
       enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
     } else {
@@ -122,7 +122,9 @@ void Player::play_messages_from_queue()
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message)) {
       std::this_thread::sleep_until(start_time + message.time_since_start);
-      publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+      if (rclcpp::ok()) {
+        publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+      }
     }
   }
 }
