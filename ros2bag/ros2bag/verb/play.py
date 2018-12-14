@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import sys
 
 from ros2bag.verb import VerbExtension
 
@@ -30,7 +29,7 @@ class PlayVerb(VerbExtension):
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
         parser.add_argument(
-            '-r', '--read-ahead-queue-size', default = 1000,
+            '-r', '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
                  'playback. Larger size will result in larger memory needs but might prevent '
                  'delay of message playback.')
@@ -38,16 +37,9 @@ class PlayVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
-            return "Error: bag file '{}' does not exist!".format(bag_file)
-
-        read_ahead_queue_size = 1000
-        try:
-            read_ahead_queue_size = int(args.read_ahead_queue_size)
-        except:
-            print("[ERROR] [ros2bag] read ahead queue size must be an integer")
-            exit(0)
+            return "[ERROR] [ros2bag] bag file '{}' does not exist!".format(bag_file)
 
         rosbag2_transport_py.play(
             uri=bag_file,
             storage_id=args.storage,
-            read_ahead_queue_size=read_ahead_queue_size)
+            read_ahead_queue_size=args.read_ahead_queue_size)

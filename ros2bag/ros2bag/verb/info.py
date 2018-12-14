@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import sys
 
 from ros2bag.verb import VerbExtension
 
@@ -30,6 +29,6 @@ class InfoVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
-            return "Error: bag file '{}' does not exist!".format(bag_file)
+            return "[ERROR] [ros2bag]: bag file '{}' does not exist!".format(bag_file)
 
         rosbag2_transport_py.info(uri=bag_file)

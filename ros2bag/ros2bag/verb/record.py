@@ -14,7 +14,6 @@
 
 import datetime
 import os
-import sys
 
 from ros2bag.verb import VerbExtension
 
@@ -30,7 +29,7 @@ class RecordVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
             '-a', '--all', action='store_true',
-            help='recording all topics, required if no topics are listed explicitely.')
+            help='recording all topics, required if no topics are listed explicitly.')
         parser.add_argument(
             'topics', nargs='*', help='topics to be recorded')
         parser.add_argument(
@@ -57,7 +56,7 @@ class RecordVerb(VerbExtension):
     def create_bag_directory(self, uri):
         try:
             os.makedirs(uri)
-        except:
+        except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
 
     def main(self, *, args):  # noqa: D102
