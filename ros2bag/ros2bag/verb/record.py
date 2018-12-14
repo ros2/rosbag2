@@ -28,9 +28,6 @@ class RecordVerb(VerbExtension):
     """ros2 bag record."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        self._subparser = parser
-
-        add_arguments(parser)
         parser.add_argument(
             '-a', '--all', action='store_true',
             help='recording all topics, required if no topics are listed explicitely.')
