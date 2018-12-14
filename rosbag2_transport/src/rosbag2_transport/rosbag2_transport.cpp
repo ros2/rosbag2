@@ -107,7 +107,8 @@ void Rosbag2Transport::print_bag_info(const std::string & uri)
   } catch (std::runtime_error & e) {
     (void) e;
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Could not read metadata for " << uri << ". Please specify "
-      "the path to the folder containing an existing 'metadata.yaml' file");
+      "the path to the folder containing an existing 'metadata.yaml' file and make sure that the "
+      "file 'metadata.yaml' exists and has the correct format.");
     return;
   }
 
