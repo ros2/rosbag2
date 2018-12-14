@@ -32,7 +32,8 @@ class RecordVerb(VerbExtension):
 
         add_arguments(parser)
         parser.add_argument(
-            '-a', '--all', action='store_true', help='recording all topics')
+            '-a', '--all', action='store_true',
+            help='recording all topics, required if no topics are listed explicitely.')
         parser.add_argument(
             'topics', nargs='*', help='topics to be recorded')
         parser.add_argument(
