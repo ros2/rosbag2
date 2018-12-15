@@ -4,7 +4,7 @@
   <name>ros1_rosbag_storage_vendor</name>
   <version>0.0.0</version>
   <description>Vendor package for rosbag_storage of ROS1</description>
-  <maintainer email="karsten.knese@googlemail.com">Karsten Knese</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
