@@ -2,8 +2,8 @@
 Changelog for package rosbag2_bag_v2_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2018-12-14)
+------------------
 * Release fixes (`#73 <https://github.com/ros2/rosbag2/issues/73>`_)
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
