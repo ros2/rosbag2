@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosbag2_bag_v2_plugins</name>
+  <version>0.0.0</version>
+  <description>Package containing storage and converter plugins for rosbag 1</description>
+  <maintainer email="karsten.knese@googlemail.com">Karsten Knese</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>pluginlib</depend>
+  <depend>rcutils</depend>
+  <depend>rclcpp</depend>
+  <depend>ros1_rosbag_storage_vendor</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>rosbag2</depend>
+
+  <test_depend>rosbag2_test_common</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gmock</test_depend>
+  <test_depend>std_msgs</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

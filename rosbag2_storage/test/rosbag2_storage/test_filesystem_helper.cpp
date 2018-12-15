@@ -87,3 +87,22 @@ TEST(FilesystemHelper, get_folder_name_for_path_not_ending_with_separator)
 
   EXPECT_THAT(folder_name, Eq("folder"));
 }
+
+TEST(FilesystemHelper, get_file_name_returns_last_part_of_path)
+{
+  auto path = FilesystemHelper::concat({"some", "path", "to", "a", "file.txt"});
+
+  auto folder_name = FilesystemHelper::get_file_name(path);
+
+  EXPECT_THAT(folder_name, Eq("file.txt"));
+}
+
+TEST(FilesystemHelper, get_file_name_returns_empty_string_if_passed_a_path_with_trailing_separator)
+{
+  auto sep = std::string(FilesystemHelper::separator);
+  auto path = FilesystemHelper::concat({"some", "path", "to", "a", "folder"}) + sep;
+
+  auto folder_name = FilesystemHelper::get_file_name(path);
+
+  EXPECT_THAT(folder_name, Eq(""));
+}

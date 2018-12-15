@@ -122,17 +122,21 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 static PyObject *
 rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  static const char * kwlist[] = {"uri", nullptr};
+  static const char * kwlist[] = {"uri", "storage_id", nullptr};
 
   char * char_uri;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", const_cast<char **>(kwlist), &char_uri)) {
+  char * char_storage_id;
+  if (!PyArg_ParseTupleAndKeywords(
+      args, kwargs, "ss", const_cast<char **>(kwlist), &char_uri, &char_storage_id))
+  {
     return nullptr;
   }
 
   std::string uri = std::string(char_uri);
+  std::string storage_id = std::string(char_storage_id);
 
   rosbag2_transport::Rosbag2Transport transport;
-  transport.print_bag_info(uri);
+  transport.print_bag_info(uri, storage_id);
 
   Py_RETURN_NONE;
 }

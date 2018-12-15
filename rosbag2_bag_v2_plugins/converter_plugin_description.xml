@@ -1,0 +1,13 @@
+<library path="rosbag2_bag_v2_plugins">
+    <class
+            name="rosbag_v2_converter"
+            type="rosbag2_bag_v2_plugins::RosbagV2Deserializer"
+            base_class_type="rosbag2::converter_interfaces::SerializationFormatDeserializer"
+    >
+        <description>
+            This is a deserializer plugin which allows to convert ROS 1 messages via the
+            ros1_bridge to ROS 2 messages, if both message definitions are present.
+            This plugin needs to be build from source if custom messages are to be supported.
+        </description>
+    </class>
+</library>

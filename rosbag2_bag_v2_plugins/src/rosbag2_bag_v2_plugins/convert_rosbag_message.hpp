@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__INFO_HPP_
-#define ROSBAG2__INFO_HPP_
+#ifndef ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_
+#define ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_
 
+#include <memory>
 #include <string>
 
+#include "rosbag/message_instance.h"
 #include "rosbag2/types.hpp"
-#include "visibility_control.hpp"
+#include "rosbag2/types/introspection_message.hpp"
 
-namespace rosbag2
+namespace rosbag2_bag_v2_plugins
 {
+bool get_1to2_mapping(const std::string & ros1_message_type, std::string & ros2_message_type);
 
-class ROSBAG2_PUBLIC Info
-{
-public:
-  virtual ~Info() = default;
+void
+convert_1_to_2(
+  const std::string & ros1_type_name,
+  ros::serialization::IStream & ros1_message_stream,
+  std::shared_ptr<rosbag2_introspection_message_t> ros2_message);
+}  // namespace rosbag2_bag_v2_plugins
 
-  virtual rosbag2::BagMetadata read_metadata(
-    const std::string & uri, const std::string & storage_id);
-};
-
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__INFO_HPP_
+#endif  // ROSBAG2_BAG_V2_PLUGINS__CONVERT_ROSBAG_MESSAGE_HPP_

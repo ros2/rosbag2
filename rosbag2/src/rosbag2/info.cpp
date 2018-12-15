@@ -39,7 +39,6 @@ rosbag2::BagMetadata Info::read_metadata(const std::string & uri, const std::str
               "opened.");
     }
     auto bag_metadata = storage->get_metadata();
-    bag_metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(uri);
     return bag_metadata;
   }
   throw std::runtime_error("The metadata.yaml file does not exist. Please specify a the "

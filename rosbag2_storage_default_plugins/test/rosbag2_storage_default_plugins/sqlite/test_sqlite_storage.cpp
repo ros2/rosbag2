@@ -30,11 +30,6 @@ using namespace ::testing;  // NOLINT
 namespace rosbag2_storage
 {
 
-bool operator==(const TopicMetadata & lhs, const TopicMetadata & rhs)
-{
-  return lhs.name == rhs.name && lhs.type == rhs.type;
-}
-
 bool operator!=(const TopicMetadata & lhs, const TopicMetadata & rhs)
 {
   return !(lhs == rhs);

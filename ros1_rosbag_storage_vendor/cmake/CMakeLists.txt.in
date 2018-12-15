@@ -1,0 +1,5 @@
+# We download ros_comm, which does not contain a toplevel CMakeLists so colcon can't find the entry
+# point and claims there is nothing to build.
+# This is also an opportunity, because we want to only build rosbag_storage anyways
+cmake_minimum_required(VERSION 3.5)
+add_subdirectory(tools/rosbag_storage)

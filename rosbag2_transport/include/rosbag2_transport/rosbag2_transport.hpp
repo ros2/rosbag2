@@ -82,7 +82,7 @@ public:
    * \param uri path to the metadata yaml file.
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void print_bag_info(const std::string & uri);
+  void print_bag_info(const std::string & uri, const std::string & storage_id);
 
 private:
   std::shared_ptr<Rosbag2Node> setup_node();

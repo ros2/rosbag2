@@ -12,26 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
-#define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
+#ifndef ROSBAG2_BAG_V2_PLUGINS__STORAGE__ROSBAG_OUTPUT_STREAM_HPP_
+#define ROSBAG2_BAG_V2_PLUGINS__STORAGE__ROSBAG_OUTPUT_STREAM_HPP_
 
+#include <cstdint>
+#include <memory>
 #include <string>
 
-namespace rosbag2_storage
+#include "rcutils/types/uint8_array.h"
+
+namespace rosbag2_bag_v2_plugins
 {
 
-struct TopicMetadata
+class RosbagOutputStream
 {
-  std::string name;
-  std::string type;
-  std::string serialization_format;
+public:
+  explicit RosbagOutputStream(const std::string & type);
 
-  bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
-  {
-    return name == rhs.name && type == rhs.type && serialization_format == rhs.serialization_format;
-  }
+  uint8_t * advance(size_t size);
+
+  std::shared_ptr<rcutils_uint8_array_t> get_content();
+
+private:
+  std::shared_ptr<rcutils_uint8_array_t> char_array_;
 };
 
-}  // namespace rosbag2_storage
+}  // namespace rosbag2_bag_v2_plugins
 
-#endif  // ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
+#endif  // ROSBAG2_BAG_V2_PLUGINS__STORAGE__ROSBAG_OUTPUT_STREAM_HPP_

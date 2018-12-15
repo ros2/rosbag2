@@ -1,0 +1,13 @@
+<library path="rosbag2_bag_v2_plugins">
+    <class
+            name="rosbag_v2"
+            type="rosbag2_bag_v2_plugins::RosbagV2Storage"
+            base_class_type="rosbag2_storage::storage_interfaces::ReadOnlyInterface"
+    >
+        <description>
+            This is a storage plugin which allows to read rosbag v2 bagfiles.
+            Use together with rosbag_v2_converter as the messages will still be in ROS 1 format
+            This plugin needs to be build from source if custom messages are to be supported.
+        </description>
+    </class>
+</library>

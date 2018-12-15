@@ -1,0 +1,573 @@
+diff --git a/tools/rosbag_storage/CMakeLists.txt b/tools/rosbag_storage/CMakeLists.txt
+index ad2769817..dc49e2250 100644
+--- a/tools/rosbag_storage/CMakeLists.txt
++++ b/tools/rosbag_storage/CMakeLists.txt
+@@ -28,19 +28,17 @@ add_definitions(${BZIP2_DEFINITIONS})
+ set(AES_ENCRYPT_SOURCE "")
+ set(AES_ENCRYPT_LIBRARIES "")
+ if(NOT WIN32)
+-  set(AES_ENCRYPT_SOURCE "src/aes_encryptor.cpp")
++  set(AES_ENCRYPT_SOURCE "src/aes_encryptor.cpp" "src/gpgme_utils.cpp")
+   set(AES_ENCRYPT_LIBRARIES "crypto" "gpgme")
+ endif()
+ 
+ add_library(rosbag_storage
+-  ${AES_ENCRYPT_SOURCE}
+   src/bag.cpp
+   src/bag_player.cpp
+   src/buffer.cpp
+   src/bz2_stream.cpp
+   src/lz4_stream.cpp
+   src/chunked_file.cpp
+-  src/encryptor.cpp
+   src/message_instance.cpp
+   src/query.cpp
+   src/stream.cpp
+@@ -55,6 +53,19 @@ install(TARGETS rosbag_storage
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+ 
++add_library(rosbag_default_encryption_plugins
++  ${AES_ENCRYPT_SOURCE}
++  src/no_encryptor.cpp
++)
++
++target_link_libraries(rosbag_default_encryption_plugins ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${AES_ENCRYPT_LIBRARIES})
++
++install(TARGETS rosbag_default_encryption_plugins
++  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
++  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
++  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
++)
++
+ install(DIRECTORY include/
+   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+@@ -68,10 +79,10 @@ if(NOT WIN32)
+   if(CATKIN_ENABLE_TESTING)
+     find_package(rostest)
+ 
+-    catkin_add_gtest(test_aes_encryptor test/test_aes_encryptor.cpp
++    catkin_add_gtest(test_aes_encryptor test/test_aes_encryptor.cpp src/gpgme_utils.cpp
+       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+     if(TARGET test_aes_encryptor)
+-      target_link_libraries(test_aes_encryptor rosbag_storage ${catkin_LIBRARIES} ${Boost_LIBRARIES})
++      target_link_libraries(test_aes_encryptor rosbag_storage ${BZIP2_LIBRARIES}  ${AES_ENCRYPT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+     endif()
+   endif()
+ endif()
+diff --git a/tools/rosbag_storage/encryptor_plugins.xml b/tools/rosbag_storage/encryptor_plugins.xml
+index 91c0d31dc..3128ec9a5 100644
+--- a/tools/rosbag_storage/encryptor_plugins.xml
++++ b/tools/rosbag_storage/encryptor_plugins.xml
+@@ -1,4 +1,4 @@
+-<library path="lib/librosbag_storage">
++<library path="lib/librosbag_default_encryption_plugins">
+   <class name="rosbag/NoEncryptor" type="rosbag::NoEncryptor" base_class_type="rosbag::EncryptorBase">
+     <description>This is a plugin for no encryption.</description>
+   </class>
+diff --git a/tools/rosbag_storage/include/rosbag/aes_encryptor.h b/tools/rosbag_storage/include/rosbag/aes_encryptor.h
+new file mode 100644
+index 000000000..b9a0ef6b0
+--- /dev/null
++++ b/tools/rosbag_storage/include/rosbag/aes_encryptor.h
+@@ -0,0 +1,80 @@
++/*********************************************************************
++* Software License Agreement (BSD License)
++*
++*  Copyright (c) 2017, Open Source Robotics Foundation
++*  All rights reserved.
++*
++*  Redistribution and use in source and binary forms, with or without
++*  modification, are permitted provided that the following conditions
++*  are met:
++*
++*   * Redistributions of source code must retain the above copyright
++*     notice, this list of conditions and the following disclaimer.
++*   * Redistributions in binary form must reproduce the above
++*     copyright notice, this list of conditions and the following
++*     disclaimer in the documentation and/or other materials provided
++*     with the distribution.
++*   * Neither the name of Willow Garage, Inc. nor the names of its
++*     contributors may be used to endorse or promote products derived
++*     from this software without specific prior written permission.
++*
++*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++*  POSSIBILITY OF SUCH DAMAGE.
++*********************************************************************/
++
++#ifndef ROSBAG_AES_ENCRYPTION_H
++#define ROSBAG_AES_ENCRYPTION_H
++
++#include "rosbag/encryptor.h"
++
++#ifndef _WIN32
++  #include <openssl/aes.h>
++
++namespace rosbag {
++
++class AesCbcEncryptor : public EncryptorBase
++{
++public:
++    static const std::string GPG_USER_FIELD_NAME;
++    static const std::string ENCRYPTED_KEY_FIELD_NAME;
++
++public:
++    AesCbcEncryptor() { }
++    ~AesCbcEncryptor() { }
++
++    void initialize(Bag const& bag, std::string const& gpg_key_user);
++    uint32_t encryptChunk(const uint32_t chunk_size, const uint64_t chunk_data_pos, ChunkedFile& file);
++    void decryptChunk(ChunkHeader const& chunk_header, Buffer& decrypted_chunk, ChunkedFile& file) const;
++    void addFieldsToFileHeader(ros::M_string& header_fields) const;
++    void readFieldsFromFileHeader(ros::M_string const& header_fields);
++    void writeEncryptedHeader(boost::function<void(ros::M_string const&)>, ros::M_string const& header_fields, ChunkedFile&);
++    bool readEncryptedHeader(boost::function<bool(ros::Header&)>, ros::Header& header, Buffer& header_buffer, ChunkedFile&);
++
++private:
++    void buildSymmetricKey();
++
++private:
++    // User name of GPG key used for symmetric key encryption
++    std::string gpg_key_user_;
++    // Symmetric key for encryption/decryption
++    std::basic_string<unsigned char> symmetric_key_;
++    // Encrypted symmetric key
++    std::string encrypted_symmetric_key_;
++    // AES keys for encryption/decryption
++    AES_KEY aes_encrypt_key_;
++    AES_KEY aes_decrypt_key_;
++};
++}
++#endif
++
++#endif
+diff --git a/tools/rosbag_storage/include/rosbag/encryptor.h b/tools/rosbag_storage/include/rosbag/encryptor.h
+index 2c3f8adab..b4dc31412 100644
+--- a/tools/rosbag_storage/include/rosbag/encryptor.h
++++ b/tools/rosbag_storage/include/rosbag/encryptor.h
+@@ -46,10 +46,6 @@
+ 
+ #include <boost/function.hpp>
+ 
+-#ifndef _WIN32
+-  #include <gpgme.h>
+-  #include <openssl/aes.h>
+-#endif
+ 
+ namespace rosbag {
+ 
+@@ -133,72 +129,6 @@ public:
+     virtual bool readEncryptedHeader(boost::function<bool(ros::Header&)> read_header, ros::Header& header, Buffer& header_buffer, ChunkedFile& file) = 0;
+ };
+ 
+-class NoEncryptor : public EncryptorBase
+-{
+-public:
+-    NoEncryptor() { }
+-    ~NoEncryptor() { }
+-
+-    void initialize(Bag const&, std::string const&) { }
+-    uint32_t encryptChunk(const uint32_t, const uint64_t, ChunkedFile&);
+-    void decryptChunk(ChunkHeader const&, Buffer&, ChunkedFile&) const;
+-    void addFieldsToFileHeader(ros::M_string&) const { }
+-    void readFieldsFromFileHeader(ros::M_string const&) { }
+-    void writeEncryptedHeader(boost::function<void(ros::M_string const&)>, ros::M_string const&, ChunkedFile&);
+-    bool readEncryptedHeader(boost::function<bool(ros::Header&)>, ros::Header&, Buffer&, ChunkedFile&);
+-};
+-
+-#ifndef _WIN32
+-//! Initialize GPGME library
+-/*!
+- * This method initializes GPGME library, and set locale.
+- */
+-void initGpgme();
+-
+-//! Get GPG key
+-/*!
+- * \param ctx GPGME context
+- * \param user User name of the GPG key
+- * \param key GPG key found
+- *
+- * This method outputs a GPG key in the system keyring corresponding to the given user name.
+- * This method throws BagException if the key is not found or error occurred.
+- */
+-void getGpgKey(gpgme_ctx_t& ctx, std::string const& user, gpgme_key_t& key);
+-
+-class AesCbcEncryptor : public EncryptorBase
+-{
+-public:
+-    static const std::string GPG_USER_FIELD_NAME;
+-    static const std::string ENCRYPTED_KEY_FIELD_NAME;
+-
+-public:
+-    AesCbcEncryptor() { }
+-    ~AesCbcEncryptor() { }
+-
+-    void initialize(Bag const& bag, std::string const& gpg_key_user);
+-    uint32_t encryptChunk(const uint32_t chunk_size, const uint64_t chunk_data_pos, ChunkedFile& file);
+-    void decryptChunk(ChunkHeader const& chunk_header, Buffer& decrypted_chunk, ChunkedFile& file) const;
+-    void addFieldsToFileHeader(ros::M_string& header_fields) const;
+-    void readFieldsFromFileHeader(ros::M_string const& header_fields);
+-    void writeEncryptedHeader(boost::function<void(ros::M_string const&)>, ros::M_string const& header_fields, ChunkedFile&);
+-    bool readEncryptedHeader(boost::function<bool(ros::Header&)>, ros::Header& header, Buffer& header_buffer, ChunkedFile&);
+-
+-private:
+-    void buildSymmetricKey();
+-
+-private:
+-    // User name of GPG key used for symmetric key encryption
+-    std::string gpg_key_user_;
+-    // Symmetric key for encryption/decryption
+-    std::basic_string<unsigned char> symmetric_key_;
+-    // Encrypted symmetric key
+-    std::string encrypted_symmetric_key_;
+-    // AES keys for encryption/decryption
+-    AES_KEY aes_encrypt_key_;
+-    AES_KEY aes_decrypt_key_;
+-};
+-#endif
+ }
+ 
+ #endif
+diff --git a/tools/rosbag_storage/include/rosbag/gpgme_utils.h b/tools/rosbag_storage/include/rosbag/gpgme_utils.h
+new file mode 100644
+index 000000000..1e44a0fd1
+--- /dev/null
++++ b/tools/rosbag_storage/include/rosbag/gpgme_utils.h
+@@ -0,0 +1,65 @@
++/*********************************************************************
++* Software License Agreement (BSD License)
++*
++*  Copyright (c) 2017, Open Source Robotics Foundation
++*  All rights reserved.
++*
++*  Redistribution and use in source and binary forms, with or without
++*  modification, are permitted provided that the following conditions
++*  are met:
++*
++*   * Redistributions of source code must retain the above copyright
++*     notice, this list of conditions and the following disclaimer.
++*   * Redistributions in binary form must reproduce the above
++*     copyright notice, this list of conditions and the following
++*     disclaimer in the documentation and/or other materials provided
++*     with the distribution.
++*   * Neither the name of Willow Garage, Inc. nor the names of its
++*     contributors may be used to endorse or promote products derived
++*     from this software without specific prior written permission.
++*
++*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++*  POSSIBILITY OF SUCH DAMAGE.
++*********************************************************************/
++
++#ifndef ROSBAG_GPGME_UTILS_H
++#define ROSBAG_GPGME_UTILS_H
++
++#include "rosbag/encryptor.h"
++
++#ifndef _WIN32
++  #include <gpgme.h>
++
++namespace rosbag {
++
++//! Initialize GPGME library
++/*!
++ * This method initializes GPGME library, and set locale.
++ */
++void initGpgme();
++
++//! Get GPG key
++/*!
++ * \param ctx GPGME context
++ * \param user User name of the GPG key
++ * \param key GPG key found
++ *
++ * This method outputs a GPG key in the system keyring corresponding to the given user name.
++ * This method throws BagException if the key is not found or error occurred.
++ */
++void getGpgKey(gpgme_ctx_t& ctx, std::string const& user, gpgme_key_t& key);
++
++}
++#endif
++
++#endif
+diff --git a/tools/rosbag_storage/include/rosbag/no_encryptor.h b/tools/rosbag_storage/include/rosbag/no_encryptor.h
+new file mode 100644
+index 000000000..32e97df57
+--- /dev/null
++++ b/tools/rosbag_storage/include/rosbag/no_encryptor.h
+@@ -0,0 +1,59 @@
++/*********************************************************************
++* Software License Agreement (BSD License)
++*
++*  Copyright (c) 2017, Open Source Robotics Foundation
++*  All rights reserved.
++*
++*  Redistribution and use in source and binary forms, with or without
++*  modification, are permitted provided that the following conditions
++*  are met:
++*
++*   * Redistributions of source code must retain the above copyright
++*     notice, this list of conditions and the following disclaimer.
++*   * Redistributions in binary form must reproduce the above
++*     copyright notice, this list of conditions and the following
++*     disclaimer in the documentation and/or other materials provided
++*     with the distribution.
++*   * Neither the name of Willow Garage, Inc. nor the names of its
++*     contributors may be used to endorse or promote products derived
++*     from this software without specific prior written permission.
++*
++*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++*  POSSIBILITY OF SUCH DAMAGE.
++*********************************************************************/
++
++#ifndef ROSBAG_NO_ENCRYPTION_H
++#define ROSBAG_NO_ENCRYPTION_H
++
++#include "rosbag/encryptor.h"
++
++
++namespace rosbag {
++
++class NoEncryptor : public EncryptorBase
++{
++public:
++    NoEncryptor() { }
++    ~NoEncryptor() { }
++
++    void initialize(Bag const&, std::string const&) { }
++    uint32_t encryptChunk(const uint32_t, const uint64_t, ChunkedFile&);
++    void decryptChunk(ChunkHeader const&, Buffer&, ChunkedFile&) const;
++    void addFieldsToFileHeader(ros::M_string&) const { }
++    void readFieldsFromFileHeader(ros::M_string const&) { }
++    void writeEncryptedHeader(boost::function<void(ros::M_string const&)>, ros::M_string const&, ChunkedFile&);
++    bool readEncryptedHeader(boost::function<bool(ros::Header&)>, ros::Header&, Buffer&, ChunkedFile&);
++};
++}
++
++#endif
+diff --git a/tools/rosbag_storage/src/aes_encryptor.cpp b/tools/rosbag_storage/src/aes_encryptor.cpp
+index e0fcb807e..73f88de5a 100644
+--- a/tools/rosbag_storage/src/aes_encryptor.cpp
++++ b/tools/rosbag_storage/src/aes_encryptor.cpp
+@@ -33,7 +33,8 @@
+ *********************************************************************/
+ 
+ #include "rosbag/bag.h"
+-#include "rosbag/encryptor.h"
++#include "rosbag/aes_encryptor.h"
++#include "rosbag/gpgme_utils.h"
+ 
+ #include <openssl/rand.h>
+ 
+@@ -47,53 +48,6 @@ namespace rosbag
+ const std::string AesCbcEncryptor::GPG_USER_FIELD_NAME = "gpg_user";
+ const std::string AesCbcEncryptor::ENCRYPTED_KEY_FIELD_NAME = "encrypted_key";
+ 
+-void initGpgme() {
+-    // Check version method must be called before en/decryption
+-    gpgme_check_version(0);
+-    // Set locale
+-    setlocale(LC_ALL, "");
+-    gpgme_set_locale(NULL, LC_CTYPE, setlocale(LC_CTYPE, NULL));
+-#ifdef LC_MESSAGES
+-    gpgme_set_locale(NULL, LC_MESSAGES, setlocale(LC_MESSAGES, NULL));
+-#endif
+-}
+-
+-void getGpgKey(gpgme_ctx_t& ctx, std::string const& user, gpgme_key_t& key) {
+-    gpgme_error_t err;
+-    // Asterisk means an arbitrary user.
+-    if (user == std::string("*")) {
+-        err = gpgme_op_keylist_start(ctx, 0, 0);
+-    } else {
+-        err = gpgme_op_keylist_start(ctx, user.c_str(), 0);
+-    }
+-    if (err) {
+-        throw BagException((boost::format("gpgme_op_keylist_start returned %1%") % gpgme_strerror(err)).str());
+-    }
+-    while (true) {
+-        err = gpgme_op_keylist_next(ctx, &key);
+-        if (!err) {
+-            if (user == std::string("*") || strcmp(key->uids->name, user.c_str()) == 0) {
+-                break;
+-            }
+-            gpgme_key_release(key);
+-        } else if (gpg_err_code(err) == GPG_ERR_EOF) {
+-            if (user == std::string("*")) {
+-                // A method throws an exception (instead of returning a specific value) if the key is not found
+-                // This allows rosbag client applications to work without modifying their source code
+-                throw BagException("GPG key not found");
+-            } else {
+-                throw BagException((boost::format("GPG key not found for a user %1%") % user.c_str()).str());
+-            }
+-        } else {
+-            throw BagException((boost::format("gpgme_op_keylist_next returned %1%") % err).str());
+-        }
+-    }
+-    err = gpgme_op_keylist_end(ctx);
+-    if (err) {
+-        throw BagException((boost::format("gpgme_op_keylist_end returned %1%") % gpgme_strerror(err)).str());
+-    }
+-}
+-
+ //! Encrypt string using GPGME
+ /*!
+  * \return Encrypted string
+diff --git a/tools/rosbag_storage/src/gpgme_utils.cpp b/tools/rosbag_storage/src/gpgme_utils.cpp
+new file mode 100644
+index 000000000..69ce9bd4e
+--- /dev/null
++++ b/tools/rosbag_storage/src/gpgme_utils.cpp
+@@ -0,0 +1,90 @@
++/*********************************************************************
++* Software License Agreement (BSD License)
++*
++*  Copyright (c) 2017, Open Source Robotics Foundation
++*  All rights reserved.
++*
++*  Redistribution and use in source and binary forms, with or without
++*  modification, are permitted provided that the following conditions
++*  are met:
++*
++*   * Redistributions of source code must retain the above copyright
++*     notice, this list of conditions and the following disclaimer.
++*   * Redistributions in binary form must reproduce the above
++*     copyright notice, this list of conditions and the following
++*     disclaimer in the documentation and/or other materials provided
++*     with the distribution.
++*   * Neither the name of Willow Garage, Inc. nor the names of its
++*     contributors may be used to endorse or promote products derived
++*     from this software without specific prior written permission.
++*
++*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++*  POSSIBILITY OF SUCH DAMAGE.
++*********************************************************************/
++
++#include "rosbag/gpgme_utils.h"
++
++#include <boost/format.hpp>
++
++namespace rosbag
++{
++
++void initGpgme() {
++    // Check version method must be called before en/decryption
++    gpgme_check_version(0);
++    // Set locale
++    setlocale(LC_ALL, "");
++    gpgme_set_locale(NULL, LC_CTYPE, setlocale(LC_CTYPE, NULL));
++#ifdef LC_MESSAGES
++    gpgme_set_locale(NULL, LC_MESSAGES, setlocale(LC_MESSAGES, NULL));
++#endif
++}
++
++void getGpgKey(gpgme_ctx_t& ctx, std::string const& user, gpgme_key_t& key) {
++    gpgme_error_t err;
++    // Asterisk means an arbitrary user.
++    if (user == std::string("*")) {
++        err = gpgme_op_keylist_start(ctx, 0, 0);
++    } else {
++        err = gpgme_op_keylist_start(ctx, user.c_str(), 0);
++    }
++    if (err) {
++        throw BagException((boost::format("gpgme_op_keylist_start returned %1%") % gpgme_strerror(err)).str());
++    }
++    while (true) {
++        err = gpgme_op_keylist_next(ctx, &key);
++        if (!err) {
++            if (user == std::string("*") || strcmp(key->uids->name, user.c_str()) == 0) {
++                break;
++            }
++            gpgme_key_release(key);
++        } else if (gpg_err_code(err) == GPG_ERR_EOF) {
++            if (user == std::string("*")) {
++                // A method throws an exception (instead of returning a specific value) if the key is not found
++                // This allows rosbag client applications to work without modifying their source code
++                throw BagException("GPG key not found");
++            } else {
++                throw BagException((boost::format("GPG key not found for a user %1%") % user.c_str()).str());
++            }
++        } else {
++            throw BagException((boost::format("gpgme_op_keylist_next returned %1%") % err).str());
++        }
++    }
++    err = gpgme_op_keylist_end(ctx);
++    if (err) {
++        throw BagException((boost::format("gpgme_op_keylist_end returned %1%") % gpgme_strerror(err)).str());
++    }
++}
++
++
++}  // namespace rosbag
+diff --git a/tools/rosbag_storage/src/encryptor.cpp b/tools/rosbag_storage/src/no_encryptor.cpp
+similarity index 97%
+rename from tools/rosbag_storage/src/encryptor.cpp
+rename to tools/rosbag_storage/src/no_encryptor.cpp
+index 17c62815d..9e6174020 100644
+--- a/tools/rosbag_storage/src/encryptor.cpp
++++ b/tools/rosbag_storage/src/no_encryptor.cpp
+@@ -32,7 +32,8 @@
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
+ 
+-#include "rosbag/encryptor.h"
++#include "rosbag/bag.h"
++#include "rosbag/no_encryptor.h"
+ 
+ #include <pluginlib/class_list_macros.hpp>
+ 
+diff --git a/tools/rosbag_storage/test/test_aes_encryptor.cpp b/tools/rosbag_storage/test/test_aes_encryptor.cpp
+index 7de167cf0..0a9c8abdb 100644
+--- a/tools/rosbag_storage/test/test_aes_encryptor.cpp
++++ b/tools/rosbag_storage/test/test_aes_encryptor.cpp
+@@ -41,7 +41,8 @@
+ #include "std_msgs/String.h"
+ 
+ #include "rosbag/bag.h"
+-#include "rosbag/encryptor.h"
++#include "rosbag/aes_encryptor.h"
++#include "rosbag/gpgme_utils.h"
+ #include "rosbag/view.h"
+ 
+ const char *GPG_KEY_USER = "Foo00";

@@ -77,6 +77,23 @@ public:
   }
 
   /**
+   * Returns the name of the file identified by a file system path
+   * \param path The file path
+   * \return The name of the file or an empty string, if the path ends with a separator
+   */
+  static std::string get_file_name(const std::string & path)
+  {
+    auto last_separator = path.rfind(separator);
+    if (last_separator == path.size() - 1) {
+      return "";
+    } else {
+      return path.substr(
+        last_separator == std::string::npos ? 0 : last_separator + 1, path.length());
+    }
+  }
+
+
+  /**
    * Calculates the size of a directory by summarizing the file size of all files
    * Note: This operation is not recursive
    * \param directory_path The directory path to calculate the size of

@@ -1,0 +1,22 @@
+diff --git a/tools/rosbag_storage/src/bag.cpp b/tools/rosbag_storage/src/bag.cpp
+index 7e2e67171..073072934 100644
+--- a/tools/rosbag_storage/src/bag.cpp
++++ b/tools/rosbag_storage/src/bag.cpp
+@@ -40,6 +40,7 @@
+ #include <iomanip>
+
+ #include <boost/foreach.hpp>
++#include <boost/bind.hpp>
+
+ #include "console_bridge/console.h"
+
+@@ -222,7 +223,8 @@ void Bag::setEncryptorPlugin(std::string const& plugin_name, std::string const&
+     if (!chunks_.empty()) {
+         throw BagException("Cannot set encryption plugin after chunks are written");
+     }
+-    encryptor_ = encryptor_loader_.createInstance(plugin_name);
++    auto unmanaged_instance = encryptor_loader_.createUnmanagedInstance(plugin_name);
++    encryptor_ = std::shared_ptr<rosbag::EncryptorBase>(unmanaged_instance);
+     encryptor_->initialize(*this, plugin_param);
+ }
+
