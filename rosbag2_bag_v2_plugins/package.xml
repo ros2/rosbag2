@@ -11,6 +11,7 @@
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
   <depend>rclcpp</depend>
+  <depend>ros1_bridge</depend>
   <depend>ros1_rosbag_storage_vendor</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosbag2</depend>
