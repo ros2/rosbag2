@@ -116,20 +116,24 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 
 void Player::play_messages_from_queue()
 {
-  auto start_time = std::chrono::high_resolution_clock::now();
-
   do {
-    ReplayableMessage message;
-    while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-      std::this_thread::sleep_until(start_time + message.time_since_start);
-      if (rclcpp::ok()) {
-        publishers_[message.message->topic_name]->publish(message.message->serialized_data);
-      }
-    }
+    play_messages_until_queue_empty();
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN("Message queue starved. Messages will be delayed.");
     }
   } while (!is_storage_completely_loaded() && rclcpp::ok());
+}
+
+void Player::play_messages_until_queue_empty()
+{
+  auto start_time = std::chrono::system_clock::now();
+  ReplayableMessage message;
+  while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+    std::this_thread::sleep_until(start_time + message.time_since_start);
+    if (rclcpp::ok()) {
+      publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+    }
+  }
 }
 
 void Player::prepare_publishers()

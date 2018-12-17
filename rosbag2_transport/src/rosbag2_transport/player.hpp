@@ -55,6 +55,7 @@ private:
   void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
   void wait_for_filled_queue(const PlayOptions & options) const;
   void play_messages_from_queue();
+  void play_messages_until_queue_empty();
   void prepare_publishers();
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
