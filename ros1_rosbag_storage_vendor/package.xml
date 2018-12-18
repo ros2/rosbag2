@@ -9,7 +9,14 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <build_depend>boost</build_depend>
+  <build_depend>bzip2</build_depend>
   <build_depend>git</build_depend>
+  <build_depend>libconsole-bridge-dev</build_depend>
+  <build_depend>libgpgme-dev</build_depend>
+  <build_depend>libssl-dev</build_depend>
+  <build_depend>pkg-config</build_depend>
+  <build_depend>pluginlib</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
