@@ -24,8 +24,6 @@ if(WIN32)
   return()
 endif()
 
-set(git_apply git apply)
-
 include(ExternalProject)
 # We have to include a number of patches to the rosbag
 # 1. rosbag1_encryption_patch includes https://github.com/ros/ros_comm/pull/1499, without it, pluginlib won't link
@@ -46,17 +44,16 @@ ExternalProject_Add(ros1_rosbag_storage
   URL https://github.com/ros/ros_comm/archive/669fbd32d2f92cc295f4b024fcb2f982fddec0f0.zip
   URL_MD5 4c8b4c33165b223870f5d77bb697bef6
   TIMEOUT 60
-  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/sources
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rosbag_install -DCMAKE_NO_SYSTEM_FROM_IMPORTED=1
   PATCH_COMMAND
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_encryption_patch.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagh.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp_name.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/plugin_descriptionxml.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/packagexml.diff &&
-    ${git_apply} ${CMAKE_CURRENT_SOURCE_DIR}/resources/cmakeliststxt.diff &&
-    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/sources/CMakeLists.txt
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/rosbag1_encryption_patch.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagh.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/bagcpp_name.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/plugin_descriptionxml.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/packagexml.diff &&
+    patch -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/resources/cmakeliststxt.diff &&
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CMakeLists.txt.in ${CMAKE_CURRENT_BINARY_DIR}/ros1_rosbag_storage-prefix/src/ros1_rosbag_storage/CMakeLists.txt
 )
 
 install(
