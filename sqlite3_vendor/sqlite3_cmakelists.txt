@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
-add_library(sqlite3 SHARED sqlite3.c)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # for Linux, since the library will be used in a shared lib
+add_library(sqlite3 sqlite3.c)
 set_target_properties(sqlite3 PROPERTIES
   INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
