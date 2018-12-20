@@ -8,8 +8,8 @@ Changelog for package ros1_rosbag_storage_vendor
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
 
-Forthcoming
------------
+0.0.4 (2018-12-19)
+------------------
 * Fix patch command osx (`#82 <https://github.com/bsinno/rosbag2/issues/82>`_)
 * Improve queue usage (`#75 <https://github.com/bsinno/rosbag2/issues/75>`_)
 * add ros1 rosbag_storage dependencies to vendor package (`#77 <https://github.com/bsinno/rosbag2/issues/77>`_)

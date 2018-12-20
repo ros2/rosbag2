@@ -8,8 +8,8 @@ Changelog for package rosbag2_bag_v2_plugins
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
 
-Forthcoming
------------
+0.0.4 (2018-12-19)
+------------------
 * 0.0.3
 * manually bump version number as catkin_prepare_release complains
 * generate changelog

@@ -2,8 +2,8 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2018-12-19)
+------------------
 * Build position independent (`#79 <https://github.com/bsinno/rosbag2/issues/79>`_)
 * Build sqlite3 as shared library (`#78 <https://github.com/bsinno/rosbag2/issues/78>`_)
 * 0.0.3

@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2018-12-19)
+------------------
 * 0.0.3
 * Play old bagfiles (`#69 <https://github.com/bsinno/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
