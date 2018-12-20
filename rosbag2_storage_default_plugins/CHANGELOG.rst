@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* 0.0.3
+* Play old bagfiles (`#69 <https://github.com/bsinno/rosbag2/issues/69>`_)
+* Contributors: Karsten Knese, Martin Idel
+
 0.0.2 (2018-12-12)
 ------------------
 * update maintainer email
