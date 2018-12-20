@@ -55,6 +55,7 @@ private:
   void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
   void wait_for_filled_queue(const PlayOptions & options) const;
   void play_messages_from_queue();
+  void play_messages_until_queue_empty();
   void prepare_publishers();
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
@@ -62,6 +63,7 @@ private:
 
   std::shared_ptr<rosbag2::SequentialReader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
+  std::chrono::time_point<std::chrono::system_clock> start_time_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
