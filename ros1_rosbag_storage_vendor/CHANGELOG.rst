@@ -8,8 +8,8 @@ Changelog for package ros1_rosbag_storage_vendor
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
 
-Forthcoming
------------
+0.0.5 (2018-12-27)
+------------------
 * add ros1bridge dependency
 * Contributors: Karsten Knese
 
