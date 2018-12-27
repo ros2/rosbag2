@@ -17,6 +17,7 @@
   <build_depend>libssl-dev</build_depend>
   <build_depend>pkg-config</build_depend>
   <build_depend>pluginlib</build_depend>
+  <build_depend>ros1_bridge</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
