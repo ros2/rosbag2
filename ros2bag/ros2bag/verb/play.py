@@ -15,7 +15,7 @@
 import os
 
 from ros2bag.verb import VerbExtension
-from ros2cli.node import CLI_NODE_NAME_PREFIX
+from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_transport import rosbag2_transport_py
 
 
@@ -42,5 +42,5 @@ class PlayVerb(VerbExtension):
         rosbag2_transport_py.play(
             uri=bag_file,
             storage_id=args.storage,
-            node_prefix=CLI_NODE_NAME_PREFIX,
+            node_prefix=NODE_NAME_PREFIX,
             read_ahead_queue_size=args.read_ahead_queue_size)
