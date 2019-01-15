@@ -11,7 +11,7 @@ Repository for implementing rosbag2 as described in its corresponding [design ar
 rosbag2 packages are available via debian packages and thus can be installed via
 
 ```
-$ sudo apt-get install ros2bag rosbag2*
+$ sudo apt-get install ros2bag* rosbag2*
 ```
 
 For other platforms than Linux, rosbag2 has to be built from source as it's currently not part of the latest (ros2.repos file)[https://github.com/ros2/ros2/blob/master/ros2.repos].
