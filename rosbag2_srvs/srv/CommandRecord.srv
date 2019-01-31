@@ -1,0 +1,4 @@
+string uri  # file location to store recording, if empty stop recording
+string storage_id  "sqlite3" # storage identifier to use for recording
+---
+bool success  # indicate successful operation
