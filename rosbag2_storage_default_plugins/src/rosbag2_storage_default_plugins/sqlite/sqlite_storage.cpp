@@ -30,6 +30,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 
 #include "../logging.hpp"
 
@@ -41,7 +42,8 @@ SqliteStorage::SqliteStorage()
   write_statement_(nullptr),
   read_statement_(nullptr),
   message_result_(nullptr),
-  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
+  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END),
+  extra_file_(true)
 {}
 
 void SqliteStorage::open(
@@ -82,6 +84,24 @@ void SqliteStorage::open(
     initialize();
   }
 
+  if (extra_file_) {
+    const bool ro = is_read_only(io_flag);
+
+    data_file_.open(
+      database_path + ".extra",
+      std::fstream::binary | (ro ? std::fstream::in : std::fstream::out)
+    );
+
+    if (!data_file_) {
+      if (ro) {
+        //in reading mode, we fall back to old version if extra file is not available
+        extra_file_ = false;
+      } else {
+        throw std::runtime_error("Failed to setup storage. Failed to open extra file!");
+      }
+    }
+  }
+
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << uri << "'.");
 }
 
@@ -96,8 +116,28 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
             "' has not been created yet! Call 'create_topic' first.");
   }
 
-  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-  write_statement_->execute_and_reset();
+  if (extra_file_) {
+    uint64_t data[2];
+
+    data[0] = data_file_.tellg();
+    data[1] = message->serialized_data->buffer_length;
+
+    data_file_.write(reinterpret_cast<const char *>(message->serialized_data->buffer),
+      message->serialized_data->buffer_length);
+
+    auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
+    serialized_data->buffer = reinterpret_cast<uint8_t *>(&data);
+    serialized_data->buffer_length = serialized_data->buffer_capacity = 16;
+
+    write_statement_->bind(message->time_stamp, topic_entry->second, serialized_data);
+    write_statement_->execute_and_reset();
+
+    serialized_data->buffer = nullptr;
+    serialized_data->buffer_length = serialized_data->buffer_capacity = 0;
+  } else {
+    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+    write_statement_->execute_and_reset();
+  }
 }
 
 bool SqliteStorage::has_next()
@@ -116,7 +156,26 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   }
 
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  bag_message->serialized_data = std::get<0>(*current_message_row_);
+  if (extra_file_) {
+    std::shared_ptr<rcutils_uint8_array_t> serialized_data = std::get<0>(*current_message_row_);
+    if (serialized_data->buffer_length == 16) {
+
+      uint64_t * data = reinterpret_cast<uint64_t *>(serialized_data->buffer);
+
+      bag_message->serialized_data = rosbag2_storage::make_empty_serialized_message(data[1]);
+      bag_message->serialized_data->buffer_length = data[1];
+      data_file_.seekg(data[0]);
+
+      data_file_.read(reinterpret_cast<char *>(
+        bag_message->serialized_data->buffer),
+        bag_message->serialized_data->buffer_length
+      );
+    } else {
+      throw std::runtime_error("Database entry has wrong size! %d != 16", serialized_data->buffer_length);
+    }
+  } else {
+    bag_message->serialized_data = std::get<0>(*current_message_row_);
+  }
   bag_message->time_stamp = std::get<1>(*current_message_row_);
   bag_message->topic_name = std::get<2>(*current_message_row_);
 

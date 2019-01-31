@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -85,6 +86,8 @@ private:
   ReadQueryResult::Iterator current_message_row_;
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
+  bool extra_file_;
+  std::fstream data_file_;
 };
 
 }  // namespace rosbag2_storage_plugins
