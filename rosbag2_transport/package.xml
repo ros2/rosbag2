@@ -13,6 +13,8 @@
   <depend>rosbag2</depend>
   <depend>rmw</depend>
   <depend>shared_queues_vendor</depend>
+  <depend>class_loader</depend>
+  <depend>rosbag2_srvs</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>

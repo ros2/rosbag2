@@ -19,11 +19,38 @@
 
 #include "rclcpp/any_subscription_callback.hpp"
 #include "rclcpp/subscription.hpp"
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 
+#include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2_transport/logging.hpp"
 
 namespace rosbag2_transport
 {
+
+static std::shared_ptr<rmw_serialized_message_t>
+get_initialized_serialized_message(size_t capacity)
+{
+  static rcutils_allocator_t rcutils_allocator_ = rcutils_get_default_allocator();
+
+  auto msg = new rmw_serialized_message_t;
+  *msg = rmw_get_zero_initialized_serialized_message();
+  auto ret = rmw_serialized_message_init(msg, capacity, &rcutils_allocator_);
+  if (ret != RCUTILS_RET_OK) {
+    throw std::runtime_error("Error allocating resources for serialized message: " +
+      std::string(rcutils_get_error_string().str));
+}
+
+  auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
+  [](rmw_serialized_message_t * msg) {
+    int error = rmw_serialized_message_fini(msg);
+    delete msg;
+    if (error != RCUTILS_RET_OK) {
+      RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
+      rcutils_get_error_string().str);
+    }
+  });
+  return serialized_message;
+}
 
 GenericSubscription::GenericSubscription(
   std::shared_ptr<rcl_node_t> node_handle,
@@ -53,7 +80,14 @@ std::shared_ptr<rmw_serialized_message_t> GenericSubscription::create_serialized
 void GenericSubscription::handle_message(
   std::shared_ptr<void> & message, const rmw_message_info_t & message_info)
 {
-  (void) message_info;
+  if (matches_any_intra_process_publishers_) {
+    if (matches_any_intra_process_publishers_(&message_info.publisher_gid)) {
+      // In this case, the message will be delivered via intra process and
+      // we should ignore this copy of the message.
+      return;
+    }
+  }
+
   auto typed_message = std::static_pointer_cast<rmw_serialized_message_t>(message);
   callback_(typed_message);
 }
@@ -74,15 +108,44 @@ void GenericSubscription::handle_intra_process_message(
   rcl_interfaces::msg::IntraProcessMessage & ipm,
   const rmw_message_info_t & message_info)
 {
-  (void) ipm;
-  (void) message_info;
-  throw std::runtime_error("Intra process is not supported");
+  (void)message_info;
+
+  if (!get_intra_process_message_callback_) {
+    throw std::runtime_error("Intra process is not supported");
+  }
+
+  MessageUniquePtr message;
+  get_intra_process_message_callback_(
+      ipm.publisher_id,
+      ipm.message_sequence,
+      intra_process_subscription_id_,
+      message);
+
+  if (!message) {
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+      "Intra process not successfull: probalby queue run over for " << get_topic_name());
+    return;
+  }
+  
+  auto serialized_message = get_initialized_serialized_message(0);
+  auto error = rmw_serialize(
+    message.get(),
+    &get_message_type_support_handle(),
+    serialized_message.get());
+  if (error != RCL_RET_OK) {
+    throw std::runtime_error("Failed to serialize");
+  }
+
+  callback_(serialized_message);
 }
 
 const std::shared_ptr<rcl_subscription_t>
 GenericSubscription::get_intra_process_subscription_handle() const
 {
-  return nullptr;
+  if (!get_intra_process_message_callback_) {
+    return nullptr;
+  }
+  return intra_process_subscription_handle_;
 }
 
 std::shared_ptr<rmw_serialized_message_t>

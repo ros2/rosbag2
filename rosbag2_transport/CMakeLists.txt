@@ -21,8 +21,10 @@ find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2 REQUIRED)
+find_package(rosbag2_srvs REQUIRED)
 find_package(rmw REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
+find_package(class_loader REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
@@ -31,19 +33,25 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/rosbag2_node.cpp
-  src/rosbag2_transport/rosbag2_transport.cpp)
+  src/rosbag2_transport/rosbag2_transport.cpp
+  src/rosbag2_transport/rosbag2_transport_composition.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+rclcpp_register_node_plugins(${PROJECT_NAME} "rosbag2_composition::Rosbag2Node_Recorder")
+set(node_plugins "${node_plugins}rosbag2_composition::Rosbag2Node_Recorder;$<TARGET_FILE:rosbag2_composition>\n")
 
 ament_target_dependencies(${PROJECT_NAME}
   rcl
   rclcpp
   rcutils
   rosbag2
+  rosbag2_srvs
   rosidl_generator_cpp
   rmw
   shared_queues_vendor
+  class_loader
 )
 
 include(cmake/configure_python.cmake)
