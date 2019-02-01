@@ -27,6 +27,14 @@
 #include "rosbag2/writer.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
+namespace rclcpp
+{
+namespace executors
+{
+class SingleThreadedExecutor;
+}
+}
+
 namespace rosbag2
 {
 class Writer;
@@ -44,6 +52,8 @@ public:
   explicit Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosbag2Node> node);
 
   void record(const RecordOptions & record_options);
+
+  bool stop();
 
 private:
   void topics_discovery(
@@ -71,6 +81,7 @@ private:
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> subscribed_topics_;
   std::string serialization_format_;
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
 };
 
 }  // namespace rosbag2_transport

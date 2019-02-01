@@ -42,6 +42,9 @@ void Recorder::record(const RecordOptions & record_options)
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
   subscribe_topics(get_requested_or_available_topics(record_options.topics));
 
+  //create an execution handler to be able to stop recording by another thread
+  exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
     auto discovery = std::bind(
@@ -51,6 +54,7 @@ void Recorder::record(const RecordOptions & record_options)
   }
 
   record_messages();
+  exec_.reset();
 
   if (discovery_future.valid()) {
     discovery_future.wait();
@@ -63,7 +67,7 @@ void Recorder::topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
   const std::vector<std::string> & requested_topics)
 {
-  while (rclcpp::ok()) {
+  while (rclcpp::ok() && exec_) {
     auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
@@ -141,7 +145,24 @@ Recorder::create_subscription(
 
 void Recorder::record_messages() const
 {
-  spin(node_);
+  if(exec_)
+  {
+    exec_->add_node(node_);
+    exec_->spin();
+    exec_->remove_node(node_);
+  }
+}
+
+bool Recorder::stop()
+{
+  if(!exec_)
+  {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Unable to stop, as not started yet.");
+    return false;
+  }
+  
+  exec_->cancel();
+  return true;
 }
 
 }  // namespace rosbag2_transport
