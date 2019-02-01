@@ -104,7 +104,14 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
+    //if topic name does not end with "/_intra" (for intra process)
+    if(
+       topic_with_type.first.size()<strlen("/_intra") ||
+       !std::string(topic_with_type.first.end()-strlen("/_intra"), topic_with_type.first.end())=="/_intra")
+    )
+    {
+      subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
+    }
   }
 }
 
