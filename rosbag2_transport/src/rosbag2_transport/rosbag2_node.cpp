@@ -30,7 +30,7 @@ namespace rosbag2_transport
 {
 
 Rosbag2Node::Rosbag2Node(const std::string & node_name)
-: rclcpp::Node(node_name)
+: rclcpp::Node(node_name, "", true)
 {}
 
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
@@ -49,12 +49,62 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
 
   auto subscription = std::shared_ptr<GenericSubscription>();
 
+  auto context = get_node_base_interface()->get_context();
+  auto ipm = context->get_sub_context<rclcpp::intra_process_manager::IntraProcessManager>();
+
   try {
     subscription = std::make_shared<GenericSubscription>(
       get_node_base_interface()->get_shared_rcl_node_handle(),
       *type_support,
       topic,
       callback);
+
+    rclcpp::intra_process_manager::IntraProcessManager::WeakPtr weak_ipm = ipm;
+    uint64_t intra_process_subscription_id = ipm->add_subscription(subscription);
+
+    // copy subscription options from original subscriber
+    auto intra_process_options = *subscription->get_options();
+    intra_process_options.ignore_local_publications = false;
+
+    // function that will be called to take a MessageT from the intra process manager
+    auto take_intra_process_message_func =
+      [weak_ipm](
+      uint64_t publisher_id,
+      uint64_t message_sequence,
+      uint64_t subscription_id,
+      typename GenericSubscription::MessageUniquePtr & message)
+      {
+        auto ipm = weak_ipm.lock();
+        if (!ipm) {
+          // TODO(wjwwood): should this just return silently? Or return with a logged warning?
+          throw std::runtime_error(
+                  "intra process take called after destruction of intra process manager");
+        }
+        ipm->take_intra_process_message<GenericSubscription::CallbackMessageT, GenericSubscription::Alloc>(
+          publisher_id, message_sequence, subscription_id, message);
+      };
+
+    // function that is called to see if the publisher id matches any local publishers
+    auto matches_any_publisher_func =
+      [weak_ipm](const rmw_gid_t * sender_gid) -> bool
+      {
+        auto ipm = weak_ipm.lock();
+        if (!ipm) {
+          throw std::runtime_error(
+                  "intra process publisher check called "
+                  "after destruction of intra process manager");
+        }
+        bool ret = ipm->matches_any_publishers(sender_gid);
+        return ret;
+      };
+
+    subscription->setup_intra_process(
+      intra_process_subscription_id,
+      take_intra_process_message_func,
+      matches_any_publisher_func,
+      intra_process_options
+    );
+    // end definition of function to setup intra process
 
     get_node_topics_interface()->add_subscription(subscription, nullptr);
   } catch (const std::runtime_error & ex) {
