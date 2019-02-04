@@ -97,7 +97,6 @@ public:
     const rcl_subscription_options_t & intra_process_options)
   {
     std::string intra_process_topic_name = std::string(get_topic_name()) + "/_intra";
-    std::cout<<"topic "<<intra_process_topic_name<<std::endl;
     rcl_ret_t ret = rcl_subscription_init(
       intra_process_subscription_handle_.get(),
       node_handle_.get(),
