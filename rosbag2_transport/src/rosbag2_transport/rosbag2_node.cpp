@@ -76,7 +76,6 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
       {
         auto ipm = weak_ipm.lock();
         if (!ipm) {
-          // TODO(wjwwood): should this just return silently? Or return with a logged warning?
           throw std::runtime_error(
                   "intra process take called after destruction of intra process manager");
         }
