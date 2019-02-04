@@ -117,16 +117,15 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   }
 
   if (extra_file_) {
-    uint64_t data[2];
-
-    data[0] = data_file_.tellg();
-    data[1] = message->serialized_data->buffer_length;
+    std::array<uint64_t, 2> data = {
+      data_file_.tellg(),
+      message->serialized_data->buffer_length};
 
     data_file_.write(reinterpret_cast<const char *>(message->serialized_data->buffer),
       message->serialized_data->buffer_length);
 
     auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
-    serialized_data->buffer = reinterpret_cast<uint8_t *>(&data);
+    serialized_data->buffer = reinterpret_cast<uint8_t *>(data.data());
     serialized_data->buffer_length = serialized_data->buffer_capacity = 16;
 
     write_statement_->bind(message->time_stamp, topic_entry->second, serialized_data);
