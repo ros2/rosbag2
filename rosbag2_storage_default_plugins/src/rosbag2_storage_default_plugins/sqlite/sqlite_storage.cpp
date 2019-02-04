@@ -126,7 +126,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
     auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
     serialized_data->buffer = reinterpret_cast<uint8_t *>(data.data());
-    serialized_data->buffer_length = serialized_data->buffer_capacity = 16;
+    serialized_data->buffer_length = serialized_data->buffer_capacity = sizeof(data::value_type)*data.size();
 
     write_statement_->bind(message->time_stamp, topic_entry->second, serialized_data);
     write_statement_->execute_and_reset();
@@ -157,7 +157,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   if (extra_file_) {
     std::shared_ptr<rcutils_uint8_array_t> serialized_data = std::get<0>(*current_message_row_);
-    if (serialized_data->buffer_length == 16) {
+    if (serialized_data->buffer_length == 2*sizeof(uint64_t)) {
 
       uint64_t * data = reinterpret_cast<uint64_t *>(serialized_data->buffer);
 
@@ -170,7 +170,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
         bag_message->serialized_data->buffer_length
       );
     } else {
-      throw std::runtime_error("Database entry has wrong size! %d != 16", serialized_data->buffer_length);
+      throw std::runtime_error("Database entry has wrong size! %d != %d", serialized_data->buffer_length, 2*sizeof(uint64_t));
     }
   } else {
     bag_message->serialized_data = std::get<0>(*current_message_row_);
