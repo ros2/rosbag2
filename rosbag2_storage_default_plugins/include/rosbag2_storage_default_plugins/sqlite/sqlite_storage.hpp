@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 #include <fstream>
+#include <mutex>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -78,6 +79,26 @@ private:
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 
+#pragma pack(push, 1)
+  struct MetaInformation
+  {
+    uint64_t offset;
+    uint64_t size;
+    uint32_t file_index;
+  };
+#pragma pack(pop) //back to whatever the previous packing mode was
+
+  struct BinarySequentialFile
+  {
+    std::string path;
+    std::fstream file_stream;
+    std::mutex lock;
+
+    BinarySequentialFile(const std::string &_path) : path(_path)
+    {
+    }
+  };
+
   std::shared_ptr<SqliteWrapper> database_;
   std::string database_name_;
   SqliteStatement write_statement_;
@@ -87,7 +108,7 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   bool extra_file_;
-  std::fstream data_file_;
+  std::vector<std::unique_ptr<BinarySequentialFile>> data_files_;
 };
 
 }  // namespace rosbag2_storage_plugins
