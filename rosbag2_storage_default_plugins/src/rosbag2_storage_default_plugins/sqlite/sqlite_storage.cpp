@@ -89,7 +89,7 @@ void SqliteStorage::open(
     const bool ro = is_read_only(io_flag);
 
     // in write mode we add at least one serialized file
-    // (it would be possible to split dante into multiple files)
+    // (it would be possible to split the data into into multiple files)
     if(!ro)
     {
       data_files_.push_back(
