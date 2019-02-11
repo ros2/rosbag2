@@ -34,29 +34,28 @@ namespace rosbag2_composition
 class Rosbag2Node_Recorder : public rosbag2_transport::Rosbag2Node
 {
 public:
-  Rosbag2Node_Recorder() :
-    rosbag2_transport::Rosbag2Node("rosbag2_recorder")
+  Rosbag2Node_Recorder()
+  : rosbag2_transport::Rosbag2Node("rosbag2_recorder")
   {
     // control recording by a service
     auto handle_command_record =
-        [this](const std::shared_ptr<rmw_request_id_t> request_header,
-               const std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Request> request,
-               std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Response> response) -> void {
-      (void)request_header;
-      RCLCPP_INFO(this->get_logger(),
-        "Setup with %s (%s)", request->uri.c_str(), request->storage_id.c_str());
+      [this](const std::shared_ptr<rmw_request_id_t> request_header,
+        const std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Request> request,
+        std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Response> response) -> void {
+        (void)request_header;
+        RCLCPP_INFO(this->get_logger(),
+          "Setup with %s (%s)", request->uri.c_str(), request->storage_id.c_str());
 
-      // stop recording
-      response->success = stop();
+        // stop recording
+        response->success = stop();
 
-      if (!request->uri.empty())
-      {
-        response->success = setup(request->uri, request->storage_id);
-      }
-    };
+        if (!request->uri.empty()) {
+          response->success = setup(request->uri, request->storage_id);
+        }
+      };
 
-    srv_ = create_service<rosbag2_srvs::srv::CommandRecord>
-      ("command_record", handle_command_record);
+    srv_ =
+      create_service<rosbag2_srvs::srv::CommandRecord>("command_record", handle_command_record);
   }
 
   virtual ~Rosbag2Node_Recorder()
@@ -73,8 +72,7 @@ protected:
   {
     bool ret = false;
 
-    if (recorder_)
-    {
+    if (recorder_) {
       ret = recorder_ ? recorder_->stop() : false;
       thread_->join();
       recorder_.reset();
@@ -85,10 +83,9 @@ protected:
   }
 
   /// Start recording at the file location (uri) and with the defined storage_id
-  bool setup(const std::string &uri, const std::string &storage_id = "sqlite3")
+  bool setup(const std::string & uri, const std::string & storage_id = "sqlite3")
   {
-    try
-    {
+    try {
       rosbag2_transport::StorageOptions storage_options{};
       rosbag2_transport::RecordOptions record_options{};
 
@@ -109,26 +106,23 @@ protected:
 #else
       nError = mkdir(storage_options.uri.c_str(), nMode);  // can be used on non-Windows
 #endif
-      if(nError != 0)
-      {
-         ROSBAG2_TRANSPORT_LOG_ERROR("Failed to create directory: %s", storage_options.uri.c_str());
+      if (nError != 0) {
+        ROSBAG2_TRANSPORT_LOG_ERROR("Failed to create directory: %s", storage_options.uri.c_str());
       }
 
       writer_ = std::make_shared<rosbag2::Writer>();
       writer_->open(
-          storage_options,
-          {rmw_get_serialization_format(), record_options.rmw_serialization_format}
+        storage_options,
+        {rmw_get_serialization_format(), record_options.rmw_serialization_format}
       );
 
       thread_ = std::make_shared<std::thread>([this, record_options]() {
-        recorder_ = std::make_unique<rosbag2_transport::Recorder>(writer_, setup_node());
-        recorder_->record(record_options);
-      });
+            recorder_ = std::make_unique<rosbag2_transport::Recorder>(writer_, setup_node());
+            recorder_->record(record_options);
+          });
 
       return true;
-    }
-    catch (std::runtime_error &e)
-    {
+    } catch (std::runtime_error & e) {
       ROSBAG2_TRANSPORT_LOG_ERROR("Failed to record: %s", e.what());
       return false;
     }
@@ -138,8 +132,7 @@ protected:
 
   std::shared_ptr<Rosbag2Node> setup_node()
   {
-    if (!transport_node_)
-    {
+    if (!transport_node_) {
       transport_node_ = std::make_shared<Rosbag2Node>("rosbag2");
     }
     return transport_node_;

@@ -41,14 +41,14 @@ get_initialized_serialized_message(size_t capacity)
   }
 
   auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg.release(),
-    [](rmw_serialized_message_t * msg) {
-      int error = rmw_serialized_message_fini(msg);
-      delete msg;
-      if (error != RCUTILS_RET_OK) {
-        RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
-        rcutils_get_error_string().str);
-      }
-    });
+      [](rmw_serialized_message_t * msg) {
+        int error = rmw_serialized_message_fini(msg);
+        delete msg;
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
+          rcutils_get_error_string().str);
+        }
+      });
 
   return serialized_message;
 }

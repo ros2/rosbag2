@@ -105,13 +105,12 @@ void Recorder::subscribe_topics(
 {
   for (const auto & topic_with_type : topics_and_types) {
     // if topic name does not end with "/_intra" (for intra process)
-    if(
-       (topic_with_type.first.size()<strlen("/_intra")) ||
-       (std::string(
-         topic_with_type.first.end()-strlen("/_intra"),
-         topic_with_type.first.end())
-         !="/_intra")
-    )
+    if (
+      (topic_with_type.first.size() < strlen("/_intra")) ||
+      (std::string(
+        topic_with_type.first.end() - strlen("/_intra"),
+        topic_with_type.first.end()) !=
+      "/_intra"))
     {
       subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
     }
@@ -155,8 +154,7 @@ Recorder::create_subscription(
 
 void Recorder::record_messages() const
 {
-  if(exec_)
-  {
+  if (exec_) {
     exec_->add_node(node_);
     exec_->spin();
     exec_->remove_node(node_);
@@ -165,8 +163,7 @@ void Recorder::record_messages() const
 
 bool Recorder::stop()
 {
-  if(!exec_)
-  {
+  if (!exec_) {
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Unable to stop, as not started yet.");
     return false;
   }
