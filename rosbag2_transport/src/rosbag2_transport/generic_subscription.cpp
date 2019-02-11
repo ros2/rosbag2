@@ -37,18 +37,18 @@ get_initialized_serialized_message(size_t capacity)
   auto ret = rmw_serialized_message_init(msg.get(), capacity, &rcutils_allocator_);
   if (ret != RCUTILS_RET_OK) {
     throw std::runtime_error("Error allocating resources for serialized message: " +
-      std::string(rcutils_get_error_string().str));
+            std::string(rcutils_get_error_string().str));
   }
 
   auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg.release(),
-  [](rmw_serialized_message_t * msg) {
-    int error = rmw_serialized_message_fini(msg);
-    delete msg;
-    if (error != RCUTILS_RET_OK) {
-      RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
-      rcutils_get_error_string().str);
-    }
-  });
+    [](rmw_serialized_message_t * msg) {
+      int error = rmw_serialized_message_fini(msg);
+      delete msg;
+      if (error != RCUTILS_RET_OK) {
+        RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
+        rcutils_get_error_string().str);
+      }
+    });
 
   return serialized_message;
 }
@@ -117,17 +117,17 @@ void GenericSubscription::handle_intra_process_message(
 
   MessageUniquePtr message;
   get_intra_process_message_callback_(
-      ipm.publisher_id,
-      ipm.message_sequence,
-      intra_process_subscription_id_,
-      message);
+    ipm.publisher_id,
+    ipm.message_sequence,
+    intra_process_subscription_id_,
+    message);
 
   if (!message) {
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
       "Intra process not successfull: probalby queue run over for " << get_topic_name());
     return;
   }
-  
+
   auto serialized_message = get_initialized_serialized_message(0);
   auto error = rmw_serialize(
     message.get(),

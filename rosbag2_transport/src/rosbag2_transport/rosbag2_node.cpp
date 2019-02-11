@@ -79,7 +79,8 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
           throw std::runtime_error(
                   "intra process take called after destruction of intra process manager");
         }
-        ipm->take_intra_process_message<GenericSubscription::CallbackMessageT, GenericSubscription::Alloc>(
+        ipm->take_intra_process_message
+          <GenericSubscription::CallbackMessageT, GenericSubscription::Alloc>(
           publisher_id, message_sequence, subscription_id, message);
       };
 

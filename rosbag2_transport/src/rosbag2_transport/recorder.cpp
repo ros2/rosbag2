@@ -42,7 +42,7 @@ void Recorder::record(const RecordOptions & record_options)
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
   subscribe_topics(get_requested_or_available_topics(record_options.topics));
 
-  //create an execution handler to be able to stop recording by another thread
+  // create an execution handler to be able to stop recording by another thread
   exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
 
   std::future<void> discovery_future;
@@ -104,10 +104,13 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    //if topic name does not end with "/_intra" (for intra process)
+    // if topic name does not end with "/_intra" (for intra process)
     if(
-       topic_with_type.first.size()<strlen("/_intra") ||
-       std::string(topic_with_type.first.end()-strlen("/_intra"), topic_with_type.first.end())!="/_intra"
+       (topic_with_type.first.size()<strlen("/_intra")) ||
+       (std::string(
+         topic_with_type.first.end()-strlen("/_intra"),
+         topic_with_type.first.end())
+         !="/_intra")
     )
     {
       subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
@@ -167,7 +170,7 @@ bool Recorder::stop()
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Unable to stop, as not started yet.");
     return false;
   }
-  
+
   exec_->cancel();
   return true;
 }

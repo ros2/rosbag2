@@ -36,14 +36,15 @@ class GenericSubscription : public rclcpp::SubscriptionBase
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(GenericSubscription)
 
-  using CallbackMessageT = void*;
+  using CallbackMessageT = void *;
   using Alloc = std::allocator<void>;
 
   using MessageAllocTraits = rclcpp::allocator::AllocRebind<CallbackMessageT, Alloc>;
   using MessageAlloc = typename MessageAllocTraits::allocator_type;
   using MessageDeleter = rclcpp::allocator::Deleter<MessageAlloc, CallbackMessageT>;
   using MessageUniquePtr = std::unique_ptr<CallbackMessageT, MessageDeleter>;
-  using GetMessageCallbackType = std::function<void (uint64_t, uint64_t, uint64_t, MessageUniquePtr &)>;
+  using GetMessageCallbackType = std::function<void (uint64_t, uint64_t, uint64_t,
+      MessageUniquePtr &)>;
   using MatchesAnyPublishersCallbackType = std::function<bool (const rmw_gid_t *)>;
 
   /**
@@ -74,8 +75,8 @@ public:
 
   void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
 
-  /// Returns the subscription options to duplicate the set options for the intra-process communication.
-  const rcl_subscription_options_t *get_options() const
+  /// Returns the subscription options to duplicate the options for the intra-process communication
+  const rcl_subscription_options_t * get_options() const
   {
     return rcl_subscription_get_options(subscription_handle_.get());
   }
@@ -120,7 +121,7 @@ public:
     intra_process_subscription_id_ = intra_process_subscription_id;
     get_intra_process_message_callback_ = get_message_callback;
     matches_any_intra_process_publishers_ = matches_any_publisher_callback;
-}
+  }
 
 private:
   RCLCPP_DISABLE_COPY(GenericSubscription)

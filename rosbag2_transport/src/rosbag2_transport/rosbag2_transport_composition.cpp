@@ -1,4 +1,24 @@
+// Copyright 2019, Denso ADAS Engineering Services GmbH.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "rosbag2_transport/rosbag2_transport.hpp"
+
+#include <sys/types.h>  // required for stat.h
+#include <sys/stat.h>
+#include <memory>
+#include <string>
+
 #include "rosbag2_node.hpp"
 #include "rosbag2/writer.hpp"
 #include "recorder.hpp"
@@ -6,11 +26,7 @@
 #include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/logging.hpp"
-
 #include "rosbag2_srvs/srv/command_record.hpp"
-
-#include <sys/types.h> // required for stat.h
-#include <sys/stat.h>
 
 namespace rosbag2_composition
 {
@@ -18,7 +34,7 @@ namespace rosbag2_composition
 class Rosbag2Node_Recorder : public rosbag2_transport::Rosbag2Node
 {
 public:
-  explicit Rosbag2Node_Recorder() :
+  Rosbag2Node_Recorder() :
     rosbag2_transport::Rosbag2Node("rosbag2_recorder")
   {
     // control recording by a service
@@ -27,9 +43,10 @@ public:
                const std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Request> request,
                std::shared_ptr<rosbag2_srvs::srv::CommandRecord::Response> response) -> void {
       (void)request_header;
-      RCLCPP_INFO(this->get_logger(), "Setup with %s (%s)", request->uri.c_str(), request->storage_id.c_str());
+      RCLCPP_INFO(this->get_logger(),
+        "Setup with %s (%s)", request->uri.c_str(), request->storage_id.c_str());
 
-      //stop recording
+      // stop recording
       response->success = stop();
 
       if (!request->uri.empty())
@@ -38,7 +55,8 @@ public:
       }
     };
 
-    srv_ = create_service<rosbag2_srvs::srv::CommandRecord>("command_record", handle_command_record);
+    srv_ = create_service<rosbag2_srvs::srv::CommandRecord>
+      ("command_record", handle_command_record);
   }
 
   virtual ~Rosbag2Node_Recorder()
@@ -84,12 +102,12 @@ protected:
       record_options.rmw_serialization_format = rmw_get_serialization_format();
 
       // using system functions to reduce build dependencies
-      mode_t nMode = 0733; // UNIX style permissions
+      mode_t nMode = 0733;  // UNIX style permissions
       int nError = 0;
 #if defined(_WIN32)
-      nError = _mkdir(storage_options.uri.c_str()); // can be used on Windows
-#else 
-      nError = mkdir(storage_options.uri.c_str(),nMode); // can be used on non-Windows
+      nError = _mkdir(storage_options.uri.c_str());  // can be used on Windows
+#else
+      nError = mkdir(storage_options.uri.c_str(), nMode);  // can be used on non-Windows
 #endif
       if(nError != 0)
       {
@@ -132,7 +150,7 @@ protected:
   std::unique_ptr<rosbag2_transport::Recorder> recorder_;
 };
 
-} // namespace rosbag2_composition
+}  // namespace rosbag2_composition
 
 #include "class_loader/register_macro.hpp"
 
