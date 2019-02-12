@@ -80,6 +80,8 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
+  # explicitly disable cppcheck
+  set(ament_cmake_cppcheck_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_info
