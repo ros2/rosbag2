@@ -86,7 +86,7 @@ private:
     uint64_t size;
     uint32_t file_index;
   };
-#pragma pack(pop) //back to whatever the previous packing mode was
+#pragma pack(pop)  // back to whatever the previous packing mode was
 
   struct BinarySequentialFile
   {
@@ -94,7 +94,8 @@ private:
     std::fstream file_stream;
     std::mutex lock;
 
-    BinarySequentialFile(const std::string &_path) : path(_path)
+    explicit BinarySequentialFile(const std::string & _path)
+    : path(_path)
     {
     }
   };
