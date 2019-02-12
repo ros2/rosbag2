@@ -67,7 +67,7 @@ void Rosbag2Transport::record(
     writer_->open(
       storage_options, {rmw_get_serialization_format(), record_options.rmw_serialization_format});
 
-    auto transport_node = setup_node();
+    auto transport_node = setup_node(record_options.node_prefix);
 
     Recorder recorder(writer_, transport_node);
     recorder.record(record_options);
@@ -76,10 +76,10 @@ void Rosbag2Transport::record(
   }
 }
 
-std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node()
+std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(std::string node_prefix)
 {
   if (!transport_node_) {
-    transport_node_ = std::make_shared<Rosbag2Node>("rosbag2");
+    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2");
   }
   return transport_node_;
 }
@@ -90,7 +90,7 @@ void Rosbag2Transport::play(
   try {
     reader_->open(storage_options, {"", rmw_get_serialization_format()});
 
-    auto transport_node = setup_node();
+    auto transport_node = setup_node(play_options.node_prefix);
 
     Player player(reader_, transport_node);
     player.play(play_options);

@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
 #include <cstddef>
+#include <string>
 
 namespace rosbag2_transport
 {
@@ -24,6 +25,7 @@ struct PlayOptions
 {
 public:
   size_t read_ahead_queue_size;
+  std::string node_prefix = "";
 };
 
 }  // namespace rosbag2_transport

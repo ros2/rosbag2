@@ -32,6 +32,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "uri",
     "storage_id",
     "serialization_format",
+    "node_prefix",
     "all",
     "no_discovery",
     "polling_interval",
@@ -41,14 +42,16 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * uri = nullptr;
   char * storage_id = nullptr;
   char * serilization_format = nullptr;
+  char * node_prefix = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bbKO", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &serilization_format,
+    &node_prefix,
     &all,
     &no_discovery,
     &polling_interval_ms,
@@ -62,6 +65,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.all = all;
   record_options.is_discovery_disabled = no_discovery;
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
+  record_options.node_prefix = std::string(node_prefix);
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
@@ -93,14 +97,22 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_transport::PlayOptions play_options{};
   rosbag2_transport::StorageOptions storage_options{};
 
-  static const char * kwlist[] = {"uri", "storage_id", "read_ahead_queue_size", nullptr};
+  static const char * kwlist[] = {
+    "uri",
+    "storage_id",
+    "node_prefix",
+    "read_ahead_queue_size",
+    nullptr
+  };
 
   char * uri;
   char * storage_id;
+  char * node_prefix;
   size_t read_ahead_queue_size;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|k", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|k", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
+    &node_prefix,
     &read_ahead_queue_size))
   {
     return nullptr;
@@ -109,6 +121,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
 
+  play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
 
   rosbag2_transport::Rosbag2Transport transport;
