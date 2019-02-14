@@ -18,7 +18,7 @@
 # plugin is not available
 
 macro(skip_ros1_tests_if_necessary)
-  find_package(ros1_bridge)
+  find_package(ros1_bridge QUIET)
   if(ros1_bridge_FOUND)
     find_ros1_package(roscpp)
     if(ros1_roscpp_FOUND)

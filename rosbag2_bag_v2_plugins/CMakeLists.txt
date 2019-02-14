@@ -18,7 +18,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 
 # include bridge first to not create package if ros1 packages cannot be found
-find_package(ros1_bridge)
+find_package(ros1_bridge QUIET)
 if (NOT ros1_bridge_FOUND)
   message(STATUS "Failed to find ros1_bridge, skipping...")
   # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
