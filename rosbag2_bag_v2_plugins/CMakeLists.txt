@@ -17,23 +17,17 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-find_package(PkgConfig)
-if(NOT PKG_CONFIG_FOUND)
-  message(WARNING "Failed to find PkgConfig, skipping...")
+# include bridge first to not create package if ros1 packages cannot be found
+find_package(ros1_bridge)
+if (NOT ros1_bridge_FOUND)
+  message(STATUS "Failed to find ros1_bridge, skipping...")
   # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
   ament_package()
   return()
 endif()
-
-# include bridge first to not create package if ros1 packages cannot be found
-find_package(ros1_bridge REQUIRED)
-include(${ros1_bridge_DIR}/find_ros1_interface_packages.cmake)
-include(${ros1_bridge_DIR}/find_ros1_package.cmake)
-
 find_ros1_package(roscpp)
 if(NOT ros1_roscpp_FOUND)
-  message(WARNING "Failed to find ROS 1 roscpp, skipping...")
-  # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
+  message(STATUS "Failed to find ROS 1 roscpp, skipping...")
   ament_package()
   return()
 endif()
