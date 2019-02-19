@@ -6,4 +6,11 @@
   >
     <description>Plugin to write to SQLite3 databases</description>
   </class>
+  <class
+    name="sqlite3_sequential"
+    type="rosbag2_storage_plugins::SqliteSequentialStorage"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
+  >
+    <description>Plugin to write to SQLite3 databases, serializing binary data in separate file</description>
+  </class>
 </library>

@@ -25,6 +25,7 @@ find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
   src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
+  src/rosbag2_storage_default_plugins/sqlite/sqlite_sequential_storage.cpp
   src/rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}

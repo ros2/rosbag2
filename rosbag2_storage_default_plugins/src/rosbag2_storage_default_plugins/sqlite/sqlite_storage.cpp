@@ -43,8 +43,7 @@ SqliteStorage::SqliteStorage()
   write_statement_(nullptr),
   read_statement_(nullptr),
   message_result_(nullptr),
-  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END),
-  extra_file_(true)
+  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
 {}
 
 void SqliteStorage::open(
@@ -58,6 +57,12 @@ void SqliteStorage::open(
     if (metadata->relative_file_paths.empty()) {
       throw std::runtime_error(
               "Failed to read from bag '" + uri + "': Missing database file path in metadata");
+    }
+
+    if (metadata->storage_identifier != get_storage_identifier()) {
+      throw std::runtime_error(
+              "Storage identifier is not supported: " + metadata->storage_identifier +
+              ", while loaded plugin supports: " + get_storage_identifier());
     }
 
     database_name_ = metadata->relative_file_paths[0];
@@ -85,43 +90,13 @@ void SqliteStorage::open(
     initialize();
   }
 
-  if (extra_file_) {
-    const bool ro = is_read_only(io_flag);
-
-    // in write mode we add at least one serialized file
-    // (it would be possible to split the data into into multiple files)
-    if (!ro) {
-      data_files_.push_back(
-        std::make_unique<BinarySequentialFile>(database_name_ + ".extra")
-      );
-    } else if (metadata->relative_file_paths.size() >= 1) {
-      std::for_each(metadata->relative_file_paths.begin() + 1,
-        metadata->relative_file_paths.end(), [this](auto & path)
-        {
-          data_files_.push_back(
-            std::make_unique<BinarySequentialFile>(path)
-          );
-        });
-    }
-
-    // no serialized file, fall back to old mode
-    if (data_files_.size() == 0) {
-      extra_file_ = false;
-    } else {
-      for (auto & data_file : data_files_) {
-        data_file->file_stream.open(
-          rosbag2_storage::FilesystemHelper::concat({uri, data_file->path}),
-          std::fstream::binary | (ro ? std::fstream::in : std::fstream::out)
-        );
-
-        if (!data_file->file_stream) {
-          throw std::runtime_error("Failed to setup storage. Failed to open extra file!");
-        }
-      }
-    }
-  }
-
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << uri << "'.");
+}
+
+std::shared_ptr<rcutils_uint8_array_t> SqliteStorage::get_serialized_data(
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+{
+  return message->serialized_data;
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -135,34 +110,8 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
             "' has not been created yet! Call 'create_topic' first.");
   }
 
-  if (extra_file_) {
-    constexpr uint32_t file_index = 0;  // could be changed to split data into files
-
-    auto & file_handle = data_files_[file_index];
-    std::lock_guard<std::mutex>(file_handle->lock);
-
-    MetaInformation data = {
-      static_cast<uint64_t>(file_handle->file_stream.tellg()),
-      static_cast<uint64_t>(message->serialized_data->buffer_length),
-      file_index
-    };
-
-    file_handle->file_stream.write(reinterpret_cast<const char *>(message->serialized_data->buffer),
-      message->serialized_data->buffer_length);
-
-    auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
-    serialized_data->buffer = reinterpret_cast<uint8_t *>(&data);
-    serialized_data->buffer_length = serialized_data->buffer_capacity = sizeof(MetaInformation);
-
-    write_statement_->bind(message->time_stamp, topic_entry->second, serialized_data);
-    write_statement_->execute_and_reset();
-
-    serialized_data->buffer = nullptr;
-    serialized_data->buffer_length = serialized_data->buffer_capacity = 0;
-  } else {
-    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-    write_statement_->execute_and_reset();
-  }
+  write_statement_->bind(message->time_stamp, topic_entry->second, get_serialized_data(message));
+  write_statement_->execute_and_reset();
 }
 
 bool SqliteStorage::has_next()
@@ -174,6 +123,11 @@ bool SqliteStorage::has_next()
   return current_message_row_ != message_result_.end();
 }
 
+std::shared_ptr<rcutils_uint8_array_t> SqliteStorage::read_data()
+{
+  return std::get<0>(*current_message_row_);
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
 {
   if (!read_statement_) {
@@ -181,33 +135,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   }
 
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  if (extra_file_) {
-    MetaInformation * data;
-    std::shared_ptr<rcutils_uint8_array_t> serialized_data = std::get<0>(*current_message_row_);
-    if (serialized_data->buffer_length == sizeof(MetaInformation)) {
-      data = reinterpret_cast<MetaInformation *>(serialized_data->buffer);
-
-      if (!data || data->file_index >= data_files_.size()) {
-        throw std::runtime_error("Invalid content for extra file!");
-      }
-
-      auto & file_handle = data_files_[data->file_index];
-      std::lock_guard<std::mutex>(file_handle->lock);
-
-      bag_message->serialized_data = rosbag2_storage::make_empty_serialized_message(data->size);
-      bag_message->serialized_data->buffer_length = data->size;
-      file_handle->file_stream.seekg(data->offset);
-
-      file_handle->file_stream.read(reinterpret_cast<char *>(
-          bag_message->serialized_data->buffer),
-        bag_message->serialized_data->buffer_length
-      );
-    } else {
-      throw std::runtime_error("Database entry has wrong size!");
-    }
-  } else {
-    bag_message->serialized_data = std::get<0>(*current_message_row_);
-  }
+  bag_message->serialized_data = read_data();
   bag_message->time_stamp = std::get<1>(*current_message_row_);
   bag_message->topic_name = std::get<2>(*current_message_row_);
 
@@ -322,9 +250,6 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = "sqlite3";
   metadata.relative_file_paths = {database_name_};
-  for (const auto & f : data_files_) {
-    metadata.relative_file_paths.push_back(f->path);
-  }
 
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
@@ -363,6 +288,11 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(database_name_);
 
   return metadata;
+}
+
+const std::string SqliteStorage::get_storage_identifier() const
+{
+  return "sqlite3";
 }
 
 }  // namespace rosbag2_storage_plugins
