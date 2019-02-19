@@ -90,6 +90,14 @@ if(BUILD_TESTING)
     target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
     ament_target_dependencies(test_sqlite_storage rosbag2_test_common)
   endif()
+
+  ament_add_gmock(test_sqlite_sequential_storage
+    test/rosbag2_storage_default_plugins/sqlite/test_sqlite_storage.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_sqlite_sequential_storage)
+    target_link_libraries(test_sqlite_sequential_storage ${TEST_LINK_LIBRARIES})
+    ament_target_dependencies(test_sqlite_sequential_storage rosbag2_test_common)
+  endif()
 endif()
 
 ament_package()

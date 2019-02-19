@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2019, Denso ADAS Engineering Services GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
@@ -94,7 +94,7 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   readable_storage->open(temporary_dir_path_);
 
   EXPECT_TRUE(readable_storage->has_next());
@@ -108,14 +108,14 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   writable_storage->open(temporary_dir_path_);
   writable_storage->create_topic({"topic1", "type1", "rmw1"});
   writable_storage->create_topic({"topic2", "type2", "rmw2"});
   metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   writable_storage.reset();
 
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   readable_storage->open(
     temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
@@ -139,14 +139,15 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   write_messages_to_sqlite(messages);
 
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   readable_storage->open(
     temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3",
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3.extra"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
@@ -164,14 +165,15 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   write_messages_to_sqlite({});
 
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteSequentialStorage>();
   readable_storage->open(
     temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3",
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3.extra"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
   EXPECT_THAT(metadata.message_count, Eq(0u));
@@ -179,23 +181,4 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
       std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::seconds(0))
   ));
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(0)));
-}
-
-TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
-  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
-    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(temporary_dir_path_);
-  writable_storage->create_topic({"topic1", "type1", "rmw1"});
-  metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
-  writable_storage->remove_topic({"topic1", "type1", "rmw1"});
-  writable_storage.reset();
-
-  // Remove topics
-
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(
-    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  auto topics_and_types = readable_storage->get_all_topics_and_types();
-
-  EXPECT_THAT(topics_and_types, IsEmpty());
 }
