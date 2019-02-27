@@ -2,6 +2,19 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* enforce unique node names (`#86 <https://github.com/ros2/rosbag2/issues/86>`_)
+  * enforce unique node names
+  * fix cppcheck
+* disable cppcheck (`#91 <https://github.com/ros2/rosbag2/issues/91>`_)
+* Consistent node naming across ros2cli tools (`#60 <https://github.com/ros2/rosbag2/issues/60>`_)
+  * Passing CLI_NODE_NAME_PREFIX from ros2cli and using it to start the nodes with appropriate naming.
+  * Passing CLI_NODE_NAME_PREFIX from ros2cli and using it to start the nodes with appropriate naming.
+  * Fixing linter errors.
+  * Renaming CLI_NODE_NAME_PREFIX -> NODE_NAME_PREFIX
+* Contributors: AAlon, Karsten Knese
+
 0.0.5 (2018-12-27)
 ------------------
 

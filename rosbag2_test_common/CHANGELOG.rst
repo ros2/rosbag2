@@ -2,6 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* enforce unique node names (`#86 <https://github.com/ros2/rosbag2/issues/86>`_)
+  * enforce unique node names
+  * fix cppcheck
+* Contributors: Karsten Knese
+
 0.0.5 (2018-12-27)
 ------------------
 

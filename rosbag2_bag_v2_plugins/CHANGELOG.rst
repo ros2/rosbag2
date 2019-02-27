@@ -8,6 +8,9 @@ Changelog for package rosbag2_bag_v2_plugins
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
 
+Forthcoming
+-----------
+
 0.0.5 (2018-12-27)
 ------------------
 
