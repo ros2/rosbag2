@@ -19,6 +19,7 @@
 #include <string>
 
 #include "rclcpp/any_subscription_callback.hpp"
+#include "rclcpp/macros.hpp"
 #include "rclcpp/subscription.hpp"
 
 namespace rosbag2_transport

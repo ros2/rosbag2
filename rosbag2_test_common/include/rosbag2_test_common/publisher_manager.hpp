@@ -33,14 +33,21 @@ using CountFunction = std::function<size_t(const std::string &)>;
 class PublisherManager
 {
 public:
+  ~PublisherManager()
+  {
+    publishers_.clear();
+    publisher_nodes_.clear();
+  }
+
   template<class T>
   void add_publisher(
     const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages = 0)
   {
-    static int counter = 0;
-    auto publisher_node = std::make_shared<rclcpp::Node>("publisher" + std::to_string(counter++));
+    auto node_name = std::string("publisher") + std::to_string(counter_++);
+    auto publisher_node = std::make_shared<rclcpp::Node>(node_name);
     auto publisher = publisher_node->create_publisher<T>(topic_name);
 
+    publisher_nodes_.push_back(publisher_node);
     publishers_.push_back([publisher, topic_name, message, expected_messages](
         CountFunction count_stored_messages) {
         if (expected_messages != 0) {
@@ -72,6 +79,8 @@ public:
   }
 
 private:
+  int counter_ = 1;
+  std::vector<std::shared_ptr<rclcpp::Node>> publisher_nodes_;
   std::vector<std::function<void(CountFunction)>> publishers_;
 };
 
