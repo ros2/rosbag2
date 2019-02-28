@@ -78,6 +78,16 @@ public:
   virtual void create_topic(const TopicMetadata & topic_with_type);
 
   /**
+   * Remove a new topic in the underlying storage. If creation of subscription fails remove the, 
+   * topic, so that we may facilitate an addition later.
+   *
+   * \param topic_with_type name and type identifier of topic to be created
+   * \throws runtime_error if the Writer is not open.
+   */
+
+  virtual void remove_topic(const TopicMetadata & topic_with_type);
+
+  /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
    *
    * \param message to be written to the bagfile
