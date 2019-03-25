@@ -24,6 +24,21 @@ if(WIN32)
   return()
 endif()
 
+# include bridge first to not create package if ros1 packages cannot be found
+find_package(ros1_bridge QUIET)
+if(NOT ros1_bridge_FOUND)
+  message(STATUS "Failed to find ros1_bridge, skipping...")
+  # call ament_package() to avoid ament_tools treating this as a plain CMake pkg
+  ament_package()
+  return()
+endif()
+find_ros1_package(roscpp)
+if(NOT ros1_roscpp_FOUND)
+  message(STATUS "Failed to find ROS 1 roscpp, skipping...")
+  ament_package()
+  return()
+endif()
+
 include(ExternalProject)
 # We have to include a number of patches to the rosbag
 # 1. rosbag1_encryption_patch includes https://github.com/ros/ros_comm/pull/1499, without it, pluginlib won't link

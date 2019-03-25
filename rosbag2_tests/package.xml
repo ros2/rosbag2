@@ -20,6 +20,7 @@
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>rosbag2_storage</test_depend>
   <test_depend>rosbag2</test_depend>
+  <test_depend>ros1_bridge</test_depend>
   <test_depend>ros2bag</test_depend>
   <test_depend>rclcpp</test_depend>
   <test_depend>std_msgs</test_depend>

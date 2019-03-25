@@ -18,20 +18,15 @@
 # plugin is not available
 
 macro(skip_ros1_tests_if_necessary)
-  find_package(PkgConfig)
-  if(PKG_CONFIG_FOUND)
-    find_package(ros1_bridge REQUIRED)
-    include(${ros1_bridge_DIR}/find_ros1_interface_packages.cmake)
-    include(${ros1_bridge_DIR}/find_ros1_package.cmake)
+  find_package(ros1_bridge QUIET)
+  if(ros1_bridge_FOUND)
     find_ros1_package(roscpp)
-    if(NOT ros1_roscpp_FOUND)
-      set(SKIP_ROS1_TESTS "SKIP_TEST")
-      message(WARNING
-        "Skipping build of tests for rosbag_v2 plugin. ROS 1 not found")
+    if(ros1_roscpp_FOUND)
+      return()
     endif()
-  else()
-    set(SKIP_ROS1_TESTS "SKIP_TEST")
-    message(WARNING
-      "Skipping build of tests for rosbag_v2 plugin. ROS 1 not found")
   endif()
+
+  set(SKIP_ROS1_TESTS "SKIP_TEST")
+  message(STATUS
+    "Skipping build of tests for rosbag_v2 plugin. ROS 1 not found")
 endmacro()
