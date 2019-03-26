@@ -84,7 +84,6 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-
   virtual void remove_topic(const TopicMetadata & topic_with_type);
 
   /**
