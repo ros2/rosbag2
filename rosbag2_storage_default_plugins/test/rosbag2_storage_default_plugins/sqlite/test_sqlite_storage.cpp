@@ -180,3 +180,22 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   ));
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(0)));
 }
+
+TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  writable_storage->open(temporary_dir_path_);
+  writable_storage->create_topic({"topic1", "type1", "rmw1"});
+  metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
+  writable_storage->remove_topic({"topic1", "type1", "rmw1"});
+  writable_storage.reset();
+
+  // Remove topics
+
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  readable_storage->open(
+    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  auto topics_and_types = readable_storage->get_all_topics_and_types();
+
+  EXPECT_THAT(topics_and_types, IsEmpty());
+}

@@ -78,8 +78,9 @@ public:
   virtual void create_topic(const TopicMetadata & topic_with_type);
 
   /**
-   * Remove a new topic in the underlying storage. If creation of subscription fails remove the, 
-   * topic, so that we may facilitate an addition later.
+   * Remove a new topic in the underlying storage.
+   * If creation of subscription fails remove the topic
+   * from the db (more of cleanup)
    *
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
