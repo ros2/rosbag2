@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.7 (2019-04-08)
+------------------
 * [backport] ros1 dependency handling (`#98 <https://github.com/ros2/rosbag2/issues/98>`_)
   * removed dependency to ros1_bridge package (`#90 <https://github.com/ros2/rosbag2/issues/90>`_)
   * removed dependency to ros1_bridge package:

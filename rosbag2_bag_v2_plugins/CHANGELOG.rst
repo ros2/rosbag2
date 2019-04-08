@@ -8,8 +8,8 @@ Changelog for package rosbag2_bag_v2_plugins
 * Play old bagfiles (`#69 <https://github.com/ros2/rosbag2/issues/69>`_)
 * Contributors: Karsten Knese, Martin Idel
 
-Forthcoming
------------
+0.0.7 (2019-04-08)
+------------------
 * [backport] ros1 dependency handling (`#98 <https://github.com/ros2/rosbag2/issues/98>`_)
   * removed dependency to ros1_bridge package (`#90 <https://github.com/ros2/rosbag2/issues/90>`_)
   * removed dependency to ros1_bridge package:
