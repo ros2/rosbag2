@@ -52,6 +52,8 @@ class RecordVerb(VerbExtension):
             help='time in ms to wait between querying available topics for recording. It has no '
              'effect if --no-discovery is enabled.'
         )
+        self._subparser = parser
+
 
     def create_bag_directory(self, uri):
         try:
