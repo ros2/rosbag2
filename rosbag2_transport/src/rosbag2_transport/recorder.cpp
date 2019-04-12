@@ -113,8 +113,7 @@ void Recorder::subscribe_topic(const rosbag2::TopicMetadata & topic)
     subscribed_topics_.insert(topic.name);
     subscriptions_.push_back(subscription);
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic.name << "'");
-  }
-  else {
+  } else {
     writer_->remove_topic(topic);
     subscribed_topics_.erase(topic.name);
   }
