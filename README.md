@@ -125,7 +125,6 @@ This allows a flexible adaptation of various storage formats depending on indivi
 As of now, this repository comes with two storage plugins.
 The first plugin, sqlite3 is chosen by default.
 If not specified otherwise, rosbag2 will store and replay all recorded data in an SQLite3 database.
-Secondly, rosbag2 provides support for legacy ROS 1 bag data. __TODO(karsten1987) Add link when rosindex ran__.
 
 In order to use a specified (non-default) storage format plugin, rosbag2 has a command line argument for it:
 
