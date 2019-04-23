@@ -18,7 +18,7 @@
 #include <string>
 #include <thread>
 
-#include "process_execution_helpers.hpp"
+#include "rosbag2_test_common/process_execution_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
 

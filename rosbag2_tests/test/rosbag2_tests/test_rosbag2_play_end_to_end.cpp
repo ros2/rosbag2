@@ -23,7 +23,7 @@
 
 // rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
-#include "process_execution_helpers.hpp"
+#include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "test_msgs/msg/primitives.hpp"
 #include "test_msgs/msg/static_array_primitives.hpp"

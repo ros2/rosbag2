@@ -61,7 +61,8 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_info_end_to_end)
     ament_target_dependencies(test_rosbag2_info_end_to_end
-      rosbag2_storage)
+      rosbag2_storage
+      rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_converter
