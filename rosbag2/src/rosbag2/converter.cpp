@@ -15,6 +15,7 @@
 #include "rosbag2/converter.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>

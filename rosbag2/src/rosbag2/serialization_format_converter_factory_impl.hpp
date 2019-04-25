@@ -18,6 +18,7 @@
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
