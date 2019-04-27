@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
-#define ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
+#ifndef ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
+#define ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
 
 #include <gmock/gmock.h>
 
@@ -69,4 +69,4 @@ void stop_execution(const ProcessHandle & handle)
   EXPECT_THAT(WEXITSTATUS(child_return_code), Not(Eq(EXIT_FAILURE)));
 }
 
-#endif  // ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
+#endif  // ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_UNIX_HPP_

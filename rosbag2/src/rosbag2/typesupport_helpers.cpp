@@ -15,6 +15,7 @@
 #include "rosbag2/typesupport_helpers.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 

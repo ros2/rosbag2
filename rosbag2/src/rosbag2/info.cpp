@@ -15,6 +15,7 @@
 #include "rosbag2/info.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "rosbag2_storage/filesystem_helper.hpp"

@@ -18,7 +18,7 @@
 
 // rclcpp.hpp included in record_fixture.hpp must be included before process_execution_helpers.hpp
 #include "record_fixture.hpp"
-#include "process_execution_helpers.hpp"
+#include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
 TEST_F(RecordFixture, record_end_to_end_test) {

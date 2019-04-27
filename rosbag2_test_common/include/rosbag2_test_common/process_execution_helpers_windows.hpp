@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
-#define ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
+#ifndef ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
+#define ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
 
 #include <gmock/gmock.h>
 
@@ -115,4 +115,4 @@ void stop_execution(const ProcessHandle & handle)
   CloseHandle(handle.job_handle);
 }
 
-#endif  // ROSBAG2_TESTS__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
+#endif  // ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
