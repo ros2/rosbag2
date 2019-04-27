@@ -17,27 +17,25 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_cmake_gmock REQUIRED)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(rclcpp REQUIRED)
+find_package(ament_cmake_gmock REQUIRED)
+find_package(ament_lint_auto REQUIRED)
+find_package(rclcpp REQUIRED)
 
-  ament_lint_auto_find_test_dependencies()
+ament_lint_auto_find_test_dependencies()
 
-  add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME} INTERFACE)
 
-  target_include_directories(${PROJECT_NAME} INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
+target_include_directories(${PROJECT_NAME} INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 
-  target_link_libraries(${PROJECT_NAME} INTERFACE rclcpp rcutils)
+target_link_libraries(${PROJECT_NAME} INTERFACE rclcpp rcutils)
 
-  ament_export_dependencies(rclcpp)
-  ament_export_include_directories(include)
+ament_export_dependencies(rclcpp)
 
-  install(
-    DIRECTORY include/
-    DESTINATION include)
-endif()
+install(
+  DIRECTORY include/
+  DESTINATION include)
 
+ament_export_include_directories(include)
 ament_package()
