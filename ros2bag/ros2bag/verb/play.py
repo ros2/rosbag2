@@ -34,7 +34,7 @@ class PlayVerb(VerbExtension):
                  'playback. Larger size will result in larger memory needs but might prevent '
                  'delay of message playback.')
         parser.add_argument(
-            '--exclude_topics', nargs='*', default=[], help='topics which are not played from the bag file')
+            '-e', '--exclude-topics', nargs='*', default=[], help='topics which are not played from the bag file')
 
 
     def main(self, *, args):  # noqa: D102
