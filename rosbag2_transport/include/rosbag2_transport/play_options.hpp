@@ -24,8 +24,11 @@ namespace rosbag2_transport
 struct PlayOptions
 {
 public:
+  using TopicFilter = std::function<bool(const std::string& topic)>;
+
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
+  TopicFilter topic_filter = [](const std::string&){return false;};
 };
 
 }  // namespace rosbag2_transport

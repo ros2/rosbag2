@@ -33,6 +33,9 @@ class PlayVerb(VerbExtension):
             help='size of message queue rosbag tries to hold in memory to help deterministic '
                  'playback. Larger size will result in larger memory needs but might prevent '
                  'delay of message playback.')
+        parser.add_argument(
+            '--exclude_topics', nargs='*', default=[], help='topics which are not played from the bag file')
+
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
@@ -43,4 +46,5 @@ class PlayVerb(VerbExtension):
             uri=bag_file,
             storage_id=args.storage,
             node_prefix=NODE_NAME_PREFIX,
-            read_ahead_queue_size=args.read_ahead_queue_size)
+            read_ahead_queue_size=args.read_ahead_queue_size,
+            exclude_topics=args.exclude_topics)

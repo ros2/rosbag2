@@ -54,14 +54,14 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
-  prepare_publishers();
+  prepare_publishers(options);
 
   storage_loading_future_ = std::async(std::launch::async,
       [this, options]() {load_storage_content(options);});
 
   wait_for_filled_queue(options);
 
-  play_messages_from_queue();
+  play_messages_from_queue(options);
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
@@ -114,11 +114,11 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::play_messages_from_queue()
+void Player::play_messages_from_queue(const PlayOptions & options)
 {
   start_time_ = std::chrono::system_clock::now();
   do {
-    play_messages_until_queue_empty();
+    play_messages_until_queue_empty(options);
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN("Message queue starved. Messages will be delayed. Consider "
         "increasing the --read-ahead-queue-size option.");
@@ -126,10 +126,12 @@ void Player::play_messages_from_queue()
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty()
+void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+    if (options.topic_filter(message.message->topic_name))
+      continue;
     std::this_thread::sleep_until(start_time_ + message.time_since_start);
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
@@ -137,13 +139,18 @@ void Player::play_messages_until_queue_empty()
   }
 }
 
-void Player::prepare_publishers()
+void Player::prepare_publishers(const PlayOptions & options)
 {
   auto topics = reader_->get_all_topics_and_types();
+
   for (const auto & topic : topics) {
+    if (options.topic_filter(topic.name))
+    {
+      ROSBAG2_TRANSPORT_LOG_INFO("Excluding topic %s", topic.name.c_str());
+      continue;
+    }
     publishers_.insert(std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(topic.name, topic.type)));
   }
 }
-
 }  // namespace rosbag2_transport

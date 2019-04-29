@@ -16,6 +16,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
@@ -102,18 +103,21 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "storage_id",
     "node_prefix",
     "read_ahead_queue_size",
+    "exclude_topics",
     nullptr
   };
 
   char * uri;
   char * storage_id;
   char * node_prefix;
+  PyObject * exclude_topics = nullptr;
   size_t read_ahead_queue_size;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|k", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|kO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &node_prefix,
-    &read_ahead_queue_size))
+    &read_ahead_queue_size,
+    &exclude_topics))
   {
     return nullptr;
   }
@@ -123,6 +127,32 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
+
+  std::set<std::string> exclude_topics_list;
+  if (exclude_topics) {
+    PyObject * topic_exclude_iterator = PyObject_GetIter(exclude_topics);
+    if (topic_exclude_iterator != nullptr) {
+      PyObject * topic;
+      while ((topic = PyIter_Next(topic_exclude_iterator))) {
+        exclude_topics_list.insert(PyUnicode_AsUTF8(topic));
+
+        Py_DECREF(topic);
+      }
+      Py_DECREF(topic_exclude_iterator);
+    }
+
+    if (exclude_topics_list.empty() == false) {
+      auto topic_filter_function = [exclude_topics_list](const std::string& topic)
+      {
+        auto entry = exclude_topics_list.find(topic);
+        if (entry == exclude_topics_list.end())
+          return false;
+        return true;
+      };
+
+      play_options.topic_filter = topic_filter_function;
+    }
+  }
 
   rosbag2_transport::Rosbag2Transport transport;
   transport.init();
