@@ -22,11 +22,11 @@
 #include "rosbag2_storage/metadata_io.hpp"
 
 TEST_F(RecordFixture, record_end_to_end_test) {
-  auto message = get_messages_basic_types()[0];
+  auto message = get_messages_strings()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
 
-  auto wrong_message = get_messages_basic_types()[0];
+  auto wrong_message = get_messages_strings()[0];
   wrong_message->string_value = "wrong_content";
 
   auto process_handle = start_execution("ros2 bag record --output " + bag_path_ + " /test_topic");
@@ -58,10 +58,10 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   metadata_io.write_metadata(bag_path_, metadata);
 #endif
 
-  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/test_topic");
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
   EXPECT_THAT(test_topic_messages,
-    Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
+    Each(Pointee(Field(&test_msgs::msg::Strings::string_value, "test"))));
   EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
