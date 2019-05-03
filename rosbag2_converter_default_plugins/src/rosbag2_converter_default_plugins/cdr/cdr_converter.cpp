@@ -60,7 +60,7 @@ std::string get_package_library_path(const std::string & package_name)
 
 CdrConverter::CdrConverter()
 {
-  auto library_path = get_package_library_path("rmw_fastrtps_dynamic_cpp");
+  auto library_path = get_package_library_path("rmw_fastrtps_cpp");
   std::shared_ptr<Poco::SharedLibrary> library;
   try {
     library = std::make_shared<Poco::SharedLibrary>(library_path);
