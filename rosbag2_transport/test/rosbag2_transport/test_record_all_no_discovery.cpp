@@ -19,19 +19,19 @@
 #include <vector>
 
 #include "record_integration_fixture.hpp"
-#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_announced_topics)
 {
-  auto string_message = get_messages_primitives()[0];
+  auto string_message = get_messages_basic_types()[0];
   string_message->string_value = "Hello World";
 
   start_recording({true, true, {}, "rmw_format", 1ms});
 
   std::this_thread::sleep_for(100ms);
   auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for_test");
-  auto publisher = publisher_node->create_publisher<test_msgs::msg::Primitives>("/string_topic");
+  auto publisher = publisher_node->create_publisher<test_msgs::msg::BasicTypes>("/string_topic");
   for (int i = 0; i < 5; ++i) {
     std::this_thread::sleep_for(20ms);
     publisher->publish(string_message);

@@ -50,9 +50,9 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(output, HasSubstr(
-      "Topic: /test_topic | Type: test_msgs/Primitives | Count: 3 | Serialization Format: cdr\n"));
+      "Topic: /test_topic | Type: test_msgs/BasicTypes | Count: 3 | Serialization Format: cdr\n"));
   EXPECT_THAT(output, HasSubstr(
-      "Topic: /array_topic | Type: test_msgs/StaticArrayPrimitives | Count: 4 | "
+      "Topic: /array_topic | Type: test_msgs/Arrays | Count: 4 | "
       "Serialization Format: cdr"));
 }
 

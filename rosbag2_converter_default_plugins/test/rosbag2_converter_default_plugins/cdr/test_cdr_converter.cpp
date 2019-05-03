@@ -63,7 +63,7 @@ public:
 };
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_primitives) {
-  auto message = get_messages_primitives()[0];
+  auto message = get_messages_basic_types()[0];
   message->string_value = "test_deserialize";
   message->float64_value = 102.34;
   message->int32_value = 10101010;
@@ -74,13 +74,13 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
   serialized_message->time_stamp = 1;
 
   auto ros_message = make_shared_ros_message();
-  test_msgs::msg::Primitives primitive_test_msg;
+  test_msgs::msg::BasicTypes primitive_test_msg;
   ros_message->message = &primitive_test_msg;
-  auto type_support = rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
-  auto cast_message = static_cast<test_msgs::msg::Primitives *>(ros_message->message);
+  auto cast_message = static_cast<test_msgs::msg::BasicTypes *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
@@ -89,7 +89,7 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_primitives) {
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->time_stamp = 1;
-  auto message = get_messages_primitives()[0];
+  auto message = get_messages_basic_types()[0];
   message->string_value = "test_serialize";
   message->float64_value = 102.34;
   message->int32_value = 10101010;
@@ -97,11 +97,11 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_prim
 
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support = rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
-  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::Primitives>(
+  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::BasicTypes>(
     serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
@@ -120,14 +120,14 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
   serialized_message->time_stamp = 1;
 
   auto ros_message = make_shared_ros_message();
-  test_msgs::msg::StaticArrayPrimitives primitive_test_msg;
+  test_msgs::msg::Arrays primitive_test_msg;
   ros_message->message = &primitive_test_msg;
   auto type_support = rosbag2::get_typesupport(
-    "test_msgs/StaticArrayPrimitives", "rosidl_typesupport_cpp");
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
-  auto cast_message = static_cast<test_msgs::msg::StaticArrayPrimitives *>(ros_message->message);
+  auto cast_message = static_cast<test_msgs::msg::Arrays *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
@@ -145,12 +145,12 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport(
-    "test_msgs/StaticArrayPrimitives", "rosidl_typesupport_cpp");
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->
-    deserialize_message<test_msgs::msg::StaticArrayPrimitives>(serialized_message->serialized_data);
+    deserialize_message<test_msgs::msg::Arrays>(serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
   EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
@@ -158,10 +158,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dynamic_array_nest) {
   auto message = get_messages_dynamic_array_nested()[0];
-  test_msgs::msg::Primitives first_primitive_message;
+  test_msgs::msg::BasicTypes first_primitive_message;
   first_primitive_message.string_value = "I am the first";
   first_primitive_message.float32_value = 35.7f;
-  test_msgs::msg::Primitives second_primitive_message;
+  test_msgs::msg::BasicTypes second_primitive_message;
   second_primitive_message.string_value = "I am the second";
   second_primitive_message.float32_value = 135.72f;
   message->primitive_values.push_back(first_primitive_message);
@@ -190,10 +190,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dyna
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->time_stamp = 1;
   auto message = get_messages_dynamic_array_nested()[0];
-  test_msgs::msg::Primitives first_primitive_message;
+  test_msgs::msg::BasicTypes first_primitive_message;
   first_primitive_message.string_value = "I am the first";
   first_primitive_message.float32_value = 35.7f;
-  test_msgs::msg::Primitives second_primitive_message;
+  test_msgs::msg::BasicTypes second_primitive_message;
   second_primitive_message.string_value = "I am the second";
   second_primitive_message.float32_value = 135.72f;
   message->primitive_values.push_back(first_primitive_message);

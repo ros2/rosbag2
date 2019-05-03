@@ -58,7 +58,7 @@ public:
   {
     auto correctly_typed_ros_message =
       reinterpret_cast<test_msgs::msg::DynamicArrayNested *>(message->message);
-    auto primitive_msgs = get_messages_primitives();
+    auto primitive_msgs = get_messages_basic_types();
     for (const auto & primitive_msg : primitive_msgs) {
       correctly_typed_ros_message->primitive_values.push_back(*primitive_msg);
     }

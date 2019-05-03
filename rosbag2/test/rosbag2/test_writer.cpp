@@ -75,7 +75,7 @@ TEST_F(WriterTest,
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
   writer_->open(storage_options_, {input_format, storage_serialization_format});
-  writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
   writer_->write(message);
 }
 
@@ -91,7 +91,7 @@ TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_
   auto message = std::make_shared<rosbag2::SerializedBagMessage>();
   message->topic_name = "test_topic";
   writer_->open(storage_options_, {storage_serialization_format, storage_serialization_format});
-  writer_->create_topic({"test_topic", "test_msgs/Primitives", ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
   writer_->write(message);
 }
 

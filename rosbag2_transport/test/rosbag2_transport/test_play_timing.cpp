@@ -22,7 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
-#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -31,15 +31,15 @@ using namespace rosbag2_transport;  // NOLINT
 TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_messages)
 {
   rclcpp::init(0, nullptr);
-  auto primitive_message1 = get_messages_primitives()[0];
+  auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->string_value = "Hello World 1";
 
-  auto primitive_message2 = get_messages_primitives()[0];
+  auto primitive_message2 = get_messages_basic_types()[0];
   primitive_message2->string_value = "Hello World 2";
 
   auto message_time_difference = std::chrono::seconds(1);
   auto topics_and_types =
-    std::vector<rosbag2::TopicMetadata>{{"topic1", "test_msgs/Primitives", ""}};
+    std::vector<rosbag2::TopicMetadata>{{"topic1", "test_msgs/BasicTypes", ""}};
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 0, primitive_message1),
     serialize_test_message("topic1", 0, primitive_message2)};

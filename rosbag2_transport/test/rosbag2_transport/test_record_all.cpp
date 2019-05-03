@@ -17,8 +17,8 @@
 #include <string>
 
 #include "record_integration_fixture.hpp"
-#include "test_msgs/msg/primitives.hpp"
-#include "test_msgs/msg/static_array_primitives.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
@@ -28,12 +28,12 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   array_message->bool_values = {{true, false, true}};
   std::string array_topic = "/array_topic";
 
-  auto string_message = get_messages_primitives()[0];
+  auto string_message = get_messages_basic_types()[0];
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  pub_man_.add_publisher<test_msgs::msg::Primitives>(string_topic, string_message, 2);
-  pub_man_.add_publisher<test_msgs::msg::StaticArrayPrimitives>(array_topic, array_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::BasicTypes>(string_topic, string_message, 2);
+  pub_man_.add_publisher<test_msgs::msg::Arrays>(array_topic, array_message, 2);
 
   start_recording({true, false, {}, "rmw_format", 100ms});
   run_publishers();
@@ -42,9 +42,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   auto recorded_messages = writer_->get_messages();
 
   ASSERT_THAT(recorded_messages, SizeIs(4));
-  auto string_messages = filter_messages<test_msgs::msg::Primitives>(
+  auto string_messages = filter_messages<test_msgs::msg::BasicTypes>(
     recorded_messages, string_topic);
-  auto array_messages = filter_messages<test_msgs::msg::StaticArrayPrimitives>(
+  auto array_messages = filter_messages<test_msgs::msg::Arrays>(
     recorded_messages, array_topic);
   ASSERT_THAT(string_messages, SizeIs(2));
   ASSERT_THAT(array_messages, SizeIs(2));
