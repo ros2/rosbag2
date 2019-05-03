@@ -49,7 +49,7 @@ public:
 
   void create_publisher(const std::string & topic)
   {
-    auto publisher = publisher_node_->create_publisher<test_msgs::msg::BasicTypes>(topic);
+    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic);
     publishers_.push_back(publisher);
   }
 
@@ -61,7 +61,7 @@ public:
     auto subscription = node_->create_generic_subscription(topic_name, type,
         [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
           auto string_message =
-          memory_management_.deserialize_message<test_msgs::msg::BasicTypes>(message);
+          memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
           messages.push_back(string_message->string_value);
           counter++;
         });
@@ -74,7 +74,7 @@ public:
 
   std::shared_ptr<rmw_serialized_message_t> serialize_string_message(const std::string & message)
   {
-    auto string_message = std::make_shared<test_msgs::msg::BasicTypes>();
+    auto string_message = std::make_shared<test_msgs::msg::Strings>();
     string_message->string_value = message;
     return memory_management_.serialize_message(string_message);
   }
@@ -97,7 +97,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   // We currently publish more messages because they can get lost
   std::vector<std::string> test_messages = {"Hello World", "Hello World"};
   std::string topic_name = "string_topic";
-  std::string type = "test_msgs/BasicTypes";
+  std::string type = "test_msgs/Strings";
 
   auto publisher = node_->create_generic_publisher(topic_name, type);
 
@@ -134,7 +134,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/BasicTypes"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture,
@@ -146,7 +146,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/BasicTypes"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
@@ -162,8 +162,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/BasicTypes"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/BasicTypes"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
@@ -180,7 +180,7 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   auto topics_and_types = node_->get_all_topics_with_types();
 
   ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/BasicTypes"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/BasicTypes"));
-  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/BasicTypes"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/Strings"));
 }
