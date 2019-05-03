@@ -21,18 +21,14 @@
 
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/types/introspection_message.hpp"
-#include "test_msgs/msg/bounded_array_nested.hpp"
-#include "test_msgs/msg/bounded_array_primitives_nested.hpp"
-#include "test_msgs/msg/bounded_array_primitives.hpp"
-#include "test_msgs/msg/dynamic_array_primitives_nested.hpp"
-#include "test_msgs/msg/dynamic_array_nested.hpp"
-#include "test_msgs/msg/dynamic_array_primitives.hpp"
-#include "test_msgs/msg/dynamic_array_static_array_primitives_nested.hpp"
-#include "test_msgs/msg/nested.hpp"
-#include "test_msgs/msg/primitives.hpp"
-#include "test_msgs/msg/static_array_nested.hpp"
-#include "test_msgs/msg/static_array_primitives.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
+#include "test_msgs/msg/bounded_sequences.hpp"
+#include "test_msgs/msg/multi_nested.hpp"
+#include "test_msgs/msg/nested.hpp"
+#include "test_msgs/msg/strings.hpp"
+#include "test_msgs/msg/unbounded_sequences.hpp"
 
 using namespace testing;  // NOLINT
 
@@ -58,34 +54,29 @@ public:
   rcutils_allocator_t allocator_;
 };
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message) {
-  auto message = get_allocated_message("test_msgs/Primitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_basic_types_message) {
+  auto message = get_allocated_message("test_msgs/BasicTypes");
 
-  auto data = static_cast<test_msgs::msg::Primitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::BasicTypes *>(message->message);
 
   data->bool_value = true;
-  data->string_value = "content";
   data->int16_value = 144;
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message_with_empty_string) {
-  auto message = get_allocated_message("test_msgs/Primitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_strings_message_with_empty_string) {
+  auto message = get_allocated_message("test_msgs/Strings");
 
-  auto data = static_cast<test_msgs::msg::Primitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::Strings *>(message->message);
 
-  data->bool_value = true;
   data->string_value = "";
-  data->int16_value = 144;
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_primitive_message_with_big_string_no_SSO) {
-  auto message = get_allocated_message("test_msgs/Primitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_strings_message_with_big_string_no_SSO) {
+  auto message = get_allocated_message("test_msgs/Strings");
 
-  auto data = static_cast<test_msgs::msg::Primitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::Strings *>(message->message);
 
-  data->bool_value = true;
   data->string_value = std::string(1000, 's');
-  data->int16_value = 144;
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_message) {
@@ -93,120 +84,81 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_message) {
 
   auto data = static_cast<test_msgs::msg::Nested *>(message->message);
 
-  data->primitive_values.bool_value = true;
-  data->primitive_values.string_value = "content";
-  data->primitive_values.int16_value = 143;
+  data->basic_types_value.bool_value = true;
+  data->basic_types_value.int16_value = 143;
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message) {
-  auto message = get_allocated_message("test_msgs/StaticArrayPrimitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_arrays_message) {
+  auto message = get_allocated_message("test_msgs/Arrays");
 
-  auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::Arrays *>(message->message);
 
   data->bool_values = {{true, false, true}};
   data->string_values = {{"eins", "zwei", std::string(1000, 'd')}};
   data->int32_values = {{11, 22, 33}};
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_message_with_empty_string) {
-  auto message = get_allocated_message("test_msgs/StaticArrayPrimitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_arrays_message_with_empty_string) {
+  auto message = get_allocated_message("test_msgs/Arrays");
 
-  auto data = static_cast<test_msgs::msg::StaticArrayPrimitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::Arrays *>(message->message);
 
   data->bool_values = {{true, false, true}};
   data->string_values = {{"", "zwei", std::string(1000, 'a')}};
   data->int32_values = {{11, 22, 33}};
+
+  data->basic_types_values[0].bool_value = true;
+  data->basic_types_values[0].int64_value = 123;
+  data->basic_types_values[1].bool_value = false;
+  data->basic_types_values[1].int64_value = 123;
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_message) {
-  auto message = get_allocated_message("test_msgs/DynamicArrayPrimitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_unbounded_sequences_message) {
+  auto message = get_allocated_message("test_msgs/UnboundedSequences");
 
-  auto data = static_cast<test_msgs::msg::DynamicArrayPrimitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::UnboundedSequences *>(message->message);
 
   data->bool_values = {{true, false, true, false}};
   data->string_values = {{"eins", std::string(1000, 'b'), ""}};
   data->int32_values = {{11, 22, 33, 44, 55}};
+
+  data->basic_types_values.push_back(*get_messages_basic_types()[1]);
+  data->basic_types_values.push_back(*get_messages_basic_types()[2]);
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_message) {
-  auto message = get_allocated_message("test_msgs/BoundedArrayPrimitives");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_sequences_message) {
+  auto message = get_allocated_message("test_msgs/BoundedSequences");
 
-  auto data = static_cast<test_msgs::msg::BoundedArrayPrimitives *>(message->message);
+  auto data = static_cast<test_msgs::msg::BoundedSequences *>(message->message);
 
   data->bool_values = {{true, false, true}};
   data->string_values = {{"eins", std::string(1000, 'z'), ""}};
   data->int32_values = {11};
+
+  data->basic_types_values.push_back(*get_messages_basic_types()[1]);
+  data->basic_types_values.push_back(*get_messages_basic_types()[2]);
 }
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_static_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/StaticArrayNested");
+TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_multi_nested_message) {
+  auto message = get_allocated_message("test_msgs/MultiNested");
 
-  auto data = static_cast<test_msgs::msg::StaticArrayNested *>(message->message);
+  auto data = static_cast<test_msgs::msg::MultiNested *>(message->message);
 
-  data->primitive_values[0].bool_value = true;
-  data->primitive_values[0].string_value = "eins";
-  data->primitive_values[0].int64_value = 123;
-  data->primitive_values[1].bool_value = false;
-  data->primitive_values[1].string_value = std::string(1000, '2');
-  data->primitive_values[1].int64_value = 123;
-}
+  data->array_of_arrays[0] = *get_messages_arrays()[0];
 
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_dynamic_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/DynamicArrayNested");
+  data->bounded_sequence_of_bounded_sequences.push_back(
+    *get_messages_bounded_sequences()[0]);
+  data->bounded_sequence_of_bounded_sequences.push_back(
+    *get_messages_bounded_sequences()[1]);
 
-  auto data = static_cast<test_msgs::msg::DynamicArrayNested *>(message->message);
-
-  data->primitive_values.push_back(*get_messages_primitives()[1]);
-  data->primitive_values.push_back(*get_messages_primitives()[2]);
-}
-
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_bounded_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
-
-  auto data = static_cast<test_msgs::msg::BoundedArrayNested *>(message->message);
-
-  data->primitive_values.push_back(*get_messages_primitives()[1]);
-  data->primitive_values.push_back(*get_messages_primitives()[2]);
-}
-
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_static_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/DynamicArrayStaticArrayPrimitivesNested");
-
-  auto data =
-    static_cast<test_msgs::msg::DynamicArrayStaticArrayPrimitivesNested *>(message->message);
-
-  data->dynamic_array_static_array_primitive_values.push_back(
-    *get_messages_static_array_primitives()[0]);
-  data->dynamic_array_static_array_primitive_values.push_back(
-    *get_messages_static_array_primitives()[0]);
-}
-
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_dynamic_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/DynamicArrayPrimitivesNested");
-
-  auto data =
-    static_cast<test_msgs::msg::DynamicArrayPrimitivesNested *>(message->message);
-
-  data->dynamic_array_primitive_values.push_back(
-    *get_messages_dynamic_array_primitives()[1]);
-  data->dynamic_array_primitive_values.push_back(
-    *get_messages_dynamic_array_primitives()[2]);
-}
-
-TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_nested_bounded_array_nested_message) {
-  auto message = get_allocated_message("test_msgs/BoundedArrayPrimitivesNested");
-
-  auto data =
-    static_cast<test_msgs::msg::BoundedArrayPrimitivesNested *>(message->message);
-
-  data->bounded_array_primitive_values.push_back(
-    *get_messages_bounded_array_primitives()[0]);
-  data->bounded_array_primitive_values.push_back(
-    *get_messages_bounded_array_primitives()[1]);
+  data->unbounded_sequence_of_unbounded_sequences.push_back(
+    *get_messages_unbounded_sequences()[0]);
+  data->unbounded_sequence_of_unbounded_sequences.push_back(
+    *get_messages_unbounded_sequences()[0]);
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) {
-  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
+  auto message = get_allocated_message("test_msgs/BoundedSequences");
 
   rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
 
@@ -214,7 +166,7 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_cleans_up_topic_name_on_shutdown) 
 }
 
 TEST_F(Ros2MessageTest, duplicate_set_topic_does_not_leak) {
-  auto message = get_allocated_message("test_msgs/BoundedArrayNested");
+  auto message = get_allocated_message("test_msgs/BoundedSequences");
 
   rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
   rosbag2::introspection_message_set_topic_name(message.get(), "Topic name");
