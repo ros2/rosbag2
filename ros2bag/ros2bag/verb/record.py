@@ -48,10 +48,12 @@ class RecordVerb(VerbExtension):
             help='disables topic auto discovery during recording: only topics present at '
              'startup will be recorded')
         parser.add_argument(
-            '-p', '--polling-interval', default=100,
+            '-p', '--polling-interval', type=int, default=100,
             help='time in ms to wait between querying available topics for recording. It has no '
              'effect if --no-discovery is enabled.'
         )
+        self._subparser = parser
+
 
     def create_bag_directory(self, uri):
         try:
