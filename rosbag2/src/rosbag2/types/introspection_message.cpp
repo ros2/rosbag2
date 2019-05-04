@@ -89,6 +89,9 @@ void cleanup_element(
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     std::string empty;
     static_cast<std::string *>(data)->swap(empty);
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_WSTRING) {
+    std::wstring empty;
+    static_cast<std::wstring *>(data)->swap(empty);
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     deallocate_internal_types(
       data,
@@ -104,6 +107,12 @@ void cleanup_array(
     for (size_t i = 0; i < member.array_size_; ++i) {
       std::string empty;
       auto * element = static_cast<std::string *>(member.get_function(data, i));
+      element->swap(empty);
+    }
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
+    for (size_t i = 0; i < member.array_size_; ++i) {
+      std::wstring empty;
+      auto * element = static_cast<std::wstring *>(member.get_function(data, i));
       element->swap(empty);
     }
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
@@ -205,6 +214,12 @@ void cleanup_vector(
         data_vector->swap(empty);
         break;
       }
+    case rosidl_typesupport_introspection_cpp::ROS_TYPE_WSTRING: {
+        auto data_vector = static_cast<std::vector<std::wstring> *>(data);
+        std::vector<std::wstring> empty;
+        data_vector->swap(empty);
+        break;
+      }
     case rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE: {
         auto data_vector = static_cast<std::vector<uint8_t> *>(data);
 
@@ -264,6 +279,12 @@ void allocate_array(
       // This is necessary because initialization of empty strings fails for g++ compiled builds
       new (element) std::string("");
     }
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_WSTRING) {
+    for (size_t i = 0; i < member.array_size_; ++i) {
+      auto * element = static_cast<std::string *>(member.get_function(data, i));
+      // This is necessary because initialization of empty strings fails for g++ compiled builds
+      new (element) std::wstring();
+    }
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     auto nested_ts = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
       member.members_->data);
@@ -280,6 +301,8 @@ void allocate_element(
   if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING) {
     // This is necessary because initialization of empty strings fails for g++ compiled builds
     new (data) std::string("");
+  } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_WSTRING) {
+    new (data) std::wstring();
   } else if (member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE) {
     allocate_internal_types(
       data,
