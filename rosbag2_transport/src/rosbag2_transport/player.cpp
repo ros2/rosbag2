@@ -130,8 +130,9 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    if (options.topic_filter(message.message->topic_name))
+    if (options.topic_filter(message.message->topic_name)) {
       continue;
+    }
     std::this_thread::sleep_until(start_time_ + message.time_since_start);
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
@@ -144,8 +145,7 @@ void Player::prepare_publishers(const PlayOptions & options)
   auto topics = reader_->get_all_topics_and_types();
 
   for (const auto & topic : topics) {
-    if (options.topic_filter(topic.name))
-    {
+    if (options.topic_filter(topic.name)) {
       ROSBAG2_TRANSPORT_LOG_INFO("Excluding topic %s", topic.name.c_str());
       continue;
     }

@@ -142,13 +142,14 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     }
 
     if (exclude_topics_list.empty() == false) {
-      auto topic_filter_function = [exclude_topics_list](const std::string& topic)
-      {
-        auto entry = exclude_topics_list.find(topic);
-        if (entry == exclude_topics_list.end())
-          return false;
-        return true;
-      };
+      auto topic_filter_function = [exclude_topics_list](const std::string & topic)
+        {
+          auto entry = exclude_topics_list.find(topic);
+          if (entry == exclude_topics_list.end()) {
+            return false;
+          }
+          return true;
+        };
 
       play_options.topic_filter = topic_filter_function;
     }
