@@ -39,7 +39,7 @@ public:
   template<typename MessageT>
   void add_subscription(const std::string & topic_name, size_t expected_number_of_messages)
   {
-    rmw_qos_profile_t qos_profile;
+    rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
     qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
     qos_profile.depth = 4;
     qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT;
