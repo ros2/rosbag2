@@ -67,7 +67,6 @@ const std::pair<std::string, std::string> extract_type_and_package(const std::st
   auto sep_position_back = full_type.find_last_of(type_separator);
   auto sep_position_front = full_type.find_first_of(type_separator);
   if (sep_position_back == std::string::npos ||
-    sep_position_back != sep_position_front ||
     sep_position_back == 0 ||
     sep_position_back == full_type.length() - 1)
   {
@@ -76,7 +75,7 @@ const std::pair<std::string, std::string> extract_type_and_package(const std::st
   }
 
   std::string package_name = full_type.substr(0, sep_position_front);
-  std::string type_name = full_type.substr(sep_position_front + 1);
+  std::string type_name = full_type.substr(sep_position_back + 1);
 
   return {package_name, type_name};
 }
