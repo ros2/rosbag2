@@ -34,7 +34,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>("/string_topic");
   for (int i = 0; i < 5; ++i) {
     std::this_thread::sleep_for(20ms);
-    publisher->publish(string_message);
+    publisher->publish(*string_message);
   }
   stop_recording();
 

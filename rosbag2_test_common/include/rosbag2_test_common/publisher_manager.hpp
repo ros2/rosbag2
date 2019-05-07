@@ -52,17 +52,17 @@ public:
         CountFunction count_stored_messages) {
         if (expected_messages != 0) {
           while (rclcpp::ok() && count_stored_messages(topic_name) < expected_messages) {
-            publisher->publish(message);
+            publisher->publish(*message);
             // rate limiting
             std::this_thread::sleep_for(50ms);
           }
         } else {
           // Just publish a few messages - they should never be stored
-          publisher->publish(message);
+          publisher->publish(*message);
           std::this_thread::sleep_for(50ms);
-          publisher->publish(message);
+          publisher->publish(*message);
           std::this_thread::sleep_for(50ms);
-          publisher->publish(message);
+          publisher->publish(*message);
         }
       });
   }
