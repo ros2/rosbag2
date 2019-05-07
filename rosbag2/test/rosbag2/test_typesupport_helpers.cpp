@@ -55,7 +55,7 @@ TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
   auto string_typesupport =
-    rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+    rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));

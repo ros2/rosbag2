@@ -11,11 +11,11 @@ rosbag2_bagfile_information:
   topics_with_message_count:
     - topic_metadata:
         name: /test_topic
-        type: test_msgs/Primitives
+        type: test_msgs/BasicTypes
         serialization_format: wrong_format
       message_count: 3
     - topic_metadata:
         name: /array_topic
-        type: test_msgs/StaticArrayPrimitives
+        type: test_msgs/Arrays
         serialization_format: wrong_format
       message_count: 4
