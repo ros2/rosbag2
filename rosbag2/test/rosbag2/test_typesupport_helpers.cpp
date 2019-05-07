@@ -53,7 +53,6 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
   EXPECT_THAT(name, StrEq("multiple_slashes"));
 }
 
-
 TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
   EXPECT_THROW(
     rosbag2::get_typesupport("invalid/message", "rosidl_typesupport_cpp"), std::runtime_error);
