@@ -39,20 +39,20 @@ public:
   template<typename MessageT>
   void add_subscription(const std::string & topic_name, size_t expected_number_of_messages)
   {
-    rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
-    qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
-    qos_profile.depth = 4;
-    qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT;
-    qos_profile.durability = RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT;
-    qos_profile.avoid_ros_namespace_conventions = false;
+    auto qos = rclcpp::QoS(rclcpp::KeepAll());
+    qos.get_rmw_qos_profile().depth = 4;
+    qos.reliability(RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT);
+    qos.durability(RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT);
+    qos.avoid_ros_namespace_conventions(false);
     expected_topics_with_size_[topic_name] = expected_number_of_messages;
 
     subscriptions_.push_back(
       subscriber_node_->create_subscription<MessageT>(
         topic_name,
+        qos,
         [this, topic_name](std::shared_ptr<rmw_serialized_message_t> msg) {
           subscribed_messages_[topic_name].push_back(msg);
-        }, qos_profile));
+        }));
   }
 
   template<typename MessageT>

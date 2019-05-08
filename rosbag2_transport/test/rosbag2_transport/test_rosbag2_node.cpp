@@ -49,7 +49,7 @@ public:
 
   void create_publisher(const std::string & topic)
   {
-    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic);
+    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic, 10);
     publishers_.push_back(publisher);
   }
 

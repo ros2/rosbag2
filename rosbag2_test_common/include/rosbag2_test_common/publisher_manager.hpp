@@ -45,7 +45,7 @@ public:
   {
     auto node_name = std::string("publisher") + std::to_string(counter_++);
     auto publisher_node = std::make_shared<rclcpp::Node>(node_name);
-    auto publisher = publisher_node->create_publisher<T>(topic_name);
+    auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
 
     publisher_nodes_.push_back(publisher_node);
     publishers_.push_back([publisher, topic_name, message, expected_messages](
