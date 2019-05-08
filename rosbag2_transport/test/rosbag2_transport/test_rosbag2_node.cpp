@@ -134,7 +134,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture,
@@ -146,7 +146,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
@@ -162,8 +162,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Strings"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
@@ -180,7 +180,7 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   auto topics_and_types = node_->get_all_topics_with_types();
 
   ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Strings"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Strings"));
-  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/Strings"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
