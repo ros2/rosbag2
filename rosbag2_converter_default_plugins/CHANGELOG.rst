@@ -3,8 +3,8 @@ Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.0 (2019-05-08)
+------------------
 * fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
 * fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)
 * use fastrtps static instead of dynamic (`#104 <https://github.com/ros2/rosbag2/issues/104>`_)

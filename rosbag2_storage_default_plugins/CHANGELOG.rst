@@ -3,8 +3,8 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.0 (2019-05-08)
+------------------
 * fix line length of logging macros (`#110 <https://github.com/ros2/rosbag2/issues/110>`_)
 * fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)
 * Contributors: Dirk Thomas, Karsten Knese

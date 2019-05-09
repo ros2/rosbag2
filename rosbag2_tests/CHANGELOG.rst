@@ -3,8 +3,8 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.0 (2019-05-08)
+------------------
 * fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
 * use fastrtps static instead of dynamic (`#104 <https://github.com/ros2/rosbag2/issues/104>`_)
 * Compile tests (`#103 <https://github.com/ros2/rosbag2/issues/103>`_)

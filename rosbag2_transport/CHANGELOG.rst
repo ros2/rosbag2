@@ -3,8 +3,8 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.0 (2019-05-08)
+------------------
 * ignore cast function type warning (`#116 <https://github.com/ros2/rosbag2/issues/116>`_)
 * changes to avoid deprecated API's (`#115 <https://github.com/ros2/rosbag2/issues/115>`_)
 * Handle message type name with multiple namespace parts (`#114 <https://github.com/ros2/rosbag2/issues/114>`_)
