@@ -2,6 +2,12 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+Forthcoming
+-----------
+* Pass CMAKE_TOOLCHAIN_FILE if crosscompiling (`#112 <https://github.com/ros2/rosbag2/issues/112>`_)
+* Contributors: Esteve Fernandez
+
 0.0.5 (2018-12-27)
 ------------------
 

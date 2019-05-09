@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix issue with ros2bag record python frontend (`#100 <https://github.com/ros2/rosbag2/issues/100>`_)
+* Consistent node naming across ros2cli tools (`#60 <https://github.com/ros2/rosbag2/issues/60>`_)
+* Contributors: AAlon, Sagnik Basu
+
 0.0.5 (2018-12-27)
 ------------------
 

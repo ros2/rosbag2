@@ -2,6 +2,16 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+Forthcoming
+-----------
+* fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
+* use fastrtps static instead of dynamic (`#104 <https://github.com/ros2/rosbag2/issues/104>`_)
+* Compile tests (`#103 <https://github.com/ros2/rosbag2/issues/103>`_)
+* remove duplicate repos (`#102 <https://github.com/ros2/rosbag2/issues/102>`_)
+* removed dependency to ros1_bridge package (`#90 <https://github.com/ros2/rosbag2/issues/90>`_)
+* Contributors: DensoADAS, Dirk Thomas, Karsten Knese
+
 0.0.5 (2018-12-27)
 ------------------
 

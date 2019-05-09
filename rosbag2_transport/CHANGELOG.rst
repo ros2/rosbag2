@@ -2,6 +2,20 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+Forthcoming
+-----------
+* ignore cast function type warning (`#116 <https://github.com/ros2/rosbag2/issues/116>`_)
+* changes to avoid deprecated API's (`#115 <https://github.com/ros2/rosbag2/issues/115>`_)
+* Handle message type name with multiple namespace parts (`#114 <https://github.com/ros2/rosbag2/issues/114>`_)
+* fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
+* fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)
+* use fastrtps static instead of dynamic (`#104 <https://github.com/ros2/rosbag2/issues/104>`_)
+* enforce unique node names (`#86 <https://github.com/ros2/rosbag2/issues/86>`_)
+* disable cppcheck (`#91 <https://github.com/ros2/rosbag2/issues/91>`_)
+* Consistent node naming across ros2cli tools (`#60 <https://github.com/ros2/rosbag2/issues/60>`_)
+* Contributors: AAlon, Dirk Thomas, Jacob Perron, Karsten Knese, William Woodall
+
 0.0.5 (2018-12-27)
 ------------------
 

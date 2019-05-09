@@ -2,6 +2,14 @@
 Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+Forthcoming
+-----------
+* fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
+* fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)
+* use fastrtps static instead of dynamic (`#104 <https://github.com/ros2/rosbag2/issues/104>`_)
+* Contributors: Dirk Thomas, Karsten Knese
+
 0.0.5 (2018-12-27)
 ------------------
 
