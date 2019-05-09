@@ -155,7 +155,7 @@ rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 }
 
 /// Define the public methods of this module
-#if !defined(_WIN32)
+#if __GNUC__ >= 8
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
@@ -174,7 +174,7 @@ static PyMethodDef rosbag2_transport_methods[] = {
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };
-#if !defined(_WIN32)
+#if __GNUC__ >= 8
 # pragma GCC diagnostic pop
 #endif
 
