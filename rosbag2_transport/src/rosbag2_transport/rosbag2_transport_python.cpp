@@ -158,6 +158,7 @@ rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 #if !defined(_WIN32)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 static PyMethodDef rosbag2_transport_methods[] = {
   {
     "record", reinterpret_cast<PyCFunction>(rosbag2_transport_record), METH_VARARGS | METH_KEYWORDS,
@@ -173,6 +174,7 @@ static PyMethodDef rosbag2_transport_methods[] = {
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };
+#if !defined(_WIN32)
 # pragma GCC diagnostic pop
 #endif
 
