@@ -4,8 +4,8 @@ Changelog for package rosbag2_transport
 
 
 
-Forthcoming
------------
+0.1.1 (2019-05-09)
+------------------
 * fix condition to only apply pragma for GCC 8+ (`#117 <https://github.com/ros2/rosbag2/issues/117>`_)
 * Contributors: Dirk Thomas
 
