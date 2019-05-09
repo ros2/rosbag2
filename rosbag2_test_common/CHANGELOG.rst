@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.0 (2019-05-08)
 ------------------
 * changes to avoid deprecated API's (`#115 <https://github.com/ros2/rosbag2/issues/115>`_)

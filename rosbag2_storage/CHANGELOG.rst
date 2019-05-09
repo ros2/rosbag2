@@ -3,6 +3,9 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.1.0 (2019-05-08)
 ------------------
 * fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)

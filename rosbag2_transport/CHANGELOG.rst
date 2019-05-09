@@ -3,6 +3,12 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+
+Forthcoming
+-----------
+* fix condition to only apply pragma for GCC 8+ (`#117 <https://github.com/ros2/rosbag2/issues/117>`_)
+* Contributors: Dirk Thomas
+
 0.1.0 (2019-05-08)
 ------------------
 * ignore cast function type warning (`#116 <https://github.com/ros2/rosbag2/issues/116>`_)
