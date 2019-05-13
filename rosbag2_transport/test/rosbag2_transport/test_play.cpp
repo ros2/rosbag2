@@ -105,3 +105,59 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
     Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
     ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
+
+
+TEST_F(RosBag2PlayTestFixture, exclude_topic_filter)
+{
+  auto primitive_message1 = get_messages_primitives()[0];
+  primitive_message1->string_value = "Hello World";
+
+  auto primitive_message2 = get_messages_primitives()[0];
+  primitive_message2->string_value = "Hello World";
+
+  auto topic_types = std::vector<rosbag2::TopicMetadata>{
+    {"topic1", "test_msgs/Primitives", ""},
+    {"topic2", "test_msgs/Primitives", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages = {
+    serialize_test_message("topic1", 0, primitive_message1),
+    serialize_test_message("topic1", 100, primitive_message1),
+    serialize_test_message("topic1", 200, primitive_message1),
+    serialize_test_message("topic2", 50, primitive_message2),
+    serialize_test_message("topic2", 150, primitive_message2),
+    serialize_test_message("topic2", 250, primitive_message2)};
+
+  reader_->prepare(messages, topic_types);
+
+  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::Primitives>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::Primitives>("/topic2", 0);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  // Set the topic filter
+  play_options_.exclude_topic_filter = [](const std::string & topic) {
+      if (topic == "topic2") {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives1 = sub_->get_received_messages<test_msgs::msg::Primitives>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives1, SizeIs(Ge(2u)));
+  EXPECT_THAT(replayed_test_primitives1,
+    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "Hello World"))));
+
+  auto replayed_test_primitives2 = sub_->get_received_messages<test_msgs::msg::Primitives>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_primitives2, SizeIs(0u));
+}
