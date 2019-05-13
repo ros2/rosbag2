@@ -23,6 +23,23 @@
 #include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
 
+
+template<class InserterIterator>
+void parse_python_list(PyObject * list, InserterIterator insert_iterator)
+{
+  if (list) {
+    PyObject * list_iterator = PyObject_GetIter(list);
+    if (list_iterator != nullptr) {
+      PyObject * value;
+      while ((value = PyIter_Next(list_iterator))) {
+        insert_iterator = PyUnicode_AsUTF8(value);
+        Py_DECREF(value);
+      }
+      Py_DECREF(list_iterator);
+    }
+  }
+}
+
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
@@ -68,18 +85,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
   record_options.node_prefix = std::string(node_prefix);
 
-  if (topics) {
-    PyObject * topic_iterator = PyObject_GetIter(topics);
-    if (topic_iterator != nullptr) {
-      PyObject * topic;
-      while ((topic = PyIter_Next(topic_iterator))) {
-        record_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
+  parse_python_list(topics, std::back_inserter(record_options.topics));
 
-        Py_DECREF(topic);
-      }
-      Py_DECREF(topic_iterator);
-    }
-  }
   record_options.rmw_serialization_format = std::string(serilization_format).empty() ?
     rmw_get_serialization_format() :
     serilization_format;
@@ -129,30 +136,21 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.read_ahead_queue_size = read_ahead_queue_size;
 
   std::set<std::string> exclude_topics_list;
-  if (exclude_topics) {
-    PyObject * topic_exclude_iterator = PyObject_GetIter(exclude_topics);
-    if (topic_exclude_iterator != nullptr) {
-      PyObject * topic;
-      while ((topic = PyIter_Next(topic_exclude_iterator))) {
-        exclude_topics_list.insert(PyUnicode_AsUTF8(topic));
+  parse_python_list(
+    exclude_topics,
+    std::inserter(exclude_topics_list, std::begin(exclude_topics_list)));
 
-        Py_DECREF(topic);
-      }
-      Py_DECREF(topic_exclude_iterator);
-    }
+  if (exclude_topics_list.empty() == false) {
+    auto topic_filter_function = [exclude_topics_list](const std::string & topic)
+      {
+        auto entry = exclude_topics_list.find(topic);
+        if (entry == exclude_topics_list.end()) {
+          return false;
+        }
+        return true;
+      };
 
-    if (exclude_topics_list.empty() == false) {
-      auto topic_filter_function = [exclude_topics_list](const std::string & topic)
-        {
-          auto entry = exclude_topics_list.find(topic);
-          if (entry == exclude_topics_list.end()) {
-            return false;
-          }
-          return true;
-        };
-
-      play_options.exclude_topic_filter = topic_filter_function;
-    }
+    play_options.exclude_topic_filter = topic_filter_function;
   }
 
   rosbag2_transport::Rosbag2Transport transport;
