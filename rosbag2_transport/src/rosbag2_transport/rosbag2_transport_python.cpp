@@ -151,7 +151,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
           return true;
         };
 
-      play_options.topic_filter = topic_filter_function;
+      play_options.exclude_topic_filter = topic_filter_function;
     }
   }
 
