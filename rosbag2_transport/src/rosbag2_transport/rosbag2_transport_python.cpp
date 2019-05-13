@@ -14,9 +14,9 @@
 
 #include <Python.h>
 #include <chrono>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
