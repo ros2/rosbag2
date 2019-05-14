@@ -109,11 +109,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
 TEST_F(RosBag2PlayTestFixture, exclude_topic_filter)
 {
-  auto primitive_message1 = get_messages_primitives()[0];
-  primitive_message1->string_value = "Hello World";
-
-  auto primitive_message2 = get_messages_primitives()[0];
-  primitive_message2->string_value = "Hello World";
+  auto primitive_message = std::make_shared<test_msgs::msg::Primitives>();
+  primitive_message->string_value = "Hello World";
 
   auto topic_types = std::vector<rosbag2::TopicMetadata>{
     {"topic1", "test_msgs/Primitives", ""},
@@ -121,12 +118,12 @@ TEST_F(RosBag2PlayTestFixture, exclude_topic_filter)
   };
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages = {
-    serialize_test_message("topic1", 0, primitive_message1),
-    serialize_test_message("topic1", 100, primitive_message1),
-    serialize_test_message("topic1", 200, primitive_message1),
-    serialize_test_message("topic2", 50, primitive_message2),
-    serialize_test_message("topic2", 150, primitive_message2),
-    serialize_test_message("topic2", 250, primitive_message2)};
+    serialize_test_message("topic1", 0, primitive_message),
+    serialize_test_message("topic1", 100, primitive_message),
+    serialize_test_message("topic1", 200, primitive_message),
+    serialize_test_message("topic2", 50, primitive_message),
+    serialize_test_message("topic2", 150, primitive_message),
+    serialize_test_message("topic2", 250, primitive_message)};
 
   reader_->prepare(messages, topic_types);
 
