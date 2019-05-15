@@ -147,13 +147,13 @@ TEST_F(RosBag2PlayTestFixture, exclude_topic_filter)
 
   await_received_messages.get();
 
-  auto replayed_test_primitives1 = sub_->get_received_messages<test_msgs::msg::Primitives>(
+  auto replayed_test_primitives1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/topic1");
   EXPECT_THAT(replayed_test_primitives1, SizeIs(Ge(2u)));
   EXPECT_THAT(replayed_test_primitives1,
-    Each(Pointee(Field(&test_msgs::msg::Primitives::int32_value, 42))));
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 42))));
 
-  auto replayed_test_primitives2 = sub_->get_received_messages<test_msgs::msg::Primitives>(
+  auto replayed_test_primitives2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/topic2");
   EXPECT_THAT(replayed_test_primitives2, SizeIs(0u));
 }
