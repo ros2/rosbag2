@@ -2,6 +2,18 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+0.1.1 (2019-05-09)
+------------------
+
+0.1.0 (2019-05-08)
+------------------
+* Handle message type name with multiple namespace parts (`#114 <https://github.com/ros2/rosbag2/issues/114>`_)
+* fix compilation against master (`#111 <https://github.com/ros2/rosbag2/issues/111>`_)
+* fix logging signature (`#107 <https://github.com/ros2/rosbag2/issues/107>`_)
+* Compile tests (`#103 <https://github.com/ros2/rosbag2/issues/103>`_)
+* Contributors: Dirk Thomas, Jacob Perron, Karsten Knese
+
 0.0.5 (2018-12-27)
 ------------------
 

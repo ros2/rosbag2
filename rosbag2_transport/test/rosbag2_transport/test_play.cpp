@@ -22,8 +22,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "test_msgs/msg/primitives.hpp"
-#include "test_msgs/msg/static_array_primitives.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
@@ -54,16 +54,16 @@ public:
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {
-  auto primitive_message1 = get_messages_primitives()[0];
-  primitive_message1->string_value = "Hello World";
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
 
-  auto complex_message1 = get_messages_static_array_primitives()[0];
-  complex_message1->string_values = {{"Complex Hello1", "Complex Hello2", "Complex Hello3"}};
+  auto complex_message1 = get_messages_arrays()[0];
+  complex_message1->float32_values = {{40.0f, 2.0f, 0.0f}};
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2::TopicMetadata>{
-    {"topic1", "test_msgs/Primitives", ""},
-    {"topic2", "test_msgs/StaticArrayPrimitives", ""},
+    {"topic1", "test_msgs/BasicTypes", ""},
+    {"topic2", "test_msgs/Arrays", ""},
   };
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
@@ -78,9 +78,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
-  sub_->add_subscription<test_msgs::msg::Primitives>("/topic1", 2);
-  sub_->add_subscription<test_msgs::msg::StaticArrayPrimitives>(
-    "/topic2", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 2);
 
   auto await_received_messages = sub_->spin_subscriptions();
 
@@ -89,21 +88,21 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   await_received_messages.get();
 
-  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::Primitives>(
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/topic1");
   EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
   EXPECT_THAT(replayed_test_primitives,
-    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "Hello World"))));
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 42))));
 
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
     "/topic2");
   EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
   EXPECT_THAT(replayed_test_arrays,
-    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::bool_values,
+    Each(Pointee(Field(&test_msgs::msg::Arrays::bool_values,
     ElementsAre(true, false, true)))));
   EXPECT_THAT(replayed_test_arrays,
-    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
-    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+    Each(Pointee(Field(&test_msgs::msg::Arrays::float32_values,
+    ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
 

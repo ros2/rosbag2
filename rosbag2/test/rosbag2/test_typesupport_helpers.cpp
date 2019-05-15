@@ -27,10 +27,6 @@ TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_no_type) {
   EXPECT_ANY_THROW(rosbag2::extract_type_and_package("just_a_package_name"));
 }
 
-TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_multiple_slashes) {
-  EXPECT_ANY_THROW(rosbag2::extract_type_and_package("name/with/multiple_slashes"));
-}
-
 TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_slash_at_the_start_only) {
   EXPECT_ANY_THROW(rosbag2::extract_type_and_package("/name_with_slash_at_start"));
 }
@@ -48,6 +44,15 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package
   EXPECT_THAT(name, StrEq("name"));
 }
 
+TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashes) {
+  std::string package;
+  std::string name;
+  std::tie(package, name) = rosbag2::extract_type_and_package("name/with/multiple_slashes");
+
+  EXPECT_THAT(package, StrEq("name"));
+  EXPECT_THAT(name, StrEq("multiple_slashes"));
+}
+
 TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
   EXPECT_THROW(
     rosbag2::get_typesupport("invalid/message", "rosidl_typesupport_cpp"), std::runtime_error);
@@ -55,7 +60,7 @@ TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
   auto string_typesupport =
-    rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+    rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));

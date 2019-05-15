@@ -45,24 +45,24 @@ public:
   {
     auto node_name = std::string("publisher") + std::to_string(counter_++);
     auto publisher_node = std::make_shared<rclcpp::Node>(node_name);
-    auto publisher = publisher_node->create_publisher<T>(topic_name);
+    auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
 
     publisher_nodes_.push_back(publisher_node);
     publishers_.push_back([publisher, topic_name, message, expected_messages](
         CountFunction count_stored_messages) {
         if (expected_messages != 0) {
           while (rclcpp::ok() && count_stored_messages(topic_name) < expected_messages) {
-            publisher->publish(message);
+            publisher->publish(*message);
             // rate limiting
             std::this_thread::sleep_for(50ms);
           }
         } else {
           // Just publish a few messages - they should never be stored
-          publisher->publish(message);
+          publisher->publish(*message);
           std::this_thread::sleep_for(50ms);
-          publisher->publish(message);
+          publisher->publish(*message);
           std::this_thread::sleep_for(50ms);
-          publisher->publish(message);
+          publisher->publish(*message);
         }
       });
   }

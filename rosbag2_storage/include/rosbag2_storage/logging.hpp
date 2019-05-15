@@ -28,7 +28,7 @@
 #define ROSBAG2_STORAGE_LOG_INFO_STREAM(args) do { \
     std::stringstream __ss; \
     __ss << args; \
-    RCUTILS_LOG_INFO_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, __ss.str().c_str()); \
+    RCUTILS_LOG_INFO_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_LOG_ERROR(...) \
@@ -37,7 +37,7 @@
 #define ROSBAG2_STORAGE_LOG_ERROR_STREAM(args) do { \
     std::stringstream __ss; \
     __ss << args; \
-    RCUTILS_LOG_ERROR_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, __ss.str().c_str()); \
+    RCUTILS_LOG_ERROR_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_LOG_WARN(...) \
@@ -46,7 +46,7 @@
 #define ROSBAG2_STORAGE_LOG_WARN_STREAM(args) do { \
     std::stringstream __ss; \
     __ss << args; \
-    RCUTILS_LOG_WARN_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, __ss.str().c_str()); \
+    RCUTILS_LOG_WARN_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_LOG_DEBUG(...) \
@@ -55,7 +55,7 @@
 #define ROSBAG2_STORAGE_LOG_DEBUG_STREAM(args) do { \
     std::stringstream __ss; \
     __ss << args; \
-    RCUTILS_LOG_DEBUG_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, __ss.str().c_str()); \
+    RCUTILS_LOG_DEBUG_NAMED(ROSBAG2_STORAGE_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #endif  // ROSBAG2_STORAGE__LOGGING_HPP_

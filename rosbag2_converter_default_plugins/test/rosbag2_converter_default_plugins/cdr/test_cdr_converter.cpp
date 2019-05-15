@@ -63,10 +63,7 @@ public:
 };
 
 TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_primitives) {
-  auto message = get_messages_primitives()[0];
-  message->string_value = "test_deserialize";
-  message->float64_value = 102.34;
-  message->int32_value = 10101010;
+  auto message = get_messages_basic_types()[1];
   auto serialized_data = memory_management_->serialize_message(message);
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = serialized_data;
@@ -74,13 +71,13 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
   serialized_message->time_stamp = 1;
 
   auto ros_message = make_shared_ros_message();
-  test_msgs::msg::Primitives primitive_test_msg;
+  test_msgs::msg::BasicTypes primitive_test_msg;
   ros_message->message = &primitive_test_msg;
-  auto type_support = rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
-  auto cast_message = static_cast<test_msgs::msg::Primitives *>(ros_message->message);
+  auto cast_message = static_cast<test_msgs::msg::BasicTypes *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
@@ -89,30 +86,24 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_primitives) {
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->time_stamp = 1;
-  auto message = get_messages_primitives()[0];
-  message->string_value = "test_serialize";
-  message->float64_value = 102.34;
-  message->int32_value = 10101010;
+  auto message = get_messages_basic_types()[1];
   ros_message->message = message.get();
 
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support = rosbag2::get_typesupport("test_msgs/Primitives", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
-  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::Primitives>(
+  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::BasicTypes>(
     serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
   EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
 }
 
-TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_static_array) {
-  auto message = get_messages_static_array_primitives()[0];
-  message->string_values = {{"test_deserialize", "another string", "the third one"}};
-  message->float64_values = {{102.34, 1.9, 1236.011}};
-  message->int32_values = {{11, 36, 219}};
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_strings) {
+  auto message = get_messages_strings()[2];
   auto serialized_data = memory_management_->serialize_message(message);
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = serialized_data;
@@ -120,14 +111,94 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
   serialized_message->time_stamp = 1;
 
   auto ros_message = make_shared_ros_message();
-  test_msgs::msg::StaticArrayPrimitives primitive_test_msg;
-  ros_message->message = &primitive_test_msg;
-  auto type_support = rosbag2::get_typesupport(
-    "test_msgs/StaticArrayPrimitives", "rosidl_typesupport_cpp");
+  test_msgs::msg::Strings string_test_msg;
+  ros_message->message = &string_test_msg;
+  auto type_support = rosbag2::get_typesupport("test_msgs/Strings", "rosidl_typesupport_cpp");
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
-  auto cast_message = static_cast<test_msgs::msg::StaticArrayPrimitives *>(ros_message->message);
+  auto cast_message = static_cast<test_msgs::msg::Strings *>(ros_message->message);
+  EXPECT_THAT(*cast_message, Eq(*message));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
+}
+
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_strings) {
+  auto ros_message = make_shared_ros_message(topic_name_);
+  ros_message->time_stamp = 1;
+  auto message = get_messages_strings()[2];
+  ros_message->message = message.get();
+
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = memory_management_->make_initialized_message();
+  auto type_support = rosbag2::get_typesupport("test_msgs/Strings", "rosidl_typesupport_cpp");
+
+  converter_->serialize(ros_message, type_support, serialized_message);
+
+  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::Strings>(
+    serialized_message->serialized_data);
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
+  EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
+}
+
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_wstrings) {
+  auto message = get_messages_wstrings()[0];
+  auto serialized_data = memory_management_->serialize_message(message);
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = serialized_data;
+  serialized_message->topic_name = topic_name_;
+  serialized_message->time_stamp = 1;
+
+  auto ros_message = make_shared_ros_message();
+  test_msgs::msg::WStrings wstring_test_msg;
+  ros_message->message = &wstring_test_msg;
+  auto type_support = rosbag2::get_typesupport("test_msgs/WStrings", "rosidl_typesupport_cpp");
+
+  converter_->deserialize(serialized_message, type_support, ros_message);
+
+  auto cast_message = static_cast<test_msgs::msg::WStrings *>(ros_message->message);
+  EXPECT_THAT(*cast_message, Eq(*message));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
+}
+
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_wstrings) {
+  auto ros_message = make_shared_ros_message(topic_name_);
+  ros_message->time_stamp = 1;
+  auto message = get_messages_wstrings()[0];
+  ros_message->message = message.get();
+
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = memory_management_->make_initialized_message();
+  auto type_support = rosbag2::get_typesupport("test_msgs/WStrings", "rosidl_typesupport_cpp");
+
+  converter_->serialize(ros_message, type_support, serialized_message);
+
+  auto deserialized_msg = memory_management_->deserialize_message<test_msgs::msg::WStrings>(
+    serialized_message->serialized_data);
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
+  EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
+}
+
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_static_array) {
+  auto message = get_messages_arrays()[0];
+  auto serialized_data = memory_management_->serialize_message(message);
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = serialized_data;
+  serialized_message->topic_name = topic_name_;
+  serialized_message->time_stamp = 1;
+
+  auto ros_message = make_shared_ros_message();
+  test_msgs::msg::Arrays primitive_test_msg;
+  ros_message->message = &primitive_test_msg;
+  auto type_support = rosbag2::get_typesupport(
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
+
+  converter_->deserialize(serialized_message, type_support, ros_message);
+
+  auto cast_message = static_cast<test_msgs::msg::Arrays *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
@@ -136,36 +207,25 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
 TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_static_array) {
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->time_stamp = 1;
-  auto message = get_messages_static_array_primitives()[0];
-  message->string_values = {{"test_deserialize", "another string", "the third one"}};
-  message->float64_values = {{102.34, 1.9, 1236.011}};
-  message->int32_values = {{11, 36, 219}};
+  auto message = get_messages_arrays()[0];
   ros_message->message = message.get();
 
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport(
-    "test_msgs/StaticArrayPrimitives", "rosidl_typesupport_cpp");
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->
-    deserialize_message<test_msgs::msg::StaticArrayPrimitives>(serialized_message->serialized_data);
+    deserialize_message<test_msgs::msg::Arrays>(serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
   EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
 }
 
-TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dynamic_array_nest) {
-  auto message = get_messages_dynamic_array_nested()[0];
-  test_msgs::msg::Primitives first_primitive_message;
-  first_primitive_message.string_value = "I am the first";
-  first_primitive_message.float32_value = 35.7f;
-  test_msgs::msg::Primitives second_primitive_message;
-  second_primitive_message.string_value = "I am the second";
-  second_primitive_message.float32_value = 135.72f;
-  message->primitive_values.push_back(first_primitive_message);
-  message->primitive_values.push_back(second_primitive_message);
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_unbounded_sequence) {
+  auto message = get_messages_unbounded_sequences()[1];
   auto serialized_data = memory_management_->serialize_message(message);
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = serialized_data;
@@ -173,42 +233,77 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_dy
   serialized_message->time_stamp = 1;
 
   auto ros_message = make_shared_ros_message();
-  test_msgs::msg::DynamicArrayNested dynamic_nested_message;
+  test_msgs::msg::UnboundedSequences dynamic_nested_message;
   ros_message->message = &dynamic_nested_message;
   auto type_support = rosbag2::get_typesupport(
-    "test_msgs/DynamicArrayNested", "rosidl_typesupport_cpp");
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
-  auto cast_message = static_cast<test_msgs::msg::DynamicArrayNested *>(ros_message->message);
+  auto cast_message = static_cast<test_msgs::msg::UnboundedSequences *>(ros_message->message);
   EXPECT_THAT(*cast_message, Eq(*message));
   EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
   EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
 }
 
-TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_dynamic_array_nest) {
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_unbounded_sequence) {
   auto ros_message = make_shared_ros_message(topic_name_);
   ros_message->time_stamp = 1;
-  auto message = get_messages_dynamic_array_nested()[0];
-  test_msgs::msg::Primitives first_primitive_message;
-  first_primitive_message.string_value = "I am the first";
-  first_primitive_message.float32_value = 35.7f;
-  test_msgs::msg::Primitives second_primitive_message;
-  second_primitive_message.string_value = "I am the second";
-  second_primitive_message.float32_value = 135.72f;
-  message->primitive_values.push_back(first_primitive_message);
-  message->primitive_values.push_back(second_primitive_message);
+  auto message = get_messages_unbounded_sequences()[1];
+  test_msgs::msg::BasicTypes first_primitive_message;
   ros_message->message = message.get();
 
   auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
   auto type_support = rosbag2::get_typesupport(
-    "test_msgs/DynamicArrayNested", "rosidl_typesupport_cpp");
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
   auto deserialized_msg = memory_management_->
-    deserialize_message<test_msgs::msg::DynamicArrayNested>(serialized_message->serialized_data);
+    deserialize_message<test_msgs::msg::UnboundedSequences>(serialized_message->serialized_data);
+  EXPECT_THAT(*deserialized_msg, Eq(*message));
+  EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
+  EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));
+}
+
+TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_multi_nested) {
+  auto message = get_messages_multi_nested()[0];
+  auto serialized_data = memory_management_->serialize_message(message);
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = serialized_data;
+  serialized_message->topic_name = topic_name_;
+  serialized_message->time_stamp = 1;
+
+  auto ros_message = make_shared_ros_message();
+  test_msgs::msg::MultiNested multi_nested_message;
+  ros_message->message = &multi_nested_message;
+  auto type_support = rosbag2::get_typesupport(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp");
+
+  converter_->deserialize(serialized_message, type_support, ros_message);
+
+  auto cast_message = static_cast<test_msgs::msg::MultiNested *>(ros_message->message);
+  EXPECT_THAT(*cast_message, Eq(*message));
+  EXPECT_THAT(ros_message->time_stamp, Eq(serialized_message->time_stamp));
+  EXPECT_THAT(ros_message->topic_name, StrEq(serialized_message->topic_name));
+}
+
+TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_multi_nested) {
+  auto ros_message = make_shared_ros_message(topic_name_);
+  ros_message->time_stamp = 1;
+  auto message = get_messages_multi_nested()[0];
+  ros_message->message = message.get();
+
+  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  serialized_message->serialized_data = memory_management_->make_initialized_message();
+  auto type_support = rosbag2::get_typesupport(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp");
+
+  converter_->serialize(ros_message, type_support, serialized_message);
+
+  auto deserialized_msg = memory_management_->
+    deserialize_message<test_msgs::msg::MultiNested>(serialized_message->serialized_data);
   EXPECT_THAT(*deserialized_msg, Eq(*message));
   EXPECT_THAT(serialized_message->topic_name, StrEq(topic_name_));
   EXPECT_THAT(serialized_message->time_stamp, Eq(ros_message->time_stamp));

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_converter_default_plugins</name>
-  <version>0.0.5</version>
+  <version>0.1.1</version>
   <description>Package containing default plugins for format converters</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
@@ -20,7 +20,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>rcutils</test_depend>
-  <test_depend>rmw_fastrtps_dynamic_cpp</test_depend>
+  <test_depend>rmw_fastrtps_cpp</test_depend>
   <test_depend>rosbag2</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>test_msgs</test_depend>

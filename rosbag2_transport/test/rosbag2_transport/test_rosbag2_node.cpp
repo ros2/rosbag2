@@ -22,7 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "test_msgs/msg/primitives.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -49,7 +49,7 @@ public:
 
   void create_publisher(const std::string & topic)
   {
-    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Primitives>(topic);
+    auto publisher = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic, 10);
     publishers_.push_back(publisher);
   }
 
@@ -61,7 +61,7 @@ public:
     auto subscription = node_->create_generic_subscription(topic_name, type,
         [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
           auto string_message =
-          memory_management_.deserialize_message<test_msgs::msg::Primitives>(message);
+          memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
           messages.push_back(string_message->string_value);
           counter++;
         });
@@ -74,7 +74,7 @@ public:
 
   std::shared_ptr<rmw_serialized_message_t> serialize_string_message(const std::string & message)
   {
-    auto string_message = std::make_shared<test_msgs::msg::Primitives>();
+    auto string_message = std::make_shared<test_msgs::msg::Strings>();
     string_message->string_value = message;
     return memory_management_.serialize_message(string_message);
   }
@@ -82,7 +82,7 @@ public:
   void sleep_to_allow_topics_discovery()
   {
     // This is a short sleep to allow the node some time to discover the topic
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 
   MemoryManagement memory_management_;
@@ -97,7 +97,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   // We currently publish more messages because they can get lost
   std::vector<std::string> test_messages = {"Hello World", "Hello World"};
   std::string topic_name = "string_topic";
-  std::string type = "test_msgs/Primitives";
+  std::string type = "test_msgs/Strings";
 
   auto publisher = node_->create_generic_publisher(topic_name, type);
 
@@ -134,7 +134,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture,
@@ -146,7 +146,7 @@ TEST_F(RosBag2NodeFixture,
   auto topics_and_types = node_->get_topics_with_types({"/string_topic"});
 
   ASSERT_THAT(topics_and_types, SizeIs(1));
-  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
@@ -162,8 +162,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Primitives"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
 
 TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
@@ -180,7 +180,7 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   auto topics_and_types = node_->get_all_topics_with_types();
 
   ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/Primitives"));
-  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/Primitives"));
-  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/Primitives"));
+  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
+  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }

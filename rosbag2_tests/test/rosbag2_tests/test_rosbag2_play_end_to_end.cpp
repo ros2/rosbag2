@@ -25,8 +25,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
-#include "test_msgs/msg/primitives.hpp"
-#include "test_msgs/msg/static_array_primitives.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
@@ -58,8 +58,8 @@ public:
 };
 
 TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
-  sub_->add_subscription<test_msgs::msg::StaticArrayPrimitives>("/array_topic", 2);
-  sub_->add_subscription<test_msgs::msg::Primitives>("/test_topic", 3);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
 
   auto subscription_future = sub_->spin_subscriptions();
 
@@ -67,22 +67,22 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
 
   subscription_future.get();
 
-  auto primitive_messages = sub_->get_received_messages<test_msgs::msg::Primitives>("/test_topic");
-  auto array_messages = sub_->get_received_messages<test_msgs::msg::StaticArrayPrimitives>(
+  auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
     "/array_topic");
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(primitive_messages,
-    Each(Pointee(Field(&test_msgs::msg::Primitives::string_value, "test"))));
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
 
   EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
   EXPECT_THAT(array_messages,
-    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::bool_values,
+    Each(Pointee(Field(&test_msgs::msg::Arrays::bool_values,
     ElementsAre(true, false, true)))));
   EXPECT_THAT(array_messages,
-    Each(Pointee(Field(&test_msgs::msg::StaticArrayPrimitives::string_values,
+    Each(Pointee(Field(&test_msgs::msg::Arrays::string_values,
     ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
 

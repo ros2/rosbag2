@@ -2,19 +2,21 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>rosbag2_test_common</name>
-  <version>0.0.5</version>
+  <version>0.1.1</version>
   <description>Commonly used test helper classes and fixtures for rosbag2</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <test_depend>ament_cmake_gmock</test_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rcutils</build_depend>
+
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rcutils</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>rclcpp</test_depend>
-  <test_depend>rcutils</test_depend>
-  <build_export_depend>rclcpp</build_export_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

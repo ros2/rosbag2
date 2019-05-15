@@ -54,7 +54,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rcutils REQUIRED)
-  find_package(rmw_fastrtps_dynamic_cpp REQUIRED)
+  find_package(rmw_fastrtps_cpp REQUIRED)
   find_package(rosbag2 REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
   find_package(test_msgs REQUIRED)
@@ -71,7 +71,7 @@ if(BUILD_TESTING)
       rosbag2
       rosbag2_test_common
       rcutils
-      rmw_fastrtps_dynamic_cpp
+      rmw_fastrtps_cpp
       test_msgs)
   endif()
 endif()
