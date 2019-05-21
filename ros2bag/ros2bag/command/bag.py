@@ -36,7 +36,5 @@ class BagCommand(CommandExtension):
 
         extension = getattr(args, '_verb')
 
-        print('DISCLAIMER')
-        print('ros2 bag is currently under development and not ready to use yet')
         # call the verb's main method
         return extension.main(args=args)
