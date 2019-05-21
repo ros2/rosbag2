@@ -31,6 +31,7 @@ class MockStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterfa
 public:
   MOCK_METHOD2(open, void(const std::string &, rosbag2_storage::storage_interfaces::IOFlag));
   MOCK_METHOD1(create_topic, void(const rosbag2_storage::TopicMetadata &));
+  MOCK_METHOD1(remove_topic, void(const rosbag2_storage::TopicMetadata &));
   MOCK_METHOD0(has_next, bool());
   MOCK_METHOD0(read_next, std::shared_ptr<rosbag2_storage::SerializedBagMessage>());
   MOCK_METHOD1(write, void(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));

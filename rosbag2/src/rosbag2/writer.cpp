@@ -75,6 +75,15 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
   storage_->create_topic(topic_with_type);
 }
 
+void Writer::remove_topic(const TopicMetadata & topic_with_type)
+{
+  if (!storage_) {
+    throw std::runtime_error("Bag is not open. Call open() before removing.");
+  }
+
+  storage_->remove_topic(topic_with_type);
+}
+
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 {
   if (!storage_) {
