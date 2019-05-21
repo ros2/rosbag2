@@ -3,8 +3,8 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.2 (2019-05-20)
+------------------
 * Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)
   * This could probably be a race condition, for ex: When we've create a subscriber in the API, and the subscriber has the data already available in the callback (Cause of existing publishers) the db entry for the particular topic would not be availalble, which in turn returns an SqliteException. This is cause write\_->create_topic() call is where we add the db entry for a particular topic. And, this leads to crashing before any recording.
   Locally I solved it by adding the db entry first, and if

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.2 (2019-05-20)
+------------------
 * clean up test dependencies for rosbag2_test_common (`#118 <https://github.com/ros2/rosbag2/issues/118>`_)
   * clean up test dependencies for rosbag2_test_common
   Signed-off-by: Karsten Knese <karsten@openrobotics.org>

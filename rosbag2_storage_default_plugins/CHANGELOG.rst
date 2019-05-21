@@ -3,8 +3,8 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.2 (2019-05-20)
+------------------
 * Indexing of messages.timestamp to avoid runtime-copy. (`#121 <https://github.com/ros2/rosbag2/issues/121>`_)
   Extended SqliteStorage::initialize() to add an index for the message table's timestamp column.
   Without this, the ORDER BY query in prepare_for_reading() causes expensive table duplication,
