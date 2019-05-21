@@ -3,6 +3,27 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Indexing of messages.timestamp to avoid runtime-copy. (`#121 <https://github.com/ros2/rosbag2/issues/121>`_)
+  Extended SqliteStorage::initialize() to add an index for the message table's timestamp column.
+  Without this, the ORDER BY query in prepare_for_reading() causes expensive table duplication,
+  which also has potential for out-of-disk or out-of-memory errors.
+* Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)
+  * This could probably be a race condition, for ex: When we've create a subscriber in the API, and the subscriber has the data already available in the callback (Cause of existing publishers) the db entry for the particular topic would not be availalble, which in turn returns an SqliteException. This is cause write\_->create_topic() call is where we add the db entry for a particular topic. And, this leads to crashing before any recording.
+  Locally I solved it by adding the db entry first, and if
+  create_subscription fails, remove the topic entry from the db and also
+  erase the subscription.
+  Signed-off-by: Sriram Raghunathan <rsriram7@visteon.com>
+  * Fix comments for pull request https://github.com/ros2/rosbag2/pull/93
+  Signed-off-by: Sriram Raghunathan <rsriram7@visteon.com>
+  * Added unit test case for remove_topics from db
+  Signed-off-by: Sriram Raghunathan <rsriram7@visteon.com>
+  * Fix unit tests failing by adding dependent test macros
+  Signed-off-by: Sriram Raghunathan <rsriram7@visteon.com>
+  * Fixes the linter errors
+* Contributors: Felix-El, Sriram Raghunathan
+
 0.1.1 (2019-05-09)
 ------------------
 

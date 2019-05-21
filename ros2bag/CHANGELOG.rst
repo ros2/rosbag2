@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* remove disclaimer (`#122 <https://github.com/ros2/rosbag2/issues/122>`_)
+  Signed-off-by: Karsten Knese <karsten@openrobotics.org>
+* Contributors: Karsten Knese
+
 0.1.1 (2019-05-09)
 ------------------
 
