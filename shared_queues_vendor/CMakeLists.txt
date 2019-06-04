@@ -21,7 +21,7 @@ ExternalProject_Add(concurrentqueue
   DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/multiple
   URL https://github.com/cameron314/concurrentqueue/archive/8f65a8734d77c3cc00d74c0532efca872931d3ce.zip
   URL_MD5 71a0d932cc89150c2ade85f0d9cac9dc
-  TIMEOUT 60
+  TIMEOUT 120
   INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
