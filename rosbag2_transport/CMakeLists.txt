@@ -77,6 +77,7 @@ ament_export_dependencies(rosbag2)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_ros_isolated_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
@@ -100,7 +101,7 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_record test_msgs rosbag2_test_common)
   endif()
 
-  ament_add_gmock(test_record_all
+  ament_add_ros_isolated_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record_all)
@@ -108,7 +109,7 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_record_all test_msgs rosbag2_test_common)
   endif()
 
-  ament_add_gmock(test_record_all_no_discovery
+  ament_add_ros_isolated_gmock(test_record_all_no_discovery
     test/rosbag2_transport/test_record_all_no_discovery.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_record_all_no_discovery)

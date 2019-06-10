@@ -25,6 +25,7 @@ if(BUILD_TESTING)
   skip_ros1_tests_if_necessary()
 
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_ros_isolated_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(std_msgs REQUIRED)
@@ -36,7 +37,7 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gmock(test_rosbag2_record_end_to_end
+  ament_add_ros_isolated_gmock(test_rosbag2_record_end_to_end
     test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_record_end_to_end)

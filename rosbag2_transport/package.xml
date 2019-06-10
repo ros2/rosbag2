@@ -15,6 +15,7 @@
   <depend>shared_queues_vendor</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
+  <test_depend>ament_cmake_ros_isolated_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>test_msgs</test_depend>
