@@ -16,6 +16,7 @@
 #define ROSBAG2__TYPESUPPORT_HELPERS_HPP_
 
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
@@ -29,7 +30,8 @@ const rosidl_message_type_support_t *
 get_typesupport(const std::string & type, const std::string & typesupport_identifier);
 
 ROSBAG2_PUBLIC
-const std::tuple<std::string, std::string, std::string> extract_type_and_package(const std::string & full_type);
+const std::tuple<std::string, std::string, std::string>
+extract_type_and_package(const std::string & full_type);
 
 }  // namespace rosbag2
 

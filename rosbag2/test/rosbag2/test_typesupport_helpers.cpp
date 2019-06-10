@@ -50,7 +50,8 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
   std::string package;
   std::string middle_module;
   std::string name;
-  std::tie(package, middle_module, name) = rosbag2::extract_type_and_package("package/middle_module/name");
+  std::tie(package, middle_module, name) =
+    rosbag2::extract_type_and_package("package/middle_module/name");
 
   EXPECT_THAT(package, StrEq("package"));
   EXPECT_THAT(middle_module, StrEq("middle_module"));
@@ -62,9 +63,17 @@ TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
     rosbag2::get_typesupport("invalid/message", "rosidl_typesupport_cpp"), std::runtime_error);
 }
 
-TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
+TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_legacy_library) {
   auto string_typesupport =
     rosbag2::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+
+  EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
+    ContainsRegex("rosidl_typesupport"));
+}
+
+TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
+  auto string_typesupport =
+    rosbag2::get_typesupport("test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp");
 
   EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));
