@@ -17,6 +17,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "ament_index_cpp/get_resources.hpp"
@@ -61,7 +62,8 @@ std::string get_typesupport_library_path(
   return library_path;
 }
 
-const std::tuple<std::string, std::string, std::string> extract_type_and_package(const std::string & full_type)
+const std::tuple<std::string, std::string, std::string>
+extract_type_and_package(const std::string & full_type)
 {
   char type_separator = '/';
   auto sep_position_back = full_type.find_last_of(type_separator);
@@ -75,7 +77,11 @@ const std::tuple<std::string, std::string, std::string> extract_type_and_package
   }
 
   std::string package_name = full_type.substr(0, sep_position_front);
-  std::string middle_module = full_type.substr(sep_position_front + 1, sep_position_back - sep_position_front - 1);
+  std::string middle_module = "";
+  if (sep_position_back - sep_position_front > 0) {
+    middle_module =
+      full_type.substr(sep_position_front + 1, sep_position_back - sep_position_front - 1);
+  }
   std::string type_name = full_type.substr(sep_position_back + 1);
 
   return std::make_tuple(package_name, middle_module, type_name);
@@ -98,7 +104,7 @@ get_typesupport(const std::string & type, const std::string & typesupport_identi
     auto typesupport_library = std::make_shared<Poco::SharedLibrary>(library_path);
 
     auto symbol_name = typesupport_identifier + "__get_message_type_support_handle__" +
-      package_name + "__" + middle_module + "__" + type_name;
+      package_name + "__" + (middle_module.empty() ? "msg" : middle_module) + "__" + type_name;
 
     if (!typesupport_library->hasSymbol(symbol_name)) {
       throw std::runtime_error(poco_dynamic_loading_error + " Symbol not found.");
