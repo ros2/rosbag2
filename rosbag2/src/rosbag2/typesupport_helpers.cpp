@@ -62,8 +62,18 @@ std::string get_typesupport_library_path(
   return library_path;
 }
 
+const std::pair<std::string, std::string> extract_type_and_package(const std::string & full_type)
+{
+  std::string package_name;
+  std::string type_name;
+
+  std::tie(package_name, std::ignore, type_name) = extract_type_identifier(full_type);
+
+  return {package_name, type_name};
+}
+
 const std::tuple<std::string, std::string, std::string>
-extract_type_and_package(const std::string & full_type)
+extract_type_identifier(const std::string & full_type)
 {
   char type_separator = '/';
   auto sep_position_back = full_type.find_last_of(type_separator);
@@ -93,7 +103,7 @@ get_typesupport(const std::string & type, const std::string & typesupport_identi
   std::string package_name;
   std::string middle_module;
   std::string type_name;
-  std::tie(package_name, middle_module, type_name) = extract_type_and_package(type);
+  std::tie(package_name, middle_module, type_name) = extract_type_identifier(type);
 
   std::string poco_dynamic_loading_error = "Something went wrong loading the typesupport library "
     "for message type " + package_name + "/" + type_name + ".";

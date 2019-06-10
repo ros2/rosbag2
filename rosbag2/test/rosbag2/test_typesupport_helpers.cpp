@@ -35,11 +35,30 @@ TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_slash_at_the_end_o
   EXPECT_ANY_THROW(rosbag2::extract_type_and_package("name_with_slash_at_end/"));
 }
 
+TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package_legacy) {
+  std::string package;
+  std::string name;
+  std::tie(package, name) = rosbag2::extract_type_and_package("package/name");
+
+  EXPECT_THAT(package, StrEq("package"));
+  EXPECT_THAT(name, StrEq("name"));
+}
+
+TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashes_legacy) {
+  std::string package;
+  std::string name;
+  std::tie(package, name) =
+    rosbag2::extract_type_and_package("package/middle_module/name");
+
+  EXPECT_THAT(package, StrEq("package"));
+  EXPECT_THAT(name, StrEq("name"));
+}
+
 TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package) {
   std::string package;
   std::string middle_module;
   std::string name;
-  std::tie(package, middle_module, name) = rosbag2::extract_type_and_package("package/name");
+  std::tie(package, middle_module, name) = rosbag2::extract_type_identifier("package/name");
 
   EXPECT_THAT(package, StrEq("package"));
   EXPECT_THAT(middle_module, StrEq(""));
@@ -51,7 +70,7 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
   std::string middle_module;
   std::string name;
   std::tie(package, middle_module, name) =
-    rosbag2::extract_type_and_package("package/middle_module/name");
+    rosbag2::extract_type_identifier("package/middle_module/name");
 
   EXPECT_THAT(package, StrEq("package"));
   EXPECT_THAT(middle_module, StrEq("middle_module"));

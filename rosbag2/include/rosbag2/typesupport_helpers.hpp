@@ -29,9 +29,13 @@ ROSBAG2_PUBLIC
 const rosidl_message_type_support_t *
 get_typesupport(const std::string & type, const std::string & typesupport_identifier);
 
+[[deprecated("use extract_type_identifier(const std::string & full_type) instead")]]
+ROSBAG2_PUBLIC
+const std::pair<std::string, std::string> extract_type_and_package(const std::string & full_type);
+
 ROSBAG2_PUBLIC
 const std::tuple<std::string, std::string, std::string>
-extract_type_and_package(const std::string & full_type);
+extract_type_identifier(const std::string & full_type);
 
 }  // namespace rosbag2
 
