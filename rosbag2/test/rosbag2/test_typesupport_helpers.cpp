@@ -24,17 +24,24 @@
 using namespace ::testing;  // NOLINT
 
 TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_no_type) {
-  EXPECT_ANY_THROW(rosbag2::extract_type_and_package("just_a_package_name"));
+  EXPECT_ANY_THROW(rosbag2::extract_type_identifier("just_a_package_name"));
 }
 
 TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_slash_at_the_start_only) {
-  EXPECT_ANY_THROW(rosbag2::extract_type_and_package("/name_with_slash_at_start"));
+  EXPECT_ANY_THROW(rosbag2::extract_type_identifier("/name_with_slash_at_start"));
 }
 
 TEST(TypesupportHelpersTest, throws_exception_if_filetype_has_slash_at_the_end_only) {
-  EXPECT_ANY_THROW(rosbag2::extract_type_and_package("name_with_slash_at_end/"));
+  EXPECT_ANY_THROW(rosbag2::extract_type_identifier("name_with_slash_at_end/"));
 }
 
+#if !defined(_WIN32)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#else  // !defined(_WIN32)
+# pragma warning(push)
+# pragma warning(disable: 4996)
+#endif
 TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package_legacy) {
   std::string package;
   std::string name;
@@ -53,6 +60,11 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
   EXPECT_THAT(package, StrEq("package"));
   EXPECT_THAT(name, StrEq("name"));
 }
+#if !defined(_WIN32)
+# pragma GCC diagnostic pop
+#else  // !defined(_WIN32)
+# pragma warning(pop)
+#endif
 
 TEST(TypesupportHelpersTest, separates_into_package_and_name_for_correct_package) {
   std::string package;
