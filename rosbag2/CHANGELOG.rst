@@ -3,6 +3,11 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Add support for parsing middle module name from type (`#128 <https://github.com/ros2/rosbag2/issues/128>`_)
+* Contributors: David Hodo
+
 0.1.2 (2019-05-20)
 ------------------
 * Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)

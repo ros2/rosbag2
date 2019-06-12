@@ -3,6 +3,9 @@ Changelog for package shared_queues_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.1.2 (2019-05-20)
 ------------------
 

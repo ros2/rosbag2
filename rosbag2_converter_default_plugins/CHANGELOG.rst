@@ -3,6 +3,9 @@ Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.1.2 (2019-05-20)
 ------------------
 

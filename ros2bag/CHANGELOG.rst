@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.2 (2019-05-20)
 ------------------
 * remove disclaimer (`#122 <https://github.com/ros2/rosbag2/issues/122>`_)

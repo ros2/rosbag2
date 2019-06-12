@@ -4,6 +4,9 @@ Changelog for package rosbag2_transport
 
 
 
+Forthcoming
+-----------
+
 0.1.2 (2019-05-20)
 ------------------
 * Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)
