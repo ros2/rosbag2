@@ -73,7 +73,11 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_storage rosidl_typesupport_introspection_cpp)
+ament_export_dependencies(
+  ament_index_cpp
+  class_loader
+  rosbag2_storage
+  rosidl_typesupport_introspection_cpp)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
