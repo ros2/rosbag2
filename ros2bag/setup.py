@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='ros2bag',
-    version='0.0.0',
+    version='0.1.3',
     packages=find_packages(exclude=['test']),
     install_requires=['ros2cli'],
     zip_safe=True,

@@ -3,8 +3,8 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.3 (2019-06-12)
+------------------
 * Add support for parsing middle module name from type (`#128 <https://github.com/ros2/rosbag2/issues/128>`_)
 * Contributors: David Hodo
 
