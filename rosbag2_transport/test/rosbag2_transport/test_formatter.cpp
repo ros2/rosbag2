@@ -35,13 +35,13 @@ public:
 };
 
 TEST_F(FormatterTestFixture, format_file_size_returns_correct_format) {
-  size_t zero_bytes = 0;
-  size_t thirty_bytes = 30;
-  size_t two_kibibytes = 2048;
-  size_t two_point_twelve_kibibytes = 3195;
-  size_t one_and_a_half_mebibytes = 1536 * 1024;
-  size_t one_tebibite = static_cast<size_t>(pow(1024, 4));
-  size_t one_pebibyte = static_cast<size_t>(pow(1024, 5));
+  uint64_t zero_bytes = 0;
+  uint64_t thirty_bytes = 30;
+  uint64_t two_kibibytes = 2048;
+  uint64_t two_point_twelve_kibibytes = 3195;
+  uint64_t one_and_a_half_mebibytes = 1536 * 1024;
+  uint64_t one_tebibite = static_cast<uint64_t>(pow(1024, 4));
+  uint64_t one_pebibyte = static_cast<uint64_t>(pow(1024, 5));
 
   EXPECT_THAT(formatter_->format_file_size(zero_bytes), Eq("0 B"));
   EXPECT_THAT(formatter_->format_file_size(thirty_bytes), Eq("30 B"));

@@ -36,7 +36,7 @@ public:
 
   static std::string format_time_point(std::chrono::high_resolution_clock::duration time_point);
 
-  static std::string format_file_size(size_t file_size);
+  static std::string format_file_size(uint64_t file_size);
 
   static void format_file_paths(
     const std::vector<std::string> & paths,

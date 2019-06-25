@@ -90,7 +90,7 @@ std::string Formatter::format_time_point(
          " (" + formatted_duration["time_in_sec"] + ")";
 }
 
-std::string Formatter::format_file_size(size_t file_size)
+std::string Formatter::format_file_size(uint64_t file_size)
 {
   double size = static_cast<double>(file_size);
   static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
