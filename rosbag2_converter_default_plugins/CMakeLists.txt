@@ -24,44 +24,44 @@ find_package(rosbag2 REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rmw_fastrtps_cpp QUIET)
 
-add_library(${PROJECT_NAME} SHARED
-  src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp)
+if(rmw_fastrtps_cpp_FOUND)
+  add_library(${PROJECT_NAME} SHARED
+    src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp)
 
-ament_target_dependencies(${PROJECT_NAME}
-  ament_index_cpp
-  pluginlib
-  Poco
-  rosbag2
-  rcutils
-  rmw
-  rosidl_generator_cpp)
+  ament_target_dependencies(${PROJECT_NAME}
+    ament_index_cpp
+    pluginlib
+    Poco
+    rosbag2
+    rcutils
+    rmw
+    rosidl_generator_cpp)
 
-target_include_directories(${PROJECT_NAME}
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  target_include_directories(${PROJECT_NAME}
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
-pluginlib_export_plugin_description_file(rosbag2 plugin_description.xml)
+  pluginlib_export_plugin_description_file(rosbag2 plugin_description.xml)
 
-install(
-  TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  install(
+    TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin)
 
-if(BUILD_TESTING)
-  find_package(ament_cmake_gmock REQUIRED)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(rcutils REQUIRED)
-  find_package(rmw_fastrtps_cpp QUIET)
-  find_package(rosbag2 REQUIRED)
-  find_package(rosbag2_test_common REQUIRED)
-  find_package(test_msgs REQUIRED)
+  if(BUILD_TESTING)
+    find_package(ament_cmake_gmock REQUIRED)
+    find_package(ament_lint_auto REQUIRED)
+    find_package(rcutils REQUIRED)
+    find_package(rosbag2 REQUIRED)
+    find_package(rosbag2_test_common REQUIRED)
+    find_package(test_msgs REQUIRED)
 
-  ament_lint_auto_find_test_dependencies()
+    ament_lint_auto_find_test_dependencies()
 
-  if(rmw_fastrtps_cpp_FOUND)
     ament_add_gmock(test_cdr_converter
       test/rosbag2_converter_default_plugins/cdr/test_cdr_converter.cpp
       src/rosbag2_converter_default_plugins/cdr/cdr_converter.cpp
