@@ -39,20 +39,10 @@ public:
   template<typename MessageT>
   void add_subscription(const std::string & topic_name, size_t expected_number_of_messages)
   {
-    auto qos = rclcpp::QoS(rclcpp::KeepAll());
-    qos.get_rmw_qos_profile().depth = 4;
-    qos.reliability(RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT);
-    qos.durability(RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT);
-    qos.avoid_ros_namespace_conventions(false);
-    expected_topics_with_size_[topic_name] = expected_number_of_messages;
+    auto subscription = create_subscription<MessageT>(topic_name);
 
-    subscriptions_.push_back(
-      subscriber_node_->create_subscription<MessageT>(
-        topic_name,
-        qos,
-        [this, topic_name](std::shared_ptr<rmw_serialized_message_t> msg) {
-          subscribed_messages_[topic_name].push_back(msg);
-        }));
+    expected_topics_with_size_[topic_name] = expected_number_of_messages;
+    subscriptions_.push_back(subscription);
   }
 
   template<typename MessageT>
@@ -77,6 +67,55 @@ public:
   }
 
 private:
+  template<typename MessageT>
+  rclcpp::SubscriptionBase::SharedPtr
+  create_subscription(const std::string & topic_name)
+  {
+    using CallbackMessageT = rmw_serialized_message_t;
+    using AllocT = std::allocator<void>;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepAll());
+    qos.get_rmw_qos_profile().depth = 4;
+    qos.reliability(RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT);
+    qos.durability(RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT);
+    qos.avoid_ros_namespace_conventions(false);
+    auto options = rclcpp::SubscriptionOptionsWithAllocator<AllocT>();
+
+    auto callback = [this, topic_name](std::shared_ptr<CallbackMessageT> msg) {
+          subscribed_messages_[topic_name].push_back(msg);
+    };
+
+    auto allocator = std::make_shared<AllocT>();
+    using rclcpp::AnySubscriptionCallback;
+    AnySubscriptionCallback<CallbackMessageT, AllocT>
+      any_subscription_callback(allocator);
+    any_subscription_callback.set(callback);
+
+    using rclcpp::message_memory_strategy::MessageMemoryStrategy;
+    auto msg_mem_strat =
+      MessageMemoryStrategy<CallbackMessageT, AllocT>::create_default();
+
+    auto subscription =
+      rclcpp::Subscription<CallbackMessageT, AllocT>::make_shared(
+        subscriber_node_->get_node_base_interface()->get_shared_rcl_node_handle(),
+        *rosidl_typesupport_cpp::get_message_type_support_handle<MessageT>(),
+        topic_name,
+        options.template to_rcl_subscription_options<MessageT>(qos),
+        any_subscription_callback,
+        options.event_callbacks,
+        msg_mem_strat);
+
+    // Intra-process message handling is not supported.
+    bool use_intra_process = false;
+    subscriber_node_->get_node_topics_interface()->add_subscription(
+      subscription,
+      use_intra_process,
+      nullptr);
+
+    auto sub_base_ptr = std::dynamic_pointer_cast<rclcpp::SubscriptionBase>(subscription);
+    return sub_base_ptr;
+  }
+
   bool continue_spinning(std::unordered_map<std::string, size_t> expected_topics_with_sizes)
   {
     for (const auto & topic_expected : expected_topics_with_sizes) {
