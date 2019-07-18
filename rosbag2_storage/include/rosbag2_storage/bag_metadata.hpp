@@ -33,13 +33,13 @@ struct TopicInformation
 
 struct BagMetadata
 {
-  int version = 1;  // upgrade this number when changing the content of the struct
-  size_t bag_size = 0;  // Will not be serialized
+  int version = 2;  // upgrade this number when changing the content of the struct
+  uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
-  size_t message_count;
+  uint64_t message_count;
   std::vector<TopicInformation> topics_with_message_count;
 };
 
