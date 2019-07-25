@@ -31,7 +31,7 @@ public:
     const std::string & topic,
     const rosidl_message_type_support_t & type_support);
 
-  ~GenericPublisher() override = default;
+  ~GenericPublisher() = default;
 
   void publish(std::shared_ptr<rmw_serialized_message_t> message);
 };
