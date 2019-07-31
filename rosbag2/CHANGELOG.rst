@@ -3,6 +3,11 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Exported pluginlib dependency to downstream packages (`#144 <https://github.com/ros2/rosbag2/issues/144>`_)
+* Contributors: Esteve Fernandez, Michel Hidalgo
+
 0.1.3 (2019-06-12)
 ------------------
 * Add support for parsing middle module name from type (`#128 <https://github.com/ros2/rosbag2/issues/128>`_)
