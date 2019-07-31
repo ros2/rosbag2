@@ -3,8 +3,8 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.4 (2019-07-31)
+------------------
 * Exported pluginlib dependency to downstream packages (`#144 <https://github.com/ros2/rosbag2/issues/144>`_)
 * Contributors: Esteve Fernandez, Michel Hidalgo
 
