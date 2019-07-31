@@ -77,6 +77,7 @@ ament_export_dependencies(rosbag2)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_index_cpp REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
