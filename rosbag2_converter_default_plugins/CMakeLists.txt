@@ -76,6 +76,8 @@ if(rmw_fastrtps_cpp_FOUND)
         test_msgs)
     endif()
   endif()
+else()
+  message(STATUS "Skipping [${PROJECT_NAME}]. rmw_fastrtps_cpp isn't available.")
 endif()
 
 ament_package()
