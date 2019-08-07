@@ -82,7 +82,7 @@ public:
   void sleep_to_allow_topics_discovery()
   {
     // This is a short sleep to allow the node some time to discover the topic
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   MemoryManagement memory_management_;
