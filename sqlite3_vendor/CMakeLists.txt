@@ -36,6 +36,10 @@ configure_file(sqlite3_vendorConfig-version.cmake.in "${PROJECT_BINARY_DIR}/sqli
 install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
 install(FILES
+  package.xml
+  DESTINATION share/${PROJECT_NAME})
+
+install(FILES
   "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig.cmake"
   "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig-version.cmake"
   DESTINATION share/${PROJECT_NAME}/cmake)
