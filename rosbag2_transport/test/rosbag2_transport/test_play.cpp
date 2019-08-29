@@ -67,12 +67,12 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   };
 
   std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
-  {serialize_test_message("topic1", 0, primitive_message1),
-    serialize_test_message("topic1", 100, primitive_message1),
-    serialize_test_message("topic1", 200, primitive_message1),
-    serialize_test_message("topic2", 50, complex_message1),
-    serialize_test_message("topic2", 150, complex_message1),
-    serialize_test_message("topic2", 250, complex_message1)};
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic2", 550, complex_message1),
+    serialize_test_message("topic2", 750, complex_message1),
+    serialize_test_message("topic2", 950, complex_message1)};
 
   reader_->prepare(messages, topic_types);
 

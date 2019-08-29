@@ -93,14 +93,6 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_info rosbag2_test_common)
   endif()
 
-  ament_add_gmock(test_record
-    test/rosbag2_transport/test_record.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_record)
-    target_link_libraries(test_record rosbag2_transport)
-    ament_target_dependencies(test_record test_msgs rosbag2_test_common)
-  endif()
-
   ament_add_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -115,14 +107,6 @@ if(BUILD_TESTING)
   if(TARGET test_record_all_no_discovery)
     target_link_libraries(test_record_all_no_discovery rosbag2_transport)
     ament_target_dependencies(test_record_all_no_discovery test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_play
-    test/rosbag2_transport/test_play.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_play)
-    target_link_libraries(test_play rosbag2_transport)
-    ament_target_dependencies(test_play test_msgs rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_play_timing
@@ -159,6 +143,33 @@ if(BUILD_TESTING)
   if(TARGET test_formatter)
     target_link_libraries(test_formatter rosbag2_transport)
   endif()
+
+  # disable the following tests for connext
+  # due to slower discovery of nodes
+  get_default_rmw_implementation(rmw_default)
+  set(SKIP_TEST "")
+  if(${rmw_default} MATCHES "(.*)connext(.*)")
+    set(SKIP_TEST "SKIP_TEST")
+  endif()
+
+  ament_add_gmock(test_record
+    test/rosbag2_transport/test_record.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if(TARGET test_record)
+    target_link_libraries(test_record rosbag2_transport)
+    ament_target_dependencies(test_record test_msgs rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_play
+    test/rosbag2_transport/test_play.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if(TARGET test_play)
+    target_link_libraries(test_play rosbag2_transport)
+    ament_target_dependencies(test_play test_msgs rosbag2_test_common)
+  endif()
+
 endif()
 
 ament_package()
