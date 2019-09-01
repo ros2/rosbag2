@@ -20,9 +20,9 @@ import launch_ros.actions
 def generate_launch_description():
     return LaunchDescription([
         launch_ros.actions.Node(
-            package='rosbag2_performance_publishers', node_executable='image_publisher1', output='screen'),
+            package='rosbag2_performance_testing', node_executable='image_publisher1', output='screen'),
         launch_ros.actions.Node(
-            package='rosbag2_performance_publishers', node_executable='image_publisher2', output='screen'),
+            package='rosbag2_performance_testing', node_executable='image_publisher2', output='screen'),
         launch_ros.actions.Node(
-            package='rosbag2_performance_publishers', node_executable='pointcloud_publisher', output='screen')
+            package='rosbag2_performance_testing', node_executable='pointcloud_publisher', output='screen')
     ])

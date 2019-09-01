@@ -5,6 +5,10 @@ import time
 import shutil
 import signal
 import yaml
+from launch import LaunchDescription, LaunchService
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import AnyLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
 
 
 def run_record_process(bagfile_name):
@@ -31,7 +35,24 @@ def run_record_process(bagfile_name):
 
 
 def run_launch_file(name):
-    return subprocess.Popen(['ros2', 'launch', 'rosbag2_performance_publishers', name], shell=False)
+    loop = osrf_pycommon.process_utils.get_loop()
+    launch_task = loop.create_task(ls.run_async())
+    if not launch_task.done():
+         asyncio.ensure_future(ls.shutdown(), loop=loop)
+         loop.run_until_complete(launch_task)
+    return launch_task.result()
+
+    ls = LaunchService()
+    launch_description = LaunchDescription([
+        IncludeLaunchDescription(
+            AnyLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('rosbag2_performance_testing'), 'launch', name)
+            )
+        )
+    ])
+    ls.include_launch_description(launch_description)
+    ls.run()
+    return ls
 
 
 def read_expectations_file(test_name):
@@ -75,13 +96,19 @@ def has_test_passed(actual_topics, expected_topics):
 
 
 def run_test(bagfile_name, launchfile_name):
-    shutil.rmtree(bagfile_name)
+    if os.path.isdir(os.path.join(os.getcwd(), bagfile_name)):
+        shutil.rmtree(os.path.join(os.getcwd(), bagfile_name))
     expected_topics = read_expectations_file('large_message_test')
     launch_process = run_launch_file(launchfile_name)
     run_record_process(bagfile_name)
-    launch_process.send_signal(signal.SIGINT)
+    launch_process.shutdown()
     actual_topics = inspect_bagfile(bagfile_name)
     print('Performance test passed' if has_test_passed(actual_topics, expected_topics) else 'Performance test failed')
 
 
-run_test('performance_bag', 'large_message_launch.launch.py')
+def main():
+    run_test('performance_bag', 'large_message_launch.launch.py')
+
+
+if __name__=="__main__":
+    main()
