@@ -3,6 +3,11 @@ Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* disable fastrtps dependent tests when unavailable (`#137 <https://github.com/ros2/rosbag2/issues/137>`_) (`#148 <https://github.com/ros2/rosbag2/issues/148>`_)
+* Contributors: Karsten Knese
+
 0.1.4 (2019-07-31)
 ------------------
 
