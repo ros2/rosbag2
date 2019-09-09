@@ -4,8 +4,8 @@ Changelog for package rosbag2_transport
 
 
 
-Forthcoming
------------
+0.1.5 (2019-09-09)
+------------------
 * disable some tests for connext (`#145 <https://github.com/ros2/rosbag2/issues/145>`_) (`#151 <https://github.com/ros2/rosbag2/issues/151>`_)
   Signed-off-by: Karsten Knese <karsten@openrobotics.org>
 * disable plugins/tests which need rmw_fastrtps_cpp if unavailable (`#137 <https://github.com/ros2/rosbag2/issues/137>`_) (`#148 <https://github.com/ros2/rosbag2/issues/148>`_)

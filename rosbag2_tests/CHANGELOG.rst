@@ -3,8 +3,8 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.1.5 (2019-09-09)
+------------------
 * disable fastrtps dependent tests when unavailable (`#137 <https://github.com/ros2/rosbag2/issues/137>`_) (`#148 <https://github.com/ros2/rosbag2/issues/148>`_)
 * Contributors: Karsten Knese
 
