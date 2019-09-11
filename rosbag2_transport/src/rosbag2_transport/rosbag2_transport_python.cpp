@@ -36,6 +36,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "all",
     "no_discovery",
     "polling_interval",
+    "max_bagfile_size",
     "topics",
     nullptr};
 
@@ -46,8 +47,9 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
+  uint64_t max_bagfile_size = UINT64_MAX;
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKO", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &serilization_format,
@@ -55,6 +57,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     &all,
     &no_discovery,
     &polling_interval_ms,
+    &max_bagfile_size,
     &topics))
   {
     return nullptr;
@@ -62,6 +65,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.max_bagfile_size = (uint64_t) max_bagfile_size;
   record_options.all = all;
   record_options.is_discovery_disabled = no_discovery;
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
