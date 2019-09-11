@@ -25,6 +25,7 @@ struct StorageOptions
 public:
   std::string uri;
   std::string storage_id;
+  uint64_t max_bagfile_size = UINT64_MAX;
 };
 
 }  // namespace rosbag2

@@ -55,7 +55,10 @@ void Writer::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  storage_ = storage_factory_->open_read_write(storage_options.uri, storage_options.storage_id);
+  storage_ = storage_factory_->open_read_write(
+    storage_options.uri,
+    storage_options.storage_id,
+    storage_options.max_bagfile_size);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }

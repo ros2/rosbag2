@@ -43,7 +43,8 @@ public:
     storage_options_.uri = "uri";
 
     EXPECT_CALL(
-      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
+      *storage_factory_,
+      open_read_write(_, _, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;

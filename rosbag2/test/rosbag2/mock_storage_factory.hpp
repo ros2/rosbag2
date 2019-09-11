@@ -30,9 +30,9 @@ public:
   MOCK_METHOD2(open_read_only,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(
       const std::string &, const std::string &));
-  MOCK_METHOD2(open_read_write,
+  MOCK_METHOD3(open_read_write,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
-      const std::string &, const std::string &));
+      const std::string &, const std::string &, const uint64_t));
 };
 
 #endif  // ROSBAG2__MOCK_STORAGE_FACTORY_HPP_
