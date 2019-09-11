@@ -48,7 +48,10 @@ public:
   void open(
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
-    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
+    const uint64_t max_bagfile_size = UINT64_MAX) override;
+
+  uint64_t get_db_size() override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
@@ -79,12 +82,17 @@ private:
 
   std::shared_ptr<SqliteWrapper> database_;
   std::string database_name_;
+  std::vector<std::string> database_files_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
   ReadQueryResult message_result_;
   ReadQueryResult::Iterator current_message_row_;
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
+  uint64_t database_file_counter_ = 0;
+  uint64_t max_bagfile_size_ = UINT64_MAX;
+  std::string uri_;
+  rosbag2_storage::storage_interfaces::IOFlag io_flag_;
 };
 
 }  // namespace rosbag2_storage_plugins

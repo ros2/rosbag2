@@ -146,7 +146,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + "_0.db3"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
@@ -171,7 +171,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
+    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + "_0.db3"
   }));
   EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
   EXPECT_THAT(metadata.message_count, Eq(0u));
