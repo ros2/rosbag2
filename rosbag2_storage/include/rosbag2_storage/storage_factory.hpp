@@ -48,7 +48,10 @@ public:
   open_read_only(const std::string & uri, const std::string & storage_id) override;
 
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(const std::string & uri, const std::string & storage_id) override;
+  open_read_write(
+    const std::string & uri,
+    const std::string & storage_id,
+    const uint64_t max_bagfile_size) override;
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;

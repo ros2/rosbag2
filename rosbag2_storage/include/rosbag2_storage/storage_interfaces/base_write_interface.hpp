@@ -38,6 +38,8 @@ public:
   virtual void create_topic(const TopicMetadata & topic) = 0;
 
   virtual void remove_topic(const TopicMetadata & topic) = 0;
+
+  virtual uint64_t get_db_size() = 0;
 };
 
 }  // namespace storage_interfaces

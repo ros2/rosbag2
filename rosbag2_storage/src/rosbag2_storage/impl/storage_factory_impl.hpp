@@ -52,7 +52,8 @@ std::shared_ptr<InterfaceT>
 get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & storage_id,
-  const std::string & uri)
+  const std::string & uri,
+  const uint64_t max_bagfile_size = UINT64_MAX)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
@@ -72,7 +73,7 @@ get_interface_instance(
   }
 
   try {
-    instance->open(uri, flag);
+    instance->open(uri, flag, max_bagfile_size);
     return instance;
   } catch (const std::runtime_error & ex) {
     ROSBAG2_STORAGE_LOG_ERROR_STREAM(
@@ -104,9 +105,10 @@ public:
   virtual ~StorageFactoryImpl() = default;
 
   std::shared_ptr<ReadWriteInterface> open_read_write(
-    const std::string & uri, const std::string & storage_id)
+    const std::string & uri, const std::string & storage_id, const uint64_t max_bagfile_size)
   {
-    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
+    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri,
+        max_bagfile_size);
 
     if (instance == nullptr) {
       ROSBAG2_STORAGE_LOG_ERROR_STREAM(

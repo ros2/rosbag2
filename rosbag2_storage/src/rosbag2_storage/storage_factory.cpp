@@ -43,8 +43,8 @@ std::shared_ptr<ReadOnlyInterface> StorageFactory::open_read_only(
 }
 
 std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
-  const std::string & uri, const std::string & storage_id)
+  const std::string & uri, const std::string & storage_id, const uint64_t max_bagfile_size)
 {
-  return impl_->open_read_write(uri, storage_id);
+  return impl_->open_read_write(uri, storage_id, max_bagfile_size);
 }
 }  // namespace rosbag2_storage

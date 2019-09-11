@@ -34,7 +34,10 @@ public:
   open_read_only(const std::string & uri, const std::string & storage_id) = 0;
 
   virtual std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(const std::string & uri, const std::string & storage_id) = 0;
+  open_read_write(
+    const std::string & uri,
+    const std::string & storage_id,
+    const uint64_t max_bagfile_size) = 0;
 };
 
 }  // namespace rosbag2_storage

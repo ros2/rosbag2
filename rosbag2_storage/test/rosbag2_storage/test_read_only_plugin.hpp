@@ -26,7 +26,10 @@ class TestReadOnlyPlugin : public rosbag2_storage::storage_interfaces::ReadOnlyI
 public:
   ~TestReadOnlyPlugin() override;
 
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
+  void open(
+    const std::string & uri,
+    rosbag2_storage::storage_interfaces::IOFlag flag,
+    const uint64_t max_bagfile_size) override;
 
   bool has_next() override;
 

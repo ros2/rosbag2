@@ -36,7 +36,7 @@ class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 public:
   virtual ~BaseIOInterface() = default;
 
-  virtual void open(const std::string & uri, IOFlag io_flag) = 0;
+  virtual void open(const std::string & uri, IOFlag io_flag, const uint64_t max_bagfile_size) = 0;
 };
 
 }  // namespace storage_interfaces
