@@ -14,6 +14,7 @@
   <depend>rosidl_generator_cpp</depend>
   <depend>rcutils</depend>
   <depend>rmw</depend>
+  <depend>rmw_fastrtps_cpp</depend>
   <depend>rosbag2</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>

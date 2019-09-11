@@ -56,7 +56,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(yaml_cpp_vendor)
+ament_export_dependencies(pluginlib yaml_cpp_vendor)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
