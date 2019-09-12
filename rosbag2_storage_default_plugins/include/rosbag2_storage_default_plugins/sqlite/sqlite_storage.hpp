@@ -49,7 +49,7 @@ public:
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
-    const uint64_t max_bagfile_size = UINT64_MAX) override;
+    const uint64_t max_bagfile_size = 0) override;
 
   uint64_t get_db_size() override;
 
@@ -90,7 +90,7 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   uint64_t database_file_counter_ = 0;
-  uint64_t max_bagfile_size_ = UINT64_MAX;
+  uint64_t max_bagfile_size_ = 0;
   std::string uri_;
   rosbag2_storage::storage_interfaces::IOFlag io_flag_;
 };

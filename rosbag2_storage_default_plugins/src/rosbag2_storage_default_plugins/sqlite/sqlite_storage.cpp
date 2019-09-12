@@ -126,10 +126,12 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
 
-  if (get_db_size() > max_bagfile_size_) {
-    database_file_counter_++;
-    database_.reset();
-    open(uri_, io_flag_, max_bagfile_size_);
+  if (max_bagfile_size_ > 0) {
+    if (get_db_size() > max_bagfile_size_) {
+      database_file_counter_++;
+      database_.reset();
+      open(uri_, io_flag_, max_bagfile_size_);
+    }
   }
 }
 

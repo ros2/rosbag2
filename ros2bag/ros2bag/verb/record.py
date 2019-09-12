@@ -14,7 +14,6 @@
 
 import datetime
 import os
-import sys
 
 from ros2bag.verb import VerbExtension
 
@@ -52,11 +51,11 @@ class RecordVerb(VerbExtension):
              'effect if --no-discovery is enabled.'
         )
         parser.add_argument(
-            '-b', '--bag-size', type=int, default=sys.maxsize,
+            '-b', '--bag-size', type=int, default=0,
             help='provides a threshold for recording bagfile size in bytes, before the recording is split and '
               'rolled over to a new bagfile. This value is only used as a guideline because actually enforcing a '
               'maximum file size is difficult. The actual bagfile size may be a little over this value. '
-              'Defaults to system maximum integer value.'
+              'By default it is zero, all recording data is written to single bagfile and this feature is disabled.'
         )
         self._subparser = parser
 

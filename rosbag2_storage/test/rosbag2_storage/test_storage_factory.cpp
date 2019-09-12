@@ -35,7 +35,7 @@ public:
   std::string test_plugin_id = "my_test_plugin";
   std::string test_read_only_plugin_id = "my_read_only_test_plugin";
   std::string test_unavailable_plugin_id = "my_unavailable_plugin";
-  uint64_t max_bagfile_size = UINT64_MAX;
+  uint64_t max_bagfile_size = 0;
 };
 
 TEST_F(StorageFactoryTest, load_test_plugin) {

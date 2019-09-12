@@ -47,7 +47,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
-  uint64_t max_bagfile_size = UINT64_MAX;
+  unsigned long long max_bagfile_size = 0;
   PyObject * topics = nullptr;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
     &uri,

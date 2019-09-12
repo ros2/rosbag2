@@ -53,7 +53,7 @@ get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & storage_id,
   const std::string & uri,
-  const uint64_t max_bagfile_size = UINT64_MAX)
+  const uint64_t max_bagfile_size = 0)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
