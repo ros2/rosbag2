@@ -59,7 +59,8 @@ SqliteWrapper::~SqliteWrapper()
   int rc = sqlite3_close(db_ptr);
   if (rc != SQLITE_OK) {
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
-      "Could not close open database. Error code: " + std::to_string(rc));
+      "Could not close open database. Error code: " + std::to_string(rc) +
+      " Error message: " + sqlite3_errstr(rc));
   }
 }
 

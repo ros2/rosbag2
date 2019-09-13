@@ -53,7 +53,7 @@ get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & storage_id,
   const std::string & uri,
-  const uint64_t max_bagfile_size = 0)
+  const uint64_t max_bagfile_size = rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
@@ -107,8 +107,8 @@ public:
   std::shared_ptr<ReadWriteInterface> open_read_write(
     const std::string & uri, const std::string & storage_id, const uint64_t max_bagfile_size)
   {
-    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri,
-        max_bagfile_size);
+    auto instance = get_interface_instance(
+      read_write_class_loader_, storage_id, uri, max_bagfile_size);
 
     if (instance == nullptr) {
       ROSBAG2_STORAGE_LOG_ERROR_STREAM(

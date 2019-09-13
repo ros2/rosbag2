@@ -22,6 +22,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -52,29 +53,31 @@ void SqliteStorage::open(
     load_metadata(uri) :
     std::unique_ptr<rosbag2_storage::BagMetadata>();
 
+  std::string database_name;
+
   if (metadata) {
     if (metadata->relative_file_paths.empty()) {
       throw std::runtime_error(
               "Failed to read from bag '" + uri + "': Missing database file path in metadata");
     }
 
-    database_name_ = metadata->relative_file_paths[0];
+    database_name = metadata->relative_file_paths[0];
   } else {
     if (is_read_only(io_flag)) {
       throw std::runtime_error("Failed to read from bag '" + uri + "': No metadata found.");
     }
 
-    database_name_ = rosbag2_storage::FilesystemHelper::get_folder_name(uri) +
-      "_" +
-      std::to_string(database_file_counter_) +
-      ".db3";
+    std::stringstream ss;
+    ss << rosbag2_storage::FilesystemHelper::get_folder_name(uri) << "_" <<
+      database_file_counter_ << ".db3";
+    database_name = ss.str();
   }
-  database_files_.insert(database_files_.end(), database_name_);
+  database_names_.push_back(database_name);
 
-  std::string database_path = rosbag2_storage::FilesystemHelper::concat({uri, database_name_});
+  std::string database_path = rosbag2_storage::FilesystemHelper::concat({uri, database_name});
   if (is_read_only(io_flag) && !database_exists(database_path)) {
     throw std::runtime_error(
-            "Failed to read from bag '" + uri + "': File '" + database_name_ + "' does not exist.");
+            "Failed to read from bag '" + uri + "': File '" + database_name + "' does not exist.");
   }
 
   try {
@@ -91,26 +94,14 @@ void SqliteStorage::open(
   io_flag_ = io_flag;
   max_bagfile_size_ = max_bagfile_size;
 
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << database_name_ << "'.");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << database_name << "'.");
 }
 
-uint64_t SqliteStorage::get_db_size()
+std::string SqliteStorage::get_current_database_file_name() const
 {
-  struct stat stat_res;
-  uint64_t size = 0;
-  std::string file = rosbag2_storage::FilesystemHelper::concat({uri_, database_name_});
-
-  if (stat(file.c_str(), &stat_res) == 0) {
-    size = stat_res.st_size;
-  } else {
-    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
-      "Failed to get size of file '" << file << "':" <<
-        std::strerror(
-        errno));
-  }
-
-  return size;
+  return database_names_.back();
 }
+
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
@@ -126,13 +117,25 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
 
-  if (max_bagfile_size_ > 0) {
-    if (get_db_size() > max_bagfile_size_) {
-      database_file_counter_++;
-      database_.reset();
-      open(uri_, io_flag_, max_bagfile_size_);
-    }
+  if (should_split_database()) {
+    split_database();
   }
+}
+
+bool SqliteStorage::should_split_database()
+{
+  auto current_database_file_path =
+    rosbag2_storage::FilesystemHelper::concat({uri_, get_current_database_file_name()});
+  return (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) &&
+         (rosbag2_storage::FilesystemHelper::get_file_size(current_database_file_path) >
+         max_bagfile_size_);
+}
+
+void SqliteStorage::split_database()
+{
+  database_file_counter_++;
+  database_.reset();
+  open(uri_, io_flag_, max_bagfile_size_);
 }
 
 bool SqliteStorage::has_next()
@@ -264,16 +267,26 @@ bool SqliteStorage::is_read_only(const rosbag2_storage::storage_interfaces::IOFl
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
-  metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths = {database_files_};
 
+  metadata.storage_identifier = "sqlite3";
+  metadata.relative_file_paths = database_names_;
+  metadata.bag_size =
+    rosbag2_storage::FilesystemHelper::calculate_directory_size(database_names_[0]);
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
 
+  aggregate_bagfiles_metadata(metadata);
+
+  return metadata;
+}
+
+void SqliteStorage::aggregate_bagfiles_metadata(rosbag2_storage::BagMetadata & metadata)
+{
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
-  for (const std::string & database_name : database_files_) {
-    std::unique_ptr<SqliteWrapper> database = std::make_unique<SqliteWrapper>(
+
+  for (const auto & database_name : database_names_) {
+    auto database = std::make_unique<SqliteWrapper>(
       rosbag2_storage::FilesystemHelper::concat({uri_, database_name}), io_flag_);
     auto statement = database->prepare_statement(
       "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
@@ -306,8 +319,6 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
-
-  return metadata;
 }
 
 }  // namespace rosbag2_storage_plugins

@@ -36,7 +36,8 @@ public:
   void open(
     const std::string & uri,
     IOFlag io_flag = IOFlag::READ_ONLY,
-    const uint64_t max_bagfile_size = 0) override = 0;
+    const uint64_t max_bagfile_size =
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) override = 0;
 };
 
 }  // namespace storage_interfaces

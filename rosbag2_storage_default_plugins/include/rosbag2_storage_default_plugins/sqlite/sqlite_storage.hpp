@@ -49,9 +49,8 @@ public:
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
-    const uint64_t max_bagfile_size = 0) override;
-
-  uint64_t get_db_size() override;
+    const uint64_t max_bagfile_size =
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
@@ -72,6 +71,10 @@ private:
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  std::string get_current_database_file_name() const;
+  bool should_split_database();
+  void split_database();
+  void aggregate_bagfiles_metadata(rosbag2_storage::BagMetadata & metadata);
 
   std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
   bool database_exists(const std::string & uri);
@@ -81,16 +84,15 @@ private:
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
-  std::string database_name_;
-  std::vector<std::string> database_files_;
+  std::vector<std::string> database_names_;
   SqliteStatement write_statement_;
   SqliteStatement read_statement_;
   ReadQueryResult message_result_;
   ReadQueryResult::Iterator current_message_row_;
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
-  uint64_t database_file_counter_ = 0;
-  uint64_t max_bagfile_size_ = 0;
+  uint64_t database_file_counter_ {0};
+  uint64_t max_bagfile_size_ {rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
   std::string uri_;
   rosbag2_storage::storage_interfaces::IOFlag io_flag_;
 };

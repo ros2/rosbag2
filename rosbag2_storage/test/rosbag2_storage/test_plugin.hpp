@@ -47,8 +47,6 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
-
-  uint64_t get_db_size() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_
