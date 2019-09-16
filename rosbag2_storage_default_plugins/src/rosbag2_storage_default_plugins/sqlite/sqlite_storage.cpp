@@ -36,17 +36,9 @@
 
 namespace rosbag2_storage_plugins
 {
-
-SqliteStorage::SqliteStorage()
-: database_(),
-  write_statement_(nullptr),
-  read_statement_(nullptr),
-  message_result_(nullptr),
-  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
-{}
-
 void SqliteStorage::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag,
+  const std::string & uri,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag,
   const uint64_t max_bagfile_size)
 {
   auto metadata = is_read_only(io_flag) ?
@@ -72,7 +64,6 @@ void SqliteStorage::open(
       database_file_counter_ << ".db3";
     database_name = ss.str();
   }
-  database_names_.push_back(database_name);
 
   std::string database_path = rosbag2_storage::FilesystemHelper::concat({uri, database_name});
   if (is_read_only(io_flag) && !database_exists(database_path)) {
@@ -85,6 +76,8 @@ void SqliteStorage::open(
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
+
+  database_names_.push_back(database_name);
 
   if (!metadata) {
     initialize();
@@ -122,7 +115,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   }
 }
 
-bool SqliteStorage::should_split_database()
+bool SqliteStorage::should_split_database() const
 {
   auto current_database_file_path =
     rosbag2_storage::FilesystemHelper::concat({uri_, get_current_database_file_name()});
@@ -134,6 +127,8 @@ bool SqliteStorage::should_split_database()
 void SqliteStorage::split_database()
 {
   database_file_counter_++;
+  read_statement_.reset();
+  write_statement_.reset();
   database_.reset();
   open(uri_, io_flag_, max_bagfile_size_);
 }
@@ -297,7 +292,7 @@ void SqliteStorage::aggregate_bagfiles_metadata(rosbag2_storage::BagMetadata & m
       std::string, std::string, std::string, int, rcutils_time_point_value_t,
       rcutils_time_point_value_t>();
 
-    for (auto result : query_results) {
+    for (const auto & result : query_results) {
       metadata.topics_with_message_count.push_back(
         {
           {std::get<0>(result), std::get<1>(result), std::get<2>(result)},

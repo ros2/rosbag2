@@ -42,7 +42,7 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
   : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  SqliteStorage();
+  SqliteStorage() = default;
   ~SqliteStorage() override = default;
 
   void open(
@@ -72,7 +72,7 @@ private:
   void prepare_for_reading();
   void fill_topics_and_types();
   std::string get_current_database_file_name() const;
-  bool should_split_database();
+  bool should_split_database() const;
   void split_database();
   void aggregate_bagfiles_metadata(rosbag2_storage::BagMetadata & metadata);
 
@@ -85,10 +85,11 @@ private:
 
   std::shared_ptr<SqliteWrapper> database_;
   std::vector<std::string> database_names_;
-  SqliteStatement write_statement_;
-  SqliteStatement read_statement_;
-  ReadQueryResult message_result_;
-  ReadQueryResult::Iterator current_message_row_;
+  SqliteStatement write_statement_ {};
+  SqliteStatement read_statement_ {};
+  ReadQueryResult message_result_ {nullptr};
+  ReadQueryResult::Iterator current_message_row_ {
+    nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   uint64_t database_file_counter_ {0};

@@ -49,7 +49,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths.emplace_back("bag.db3");
+  metadata.relative_file_paths.emplace_back("bag_0.db3");
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
