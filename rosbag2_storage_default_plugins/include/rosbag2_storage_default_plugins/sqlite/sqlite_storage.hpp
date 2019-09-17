@@ -48,9 +48,7 @@ public:
   void open(
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
-    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
-    const uint64_t max_bagfile_size =
-    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) override;
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
@@ -66,15 +64,17 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
+  uint64_t get_current_bagfile_size() const override;
+
+  void split_database() override;
+
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
   std::string get_current_database_file_name() const;
-  bool should_split_database() const;
-  void split_database();
-  void aggregate_bagfiles_metadata(rosbag2_storage::BagMetadata & metadata);
+  std::string get_current_database_file_path() const;
 
   std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
   bool database_exists(const std::string & uri);
@@ -93,7 +93,6 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   uint64_t database_file_counter_ {0};
-  uint64_t max_bagfile_size_ {rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
   std::string uri_;
   rosbag2_storage::storage_interfaces::IOFlag io_flag_;
 };

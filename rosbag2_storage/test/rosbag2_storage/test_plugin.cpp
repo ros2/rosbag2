@@ -29,10 +29,7 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing.\n";
 }
 
-void TestPlugin::open(
-  const std::string & uri,
-  rosbag2_storage::storage_interfaces::IOFlag flag,
-  const uint64_t max_bagfile_size)
+void TestPlugin::open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";
@@ -40,7 +37,6 @@ void TestPlugin::open(
     std::cout << "opening testplugin read write: ";
   }
   std::cout << uri << ".\n";
-  std::cout << "Maximum bagfile size: " << max_bagfile_size << " bytes.\n";
 }
 
 bool TestPlugin::has_next()
@@ -80,6 +76,17 @@ rosbag2_storage::BagMetadata TestPlugin::get_metadata()
 {
   std::cout << "\nreturning metadata\n";
   return rosbag2_storage::BagMetadata();
+}
+
+uint64_t TestPlugin::get_current_bagfile_size() const
+{
+  std::cout << "\nreturning current bagfile size\n";
+  return rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT;
+}
+
+void TestPlugin::split_database()
+{
+  std::cout << "\nsplitting database\n";
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

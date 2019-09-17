@@ -199,3 +199,17 @@ TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
 
   EXPECT_THAT(topics_and_types, IsEmpty());
 }
+
+TEST_F(StorageTestFixture, split_database_creates_new_database_file) {
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  writable_storage->open(temporary_dir_path_);
+
+  auto metadata = writable_storage->get_metadata();
+  EXPECT_THAT(metadata.relative_file_paths.size(), Eq(1u));
+
+  writable_storage->split_database();
+
+  metadata = writable_storage->get_metadata();
+  EXPECT_THAT(metadata.relative_file_paths.size(), Eq(2u));
+}

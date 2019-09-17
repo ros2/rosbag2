@@ -43,8 +43,7 @@ public:
     storage_options_.uri = "uri";
 
     EXPECT_CALL(
-      *storage_factory_,
-      open_read_write(_, _, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
+      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -121,4 +120,46 @@ TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
   .WillOnce(Return(ByMove(nullptr)));
 
   EXPECT_ANY_THROW(writer_->open(storage_options_, {input_format, output_format}));
+}
+
+TEST_F(WriterTest, bagfile_size_is_checked_on_every_write) {
+  const int counter = 10;
+  const uint64_t max_bagfile_size = 100;
+  EXPECT_CALL(*storage_, get_current_bagfile_size()).Times(counter);
+
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  std::string rmw_format = "rmw_format";
+
+  auto message = std::make_shared<rosbag2::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
+
+  for (auto i = 0; i < counter; i++) {
+    writer_->write(message);
+  }
+}
+
+TEST_F(WriterTest, get_metadata_gets_called_from_write_when_splitting_and_destructor) {
+  const uint64_t max_bagfile_size = 1;
+  EXPECT_CALL(*storage_, get_metadata()).Times(2);
+  EXPECT_CALL(*storage_, split_database()).Times(1);
+  EXPECT_CALL(*storage_, get_current_bagfile_size())
+  .Times(AtLeast(1)).WillRepeatedly(Return(max_bagfile_size + 1));
+
+  writer_ = std::make_unique<rosbag2::Writer>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  std::string rmw_format = "rmw_format";
+
+  auto message = std::make_shared<rosbag2::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
+
+  writer_->write(message);
 }

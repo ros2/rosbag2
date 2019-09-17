@@ -32,11 +32,11 @@ class ROSBAG2_STORAGE_PUBLIC ReadWriteInterface
 public:
   ~ReadWriteInterface() override = default;
 
-  void open(
-    const std::string & uri,
-    IOFlag io_flag = IOFlag::READ_WRITE,
-    const uint64_t max_bagfile_size =
-    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) override = 0;
+  void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_WRITE) override = 0;
+
+  uint64_t get_current_bagfile_size() const override = 0;
+
+  void split_database() override = 0;
 };
 
 }  // namespace storage_interfaces
