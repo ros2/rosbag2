@@ -18,7 +18,7 @@ endif()
 option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
 # Only enable sanitizers on x64 architectures
 # https://github.com/google/sanitizers/issues/794
-if(NOT "${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
   set(DISABLE_SANITIZERS ON)
 endif()
 
