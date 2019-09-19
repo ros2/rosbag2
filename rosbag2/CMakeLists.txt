@@ -16,6 +16,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
+# Only enable sanitizers on x64 architectures
+# https://github.com/google/sanitizers/issues/794
+if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+  set(DISABLE_SANITIZERS ON)
+endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
