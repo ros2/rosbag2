@@ -3,6 +3,9 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.1.5 (2019-09-09)
 ------------------
 

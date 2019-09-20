@@ -3,6 +3,10 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* enable address sanitizers only on 64bit machines (`#149 <https://github.com/ros2/rosbag2/issues/149>`_) (`#162 <https://github.com/ros2/rosbag2/issues/162>`_)
+
 0.1.5 (2019-09-09)
 ------------------
 

@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.5 (2019-09-09)
 ------------------
 
