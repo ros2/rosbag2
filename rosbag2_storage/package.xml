@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_storage</name>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <description>ROS2 independent storage format to store serialized ROS2 messages</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <license>Apache License 2.0</license>
