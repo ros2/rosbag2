@@ -26,12 +26,12 @@ namespace rosbag2_transport
 {
 
 GenericSubscription::GenericSubscription(
-  std::shared_ptr<rcl_node_t> node_handle,
+  rclcpp::node_interfaces::NodeBaseInterface * node_base,
   const rosidl_message_type_support_t & ts,
   const std::string & topic_name,
   std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 : SubscriptionBase(
-    node_handle,
+    node_base,
     ts,
     topic_name,
     rcl_subscription_get_default_options(),
