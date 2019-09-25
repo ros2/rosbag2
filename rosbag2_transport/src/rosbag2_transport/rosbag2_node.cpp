@@ -51,7 +51,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
 
   try {
     subscription = std::make_shared<GenericSubscription>(
-      get_node_base_interface()->get_shared_rcl_node_handle(),
+      get_node_base_interface().get(),
       *type_support,
       topic,
       callback);
