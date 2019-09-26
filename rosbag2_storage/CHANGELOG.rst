@@ -3,6 +3,12 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.0 (2019-09-26)
+------------------
+* Fix test failures on armhf (`#135 <https://github.com/ros2/rosbag2/issues/135>`_)
+* Export pluginlib to downstream packages (`#113 <https://github.com/ros2/rosbag2/issues/113>`_)
+* Contributors: Esteve Fernandez, Prajakta Gokhale
+
 0.1.2 (2019-05-20)
 ------------------
 * Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)

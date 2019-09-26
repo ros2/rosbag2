@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.0 (2019-09-26)
+------------------
+
 0.1.2 (2019-05-20)
 ------------------
 * clean up test dependencies for rosbag2_test_common (`#118 <https://github.com/ros2/rosbag2/issues/118>`_)

@@ -3,6 +3,11 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.0 (2019-09-26)
+------------------
+* disable plugins/tests which need rmw_fastrtps_cpp if unavailable (`#137 <https://github.com/ros2/rosbag2/issues/137>`_)
+* Contributors: ivanpauno
+
 0.1.2 (2019-05-20)
 ------------------
 

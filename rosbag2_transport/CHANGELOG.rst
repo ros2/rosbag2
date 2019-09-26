@@ -4,6 +4,14 @@ Changelog for package rosbag2_transport
 
 
 
+0.2.0 (2019-09-26)
+------------------
+* fixup after API changes to Subscription in rclcpp (`#166 <https://github.com/ros2/rosbag2/issues/166>`_)
+* disable some tests for connext (`#145 <https://github.com/ros2/rosbag2/issues/145>`_)
+* disable plugins/tests which need rmw_fastrtps_cpp if unavailable (`#137 <https://github.com/ros2/rosbag2/issues/137>`_)
+* Fix test failures on armhf (`#135 <https://github.com/ros2/rosbag2/issues/135>`_)
+* Contributors: Karsten Knese, Prajakta Gokhale, William Woodall, ivanpauno
+
 0.1.2 (2019-05-20)
 ------------------
 * Fixes an init race condition (`#93 <https://github.com/ros2/rosbag2/issues/93>`_)
