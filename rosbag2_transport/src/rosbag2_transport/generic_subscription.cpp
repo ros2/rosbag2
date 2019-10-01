@@ -50,12 +50,29 @@ std::shared_ptr<rmw_serialized_message_t> GenericSubscription::create_serialized
   return borrow_serialized_message(0);
 }
 
+void * GenericSubscription::loan_message()
+{
+  return nullptr;
+}
+
+rclcpp::LoanedMessageSequence GenericSubscription::loan_message_sequence()
+{
+  return rclcpp::LoanedMessageSequence(this);
+}
+
 void GenericSubscription::handle_message(
   std::shared_ptr<void> & message, const rmw_message_info_t & message_info)
 {
   (void) message_info;
   auto typed_message = std::static_pointer_cast<rmw_serialized_message_t>(message);
   callback_(typed_message);
+}
+
+void GenericSubscription::handle_loaned_message(
+  void * message, const rmw_message_info_t & message_info)
+{
+  (void) message;
+  (void) message_info;
 }
 
 void GenericSubscription::return_message(std::shared_ptr<void> & message)
@@ -68,6 +85,19 @@ void GenericSubscription::return_serialized_message(
   std::shared_ptr<rmw_serialized_message_t> & message)
 {
   message.reset();
+}
+
+void GenericSubscription::return_loaned_message(
+  void * loaned_message)
+{
+  (void) loaned_message;
+}
+
+void GenericSubscription::return_loaned_message_sequence(
+  rclcpp::LoanedMessageSequence && loaned_message_sequence)
+{
+  // scope exit
+  (void) loaned_message_sequence;
 }
 
 void GenericSubscription::handle_intra_process_message(
