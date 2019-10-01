@@ -49,6 +49,13 @@ class RecordVerb(VerbExtension):
             help='time in ms to wait between querying available topics for recording. It has no '
                  'effect if --no-discovery is enabled.'
         )
+        parser.add_argument(
+            '-b', '--bag-size', type=int, default=0,
+            help='provides a threshold for recording bagfile size in bytes, before the recording is split and '
+              'rolled over to a new bagfile. This value is only used as a guideline because actually enforcing a '
+              'maximum file size is difficult. The actual bagfile size may be a little over this value. '
+              'By default it is zero, all recording data is written to single bagfile and this feature is disabled.'
+        )
         self._subparser = parser
 
     def create_bag_directory(self, uri):
@@ -83,7 +90,8 @@ class RecordVerb(VerbExtension):
                 node_prefix=NODE_NAME_PREFIX,
                 all=True,
                 no_discovery=args.no_discovery,
-                polling_interval=args.polling_interval)
+                polling_interval=args.polling_interval,
+                max_bagfile_size=args.bag_size)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -99,6 +107,7 @@ class RecordVerb(VerbExtension):
                 node_prefix=NODE_NAME_PREFIX,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
+                max_bagfile_size=args.bag_size,
                 topics=args.topics)
         else:
             self._subparser.print_help()
