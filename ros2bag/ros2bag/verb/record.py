@@ -55,6 +55,13 @@ class RecordVerb(VerbExtension):
                   'Default it is zero, recording written in single bagfile and splitting '
                   'is disabled.'
         )
+        parser.add_argument(
+            '-b', '--bag-size', type=int, default=0,
+            help='provides a threshold for recording bagfile size in bytes, before the recording is split and '
+              'rolled over to a new bagfile. This value is only used as a guideline because actually enforcing a '
+              'maximum file size is difficult. The actual bagfile size may be a little over this value. '
+              'By default it is zero, all recording data is written to single bagfile and this feature is disabled.'
+        )
         self._subparser = parser
 
     def create_bag_directory(self, uri):
