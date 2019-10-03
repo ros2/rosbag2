@@ -48,37 +48,9 @@ void allocate_internal_types(
   void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
 
 ROSBAG2_PUBLIC
-void allocate_element(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
-
-ROSBAG2_PUBLIC
-void allocate_array(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
-
-ROSBAG2_PUBLIC
-void allocate_vector(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
-
-ROSBAG2_PUBLIC
 void deallocate_introspection_message(
   rosbag2_introspection_message_t * msg,
-  const rosidl_typesupport_introspection_cpp::MessageMembers * members);
-
-ROSBAG2_PUBLIC
-void deallocate_internal_types(
-  void * msg, const rosidl_typesupport_introspection_cpp::MessageMembers * members);
-
-ROSBAG2_PUBLIC
-void cleanup_element(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
-
-ROSBAG2_PUBLIC
-void cleanup_array(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
-
-ROSBAG2_PUBLIC
-void cleanup_vector(
-  void * data, const rosidl_typesupport_introspection_cpp::MessageMember & member);
+  const rosidl_message_type_support_t * introspection_ts);
 
 }  // namespace rosbag2
 

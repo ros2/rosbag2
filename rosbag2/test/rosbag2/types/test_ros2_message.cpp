@@ -66,7 +66,13 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_basic_types_message) {
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_strings_message_with_empty_string) {
   auto message = get_allocated_message("test_msgs/Strings");
 
+  if (!message) {
+    fprintf(stderr, "could not get string message\n");
+  }
   auto data = static_cast<test_msgs::msg::Strings *>(message->message);
+  if (!data) {
+    fprintf(stderr, "allocation failed for string\n");
+  }
 
   data->string_value = "";
 }

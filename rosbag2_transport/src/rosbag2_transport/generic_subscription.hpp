@@ -56,11 +56,6 @@ public:
 
   std::shared_ptr<rmw_serialized_message_t> create_serialized_message() override;
 
-  void * loan_message() override;
-
-  rclcpp::LoanedMessageSequence
-  loan_message_sequence() override;
-
   void handle_message(
     std::shared_ptr<void> & message, const rmw_message_info_t & message_info) override;
 
@@ -70,10 +65,6 @@ public:
   void return_message(std::shared_ptr<void> & message) override;
 
   void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
-
-  void return_loaned_message(void * loaned_message) override;
-
-  void return_loaned_message_sequence(rclcpp::LoanedMessageSequence && loaned_mesage_sequence) override;
 
   // Intra-process message handling is not supported by this publisher
   void handle_intra_process_message(
