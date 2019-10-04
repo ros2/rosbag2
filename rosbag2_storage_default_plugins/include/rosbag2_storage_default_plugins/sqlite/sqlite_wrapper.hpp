@@ -47,6 +47,7 @@ public:
 
 private:
   DBPtr db_ptr;
+  std::string uri_;
 };
 
 
