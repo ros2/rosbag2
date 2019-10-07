@@ -38,6 +38,7 @@ public:
   MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicMetadata>());
   MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
   MOCK_CONST_METHOD0(get_bagfile_size, uint64_t());
+  MOCK_METHOD0(split_database, void());
 };
 
 #endif  // ROSBAG2__MOCK_STORAGE_HPP_

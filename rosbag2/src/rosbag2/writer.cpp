@@ -32,7 +32,8 @@ Writer::Writer(
 : storage_factory_(std::move(storage_factory)),
   converter_factory_(std::move(converter_factory)),
   metadata_io_(std::move(metadata_io)),
-  converter_(nullptr)
+  converter_(nullptr),
+  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
 {}
 
 Writer::~Writer()
@@ -60,6 +61,7 @@ void Writer::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
   uri_ = storage_options.uri;
+  max_bagfile_size_ = storage_options.max_bagfile_size;
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
@@ -91,6 +93,12 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   }
 
   storage_->write(converter_ ? converter_->convert(message) : message);
+}
+
+bool Writer::should_split_database() const
+{
+  return (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) &&
+         (storage_->get_bagfile_size() > max_bagfile_size_);
 }
 
 }  // namespace rosbag2
