@@ -92,6 +92,11 @@ public:
     return *writer_impl_;
   }
 
+  /**
+   * Check if the current recording database file needs to be split and rolled over to new file.
+   */
+  virtual bool should_split_database() const;
+
 private:
   std::unique_ptr<rosbag2::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
