@@ -37,6 +37,8 @@ public:
   virtual ~BaseIOInterface() = default;
 
   virtual void open(const std::string & uri, IOFlag io_flag) = 0;
+
+  virtual uint64_t get_bagfile_size() const = 0;
 };
 
 }  // namespace storage_interfaces
