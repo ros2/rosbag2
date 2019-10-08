@@ -24,6 +24,8 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
+#include "../logging.hpp"
+
 namespace rosbag2_storage_plugins
 {
 
@@ -54,7 +56,12 @@ SqliteWrapper::SqliteWrapper()
 
 SqliteWrapper::~SqliteWrapper()
 {
-  sqlite3_close(db_ptr);
+  const int rc = sqlite3_close(db_ptr);
+  if (rc != SQLITE_OK) {
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+      "Could not close open database. Error code: " << rc <<
+        " Error message: " << sqlite3_errstr(rc));
+  }
 }
 
 SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
