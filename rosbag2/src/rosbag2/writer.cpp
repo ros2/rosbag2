@@ -66,4 +66,36 @@ bool Writer::should_split_database() const
          (storage_->get_current_bagfile_size() > max_bagfile_size_);
 }
 
+void Writer::initialize_metadata_()
+{
+  metadata_.message_count = 0;
+  metadata_.topics_with_message_count = {};
+  metadata_.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(INT64_MAX));
+  metadata_.duration = std::chrono::nanoseconds(0);
+  metadata_.bag_size = 0;
+}
+
+void Writer::aggregate_metadata_(rosbag2_storage::BagMetadata metadata)
+{
+  metadata_.storage_identifier = metadata.storage_identifier;
+  metadata_.relative_file_paths.swap(metadata.relative_file_paths);
+  metadata_.message_count += metadata.message_count;
+
+  if (metadata_.starting_time > metadata.starting_time &&
+    metadata.starting_time !=
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0)))
+  {
+    metadata_.starting_time = metadata.starting_time;
+  }
+
+  metadata_.duration += metadata.duration;
+  metadata_.bag_size = metadata.bag_size;
+  metadata_.topics_with_message_count.insert(
+    metadata_.topics_with_message_count.end(),
+    metadata.topics_with_message_count.begin(),
+    metadata.topics_with_message_count.end());
+}
+
 }  // namespace rosbag2
