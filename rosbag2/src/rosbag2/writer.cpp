@@ -39,7 +39,8 @@ Writer::Writer(
 Writer::~Writer()
 {
   if (!uri_.empty()) {
-    metadata_io_->write_metadata(uri_, storage_->get_metadata());
+    aggregate_metadata_(storage_->get_metadata());
+    metadata_io_->write_metadata(uri_, metadata_);
   }
 
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
@@ -62,6 +63,7 @@ void Writer::open(
   }
   uri_ = storage_options.uri;
   max_bagfile_size_ = storage_options.max_bagfile_size;
+  initialize_metadata_();
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
@@ -93,12 +95,49 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   }
 
   storage_->write(converter_ ? converter_->convert(message) : message);
+
+  if (should_split_database()) {
+    aggregate_metadata_(storage_->get_metadata());
+    storage_->split_database();
+  }
 }
 
 bool Writer::should_split_database() const
 {
   return (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) &&
          (storage_->get_current_bagfile_size() > max_bagfile_size_);
+}
+
+void Writer::initialize_metadata_()
+{
+  metadata_.message_count = 0;
+  metadata_.topics_with_message_count = {};
+  metadata_.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(INT64_MAX));
+  metadata_.duration = std::chrono::nanoseconds(0);
+  metadata_.bag_size = 0;
+}
+
+void Writer::aggregate_metadata_(rosbag2_storage::BagMetadata metadata)
+{
+  metadata_.storage_identifier = metadata.storage_identifier;
+  metadata_.relative_file_paths.swap(metadata.relative_file_paths);
+  metadata_.message_count += metadata.message_count;
+
+  if (metadata_.starting_time > metadata.starting_time &&
+    metadata.starting_time !=
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0)))
+  {
+    metadata_.starting_time = metadata.starting_time;
+  }
+
+  metadata_.duration += metadata.duration;
+  metadata_.bag_size = metadata.bag_size;
+  metadata_.topics_with_message_count.insert(
+    metadata_.topics_with_message_count.end(),
+    metadata.topics_with_message_count.begin(),
+    metadata.topics_with_message_count.end());
 }
 
 }  // namespace rosbag2

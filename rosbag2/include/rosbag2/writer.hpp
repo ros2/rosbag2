@@ -101,6 +101,9 @@ public:
   virtual bool should_split_database() const;
 
 private:
+  void initialize_metadata_();
+  void aggregate_metadata_(rosbag2_storage::BagMetadata metadata);
+
   std::string uri_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
@@ -108,6 +111,7 @@ private:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
   uint64_t max_bagfile_size_;
+  rosbag2_storage::BagMetadata metadata_;
 };
 
 }  // namespace rosbag2
