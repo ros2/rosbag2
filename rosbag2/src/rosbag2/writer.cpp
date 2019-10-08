@@ -63,7 +63,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 bool Writer::should_split_database() const
 {
   return (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) &&
-         (storage_->get_bagfile_size() > max_bagfile_size_);
+         (storage_->get_current_bagfile_size() > max_bagfile_size_);
 }
 
 }  // namespace rosbag2
