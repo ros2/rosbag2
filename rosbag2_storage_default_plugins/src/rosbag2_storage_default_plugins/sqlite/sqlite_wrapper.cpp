@@ -31,8 +31,7 @@ namespace rosbag2_storage_plugins
 
 SqliteWrapper::SqliteWrapper(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
-: db_ptr(nullptr),
-  uri_(uri)
+: db_ptr(nullptr)
 {
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
@@ -60,7 +59,7 @@ SqliteWrapper::~SqliteWrapper()
   const int rc = sqlite3_close(db_ptr);
   if (rc != SQLITE_OK) {
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
-      "Could not close open database: " << uri_ << ". Error code: " << rc <<
+      "Could not close open database. Error code: " << rc <<
         " Error message: " << sqlite3_errstr(rc));
   }
 }
