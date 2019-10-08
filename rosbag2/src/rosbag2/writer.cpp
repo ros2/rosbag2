@@ -119,7 +119,7 @@ void Writer::initialize_metadata_()
   metadata_.bag_size = 0;
 }
 
-void Writer::aggregate_metadata_(rosbag2_storage::BagMetadata metadata)
+void Writer::aggregate_metadata_(rosbag2_storage::BagMetadata&& metadata)
 {
   metadata_.storage_identifier = metadata.storage_identifier;
   metadata_.relative_file_paths.swap(metadata.relative_file_paths);

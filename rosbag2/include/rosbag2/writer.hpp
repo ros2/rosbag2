@@ -102,7 +102,7 @@ public:
 
 private:
   void initialize_metadata_();
-  void aggregate_metadata_(rosbag2_storage::BagMetadata metadata);
+  void aggregate_metadata_(rosbag2_storage::BagMetadata&& metadata);
 
   std::string uri_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
