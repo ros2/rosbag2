@@ -36,10 +36,7 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
-  uint64_t get_bagfile_size() const override;
-
-private:
-  const uint64_t default_max_bagfile_size = 0;
+  uint64_t get_current_bagfile_size() const override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_READ_ONLY_PLUGIN_HPP_

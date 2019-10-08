@@ -64,13 +64,17 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
-  uint64_t get_bagfile_size() const override;
+  uint64_t get_current_bagfile_size() const override;
+
+  void split_database() override;
 
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  std::string get_current_database_file_name() const;
+  std::string get_current_database_file_path() const;
 
   std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
   bool database_exists(const std::string & uri);
@@ -80,7 +84,7 @@ private:
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
-  std::string database_name_;
+  std::vector<std::string> database_names_;
   SqliteStatement write_statement_ {};
   SqliteStatement read_statement_ {};
   ReadQueryResult message_result_ {nullptr};
@@ -88,7 +92,9 @@ private:
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
+  uint64_t database_file_counter_ {0};
   std::string uri_;
+  rosbag2_storage::storage_interfaces::IOFlag io_flag_;
 };
 
 }  // namespace rosbag2_storage_plugins

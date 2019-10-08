@@ -35,7 +35,7 @@ public:
 
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 
-  uint64_t get_bagfile_size() const override = 0;
+  uint64_t get_current_bagfile_size() const override = 0;
 };
 
 }  // namespace storage_interfaces
