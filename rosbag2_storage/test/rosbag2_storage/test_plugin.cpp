@@ -85,5 +85,4 @@ uint64_t TestPlugin::get_bagfile_size() const
   return default_max_bagfile_size;
 }
 
-
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)
