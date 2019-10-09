@@ -98,7 +98,7 @@ public:
   /**
    * Check if the current recording database file needs to be split and rolled over to new file.
    */
-  virtual bool should_split_database() const;
+  virtual bool should_split_bagfile() const;
 
 private:
   std::string uri_;
