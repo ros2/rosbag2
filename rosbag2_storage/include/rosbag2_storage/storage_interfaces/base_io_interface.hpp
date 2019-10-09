@@ -38,6 +38,10 @@ public:
 
   virtual void open(const std::string & uri, IOFlag io_flag) = 0;
 
+  /**
+   * Returns the size of the bagfile.
+   * \returns the size of the bagfile in bytes.
+   */
   virtual uint64_t get_bagfile_size() const = 0;
 };
 
