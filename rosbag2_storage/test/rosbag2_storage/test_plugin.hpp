@@ -44,6 +44,11 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
+
+  uint64_t get_bagfile_size() const override;
+
+private:
+  const uint64_t default_max_bagfile_size = 0;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_

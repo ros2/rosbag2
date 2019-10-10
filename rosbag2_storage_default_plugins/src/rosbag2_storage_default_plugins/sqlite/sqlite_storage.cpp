@@ -36,14 +36,6 @@
 namespace rosbag2_storage_plugins
 {
 
-SqliteStorage::SqliteStorage()
-: database_(),
-  write_statement_(nullptr),
-  read_statement_(nullptr),
-  message_result_(nullptr),
-  current_message_row_(nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END)
-{}
-
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
@@ -82,6 +74,7 @@ void SqliteStorage::open(
     initialize();
   }
 
+  uri_ = uri;
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << uri << "'.");
 }
 
@@ -131,6 +124,12 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
   }
 
   return all_topics_and_types_;
+}
+
+uint64_t SqliteStorage::get_bagfile_size() const
+{
+  return rosbag2_storage::FilesystemHelper::get_file_size(
+    rosbag2_storage::FilesystemHelper::concat({uri_, database_name_}));
 }
 
 void SqliteStorage::initialize()

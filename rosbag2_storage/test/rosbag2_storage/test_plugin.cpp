@@ -79,4 +79,10 @@ rosbag2_storage::BagMetadata TestPlugin::get_metadata()
   return rosbag2_storage::BagMetadata();
 }
 
+uint64_t TestPlugin::get_bagfile_size() const
+{
+  std::cout << "\nreturning bagfile size\n";
+  return default_max_bagfile_size;
+}
+
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)
