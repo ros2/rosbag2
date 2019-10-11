@@ -80,23 +80,6 @@ public:
    */
   virtual bool has_next();
 
-    /**
-   * Ask whether there is another database file to read from the list of relative
-   * file paths.
-   *
-   * \return true if there are still files to read in the list
-   */
-  virtual bool has_next_file();
-
-  /**
-   * Update the current database file to read from and remove the first (front)
-   * element in the list of files to read from.
-   *
-   * Expected usage:
-   * if (has_next_file()) get_next_file();
-   */
-  void get_next_file();
-
   /**
    * Read next message from storage. Will throw if no more messages are available.
    * The message will be serialized in the format given to `open`.
@@ -118,14 +101,32 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
+  /**
+   * Ask whether there is another database file to read from the list of relative file paths.
+   *
+   * \return true if there are still files to read in the list. false otherwise.
+   */
+  bool has_next_file() const;
+
+  /**
+   * Update the current database file to read from by incrementing the current file offset.
+   * A std::out_of_range error will be thrown if the file offset is out of range.
+   *
+   * Expected usage:
+   * if (has_next_file_()) file_string = get_next_file_();
+   *
+   * \throws runtime_error if the list of file paths is empty.
+   */
+  std::string get_next_file();
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
   std::unique_ptr<Converter> converter_;
-  std::string storage_id_;
-  std::string file_uri_;
-  std::vector<std::string> file_paths_;
-  std::string current_file_;
+
+  StorageOptions storage_options_;  // The storage options passed to the reader.
+  std::vector<std::string> file_paths_; // List of database files.
+  std::size_t current_file_offset_;  // Index of file to read from file_paths_.
 };
 
 }  // namespace rosbag2

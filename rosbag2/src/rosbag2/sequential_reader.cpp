@@ -29,7 +29,7 @@ SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
 : storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory)),
-  converter_(nullptr)
+  converter_(nullptr), current_file_offset_(0)
 {}
 
 SequentialReader::~SequentialReader()
@@ -41,17 +41,15 @@ void
 SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  file_uri_ = storage_options.uri;
-  storage_id_ = storage_options.storage_id;
-  storage_ = storage_factory_->open_read_only(file_uri_, storage_id_);
+  storage_options_ = storage_options;
+  storage_ = storage_factory_->open_read_only(storage_options_.uri, storage_options_.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  BagMetadata bag_metadata = storage_->get_metadata();
+  const auto bag_metadata = storage_->get_metadata();
   // Get all the files that need to be read from
   file_paths_ = bag_metadata.relative_file_paths;
-  get_next_file();
 
   // Get all the topics to read
   auto topics = bag_metadata.topics_with_message_count;
@@ -80,16 +78,19 @@ SequentialReader::open(
   }
 }
 
-void SequentialReader::get_next_file()
+std::string SequentialReader::get_next_file()
 {
-  current_file_ = file_paths_.front();
-  file_paths_.erase(file_paths_.begin());
+  assert(current_file_offset_ < file_paths_.size());
+  current_file_offset_++;
+  return file_paths_.at(current_file_offset_);
 }
 
-bool SequentialReader::has_next_file()
+bool SequentialReader::has_next_file() const
 {
-  return !file_paths_.empty();
+  assert(!file_paths_.empty());
+  return (current_file_offset_ + 1 < file_paths_.size());
 }
+
 
 bool SequentialReader::has_next()
 {
@@ -98,9 +99,9 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     if (!storage_->has_next()) {
       if (has_next_file()) {
-        get_next_file();
-        ROSBAG2_LOG_INFO_STREAM("New file: " << current_file_);
-        storage_ = storage_factory_->open_read_only(current_file_, storage_id_);
+        std::string current_file = get_next_file();
+        ROSBAG2_LOG_INFO_STREAM("New file: " << file_paths_.at(current_file_offset_));
+        storage_ = storage_factory_->open_read_only(current_file, storage_options_.storage_id);
       }
     }
     return storage_->has_next();
