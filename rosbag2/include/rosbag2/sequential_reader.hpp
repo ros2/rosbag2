@@ -23,6 +23,7 @@
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2/converter.hpp"
+#include "rosbag2/logging.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/storage_options.hpp"
@@ -79,6 +80,23 @@ public:
    */
   virtual bool has_next();
 
+    /**
+   * Ask whether there is another database file to read from the list of relative
+   * file paths.
+   *
+   * \return true if there are still files to read in the list
+   */
+  virtual bool has_next_file();
+
+  /**
+   * Update the current database file to read from and remove the first (front)
+   * element in the list of files to read from.
+   *
+   * Expected usage:
+   * if (has_next_file()) get_next_file();
+   */
+  void get_next_file();
+
   /**
    * Read next message from storage. Will throw if no more messages are available.
    * The message will be serialized in the format given to `open`.
@@ -104,6 +122,10 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
   std::unique_ptr<Converter> converter_;
+  std::string storage_id_;
+  std::string file_uri_;
+  std::vector<std::string> file_paths_;
+  std::string current_file_;
 };
 
 }  // namespace rosbag2
