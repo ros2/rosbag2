@@ -21,14 +21,6 @@
 
 #include "rosbag2/reader.hpp"
 
-// This is necessary because of using stl types here. It is completely safe, because
-// a) the member is not accessible from the outside
-// b) there are no inline functions.
-#ifdef _WIN32
-# pragma warning(push)
-# pragma warning(disable:4251)
-#endif
-
 namespace rosbag2
 {
 /**
@@ -43,9 +35,9 @@ public:
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>());
+    std::make_shared<SerializationFormatConverterFactory>()) - ;
 
-  virtual ~SequentialReader();
+  ~SequentialReader() = default;
 
   /**
      * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
@@ -92,8 +84,6 @@ public:
    */
   virtual std::shared_ptr<SerializedBagMessage> read_next();
 
-  std::shared_ptr<rosbag2::Reader> reader;  // Base reader class
-
 private:
   /**
    * Ask whether there is another database file to read from the list of relative file paths.
@@ -113,15 +103,12 @@ private:
    */
   std::string get_next_file();
 
-  StorageOptions storage_options_;  // The storage options passed to the reader.
-  std::vector<std::string> file_paths_;  // List of database files.
-  std::size_t current_file_offset_;  // Index of file to read from file_paths_.
+  std::shared_ptr<rosbag2::Reader> reader_;  // Underlying reader_ class that reads single bags.
+  StorageOptions storage_options_;  // The storage options passed to the reader_.
+  std::vector<std::string> file_paths_ {};  // List of database files.
+  std::size_t current_file_offset_ {0};  // Index of file to read from file_paths_.
 };
 
 }  // namespace rosbag2
-
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
 
 #endif  // ROSBAG2__SEQUENTIAL_READER_HPP_

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rosbag2/info.hpp"
+#include "rosbag2/logging.hpp"
 #include "rosbag2/reader.hpp"
 
 #include <memory>
@@ -20,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/info.hpp"
+
 
 namespace rosbag2
 {
@@ -28,13 +30,13 @@ namespace rosbag2
 Reader::Reader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory)),
-  converter_(nullptr)
+: storage_factory_(std::move(storage_factory)),
+  converter_factory_(std::move(converter_factory))
 {}
 
 Reader::~Reader()
 {
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
+  reset();  // Necessary to ensure that the storage is destroyed before the factory
 }
 
 void Reader::reset()
@@ -42,80 +44,102 @@ void Reader::reset()
   storage_.reset();
 }
 
-void Reader::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+void Reader::check_topics_serialization_formats(const std::vector<TopicInformation> & topics)
 {
-  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
-  if (!storage_) {
-    throw std::runtime_error("No storage could be initialized. Abort");
-  }
-  auto topics = get_metadata().topics_with_message_count;
-  if (topics.empty()) {
-    return;
-  }
-
-  // Currently a bag file can only be played if all topics have the same serialization format.
-  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
+  const auto storage_serialization_format = topics.at(0).topic_metadata.serialization_format;
   for (const auto & topic : topics) {
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
-      throw std::runtime_error("Topics with different rwm serialization format have been found. "
-              "All topics must have the same serialization format.");
+      std::stringstream error_message;
+      error_message << "Topic " << topic.topic_metadata.name << "uses RMW serialization format " <<
+      topic.topic_metadata.serialization_format << ", but topic " << topics.at(0).topic_metadata.name <<
+      "uses RMW serialization format " << storage_serialization_format << ".\nOpening storage formats with mixed "
+      "RMW serialization formats is currently unsupported.";
+      throw std::runtime_error(error_message.str().c_str());
     }
   }
+}
 
-  if (converter_options.output_serialization_format != storage_serialization_format) {
+void Reader::check_converter_serialization_format(
+    const std::string & converter_serialization_format, const std::string & storage_serialization_format)
+{
+  if (converter_serialization_format != storage_serialization_format) {
+    ROSBAG2_LOG_WARN_STREAM("Storage has RMW serialization format " << storage_serialization_format <<
+    " but converter has RMW serialization format " << converter_serialization_format << ". "
+    "Using converter to serialize messages.\nReplay performance may be degraded!");
     converter_ = std::make_unique<Converter>(
-      storage_serialization_format,
-      converter_options.output_serialization_format,
-      converter_factory_);
-    auto topics = storage_->get_all_topics_and_types();
+        storage_serialization_format,
+        converter_serialization_format,
+        converter_factory_);
+    const auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {
       converter_->add_topic(topic_with_type.name, topic_with_type.type);
     }
   }
-
-  ROSBAG2_LOG_INFO_STREAM("Reader opened.");
 }
 
-bool Reader::has_next()
+void Reader::open(
+  const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  if (storage_) {
+  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
+  if (!has_storage()) {
+    std::stringstream error_message;
+    error_message << "Failed to open storage file: " << storage_options.uri;
+    throw std::runtime_error(error_message.str().c_str());
+  }
+
+  const auto metadata = get_metadata();
+  const auto topics = metadata.topics_with_message_count;
+  if (topics.empty()) {
+    return;
+  }
+
+  check_topics_serialization_formats(topics);
+
+  const auto storage_serialization_format = topics.at(0).topic_metadata.serialization_format;
+  const auto converter_serialization_format = converter_options.output_serialization_format;
+  check_converter_serialization_format(converter_serialization_format, storage_serialization_format);
+
+  ROSBAG2_LOG_DEBUG("Bag opened.");
+}
+
+bool Reader::has_next() const
+{
+  if (has_storage()) {
     return storage_->has_next();
   }
-  throw std::runtime_error("(has_next) Bag is not open. Call open() before reading.");
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
 std::shared_ptr<SerializedBagMessage> Reader::read_next()
 {
-  if (storage_) {
+  if (has_storage()) {
     auto message = storage_->read_next();
     return converter_ ? converter_->convert(message) : message;
   }
-  throw std::runtime_error("(read_next) Bag is not open. Call open() before reading.");
+  throw std::runtime_error("Bag is not open. Call has_next() before reading.");
 }
 
-std::vector<TopicMetadata> Reader::get_all_topics_and_types()
+std::vector<TopicMetadata> Reader::get_all_topics_and_types() const
 {
-  if (storage_) {
+  if (has_storage()) {
     return storage_->get_all_topics_and_types();
   }
-  throw std::runtime_error("(get_all_topic_and_types) Bag is not open. "
-          "Call open() before reading.");
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-bool Reader::has_storage()
+bool Reader::has_storage() const
 {
   return storage_ != nullptr;
 }
 
 bool Reader::open_read_only(const std::string & file, const std::string & storage_id)
 {
-  ROSBAG2_LOG_INFO_STREAM("Opening file: " << file);
+  ROSBAG2_LOG_DEBUG_STREAM("Opening file: " << file);
   storage_ = storage_factory_->open_read_only(file, storage_id);
   return has_storage();
 }
 
-rosbag2_storage::BagMetadata Reader::get_metadata()
+rosbag2_storage::BagMetadata Reader::get_metadata() const
 {
   return storage_->get_metadata();
 }
