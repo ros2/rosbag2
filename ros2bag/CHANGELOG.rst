@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.1.7 (2019-10-14)
+------------------
+* Install package manifest. (`#161 <https://github.com/ros2/rosbag2/issues/161>`_) (`#175 <https://github.com/ros2/rosbag2/issues/175>`_)
+* Contributors: Dirk Thomas
+
 0.1.6 (2019-09-20)
 ------------------
 
