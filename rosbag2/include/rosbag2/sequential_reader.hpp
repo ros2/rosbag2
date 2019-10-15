@@ -19,16 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_factory_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2/converter.hpp"
-#include "rosbag2/logging.hpp"
-#include "rosbag2/serialization_format_converter_factory.hpp"
-#include "rosbag2/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2/storage_options.hpp"
-#include "rosbag2/types.hpp"
-#include "rosbag2/visibility_control.hpp"
+#include "rosbag2/reader.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
@@ -41,8 +32,8 @@
 namespace rosbag2
 {
 /**
- * The SequentialReader allows opening and reading messages of a bag. Messages will be read
- * sequentially according to timestamp.
+ * The SequentialReader allows opening and reading messages of a bag with multiple database files.
+ * Messages will be read sequentially according to timestamp.
  */
 class ROSBAG2_PUBLIC SequentialReader
 {
@@ -57,40 +48,29 @@ public:
   virtual ~SequentialReader();
 
   /**
-   * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
-   * opened. This must be called before any other function is used. The rosbag is
-   * automatically closed on destruction.
-   *
-   * If the `output_serialization_format` within the `converter_options` is not the same as the
-   * format of the underlying stored data, a converter will be used to automatically convert the
-   * data to the specified output format.
-   * Throws if the converter plugin does not exist.
-   *
-   * \param storage_options Options to configure the storage
-   * \param converter_options Options for specifying the output data format
-   */
+     * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
+     * opened. This must be called before any other function is used. The rosbag is
+     * automatically closed on destruction.
+     *
+     * If the `output_serialization_format` within the `converter_options` is not the same as the
+     * format of the underlying stored data, a converter will be used to automatically convert the
+     * data to the specified output format.
+     * Throws if the converter plugin does not exist.
+     *
+     * \param storage_options Options to configure the storage
+     * \param converter_options Options for specifying the output data format
+     */
   virtual void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options);
 
   /**
-   * Ask whether the underlying bagfile contains at least one more message.
+   * Ask whether the underlying bagfile contains at least one more message. If not, checks if there's
+   * another file to read from and if so, update the storage factory to read from it.
    *
    * \return true if storage contains at least one more message
    * \throws runtime_error if the Reader is not open.
    */
   virtual bool has_next();
-
-  /**
-   * Read next message from storage. Will throw if no more messages are available.
-   * The message will be serialized in the format given to `open`.
-   *
-   * Expected usage:
-   * if (writer.has_next()) message = writer.read_next();
-   *
-   * \return next message in serialized form
-   * \throws runtime_error if the Reader is not open.
-   */
-  virtual std::shared_ptr<SerializedBagMessage> read_next();
 
   /**
    * Ask bagfile for all topics (including their type identifier) that were recorded.
@@ -99,6 +79,20 @@ public:
    * \throws runtime_error if the Reader is not open.
    */
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
+
+  /**
+   * Read next message from storage. Will throw if no more messages are available.
+   * The message will be serialized in the format given to `open`.
+   *
+   * Expected usage:
+   * if (reader.has_next()) message = reader.read_next();
+   *
+   * \return next message in serialized form
+   * \throws runtime_error if the Reader is not open.
+   */
+  virtual std::shared_ptr<SerializedBagMessage> read_next();
+
+  std::shared_ptr<rosbag2::Reader> reader;  // Base reader class
 
 private:
   /**
@@ -119,13 +113,8 @@ private:
    */
   std::string get_next_file();
 
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
-  std::unique_ptr<Converter> converter_;
-
   StorageOptions storage_options_;  // The storage options passed to the reader.
-  std::vector<std::string> file_paths_; // List of database files.
+  std::vector<std::string> file_paths_;  // List of database files.
   std::size_t current_file_offset_;  // Index of file to read from file_paths_.
 };
 
