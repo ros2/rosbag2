@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/reader.hpp"
+#include "../../src/rosbag2/reader.hpp"
 
 namespace rosbag2
 {

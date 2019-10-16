@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/info.hpp"
-#include "rosbag2/sequential_reader.hpp"
-
 #include <cassert>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "rosbag2/info.hpp"
+#include "rosbag2/logging.hpp"
+#include "rosbag2/sequential_reader.hpp"
 
 namespace rosbag2
 {
@@ -27,7 +28,8 @@ namespace rosbag2
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: reader_(std::make_shared<rosbag2::Reader>(std::move(storage_factory), std::move(converter_factory)))
+: reader_(std::make_shared<rosbag2::Reader>(
+      std::move(storage_factory), std::move(converter_factory)))
 {}
 
 void SequentialReader::open(
