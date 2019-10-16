@@ -32,6 +32,7 @@
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
 // b) there are no inline functions.
+// TODO(piraka9011): PIMPL for reader, exposing only sequential_reader API.
 #ifdef _WIN32
 # pragma warning(push)
 # pragma warning(disable:4251)
@@ -47,7 +48,7 @@ namespace rosbag2
 class ROSBAG2_PUBLIC Reader
 {
 public:
-  // TODO: Re-evaluate usage of shared_ptr in converter.
+  // TODO(piraka9011): Re-evaluate usage of shared_ptr in converter.
   explicit Reader(
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
@@ -115,10 +116,10 @@ public:
 
   /**
    * Gets a copy of the metadata file read from the storage factory.
-   * TODO: Do we want to optimize to avoid copying?
    *
    * \return BagMetadata object with the info read from a metadata.yaml file
    */
+   // TODO(piraka9011): Do we want to optimize to avoid copying?
   rosbag2_storage::BagMetadata get_metadata() const;
 
 private:
@@ -137,7 +138,8 @@ private:
    * the storage factory.
    */
   void check_converter_serialization_format(
-      const std::string & converter_serialization_format, const std::string & storage_serialization_format);
+    const std::string & converter_serialization_format,
+    const std::string & storage_serialization_format);
 
   /**
    * Ask if we have a storage object to read from.

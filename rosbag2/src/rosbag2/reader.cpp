@@ -20,7 +20,7 @@
 
 #include "rosbag2/info.hpp"
 #include "rosbag2/logging.hpp"
-#include "reader.hpp"
+#include "rosbag2/reader.hpp"
 
 namespace rosbag2
 {
@@ -49,9 +49,10 @@ void Reader::check_topics_serialization_formats(const std::vector<TopicInformati
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       std::stringstream error_message;
       error_message << "Topic " << topic.topic_metadata.name << "uses RMW serialization format " <<
-      topic.topic_metadata.serialization_format << ", but topic " << topics.at(0).topic_metadata.name <<
-      "uses RMW serialization format " << storage_serialization_format << ".\nOpening storage formats with mixed "
-      "RMW serialization formats is currently unsupported.";
+        topic.topic_metadata.serialization_format << ", but topic " <<
+        topics.at(0).topic_metadata.name << "uses RMW serialization format " <<
+        storage_serialization_format <<
+        ".\nOpening storage formats with mixed RMW serialization formats is currently unsupported.";
       throw std::runtime_error(error_message.str().c_str());
     }
   }
@@ -62,7 +63,8 @@ void Reader::check_converter_serialization_format(
   const std::string & storage_serialization_format)
 {
   if (converter_serialization_format != storage_serialization_format) {
-    ROSBAG2_LOG_WARN_STREAM("Storage serialization format is " << storage_serialization_format <<
+    ROSBAG2_LOG_WARN_STREAM("Storage serialization format is " <<
+      storage_serialization_format <<
       " but converter has serialization format " << converter_serialization_format << ". "
       "Using converter to serialize messages.\nReplay performance may be degraded!");
     converter_ = std::make_unique<Converter>(
@@ -79,12 +81,7 @@ void Reader::check_converter_serialization_format(
 void Reader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
-  if (!has_storage()) {
-    std::stringstream error_message;
-    error_message << "Failed to open storage file: " << storage_options.uri;
-    throw std::runtime_error(error_message.str().c_str());
-  }
+  open_read_only(storage_options.uri, storage_options.storage_id);
 
   const auto metadata = get_metadata();
   const auto topics = metadata.topics_with_message_count;
@@ -136,6 +133,11 @@ bool Reader::open_read_only(const std::string & file, const std::string & storag
 {
   ROSBAG2_LOG_DEBUG_STREAM("Opening file: " << file);
   storage_ = storage_factory_->open_read_only(file, storage_id);
+  if (!has_storage()) {
+    std::stringstream error_message;
+    error_message << "Failed to open storage file: " << file;
+    throw std::runtime_error(error_message.str().c_str());
+  }
   return has_storage();
 }
 

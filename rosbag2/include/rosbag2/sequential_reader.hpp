@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "../../src/rosbag2/reader.hpp"
+#include "reader.hpp"
 
 namespace rosbag2
 {
@@ -35,23 +35,23 @@ public:
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>()) - ;
+    std::make_shared<SerializationFormatConverterFactory>());
 
   ~SequentialReader() = default;
 
   /**
-     * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
-     * opened. This must be called before any other function is used. The rosbag is
-     * automatically closed on destruction.
-     *
-     * If the `output_serialization_format` within the `converter_options` is not the same as the
-     * format of the underlying stored data, a converter will be used to automatically convert the
-     * data to the specified output format.
-     * Throws if the converter plugin does not exist.
-     *
-     * \param storage_options Options to configure the storage
-     * \param converter_options Options for specifying the output data format
-     */
+   * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
+   * opened. This must be called before any other function is used. The rosbag is
+   * automatically closed on destruction.
+   *
+   * If the `output_serialization_format` within the `converter_options` is not the same as the
+   * format of the underlying stored data, a converter will be used to automatically convert the
+   * data to the specified output format.
+   * Throws if the converter plugin does not exist.
+   *
+   * \param storage_options Options to configure the storage
+   * \param converter_options Options for specifying the output data format
+   */
   virtual void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options);
 

@@ -122,6 +122,12 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_info rosbag2_test_common)
   endif()
 
+  ament_add_gmock(test_reader
+    test/rosbag2/test_reader.cpp)
+  if(TARGET test_reader)
+    target_link_libraries(test_reader rosbag2)
+  endif()
+
   ament_add_gmock(test_sequential_reader
     test/rosbag2/test_sequential_reader.cpp)
   if(TARGET test_sequential_reader)
