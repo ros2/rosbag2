@@ -2,6 +2,10 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.1.8 (2019-10-16)
+------------------
+* install resource marker file for package (`#177 <https://github.com/ros2/rosbag2/issues/177>`_)
+
 0.1.7 (2019-10-14)
 ------------------
 * Install package manifest. (`#161 <https://github.com/ros2/rosbag2/issues/161>`_) (`#175 <https://github.com/ros2/rosbag2/issues/175>`_)
