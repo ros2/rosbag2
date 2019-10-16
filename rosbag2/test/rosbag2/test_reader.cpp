@@ -58,7 +58,7 @@ public:
 
   void set_storage_serialization_format(const std::string & format)
   {
-    rosbag2_storage::BagMetadata metadata;
+    rosbag2_storage::BagMetadata metadata{};
     metadata.topics_with_message_count.push_back({{"", "", format}, 1});
     EXPECT_CALL(*storage_, get_metadata()).WillOnce(Return(metadata));
   }

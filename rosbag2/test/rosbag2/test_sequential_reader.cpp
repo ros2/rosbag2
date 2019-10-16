@@ -23,7 +23,6 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
-#include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
@@ -35,7 +34,7 @@ class SequentialReaderTest : public Test
 public:
   SequentialReaderTest()
   {
-    storage_factory_ = std::make_unique<StrictMock<MockStorageFactory>>();
+    storage_factory_ = std::make_unique<NiceMock<MockStorageFactory>>();
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
 
@@ -48,69 +47,53 @@ public:
 
     auto message = std::make_shared<rosbag2::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
-    EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
+    ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
+    ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
 
-    EXPECT_CALL(*storage_factory_, open_read_only(_, _)).WillOnce(Return(storage_));
+    // Version 2 of the metadata file includes the split bag features.
+    metadata_.version = 2;
+    metadata_.storage_identifier = "sqlite3";
+    metadata_.relative_file_paths.emplace_back("some_relative_path");
+    metadata_.relative_file_paths.emplace_back("some_other_relative_path");
+    metadata_.duration = std::chrono::nanoseconds(100);
+    metadata_.starting_time =
+      std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(1000000));
+    metadata_.message_count = 50;
+    metadata_.topics_with_message_count.push_back({{"topic1", "type1", serialization_format}, 100});
+    ON_CALL(*storage_, get_metadata()).WillByDefault(Return(metadata_));
 
     reader_ = std::make_unique<rosbag2::SequentialReader>(
       std::move(storage_factory_), converter_factory_);
   }
 
-  void set_storage_serialization_format(const std::string & format)
-  {
-    rosbag2_storage::BagMetadata metadata;
-    metadata.topics_with_message_count.push_back({{"", "", format}, 1});
-    EXPECT_CALL(*storage_, get_metadata()).WillOnce(Return(metadata));
-  }
-
-  std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
+  std::unique_ptr<NiceMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
+  rosbag2_storage::BagMetadata metadata_;
   std::unique_ptr<rosbag2::SequentialReader> reader_;
+  std::string serialization_format {"rmw1_format"};
 };
 
-TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {
-  std::string storage_serialization_format = "rmw1_format";
-  std::string output_format = "rmw2_format";
-  set_storage_serialization_format(storage_serialization_format);
-
-  auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
-  auto format2_converter = std::make_unique<StrictMock<MockConverter>>();
-  EXPECT_CALL(*format1_converter, deserialize(_, _, _)).Times(1);
-  EXPECT_CALL(*format2_converter, serialize(_, _, _)).Times(1);
-
-  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format))
-  .WillOnce(Return(ByMove(std::move(format1_converter))));
-  EXPECT_CALL(*converter_factory_, load_serializer(output_format))
-  .WillOnce(Return(ByMove(std::move(format2_converter))));
-
-  reader_->open(rosbag2::StorageOptions(), {"", output_format});
-  reader_->read_next();
-}
-
-TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exist) {
-  std::string storage_serialization_format = "rmw1_format";
-  std::string output_format = "rmw2_format";
-  set_storage_serialization_format(storage_serialization_format);
-
-  auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
-  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format))
-  .WillOnce(Return(ByMove(std::move(format1_converter))));
-  EXPECT_CALL(*converter_factory_, load_serializer(output_format))
-  .WillOnce(Return(ByMove(nullptr)));
-
-  EXPECT_ANY_THROW(reader_->open(rosbag2::StorageOptions(), {"", output_format}));
-}
-
-TEST_F(SequentialReaderTest,
-  read_next_does_not_use_converters_if_input_and_output_format_are_equal)
+TEST_F(SequentialReaderTest, has_next_reads_next_file)
 {
-  std::string storage_serialization_format = "rmw1_format";
-  set_storage_serialization_format(storage_serialization_format);
-
-  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format)).Times(0);
-  EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format)).Times(0);
-
-  reader_->open(rosbag2::StorageOptions(), {"", storage_serialization_format});
+  EXPECT_CALL(*storage_, has_next()).Times(AtLeast(2)).WillRepeatedly(Return(false));
+  reader_->open(rosbag2::StorageOptions(), {serialization_format, serialization_format});
+  reader_->has_next();
   reader_->read_next();
+}
+
+TEST_F(SequentialReaderTest, has_next_throws_if_no_storage)
+{
+  EXPECT_ANY_THROW(reader_->has_next());
+}
+
+TEST_F(SequentialReaderTest, read_next_throws_if_no_storage)
+{
+  EXPECT_ANY_THROW(reader_->read_next());
+}
+
+TEST_F(SequentialReaderTest, get_all_topics_and_types_throws_if_no_storage)
+{
+  EXPECT_ANY_THROW(reader_->get_all_topics_and_types());
 }

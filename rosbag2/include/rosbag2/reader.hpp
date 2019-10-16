@@ -119,7 +119,7 @@ public:
    *
    * \return BagMetadata object with the info read from a metadata.yaml file
    */
-   // TODO(piraka9011): Do we want to optimize to avoid copying?
+  // TODO(piraka9011): Do we want to optimize to avoid copying?
   rosbag2_storage::BagMetadata get_metadata() const;
 
 private:
