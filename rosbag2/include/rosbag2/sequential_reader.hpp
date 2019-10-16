@@ -15,11 +15,7 @@
 #ifndef ROSBAG2__SEQUENTIAL_READER_HPP_
 #define ROSBAG2__SEQUENTIAL_READER_HPP_
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "rosbag2/reader.hpp"
+#include "../../src/rosbag2/reader.hpp"
 
 namespace rosbag2
 {
@@ -35,7 +31,7 @@ public:
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>()) - ;
+    std::make_shared<SerializationFormatConverterFactory>());
 
   ~SequentialReader() = default;
 

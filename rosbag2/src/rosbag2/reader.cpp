@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/info.hpp"
-#include "rosbag2/logging.hpp"
-#include "rosbag2/reader.hpp"
-
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-
+#include "rosbag2/info.hpp"
+#include "rosbag2/logging.hpp"
+#include "reader.hpp"
 
 namespace rosbag2
 {
@@ -51,25 +49,28 @@ void Reader::check_topics_serialization_formats(const std::vector<TopicInformati
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       std::stringstream error_message;
       error_message << "Topic " << topic.topic_metadata.name << "uses RMW serialization format " <<
-      topic.topic_metadata.serialization_format << ", but topic " << topics.at(0).topic_metadata.name <<
-      "uses RMW serialization format " << storage_serialization_format << ".\nOpening storage formats with mixed "
-      "RMW serialization formats is currently unsupported.";
+        topic.topic_metadata.serialization_format << ", but topic " <<
+        topics.at(0).topic_metadata.name <<
+        "uses RMW serialization format " << storage_serialization_format <<
+        ".\nOpening storage formats with mixed "
+        "RMW serialization formats is currently unsupported.";
       throw std::runtime_error(error_message.str().c_str());
     }
   }
 }
 
 void Reader::check_converter_serialization_format(
-    const std::string & converter_serialization_format, const std::string & storage_serialization_format)
+  const std::string & converter_serialization_format,
+  const std::string & storage_serialization_format)
 {
   if (converter_serialization_format != storage_serialization_format) {
-    ROSBAG2_LOG_WARN_STREAM("Storage has RMW serialization format " << storage_serialization_format <<
-    " but converter has RMW serialization format " << converter_serialization_format << ". "
-    "Using converter to serialize messages.\nReplay performance may be degraded!");
+    ROSBAG2_LOG_WARN_STREAM("Storage serialization format is " << storage_serialization_format <<
+      " but converter has serialization format " << converter_serialization_format << ". "
+      "Using converter to serialize messages.\nReplay performance may be degraded!");
     converter_ = std::make_unique<Converter>(
-        storage_serialization_format,
-        converter_serialization_format,
-        converter_factory_);
+      storage_serialization_format,
+      converter_serialization_format,
+      converter_factory_);
     const auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {
       converter_->add_topic(topic_with_type.name, topic_with_type.type);
@@ -97,7 +98,8 @@ void Reader::open(
 
   const auto storage_serialization_format = topics.at(0).topic_metadata.serialization_format;
   const auto converter_serialization_format = converter_options.output_serialization_format;
-  check_converter_serialization_format(converter_serialization_format, storage_serialization_format);
+  check_converter_serialization_format(converter_serialization_format,
+    storage_serialization_format);
 
   ROSBAG2_LOG_DEBUG("Bag opened.");
 }
