@@ -72,6 +72,7 @@ void Writer::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
+  uri_ = storage_options.uri;
   start_time_ = std::chrono::nanoseconds::max().count();
   end_time_ = std::chrono::nanoseconds::min().count();
 }
@@ -138,7 +139,7 @@ rosbag2_storage::BagMetadata Writer::generate_metadata_() const
 
   // Only populate metadata if storage exists
   if (storage_) {
-    metadata.storage_identifier = storage_->get_identifier();
+    metadata.storage_identifier = storage_->get_storage_identifier();
 
     metadata.relative_file_paths = relative_file_paths_;
     metadata.duration = time_of_last_message - time_of_first_message;
