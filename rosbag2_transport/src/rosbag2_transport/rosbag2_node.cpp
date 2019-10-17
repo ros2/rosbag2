@@ -57,8 +57,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
       callback);
 
     // Intra-process message handling has to be disabled.
-    bool use_intra_process = false;
-    get_node_topics_interface()->add_subscription(subscription, nullptr, use_intra_process);
+    get_node_topics_interface()->add_subscription(subscription, nullptr);
   } catch (const std::runtime_error & ex) {
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
       "Error subscribing to topic '" << topic << "'. Error: " << ex.what());
