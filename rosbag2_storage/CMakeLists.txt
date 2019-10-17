@@ -25,7 +25,8 @@ add_library(
   SHARED
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
-  src/rosbag2_storage/storage_factory.cpp)
+  src/rosbag2_storage/storage_factory.cpp
+  src/rosbag2_storage/base_io_interface.cpp)
 target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
