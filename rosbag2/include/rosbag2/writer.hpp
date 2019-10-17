@@ -95,6 +95,13 @@ public:
    */
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
 
+  /**
+   * Check if the current recording bagfile needs to be split and rolled over to new file.
+   *
+   * \return true if the bagfile should be split.
+   */
+  virtual bool should_split_bagfile() const;
+
 private:
   std::string uri_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
@@ -102,6 +109,7 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+  uint64_t max_bagfile_size_;
 };
 
 }  // namespace rosbag2
