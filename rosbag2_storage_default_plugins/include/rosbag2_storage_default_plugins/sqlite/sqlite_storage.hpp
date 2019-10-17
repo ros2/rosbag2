@@ -66,6 +66,8 @@ public:
 
   uint64_t get_bagfile_size() const override;
 
+  std::string get_identifier() const override;
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -73,7 +75,7 @@ private:
   void fill_topics_and_types();
 
   std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
-  bool database_exists(const std::string & uri);
+  static bool database_exists(const std::string & uri);
   bool is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
