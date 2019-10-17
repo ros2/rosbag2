@@ -51,7 +51,6 @@ void Writer::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
-  
   max_bagfile_size_ = storage_options.max_bagfile_size;
 
   if (converter_options.output_serialization_format !=
