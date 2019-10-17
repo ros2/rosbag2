@@ -52,7 +52,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2::Writer> writer_;
-  rosbag2::StorageOptions storage_options_;
+  rosbag2::StorageOptions storage_options_{};
 };
 
 TEST_F(WriterTest,
