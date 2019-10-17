@@ -14,6 +14,9 @@
 
 #include "rosbag2/writer.hpp"
 
+#include <rosbag2_storage/filesystem_helper.hpp>
+
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -34,7 +37,12 @@ Writer::Writer(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
+  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
+  relative_file_paths_({}),
+  message_count_(0),
+  topics_({}),
+  start_time_(INT64_MAX),
+  end_time_(INT64_MIN)
 {}
 
 Writer::~Writer()
@@ -63,7 +71,9 @@ void Writer::open(
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  uri_ = storage_options.uri;
+
+  start_time_ = std::chrono::nanoseconds::max().count();
+  end_time_ = std::chrono::nanoseconds::min().count();
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
@@ -76,6 +86,11 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
     converter_->add_topic(topic_with_type.name, topic_with_type.type);
   }
 
+  rosbag2_storage::TopicInformation info{};
+  info.topic_metadata = topic_with_type;
+
+  topics_.insert({topic_with_type.name, info});
+
   storage_->create_topic(topic_with_type);
 }
 
@@ -86,6 +101,7 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
   }
 
   storage_->remove_topic(topic_with_type);
+  topics_.erase(topic_with_type.name);
 }
 
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)
@@ -93,6 +109,13 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
+
+  // Update the message count for the Topic.
+  ++topics_[message->topic_name].message_count;
+  ++message_count_;
+
+  start_time_ = std::min(start_time_, message->time_stamp);
+  end_time_ = std::max(end_time_, message->time_stamp);
 
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
@@ -105,4 +128,34 @@ bool Writer::should_split_bagfile() const
     return storage_->get_bagfile_size() > max_bagfile_size_;
   }
 }
+
+rosbag2_storage::BagMetadata Writer::generate_metadata_() const
+{
+  auto time_of_first_message = std::chrono::nanoseconds(start_time_);
+  auto time_of_last_message = std::chrono::nanoseconds(end_time_);
+
+  rosbag2_storage::BagMetadata metadata{};
+
+  // Only populate metadata if storage exists
+  if (storage_) {
+    metadata.storage_identifier = storage_->get_identifier();
+
+    metadata.relative_file_paths = relative_file_paths_;
+    metadata.duration = time_of_last_message - time_of_first_message;
+    metadata.starting_time =
+      std::chrono::time_point<std::chrono::high_resolution_clock>(time_of_first_message);
+    metadata.message_count = message_count_;
+
+    metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(uri_);
+
+    metadata.topics_with_message_count.reserve(topics_.size());
+
+    for (const auto & topic : topics_) {
+      metadata.topics_with_message_count.push_back(topic.second);
+    }
+  }
+
+  return metadata;
+}
+
 }  // namespace rosbag2
