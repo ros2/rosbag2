@@ -24,6 +24,7 @@
 
 TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_announced_topics)
 {
+  auto topic = "/string_topic";
   auto string_message = get_messages_strings()[0];
   string_message->string_value = "Hello World";
 
@@ -32,12 +33,13 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   start_recording({true, true, {}, "rmw_format", 1ms});
 
   std::this_thread::sleep_for(100ms);
-  auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>("/string_topic", 10);
+  auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>(topic, 10);
   for (int i = 0; i < 5; ++i) {
     std::this_thread::sleep_for(20ms);
     publisher->publish(*string_message);
   }
   stop_recording();
 
-  ASSERT_THAT(writer_->get_messages(), SizeIs(0));
+  auto recorded_topics = writer_->get_topics();
+  EXPECT_EQ(0u, recorded_topics.count(topic));
 }
