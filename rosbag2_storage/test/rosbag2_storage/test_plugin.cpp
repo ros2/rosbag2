@@ -79,6 +79,12 @@ rosbag2_storage::BagMetadata TestPlugin::get_metadata()
   return rosbag2_storage::BagMetadata();
 }
 
+std::string TestPlugin::get_relative_path() const
+{
+  std::cout << "\returning relative path\n";
+  return "";
+}
+
 uint64_t TestPlugin::get_bagfile_size() const
 {
   std::cout << "\nreturning bagfile size\n";
