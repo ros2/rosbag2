@@ -100,10 +100,8 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
-  std::unique_ptr<Converter> converter_;
+  class ReaderImpl;
+  std::shared_ptr<ReaderImpl> reader_pimpl_;
 };
 
 }  // namespace rosbag2
