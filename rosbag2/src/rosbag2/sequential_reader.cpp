@@ -29,12 +29,10 @@ namespace rosbag2
 
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-: storage_factory_(std::move(storage_factory)),
-  converter_factory_(std::move(converter_factory)),
-  converter_(nullptr),
-  metadata_io_(std::move(metadata_io))
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
+: reader_pimpl_(std::make_unique<ReaderImpl>(
+      std::move(storage_factory),
+      std::move(converter_factory)))
 {}
 
 SequentialReader::~SequentialReader()
@@ -46,66 +44,22 @@ void
 SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  metadata_ = metadata_io_->read_metadata(storage_options.uri);
-  if (metadata_.relative_file_paths.empty()) {
-    ROSBAG2_LOG_WARN("No file paths were found in metadata.");
-    return;
-  }
-  storage_ = storage_factory_->open_read_only(
-    metadata_.relative_file_paths.at(0), storage_options.storage_id);
-  if (!storage_) {
-    throw std::runtime_error("No storage could be initialized. Abort");
-  }
-  auto topics = metadata_.topics_with_message_count;
-  if (topics.empty()) {
-    ROSBAG2_LOG_WARN("No topics were listed in metadata.");
-    return;
-  }
-
-  // Currently a bag file can only be played if all topics have the same serialization format.
-  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
-  for (const auto & topic : topics) {
-    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
-      throw std::runtime_error("Topics with different rwm serialization format have been found. "
-              "All topics must have the same serialization format.");
-    }
-  }
-
-  if (converter_options.output_serialization_format != storage_serialization_format) {
-    converter_ = std::make_unique<Converter>(
-      storage_serialization_format,
-      converter_options.output_serialization_format,
-      converter_factory_);
-    auto topics = storage_->get_all_topics_and_types();
-    for (const auto & topic_with_type : topics) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
-    }
-  }
+  reader_pimpl_->open(storage_options, converter_options);
 }
 
 bool SequentialReader::has_next()
 {
-  if (storage_) {
-    return storage_->has_next();
-  }
-  throw std::runtime_error("Bag is not open. Call open() before reading.");
+  return reader_pimpl_->has_next();
 }
 
 std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
 {
-  if (storage_) {
-    auto message = storage_->read_next();
-    return converter_ ? converter_->convert(message) : message;
-  }
-  throw std::runtime_error("Bag is not open. Call open() before reading.");
+  return reader_pimpl_->read_next();
 }
 
 std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
 {
-  if (storage_) {
-    return storage_->get_all_topics_and_types();
-  }
-  throw std::runtime_error("Bag is not open. Call open() before reading.");
+  return reader_pimpl_->get_all_topics_and_types();
 }
 
 }  // namespace rosbag2
