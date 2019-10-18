@@ -25,6 +25,11 @@ struct StorageOptions
 public:
   std::string uri;
   std::string storage_id;
+
+  /**
+   * The maximum size a bagfile can be, in bytes, before it is split.
+   * A value of 0 indicates that bagfile splitting will not be used.
+   */
   uint64_t max_bagfile_size;
 };
 
