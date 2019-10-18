@@ -58,6 +58,13 @@ void GenericSubscription::handle_message(
   callback_(typed_message);
 }
 
+void GenericSubscription::handle_loaned_message(
+  void * message, const rmw_message_info_t & message_info)
+{
+  (void) message;
+  (void) message_info;
+}
+
 void GenericSubscription::return_message(std::shared_ptr<void> & message)
 {
   auto typed_message = std::static_pointer_cast<rmw_serialized_message_t>(message);
