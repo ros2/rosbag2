@@ -30,6 +30,13 @@ public:
   virtual ~BaseInfoInterface() = default;
 
   virtual BagMetadata get_metadata() = 0;
+
+  /**
+   * Retrieves the relative path to the backing of the storage plugin.
+   *
+   * \returns the relative path.
+   */
+  virtual std::string get_relative_path() const = 0;
 };
 
 }  // namespace storage_interfaces
