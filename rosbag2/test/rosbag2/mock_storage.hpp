@@ -39,6 +39,7 @@ public:
   MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
   MOCK_CONST_METHOD0(get_bagfile_size, uint64_t());
   MOCK_CONST_METHOD0(get_storage_identifier, std::string());
+  MOCK_CONST_METHOD0(get_relative_path, std::string());
 };
 
 #endif  // ROSBAG2__MOCK_STORAGE_HPP_
