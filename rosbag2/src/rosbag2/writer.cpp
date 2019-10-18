@@ -97,7 +97,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
 
-bool Writer::should_split_bagfile() const
+bool Writer::should_split_bagfile_() const
 {
   if (max_bagfile_size_ == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
     return false;
