@@ -33,6 +33,15 @@
 
 #include "../logging.hpp"
 
+namespace
+{
+bool database_exists(const std::string & uri)
+{
+  std::ifstream database(uri);
+  return database.good();
+}
+}
+
 namespace rosbag2_storage_plugins
 {
 
@@ -212,12 +221,6 @@ std::unique_ptr<rosbag2_storage::BagMetadata> SqliteStorage::load_metadata(const
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR("Failed to load metadata: %s", e.what());
     return std::unique_ptr<rosbag2_storage::BagMetadata>();
   }
-}
-
-bool SqliteStorage::database_exists(const std::string & uri)
-{
-  std::ifstream database(uri);
-  return database.good();
 }
 
 bool SqliteStorage::is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const

@@ -75,7 +75,6 @@ private:
   void fill_topics_and_types();
 
   std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
-  static bool database_exists(const std::string & uri);
   bool is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
