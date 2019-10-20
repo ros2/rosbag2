@@ -9,6 +9,7 @@
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
+  <depend>python_cmake_module</depend>
   <depend>rclcpp</depend>
   <depend>rosbag2</depend>
   <depend>rmw</depend>
