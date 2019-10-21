@@ -50,11 +50,23 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
 
 std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
 {
-  int return_code = sqlite3_step(statement_);
-  if (!is_query_ok(return_code)) {
-    throw SqliteException("Error processing SQLite statement. Return code: " +
-            std::to_string(return_code));
-  }
+  bool retry = true;
+  do {
+    int return_code = sqlite3_step(statement_);
+    if (!is_query_ok(return_code)) {
+      if (return_code == SQLITE_BUSY)
+      {
+	// TODO: Check if we need a sleep here to avoid quicker retry
+        retry = true;
+      }
+      else {
+        throw SqliteException("Error processing SQLite statement. Return code: " +
+                              std::to_string(return_code));
+      }
+    }
+    retry = false;
+  } while (retry);
+
   return reset();
 }
 
