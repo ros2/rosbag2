@@ -102,6 +102,12 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+
+  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
+  uint64_t max_bagfile_size_;
+
+  // Checks if the current recording bagfile needs to be split and rolled over to a new file.
+  bool should_split_bagfile() const;
 };
 
 }  // namespace rosbag2

@@ -31,8 +31,10 @@ Writer::Writer(
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
   converter_factory_(std::move(converter_factory)),
+  storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
-  converter_(nullptr)
+  converter_(nullptr),
+  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
 {}
 
 Writer::~Writer()
@@ -49,6 +51,8 @@ void Writer::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  max_bagfile_size_ = storage_options.max_bagfile_size;
+
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
   {
@@ -93,4 +97,12 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
 
+bool Writer::should_split_bagfile() const
+{
+  if (max_bagfile_size_ == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
+    return false;
+  } else {
+    return storage_->get_bagfile_size() > max_bagfile_size_;
+  }
+}
 }  // namespace rosbag2
