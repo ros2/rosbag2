@@ -53,6 +53,8 @@ SequentialReader::open(
     return;
   }
   file_paths_ = bag_metadata.relative_file_paths;
+  assert(!file_paths_.empty());
+  current_file_iterator_ = file_paths_.begin();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
@@ -77,19 +79,14 @@ SequentialReader::open(
 
 std::string SequentialReader::get_next_file()
 {
-  {
     assert(current_file_iterator_ != file_paths_.end());
     current_file_iterator_++;
     return *current_file_iterator_;
-  }
 }
 
 bool SequentialReader::has_next_file() const
 {
-  {
-    assert(!file_paths_.empty());
     return current_file_iterator_ + 1 != file_paths_.end();
-  }
 }
 
 bool SequentialReader::has_next()
