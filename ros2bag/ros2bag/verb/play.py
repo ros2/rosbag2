@@ -16,7 +16,6 @@ import os
 
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
-from rosbag2_transport import rosbag2_transport_py
 
 
 class PlayVerb(VerbExtension):
@@ -38,7 +37,7 @@ class PlayVerb(VerbExtension):
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
             return "[ERROR] [ros2bag] bag file '{}' does not exist!".format(bag_file)
-
+        from rosbag2_transport import rosbag2_transport_py
         rosbag2_transport_py.play(
             uri=bag_file,
             storage_id=args.storage,

@@ -20,7 +20,6 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node.strategy import NodeStrategy
 from ros2cli.node.strategy import add_arguments
 from ros2cli.node import NODE_NAME_PREFIX
-from rosbag2_transport import rosbag2_transport_py
 
 
 class RecordVerb(VerbExtension):
@@ -73,6 +72,8 @@ class RecordVerb(VerbExtension):
         self.create_bag_directory(uri)
 
         if args.all:
+            from rosbag2_transport import rosbag2_transport_py
+
             rosbag2_transport_py.record(
                 uri=uri,
                 storage_id=args.storage,
@@ -82,6 +83,8 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval)
         elif args.topics and len(args.topics) > 0:
+            from rosbag2_transport import rosbag2_transport_py
+
             rosbag2_transport_py.record(
                 uri=uri,
                 storage_id=args.storage,

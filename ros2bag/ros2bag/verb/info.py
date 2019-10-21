@@ -16,8 +16,6 @@ import os
 
 from ros2bag.verb import VerbExtension
 
-from rosbag2_transport import rosbag2_transport_py
-
 
 class InfoVerb(VerbExtension):
     """ros2 bag info."""
@@ -34,5 +32,5 @@ class InfoVerb(VerbExtension):
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
             return "[ERROR] [ros2bag]: bag file '{}' does not exist!".format(bag_file)
-
+        from rosbag2_transport import rosbag2_transport_py
         rosbag2_transport_py.info(uri=bag_file, storage_id=args.storage)
