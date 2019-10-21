@@ -228,7 +228,7 @@ bool SqliteStorage::is_read_only(const rosbag2_storage::storage_interfaces::IOFl
   return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY;
 }
 
-std::string SqliteStorage::get_identifier() const
+std::string SqliteStorage::get_storage_identifier() const
 {
   return "sqlite3";
 }
@@ -236,7 +236,7 @@ std::string SqliteStorage::get_identifier() const
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
-  metadata.storage_identifier = get_identifier();
+  metadata.storage_identifier = get_storage_identifier();
   metadata.relative_file_paths = {database_name_};
 
   metadata.message_count = 0;

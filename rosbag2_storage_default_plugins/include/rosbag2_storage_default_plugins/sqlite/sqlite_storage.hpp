@@ -66,7 +66,7 @@ public:
 
   uint64_t get_bagfile_size() const override;
 
-  std::string get_identifier() const override;
+  std::string get_storage_identifier() const override;
 
 private:
   void initialize();
