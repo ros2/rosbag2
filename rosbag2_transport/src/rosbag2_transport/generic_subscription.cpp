@@ -77,21 +77,6 @@ void GenericSubscription::return_serialized_message(
   message.reset();
 }
 
-void GenericSubscription::handle_intra_process_message(
-  rcl_interfaces::msg::IntraProcessMessage & ipm,
-  const rmw_message_info_t & message_info)
-{
-  (void) ipm;
-  (void) message_info;
-  throw std::runtime_error("Intra process is not supported");
-}
-
-const std::shared_ptr<rcl_subscription_t>
-GenericSubscription::get_intra_process_subscription_handle() const
-{
-  return nullptr;
-}
-
 std::shared_ptr<rmw_serialized_message_t>
 GenericSubscription::borrow_serialized_message(size_t capacity)
 {

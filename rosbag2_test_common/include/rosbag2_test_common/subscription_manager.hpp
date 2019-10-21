@@ -46,13 +46,17 @@ public:
     qos.avoid_ros_namespace_conventions(false);
     expected_topics_with_size_[topic_name] = expected_number_of_messages;
 
+    auto options = rclcpp::SubscriptionOptions();
+    options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
+
     subscriptions_.push_back(
       subscriber_node_->create_subscription<MessageT>(
         topic_name,
         qos,
         [this, topic_name](std::shared_ptr<rmw_serialized_message_t> msg) {
           subscribed_messages_[topic_name].push_back(msg);
-        }));
+        },
+        options));
   }
 
   template<typename MessageT>

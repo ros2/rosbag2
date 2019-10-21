@@ -67,15 +67,6 @@ public:
 
   void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
 
-  // Intra-process message handling is not supported by this publisher
-  void handle_intra_process_message(
-    rcl_interfaces::msg::IntraProcessMessage & ipm,
-    const rmw_message_info_t & message_info) override;
-
-  // Intra-process message handling is not supported by this publisher (returns nullptr always)
-  const std::shared_ptr<rcl_subscription_t>
-  get_intra_process_subscription_handle() const override;
-
 private:
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
