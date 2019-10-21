@@ -38,6 +38,8 @@ public:
 
   uint64_t get_bagfile_size() const override;
 
+  std::string get_storage_identifier() const override;
+
 private:
   const uint64_t default_max_bagfile_size = 0;
 };
