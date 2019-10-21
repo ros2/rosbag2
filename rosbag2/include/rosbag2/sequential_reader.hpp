@@ -103,17 +103,8 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
-<<<<<<< HEAD
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
-  std::unique_ptr<Converter> converter_;
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
-  rosbag2_storage::BagMetadata metadata_;
-=======
   class ReaderImpl;
   std::shared_ptr<ReaderImpl> reader_pimpl_;
->>>>>>> Introduce new SequentialReader interface
 };
 
 }  // namespace rosbag2
