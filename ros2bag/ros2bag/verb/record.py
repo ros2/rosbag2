@@ -72,6 +72,11 @@ class RecordVerb(VerbExtension):
         self.create_bag_directory(uri)
 
         if args.all:
+            # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
+            #               combined with constrained environments (as imposed by colcon test)
+            #               may result in DLL loading failures when attempting to import a C
+            #               extension. Therefore, do not import rosbag2_transport at the module
+            #               level but on demand, right before first use.
             from rosbag2_transport import rosbag2_transport_py
 
             rosbag2_transport_py.record(
@@ -83,6 +88,11 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval)
         elif args.topics and len(args.topics) > 0:
+            # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
+            #               combined with constrained environments (as imposed by colcon test)
+            #               may result in DLL loading failures when attempting to import a C
+            #               extension. Therefore, do not import rosbag2_transport at the module
+            #               level but on demand, right before first use.
             from rosbag2_transport import rosbag2_transport_py
 
             rosbag2_transport_py.record(
