@@ -33,7 +33,7 @@ enum class IOFlag : uint8_t
 
 // When bagfile splitting feature is not enabled or applicable,
 // use 0 as the default maximum bagfile size value.
-extern const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT;
+ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT;
 
 class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 {
