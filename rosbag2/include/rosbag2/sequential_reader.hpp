@@ -100,10 +100,30 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
+  /**
+   * Ask whether there is another database file to read from the list of relative
+   * file paths.
+   *
+   * \return true if there are still files to read in the list
+   */
+  virtual bool has_next_file() const;
+
+  /**
+   * Update the current database file to read from and remove the first (front)
+   * element in the list of files to read from.
+   *
+   * Expected usage:
+   * if (has_next_file()) get_next_file();
+   */
+  std::string get_next_file();
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
   std::unique_ptr<Converter> converter_;
+  StorageOptions storage_options_{};
+  std::vector<std::string> file_paths_ {};  // List of database files.
+  std::vector<std::string>::iterator current_file_iterator_ {};  // Index of file to read from
 };
 
 }  // namespace rosbag2
