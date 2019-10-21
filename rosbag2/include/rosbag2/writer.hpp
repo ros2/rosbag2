@@ -107,7 +107,7 @@ private:
   uint64_t max_bagfile_size_;
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile_() const;
+  bool should_split_bagfile() const;
 };
 
 }  // namespace rosbag2
