@@ -1,4 +1,5 @@
 // Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +40,9 @@
 
 namespace rosbag2
 {
+
+class ReaderImpl;
+
 /**
  * The SequentialReader allows opening and reading messages of a bag. Messages will be read
  * sequentially according to timestamp.
@@ -46,8 +50,7 @@ namespace rosbag2
 class ROSBAG2_PUBLIC SequentialReader
 {
 public:
-  explicit
-  SequentialReader(
+  explicit SequentialReader(
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
@@ -100,8 +103,7 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
-  class ReaderImpl;
-  std::shared_ptr<ReaderImpl> reader_pimpl_;
+  std::unique_ptr<ReaderImpl> reader_impl_;
 };
 
 }  // namespace rosbag2
