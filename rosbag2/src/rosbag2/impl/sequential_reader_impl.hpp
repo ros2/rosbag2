@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/visibility_control.hpp"
 
 namespace rosbag2
 {
