@@ -17,8 +17,6 @@ import os
 
 from ros2bag.verb import VerbExtension
 
-from ros2cli.node.strategy import NodeStrategy
-from ros2cli.node.strategy import add_arguments
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_transport import rosbag2_transport_py
 
@@ -42,18 +40,17 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
-             ' rmw currently in use')
+                 ' rmw currently in use')
         parser.add_argument(
             '--no-discovery', action='store_true',
             help='disables topic auto discovery during recording: only topics present at '
-             'startup will be recorded')
+                 'startup will be recorded')
         parser.add_argument(
             '-p', '--polling-interval', type=int, default=100,
             help='time in ms to wait between querying available topics for recording. It has no '
-             'effect if --no-discovery is enabled.'
+                 'effect if --no-discovery is enabled.'
         )
         self._subparser = parser
-
 
     def create_bag_directory(self, uri):
         try:
@@ -65,7 +62,7 @@ class RecordVerb(VerbExtension):
         if args.all and args.topics:
             return 'Invalid choice: Can not specify topics and -a at the same time.'
 
-        uri = args.output if args.output else datetime.datetime.now().strftime("rosbag2_%Y_%m_%d-%H_%M_%S")
+        uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
             return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
