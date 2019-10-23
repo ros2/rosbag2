@@ -72,6 +72,8 @@ void Writer::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
+  relative_file_paths_.push_back(storage_->get_relative_path());
+
   uri_ = storage_options.uri;
   start_time_ = std::chrono::nanoseconds::max().count();
   end_time_ = std::chrono::nanoseconds::min().count();
@@ -147,7 +149,11 @@ rosbag2_storage::BagMetadata Writer::generate_metadata_() const
       std::chrono::time_point<std::chrono::high_resolution_clock>(time_of_first_message);
     metadata.message_count = message_count_;
 
-    metadata.bag_size = rosbag2_storage::FilesystemHelper::calculate_directory_size(uri_);
+    metadata.bag_size = 0;
+
+    for (const auto& path : relative_file_paths_) {
+        metadata.bag_size += rosbag2_storage::FilesystemHelper::get_file_size(path);
+    }
 
     metadata.topics_with_message_count.reserve(topics_.size());
 
