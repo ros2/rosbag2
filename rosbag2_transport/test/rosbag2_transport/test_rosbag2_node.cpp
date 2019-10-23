@@ -34,7 +34,9 @@ public:
   RosBag2NodeFixture()
   {
     node_ = std::make_shared<rosbag2_transport::Rosbag2Node>("rosbag2");
-    publisher_node_ = std::make_shared<rclcpp::Node>("publisher_node");
+    publisher_node_ = std::make_shared<rclcpp::Node>(
+      "publisher_node",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
   }
 
   static void SetUpTestCase()

@@ -33,7 +33,10 @@ class SubscriptionManager
 public:
   SubscriptionManager()
   {
-    subscriber_node_ = std::make_shared<rclcpp::Node>("subscriber_node");
+    subscriber_node_ = std::make_shared<rclcpp::Node>(
+      "subscriber_node",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false)
+    );
   }
 
   template<typename MessageT>
