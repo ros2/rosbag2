@@ -109,7 +109,7 @@ private:
   uint64_t max_bagfile_size_;
 
   // Used to track topic -> message count
-  std::unordered_map<std::string, TopicInformation> topics_;
+  std::unordered_map<std::string, TopicInformation> topics_names_to_info_;
 
   rosbag2_storage::BagMetadata metadata_;
 

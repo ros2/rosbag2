@@ -38,7 +38,7 @@ Writer::Writer(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
-  topics_({}),
+  topics_names_to_info_({}),
   metadata_()
 {}
 
@@ -76,7 +76,7 @@ void Writer::open(
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths.push_back(storage_->get_relative_path());
+  metadata_.relative_file_paths = {storage_->get_relative_path()};
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)
@@ -89,11 +89,13 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
     converter_->add_topic(topic_with_type.name, topic_with_type.type);
   }
 
-  if (topics_.find(topic_with_type.name) == topics_.end()) {
+  if (topics_names_to_info_.find(topic_with_type.name) ==
+    topics_names_to_info_.end())
+  {
     rosbag2_storage::TopicInformation info{};
     info.topic_metadata = topic_with_type;
 
-    topics_.insert({topic_with_type.name, info});
+    topics_names_to_info_.insert({topic_with_type.name, info});
 
     storage_->create_topic(topic_with_type);
   }
@@ -105,11 +107,7 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
     throw std::runtime_error("Bag is not open. Call open() before removing.");
   }
 
-  auto it = topics_.find(topic_with_type.name);
-
-  if (it != topics_.end()) {
-    topics_.erase(it);
-
+  if (topics_names_to_info_.erase(topic_with_type.name) > 0) {
     storage_->remove_topic(topic_with_type);
   }
 }
@@ -121,8 +119,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   }
 
   // Update the message count for the Topic.
-  ++topics_[message->topic_name].message_count;
-  ++metadata_.message_count;
+  ++topics_names_to_info_.at(message->topic_name).message_count;
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
@@ -154,10 +151,12 @@ void Writer::finalize_metadata()
   }
 
   metadata_.topics_with_message_count.clear();
-  metadata_.topics_with_message_count.reserve(topics_.size());
+  metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
+  metadata_.message_count = 0;
 
-  for (const auto & topic : topics_) {
+  for (const auto & topic : topics_names_to_info_) {
     metadata_.topics_with_message_count.push_back(topic.second);
+    metadata_.message_count += topic.second.message_count;
   }
 }
 
