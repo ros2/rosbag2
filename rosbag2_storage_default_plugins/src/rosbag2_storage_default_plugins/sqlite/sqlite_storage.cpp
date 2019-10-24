@@ -233,6 +233,11 @@ std::string SqliteStorage::get_storage_identifier() const
   return "sqlite3";
 }
 
+std::string SqliteStorage::get_relative_path() const
+{
+  return database_name_;
+}
+
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;

@@ -22,6 +22,7 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
+#include "test_constants.hpp"
 #include "test_plugin.hpp"
 
 TestPlugin::~TestPlugin()
@@ -79,15 +80,22 @@ rosbag2_storage::BagMetadata TestPlugin::get_metadata()
   return rosbag2_storage::BagMetadata();
 }
 
+std::string TestPlugin::get_relative_path() const
+{
+  std::cout << "\nreturning relative path\n";
+  return test_constants::DUMMY_FILEPATH;
+}
+
 uint64_t TestPlugin::get_bagfile_size() const
 {
   std::cout << "\nreturning bagfile size\n";
-  return default_max_bagfile_size;
+  return test_constants::MAX_BAGFILE_SIZE;
 }
 
 std::string TestPlugin::get_storage_identifier() const
 {
-  return "TestPlugin";
+  std::cout << "\nreturning storage identifier\n";
+  return test_constants::READ_WRITE_PLUGIN_IDENTIFIER;
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

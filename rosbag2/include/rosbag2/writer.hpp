@@ -17,6 +17,8 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -106,8 +108,19 @@ private:
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
 
+  // Used to track topic -> message count
+  std::unordered_map<std::string, TopicInformation> topics_names_to_info_;
+
+  rosbag2_storage::BagMetadata metadata_;
+
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
+
+  // Prepares the metadata by setting initial values.
+  void init_metadata();
+
+  // Record TopicInformation into metadata
+  void finalize_metadata();
 };
 
 }  // namespace rosbag2

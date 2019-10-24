@@ -16,6 +16,8 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 
+#include <string>
+
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -30,6 +32,13 @@ public:
   virtual ~BaseInfoInterface() = default;
 
   virtual BagMetadata get_metadata() = 0;
+
+  /**
+   * Retrieves the relative path to the backing of the storage plugin.
+   *
+   * \returns the relative path.
+   */
+  virtual std::string get_relative_path() const = 0;
 };
 
 }  // namespace storage_interfaces
