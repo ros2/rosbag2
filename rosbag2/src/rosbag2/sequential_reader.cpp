@@ -53,7 +53,6 @@ SequentialReader::open(
     return;
   }
   file_paths_ = bag_metadata.relative_file_paths;
-  assert(!file_paths_.empty());
   current_file_iterator_ = file_paths_.begin();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
