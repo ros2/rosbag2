@@ -100,7 +100,12 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
     rosbag2_storage::TopicInformation info{};
     info.topic_metadata = topic_with_type;
 
-    topics_names_to_info_.insert({topic_with_type.name, info});
+    const auto insert_res = topics_names_to_info_.insert(
+      std::make_pair(topic_with_type.name, info));
+
+    if (!insert_res.second) {
+      throw std::runtime_error("Failed to insert topic!");
+    }
 
     storage_->create_topic(topic_with_type);
   }
