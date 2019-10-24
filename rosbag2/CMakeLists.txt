@@ -15,6 +15,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+# Windows supplies macros for min and max by default. We should only use min and max from stl
+if (WIN32)
+  add_definitions(-DNOMINMAX)
+endif()
+
 option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
 # Only enable sanitizers on x64 architectures
 # https://github.com/google/sanitizers/issues/794

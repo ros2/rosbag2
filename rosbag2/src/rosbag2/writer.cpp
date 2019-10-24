@@ -59,7 +59,7 @@ void Writer::init_metadata()
   metadata_ = rosbag2_storage::BagMetadata{};
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
+    (std::chrono::nanoseconds::max)());
   metadata_.relative_file_paths = {storage_->get_relative_path()};
 }
 
@@ -143,10 +143,10 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
-  metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
+  metadata_.starting_time = (std::min)(metadata_.starting_time, message_timestamp);
 
   const auto duration = message_timestamp - metadata_.starting_time;
-  metadata_.duration = std::max(metadata_.duration, duration);
+  metadata_.duration = (std::max)(metadata_.duration, duration);
 
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
