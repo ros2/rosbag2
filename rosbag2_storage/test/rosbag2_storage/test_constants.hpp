@@ -13,14 +13,15 @@
 // limitations under the License.
 
 
-#ifndef ROSBAG2_STORAGE__PLUGIN_CONSTANTS_HPP_
-#define ROSBAG2_STORAGE__PLUGIN_CONSTANTS_HPP_
+#ifndef ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_
+#define ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_
 
-namespace plugin_constants
+namespace test_constants
 {
 constexpr const char * const READ_WRITE_PLUGIN_IDENTIFIER = "ReadWritePlugin";
 constexpr const char * const READ_ONLY_PLUGIN_IDENTIFIER = "ReadOnlyPlugin";
 constexpr const char * const DUMMY_FILEPATH = "/path/to/storage";
+constexpr const uint64_t MAX_BAGFILE_SIZE = 0;
 }
 
-#endif  // ROSBAG2_STORAGE__PLUGIN_CONSTANTS_HPP_
+#endif  // ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_

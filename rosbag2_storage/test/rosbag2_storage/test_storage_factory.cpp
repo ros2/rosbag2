@@ -22,7 +22,7 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 
-#include "plugin_constants.hpp"
+#include "test_constants.hpp"
 
 using rosbag2_storage::storage_interfaces::ReadWriteInterface;
 using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
@@ -46,12 +46,16 @@ TEST_F(StorageFactoryTest, load_test_plugin) {
   ASSERT_NE(nullptr, read_write_storage);
 
   EXPECT_EQ(
-    plugin_constants::DUMMY_FILEPATH,
+    test_constants::DUMMY_FILEPATH,
     read_write_storage->get_relative_path());
 
   EXPECT_EQ(
-    plugin_constants::READ_WRITE_PLUGIN_IDENTIFIER,
+    test_constants::READ_WRITE_PLUGIN_IDENTIFIER,
     read_write_storage->get_storage_identifier());
+
+  EXPECT_EQ(
+    test_constants::MAX_BAGFILE_SIZE,
+    read_write_storage->get_bagfile_size());
 
   auto msg = read_write_storage->read_next();
   read_write_storage->write(msg);
@@ -69,12 +73,16 @@ TEST_F(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
   ASSERT_NE(nullptr, storage_for_reading);
 
   EXPECT_EQ(
-    plugin_constants::DUMMY_FILEPATH,
+    test_constants::DUMMY_FILEPATH,
     storage_for_reading->get_relative_path());
 
   EXPECT_EQ(
-    plugin_constants::READ_ONLY_PLUGIN_IDENTIFIER,
+    test_constants::READ_ONLY_PLUGIN_IDENTIFIER,
     storage_for_reading->get_storage_identifier());
+
+  EXPECT_EQ(
+    test_constants::MAX_BAGFILE_SIZE,
+    storage_for_reading->get_bagfile_size());
 
   storage_for_reading->read_next();
 
