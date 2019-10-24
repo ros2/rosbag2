@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 # Windows supplies macros for min and max by default. We should only use min and max from stl
-if (WIN32)
+if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
