@@ -83,7 +83,6 @@ private:
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 
   std::shared_ptr<SqliteWrapper> database_;
-  std::string database_name_;
   SqliteStatement write_statement_ {};
   SqliteStatement read_statement_ {};
   ReadQueryResult message_result_ {nullptr};
@@ -91,7 +90,7 @@ private:
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
-  std::string uri_;
+  std::string relative_path_;
 };
 
 }  // namespace rosbag2_storage_plugins

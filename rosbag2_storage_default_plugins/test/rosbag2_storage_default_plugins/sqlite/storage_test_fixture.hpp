@@ -91,7 +91,9 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    writable_storage->open(temporary_dir_path_);
+    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db"});
+
+    writable_storage->open(db_file);
 
     for (auto msg : messages) {
       std::string topic_name = std::get<2>(msg);
@@ -105,7 +107,7 @@ public:
       writable_storage->write(bag_message);
     }
 
-    metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
+    metadata_io_.write_metadata(temporary_dir_path_ + "", writable_storage->get_metadata());
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
@@ -113,8 +115,11 @@ public:
   {
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db"});
+
     readable_storage->open(
-      temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+      db_file, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     while (readable_storage->has_next()) {

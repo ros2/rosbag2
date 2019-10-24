@@ -39,6 +39,7 @@ Writer::Writer(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
+  bagfile_counter_(0),
   topics_names_to_info_(),
   metadata_()
 {}
@@ -75,7 +76,9 @@ void Writer::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  storage_ = storage_factory_->open_read_write(storage_options.uri, storage_options.storage_id);
+  auto bagfile_uri = next_bagfile_uri_();
+
+  storage_ = storage_factory_->open_read_write(bagfile_uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -132,6 +135,24 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
   }
 }
 
+void Writer::split_bagfile_()
+{
+  auto bagfile_uri = next_bagfile_uri_();
+
+  storage_ = storage_factory_->open_read_write(bagfile_uri, metadata_.storage_identifier);
+
+  if (!storage_) {
+    throw std::runtime_error("No storage could be initialized. Abort");
+  }
+
+  metadata_.relative_file_paths.push_back(storage_->get_relative_path());
+
+  // Re-register all Topics since we rolled-over to a new bagfile.
+  for (const auto & topic : topics_names_to_info_) {
+    storage_->create_topic(topic.second.topic_metadata);
+  }
+}
+
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 {
   if (!storage_) {
@@ -141,6 +162,9 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   // Update the message count for the Topic.
   ++topics_names_to_info_.at(message->topic_name).message_count;
 
+  if (should_split_bagfile()) {
+    split_bagfile_();
+  }
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
@@ -176,6 +200,21 @@ void Writer::finalize_metadata()
     metadata_.topics_with_message_count.push_back(topic.second);
     metadata_.message_count += topic.second.message_count;
   }
+}
+
+std::string Writer::next_bagfile_uri_()
+{
+  std::stringstream db_name;
+  db_name << rosbag2_storage::FilesystemHelper::get_folder_name(uri_);
+
+  // Only append the counter after we have split.
+  if (bagfile_counter_ > 0) {
+    db_name << "_" << bagfile_counter_;
+  }
+
+  ++bagfile_counter_;
+
+  return rosbag2_storage::FilesystemHelper::concat({uri_, db_name.str()});
 }
 
 }  // namespace rosbag2
