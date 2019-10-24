@@ -116,11 +116,11 @@ private:
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
-  // Record TopicInformation into metadata
-  void finalize_metadata();
-
   // Prepares the metadata by setting initial values.
   void init_metadata();
+
+  // Record TopicInformation into metadata
+  void finalize_metadata();
 };
 
 }  // namespace rosbag2

@@ -142,11 +142,9 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
-
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
   const auto duration = message_timestamp - metadata_.starting_time;
-
   metadata_.duration = std::max(metadata_.duration, duration);
 
   storage_->write(converter_ ? converter_->convert(message) : message);
