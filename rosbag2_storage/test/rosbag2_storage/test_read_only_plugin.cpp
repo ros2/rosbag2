@@ -19,6 +19,7 @@
 
 #include "pluginlib/class_list_macros.hpp"
 
+#include "plugin_constants.hpp"
 #include "test_read_only_plugin.hpp"
 
 TestReadOnlyPlugin::~TestReadOnlyPlugin()
@@ -57,7 +58,7 @@ std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_a
 std::string TestReadOnlyPlugin::get_relative_path() const
 {
   std::cout << "\nreturning relative path\n";
-  return "";
+  return plugin_constants::DUMMY_FILEPATH;
 }
 
 rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()
@@ -73,7 +74,7 @@ uint64_t TestReadOnlyPlugin::get_bagfile_size() const
 
 std::string TestReadOnlyPlugin::get_storage_identifier() const
 {
-  return "TestReadOnlyPlugin";
+  return plugin_constants::READ_ONLY_PLUGIN_IDENTIFIER;
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

@@ -22,6 +22,8 @@
 
 #include "rosbag2_storage/storage_factory.hpp"
 
+#include "plugin_constants.hpp"
+
 using rosbag2_storage::storage_interfaces::ReadWriteInterface;
 using rosbag2_storage::storage_interfaces::ReadOnlyInterface;
 
@@ -42,6 +44,15 @@ TEST_F(StorageFactoryTest, load_test_plugin) {
   auto read_write_storage = factory.open_read_write(
     bag_file_path, test_plugin_id);
   ASSERT_NE(nullptr, read_write_storage);
+
+  EXPECT_EQ(
+    plugin_constants::DUMMY_FILEPATH,
+    read_write_storage->get_relative_path());
+
+  EXPECT_EQ(
+    plugin_constants::READ_WRITE_PLUGIN_IDENTIFIER,
+    read_write_storage->get_storage_identifier());
+
   auto msg = read_write_storage->read_next();
   read_write_storage->write(msg);
 
@@ -56,6 +67,15 @@ TEST_F(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
   auto storage_for_reading = factory.open_read_only(
     bag_file_path, test_read_only_plugin_id);
   ASSERT_NE(nullptr, storage_for_reading);
+
+  EXPECT_EQ(
+    plugin_constants::DUMMY_FILEPATH,
+    storage_for_reading->get_relative_path());
+
+  EXPECT_EQ(
+    plugin_constants::READ_ONLY_PLUGIN_IDENTIFIER,
+    storage_for_reading->get_storage_identifier());
+
   storage_for_reading->read_next();
 
   auto storage_for_reading_and_writing = factory.open_read_write(
