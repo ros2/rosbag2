@@ -53,6 +53,15 @@ Writer::~Writer()
   storage_factory_.reset();
 }
 
+void Writer::init_metadata()
+{
+  metadata_ = rosbag2_storage::BagMetadata{};
+  metadata_.storage_identifier = storage_->get_storage_identifier();
+  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds::max());
+  metadata_.relative_file_paths = {storage_->get_relative_path()};
+}
+
 void Writer::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
@@ -72,11 +81,7 @@ void Writer::open(
 
   uri_ = storage_options.uri;
 
-  metadata_ = rosbag2_storage::BagMetadata{};
-  metadata_.storage_identifier = storage_->get_storage_identifier();
-  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {storage_->get_relative_path()};
+  init_metadata();
 }
 
 void Writer::create_topic(const TopicMetadata & topic_with_type)

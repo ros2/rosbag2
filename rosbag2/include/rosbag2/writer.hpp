@@ -118,6 +118,9 @@ private:
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  // Prepares the metadata by setting initial values.
+  void init_metadata();
 };
 
 }  // namespace rosbag2
