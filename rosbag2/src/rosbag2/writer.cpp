@@ -94,9 +94,9 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
     info.topic_metadata = topic_with_type;
 
     topics_.insert({topic_with_type.name, info});
-  }
 
-  storage_->create_topic(topic_with_type);
+    storage_->create_topic(topic_with_type);
+  }
 }
 
 void Writer::remove_topic(const TopicMetadata & topic_with_type)
