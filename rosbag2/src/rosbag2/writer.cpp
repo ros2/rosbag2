@@ -104,7 +104,10 @@ void Writer::create_topic(const TopicMetadata & topic_with_type)
       std::make_pair(topic_with_type.name, info));
 
     if (!insert_res.second) {
-      throw std::runtime_error("Failed to insert topic!");
+      std::stringstream errmsg;
+      errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
+
+      throw std::runtime_error(errmsg.str());
     }
 
     storage_->create_topic(topic_with_type);
