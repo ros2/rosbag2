@@ -17,6 +17,7 @@
 #include <rosbag2_storage/filesystem_helper.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <stdexcept>
 #include <string>
