@@ -21,7 +21,6 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,12 +48,7 @@ namespace rosbag2_storage_plugins
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opening DB: " << uri << ".");
-
-  std::stringstream relative_path_builder;
-  relative_path_builder << uri << "." << get_storage_identifier();
-
-  relative_path_ = relative_path_builder.str();
+  relative_path_ = uri + ".db3";
 
   if (is_read_only(io_flag) && !database_exists(relative_path_)) {
     throw std::runtime_error("Failed to read from bag: File '" + relative_path_ + "' does not exist!");
@@ -75,7 +69,7 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << uri << "'.");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << relative_path_ << "'.");
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
