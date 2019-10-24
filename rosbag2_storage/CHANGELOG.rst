@@ -3,6 +3,13 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Add get_identifier to base io-interfaces for support in bagfile splitting (`#183 <https://github.com/ros2/rosbag2/issues/183>`_)
+* Add bagfile splitting support to storage_options (`#182 <https://github.com/ros2/rosbag2/issues/182>`_)
+* Change storage interfaces for bagfile splitting feature (`#170 <https://github.com/ros2/rosbag2/issues/170>`_)
+* Contributors: Zachary Michaels
+
 0.2.0 (2019-09-26)
 ------------------
 * Fix test failures on armhf (`#135 <https://github.com/ros2/rosbag2/issues/135>`_)

@@ -4,6 +4,17 @@ Changelog for package rosbag2_transport
 
 
 
+Forthcoming
+-----------
+* Disable parameter event publishers on test nodes. (`#180 <https://github.com/ros2/rosbag2/issues/180>`_)
+* Narrow down tests for topic discovery. (`#178 <https://github.com/ros2/rosbag2/issues/178>`_)
+* Fix API for new Intra-Process communication. (`#143 <https://github.com/ros2/rosbag2/issues/143>`_)
+* Add dependency on python_cmake_module. (`#188 <https://github.com/ros2/rosbag2/issues/188>`_)
+* Add bagfile splitting support to storage_options. (`#182 <https://github.com/ros2/rosbag2/issues/182>`_)
+* Fix the test failure of wrong messages count. (`#165 <https://github.com/ros2/rosbag2/issues/165>`_)
+* Support for zero-copy message transport. (`#168 <https://github.com/ros2/rosbag2/issues/168>`_)
+* Contributors: Alberto Soragna, ChenYing Kuo, Dan Rose, Karsten Knese, Mikael Arguedas, Zachary Michaels
+
 0.2.0 (2019-09-26)
 ------------------
 * fixup after API changes to Subscription in rclcpp (`#166 <https://github.com/ros2/rosbag2/issues/166>`_)
