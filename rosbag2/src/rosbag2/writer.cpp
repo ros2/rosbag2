@@ -114,6 +114,8 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
 
   if (topics_names_to_info_.erase(topic_with_type.name) > 0) {
     storage_->remove_topic(topic_with_type);
+  } else {
+    throw std::runtime_error("Tried to remove a non-existing topic");
   }
 }
 
