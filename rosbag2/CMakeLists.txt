@@ -132,6 +132,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_sequential_reader rosbag2)
   endif()
 
+  ament_add_gmock(test_multifile_reader
+    test/rosbag2/test_multifile_reader.cpp)
+  if(TARGET test_multifile_reader)
+    target_link_libraries(test_multifile_reader rosbag2)
+  endif()
+
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
     test/rosbag2/types/test_ros2_message.cpp

@@ -79,14 +79,14 @@ SequentialReader::open(
 
 std::string SequentialReader::get_next_file()
 {
-    assert(current_file_iterator_ != file_paths_.end());
-    current_file_iterator_++;
-    return *current_file_iterator_;
+  assert(current_file_iterator_ != file_paths_.end());
+  current_file_iterator_++;
+  return *current_file_iterator_;
 }
 
 bool SequentialReader::has_next_file() const
 {
-    return current_file_iterator_ + 1 != file_paths_.end();
+  return current_file_iterator_ + 1 != file_paths_.end();
 }
 
 bool SequentialReader::has_next()
