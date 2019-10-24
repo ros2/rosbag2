@@ -4,8 +4,8 @@ Changelog for package rosbag2_transport
 
 
 
-Forthcoming
------------
+0.2.1 (2019-10-23)
+------------------
 * Disable parameter event publishers on test nodes. (`#180 <https://github.com/ros2/rosbag2/issues/180>`_)
 * Narrow down tests for topic discovery. (`#178 <https://github.com/ros2/rosbag2/issues/178>`_)
 * Fix API for new Intra-Process communication. (`#143 <https://github.com/ros2/rosbag2/issues/143>`_)

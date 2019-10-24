@@ -3,8 +3,8 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.2.1 (2019-10-23)
+------------------
 * Add get_identifier to base io-interfaces for support in bagfile splitting (`#183 <https://github.com/ros2/rosbag2/issues/183>`_)
 * Add bagfile splitting support to storage_options (`#182 <https://github.com/ros2/rosbag2/issues/182>`_)
 * Support for zero copy API (`#168 <https://github.com/ros2/rosbag2/issues/168>`_)
