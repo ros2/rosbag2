@@ -51,11 +51,13 @@ void SqliteStorage::open(
   relative_path_ = uri + ".db3";
 
   if (is_read_only(io_flag) && !database_exists(relative_path_)) {
-    throw std::runtime_error("Failed to read from bag: File '" + relative_path_ + "' does not exist!");
+    throw std::runtime_error(
+            "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
   }
 
   try {
     database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
+    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag);
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
