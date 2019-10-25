@@ -31,6 +31,10 @@ enum class IOFlag : uint8_t
   APPEND = 2
 };
 
+// When bagfile splitting feature is not enabled or applicable,
+// use 0 as the default maximum bagfile size value.
+ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT;
+
 class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 {
 public:
@@ -43,6 +47,12 @@ public:
    * \returns the size of the bagfile in bytes.
    */
   virtual uint64_t get_bagfile_size() const = 0;
+
+  /**
+   * Returns the identifier for the storage plugin.
+   * \returns the identifier.
+   */
+  virtual std::string get_storage_identifier() const = 0;
 };
 
 }  // namespace storage_interfaces

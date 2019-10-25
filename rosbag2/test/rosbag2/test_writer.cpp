@@ -40,6 +40,7 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
+    storage_options_ = rosbag2::StorageOptions{};
     storage_options_.uri = "uri";
 
     EXPECT_CALL(

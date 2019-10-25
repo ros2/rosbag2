@@ -44,7 +44,9 @@ public:
     const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages = 0)
   {
     auto node_name = std::string("publisher") + std::to_string(counter_++);
-    auto publisher_node = std::make_shared<rclcpp::Node>(node_name);
+    auto publisher_node = std::make_shared<rclcpp::Node>(
+      node_name,
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
     auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
 
     publisher_nodes_.push_back(publisher_node);

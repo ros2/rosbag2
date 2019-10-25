@@ -3,6 +3,9 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.1 (2019-10-23)
+------------------
+
 0.2.0 (2019-09-26)
 ------------------
 * install package.xml (`#146 <https://github.com/ros2/rosbag2/issues/146>`_)

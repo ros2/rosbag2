@@ -36,10 +36,11 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
+  std::string get_relative_path() const override;
+
   uint64_t get_bagfile_size() const override;
 
-private:
-  const uint64_t default_max_bagfile_size = 0;
+  std::string get_storage_identifier() const override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_READ_ONLY_PLUGIN_HPP_

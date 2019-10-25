@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__STORAGE_OPTIONS_HPP_
-#define ROSBAG2__STORAGE_OPTIONS_HPP_
 
-#include <string>
+#ifndef ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_
+#define ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_
 
-namespace rosbag2
+namespace test_constants
 {
+constexpr const char * const READ_WRITE_PLUGIN_IDENTIFIER = "ReadWritePlugin";
+constexpr const char * const READ_ONLY_PLUGIN_IDENTIFIER = "ReadOnlyPlugin";
+constexpr const char * const DUMMY_FILEPATH = "/path/to/storage";
+constexpr const uint64_t MAX_BAGFILE_SIZE = 0;
+}
 
-struct StorageOptions
-{
-public:
-  std::string uri;
-  std::string storage_id;
-
-  /**
-   * The maximum size a bagfile can be, in bytes, before it is split.
-   * A value of 0 indicates that bagfile splitting will not be used.
-   */
-  uint64_t max_bagfile_size;
-};
-
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__STORAGE_OPTIONS_HPP_
+#endif  // ROSBAG2_STORAGE__TEST_CONSTANTS_HPP_

@@ -33,6 +33,15 @@
 
 #include "../logging.hpp"
 
+namespace
+{
+bool database_exists(const std::string & uri)
+{
+  std::ifstream database(uri);
+  return database.good();
+}
+}
+
 namespace rosbag2_storage_plugins
 {
 
@@ -214,21 +223,25 @@ std::unique_ptr<rosbag2_storage::BagMetadata> SqliteStorage::load_metadata(const
   }
 }
 
-bool SqliteStorage::database_exists(const std::string & uri)
-{
-  std::ifstream database(uri);
-  return database.good();
-}
-
 bool SqliteStorage::is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const
 {
   return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY;
 }
 
+std::string SqliteStorage::get_storage_identifier() const
+{
+  return "sqlite3";
+}
+
+std::string SqliteStorage::get_relative_path() const
+{
+  return database_name_;
+}
+
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
-  metadata.storage_identifier = "sqlite3";
+  metadata.storage_identifier = get_storage_identifier();
   metadata.relative_file_paths = {database_name_};
 
   metadata.message_count = 0;
