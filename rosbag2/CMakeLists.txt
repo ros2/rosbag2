@@ -40,13 +40,13 @@ find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2/converter.cpp
+  src/rosbag2/impl/sequential_reader_impl.cpp
   src/rosbag2/info.cpp
   src/rosbag2/sequential_reader.cpp
   src/rosbag2/serialization_format_converter_factory.cpp
-  src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/writer.cpp
   src/rosbag2/types/introspection_message.cpp
-  src/rosbag2/impl/sequential_reader_impl.cpp)
+  src/rosbag2/typesupport_helpers.cpp
+  src/rosbag2/writer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp

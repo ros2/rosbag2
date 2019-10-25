@@ -33,11 +33,16 @@ public:
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory);
 
   ~ReaderImpl();
+
   void reset();
+
   void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options);
+
   bool has_next();
+
   std::shared_ptr<SerializedBagMessage> read_next();
+
   std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
