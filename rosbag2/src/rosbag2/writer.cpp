@@ -77,14 +77,12 @@ void Writer::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  auto bagfile_uri = next_bagfile_uri_();
+  auto bagfile_uri = next_bagfile_uri();
 
   storage_ = storage_factory_->open_read_write(bagfile_uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-
-  uri_ = storage_options.uri;
 
   init_metadata();
 }
@@ -136,9 +134,9 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
   }
 }
 
-void Writer::split_bagfile_()
+void Writer::split_bagfile()
 {
-  auto bagfile_uri = next_bagfile_uri_();
+  auto bagfile_uri = next_bagfile_uri();
 
   storage_ = storage_factory_->open_read_write(bagfile_uri, metadata_.storage_identifier);
 
@@ -164,7 +162,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   ++topics_names_to_info_.at(message->topic_name).message_count;
 
   if (should_split_bagfile()) {
-    split_bagfile_();
+    split_bagfile();
   }
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
@@ -203,7 +201,7 @@ void Writer::finalize_metadata()
   }
 }
 
-std::string Writer::next_bagfile_uri_()
+std::string Writer::next_bagfile_uri()
 {
   std::stringstream db_name;
   db_name << rosbag2_storage::FilesystemHelper::get_folder_name(uri_);

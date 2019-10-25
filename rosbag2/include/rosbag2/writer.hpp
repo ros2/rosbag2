@@ -107,6 +107,8 @@ private:
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
+
+  // index used in bagfile splitting suffix. Starts at 0 and increments after each split.
   uint64_t bagfile_counter_;
 
   // Used to track topic -> message count
@@ -114,13 +116,17 @@ private:
 
   rosbag2_storage::BagMetadata metadata_;
 
-  std::string next_bagfile_uri_();
-  void split_bagfile_();
+  // Generates the next bagfile uri based on the bag_counter_ index.
+  std::string next_bagfile_uri();
+
+  // Closes the current backed storage and opens the next bagfile.
+  void split_bagfile();
+
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
-  void init_metadata();
   // Prepares the metadata by setting initial values.
+  void init_metadata();
 
   // Record TopicInformation into metadata
   void finalize_metadata();
