@@ -141,7 +141,10 @@ void Writer::split_bagfile()
   storage_ = storage_factory_->open_read_write(bagfile_uri, metadata_.storage_identifier);
 
   if (!storage_) {
-    throw std::runtime_error("No storage could be initialized. Abort");
+    std::stringstream errmsg;
+    errmsg << "Failed to rollover bagfile to new file: \"" << bagfile_uri << "\"!";
+
+    throw std::runtime_error(errmsg.str());
   }
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_path());
@@ -164,6 +167,7 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
   if (should_split_bagfile()) {
     split_bagfile();
   }
+
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
@@ -207,6 +211,7 @@ std::string Writer::next_bagfile_uri()
   db_name << rosbag2_storage::FilesystemHelper::get_folder_name(uri_);
 
   // Only append the counter after we have split.
+  // This is so bagfiles have the same naming conventions if splitting is disabled.
   if (bagfile_counter_ > 0) {
     db_name << "_" << bagfile_counter_;
   }

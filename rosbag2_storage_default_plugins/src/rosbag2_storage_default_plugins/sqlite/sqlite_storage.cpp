@@ -124,7 +124,8 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  return rosbag2_storage::FilesystemHelper::get_file_size(relative_path_);
+  return rosbag2_storage::FilesystemHelper::get_file_size(
+    get_relative_path());
 }
 
 void SqliteStorage::initialize()

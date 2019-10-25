@@ -107,7 +107,7 @@ public:
       writable_storage->write(bag_message);
     }
 
-    metadata_io_.write_metadata(temporary_dir_path_ + "", writable_storage->get_metadata());
+    metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
