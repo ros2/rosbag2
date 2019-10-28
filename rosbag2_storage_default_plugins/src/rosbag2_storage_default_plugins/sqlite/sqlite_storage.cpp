@@ -56,7 +56,6 @@ void SqliteStorage::open(
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(uri, io_flag);
     database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag);
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));

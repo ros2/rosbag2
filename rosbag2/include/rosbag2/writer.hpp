@@ -98,7 +98,7 @@ public:
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
 
 private:
-  std::string uri_;
+  std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
@@ -108,16 +108,10 @@ private:
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
 
-  // index used in bagfile splitting suffix. Starts at 0 and increments after each split.
-  uint64_t bagfile_counter_;
-
   // Used to track topic -> message count
   std::unordered_map<std::string, TopicInformation> topics_names_to_info_;
 
   rosbag2_storage::BagMetadata metadata_;
-
-  // Generates the next bagfile uri based on the bag_counter_ index.
-  std::string next_bagfile_uri();
 
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();

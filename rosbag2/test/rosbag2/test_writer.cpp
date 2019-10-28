@@ -14,8 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <rosbag2_storage/filesystem_helper.hpp>
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,6 +21,7 @@
 
 #include "rosbag2/writer.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
