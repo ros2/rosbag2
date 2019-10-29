@@ -30,7 +30,6 @@ ReaderImpl::ReaderImpl(
   converter_factory_(std::move(converter_factory))
 {}
 
-
 ReaderImpl::~ReaderImpl()
 {
   reset();
