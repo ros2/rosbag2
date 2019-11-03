@@ -19,31 +19,39 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+
+#include "rosbag2/converter.hpp"
+#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2/serialization_format_converter_factory.hpp"
+#include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
+
 
 namespace rosbag2
 {
 
-class ROSBAG2_LOCAL ReaderImpl
+class ROSBAG2_LOCAL SequentialReaderImpl : public BaseReaderInterface
 {
 public:
-  ReaderImpl(
+  SequentialReaderImpl(
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory);
 
-  ~ReaderImpl();
-
-  void reset();
+  virtual ~SequentialReaderImpl();
 
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options);
+    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
 
-  bool has_next();
+  void reset() override;
 
-  std::shared_ptr<SerializedBagMessage> read_next();
+  bool has_next() override;
 
-  std::vector<TopicMetadata> get_all_topics_and_types();
+  std::shared_ptr<SerializedBagMessage> read_next() override;
+
+  std::vector<TopicMetadata> get_all_topics_and_types() override;
 
 private:
   /**
@@ -74,5 +82,4 @@ private:
   std::unique_ptr<Converter> converter_{};
 };
 }  // namespace rosbag2
-
 #endif  // ROSBAG2__IMPL__SEQUENTIAL_READER_IMPL_HPP_

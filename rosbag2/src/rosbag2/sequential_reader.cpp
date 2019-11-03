@@ -20,7 +20,7 @@
 #include "rosbag2/info.hpp"
 #include "rosbag2/sequential_reader.hpp"
 
-#include "./impl/sequential_reader_impl.hpp"
+#include "rosbag2/impl/sequential_reader_impl.hpp"
 
 namespace rosbag2
 {
@@ -28,7 +28,7 @@ namespace rosbag2
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: reader_impl_(std::make_unique<ReaderImpl>(
+: reader_impl_(std::make_unique<SequentialReaderImpl>(
       std::move(storage_factory),
       std::move(converter_factory)))
 {}

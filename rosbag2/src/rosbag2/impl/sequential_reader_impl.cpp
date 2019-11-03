@@ -18,29 +18,29 @@
 #include <utility>
 #include <vector>
 
-#include "sequential_reader_impl.hpp"
+#include "rosbag2/impl/sequential_reader_impl.hpp"
 
 namespace rosbag2
 {
 
-ReaderImpl::ReaderImpl(
+SequentialReaderImpl::SequentialReaderImpl(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
 : storage_factory_(std::move(storage_factory)),
   converter_factory_(std::move(converter_factory))
 {}
 
-ReaderImpl::~ReaderImpl()
+SequentialReaderImpl::~SequentialReaderImpl()
 {
   reset();
 }
 
-void ReaderImpl::reset()
+void SequentialReaderImpl::reset()
 {
   storage_.reset();
 }
 
-void ReaderImpl::open(
+void SequentialReaderImpl::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
   storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
@@ -58,7 +58,7 @@ void ReaderImpl::open(
     topics[0].topic_metadata.serialization_format);
 }
 
-bool ReaderImpl::has_next()
+bool SequentialReaderImpl::has_next()
 {
   if (storage_) {
     return storage_->has_next();
@@ -66,7 +66,7 @@ bool ReaderImpl::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<SerializedBagMessage> ReaderImpl::read_next()
+std::shared_ptr<SerializedBagMessage> SequentialReaderImpl::read_next()
 {
   if (storage_) {
     auto message = storage_->read_next();
@@ -75,7 +75,7 @@ std::shared_ptr<SerializedBagMessage> ReaderImpl::read_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<TopicMetadata> ReaderImpl::get_all_topics_and_types()
+std::vector<TopicMetadata> SequentialReaderImpl::get_all_topics_and_types()
 {
   if (storage_) {
     return storage_->get_all_topics_and_types();
@@ -83,7 +83,8 @@ std::vector<TopicMetadata> ReaderImpl::get_all_topics_and_types()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-void ReaderImpl::check_topics_serialization_formats(const std::vector<TopicInformation> & topics)
+void SequentialReaderImpl::check_topics_serialization_formats(
+  const std::vector<TopicInformation> & topics)
 {
   auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
   for (const auto & topic : topics) {
@@ -95,7 +96,7 @@ void ReaderImpl::check_topics_serialization_formats(const std::vector<TopicInfor
   }
 }
 
-void ReaderImpl::check_converter_serialization_format(
+void SequentialReaderImpl::check_converter_serialization_format(
   const std::string & converter_serialization_format,
   const std::string & storage_serialization_format)
 {

@@ -23,10 +23,9 @@
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2/converter.hpp"
+
+#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
-#include "rosbag2/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
@@ -41,7 +40,7 @@
 namespace rosbag2
 {
 
-class ReaderImpl;
+class BaseReaderInterface;
 
 /**
  * The SequentialReader allows opening and reading messages of a bag. Messages will be read
@@ -103,7 +102,7 @@ public:
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
-  std::unique_ptr<ReaderImpl> reader_impl_;
+  std::unique_ptr<BaseReaderInterface> reader_impl_;
 };
 
 }  // namespace rosbag2
