@@ -1,6 +1,6 @@
 # rosbag2
 
-Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md)
+Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md).
 
 ## Installation instructions
 
@@ -13,7 +13,7 @@ $ export CHOOSE_ROS_DISTRO=crystal # rosbag2 is available starting from crystal
 $ sudo apt-get install ros-$CHOOSE_ROS_DISTRO-ros2bag* ros-$CHOOSE_ROS_DISTRO-rosbag2*
 ```
 
-For other platforms than Linux, rosbag2 has to be built from source as it's currently not part of the latest (ros2.repos file)[https://github.com/ros2/ros2/blob/master/ros2.repos].
+For other platforms than Linux, rosbag2 has to be built from source as it's currently not part of the latest [ros2.repos file](https://github.com/ros2/ros2/blob/master/ros2.repos).
 
 ## Build from source
 
