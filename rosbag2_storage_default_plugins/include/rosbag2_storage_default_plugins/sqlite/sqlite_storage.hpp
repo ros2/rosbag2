@@ -76,9 +76,6 @@ private:
   void prepare_for_reading();
   void fill_topics_and_types();
 
-  std::unique_ptr<rosbag2_storage::BagMetadata> load_metadata(const std::string & uri);
-  bool is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const;
-
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 

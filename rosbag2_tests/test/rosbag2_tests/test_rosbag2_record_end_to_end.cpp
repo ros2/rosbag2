@@ -29,7 +29,8 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   auto wrong_message = get_messages_strings()[0];
   wrong_message->string_value = "wrong_content";
 
-  auto process_handle = start_execution("ros2 bag record --output " + bag_path_ + " /test_topic");
+  auto process_handle = start_execution(
+    "ros2 bag record --output " + root_bag_path_ + " /test_topic");
   wait_for_db();
 
   pub_man_.add_publisher("/test_topic", message, expected_test_messages);
@@ -49,13 +50,13 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths.emplace_back("bag_0.db3");
+  metadata.relative_file_paths = {"bag_0.db3"};
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
   metadata.message_count = 0;
   rosbag2_storage::MetadataIo metadata_io;
-  metadata_io.write_metadata(bag_path_, metadata);
+  metadata_io.write_metadata(root_bag_path_, metadata);
 #endif
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");

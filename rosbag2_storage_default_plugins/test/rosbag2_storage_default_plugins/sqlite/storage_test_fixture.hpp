@@ -116,7 +116,7 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
+    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
 
     readable_storage->open(
       db_file, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);

@@ -40,7 +40,28 @@ bool database_exists(const std::string & uri)
   std::ifstream database(uri);
   return database.good();
 }
+
+std::string to_string(rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  switch (io_flag) {
+    case rosbag2_storage::storage_interfaces::IOFlag::APPEND:
+      return "APPEND";
+    case rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY:
+      return "READ_ONLY";
+    case rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE:
+      return "READ_WRITE";
+    default:
+      return "UNKNOWN";
+  }
 }
+
+bool is_read_write(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE;
+}
+
+constexpr const auto FILE_EXTENSION = ".db3";
+}  // namespace
 
 namespace rosbag2_storage_plugins
 {
@@ -48,9 +69,15 @@ namespace rosbag2_storage_plugins
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  relative_path_ = uri + ".db3";
+  if (is_read_write(io_flag)) {
+    relative_path_ = uri + FILE_EXTENSION;
+  } else {  // APPEND and READ_ONLY
+    relative_path_ = uri;
+  }
 
-  if (is_read_only(io_flag) && !database_exists(relative_path_)) {
+  // DB is created only if storage is opened for READ_WRITE.
+  // So READ_ONLY and APPEND require the DB to exist.
+  if (!is_read_write(io_flag) && !database_exists(relative_path_)) {
     throw std::runtime_error(
             "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
   }
@@ -61,7 +88,8 @@ void SqliteStorage::open(
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  if (!is_read_only(io_flag)) {
+  // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
+  if (is_read_write(io_flag)) {
     initialize();
   }
 
@@ -70,7 +98,10 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" << relative_path_ << "'.");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" <<
+    relative_path_ <<
+    "' for " <<
+    to_string(io_flag) << ".");
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -196,22 +227,6 @@ void SqliteStorage::fill_topics_and_types()
     all_topics_and_types_.push_back(
       {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
   }
-}
-
-std::unique_ptr<rosbag2_storage::BagMetadata> SqliteStorage::load_metadata(const std::string & uri)
-{
-  try {
-    rosbag2_storage::MetadataIo metadata_io;
-    return std::make_unique<rosbag2_storage::BagMetadata>(metadata_io.read_metadata(uri));
-  } catch (std::exception & e) {
-    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR("Failed to load metadata: %s", e.what());
-    return std::unique_ptr<rosbag2_storage::BagMetadata>();
-  }
-}
-
-bool SqliteStorage::is_read_only(const rosbag2_storage::storage_interfaces::IOFlag & io_flag) const
-{
-  return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY;
 }
 
 std::string SqliteStorage::get_storage_identifier() const
