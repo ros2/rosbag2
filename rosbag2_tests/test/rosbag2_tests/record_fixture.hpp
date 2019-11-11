@@ -43,7 +43,7 @@ public:
   RecordFixture()
   {
     bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
-    storage_path_ = rosbag2_storage::FilesystemHelper::concat({bag_path_, "bag"});
+    storage_path_ = rosbag2_storage::FilesystemHelper::concat({bag_path_, "bag_0"});
     database_path_ = storage_path_ + ".db3";
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }

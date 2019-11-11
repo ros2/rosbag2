@@ -220,11 +220,11 @@ TEST_F(StorageTestFixture, get_storage_identifier_returns_sqlite3) {
   EXPECT_EQ(storage->get_storage_identifier(), "sqlite3");
 }
 
-TEST_F(StorageTestFixture, get_relative_path_returns_db_name_with_ext) {
+TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
   auto storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   auto db_filename = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
 
   storage->open(db_filename);
 
-  EXPECT_EQ(storage->get_relative_path(), db_filename + ".db3");
+  EXPECT_EQ(storage->get_relative_file_path(), db_filename + ".db3");
 }

@@ -35,13 +35,8 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
   // Right now `base_folder_` is always just the folder name for where to install the bagfile.
   // The name of the folder needs to be queried in case Writer is opened with a relative path.
   std::stringstream storage_file_name;
-  storage_file_name << rosbag2_storage::FilesystemHelper::get_folder_name(base_folder);
-
-  // Only append the counter after we have split.
-  // This is so bagfiles have the old naming convention if splitting is disabled.
-  if (storage_count > 0) {
-    storage_file_name << "_" << storage_count;
-  }
+  storage_file_name << rosbag2_storage::FilesystemHelper::get_folder_name(base_folder) <<
+    "_" << storage_count;
 
   return rosbag2_storage::FilesystemHelper::concat({base_folder, storage_file_name.str()});
 }
@@ -78,7 +73,7 @@ void Writer::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {storage_->get_relative_path()};
+  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
 }
 
 void Writer::open(
@@ -165,7 +160,7 @@ void Writer::split_bagfile()
     throw std::runtime_error(errmsg.str());
   }
 
-  metadata_.relative_file_paths.push_back(storage_->get_relative_path());
+  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
 
   // Re-register all Topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {

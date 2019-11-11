@@ -66,7 +66,7 @@ void SqliteStorage::open(
   }
 
   // Reset the read and write statements in case the database changed.
-  //  These will be reinitialized lazily on the first read or write.
+  // These will be reinitialized lazily on the first read or write.
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
@@ -124,7 +124,7 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 uint64_t SqliteStorage::get_bagfile_size() const
 {
   return rosbag2_storage::FilesystemHelper::get_file_size(
-    get_relative_path());
+    get_relative_file_path());
 }
 
 void SqliteStorage::initialize()
@@ -219,7 +219,7 @@ std::string SqliteStorage::get_storage_identifier() const
   return "sqlite3";
 }
 
-std::string SqliteStorage::get_relative_path() const
+std::string SqliteStorage::get_relative_file_path() const
 {
   return relative_path_;
 }
@@ -228,7 +228,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = get_storage_identifier();
-  metadata.relative_file_paths = {get_relative_path()};
+  metadata.relative_file_paths = {get_relative_file_path()};
 
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
@@ -264,11 +264,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
-  metadata.bag_size = 0;
-
-  for (const auto & relative_path : metadata.relative_file_paths) {
-    metadata.bag_size += rosbag2_storage::FilesystemHelper::get_file_size(relative_path);
-  }
+  metadata.bag_size = rosbag2_storage::FilesystemHelper::get_file_size(get_relative_file_path());
 
   return metadata;
 }
