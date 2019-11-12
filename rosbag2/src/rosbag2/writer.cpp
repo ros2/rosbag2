@@ -162,7 +162,7 @@ void Writer::split_bagfile()
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
 
-  // Re-register all Topics since we rolled-over to a new bagfile.
+  // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }

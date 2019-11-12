@@ -71,15 +71,20 @@ void SqliteStorage::open(
 {
   if (is_read_write(io_flag)) {
     relative_path_ = uri + FILE_EXTENSION;
+
+    // READ_WRITE requires the DB to not exist.
+    if (database_exists(relative_path_)) {
+      throw std::runtime_error(
+              "Failed to create bag: File '" + relative_path_ + "' file already exists!");
+    }
   } else {  // APPEND and READ_ONLY
     relative_path_ = uri;
-  }
 
-  // DB is created only if storage is opened for READ_WRITE.
-  // So READ_ONLY and APPEND require the DB to exist.
-  if (!is_read_write(io_flag) && !database_exists(relative_path_)) {
-    throw std::runtime_error(
-            "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
+    // APPEND and READ_ONLY require the DB to exist
+    if (!database_exists(relative_path_)) {
+      throw std::runtime_error(
+              "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
+    }
   }
 
   try {
