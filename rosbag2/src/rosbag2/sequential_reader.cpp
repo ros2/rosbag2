@@ -24,15 +24,18 @@
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2/info.hpp"
 #include "rosbag2/logging.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
+
 
 namespace rosbag2
 {
 
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory)),
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+: storage_factory_(std::move(storage_factory)),
+  converter_factory_(std::move(converter_factory)),
+  metadata_io_(std::move(metadata_io)),
   converter_(nullptr)
 {}
 
@@ -45,20 +48,18 @@ void
 SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  rosbag2_storage::MetadataIo metadata_io;
-  metadata_ = std::make_unique<rosbag2_storage::BagMetadata>(
-            metadata_io.read_metadata(storage_options_.uri));
   storage_options_ = storage_options;
+  metadata_ = metadata_io_->read_metadata(storage_options.uri);
   storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  auto topics = metadata_->topics_with_message_count;
+  auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
     ROSBAG2_LOG_WARN("Bag file is empty.");
     return;
   }
-  file_paths_ = metadata_->relative_file_paths;
+  file_paths_ = metadata_.relative_file_paths;
   current_file_iterator_ = file_paths_.begin();
 
   // Currently a bag file can only be played if all topics have the same serialization format.

@@ -24,6 +24,7 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter_factory.hpp"
+#include "mock_metadata_io.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
 
@@ -37,10 +38,12 @@ public:
     storage_factory_ = std::make_unique<NiceMock<MockStorageFactory>>();
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
+    metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
 
     rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
     topic_with_type.type = "test_msgs/BasicTypes";
+    topic_with_type.serialization_format = serialization_format_;
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
@@ -50,37 +53,41 @@ public:
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
     ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
 
-    // Version 2 of the metadata file includes the split bag features.
-    metadata_.version = 2;
-    metadata_.storage_identifier = "sqlite3";
-    metadata_.relative_file_paths.emplace_back("some_relative_path");
-    metadata_.relative_file_paths.emplace_back("some_other_relative_path");
-    metadata_.duration = std::chrono::nanoseconds(100);
-    metadata_.starting_time =
-      std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(1000000));
-    metadata_.message_count = 50;
-    metadata_.topics_with_message_count.push_back({{"topic1", "type1", serialization_format}, 100});
-    ON_CALL(*storage_, get_metadata()).WillByDefault(Return(metadata_));
+    metadata_.relative_file_paths.push_back(relative_path_1_);
+    metadata_.relative_file_paths.push_back(relative_path_2_);
+    metadata_.topics_with_message_count.push_back({topic_with_type, 10});
+    ON_CALL(*metadata_io_, read_metadata(_)).WillByDefault(Return(metadata_));
 
     reader_ = std::make_unique<rosbag2::SequentialReader>(
-      std::move(storage_factory_), converter_factory_);
+      std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   }
 
   std::unique_ptr<NiceMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
+  std::unique_ptr<NiceMock<MockMetadataIo>> metadata_io_;
   rosbag2_storage::BagMetadata metadata_;
   std::unique_ptr<rosbag2::SequentialReader> reader_;
-  std::string serialization_format {"rmw1_format"};
+  std::string serialization_format_{"rmw1_format"};
+  std::string relative_path_1_{"some_relative_path"};
+  std::string relative_path_2_{"some_relative_path_1"};
 };
 
 TEST_F(MultifileReaderTest, has_next_reads_next_file)
 {
-  EXPECT_CALL(*storage_, has_next()).Times(AtLeast(2)).WillRepeatedly(Return(false));
-  reader_->open(rosbag2::StorageOptions(), {serialization_format, serialization_format});
+  // storage::has_next() is called twice when reader::has_next() is called
+  EXPECT_CALL(*storage_, has_next()).Times(4)
+  .WillOnce(Return(true)).WillOnce(Return(true))  // We have a message
+  .WillOnce(Return(false))  // No message, load next file
+  .WillOnce(Return(true));  // True since we now have a message
+  EXPECT_CALL(*converter_factory_, load_deserializer(serialization_format_)).Times(0);
+  EXPECT_CALL(*converter_factory_, load_serializer(serialization_format_)).Times(0);
+  reader_->open(rosbag2::StorageOptions(), {"", serialization_format_});
+  EXPECT_EQ(reader_->get_current_file(), relative_path_1_);
   reader_->has_next();
   reader_->read_next();
+  reader_->has_next();
+  EXPECT_EQ(reader_->get_current_file(), relative_path_2_);
 }
 
 TEST_F(MultifileReaderTest, has_next_throws_if_no_storage)
