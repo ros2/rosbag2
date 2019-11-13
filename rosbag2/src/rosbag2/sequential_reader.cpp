@@ -21,7 +21,10 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2/info.hpp"
+#include "rosbag2/logging.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 
 namespace rosbag2
 {
@@ -42,17 +45,20 @@ void
 SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_ = std::make_unique<rosbag2_storage::BagMetadata>(
+            metadata_io.read_metadata(storage_options_.uri));
   storage_options_ = storage_options;
   storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  const auto bag_metadata = storage_->get_metadata();
-  auto topics = bag_metadata.topics_with_message_count;
+  auto topics = metadata_->topics_with_message_count;
   if (topics.empty()) {
+    ROSBAG2_LOG_WARN("Bag file is empty.");
     return;
   }
-  file_paths_ = bag_metadata.relative_file_paths;
+  file_paths_ = metadata_->relative_file_paths;
   current_file_iterator_ = file_paths_.begin();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
@@ -76,11 +82,22 @@ SequentialReader::open(
   }
 }
 
-std::string SequentialReader::get_next_file()
+std::string SequentialReader::get_current_uri() const
+{
+  auto current_file = get_current_file();
+  auto current_uri = rcpputils::fs::remove_extension(current_file);
+  return current_uri.string();
+}
+
+std::string SequentialReader::get_current_file() const
+{
+  return *current_file_iterator_;
+}
+
+void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
-  return *current_file_iterator_;
 }
 
 bool SequentialReader::has_next_file() const
@@ -95,8 +112,8 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     if (!storage_->has_next()) {
       if (has_next_file()) {
-        const auto current_file = get_next_file();
-        storage_ = storage_factory_->open_read_only(current_file, storage_options_.storage_id);
+        load_next_file();
+        storage_ = storage_factory_->open_read_only(get_current_uri(), storage_options_.storage_id);
       }
     }
     return storage_->has_next();

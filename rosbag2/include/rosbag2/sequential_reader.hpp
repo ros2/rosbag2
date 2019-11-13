@@ -41,7 +41,7 @@ namespace rosbag2
 {
 /**
  * The SequentialReader allows opening and reading messages of a bag. Messages will be read
- * sequentially according to timestamp.
+ * sequentially according to timestamp. Functions are virtual so that they can be mocked in tests.
  */
 class ROSBAG2_PUBLIC SequentialReader
 {
@@ -99,7 +99,6 @@ public:
    */
   virtual std::vector<TopicMetadata> get_all_topics_and_types();
 
-private:
   /**
    * Ask whether there is another database file to read from the list of relative
    * file paths.
@@ -109,21 +108,34 @@ private:
   virtual bool has_next_file() const;
 
   /**
-   * Update the current database file to read from and remove the first (front)
-   * element in the list of files to read from.
+   * Increment the current file iterator to point to the next file in the list of relative file
+   * paths.
    *
    * Expected usage:
-   * if (has_next_file()) get_next_file();
+   * if (has_next_file()) load_next_file();
    */
-  std::string get_next_file();
+  virtual void load_next_file();
 
+  /**
+   * Return the relative file path pointed to by the current file iterator.
+   */
+  virtual std::string get_current_file() const;
+
+  /**
+   * Return the URI of the current file (i.e. no extensions).
+   */
+  virtual std::string get_current_uri() const;
+
+
+private:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_;
+  std::unique_ptr<rosbag2_storage::BagMetadata> metadata_;
   std::unique_ptr<Converter> converter_;
   StorageOptions storage_options_{};
-  std::vector<std::string> file_paths_ {};  // List of database files.
-  std::vector<std::string>::iterator current_file_iterator_ {};  // Index of file to read from
+  std::vector<std::string> file_paths_{};  // List of database files.
+  std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 };
 
 }  // namespace rosbag2

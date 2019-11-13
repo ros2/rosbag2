@@ -32,6 +32,7 @@ find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(poco_vendor)
 find_package(Poco COMPONENTS Foundation)
+find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
@@ -51,6 +52,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
   pluginlib
   Poco
+  rcpputils
   rcutils
   rosbag2_storage
   rosidl_generator_cpp
