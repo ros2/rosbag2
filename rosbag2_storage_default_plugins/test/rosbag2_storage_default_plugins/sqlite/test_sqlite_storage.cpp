@@ -78,7 +78,8 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-  auto db_filename = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+  auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
   readable_storage->open(db_filename);
 
   EXPECT_TRUE(readable_storage->has_next());
@@ -98,7 +99,8 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-  auto db_filename = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+  auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
   readable_storage->open(db_filename);
 
   EXPECT_TRUE(readable_storage->has_next());

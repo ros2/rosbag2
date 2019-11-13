@@ -75,7 +75,7 @@ void SqliteStorage::open(
     // READ_WRITE requires the DB to not exist.
     if (database_exists(relative_path_)) {
       throw std::runtime_error(
-              "Failed to create bag: File '" + relative_path_ + "' file already exists!");
+              "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
   } else {  // APPEND and READ_ONLY
     relative_path_ = uri;
@@ -104,9 +104,7 @@ void SqliteStorage::open(
   write_statement_ = nullptr;
 
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" <<
-    relative_path_ <<
-    "' for " <<
-    to_string(io_flag) << ".");
+    relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
