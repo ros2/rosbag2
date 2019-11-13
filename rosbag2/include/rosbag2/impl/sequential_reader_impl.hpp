@@ -29,7 +29,6 @@
 #include "rosbag2/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2/visibility_control.hpp"
 
-
 namespace rosbag2
 {
 
