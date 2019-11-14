@@ -57,8 +57,9 @@ class RecordVerb(VerbExtension):
         )
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
-            help='maximum size in bytes before the bagfile will be split.'
-              'Default it is zero, recording written in single bagfile and splitting is disabled.'
+            help='maximum size in bytes before the bagfile will be split. '
+                  'Default it is zero, recording written in single bagfile and splitting '
+                  'is disabled.'
         )
         self._subparser = parser
 
