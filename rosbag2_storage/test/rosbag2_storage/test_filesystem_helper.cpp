@@ -106,3 +106,23 @@ TEST(FilesystemHelper, get_file_name_returns_empty_string_if_passed_a_path_with_
 
   EXPECT_THAT(folder_name, Eq(""));
 }
+
+TEST_F(FilesystemHelperFixture, create_directory_passes_when_parent_exists)
+{
+  const auto path = FilesystemHelper::concat({temporary_dir_path_, "some_folder"});
+
+  EXPECT_TRUE(FilesystemHelper::create_directory(path));
+  EXPECT_TRUE(FilesystemHelper::file_exists(path));
+}
+
+TEST_F(FilesystemHelperFixture, create_directory_fails_when_parent_does_not_exist)
+{
+  const auto bad_path = FilesystemHelper::concat({temporary_dir_path_, "bad_folder"});
+
+  EXPECT_FALSE(FilesystemHelper::file_exists(bad_path));
+
+  const auto path = FilesystemHelper::concat({bad_path, "some_folder"});
+
+  EXPECT_FALSE(FilesystemHelper::create_directory(path));
+  EXPECT_FALSE(FilesystemHelper::file_exists(path));
+}

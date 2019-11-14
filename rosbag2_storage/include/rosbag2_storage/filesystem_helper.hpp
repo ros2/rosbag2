@@ -16,6 +16,7 @@
 #define ROSBAG2_STORAGE__FILESYSTEM_HELPER_HPP_
 
 #ifdef _WIN32
+# include <direct.h>
 # include <windows.h>
 #else
 # include <dirent.h>
@@ -140,6 +141,24 @@ public:
   {
     struct stat stat_buffer {};
     return stat(file_path.c_str(), &stat_buffer) == 0;
+  }
+
+  /**
+   * Creates the directory p as if by POSIX mkdir() with a second argument of 0777.
+   * The parent directory must already exist.
+   * @param p the path to the new directory to create.
+   * @return true if a directory was created for the directory p.
+   */
+  static bool create_directory(const std::string & p)
+  {
+#ifdef _WIN32
+    _mkdir(p.c_str());
+#else
+    constexpr const int perms_all = S_IRWXU | S_IRWXG | S_IRWXO;  // same as 0777
+    mkdir(p.c_str(), perms_all);
+#endif
+
+    return file_exists(p);
   }
 };
 
