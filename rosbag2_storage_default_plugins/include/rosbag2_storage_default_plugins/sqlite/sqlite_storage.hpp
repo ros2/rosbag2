@@ -75,8 +75,6 @@ private:
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
-  std::string get_current_database_file_name() const;
-  std::string get_current_database_file_path() const;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;

@@ -30,7 +30,8 @@ TestPlugin::~TestPlugin()
   std::cout << "\nclosing.\n";
 }
 
-void TestPlugin::open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
+void TestPlugin::open(
+  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";

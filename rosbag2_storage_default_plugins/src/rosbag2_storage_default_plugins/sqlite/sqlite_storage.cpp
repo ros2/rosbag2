@@ -22,7 +22,6 @@
 #include <fstream>
 #include <memory>
 #include <string>
-#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -114,20 +113,6 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
-}
-
-uint64_t SqliteStorage::get_current_bagfile_size() const
-{
-  return rosbag2_storage::FilesystemHelper::get_file_size(get_current_database_file_path());
-}
-
-void SqliteStorage::split_database()
-{
-  database_file_counter_++;
-  read_statement_.reset();
-  write_statement_.reset();
-  database_.reset();
-  open(uri_, io_flag_);
 }
 
 bool SqliteStorage::has_next()
@@ -259,7 +244,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
 
-  const auto & statement = database_->prepare_statement(
+  auto statement = database_->prepare_statement(
     "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
     "MAX(messages.timestamp) "
     "FROM messages JOIN topics on topics.id = messages.topic_id "
@@ -270,7 +255,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
-  for (const auto & result : query_results) {
+  for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
         {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
