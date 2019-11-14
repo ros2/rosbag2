@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__SEQUENTIAL_READER_HPP_
-#define ROSBAG2__SEQUENTIAL_READER_HPP_
+#ifndef ROSBAG2__READER_HPP_
+#define ROSBAG2__READER_HPP_
 
 #include <memory>
 #include <string>
@@ -24,8 +24,9 @@
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
-#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2/converter_options.hpp"
 #include "rosbag2/serialization_format_converter_factory.hpp"
+#include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
 
@@ -39,31 +40,25 @@
 
 namespace rosbag2
 {
-
+namespace reader_interfaces
+{
 class BaseReaderInterface;
+}  // namespace reader_interfaces
 
 /**
- * The SequentialReader allows opening and reading messages of a bag. Messages will be read
- * sequentially according to timestamp.
+ * The Reader allows opening and reading messages of a bag.
  */
-class ROSBAG2_PUBLIC SequentialReader
+class ROSBAG2_PUBLIC Reader final
 {
 public:
-  explicit
-  SequentialReader(
-    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
-    std::make_unique<rosbag2_storage::StorageFactory>(),
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>(),
-    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
-    std::make_unique<rosbag2_storage::MetadataIo>());
+  explicit Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl);
 
-  virtual ~SequentialReader();
+  ~Reader();
 
   /**
-   * Open a rosbag for reading messages sequentially (time-ordered). Throws if file could not be
-   * opened. This must be called before any other function is used. The rosbag is
-   * automatically closed on destruction.
+   * Throws if file could not be opened.
+   * This must be called before any other function is used.
+   * The rosbag is automatically closed on destruction.
    *
    * If the `output_serialization_format` within the `converter_options` is not the same as the
    * format of the underlying stored data, a converter will be used to automatically convert the
@@ -73,7 +68,7 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options Options for specifying the output data format
    */
-  virtual void open(
+  void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options);
 
   /**
@@ -82,7 +77,7 @@ public:
    * \return true if storage contains at least one more message
    * \throws runtime_error if the Reader is not open.
    */
-  virtual bool has_next();
+  bool has_next();
 
   /**
    * Read next message from storage. Will throw if no more messages are available.
@@ -94,7 +89,7 @@ public:
    * \return next message in serialized form
    * \throws runtime_error if the Reader is not open.
    */
-  virtual std::shared_ptr<SerializedBagMessage> read_next();
+  std::shared_ptr<SerializedBagMessage> read_next();
 
   /**
    * Ask bagfile for all topics (including their type identifier) that were recorded.
@@ -102,10 +97,10 @@ public:
    * \return vector of topics with topic name and type as std::string
    * \throws runtime_error if the Reader is not open.
    */
-  virtual std::vector<TopicMetadata> get_all_topics_and_types();
+  std::vector<TopicMetadata> get_all_topics_and_types();
 
 private:
-  std::unique_ptr<BaseReaderInterface> reader_impl_;
+  std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl_;
 };
 
 }  // namespace rosbag2
@@ -114,4 +109,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2__SEQUENTIAL_READER_HPP_
+#endif  // ROSBAG2__READER_HPP_

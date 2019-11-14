@@ -18,43 +18,38 @@
 #include <vector>
 
 #include "rosbag2/info.hpp"
-#include "rosbag2/logging.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2/impl/sequential_reader_impl.hpp"
+#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2/reader.hpp"
 
 namespace rosbag2
 {
 
-SequentialReader::SequentialReader(
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: reader_impl_(std::make_unique<SequentialReaderImpl>(
-      std::move(storage_factory),
-      std::move(converter_factory)))
+Reader::Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl)
+: reader_impl_(std::move(reader_impl))
 {}
 
-SequentialReader::~SequentialReader()
+Reader::~Reader()
 {
   reader_impl_->reset();
 }
 
-void SequentialReader::open(
+void Reader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
   reader_impl_->open(storage_options, converter_options);
 }
 
-bool SequentialReader::has_next()
+bool Reader::has_next()
 {
   return reader_impl_->has_next();
 }
 
-std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
+std::shared_ptr<SerializedBagMessage> Reader::read_next()
 {
   return reader_impl_->read_next();
 }
 
-std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
+std::vector<TopicMetadata> Reader::get_all_topics_and_types()
 {
   return reader_impl_->get_all_topics_and_types();
 }

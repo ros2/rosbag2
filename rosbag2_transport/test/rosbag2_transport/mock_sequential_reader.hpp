@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
 
-class MockSequentialReader : public rosbag2::SequentialReader
+class MockSequentialReader : public rosbag2::reader_interfaces::BaseReaderInterface
 {
 public:
   void open(
@@ -32,6 +32,8 @@ public:
     (void) storage_options;
     (void) converter_options;
   }
+
+  void reset() override {}
 
   bool has_next() override
   {
