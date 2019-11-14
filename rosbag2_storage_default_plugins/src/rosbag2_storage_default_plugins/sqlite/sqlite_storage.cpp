@@ -35,12 +35,6 @@
 
 namespace
 {
-bool database_exists(const std::string & uri)
-{
-  std::ifstream database(uri);
-  return database.good();
-}
-
 std::string to_string(rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
   switch (io_flag) {
@@ -73,7 +67,7 @@ void SqliteStorage::open(
     relative_path_ = uri + FILE_EXTENSION;
 
     // READ_WRITE requires the DB to not exist.
-    if (database_exists(relative_path_)) {
+    if (rosbag2_storage::FilesystemHelper::file_exists(relative_path_)) {
       throw std::runtime_error(
               "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
@@ -81,7 +75,7 @@ void SqliteStorage::open(
     relative_path_ = uri;
 
     // APPEND and READ_ONLY require the DB to exist
-    if (!database_exists(relative_path_)) {
+    if (!rosbag2_storage::FilesystemHelper::file_exists(relative_path_)) {
       throw std::runtime_error(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
     }
