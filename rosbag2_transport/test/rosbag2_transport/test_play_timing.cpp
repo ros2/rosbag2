@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
@@ -48,7 +49,9 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
 
-  reader_->prepare(messages, topics_and_types);
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topics_and_types);
+  reader_ = std::make_unique<rosbag2::Reader>(std::move(prepared_mock_reader));
 
   // We can only assert indirectly that the relative times are respected when playing a bag. So
   // we check that time elapsed during playing is at least the time difference between the two

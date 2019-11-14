@@ -31,9 +31,9 @@
 
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
-#include "rosbag2/sequential_reader.hpp"
+
+#include "rosbag2/reader.hpp"
 #include "rosbag2/types.hpp"
-#include "rosbag2/writer.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "mock_info.hpp"
@@ -57,7 +57,7 @@ class Rosbag2TransportTestFixture : public Test
 public:
   Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id", 0}), play_options_({1000}),
-    reader_(std::make_shared<MockSequentialReader>()),
+    reader_(std::make_shared<rosbag2::Reader>(std::make_unique<MockSequentialReader>())),
     writer_(std::make_shared<MockWriter>()),
     info_(std::make_shared<MockInfo>()) {}
 
@@ -81,7 +81,7 @@ public:
   rosbag2_transport::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
 
-  std::shared_ptr<MockSequentialReader> reader_;
+  std::shared_ptr<rosbag2::Reader> reader_;
   std::shared_ptr<MockWriter> writer_;
   std::shared_ptr<MockInfo> info_;
 };

@@ -25,7 +25,7 @@
 #include "rcl/graph.h"
 #include "rcutils/time.h"
 
-#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/reader.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2_transport/logging.hpp"
 #include "rosbag2_node.hpp"
@@ -38,7 +38,7 @@ const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
-  std::shared_ptr<rosbag2::SequentialReader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
+  std::shared_ptr<rosbag2::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
 : reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
 {}
 

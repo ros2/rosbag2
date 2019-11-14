@@ -27,6 +27,8 @@
 
 namespace rosbag2
 {
+namespace reader_interfaces
+{
 
 class ROSBAG2_LOCAL BaseReaderInterface
 {
@@ -44,6 +46,8 @@ public:
 
   virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() = 0;
 };
+
+}  // namespace reader_interfaces
 }  // namespace rosbag2
 
 #endif  // ROSBAG2__READER_INTERFACES__BASE_READER_INTERFACE_HPP_

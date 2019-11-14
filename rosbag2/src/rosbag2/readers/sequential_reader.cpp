@@ -18,29 +18,31 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/impl/sequential_reader_impl.hpp"
+#include "rosbag2/readers/sequential_reader.hpp"
 
 namespace rosbag2
 {
+namespace readers
+{
 
-SequentialReaderImpl::SequentialReaderImpl(
+SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
 : storage_factory_(std::move(storage_factory)),
   converter_factory_(std::move(converter_factory))
 {}
 
-SequentialReaderImpl::~SequentialReaderImpl()
+SequentialReader::~SequentialReader()
 {
   reset();
 }
 
-void SequentialReaderImpl::reset()
+void SequentialReader::reset()
 {
   storage_.reset();
 }
 
-void SequentialReaderImpl::open(
+void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
   storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
@@ -58,7 +60,7 @@ void SequentialReaderImpl::open(
     topics[0].topic_metadata.serialization_format);
 }
 
-bool SequentialReaderImpl::has_next()
+bool SequentialReader::has_next()
 {
   if (storage_) {
     return storage_->has_next();
@@ -66,7 +68,7 @@ bool SequentialReaderImpl::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<SerializedBagMessage> SequentialReaderImpl::read_next()
+std::shared_ptr<SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
     auto message = storage_->read_next();
@@ -75,7 +77,7 @@ std::shared_ptr<SerializedBagMessage> SequentialReaderImpl::read_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<TopicMetadata> SequentialReaderImpl::get_all_topics_and_types()
+std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
 {
   if (storage_) {
     return storage_->get_all_topics_and_types();
@@ -83,7 +85,7 @@ std::vector<TopicMetadata> SequentialReaderImpl::get_all_topics_and_types()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-void SequentialReaderImpl::check_topics_serialization_formats(
+void SequentialReader::check_topics_serialization_formats(
   const std::vector<TopicInformation> & topics)
 {
   auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
@@ -96,7 +98,7 @@ void SequentialReaderImpl::check_topics_serialization_formats(
   }
 }
 
-void SequentialReaderImpl::check_converter_serialization_format(
+void SequentialReader::check_converter_serialization_format(
   const std::string & converter_serialization_format,
   const std::string & storage_serialization_format)
 {
@@ -111,4 +113,5 @@ void SequentialReaderImpl::check_converter_serialization_format(
     }
   }
 }
+}  // namespace readers
 }  // namespace rosbag2

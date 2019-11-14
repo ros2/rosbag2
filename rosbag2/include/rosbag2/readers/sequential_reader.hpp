@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__IMPL__SEQUENTIAL_READER_IMPL_HPP_
-#define ROSBAG2__IMPL__SEQUENTIAL_READER_IMPL_HPP_
+#ifndef ROSBAG2__READERS__SEQUENTIAL_READER_HPP_
+#define ROSBAG2__READERS__SEQUENTIAL_READER_HPP_
 
 #include <memory>
 #include <string>
@@ -31,15 +31,19 @@
 
 namespace rosbag2
 {
+namespace readers
+{
 
-class ROSBAG2_LOCAL SequentialReaderImpl : public BaseReaderInterface
+class ROSBAG2_PUBLIC SequentialReader : public ::rosbag2::reader_interfaces::BaseReaderInterface
 {
 public:
-  SequentialReaderImpl(
-    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory);
+  SequentialReader(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
+    std::make_unique<rosbag2_storage::StorageFactory>(),
+    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<SerializationFormatConverterFactory>());
 
-  virtual ~SequentialReaderImpl();
+  virtual ~SequentialReader();
 
   void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
@@ -80,5 +84,6 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
 };
+}  // namespace readers
 }  // namespace rosbag2
-#endif  // ROSBAG2__IMPL__SEQUENTIAL_READER_IMPL_HPP_
+#endif  // ROSBAG2__READERS__SEQUENTIAL_READER_HPP_
