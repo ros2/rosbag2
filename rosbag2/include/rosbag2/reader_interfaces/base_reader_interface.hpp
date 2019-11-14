@@ -30,7 +30,7 @@ namespace rosbag2
 namespace reader_interfaces
 {
 
-class ROSBAG2_LOCAL BaseReaderInterface
+class ROSBAG2_PUBLIC BaseReaderInterface
 {
 public:
   virtual ~BaseReaderInterface() {}
