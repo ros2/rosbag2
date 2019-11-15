@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -41,7 +42,9 @@ public:
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>());
+    std::make_shared<SerializationFormatConverterFactory>(),
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
+    std::make_unique<rosbag2_storage::MetadataIo>());
 
   virtual ~SequentialReader();
 
@@ -83,6 +86,8 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
+  rosbag2_storage::BagMetadata metadata_{};
 };
 }  // namespace readers
 }  // namespace rosbag2
