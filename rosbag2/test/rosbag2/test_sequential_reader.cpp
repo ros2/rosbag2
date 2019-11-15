@@ -113,8 +113,7 @@ TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exis
 }
 
 TEST_F(SequentialReaderTest,
-  read_next_does_not_use_converters_if_input_and_output_format_are_equal)
-{
+  read_next_does_not_use_converters_if_input_and_output_format_are_equal) {
   std::string storage_serialization_format = "rmw1_format";
   set_storage_serialization_format(storage_serialization_format);
 
