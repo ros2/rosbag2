@@ -21,15 +21,20 @@
 #include <vector>
 
 #include "rosbag2/info.hpp"
+#include "rosbag2/logging.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 
 namespace rosbag2
 {
 
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory)
-: storage_factory_(std::move(storage_factory)), converter_factory_(std::move(converter_factory)),
-  converter_(nullptr)
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+: storage_factory_(std::move(storage_factory)),
+  converter_factory_(std::move(converter_factory)),
+  converter_(nullptr),
+  metadata_io_(std::move(metadata_io))
 {}
 
 SequentialReader::~SequentialReader()
@@ -41,12 +46,19 @@ void
 SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
+  metadata_ = metadata_io_->read_metadata(storage_options.uri);
+  if (metadata_.relative_file_paths.empty()) {
+    ROSBAG2_LOG_WARN("No file paths were found in metadata.");
+    return;
+  }
+  storage_ = storage_factory_->open_read_only(
+    metadata_.relative_file_paths.at(0), storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-  auto topics = storage_->get_metadata().topics_with_message_count;
+  auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
+    ROSBAG2_LOG_WARN("No topics were listed in metadata.");
     return;
   }
 

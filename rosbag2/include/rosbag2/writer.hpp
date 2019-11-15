@@ -98,7 +98,7 @@ public:
   virtual void write(std::shared_ptr<SerializedBagMessage> message);
 
 private:
-  std::string uri_;
+  std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
@@ -112,6 +112,9 @@ private:
   std::unordered_map<std::string, TopicInformation> topics_names_to_info_;
 
   rosbag2_storage::BagMetadata metadata_;
+
+  // Closes the current backed storage and opens the next bagfile.
+  void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;

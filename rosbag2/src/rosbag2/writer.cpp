@@ -14,8 +14,6 @@
 
 #include "rosbag2/writer.hpp"
 
-#include <rosbag2_storage/filesystem_helper.hpp>
-
 #include <algorithm>
 #include <chrono>
 #include <memory>
@@ -25,9 +23,24 @@
 
 #include "rosbag2/info.hpp"
 #include "rosbag2/storage_options.hpp"
+#include "rosbag2_storage/filesystem_helper.hpp"
 
 namespace rosbag2
 {
+
+namespace
+{
+std::string format_storage_uri(const std::string & base_folder, uint64_t storage_count)
+{
+  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
+  // The name of the folder needs to be queried in case Writer is opened with a relative path.
+  std::stringstream storage_file_name;
+  storage_file_name << rosbag2_storage::FilesystemHelper::get_folder_name(base_folder) <<
+    "_" << storage_count;
+
+  return rosbag2_storage::FilesystemHelper::concat({base_folder, storage_file_name.str()});
+}
+}  // namespace
 
 Writer::Writer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
@@ -45,9 +58,9 @@ Writer::Writer(
 
 Writer::~Writer()
 {
-  if (!uri_.empty()) {
+  if (!base_folder_.empty()) {
     finalize_metadata();
-    metadata_io_->write_metadata(uri_, metadata_);
+    metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
@@ -60,7 +73,7 @@ void Writer::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {storage_->get_relative_path()};
+  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
 }
 
 void Writer::open(
@@ -68,6 +81,7 @@ void Writer::open(
   const ConverterOptions & converter_options)
 {
   max_bagfile_size_ = storage_options.max_bagfile_size;
+  base_folder_ = storage_options.uri;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -75,12 +89,12 @@ void Writer::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  storage_ = storage_factory_->open_read_write(storage_options.uri, storage_options.storage_id);
+  const auto storage_uri = format_storage_uri(base_folder_, 0);
+
+  storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
-
-  uri_ = storage_options.uri;
 
   init_metadata();
 }
@@ -132,6 +146,28 @@ void Writer::remove_topic(const TopicMetadata & topic_with_type)
   }
 }
 
+void Writer::split_bagfile()
+{
+  const auto storage_uri = format_storage_uri(
+    base_folder_,
+    metadata_.relative_file_paths.size());
+  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  if (!storage_) {
+    std::stringstream errmsg;
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+
+    throw std::runtime_error(errmsg.str());
+  }
+
+  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
+
+  // Re-register all topics since we rolled-over to a new bagfile.
+  for (const auto & topic : topics_names_to_info_) {
+    storage_->create_topic(topic.second.topic_metadata);
+  }
+}
+
 void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 {
   if (!storage_) {
@@ -140,6 +176,10 @@ void Writer::write(std::shared_ptr<SerializedBagMessage> message)
 
   // Update the message count for the Topic.
   ++topics_names_to_info_.at(message->topic_name).message_count;
+
+  if (should_split_bagfile()) {
+    split_bagfile();
+  }
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
