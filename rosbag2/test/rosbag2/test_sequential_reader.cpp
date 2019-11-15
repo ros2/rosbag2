@@ -51,6 +51,7 @@ public:
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
 
+    metadata_.relative_file_paths = {"/path/to/storage"};
     metadata_.topics_with_message_count.push_back({{topic_with_type}, 1});
     EXPECT_CALL(*metadata_io_, read_metadata(_)).WillRepeatedly(Return(metadata_));
 
