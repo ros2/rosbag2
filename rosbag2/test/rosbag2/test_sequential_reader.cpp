@@ -39,7 +39,8 @@ class SequentialReaderTest : public Test
 public:
   SequentialReaderTest()
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
-    converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>())
+    converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
+    storage_serialization_format_("rmw1_format")
   {
     rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
@@ -55,6 +56,11 @@ public:
     message->topic_name = topic_with_type.name;
 
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
+    auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
+    rosbag2_storage::BagMetadata metadata;
+    metadata.relative_file_paths = {"/path/to/storage"};
+    metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
+    EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
@@ -62,7 +68,7 @@ public:
     EXPECT_CALL(*storage_factory, open_read_only(_, _)).WillOnce(Return(storage_));
 
     auto sequential_reader = std::make_unique<rosbag2::readers::SequentialReader>(
-      std::move(storage_factory), converter_factory_);
+      std::move(storage_factory), converter_factory_, std::move(metadata_io));
 
     reader_ = std::make_unique<rosbag2::Reader>(std::move(sequential_reader));
   }
@@ -77,6 +83,7 @@ public:
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<rosbag2::Reader> reader_;
+  std::string storage_serialization_format_;
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {

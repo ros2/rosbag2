@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2/logging.hpp"
 #include "rosbag2/readers/sequential_reader.hpp"
 
 namespace rosbag2
