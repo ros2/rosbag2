@@ -64,7 +64,9 @@ public:
   void run_publishers()
   {
     pub_man_.run_publishers([this](const std::string & topic_name) {
-        return writer_->messages_per_topic()[topic_name];
+        MockSequentialWriter & writer =
+        static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+        return writer.messages_per_topic()[topic_name];
       });
   }
 

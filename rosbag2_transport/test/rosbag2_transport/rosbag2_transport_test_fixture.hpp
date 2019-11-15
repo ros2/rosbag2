@@ -34,11 +34,12 @@
 
 #include "rosbag2/reader.hpp"
 #include "rosbag2/types.hpp"
+#include "rosbag2/writer.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "mock_info.hpp"
 #include "mock_sequential_reader.hpp"
-#include "mock_writer.hpp"
+#include "mock_sequential_writer.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common; // NOLINT
@@ -58,7 +59,7 @@ public:
   Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id", 0}), play_options_({1000}),
     reader_(std::make_shared<rosbag2::Reader>(std::make_unique<MockSequentialReader>())),
-    writer_(std::make_shared<MockWriter>()),
+    writer_(std::make_shared<rosbag2::Writer>(std::make_unique<MockSequentialWriter>())),
     info_(std::make_shared<MockInfo>()) {}
 
   template<typename MessageT>
@@ -82,7 +83,7 @@ public:
   rosbag2_transport::PlayOptions play_options_;
 
   std::shared_ptr<rosbag2::Reader> reader_;
-  std::shared_ptr<MockWriter> writer_;
+  std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<MockInfo> info_;
 };
 

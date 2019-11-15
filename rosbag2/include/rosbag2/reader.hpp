@@ -94,6 +94,11 @@ public:
    */
   std::vector<TopicMetadata> get_all_topics_and_types();
 
+  reader_interfaces::BaseReaderInterface & get_implementation_handle() const
+  {
+    return *reader_impl_;
+  }
+
 private:
   std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl_;
 };

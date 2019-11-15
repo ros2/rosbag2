@@ -87,6 +87,11 @@ public:
    */
   void write(std::shared_ptr<SerializedBagMessage> message);
 
+  writer_interfaces::BaseWriterInterface & get_implementation_handle() const
+  {
+    return *writer_impl_;
+  }
+
 private:
   std::unique_ptr<rosbag2::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
