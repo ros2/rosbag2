@@ -46,7 +46,8 @@ SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
   metadata_ = metadata_io_->read_metadata(storage_options.uri);
-  storage_ = storage_factory_->open_read_only(storage_options.uri, storage_options.storage_id);
+  storage_ = storage_factory_->open_read_only(
+    metadata_.relative_file_paths[0], storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }

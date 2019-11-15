@@ -21,8 +21,8 @@
 
 #include "rosbag2/sequential_reader.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
@@ -72,8 +72,7 @@ public:
   std::string storage_serialization_format_;
 };
 
-TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format)
-{
+TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {
   std::string output_format = "rmw2_format";
 
   auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
@@ -90,8 +89,7 @@ TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_
   reader_->read_next();
 }
 
-TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exist)
-{
+TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exist) {
   std::string output_format = "rmw2_format";
 
   auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
@@ -104,8 +102,7 @@ TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exis
 }
 
 TEST_F(SequentialReaderTest,
-  read_next_does_not_use_converters_if_input_and_output_format_are_equal)
-{
+  read_next_does_not_use_converters_if_input_and_output_format_are_equal) {
   std::string storage_serialization_format = "rmw1_format";
 
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format)).Times(0);
