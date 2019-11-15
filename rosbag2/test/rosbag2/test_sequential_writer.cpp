@@ -19,7 +19,9 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2/writers/sequential_writer.hpp"
 #include "rosbag2/writer.hpp"
+
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -32,10 +34,10 @@
 
 using namespace testing;  // NOLINT
 
-class WriterTest : public Test
+class SequentialWriterTest : public Test
 {
 public:
-  WriterTest()
+  SequentialWriterTest()
   {
     storage_factory_ = std::make_unique<StrictMock<MockStorageFactory>>();
     storage_ = std::make_shared<NiceMock<MockStorage>>();
@@ -66,10 +68,11 @@ public:
   std::string fake_storage_uri_;
 };
 
-TEST_F(WriterTest,
+TEST_F(SequentialWriterTest,
   write_uses_converters_to_convert_serialization_format_if_input_and_output_format_are_different) {
-  writer_ = std::make_unique<rosbag2::Writer>(
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string storage_serialization_format = "rmw1_format";
   std::string input_format = "rmw2_format";
@@ -91,9 +94,10 @@ TEST_F(WriterTest,
   writer_->write(message);
 }
 
-TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_equal) {
-  writer_ = std::make_unique<rosbag2::Writer>(
+TEST_F(SequentialWriterTest, write_does_not_use_converters_if_input_and_output_format_are_equal) {
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string storage_serialization_format = "rmw_format";
 
@@ -107,10 +111,11 @@ TEST_F(WriterTest, write_does_not_use_converters_if_input_and_output_format_are_
   writer_->write(message);
 }
 
-TEST_F(WriterTest, metadata_io_writes_metadata_file_in_destructor) {
+TEST_F(SequentialWriterTest, metadata_io_writes_metadata_file_in_destructor) {
   EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
-  writer_ = std::make_unique<rosbag2::Writer>(
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string rmw_format = "rmw_format";
 
@@ -118,9 +123,10 @@ TEST_F(WriterTest, metadata_io_writes_metadata_file_in_destructor) {
   writer_.reset();
 }
 
-TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
-  writer_ = std::make_unique<rosbag2::Writer>(
+TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string input_format = "rmw1_format";
   std::string output_format = "rmw2_format";
@@ -134,16 +140,15 @@ TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
   EXPECT_ANY_THROW(writer_->open(storage_options_, {input_format, output_format}));
 }
 
-TEST_F(WriterTest, bagfile_size_is_checked_on_every_write) {
+TEST_F(SequentialWriterTest, bagfile_size_is_checked_on_every_write) {
   const int counter = 10;
   const uint64_t max_bagfile_size = 100;
 
   EXPECT_CALL(*storage_, get_bagfile_size()).Times(counter);
 
-  writer_ = std::make_unique<rosbag2::Writer>(
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string rmw_format = "rmw_format";
 
@@ -160,7 +165,7 @@ TEST_F(WriterTest, bagfile_size_is_checked_on_every_write) {
   }
 }
 
-TEST_F(WriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagfile_size) {
+TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagfile_size) {
   const int message_count = 15;
   const int max_bagfile_size = 5;
   const auto expected_splits = message_count / max_bagfile_size;
@@ -189,10 +194,9 @@ TEST_F(WriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagfile_size) 
       fake_metadata_ = metadata;
     });
 
-  writer_ = std::make_unique<rosbag2::Writer>(
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
 
   std::string rmw_format = "rmw_format";
 

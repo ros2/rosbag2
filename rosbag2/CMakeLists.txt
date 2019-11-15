@@ -46,9 +46,9 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2/serialization_format_converter_factory.cpp
   src/rosbag2/types/introspection_message.cpp
   src/rosbag2/typesupport_helpers.cpp
-  src/rosbag2/writer.cpp
   src/rosbag2/types/introspection_message.cpp
-  src/rosbag2/impl/sequential_reader_impl.cpp)
+  src/rosbag2/writer.cpp
+  src/rosbag2/writers/sequential_writer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
@@ -161,10 +161,10 @@ if(BUILD_TESTING)
       test_msgs)
   endif()
 
-  ament_add_gmock(test_writer
-    test/rosbag2/test_writer.cpp)
-  if(TARGET test_writer)
-    target_link_libraries(test_writer rosbag2)
+  ament_add_gmock(test_sequential_writer
+    test/rosbag2/test_sequential_writer.cpp)
+  if(TARGET test_sequential_writer)
+    target_link_libraries(test_sequential_writer rosbag2)
   endif()
 endif()
 

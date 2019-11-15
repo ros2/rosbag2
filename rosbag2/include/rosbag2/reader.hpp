@@ -20,13 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_factory_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-
 #include "rosbag2/converter_options.hpp"
-#include "rosbag2/serialization_format_converter_factory.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
