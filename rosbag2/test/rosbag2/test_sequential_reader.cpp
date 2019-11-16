@@ -23,10 +23,12 @@
 #include "rosbag2/reader.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
+#include "mock_metadata_io.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
 
@@ -43,6 +45,7 @@ public:
     rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
     topic_with_type.type = "test_msgs/BasicTypes";
+    topic_with_type.serialization_format = storage_serialization_format_;
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
 
     auto message = std::make_shared<rosbag2::SerializedBagMessage>();
@@ -80,16 +83,14 @@ public:
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {
-  std::string storage_serialization_format = "rmw1_format";
   std::string output_format = "rmw2_format";
-  set_storage_serialization_format(storage_serialization_format);
 
   auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
   auto format2_converter = std::make_unique<StrictMock<MockConverter>>();
   EXPECT_CALL(*format1_converter, deserialize(_, _, _)).Times(1);
   EXPECT_CALL(*format2_converter, serialize(_, _, _)).Times(1);
 
-  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format))
+  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format_))
   .WillOnce(Return(ByMove(std::move(format1_converter))));
   EXPECT_CALL(*converter_factory_, load_serializer(output_format))
   .WillOnce(Return(ByMove(std::move(format2_converter))));
@@ -99,12 +100,10 @@ TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_
 }
 
 TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exist) {
-  std::string storage_serialization_format = "rmw1_format";
   std::string output_format = "rmw2_format";
-  set_storage_serialization_format(storage_serialization_format);
 
   auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
-  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format))
+  EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format_))
   .WillOnce(Return(ByMove(std::move(format1_converter))));
   EXPECT_CALL(*converter_factory_, load_serializer(output_format))
   .WillOnce(Return(ByMove(nullptr)));
@@ -115,7 +114,6 @@ TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exis
 TEST_F(SequentialReaderTest,
   read_next_does_not_use_converters_if_input_and_output_format_are_equal) {
   std::string storage_serialization_format = "rmw1_format";
-  set_storage_serialization_format(storage_serialization_format);
 
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format)).Times(0);
   EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format)).Times(0);
