@@ -47,7 +47,7 @@ TEST_F(StorageFactoryTest, load_test_plugin) {
 
   EXPECT_EQ(
     test_constants::DUMMY_FILEPATH,
-    read_write_storage->get_relative_path());
+    read_write_storage->get_relative_file_path());
 
   EXPECT_EQ(
     test_constants::READ_WRITE_PLUGIN_IDENTIFIER,
@@ -74,7 +74,7 @@ TEST_F(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
 
   EXPECT_EQ(
     test_constants::DUMMY_FILEPATH,
-    storage_for_reading->get_relative_path());
+    storage_for_reading->get_relative_file_path());
 
   EXPECT_EQ(
     test_constants::READ_ONLY_PLUGIN_IDENTIFIER,

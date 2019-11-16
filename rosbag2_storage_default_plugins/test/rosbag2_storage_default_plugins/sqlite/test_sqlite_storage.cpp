@@ -77,7 +77,10 @@ TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) 
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(temporary_dir_path_);
+
+  auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+  readable_storage->open(db_filename);
 
   EXPECT_TRUE(readable_storage->has_next());
   readable_storage->read_next();
@@ -95,7 +98,10 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   write_messages_to_sqlite(string_messages);
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(temporary_dir_path_);
+
+  auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+  readable_storage->open(db_filename);
 
   EXPECT_TRUE(readable_storage->has_next());
   auto first_message = readable_storage->read_next();
@@ -109,15 +115,22 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(temporary_dir_path_);
+
+  // extension is omitted since storage is being created; io_flag = READ_WRITE
+  const auto read_write_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
+
+  writable_storage->open(read_write_filename);
   writable_storage->create_topic({"topic1", "type1", "rmw1"});
   writable_storage->create_topic({"topic2", "type2", "rmw2"});
-  metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
+
+  const auto read_only_filename = writable_storage->get_relative_file_path();
+
   writable_storage.reset();
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   readable_storage->open(
-    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    read_only_filename, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, ElementsAreArray({
@@ -139,15 +152,15 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   write_messages_to_sqlite(messages);
 
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(
-    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  auto metadata = readable_storage->get_metadata();
+  const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  const auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+
+  readable_storage->open(db_filename, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  const auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
-  }));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
   EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
         "topic1", "type1", "rmw_format"}, 2u},
@@ -164,15 +177,15 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   write_messages_to_sqlite({});
 
-  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(
-    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  auto metadata = readable_storage->get_metadata();
+  const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  const auto db_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+
+  readable_storage->open(db_filename, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  const auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({
-    rosbag2_storage::FilesystemHelper::get_folder_name(temporary_dir_path_) + ".db3"
-  }));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
   EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
   EXPECT_THAT(metadata.message_count, Eq(0u));
   EXPECT_THAT(metadata.starting_time, Eq(
@@ -184,18 +197,58 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
 TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  writable_storage->open(temporary_dir_path_);
+
+  // extension is omitted since storage is created; io_flag = READ_WRITE
+  const auto read_write_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
+
+  writable_storage->open(read_write_filename);
   writable_storage->create_topic({"topic1", "type1", "rmw1"});
-  metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
   writable_storage->remove_topic({"topic1", "type1", "rmw1"});
+
+  const auto read_only_filename = writable_storage->get_relative_file_path();
+
   writable_storage.reset();
 
   // Remove topics
 
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  readable_storage->open(
-    temporary_dir_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+
+  readable_storage->open(read_only_filename,
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
   EXPECT_THAT(topics_and_types, IsEmpty());
+}
+
+TEST_F(StorageTestFixture, get_storage_identifier_returns_sqlite3) {
+  const auto storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  EXPECT_EQ(storage->get_storage_identifier(), "sqlite3");
+}
+
+TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
+  // check that storage::get_relative_file_path returns the relative path to the sqlite3 db
+  // and that uri is handled properly when storage::open is called with different io_flags
+  // READ_WRITE expects uri to not end in extension
+  const auto read_write_filename =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
+  const auto storage_filename = read_write_filename + ".db3";
+  const auto read_write_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  read_write_storage->open(read_write_filename,
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
+  EXPECT_EQ(read_write_storage->get_relative_file_path(), storage_filename);
+
+  // READ_ONLY expects uri to be the relative file path to the sqlite3 db.
+  const auto & read_only_filename = storage_filename;
+  const auto read_only_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  read_only_storage->open(read_only_filename,
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  EXPECT_EQ(read_only_storage->get_relative_file_path(), storage_filename);
+
+  const auto & append_filename = storage_filename;
+  const auto append_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  append_storage->open(append_filename,
+    rosbag2_storage::storage_interfaces::IOFlag::APPEND);
+  EXPECT_EQ(append_storage->get_relative_file_path(), storage_filename);
 }
