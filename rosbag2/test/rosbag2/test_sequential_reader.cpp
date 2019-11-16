@@ -48,10 +48,6 @@ public:
     topic_with_type.serialization_format = storage_serialization_format_;
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
 
-    metadata_.relative_file_paths = {"/path/to/storage"};
-    metadata_.topics_with_message_count.push_back({{topic_with_type}, 1});
-    EXPECT_CALL(*metadata_io_, read_metadata(_)).WillRepeatedly(Return(metadata_));
-
     auto message = std::make_shared<rosbag2::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
 

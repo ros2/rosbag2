@@ -38,7 +38,7 @@ public:
    *
    * \returns the relative path.
    */
-  virtual std::string get_relative_file_path() const = 0;
+  virtual std::string get_relative_path() const = 0;
 };
 
 }  // namespace storage_interfaces

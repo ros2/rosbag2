@@ -45,7 +45,7 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
-  std::string get_relative_file_path() const override;
+  std::string get_relative_path() const override;
 
   uint64_t get_bagfile_size() const override;
 

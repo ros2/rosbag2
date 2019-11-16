@@ -39,8 +39,6 @@ SqliteWrapper::SqliteWrapper(
     if (rc != SQLITE_OK) {
       throw SqliteException("Could not read-only open database. Error code: " + std::to_string(rc));
     }
-    // throws an exception if the database is not valid.
-    prepare_statement("PRAGMA schema_version;")->execute_and_reset();
   } else {
     int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);

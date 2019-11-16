@@ -21,7 +21,6 @@
 
 #include "rosbag2/writer.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
@@ -44,15 +43,8 @@ public:
     storage_options_ = rosbag2::StorageOptions{};
     storage_options_.uri = "uri";
 
-    ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(
-      DoAll(
-        Invoke([this](const std::string & uri, const std::string &) {
-          fake_storage_size_ = 0;
-          fake_storage_uri_ = uri;
-        }),
-        Return(storage_)));
     EXPECT_CALL(
-      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
+      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0)).WillRepeatedly(Return(storage_));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -61,9 +53,6 @@ public:
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2::Writer> writer_;
   rosbag2::StorageOptions storage_options_;
-  uint64_t fake_storage_size_;
-  rosbag2_storage::BagMetadata fake_metadata_;
-  std::string fake_storage_uri_;
 };
 
 TEST_F(WriterTest,
@@ -132,98 +121,4 @@ TEST_F(WriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
   .WillOnce(Return(ByMove(nullptr)));
 
   EXPECT_ANY_THROW(writer_->open(storage_options_, {input_format, output_format}));
-}
-
-TEST_F(WriterTest, bagfile_size_is_checked_on_every_write) {
-  const int counter = 10;
-  const uint64_t max_bagfile_size = 100;
-
-  EXPECT_CALL(*storage_, get_bagfile_size()).Times(counter);
-
-  writer_ = std::make_unique<rosbag2::Writer>(
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-
-  std::string rmw_format = "rmw_format";
-
-  auto message = std::make_shared<rosbag2::SerializedBagMessage>();
-  message->topic_name = "test_topic";
-
-  storage_options_.max_bagfile_size = max_bagfile_size;
-
-  writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
-
-  for (auto i = 0; i < counter; ++i) {
-    writer_->write(message);
-  }
-}
-
-TEST_F(WriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagfile_size) {
-  const int message_count = 15;
-  const int max_bagfile_size = 5;
-  const auto expected_splits = message_count / max_bagfile_size;
-  fake_storage_size_ = 0;
-
-  ON_CALL(*storage_, write).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_;
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
-  EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
-
-  // intercept the metadata write so we can analyze it.
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
-
-  writer_ = std::make_unique<rosbag2::Writer>(
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-
-  std::string rmw_format = "rmw_format";
-
-  auto message = std::make_shared<rosbag2::SerializedBagMessage>();
-  message->topic_name = "test_topic";
-
-  storage_options_.max_bagfile_size = max_bagfile_size;
-
-  writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
-
-  for (auto i = 0; i < message_count; ++i) {
-    writer_->write(message);
-  }
-
-  writer_.reset();
-  // metadata should be written now that the Writer was released.
-
-  EXPECT_EQ(fake_metadata_.relative_file_paths.size(),
-    static_cast<unsigned int>(expected_splits)) <<
-    "Storage should have split bagfile " << (expected_splits - 1);
-
-  const auto base_path = rosbag2_storage::FilesystemHelper::concat({
-    storage_options_.uri, storage_options_.uri});
-  int counter = 0;
-  for (const auto & path : fake_metadata_.relative_file_paths) {
-    std::stringstream ss;
-    ss << base_path << "_" << counter;
-
-    const auto expected_path = ss.str();
-    counter++;
-    EXPECT_EQ(expected_path, path);
-  }
 }

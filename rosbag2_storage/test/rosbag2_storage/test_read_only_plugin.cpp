@@ -55,7 +55,7 @@ std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_a
   return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
-std::string TestReadOnlyPlugin::get_relative_file_path() const
+std::string TestReadOnlyPlugin::get_relative_path() const
 {
   std::cout << "\nreturning relative path\n";
   return test_constants::DUMMY_FILEPATH;

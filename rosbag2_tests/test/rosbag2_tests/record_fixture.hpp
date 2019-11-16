@@ -42,9 +42,8 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture()
   {
-    root_bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
-    storage_path_ = rosbag2_storage::FilesystemHelper::concat({root_bag_path_, "bag_0"});
-    database_path_ = storage_path_ + ".db3";
+    bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
+    database_path_ = rosbag2_storage::FilesystemHelper::concat({bag_path_, "bag.db3"});
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }
 
@@ -120,7 +119,7 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-    storage->open(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    storage->open(bag_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
 
     while (storage->has_next()) {
       table_msgs.push_back(storage->read_next());
@@ -139,13 +138,8 @@ public:
     return std::get<0>(topic_format);
   }
 
-  // relative path to the root of the bag file.
-  std::string root_bag_path_;
-  // relative path including file name (excludes extension
-  // used to open a storage plugin only for read-write)
+  std::string bag_path_;
   std::string database_path_;
-  // path to the SQLite3 db.
-  std::string storage_path_;
   PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };

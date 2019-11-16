@@ -80,7 +80,7 @@ rosbag2_storage::BagMetadata TestPlugin::get_metadata()
   return rosbag2_storage::BagMetadata();
 }
 
-std::string TestPlugin::get_relative_file_path() const
+std::string TestPlugin::get_relative_path() const
 {
   std::cout << "\nreturning relative path\n";
   return test_constants::DUMMY_FILEPATH;

@@ -38,7 +38,7 @@ public:
   MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicMetadata>());
   MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
   MOCK_CONST_METHOD0(get_bagfile_size, uint64_t());
-  MOCK_CONST_METHOD0(get_relative_file_path, std::string());
+  MOCK_CONST_METHOD0(get_relative_path, std::string());
   MOCK_CONST_METHOD0(get_storage_identifier, std::string());
 };
 

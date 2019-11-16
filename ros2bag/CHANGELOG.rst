@@ -2,9 +2,6 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.2.2 (2019-11-13)
-------------------
-
 0.2.1 (2019-10-23)
 ------------------
 * Fix flake8 errors and add missing lint tests. (`#194 <https://github.com/ros2/rosbag2/issues/194>`_)

@@ -3,11 +3,6 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-0.2.2 (2019-11-13)
-------------------
-* (API) Generate bagfile metadata in Writer (`#184 <https://github.com/ros2/rosbag2/issues/184>`_)
-* Contributors: Zachary Michaels
-
 0.2.1 (2019-10-23)
 ------------------
 * Add get_identifier to storage io-interface for support in bagfile splitting. (`#183 <https://github.com/ros2/rosbag2/issues/183>`_)
