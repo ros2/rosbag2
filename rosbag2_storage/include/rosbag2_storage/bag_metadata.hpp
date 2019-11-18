@@ -33,7 +33,7 @@ struct TopicInformation
 
 struct BagMetadata
 {
-  int version = 2;  // upgrade this number when changing the content of the struct
+  int version = 3;  // Upgrade this number when changing the content of the struct
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
@@ -41,6 +41,8 @@ struct BagMetadata
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   uint64_t message_count;
   std::vector<TopicInformation> topics_with_message_count;
+  std::string compression_format;
+  std::string compression_mode;
 };
 
 }  // namespace rosbag2_storage
