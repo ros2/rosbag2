@@ -106,6 +106,8 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   auto subscriber_future_ = std::async(std::launch::async, [this, topic_name, type] {
         return subscribe_raw_messages(1, topic_name, type);
       });
+  // Give time to the subscriber to start.
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   for (const auto & message : test_messages) {
     publisher->publish(serialize_string_message(message));
