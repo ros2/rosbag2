@@ -59,6 +59,7 @@ constexpr const auto FILE_EXTENSION = ".db3";
 
 namespace rosbag2_storage_plugins
 {
+
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {

@@ -67,7 +67,7 @@ rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()
   return rosbag2_storage::BagMetadata();
 }
 
-uint64_t TestReadOnlyPlugin::get_current_bagfile_size() const
+uint64_t TestReadOnlyPlugin::get_bagfile_size() const
 {
   std::cout << "\nreturning bagfile size\n";
   return test_constants::MAX_BAGFILE_SIZE;
