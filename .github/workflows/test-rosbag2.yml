@@ -1,0 +1,23 @@
+name: Test rosbag2_all
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  build_and_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-10.14, ubuntu-18.04]
+    steps:
+      - uses: ros-tooling/setup-ros2@master
+      - uses: ros-tooling/action-ros2-ci@master
+        with:
+          package-name: rosbag2 rosbag2_storage rosbag2_storage_default_plugins rosbag2_transport rosbag2_tests
+
