@@ -3,6 +3,13 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Enhance rosbag reader capabilities to read split bag files. (`#206 <https://github.com/ros2/rosbag2/issues/206>`_)
+* Modular Reader/Writer API. (`#205 <https://github.com/ros2/rosbag2/issues/205>`_)
+* Enhance rosbag writer capabilities to split bag files. (`#185 <https://github.com/ros2/rosbag2/issues/185>`_)
+* Contributors: Karsten Knese, Zachary Michaels
+
 0.2.2 (2019-11-13)
 ------------------
 * (API) Generate bagfile metadata in Writer (`#184 <https://github.com/ros2/rosbag2/issues/184>`_)
