@@ -42,7 +42,7 @@ public:
    * @return A shared pointer to the bag message with compressed serialized_data.
    */
   virtual std::shared_ptr<SerializedBagMessage> compress_serialized_bag_message(
-    std::shared_ptr<SerializedBagMessage> & bag_message) = 0;
+    std::shared_ptr<SerializedBagMessage> bag_message) = 0;
 
   /**
    * Get the identifier of the compression algorithm. This is appended to the relative file path.
