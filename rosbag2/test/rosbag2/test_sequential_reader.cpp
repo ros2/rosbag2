@@ -69,13 +69,6 @@ public:
     reader_ = std::make_unique<rosbag2::Reader>(std::move(sequential_reader));
   }
 
-  void set_storage_serialization_format(const std::string & format)
-  {
-    rosbag2_storage::BagMetadata metadata;
-    metadata.topics_with_message_count.push_back({{"", "", format}, 1});
-    EXPECT_CALL(*storage_, get_metadata()).WillOnce(Return(metadata));
-  }
-
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<rosbag2::Reader> reader_;

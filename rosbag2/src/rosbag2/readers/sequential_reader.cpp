@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2/logging.hpp"
 #include "rosbag2/readers/sequential_reader.hpp"
 
@@ -54,8 +56,12 @@ void SequentialReader::open(
     ROSBAG2_LOG_WARN("No file paths were found in metadata.");
     return;
   }
+
+  file_paths_ = metadata_.relative_file_paths;
+  current_file_iterator_ = file_paths_.begin();
+
   storage_ = storage_factory_->open_read_only(
-    metadata_.relative_file_paths.at(0), storage_options.storage_id);
+    *current_file_iterator_, metadata_.storage_identifier);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -75,6 +81,13 @@ void SequentialReader::open(
 bool SequentialReader::has_next()
 {
   if (storage_) {
+    // If there's no new message, check if there's at least another file to read and update storage
+    // to read from there. Otherwise, check if there's another message.
+    if (!storage_->has_next() && has_next_file()) {
+      load_next_file();
+      storage_ = storage_factory_->open_read_only(
+        *current_file_iterator_, metadata_.storage_identifier);
+    }
     return storage_->has_next();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
@@ -95,6 +108,29 @@ std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
     return storage_->get_all_topics_and_types();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
+}
+
+bool SequentialReader::has_next_file() const
+{
+  return current_file_iterator_ + 1 != file_paths_.end();
+}
+
+void SequentialReader::load_next_file()
+{
+  assert(current_file_iterator_ != file_paths_.end());
+  current_file_iterator_++;
+}
+
+std::string SequentialReader::get_current_file() const
+{
+  return *current_file_iterator_;
+}
+
+std::string SequentialReader::get_current_uri() const
+{
+  auto current_file = get_current_file();
+  auto current_uri = rcpputils::fs::remove_extension(current_file);
+  return current_uri.string();
 }
 
 void SequentialReader::check_topics_serialization_formats(
