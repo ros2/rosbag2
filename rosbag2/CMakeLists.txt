@@ -32,6 +32,7 @@ find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(poco_vendor)
 find_package(Poco COMPONENTS Foundation)
+find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
@@ -54,6 +55,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
   pluginlib
   Poco
+  rcpputils
   rcutils
   rosbag2_storage
   rosidl_generator_cpp
@@ -165,6 +167,12 @@ if(BUILD_TESTING)
     test/rosbag2/test_sequential_writer.cpp)
   if(TARGET test_sequential_writer)
     target_link_libraries(test_sequential_writer rosbag2)
+  endif()
+
+  ament_add_gmock(test_multifile_reader
+    test/rosbag2/test_multifile_reader.cpp)
+  if(TARGET test_multifile_reader)
+    target_link_libraries(test_multifile_reader rosbag2)
   endif()
 endif()
 

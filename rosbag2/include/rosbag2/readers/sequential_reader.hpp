@@ -67,6 +67,34 @@ public:
 
   std::vector<TopicMetadata> get_all_topics_and_types() override;
 
+  /**
+   * Ask whether there is another database file to read from the list of relative
+   * file paths.
+   *
+   * \return true if there are still files to read in the list
+   */
+  virtual bool has_next_file() const;
+
+  /**
+  * Return the relative file path pointed to by the current file iterator.
+  */
+  virtual std::string get_current_file() const;
+
+  /**
+  * Return the URI of the current file (i.e. no extensions).
+  */
+  virtual std::string get_current_uri() const;
+
+protected:
+  /**
+  * Increment the current file iterator to point to the next file in the list of relative file
+  * paths.
+  *
+  * Expected usage:
+  * if (has_next_file()) load_next_file();
+  */
+  virtual void load_next_file();
+
 private:
   /**
    * Checks if all topics in the bagfile have the same RMW serialization format.
@@ -78,14 +106,15 @@ private:
   virtual void check_topics_serialization_formats(const std::vector<TopicInformation> & topics);
 
   /**
-   * Checks if the serialization format of the converter factory is the same as that of the storage
-   * factory.
-   * If not, changes the serialization format of the converter factory to use the serialization
-   * format of the storage factory.
-   *
-   * \param converter_serialization_format
-   * \param storage_serialization_format
-   */
+
+  * Checks if the serialization format of the converter factory is the same as that of the storage
+  * factory.
+  * If not, changes the serialization format of the converter factory to use the serialization
+  * format of the storage factory.
+  *
+  * \param converter_serialization_format
+  * \param storage_serialization_format
+  */
   virtual void check_converter_serialization_format(
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
@@ -96,6 +125,8 @@ private:
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
+  std::vector<std::string> file_paths_{};  // List of database files.
+  std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 };
 
 }  // namespace readers
