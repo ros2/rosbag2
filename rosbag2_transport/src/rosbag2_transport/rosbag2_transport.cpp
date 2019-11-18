@@ -21,14 +21,18 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+
 #include "rcutils/time.h"
 
 #include "rosbag2_transport/logging.hpp"
+
 #include "rosbag2/info.hpp"
-#include "rosbag2/sequential_reader.hpp"
+#include "rosbag2/reader.hpp"
+#include "rosbag2/readers/sequential_reader.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/typesupport_helpers.hpp"
 #include "rosbag2/writer.hpp"
+#include "rosbag2/writers/sequential_writer.hpp"
 
 #include "formatter.hpp"
 #include "player.hpp"
@@ -39,13 +43,15 @@ namespace rosbag2_transport
 {
 
 Rosbag2Transport::Rosbag2Transport()
-: reader_(std::make_shared<rosbag2::SequentialReader>()),
-  writer_(std::make_shared<rosbag2::Writer>()),
+: reader_(
+    std::make_shared<rosbag2::Reader>(std::make_unique<rosbag2::readers::SequentialReader>())),
+  writer_(
+    std::make_shared<rosbag2::Writer>(std::make_unique<rosbag2::writers::SequentialWriter>())),
   info_(std::make_shared<rosbag2::Info>())
 {}
 
 Rosbag2Transport::Rosbag2Transport(
-  std::shared_ptr<rosbag2::SequentialReader> reader,
+  std::shared_ptr<rosbag2::Reader> reader,
   std::shared_ptr<rosbag2::Writer> writer,
   std::shared_ptr<rosbag2::Info> info)
 : reader_(std::move(reader)), writer_(std::move(writer)), info_(std::move(info)) {}

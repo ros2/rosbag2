@@ -42,6 +42,8 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   }
   stop_recording();
 
-  auto recorded_topics = writer_->get_topics();
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_topics = writer.get_topics();
   EXPECT_EQ(0u, recorded_topics.count(topic));
 }

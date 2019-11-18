@@ -1,4 +1,5 @@
 // Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,52 +13,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/writer.hpp"
-
-#include <algorithm>
-#include <chrono>
 #include <memory>
-#include <stdexcept>
-#include <string>
 #include <utility>
+#include <vector>
 
 #include "rosbag2/info.hpp"
-#include "rosbag2/storage_options.hpp"
-#include "rosbag2/writer_interfaces/base_writer_interface.hpp"
-
-#include "rosbag2_storage/filesystem_helper.hpp"
+#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2/reader.hpp"
 
 namespace rosbag2
 {
 
-Writer::Writer(std::unique_ptr<rosbag2::writer_interfaces::BaseWriterInterface> writer_impl)
-: writer_impl_(std::move(writer_impl))
+Reader::Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl)
+: reader_impl_(std::move(reader_impl))
 {}
 
-Writer::~Writer()
+Reader::~Reader()
 {
-  writer_impl_.reset();
+  reader_impl_->reset();
 }
 
-void Writer::open(
+void Reader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  writer_impl_->open(storage_options, converter_options);
+  reader_impl_->open(storage_options, converter_options);
 }
 
-void Writer::create_topic(const TopicMetadata & topic_with_type)
+bool Reader::has_next()
 {
-  writer_impl_->create_topic(topic_with_type);
+  return reader_impl_->has_next();
 }
 
-void Writer::remove_topic(const TopicMetadata & topic_with_type)
+std::shared_ptr<SerializedBagMessage> Reader::read_next()
 {
-  writer_impl_->remove_topic(topic_with_type);
+  return reader_impl_->read_next();
 }
 
-void Writer::write(std::shared_ptr<SerializedBagMessage> message)
+std::vector<TopicMetadata> Reader::get_all_topics_and_types()
 {
-  writer_impl_->write(message);
+  return reader_impl_->get_all_topics_and_types();
 }
 
 }  // namespace rosbag2

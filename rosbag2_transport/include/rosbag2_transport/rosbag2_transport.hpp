@@ -28,7 +28,7 @@
 namespace rosbag2
 {
 class Info;
-class SequentialReader;
+class Reader;
 class Writer;
 }  // namespace rosbag2
 
@@ -47,7 +47,7 @@ public:
   /// Constructor for testing, allows to set the reader and writer to use
   ROSBAG2_TRANSPORT_PUBLIC
   Rosbag2Transport(
-    std::shared_ptr<rosbag2::SequentialReader> reader,
+    std::shared_ptr<rosbag2::Reader> reader,
     std::shared_ptr<rosbag2::Writer> writer,
     std::shared_ptr<rosbag2::Info> info);
 
@@ -87,7 +87,7 @@ public:
 private:
   std::shared_ptr<Rosbag2Node> setup_node(std::string node_prefix = "");
 
-  std::shared_ptr<rosbag2::SequentialReader> reader_;
+  std::shared_ptr<rosbag2::Reader> reader_;
   std::shared_ptr<rosbag2::Writer> writer_;
   std::shared_ptr<rosbag2::Info> info_;
 

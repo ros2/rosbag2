@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2/sequential_reader.hpp"
-
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "rosbag2/info.hpp"
 #include "rosbag2/logging.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2/readers/sequential_reader.hpp"
 
 namespace rosbag2
+{
+namespace readers
 {
 
 SequentialReader::SequentialReader(
@@ -39,11 +38,15 @@ SequentialReader::SequentialReader(
 
 SequentialReader::~SequentialReader()
 {
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
+  reset();
 }
 
-void
-SequentialReader::open(
+void SequentialReader::reset()
+{
+  storage_.reset();
+}
+
+void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
   metadata_ = metadata_io_->read_metadata(storage_options.uri);
@@ -63,24 +66,10 @@ SequentialReader::open(
   }
 
   // Currently a bag file can only be played if all topics have the same serialization format.
-  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
-  for (const auto & topic : topics) {
-    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
-      throw std::runtime_error("Topics with different rwm serialization format have been found. "
-              "All topics must have the same serialization format.");
-    }
-  }
-
-  if (converter_options.output_serialization_format != storage_serialization_format) {
-    converter_ = std::make_unique<Converter>(
-      storage_serialization_format,
-      converter_options.output_serialization_format,
-      converter_factory_);
-    auto topics = storage_->get_all_topics_and_types();
-    for (const auto & topic_with_type : topics) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
-    }
-  }
+  check_topics_serialization_formats(topics);
+  check_converter_serialization_format(
+    converter_options.output_serialization_format,
+    topics[0].topic_metadata.serialization_format);
 }
 
 bool SequentialReader::has_next()
@@ -108,4 +97,33 @@ std::vector<TopicMetadata> SequentialReader::get_all_topics_and_types()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
+void SequentialReader::check_topics_serialization_formats(
+  const std::vector<TopicInformation> & topics)
+{
+  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
+  for (const auto & topic : topics) {
+    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
+      throw std::runtime_error(
+              "Topics with different rwm serialization format have been found. "
+              "All topics must have the same serialization format.");
+    }
+  }
+}
+
+void SequentialReader::check_converter_serialization_format(
+  const std::string & converter_serialization_format,
+  const std::string & storage_serialization_format)
+{
+  if (converter_serialization_format != storage_serialization_format) {
+    converter_ = std::make_unique<Converter>(
+      storage_serialization_format,
+      converter_serialization_format,
+      converter_factory_);
+    auto topics = storage_->get_all_topics_and_types();
+    for (const auto & topic_with_type : topics) {
+      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+    }
+  }
+}
+}  // namespace readers
 }  // namespace rosbag2

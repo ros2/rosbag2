@@ -43,8 +43,10 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   run_publishers();
   stop_recording();
 
-  auto recorded_messages = writer_->get_messages();
-  auto recorded_topics = writer_->get_topics();
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_messages = writer.get_messages();
+  auto recorded_topics = writer.get_topics();
 
   ASSERT_THAT(recorded_topics, SizeIs(2));
   EXPECT_THAT(recorded_topics.at(string_topic).serialization_format, Eq("rmw_format"));

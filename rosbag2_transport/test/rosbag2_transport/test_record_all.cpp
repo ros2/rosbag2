@@ -39,7 +39,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   run_publishers();
   stop_recording();
 
-  auto recorded_messages = writer_->get_messages();
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_messages = writer.get_messages();
 
   ASSERT_THAT(recorded_messages, SizeIs(4));
   auto string_messages = filter_messages<test_msgs::msg::Strings>(

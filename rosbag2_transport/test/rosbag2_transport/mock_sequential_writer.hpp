@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
-#define ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
+#ifndef ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
+#define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "rosbag2/writer.hpp"
+#include "rosbag2/writer_interfaces/base_writer_interface.hpp"
 
-class MockWriter : public rosbag2::Writer
+class MockSequentialWriter : public rosbag2::writer_interfaces::BaseWriterInterface
 {
 public:
   void open(
@@ -33,9 +33,16 @@ public:
     (void) converter_options;
   }
 
+  void reset() override {}
+
   void create_topic(const rosbag2::TopicMetadata & topic_with_type) override
   {
     topics_.emplace(topic_with_type.name, topic_with_type);
+  }
+
+  void remove_topic(const rosbag2::TopicMetadata & topic_with_type) override
+  {
+    (void) topic_with_type;
   }
 
   void write(std::shared_ptr<rosbag2::SerializedBagMessage> message) override
@@ -65,4 +72,4 @@ private:
   std::unordered_map<std::string, size_t> messages_per_topic_;
 };
 
-#endif  // ROSBAG2_TRANSPORT__MOCK_WRITER_HPP_
+#endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_

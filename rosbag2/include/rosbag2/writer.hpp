@@ -20,12 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-#include "rosbag2_storage/storage_factory_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2/converter.hpp"
-#include "rosbag2/serialization_format_converter_factory.hpp"
+#include "rosbag2/converter_options.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/types.hpp"
 #include "rosbag2/visibility_control.hpp"
@@ -40,24 +35,21 @@
 
 namespace rosbag2
 {
+namespace writer_interfaces
+{
+class BaseWriterInterface;
+}  // namespace writer_interfaces
 
 /**
  * The Writer allows writing messages to a new bag. For every topic, information about its type
  * needs to be added before writing the first message.
  */
-class ROSBAG2_PUBLIC Writer
+class ROSBAG2_PUBLIC Writer final
 {
 public:
-  explicit
-  Writer(
-    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
-    std::make_unique<rosbag2_storage::StorageFactory>(),
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>(),
-    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
-    std::make_unique<rosbag2_storage::MetadataIo>());
+  explicit Writer(std::unique_ptr<rosbag2::writer_interfaces::BaseWriterInterface> writer_impl);
 
-  virtual ~Writer();
+  ~Writer();
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
@@ -66,9 +58,7 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
-  virtual void open(
-    const StorageOptions & storage_options,
-    const ConverterOptions & converter_options);
+  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -77,7 +67,7 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void create_topic(const TopicMetadata & topic_with_type);
+  void create_topic(const TopicMetadata & topic_with_type);
 
   /**
    * Remove a new topic in the underlying storage.
@@ -87,7 +77,7 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void remove_topic(const TopicMetadata & topic_with_type);
+  void remove_topic(const TopicMetadata & topic_with_type);
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
@@ -95,35 +85,15 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  virtual void write(std::shared_ptr<SerializedBagMessage> message);
+  void write(std::shared_ptr<SerializedBagMessage> message);
+
+  writer_interfaces::BaseWriterInterface & get_implementation_handle() const
+  {
+    return *writer_impl_;
+  }
 
 private:
-  std::string base_folder_;
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
-  std::unique_ptr<Converter> converter_;
-
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_;
-
-  // Used to track topic -> message count
-  std::unordered_map<std::string, TopicInformation> topics_names_to_info_;
-
-  rosbag2_storage::BagMetadata metadata_;
-
-  // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile();
-
-  // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile() const;
-
-  // Prepares the metadata by setting initial values.
-  void init_metadata();
-
-  // Record TopicInformation into metadata
-  void finalize_metadata();
+  std::unique_ptr<rosbag2::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 
 }  // namespace rosbag2

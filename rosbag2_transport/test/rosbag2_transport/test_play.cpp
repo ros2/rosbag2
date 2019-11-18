@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
@@ -74,7 +75,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
     serialize_test_message("topic2", 750, complex_message1),
     serialize_test_message("topic2", 950, complex_message1)};
 
-  reader_->prepare(messages, topic_types);
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2::Reader>(std::move(prepared_mock_reader));
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
