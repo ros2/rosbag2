@@ -62,6 +62,7 @@ void SequentialReader::open(
 
   storage_ = storage_factory_->open_read_only(
     *current_file_iterator_, metadata_.storage_identifier);
+
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -88,6 +89,7 @@ bool SequentialReader::has_next()
       storage_ = storage_factory_->open_read_only(
         *current_file_iterator_, metadata_.storage_identifier);
     }
+
     return storage_->has_next();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");

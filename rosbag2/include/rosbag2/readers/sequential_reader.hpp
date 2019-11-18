@@ -106,6 +106,7 @@ private:
   virtual void check_topics_serialization_formats(const std::vector<TopicInformation> & topics);
 
   /**
+
   * Checks if the serialization format of the converter factory is the same as that of the storage
   * factory.
   * If not, changes the serialization format of the converter factory to use the serialization
