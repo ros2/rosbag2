@@ -4,8 +4,8 @@ Changelog for package rosbag2_transport
 
 
 
-Forthcoming
------------
+0.2.4 (2019-11-18)
+------------------
 
 0.2.3 (2019-11-18)
 ------------------
