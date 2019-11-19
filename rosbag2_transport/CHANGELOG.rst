@@ -4,6 +4,9 @@ Changelog for package rosbag2_transport
 
 
 
+Forthcoming
+-----------
+
 0.2.3 (2019-11-18)
 ------------------
 * Add CLI option to expose bagfile splitting. (`#203 <https://github.com/ros2/rosbag2/issues/203>`_)
