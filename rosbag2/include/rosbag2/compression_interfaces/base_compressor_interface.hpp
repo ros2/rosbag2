@@ -20,8 +20,29 @@
 
 #include "rosbag2/visibility_control.hpp"
 
+/**
+ * An interface for developers adding a new compression algorithm to rosbag2. These functions
+ * must be implemented to that a writer can properly compress a file or bag message.
+ * A corresponding decompressor must also be implemented.
+ *
+ * Example file compression usage:
+ *
+ * MyCompressor my_compressor();
+ * std::string current_uri = storage.get_relative_path();
+ * std::string compressed_path_uri = my_compressor.compress_uri(current_uri);
+ * relative_file_paths.push_back(compressed_path_uri);
+ *
+ * Example message compression usage:
+ *
+ * MyCompressor my_compressor();
+ * std::shared_ptr<SerializedBagMessage> bag_message = std::make_shared<SerializedBagMessage>();
+ * ...fill message
+ * std::shared_ptr<SerializedBagMessage> compressed_message =
+ *   my_compressor.compress_serialized_bag_message(bag_message);
+ */
 namespace rosbag2
 {
+
 class ROSBAG2_PUBLIC BaseCompressorInterface
 {
 public:
@@ -38,8 +59,8 @@ public:
   /**
    * Compress serialized_data in a serialized bag message.
    *
-   * @param bag_message A serialized bag message.
-   * @return A shared pointer to the bag message with compressed serialized_data.
+   * \param bag_message A serialized bag message.
+   * \return A shared pointer to the bag message with compressed serialized_data.
    */
   virtual std::shared_ptr<SerializedBagMessage> compress_serialized_bag_message(
     std::shared_ptr<SerializedBagMessage> bag_message) = 0;

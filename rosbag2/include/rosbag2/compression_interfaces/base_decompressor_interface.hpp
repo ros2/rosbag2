@@ -20,6 +20,25 @@
 
 #include "rosbag2/visibility_control.hpp"
 
+/**
+ * An interface for developers adding a new decompression algorithm to rosbag2. These functions
+ * must be implemented to that a reader can properly decompress a file or bag message.
+ * A corresponding compressor must also be implemented.
+ *
+ * Example file decompression usage:
+ *
+ * MyDecompressor my_decompressor();
+ * std::string current_uri = get_current_file();
+ * std::string compressed_path_uri = my_decompressor.decompress_uri(current_uri);
+ * storage = storage_factory.open_read_only(compressed_path_uri, storage_options.storage_id);
+ *
+ * Example message decompression usage:
+ *
+ * MyDecompressor my_decompressor();
+ * std::shared_ptr<SerializedBagMessage> bag_message = storage.read_next();
+ * std::shared_ptr<SerializedBagMessage> decompressed_message =
+ *   my_decompressor.decompress_serialized_bag_message(bag_message);
+ */
 namespace rosbag2
 {
 
@@ -31,16 +50,16 @@ public:
   /**
    * Decompress a file on disk.
    *
-   * @param uri Input file to decompress with file extension.
-   * @return The relative path to the decompressed file without the compressed extension.
+   * \param uri Input file to decompress with file extension.
+   * \return The relative path to the decompressed file without the compressed extension.
    */
   virtual std::string decompress_uri(const std::string & uri) = 0;
 
   /**
    * Decompress serialized_data in a serialized bag message.
    *
-   * @param bag_message A serialized bag message.
-   * @return A shared pointer to the bag message with decompressed serialized_data.
+   * \param bag_message A serialized bag message.
+   * \return A shared pointer to the bag message with decompressed serialized_data.
    */
   virtual std::shared_ptr<SerializedBagMessage> decompress_serialized_bag_message(
     std::shared_ptr<SerializedBagMessage> bag_message) = 0;
