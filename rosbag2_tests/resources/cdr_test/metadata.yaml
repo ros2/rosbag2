@@ -1,5 +1,5 @@
 rosbag2_bagfile_information:
-  version: 1
+  version: 3
   storage_identifier: sqlite3
   relative_file_paths:
     - cdr_test.db3
@@ -19,3 +19,5 @@ rosbag2_bagfile_information:
         type: test_msgs/Arrays
         serialization_format: cdr
       message_count: 4
+  compression_format: ""
+  compression_mode: ""
