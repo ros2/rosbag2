@@ -58,6 +58,7 @@ public:
     metadata.relative_file_paths.push_back(relative_path_2_);
     metadata.topics_with_message_count.push_back({topic_with_type, 10});
     ON_CALL(*metadata_io, read_metadata(_)).WillByDefault(Return(metadata));
+    EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));

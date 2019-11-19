@@ -51,20 +51,37 @@ void SequentialReader::reset()
 void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  metadata_ = metadata_io_->read_metadata(storage_options.uri);
-  if (metadata_.relative_file_paths.empty()) {
-    ROSBAG2_LOG_WARN("No file paths were found in metadata.");
-    return;
-  }
+  // If there is a metadata.yaml file present, load it.
+  // If not, let's ask the storage with the given URI for its metadata.
+  // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
+  if (metadata_io_->metadata_file_exists(storage_options.uri)) {
+    metadata_ = metadata_io_->read_metadata(storage_options.uri);
+    if (metadata_.relative_file_paths.empty()) {
+      ROSBAG2_LOG_WARN("No file paths were found in metadata.");
+      return;
+    }
 
-  file_paths_ = metadata_.relative_file_paths;
-  current_file_iterator_ = file_paths_.begin();
+    file_paths_ = metadata_.relative_file_paths;
+    current_file_iterator_ = file_paths_.begin();
 
-  storage_ = storage_factory_->open_read_only(
-    *current_file_iterator_, metadata_.storage_identifier);
-
-  if (!storage_) {
-    throw std::runtime_error("No storage could be initialized. Abort");
+    storage_ = storage_factory_->open_read_only(
+      *current_file_iterator_, metadata_.storage_identifier);
+    if (!storage_) {
+      throw std::runtime_error("No storage could be initialized. Abort");
+    }
+  } else {
+    storage_ = storage_factory_->open_read_only(
+      storage_options.uri, storage_options.storage_id);
+    if (!storage_) {
+      throw std::runtime_error("No storage could be initialized. Abort");
+    }
+    metadata_ = storage_->get_metadata();
+    if (metadata_.relative_file_paths.empty()) {
+      ROSBAG2_LOG_WARN("No file paths were found in metadata.");
+      return;
+    }
+    file_paths_ = metadata_.relative_file_paths;
+    current_file_iterator_ = file_paths_.begin();
   }
   auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
