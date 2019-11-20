@@ -4,6 +4,7 @@
   <version>0.2.4</version>
   <description>ROS2 independent storage format to store serialized ROS2 messages</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
