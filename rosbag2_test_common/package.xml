@@ -5,6 +5,7 @@
   <version>0.2.4</version>
   <description>Commonly used test helper classes and fixtures for rosbag2</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
