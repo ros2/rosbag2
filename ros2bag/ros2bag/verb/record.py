@@ -23,6 +23,9 @@ from ros2cli.node import NODE_NAME_PREFIX
 class RecordVerb(VerbExtension):
     """ros2 bag record."""
 
+    DEFAULT_STORAGE_PLUGIN = 'sqlite3'
+    DEFAULT_PLUGIN_SPLIT_SIZE = 86015
+
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
             '-a', '--all', action='store_true',
@@ -34,7 +37,7 @@ class RecordVerb(VerbExtension):
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
-            '-s', '--storage', default='sqlite3',
+            '-s', '--storage', default=self.DEFAULT_STORAGE_PLUGIN,
             help='storage identifier to be used, defaults to "sqlite3"')
         parser.add_argument(
             '-f', '--serialization-format', default='',
@@ -52,14 +55,8 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
             help='maximum size in bytes before the bagfile will be split. '
-                  'Default it is zero, recording written in single bagfile and splitting '
-                  'is disabled.'
-        )
-        parser.add_argument(
-            '-b', '--max-bag-size', type=int, default=0,
-            help='maximum size in bytes before the bagfile will be split. '
-                  'Default it is zero, recording written in single bagfile and splitting '
-                  'is disabled.'
+                  'By default it is zero, recording is written in single bagfile and '
+                  'splitting is disabled.'
         )
         self._subparser = parser
 
@@ -68,6 +65,15 @@ class RecordVerb(VerbExtension):
             os.makedirs(uri)
         except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
+
+    def validate_splitting_size(self, args):
+        # Adjust bagfile splitting size to work correctly with the specified storage plugin.
+        if args.storage == self.DEFAULT_STORAGE_PLUGIN:
+            # If a value below this limit is specified, splitting functionality will not work as
+            # expected because of how the default plugin handles writes to disk.
+            if (args.max_bag_size != 0) and \
+               (args.max_bag_size < self.DEFAULT_PLUGIN_SPLIT_SIZE):
+                args.max_bag_size = self.DEFAULT_PLUGIN_SPLIT_SIZE
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -79,6 +85,8 @@ class RecordVerb(VerbExtension):
             return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
 
         self.create_bag_directory(uri)
+
+        self.validate_splitting_size(args)
 
         if args.all:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
