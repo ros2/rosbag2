@@ -39,7 +39,7 @@ public:
    * \returns the relative path.
    */
   virtual std::string get_relative_file_path() const = 0;
-  
+
   /**
    * Returns the size of the bagfile.
    * \returns the size of the bagfile in bytes.
