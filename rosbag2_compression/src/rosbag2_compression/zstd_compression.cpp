@@ -60,9 +60,8 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
     // Statistics
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    auto compression_ratio =
-      std::static_cast<float>(decompressed_buffer_length) /
-      std::static_cast<float>(compression_result);
+    auto compression_ratio = static_cast<float>(decompressed_buffer_length) /
+      static_cast<float>(compression_result);
     ROSBAG2_COMPRESSION_LOG_INFO("ZSTD compressed file.");
     ROSBAG2_COMPRESSION_LOG_DEBUG("Compression statistics:");
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Time: " << duration.count() << " microseconds");

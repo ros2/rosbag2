@@ -29,7 +29,7 @@ find_package(rclcpp REQUIRED)
 find_package(rcpputils REQUIRED)
 
 add_library(${PROJECT_NAME}_zstd SHARED
-  src/rosbag2_compression/zstd_compressor.cpp)
+  src/rosbag2_compression/zstd_compression.cpp)
 target_include_directories(${PROJECT_NAME}_zstd PUBLIC include)
 target_link_libraries(${PROJECT_NAME}_zstd
   ${ZSTD_LIBRARY}
