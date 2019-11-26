@@ -17,6 +17,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rosbag2_storage REQUIRED)
 
 install(
   DIRECTORY include/
