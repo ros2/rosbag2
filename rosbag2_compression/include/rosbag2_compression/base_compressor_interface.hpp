@@ -20,8 +20,6 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "visibility_control.hpp"
 
-namespace rosbag2_compression
-{
 
 /**
  * An interface for developers adding a new compression algorithm to rosbag2.
