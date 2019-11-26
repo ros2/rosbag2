@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__COMPRESSION_INTERFACES__BASE_COMPRESSOR_INTERFACE_HPP_
-#define ROSBAG2__COMPRESSION_INTERFACES__BASE_COMPRESSOR_INTERFACE_HPP_
+#ifndef ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_
+#define ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
 
-#include "rosbag2/visibility_control.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_compression/visibility_control.hpp"
+
+typedef rosbag2_storage::SerializedBagMessage SerializedBagMessage;
 
 /**
  * An interface for developers adding a new compression algorithm to rosbag2. These functions
@@ -40,13 +43,15 @@
  * std::shared_ptr<SerializedBagMessage> compressed_message =
  *   my_compressor.compress_serialized_bag_message(bag_message);
  */
-namespace rosbag2
+namespace rosbag2_compression
+{
+namespace compression_interfaces
 {
 
-class ROSBAG2_PUBLIC BaseCompressorInterface
+class ROSBAG2_COMPRESSION_PUBLIC BaseCompressorInterface
 {
 public:
-  virtual ~BaseCompressorInterface() {}
+  virtual ~BaseCompressorInterface() = default;
 
   /**
    * Compress a file on disk.
@@ -63,14 +68,14 @@ public:
    * \return A shared pointer to the bag message with compressed serialized_data.
    */
   virtual std::shared_ptr<SerializedBagMessage> compress_serialized_bag_message(
-    std::shared_ptr<SerializedBagMessage> bag_message) = 0;
+    const std::shared_ptr<SerializedBagMessage> bag_message) = 0;
 
   /**
    * Get the identifier of the compression algorithm. This is appended to the relative file path.
    */
   virtual std::string get_compression_identifier() const = 0;
 };
+}  // namespace compression_interfaces
+}  // namespace rosbag2_compression
 
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__COMPRESSION_INTERFACES__BASE_COMPRESSOR_INTERFACE_HPP_
+#endif  // ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_

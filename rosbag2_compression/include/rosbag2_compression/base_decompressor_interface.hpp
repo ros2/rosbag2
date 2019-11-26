@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2__COMPRESSION_INTERFACES__BASE_DECOMPRESSOR_INTERFACE_HPP_
-#define ROSBAG2__COMPRESSION_INTERFACES__BASE_DECOMPRESSOR_INTERFACE_HPP_
+#ifndef ROSBAG2_COMPRESSION__BASE_DECOMPRESSOR_INTERFACE_HPP_
+#define ROSBAG2_COMPRESSION__BASE_DECOMPRESSOR_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
 
-#include "rosbag2/visibility_control.hpp"
+#include "visibility_control.hpp"
 
 /**
  * An interface for developers adding a new decompression algorithm to rosbag2. These functions
@@ -39,10 +39,12 @@
  * std::shared_ptr<SerializedBagMessage> decompressed_message =
  *   my_decompressor.decompress_serialized_bag_message(bag_message);
  */
-namespace rosbag2
+namespace rosbag2_compression
+{
+namespace decompression_interfaces
 {
 
-class ROSBAG2_PUBLIC BaseDecompressorInterface
+class ROSBAG2_COMPRESSION_PUBLIC BaseDecompressorInterface
 {
 public:
   virtual ~BaseDecompressorInterface() {}
@@ -56,20 +58,20 @@ public:
   virtual std::string decompress_uri(const std::string & uri) = 0;
 
   /**
-   * Decompress serialized_data in a serialized bag message.
+   * Decompress the serialized_data in a serialized bag message.
    *
    * \param bag_message A serialized bag message.
    * \return A shared pointer to the bag message with decompressed serialized_data.
    */
   virtual std::shared_ptr<SerializedBagMessage> decompress_serialized_bag_message(
-    std::shared_ptr<SerializedBagMessage> bag_message) = 0;
+    const std::shared_ptr<SerializedBagMessage> bag_message) = 0;
 
   /**
    * Get the identifier of the compression algorithm. This is appended to the relative file path.
    */
   virtual std::string get_decompression_identifier() const = 0;
 };
+}  // namespace decompression_interfaces
+}  // namespace rosbag2_compression
 
-}  // namespace rosbag2
-
-#endif  // ROSBAG2__COMPRESSION_INTERFACES__BASE_DECOMPRESSOR_INTERFACE_HPP_
+#endif  // ROSBAG2_COMPRESSION__BASE_DECOMPRESSOR_INTERFACE_HPP_
