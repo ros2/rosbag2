@@ -23,6 +23,7 @@ if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
