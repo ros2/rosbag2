@@ -38,7 +38,6 @@ void create_garbage_file(const std::string & uri, int num_iterations=984467)
   for (int i = 0; i < num_iterations; i++) {
     out << "GarbageGarbageGarbageGarbage";
   }
-  out << "test";
   out.close();
 }
 
