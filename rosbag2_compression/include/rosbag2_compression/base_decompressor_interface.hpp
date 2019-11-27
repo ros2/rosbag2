@@ -40,7 +40,7 @@
  * MyDecompressor my_decompressor();
  * std::shared_ptr<SerializedBagMessage> bag_message = storage.read_next();
  * std::shared_ptr<SerializedBagMessage> decompressed_message =
- *   my_decompressor.decompress_serialized_bag_message(bag_message);
+ *   my_decompressor.decompress_serialized_bag_message(bag_message.get());
  */
 namespace rosbag2_compression
 {
