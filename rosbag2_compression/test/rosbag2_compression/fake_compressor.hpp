@@ -17,18 +17,23 @@
 
 #include <string>
 
-#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/visibility_control.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
-class FakeCompressor : public rosbag2_compression::BaseCompressorInterface
+class ROSBAG2_COMPRESSION_PUBLIC FakeCompressor : public rosbag2_compression::BaseCompressorInterface
 {
 public:
+  FakeCompressor() = default;
+
   std::string compress_uri(const std::string & uri) override;
 
   void compress_serialized_bag_message(
     rosbag2_storage::SerializedBagMessage * bag_message) override;
 
   std::string get_compression_identifier() const override;
+
+  ~FakeCompressor() override = default;
 };
 
 #endif  // ROSBAG2_COMPRESSION__FAKE_COMPRESSOR_HPP_
