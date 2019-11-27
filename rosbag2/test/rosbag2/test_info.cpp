@@ -53,7 +53,9 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "        name: topic2\n"
     "        type: type2\n"
     "        serialization_format: rmw2\n"
-    "      message_count: 200");
+    "      message_count: 200\n"
+    "  compression_format: \"\"\n"
+    "  compression_mode: \"\"\n");
 
   std::ofstream fout(
     rosbag2_storage::FilesystemHelper::concat({
