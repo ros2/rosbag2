@@ -26,16 +26,25 @@ find_package(ament_cmake REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_library(ZSTD_LIBRARY NAMES zstd)  # Assumes libzstd-dev is installed
+
+add_library(${PROJECT_NAME}_zstd SHARED
+  src/rosbag2_compression/zstd_compressor.cpp)
+target_include_directories(${PROJECT_NAME}_zstd PUBLIC include)
+target_link_libraries(${PROJECT_NAME}_zstd ${ZSTD_LIBRARY})
+ament_target_dependencies(${PROJECT_NAME}_zstd
+  rcpputils
+  rcutils
+  rosbag2_storage)
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
-ament_export_include_directories(include)
-
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(fake_compressor SHARED
@@ -66,6 +75,12 @@ if(BUILD_TESTING)
   ament_add_gmock(test_decompressor
     test/rosbag2_compression/test_decompressor.cpp)
   target_link_libraries(test_decompressor fake_decompressor)
+
+  ament_add_gmock(test_zstd_compressor
+    test/rosbag2_compression/test_zstd_compressor.cpp)
+  target_include_directories(test_zstd_compressor PUBLIC include)
+  target_link_libraries(test_zstd_compressor ${PROJECT_NAME}_zstd)
+  ament_target_dependencies(test_zstd_compressor rosbag2_test_common rosbag2_storage)
 endif()
 
 ament_package()

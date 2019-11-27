@@ -43,12 +43,24 @@ namespace rosbag2_compression
  * MyDecompressor my_decompressor();
  * std::shared_ptr<SerializedBagMessage> bag_message = storage.read_next();
  * std::shared_ptr<SerializedBagMessage> decompressed_message =
+<<<<<<< HEAD
  *   my_decompressor.decompress_serialized_bag_message(bag_message.get());
  */
 class ROSBAG2_COMPRESSION_PUBLIC BaseDecompressorInterface
 {
 public:
   virtual ~BaseDecompressorInterface() = default;
+=======
+ *   my_decompressor.decompress_serialized_bag_message(bag_message);
+ */
+namespace rosbag2_compression
+{
+
+class ROSBAG2_COMPRESSION_PUBLIC BaseDecompressorInterface
+{
+public:
+  virtual ~BaseDecompressorInterface() {}
+>>>>>>> 05eeb34... Add decompressor interface
 
   /**
    * Decompress a file on disk.
@@ -61,7 +73,11 @@ public:
   /**
    * Decompress the serialized_data of a serialized bag message in place.
    *
+<<<<<<< HEAD
    * \param[in,out] bag_message A serialized bag message.
+=======
+   * \param bag_message A serialized bag message.
+>>>>>>> 05eeb34... Add decompressor interface
    */
   virtual void decompress_serialized_bag_message(
     rosbag2_storage::SerializedBagMessage * bag_message) = 0;
