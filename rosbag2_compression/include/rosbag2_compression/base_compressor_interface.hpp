@@ -15,7 +15,6 @@
 #ifndef ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_
 #define ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_
 
-#include <memory>
 #include <string>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -23,8 +22,8 @@
 
 /**
  * An interface for developers adding a new compression algorithm to rosbag2.
- * These functions must be implemented to that a writer can properly compress a file or bag message.
- * A corresponding decompressor must also be implemented.
+ * These functions must be implemented so that a writer can properly compress a file or bag message.
+ * A corresponding decompressor with an identical decompression format must also be implemented.
  *
  * Example file compression usage:
  *
@@ -38,8 +37,7 @@
  * MyCompressor my_compressor();
  * std::shared_ptr<SerializedBagMessage> bag_message = std::make_shared<SerializedBagMessage>();
  * ...fill message
- * std::shared_ptr<SerializedBagMessage> compressed_message =
- *   my_compressor.compress_serialized_bag_message(bag_message);
+ * my_compressor.compress_serialized_bag_message(bag_message.get());
  */
 namespace rosbag2_compression
 {
@@ -63,7 +61,7 @@ public:
    * \param bag_message A serialized bag message.
    */
   virtual void compress_serialized_bag_message(
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> & bag_message) = 0;
+    rosbag2_storage::SerializedBagMessage * bag_message) = 0;
 
   /**
    * Get the identifier of the compression algorithm.
@@ -71,6 +69,7 @@ public:
    */
   virtual std::string get_compression_identifier() const = 0;
 };
+
 }  // namespace rosbag2_compression
 
 #endif  // ROSBAG2_COMPRESSION__BASE_COMPRESSOR_INTERFACE_HPP_
