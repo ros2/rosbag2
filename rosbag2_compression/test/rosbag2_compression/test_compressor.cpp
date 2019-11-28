@@ -19,9 +19,7 @@
 
 #include "fake_compressor.hpp"
 
-using namespace ::testing;  // NOLINT
-
-class FakeCompressorTest : public Test
+class FakeCompressorTest : public ::testing::Test
 {
 public:
   FakeCompressor compressor;

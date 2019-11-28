@@ -20,6 +20,9 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "visibility_control.hpp"
 
+namespace rosbag2_compression
+{
+
 /**
  * An interface for developers adding a new compression algorithm to rosbag2.
  * These functions must be implemented so that a writer can properly compress a file or bag message.
@@ -39,9 +42,6 @@
  * ...fill message
  * my_compressor.compress_serialized_bag_message(bag_message.get());
  */
-namespace rosbag2_compression
-{
-
 class ROSBAG2_COMPRESSION_PUBLIC BaseCompressorInterface
 {
 public:

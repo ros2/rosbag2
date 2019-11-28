@@ -31,13 +31,15 @@ install(
   DESTINATION include)
 
 ament_export_include_directories(include)
-#ament_export_dependencies(rcutils rosbag2_storage)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  add_compile_options(-fvisibility=hidden)
+  set_target_properties(fake_compressor 
+  PROPERTIES 
+  CXX_VISIBILITY_PRESET hidden 
+  VISIBILITY_INLINES_HIDDEN 1)
 
   add_library(fake_compressor SHARED
     test/rosbag2_compression/fake_compressor.cpp)
@@ -47,9 +49,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_compressor
     test/rosbag2_compression/test_compressor.cpp)
-  if(TARGET test_compressor)
-    target_link_libraries(test_compressor fake_compressor)
-  endif()
+  target_link_libraries(test_compressor fake_compressor)
 endif()
 
 ament_package()

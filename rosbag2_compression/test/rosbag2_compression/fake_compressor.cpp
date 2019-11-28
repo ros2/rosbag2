@@ -22,10 +22,7 @@ std::string FakeCompressor::compress_uri(const std::string & uri)
 }
 
 void FakeCompressor::compress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage * bag_message)
-{
-  (void) bag_message;
-}
+  rosbag2_storage::SerializedBagMessage *) {}
 
 std::string FakeCompressor::get_compression_identifier() const
 {
