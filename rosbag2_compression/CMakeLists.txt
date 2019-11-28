@@ -23,6 +23,7 @@ if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
@@ -36,20 +37,21 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  set_target_properties(fake_compressor 
-  PROPERTIES 
-  CXX_VISIBILITY_PRESET hidden 
-  VISIBILITY_INLINES_HIDDEN 1)
 
   add_library(fake_compressor SHARED
     test/rosbag2_compression/fake_compressor.cpp)
   target_include_directories(fake_compressor PUBLIC include)
   ament_target_dependencies(fake_compressor rosbag2_storage)
+  set_target_properties(fake_compressor
+    PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1)
   target_compile_definitions(fake_compressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
 
   ament_add_gmock(test_compressor
     test/rosbag2_compression/test_compressor.cpp)
   target_link_libraries(test_compressor fake_compressor)
+  ament_target_dependencies(test_compressor rcpputils)
 endif()
 
 ament_package()
