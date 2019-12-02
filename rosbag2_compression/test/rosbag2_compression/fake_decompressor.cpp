@@ -21,7 +21,7 @@
 std::string FakeDecompressor::decompress_uri(const std::string & uri)
 {
   auto uri_path = rcpputils::fs::path(uri);
-  auto decompressed_path = rcpputils::fs::remove_extension(uri_path);
+  const auto decompressed_path = rcpputils::fs::remove_extension(uri_path);
   return decompressed_path.string();
 }
 

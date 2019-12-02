@@ -29,16 +29,16 @@ public:
 
 TEST_F(FakeCompressorTest, test_compress_file_method)
 {
-  rcpputils::fs::path test_path("/path/file.txt");
-  auto expected_compressed_uri = test_path.string() + "." +
+  const rcpputils::fs::path test_path("/path/file.txt");
+  const auto expected_compressed_uri = test_path.string() + "." +
     compressor.get_compression_identifier();
-  auto compressed_uri = compressor.compress_uri(test_path.string());
+  const auto compressed_uri = compressor.compress_uri(test_path.string());
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
 }
 
 TEST_F(FakeCompressorTest, test_compress_bag_method)
 {
-  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  const auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   compressor.compress_serialized_bag_message(bag_message.get());
   EXPECT_THAT(bag_message, ::testing::NotNull());
 }

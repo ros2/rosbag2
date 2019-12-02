@@ -59,7 +59,7 @@ public:
   /**
    * Compress the serialized_data of a serialized bag message in place.
    *
-   * \param bag_message A serialized bag message.
+   * \param[in,out] bag_message A serialized bag message.
    */
   virtual void compress_serialized_bag_message(
     rosbag2_storage::SerializedBagMessage * bag_message) = 0;
