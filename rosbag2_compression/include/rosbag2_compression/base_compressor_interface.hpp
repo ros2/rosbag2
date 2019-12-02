@@ -21,6 +21,9 @@
 
 #include "visibility_control.hpp"
 
+namespace rosbag2_compression
+{
+
 /**
  * An interface for developers adding a new compression algorithm to rosbag2.
  * These functions must be implemented so that a writer can properly compress a file or bag message.

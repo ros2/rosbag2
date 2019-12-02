@@ -22,6 +22,9 @@
 
 #include "visibility_control.hpp"
 
+namespace rosbag2_compression
+{
+
 /**
  * An interface for developers adding a new decompression algorithm to rosbag2.
  * These functions must be implemented so that a reader can properly decompress a file or bag
@@ -42,13 +45,10 @@
  * std::shared_ptr<SerializedBagMessage> decompressed_message =
  *   my_decompressor.decompress_serialized_bag_message(bag_message.get());
  */
-namespace rosbag2_compression
-{
-
 class ROSBAG2_COMPRESSION_PUBLIC BaseDecompressorInterface
 {
 public:
-  virtual ~BaseDecompressorInterface() {}
+  virtual ~BaseDecompressorInterface() = default;
 
   /**
    * Decompress a file on disk.

@@ -26,10 +26,7 @@ std::string FakeDecompressor::decompress_uri(const std::string & uri)
 }
 
 void FakeDecompressor::decompress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage * bag_message)
-{
-  (void) bag_message;
-}
+  rosbag2_storage::SerializedBagMessage *) {}
 
 std::string FakeDecompressor::get_decompression_identifier() const
 {

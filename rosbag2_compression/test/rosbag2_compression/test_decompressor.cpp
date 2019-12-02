@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 
+#include "rcpputils/filesystem_helper.hpp"
+
+#include "gmock/gmock.h"
+
 #include "fake_decompressor.hpp"
 
-using namespace ::testing;  // NOLINT
-
-class FakeDecompressorTest : public Test
+class FakeDecompressorTest : public ::testing::Test
 {
 public:
   FakeDecompressor decompressor;
@@ -29,9 +29,10 @@ public:
 
 TEST_F(FakeDecompressorTest, test_compress_file_method)
 {
-  std::string test_path = "/path/file.txt." + decompressor.get_decompression_identifier();
-  std::string expected_decompressed_uri = "/path/file.txt";
-  auto decompressed_uri = decompressor.decompress_uri(test_path);
+  rcpputils::fs::path test_path("/path/file.txt");
+  auto compressed_uri = test_path.string() + "." + decompressor.get_decompression_identifier();
+  auto expected_decompressed_uri = test_path.string();
+  auto decompressed_uri = decompressor.decompress_uri(compressed_uri);
   EXPECT_EQ(decompressed_uri, expected_decompressed_uri);
 }
 
@@ -39,5 +40,5 @@ TEST_F(FakeDecompressorTest, test_compress_bag_method)
 {
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   decompressor.decompress_serialized_bag_message(bag_message.get());
-  EXPECT_THAT(bag_message, NotNull());
+  EXPECT_THAT(bag_message, ::testing::NotNull());
 }

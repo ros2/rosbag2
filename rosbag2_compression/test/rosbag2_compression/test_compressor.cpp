@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 
 #include "rcpputils/filesystem_helper.hpp"
+
+#include "gmock/gmock.h"
 
 #include "fake_compressor.hpp"
 
