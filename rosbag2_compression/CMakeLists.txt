@@ -15,16 +15,43 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+option(DISABLE_SANITIZERS "Disable the use of gcc sanitizers")
+# Only enable sanitizers on x64 architectures
+# https://github.com/google/sanitizers/issues/794
+if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+  set(DISABLE_SANITIZERS ON)
+endif()
+
 find_package(ament_cmake REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rosbag2_storage REQUIRED)
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
+ament_export_include_directories(include)
+
 if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  add_library(fake_compressor SHARED
+    test/rosbag2_compression/fake_compressor.cpp)
+  target_include_directories(fake_compressor PUBLIC include)
+  ament_target_dependencies(fake_compressor rosbag2_storage)
+  set_target_properties(fake_compressor
+    PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1)
+  target_compile_definitions(fake_compressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+
+  ament_add_gmock(test_compressor
+    test/rosbag2_compression/test_compressor.cpp)
+  target_link_libraries(test_compressor fake_compressor)
+  ament_target_dependencies(test_compressor rcpputils)
 endif()
 
 ament_package()
