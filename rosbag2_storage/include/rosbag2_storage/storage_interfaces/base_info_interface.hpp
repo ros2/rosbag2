@@ -39,6 +39,18 @@ public:
    * \returns the relative path.
    */
   virtual std::string get_relative_file_path() const = 0;
+
+  /**
+   * Returns the size of the bagfile.
+   * \returns the size of the bagfile in bytes.
+   */
+  virtual uint64_t get_bagfile_size() const = 0;
+
+  /**
+   * Returns the identifier for the storage plugin.
+   * \returns the identifier.
+   */
+  virtual std::string get_storage_identifier() const = 0;
 };
 
 }  // namespace storage_interfaces
