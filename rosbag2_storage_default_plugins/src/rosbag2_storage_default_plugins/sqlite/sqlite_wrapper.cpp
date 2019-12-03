@@ -91,4 +91,9 @@ SqliteWrapper::operator bool()
   return db_ptr != nullptr;
 }
 
+DBPtr SqliteWrapper::get_db_handle() const
+{
+  return db_ptr;
+}
+
 }  // namespace rosbag2_storage_plugins

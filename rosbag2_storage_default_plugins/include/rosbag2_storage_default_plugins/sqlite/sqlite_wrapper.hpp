@@ -45,6 +45,8 @@ public:
 
   operator bool();
 
+  DBPtr get_db_handle() const;
+
 private:
   DBPtr db_ptr;
 };

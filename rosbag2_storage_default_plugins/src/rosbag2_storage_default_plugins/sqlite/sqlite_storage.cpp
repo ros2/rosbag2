@@ -105,6 +105,34 @@ void SqliteStorage::open(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
+void SqliteStorage::activate_transaction()
+{
+  int rc = -1;
+
+  if (!active_transaction_) {
+    rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
+    active_transaction_.store(true, std::memory_order_relaxed);
+    if (rc != SQLITE_OK)
+      throw SqliteException("Failed to initialize transaction");
+  }
+}
+
+void SqliteStorage::commit_transaction()
+{
+  int rc = -1;
+
+  if (!active_transaction_) {
+    rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
+    active_transaction_.store(false, std::memory_order_relaxed);
+
+    // Reset batch insert counter
+    no_of_inserts = 0;
+
+    if (rc != SQLITE_OK)
+      throw SqliteException("Failed to initialize transaction");
+  }
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
@@ -117,8 +145,22 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
             "' has not been created yet! Call 'create_topic' first.");
   }
 
+#ifdef EN_TRANSACTION
+  if (!active_transaction_) {
+    activate_transaction();
+  }
+  // To work with a batched insert within a trasaction
+  no_of_inserts++;
+#endif
+
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
+
+#ifdef EN_TRANSACTION
+  // Just for a design perspective we'll move this to a param from command line later
+  if (no_of_inserts > 10000)
+    commit_transaction();
+#endif
 }
 
 bool SqliteStorage::has_next()

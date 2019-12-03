@@ -42,7 +42,8 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
   : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  SqliteStorage() = default;
+  SqliteStorage()
+       :no_of_inserts(0) {};
   ~SqliteStorage() override = default;
 
   void open(
@@ -71,6 +72,10 @@ public:
   std::string get_storage_identifier() const override;
 
   uint64_t get_minimum_split_file_size() const override;
+  // APIs to handle/control transactions
+  void activate_transaction();
+
+  void commit_transaction();
 
 private:
   void initialize();
@@ -90,6 +95,8 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
+  std::atomic_bool active_transaction_;
+  uint64_t no_of_inserts;
 };
 
 }  // namespace rosbag2_storage_plugins
