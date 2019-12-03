@@ -44,8 +44,9 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
 {
 public:
   SqliteStorage()
-  : no_of_inserts_(0) {}
-  ~SqliteStorage();
+      :no_of_inserts(0) {};
+  ~SqliteStorage() override = default;
+>>>>>>> First iteration of batched/transation based inserts.
 
   void open(
     const std::string & uri,
