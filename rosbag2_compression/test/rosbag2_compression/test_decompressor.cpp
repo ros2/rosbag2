@@ -19,26 +19,27 @@
 
 #include "gmock/gmock.h"
 
-#include "fake_compressor.hpp"
+#include "fake_decompressor.hpp"
 
-class FakeCompressorTest : public ::testing::Test
+class FakeDecompressorTest : public ::testing::Test
 {
 public:
-  FakeCompressor compressor;
+  FakeDecompressor decompressor;
 };
 
-TEST_F(FakeCompressorTest, test_compress_file_method)
+TEST_F(FakeDecompressorTest, test_compress_file_method)
 {
   const rcpputils::fs::path test_path("/path/file.txt");
-  const auto expected_compressed_uri = test_path.string() + "." +
-    compressor.get_compression_identifier();
-  const auto compressed_uri = compressor.compress_uri(test_path.string());
-  EXPECT_EQ(compressed_uri, expected_compressed_uri);
+  const auto compressed_uri = test_path.string() + "." +
+    decompressor.get_decompression_identifier();
+  const auto expected_decompressed_uri = test_path.string();
+  const auto decompressed_uri = decompressor.decompress_uri(compressed_uri);
+  EXPECT_EQ(decompressed_uri, expected_decompressed_uri);
 }
 
-TEST_F(FakeCompressorTest, test_compress_bag_method)
+TEST_F(FakeDecompressorTest, test_compress_bag_method)
 {
   const auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  compressor.compress_serialized_bag_message(bag_message.get());
+  decompressor.decompress_serialized_bag_message(bag_message.get());
   EXPECT_THAT(bag_message, ::testing::NotNull());
 }

@@ -12,29 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_COMPRESSION__FAKE_COMPRESSOR_HPP_
-#define ROSBAG2_COMPRESSION__FAKE_COMPRESSOR_HPP_
+#ifndef ROSBAG2_COMPRESSION__FAKE_DECOMPRESSOR_HPP_
+#define ROSBAG2_COMPRESSION__FAKE_DECOMPRESSOR_HPP_
 
 #include <string>
 
-#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/base_decompressor_interface.hpp"
 #include "rosbag2_compression/visibility_control.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
-class ROSBAG2_COMPRESSION_PUBLIC FakeCompressor : public
-  rosbag2_compression::BaseCompressorInterface
+class ROSBAG2_COMPRESSION_PUBLIC FakeDecompressor : public
+  rosbag2_compression::BaseDecompressorInterface
 {
 public:
-  FakeCompressor() = default;
+  FakeDecompressor() = default;
 
-  std::string compress_uri(const std::string & uri) override;
+  std::string decompress_uri(const std::string & uri) override;
 
-  void compress_serialized_bag_message(
+  void decompress_serialized_bag_message(
     rosbag2_storage::SerializedBagMessage * bag_message) override;
 
-  std::string get_compression_identifier() const override;
+  std::string get_decompression_identifier() const override;
 
-  ~FakeCompressor() override = default;
+  ~FakeDecompressor() override = default;
 };
 
-#endif  // ROSBAG2_COMPRESSION__FAKE_COMPRESSOR_HPP_
+
+#endif  // ROSBAG2_COMPRESSION__FAKE_DECOMPRESSOR_HPP_

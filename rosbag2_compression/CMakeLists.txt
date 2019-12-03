@@ -52,6 +52,20 @@ if(BUILD_TESTING)
     test/rosbag2_compression/test_compressor.cpp)
   target_link_libraries(test_compressor fake_compressor)
   ament_target_dependencies(test_compressor rcpputils)
+
+  add_library(fake_decompressor SHARED
+    test/rosbag2_compression/fake_decompressor.cpp)
+  target_include_directories(fake_decompressor PUBLIC include)
+  ament_target_dependencies(fake_decompressor rosbag2_storage rcpputils)
+  set_target_properties(fake_decompressor
+    PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1)
+  target_compile_definitions(fake_decompressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+
+  ament_add_gmock(test_decompressor
+    test/rosbag2_compression/test_decompressor.cpp)
+  target_link_libraries(test_decompressor fake_decompressor)
 endif()
 
 ament_package()
