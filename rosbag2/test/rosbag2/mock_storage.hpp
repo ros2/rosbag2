@@ -40,6 +40,7 @@ public:
   MOCK_CONST_METHOD0(get_bagfile_size, uint64_t());
   MOCK_CONST_METHOD0(get_relative_file_path, std::string());
   MOCK_CONST_METHOD0(get_storage_identifier, std::string());
+  MOCK_CONST_METHOD0(get_minimum_split_file_size, uint64_t());
 };
 
 #endif  // ROSBAG2__MOCK_STORAGE_HPP_

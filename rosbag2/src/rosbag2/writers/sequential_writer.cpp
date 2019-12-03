@@ -93,6 +93,13 @@ void SequentialWriter::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
+  if (max_bagfile_size_ != 0 &&
+    max_bagfile_size_ < storage_->get_minimum_split_file_size())
+  {
+    throw std::runtime_error(
+            "Invalid bag splitting size given. Please provide a different value.");
+  }
+
   init_metadata();
 }
 

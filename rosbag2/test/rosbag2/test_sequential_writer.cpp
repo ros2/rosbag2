@@ -140,6 +140,24 @@ TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exis
   EXPECT_ANY_THROW(writer_->open(storage_options_, {input_format, output_format}));
 }
 
+TEST_F(SequentialWriterTest, open_throws_error_on_invalid_splitting_size) {
+  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
+
+  // Set minimum file size greater than max bagfile size option
+  const uint64_t min_split_file_size = 10;
+  const uint64_t max_bagfile_size = 5;
+  ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
+  storage_options_.max_bagfile_size = max_bagfile_size;
+
+  EXPECT_CALL(*storage_, get_minimum_split_file_size).Times(1);
+
+  std::string rmw_format = "rmw_format";
+
+  EXPECT_ANY_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}));
+}
+
 TEST_F(SequentialWriterTest, bagfile_size_is_checked_on_every_write) {
   const int counter = 10;
   const uint64_t max_bagfile_size = 100;

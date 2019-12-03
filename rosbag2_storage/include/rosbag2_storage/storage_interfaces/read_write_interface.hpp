@@ -37,6 +37,8 @@ public:
   uint64_t get_bagfile_size() const override = 0;
 
   std::string get_storage_identifier() const override = 0;
+
+  virtual uint64_t get_minimum_split_file_size() const = 0;
 };
 
 }  // namespace storage_interfaces

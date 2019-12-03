@@ -98,4 +98,10 @@ std::string TestPlugin::get_storage_identifier() const
   return test_constants::READ_WRITE_PLUGIN_IDENTIFIER;
 }
 
+uint64_t TestPlugin::get_minimum_split_file_size() const
+{
+  std::cout << "\nreturning minimum split file size\n";
+  return test_constants::MIN_SPLIT_FILE_SIZE;
+}
+
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)
