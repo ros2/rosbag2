@@ -1,0 +1,23 @@
+name: Test rosbag2
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    # Run every hour. This helps detect flakiness,
+    # and broken external dependencies.
+    - cron:  '0 * * * *'
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: ros-tooling/setup-ros2@0.0.11
+    - uses: ros-tooling/action-ros2-ci@0.0.11
+      with:
+        package-name: ros2bag rosbag2 rosbag2_compression rosbag2_storage rosbag2_storage_default_plugins rosbag2_test_common rosbag2_tests shared_queues_vendor sqlite3_vendor
+    - uses: actions/upload-artifact@master
+      with:
+        name: colcon-logs
+        path: ros2_ws/log
