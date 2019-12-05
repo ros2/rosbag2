@@ -26,20 +26,31 @@ find_package(ament_cmake REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_library(ZSTD_LIBRARY NAMES zstd)  # Assumes libzstd-dev is installed
+find_package(zstd_vendor REQUIRED)
+find_package(zstd REQUIRED)
+# find_library(ZSTD_LIBRARY NAMES zstd)  # Assumes libzstd-dev is installed
 
 add_library(${PROJECT_NAME}_zstd SHARED
   src/rosbag2_compression/zstd_compressor.cpp)
 target_include_directories(${PROJECT_NAME}_zstd PUBLIC include)
-target_link_libraries(${PROJECT_NAME}_zstd ${ZSTD_LIBRARY})
+# target_link_libraries(${PROJECT_NAME}_zstd ${ZSTD_LIBRARY})
 ament_target_dependencies(${PROJECT_NAME}_zstd
   rcpputils
   rcutils
-  rosbag2_storage)
+  rosbag2_storage
+  zstd)
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME}_zstd PRIVATE
+  ROSBAG2_COMPRESSION_BUILDING_DLL)
 
 install(
   DIRECTORY include/
   DESTINATION include)
+
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME}_zstd)
+ament_export_dependencies(rosbag2_storage rcutils zstd_vendor zstd)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
