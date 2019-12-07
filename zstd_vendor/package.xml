@@ -3,15 +3,18 @@
 <package format="3">
   <name>zstd_vendor</name>
   <version>0.0.0</version>
-  <description>Zstd compression vendor package</description>
+  <description>Zstd compression vendor package, providing a dependency for Zstd.</description>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
-  <license>Apache License 2.0</license>
+  <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
+  <license>BSD</license>  <!-- Zstd is BSD -->
 
-  <buildtool_depend>cmake</buildtool_depend>
+  <url type="website">https://facebook.github.io/zstd/</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>libzstd-dev</depend>
 
   <export>
-    <build_type>cmake</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

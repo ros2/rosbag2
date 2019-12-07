@@ -1,48 +1,55 @@
 cmake_minimum_required(VERSION 3.5)
+
 project(zstd_vendor)
 
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-find_package(zstd)
+find_package(ament_cmake REQUIRED)
 
-if (NOT zstd_FOUND)
+option(FORCE_BUILD_VENDOR_PKG
+  "Build zstd from source, even if system-installed package is available"
+  OFF)
+
+if(NOT FORCE_BUILD_VENDOR_PKG)
+  find_package(zstd QUIET)
+endif()
+
+macro(build_zstd)
   set(extra_cmake_args)
+
+  if(DEFINED CMAKE_BUILD_TYPE)
+    list(APPEND extra_cmake_args -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  endif()
 
   if(DEFINED CMAKE_TOOLCHAIN_FILE)
     list(APPEND extra_cmake_args "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
+  else()
+    list(APPEND extra_cmake_args "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
   endif()
+  list(APPEND extra_cmake_args "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
   include(ExternalProject)
-  set(EP_PREFIX zstd-1.4.4)
+  # The CMakeLists.txt file for zstd is in a subdirectory.
+  # We need to configure the CMake command to build from there instead. 
   ExternalProject_Add(zstd-1.4.4
-    GIT_REPOSITORY https://github.com/facebook/zstd.git
-    GIT_TAG v1.4.4
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CURRENT_BINARY_DIR}/zstd/src/${EP_PREFIX}/build/cmake
-    CMAKE_ARGS
-      -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd_install
-      -DCMAKE_BUILD_TYPE=Release
-      ${extra_cmake_args})
-    # INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/zstd_install")
+    URL https://github.com/facebook/zstd/archive/v1.4.4.zip
+    URL_MD5 3a5c3a535280b7f4dfdbd739fcc7173f
+    TIMEOUT 60
+    CONFIGURE_COMMAND 
+      ${CMAKE_COMMAND} 
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
+      ${extra_cmake_args}
+      ${CMAKE_CURRENT_BINARY_DIR}/zstd-1.4.4-prefix/src/zstd-1.4.4/build/cmake)
 
-  # The external project will install to the build folder, but we'll install that on make install.
   install(
-    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/zstd_install/ 
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install/
     DESTINATION ${CMAKE_INSTALL_PREFIX})
-else ()
-  message(STATUS "Found Zstd. Using Zstd from system.")
-endif ()
+endmacro()
 
-configure_file(zstd_vendorConfig.cmake.in "${PROJECT_BINARY_DIR}/zstd_vendorConfig.cmake" @ONLY)
-configure_file(zstd_vendorConfig-version.cmake.in "${PROJECT_BINARY_DIR}/zstd_vendorConfig-version.cmake" @ONLY)
+if (NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
+  build_zstd()
+else()
+  message(STATUS "Found Zstd, skipping build.")
+endif()
 
-install(
-  DIRECTORY cmake 
-  DESTINATION share/${PROJECT_NAME})
+ament_export_libraries(zstd)
 
-install(FILES
-  package.xml
-  DESTINATION share/${PROJECT_NAME})
-
-install(FILES
-  "${PROJECT_BINARY_DIR}/zstd_vendorConfig.cmake"
-  "${PROJECT_BINARY_DIR}/zstd_vendorConfig-version.cmake"
-  DESTINATION share/${PROJECT_NAME}/cmake)
+ament_package()
