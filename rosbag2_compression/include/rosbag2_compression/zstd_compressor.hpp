@@ -15,12 +15,12 @@
 #ifndef ROSBAG2_COMPRESSION__ZSTD_COMPRESSOR_HPP_
 #define ROSBAG2_COMPRESSION__ZSTD_COMPRESSOR_HPP_
 
-#include <zstd.h>
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include "zstd.h"
 
 #include "base_compressor_interface.hpp"
 #include "visibility_control.hpp"

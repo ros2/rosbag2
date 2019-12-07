@@ -14,23 +14,25 @@
 
 #include <fstream>
 #include <string>
-#include <rclcpp/rclcpp.hpp>
 
+#include "rclcpp/rclcpp.hpp"
+#include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "gmock/gmock.h"
 
-#include "rosbag2_compression/zstd_compressor.hpp"
-
 class FilesystemHelperFixture : public rosbag2_test_common::TemporaryDirectoryFixture {};
+constexpr const char GARBAGE_STATEMENT[] = "garbage";
+constexpr const int DEFAULT_GARBAGE_FILE_SIZE = 27 * 1024 * 1024;  // 27 MB
+constexpr const int DEFAULT_ITERATIONS = DEFAULT_GARBAGE_FILE_SIZE / sizeof(GARBAGE_STATEMENT);
 
 /**
  * Creates a 27 MiB file.
  * \param uri File path to write file.
  * \param num_iterations Number of times to write garbage statement.
  */
-void create_garbage_file(const std::string & uri, int num_iterations=984467)
+void create_garbage_file(const std::string & uri, int num_iterations = DEFAULT_ITERATIONS)
 {
   std::ofstream out(uri);
   for (int i = 0; i < num_iterations; i++) {
@@ -53,7 +55,8 @@ TEST_F(FilesystemHelperFixture, zstd_compress_file_uri)
 
   const auto expected_compressed_uri = uri + "." + zstd_compressor.get_compression_identifier();
   const auto uncompressed_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
-  const auto compressed_file_size = rosbag2_storage::FilesystemHelper::get_file_size(compressed_uri);
+  const auto compressed_file_size =
+    rosbag2_storage::FilesystemHelper::get_file_size(compressed_uri);
 
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
   EXPECT_LT(compressed_file_size, uncompressed_file_size);
