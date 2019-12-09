@@ -27,19 +27,20 @@ find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(zstd_vendor REQUIRED)
-find_library(zstd REQUIRED)  # Assumes libzstd-dev is installed
+find_library(zstd REQUIRED)
 
 add_library(${PROJECT_NAME}_zstd SHARED
   src/rosbag2_compression/zstd_compressor.cpp)
 target_include_directories(${PROJECT_NAME}_zstd PUBLIC include)
-target_link_libraries(${PROJECT_NAME}_zstd ${ZSTD_LIBRARY})
+target_link_libraries(${PROJECT_NAME}_zstd ${zstd_vendor_LIBRARIES})
 ament_target_dependencies(${PROJECT_NAME}_zstd
   rcpputils
   rcutils
   rosbag2_storage)
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(${PROJECT_NAME}_zstd PRIVATE
+# Causes the visibility macros to use dllexport rather than dllimport.
+# This is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME}_zstd
+  PRIVATE
   ROSBAG2_COMPRESSION_BUILDING_DLL)
 
 install(

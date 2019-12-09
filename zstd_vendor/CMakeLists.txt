@@ -51,6 +51,5 @@ else()
 endif()
 
 ament_export_libraries(zstd)
-ament_export_include_directories(zstd)
 
 ament_package()
