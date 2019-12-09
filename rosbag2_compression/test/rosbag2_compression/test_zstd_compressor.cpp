@@ -22,32 +22,45 @@
 
 #include "gmock/gmock.h"
 
-class FilesystemHelperFixture : public rosbag2_test_common::TemporaryDirectoryFixture {};
 constexpr const char * GARBAGE_STATEMENT = "garbage";
 constexpr const int DEFAULT_GARBAGE_FILE_SIZE = 10 * 1024 * 1024;  // 10 MB
 constexpr const int DEFAULT_ITERATIONS = DEFAULT_GARBAGE_FILE_SIZE / sizeof(GARBAGE_STATEMENT);
 
-/**
- * Creates a 10 MiB file.
- * \param uri File path to write file.
- * \param num_iterations Number of times to write garbage statement.
- */
-void create_garbage_file(const std::string & uri, int num_iterations = DEFAULT_ITERATIONS)
+class CompressionHelperFixture : public rosbag2_test_common::TemporaryDirectoryFixture
 {
-  std::ofstream out{uri};
-  if (out) {
-    for (int i = 0; i < num_iterations; i++) {
-      out << GARBAGE_STATEMENT;
-    }
-  } else {
-    throw std::runtime_error("Unable to write to file.");
-  }
-}
+protected:
+  CompressionHelperFixture() {}
 
-TEST_F(FilesystemHelperFixture, zstd_compress_file_uri)
+  /**
+   * Creates a 10 MiB file.
+   * \param uri File path to write file.
+   * \param num_iterations Number of times to write garbage statement.
+   */
+  void create_garbage_file(const std::string & uri, int num_iterations = DEFAULT_ITERATIONS)
+  {
+    std::ofstream out{uri};
+    if (out) {
+      for (int i = 0; i < num_iterations; i++) {
+        out << GARBAGE_STATEMENT;
+      }
+    } else {
+      throw std::runtime_error("Unable to write to file.");
+    }
+  }
+
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
+  }
+
+  void TearDown() override
+  {
+    rclcpp::shutdown();
+  }
+};
+
+TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
 {
-  // For rcl logging macros
-  rclcpp::init(0, nullptr);
   const auto uri = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "file1.txt"});
   create_garbage_file(uri);
   auto zstd_compressor = rosbag2_compression::ZstdCompressor();
@@ -57,7 +70,6 @@ TEST_F(FilesystemHelperFixture, zstd_compress_file_uri)
   const auto uncompressed_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
   const auto compressed_file_size =
     rosbag2_storage::FilesystemHelper::get_file_size(compressed_uri);
-  rclcpp::shutdown();
 
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
   EXPECT_LT(compressed_file_size, uncompressed_file_size);

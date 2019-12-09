@@ -22,8 +22,8 @@
 #include <sstream>
 #include <string>
 
-#include "base_compressor_interface.hpp"
-#include "visibility_control.hpp"
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/visibility_control.hpp"
 
 namespace rosbag2_compression
 {

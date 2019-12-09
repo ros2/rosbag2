@@ -27,52 +27,52 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
   const auto start = std::chrono::high_resolution_clock::now();
   const auto compressed_uri = uri + "." + get_compression_identifier();
   std::ifstream infile{uri};
-  if (infile) {
-    // Get size and allocate
-    infile.seekg(0, std::ios::end);
-    const size_t decompressed_buffer_length = infile.tellg();
-    char * decompressed_buffer = new char[decompressed_buffer_length];
-    // Go back and read in contents
-    infile.seekg(0, std::ios::beg);
-    infile.read(decompressed_buffer, decompressed_buffer_length);
-    // Allocate based on compression bound and compress
-    const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
-    char * compressed_buffer = new char[compressed_buffer_length];
-    const size_t compression_result = ZSTD_compress(
-      compressed_buffer, compressed_buffer_length,
-      decompressed_buffer, decompressed_buffer_length, 1);
-    if (ZSTD_isError(compression_result)) {
-      std::stringstream error;
-      error << "ZSTD compression error: " << ZSTD_getErrorName(compression_result);
-      throw std::runtime_error(error.str());
-    }
-    std::ofstream outfile{compressed_uri, std::ios::out | std::ios::binary};
-    if (!outfile) {
-      std::stringstream error;
-      error << "Unable to write " << compressed_uri << " to file.";
-      throw std::runtime_error(error.str());
-    }
-    outfile.write(compressed_buffer, compression_result);
-    // Statistics
-    const auto end = std::chrono::high_resolution_clock::now();
-    const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    const auto compression_ratio =
-      static_cast<double>(decompressed_buffer_length) / static_cast<double>(compression_result);
-    ROSBAG2_COMPRESSION_LOG_INFO("ZSTD compressed file.");
-    ROSBAG2_COMPRESSION_LOG_DEBUG("Compression statistics:");
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Time: " << duration.count() << " microseconds");
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compression Ratio: " << compression_ratio);
-    delete[] compressed_buffer;
-    delete[] decompressed_buffer;
-    return compressed_uri;
+  if (!infile) {
+    std::stringstream error;
+    error << "Unable to read " << uri.c_str();
+    throw std::runtime_error(error.str());
   }
-  std::stringstream error;
-  error << "Unable to read " << uri.c_str();
-  throw std::runtime_error(error.str());
+  // Get size and allocate
+  infile.seekg(0, std::ios::end);
+  const size_t decompressed_buffer_length = infile.tellg();
+  char * decompressed_buffer = new char[decompressed_buffer_length];
+  // Go back and read in contents
+  infile.seekg(0, std::ios::beg);
+  infile.read(decompressed_buffer, decompressed_buffer_length);
+  // Allocate based on compression bound and compress
+  const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
+  char * compressed_buffer = new char[compressed_buffer_length];
+  const size_t compression_result = ZSTD_compress(
+    compressed_buffer, compressed_buffer_length,
+    decompressed_buffer, decompressed_buffer_length, 1);
+  if (ZSTD_isError(compression_result)) {
+    std::stringstream error;
+    error << "ZSTD compression error: " << ZSTD_getErrorName(compression_result);
+    throw std::runtime_error(error.str());
+  }
+  std::ofstream outfile{compressed_uri, std::ios::out | std::ios::binary};
+  if (!outfile) {
+    std::stringstream error;
+    error << "Unable to write " << compressed_uri << " to file.";
+    throw std::runtime_error(error.str());
+  }
+  outfile.write(compressed_buffer, compression_result);
+  // Statistics
+  const auto end = std::chrono::high_resolution_clock::now();
+  const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  const auto compression_ratio =
+    static_cast<double>(decompressed_buffer_length) / static_cast<double>(compression_result);
+  ROSBAG2_COMPRESSION_LOG_INFO("ZSTD compressed file.");
+  ROSBAG2_COMPRESSION_LOG_DEBUG("Compression statistics:");
+  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Time: " << duration.count() << " microseconds");
+  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compression Ratio: " << compression_ratio);
+  delete[] compressed_buffer;
+  delete[] decompressed_buffer;
+  return compressed_uri;
 }
 
 void ZstdCompressor::compress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage * bag_message)
+  rosbag2_storage::SerializedBagMessage *)
 {
   throw std::logic_error("Not implemented");
 }
