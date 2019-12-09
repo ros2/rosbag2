@@ -34,14 +34,14 @@ constexpr const int DEFAULT_ITERATIONS = DEFAULT_GARBAGE_FILE_SIZE / sizeof(GARB
  */
 void create_garbage_file(const std::string & uri, int num_iterations = DEFAULT_ITERATIONS)
 {
-  std::ofstream out(uri);
+  std::ofstream out{uri};
   if (out) {
     for (int i = 0; i < num_iterations; i++) {
       out << GARBAGE_STATEMENT;
     }
-    return;
+  } else {
+    throw std::runtime_error("Unable to write to file.");
   }
-  throw std::runtime_error("Unable to write to file.");
 }
 
 TEST_F(FilesystemHelperFixture, zstd_compress_file_uri)

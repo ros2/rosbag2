@@ -25,12 +25,12 @@ namespace rosbag2_compression
 std::string ZstdCompressor::compress_uri(const std::string & uri)
 {
   const auto start = std::chrono::high_resolution_clock::now();
-  auto compressed_uri = uri + "." + get_compression_identifier();
+  const auto compressed_uri = uri + "." + get_compression_identifier();
   std::ifstream infile{uri};
   if (infile) {
     // Get size and allocate
     infile.seekg(0, std::ios::end);
-    size_t decompressed_buffer_length = infile.tellg();
+    const size_t decompressed_buffer_length = infile.tellg();
     char * decompressed_buffer = new char[decompressed_buffer_length];
     // Go back and read in contents
     infile.seekg(0, std::ios::beg);
@@ -46,7 +46,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
       error << "ZSTD compression error: " << ZSTD_getErrorName(compression_result);
       throw std::runtime_error(error.str());
     }
-    std::ofstream outfile(compressed_uri, std::ios::out | std::ios::binary);
+    std::ofstream outfile{compressed_uri, std::ios::out | std::ios::binary};
     if (!outfile) {
       std::stringstream error;
       error << "Unable to write " << compressed_uri << " to file.";
