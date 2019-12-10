@@ -27,11 +27,15 @@ find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(zstd_vendor REQUIRED)
-find_library(zstd REQUIRED)
 
-add_library(${PROJECT_NAME}_zstd SHARED
+add_library(${PROJECT_NAME}_zstd
+  SHARED
   src/rosbag2_compression/zstd_compressor.cpp)
-target_include_directories(${PROJECT_NAME}_zstd PUBLIC include)
+target_include_directories(${PROJECT_NAME}_zstd
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${zstd_vendor_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_zstd ${zstd_vendor_LIBRARIES})
 ament_target_dependencies(${PROJECT_NAME}_zstd
   rcpputils

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7)
 
 project(zstd_vendor)
 
@@ -33,11 +33,10 @@ macro(build_zstd)
     URL https://github.com/facebook/zstd/archive/v1.4.4.zip
     URL_MD5 3a5c3a535280b7f4dfdbd739fcc7173f
     TIMEOUT 60
-    CONFIGURE_COMMAND 
-      ${CMAKE_COMMAND} 
+    SOURCE_SUBDIR build/cmake
+    CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
-      ${extra_cmake_args}
-      ${CMAKE_CURRENT_BINARY_DIR}/zstd-1.4.4-prefix/src/zstd-1.4.4/build/cmake)
+      ${extra_cmake_args})
 
   install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install/
@@ -51,5 +50,6 @@ else()
 endif()
 
 ament_export_libraries(zstd)
+ament_export_include_directories(include)
 
 ament_package()
