@@ -19,6 +19,15 @@
 #include "logging.hpp"
 #include "rosbag2_compression/zstd_compressor.hpp"
 
+namespace
+{
+// Increasing the compression level will:
+//   - Increase the time taken to compress
+//   - Decrease the size of the compressed data
+// Setting to zero uses Zstd's default value of 3.
+constexpr const int DEFAULT_ZSTD_COMPRESSION_LEVEL = 1;
+}
+
 namespace rosbag2_compression
 {
 
@@ -44,7 +53,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
   auto compressed_buffer = std::make_unique<char[]>(compressed_buffer_length);
   const size_t compression_result = ZSTD_compress(
     compressed_buffer.get(), compressed_buffer_length,
-    decompressed_buffer.get(), decompressed_buffer_length, 1);
+    decompressed_buffer.get(), decompressed_buffer_length, DEFAULT_ZSTD_COMPRESSION_LEVEL);
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
     error << "ZSTD compression error: " << ZSTD_getErrorName(compression_result);
