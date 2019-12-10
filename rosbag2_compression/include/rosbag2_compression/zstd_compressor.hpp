@@ -42,14 +42,6 @@ public:
     rosbag2_storage::SerializedBagMessage * bag_message) override;
 
   std::string get_compression_identifier() const override;
-
-private:
-  void check_compression_result(const size_t & compression_result);
-  void print_compression_statistics(
-    std::chrono::high_resolution_clock::time_point start,
-    std::chrono::high_resolution_clock::time_point end,
-    size_t decompressed_size,
-    size_t compressed_size);
 };
 
 }  // namespace rosbag2_compression

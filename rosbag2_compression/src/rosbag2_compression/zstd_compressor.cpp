@@ -48,12 +48,8 @@ std::unique_ptr<char[]> get_input_buffer(
     throw fail;
   }
 }
-}  // namespace
 
-namespace rosbag2_compression
-{
-
-void ZstdCompressor::check_compression_result(const size_t & compression_result)
+void check_compression_result(const size_t compression_result)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
@@ -63,7 +59,7 @@ void ZstdCompressor::check_compression_result(const size_t & compression_result)
   ROSBAG2_COMPRESSION_LOG_DEBUG("ZSTD compressed file.");
 }
 
-void ZstdCompressor::print_compression_statistics(
+void print_compression_statistics(
   std::chrono::high_resolution_clock::time_point start,
   std::chrono::high_resolution_clock::time_point end,
   size_t decompressed_size, size_t compressed_size)
@@ -77,6 +73,10 @@ void ZstdCompressor::print_compression_statistics(
       "Compression Ratio: " << compression_ratio
   );
 }
+}  // namespace
+
+namespace rosbag2_compression
+{
 
 std::string ZstdCompressor::compress_uri(const std::string & uri)
 {
