@@ -22,32 +22,35 @@
 
 #include "gmock/gmock.h"
 
+namespace
+{
 constexpr const char * GARBAGE_STATEMENT = "garbage";
 constexpr const int DEFAULT_GARBAGE_FILE_SIZE = 10;  // MiB
+
+/**
+ * Creates a text file of a certain size.
+ * \param uri File path to write file.
+ * \param size Size of file in MiB.
+ */
+void create_garbage_file(const std::string & uri, int size = DEFAULT_GARBAGE_FILE_SIZE)
+{
+  std::ofstream out{uri};
+  if (!out) {
+    throw std::runtime_error("Unable to write garbage file.");
+  }
+  const auto file_size = size * 1024 * 1024;
+  const auto num_iterations = file_size / static_cast<int>(strlen(GARBAGE_STATEMENT));
+
+  for (int i = 0; i < num_iterations; i++) {
+    out << GARBAGE_STATEMENT;
+  }
+}
+}  // namespace
 
 class CompressionHelperFixture : public rosbag2_test_common::TemporaryDirectoryFixture
 {
 protected:
   CompressionHelperFixture() = default;
-
-  /**
-   * Creates a text file of a certain size.
-   * \param uri File path to write file.
-   * \param size Size of file in MiB.
-   */
-  void create_garbage_file(const std::string & uri, int size = DEFAULT_GARBAGE_FILE_SIZE)
-  {
-    std::ofstream out{uri};
-    if (!out) {
-      throw std::runtime_error("Unable to write garbage file.");
-    }
-    const auto file_size = size * 1024 * 1024;
-    const auto num_iterations = file_size / static_cast<int>(strlen(GARBAGE_STATEMENT));
-
-    for (int i = 0; i < num_iterations; i++) {
-      out << GARBAGE_STATEMENT;
-    }
-  }
 
   void SetUp() override
   {

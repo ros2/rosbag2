@@ -44,7 +44,6 @@ public:
   std::string get_compression_identifier() const override;
 
 private:
-  std::unique_ptr<char[]> get_input_buffer(const std::string & uri);
   void check_compression_result(const size_t & compression_result);
   void print_compression_statistics(
     std::chrono::high_resolution_clock::time_point start,

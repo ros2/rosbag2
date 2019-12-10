@@ -26,29 +26,32 @@ namespace
 //   - Decrease the size of the compressed data
 // Setting to zero uses Zstd's default value of 3.
 constexpr const int DEFAULT_ZSTD_COMPRESSION_LEVEL = 1;
-}
 
-namespace rosbag2_compression
-{
-
-std::unique_ptr<char[]> ZstdCompressor::get_input_buffer(const std::string & uri)
+std::unique_ptr<char[]> get_input_buffer(
+  const std::string & uri,
+  size_t & decompressed_buffer_length)
 {
   try {
     std::ifstream infile{uri};
     infile.exceptions(std::ifstream::failbit);
     // Get size and allocate
     infile.seekg(0, std::ios::end);
-    const size_t decompressed_buffer_length = infile.tellg();
+    decompressed_buffer_length = infile.tellg();
     auto decompressed_buffer = std::make_unique<char[]>(decompressed_buffer_length);
     // Go back and read in contents
     infile.seekg(0 /* off */, std::ios::beg);
     infile.read(decompressed_buffer.get(), decompressed_buffer_length);
     return decompressed_buffer;
   } catch (std::ios_base::failure & fail) {
-    std::cerr << "Caught IO stream exception while reading file: " << fail.what() << std::endl;
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+      "Caught IO stream exception while reading file: " << fail.what());
     throw fail;
   }
 }
+}  // namespace
+
+namespace rosbag2_compression
+{
 
 void ZstdCompressor::check_compression_result(const size_t & compression_result)
 {
@@ -80,8 +83,8 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
   const auto start = std::chrono::high_resolution_clock::now();
   const auto compressed_uri = uri + "." + get_compression_identifier();
   try {
-    auto decompressed_buffer = get_input_buffer(uri);
-    auto decompressed_buffer_length = strlen(decompressed_buffer.get());
+    size_t decompressed_buffer_length{0};
+    const auto decompressed_buffer = get_input_buffer(uri, decompressed_buffer_length);
     // Allocate based on compression bound and compress
     const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
     auto compressed_buffer = std::make_unique<char[]>(compressed_buffer_length);
@@ -95,7 +98,8 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
     const auto end = std::chrono::high_resolution_clock::now();
     print_compression_statistics(start, end, decompressed_buffer_length, compression_result);
   } catch (std::ios_base::failure & fail) {
-    std::cerr << "Caught IO stream exception while compressing: " << fail.what() << std::endl;
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+      "Caught IO stream exception while compressing: " << fail.what());
     throw fail;
   }
   return compressed_uri;
