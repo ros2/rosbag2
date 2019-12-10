@@ -17,6 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_compression/zstd_compressor.hpp"
+#include "rosbag2_compression/zstd_decompressor.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
@@ -80,4 +81,23 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
   EXPECT_LT(compressed_file_size, uncompressed_file_size);
   EXPECT_GT(compressed_file_size, 0u);
   EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(compressed_uri));
+}
+
+TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
+{
+  const auto uri = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "file1.txt"});
+  create_garbage_file(uri);
+  const auto initial_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+
+  auto zstd_compressor = rosbag2_compression::ZstdCompressor();
+  auto compressed_uri = zstd_compressor.compress_uri(uri);
+  auto zstd_decompressor = rosbag2_compression::ZstdDecompressor();
+  auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
+
+  const auto expected_decompressed_uri = uri;
+  const auto decompressed_file_size =
+    rosbag2_storage::FilesystemHelper::get_file_size(decompressed_uri);
+
+  EXPECT_EQ(uri, expected_decompressed_uri);
+  EXPECT_EQ(initial_file_size, decompressed_file_size);
 }
