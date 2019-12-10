@@ -86,7 +86,8 @@ void ZstdCompressor::compress_serialized_bag_message(
 
 std::string ZstdCompressor::get_compression_identifier() const
 {
-  return "zstd";
+  static std::string kCompressionIdentifier = "zstd";
+  return kCompressionIdentifier;
 }
 
 }  // namespace rosbag2_compression

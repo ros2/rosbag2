@@ -23,13 +23,13 @@
 #include "gmock/gmock.h"
 
 constexpr const char * GARBAGE_STATEMENT = "garbage";
-constexpr const int DEFAULT_GARBAGE_FILE_SIZE = 10 * 1024 * 1024;  // 10 MB
+constexpr const int DEFAULT_GARBAGE_FILE_SIZE = 10 * 1024 * 1024;  // 10 MiB
 constexpr const int DEFAULT_ITERATIONS = DEFAULT_GARBAGE_FILE_SIZE / sizeof(GARBAGE_STATEMENT);
 
 class CompressionHelperFixture : public rosbag2_test_common::TemporaryDirectoryFixture
 {
 protected:
-  CompressionHelperFixture() {}
+  CompressionHelperFixture() = default;
 
   /**
    * Creates a 10 MiB file.
