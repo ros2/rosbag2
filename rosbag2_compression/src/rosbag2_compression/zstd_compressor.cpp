@@ -42,7 +42,6 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   // Read in buffer, handling accordingly
   auto file_pointer = std::fopen(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
-    fclose(file_pointer);
     throw std::runtime_error("Error opening file");
   }
   // Allocate and read in
