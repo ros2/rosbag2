@@ -19,10 +19,11 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_compression/zstd_compressor.hpp"
+
 #include "rosbag2_storage/filesystem_helper.hpp"
 
 #include "logging.hpp"
-#include "rosbag2_compression/zstd_compressor.hpp"
 
 namespace
 {
@@ -40,8 +41,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   const auto decompressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
   // Read in buffer, handling accordingly
   auto file_pointer = std::fopen(uri.c_str(), "rb");
-  if (file_pointer == nullptr)
-  {
+  if (file_pointer == nullptr) {
     fclose(file_pointer);
     throw std::runtime_error("Error opening file");
   }
@@ -49,8 +49,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   std::vector<uint8_t> decompressed_buffer;
   decompressed_buffer.reserve(decompressed_buffer_length);
   fread(decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer_length, file_pointer);
-  if (ferror(file_pointer))
-  {
+  if (ferror(file_pointer)) {
     fclose(file_pointer);
     throw std::runtime_error("Unable to read file");
   }
@@ -64,8 +63,7 @@ void write_output_buffer(
 {
   auto file_pointer = std::fopen(uri.c_str(), "wb");
   fwrite(output_buffer.data(), sizeof(uint8_t), output_buffer.capacity(), file_pointer);
-  if (ferror(file_pointer))
-  {
+  if (ferror(file_pointer)) {
     fclose(file_pointer);
     throw std::runtime_error("Unable to write compressed file");
   }
