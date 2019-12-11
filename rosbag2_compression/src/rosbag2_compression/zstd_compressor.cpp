@@ -33,7 +33,7 @@ std::unique_ptr<char[]> get_input_buffer(
 {
   try {
     std::ifstream infile{uri};
-    infile.exceptions(std::ifstream::failbit);
+    infile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     // Get size and allocate
     infile.seekg(0, std::ios::end);
     decompressed_buffer_length = infile.tellg();
@@ -42,14 +42,14 @@ std::unique_ptr<char[]> get_input_buffer(
     infile.seekg(0 /* off */, std::ios::beg);
     infile.read(decompressed_buffer.get(), decompressed_buffer_length);
     return decompressed_buffer;
-  } catch (std::ios_base::failure & fail) {
+  } catch (const std::ios_base::failure & fail) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
       "Caught IO stream exception while reading file: " << fail.what());
     throw fail;
   }
 }
 
-void check_compression_result(const size_t compression_result)
+void throw_on_zstd_error(const size_t compression_result)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
@@ -82,26 +82,28 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 {
   const auto start = std::chrono::high_resolution_clock::now();
   const auto compressed_uri = uri + "." + get_compression_identifier();
+
+  size_t decompressed_buffer_length{0};
+  const auto decompressed_buffer = get_input_buffer(uri, decompressed_buffer_length);
+  // Allocate based on compression bound and compress
+  const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
+  auto compressed_buffer = std::make_unique<char[]>(compressed_buffer_length);
+  // Perform compression and check
+  const size_t compression_result = ZSTD_compress(
+    compressed_buffer.get(), compressed_buffer_length,
+    decompressed_buffer.get(), decompressed_buffer_length, DEFAULT_ZSTD_COMPRESSION_LEVEL);
+  throw_on_zstd_error(compression_result);
   try {
-    size_t decompressed_buffer_length{0};
-    const auto decompressed_buffer = get_input_buffer(uri, decompressed_buffer_length);
-    // Allocate based on compression bound and compress
-    const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
-    auto compressed_buffer = std::make_unique<char[]>(compressed_buffer_length);
-    // Perform compression and check
-    const size_t compression_result = ZSTD_compress(
-      compressed_buffer.get(), compressed_buffer_length,
-      decompressed_buffer.get(), decompressed_buffer_length, DEFAULT_ZSTD_COMPRESSION_LEVEL);
-    check_compression_result(compression_result);
     std::ofstream outfile{compressed_uri, std::ios::out | std::ios::binary};
+    outfile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     outfile.write(compressed_buffer.get(), compression_result);
-    const auto end = std::chrono::high_resolution_clock::now();
-    print_compression_statistics(start, end, decompressed_buffer_length, compression_result);
-  } catch (std::ios_base::failure & fail) {
+  } catch (const std::ios_base::failure & fail) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
       "Caught IO stream exception while compressing: " << fail.what());
     throw fail;
   }
+  const auto end = std::chrono::high_resolution_clock::now();
+  print_compression_statistics(start, end, decompressed_buffer_length, compression_result);
   return compressed_uri;
 }
 
