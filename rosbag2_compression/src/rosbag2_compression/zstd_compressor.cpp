@@ -46,10 +46,12 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
   return fp;
 }
 
-std::vector<uint8_t> get_input_buffer(const std::string & uri)
+std::vector<uint8_t> get_input_buffer(
+  const std::string & uri,
+  size_t & decompressed_buffer_length)
 {
   // Get the file size
-  const auto decompressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+  decompressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
   // Read in buffer, handling accordingly
   auto file_pointer = open_file(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
@@ -68,11 +70,12 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
 }
 
 void write_output_buffer(
-  const std::vector<uint8_t> & output_buffer,
+  const uint8_t * output_buffer,
+  const size_t output_buffer_length,
   const std::string & uri)
 {
   auto file_pointer = open_file(uri.c_str(), "wb");
-  fwrite(output_buffer.data(), sizeof(uint8_t), output_buffer.capacity(), file_pointer);
+  fwrite(output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
   if (ferror(file_pointer)) {
     fclose(file_pointer);
     throw std::runtime_error("Unable to write compressed file");
@@ -113,18 +116,19 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 {
   const auto start = std::chrono::high_resolution_clock::now();
   const auto compressed_uri = uri + "." + get_compression_identifier();
-  const auto decompressed_buffer = get_input_buffer(uri);
-  const auto decompressed_buffer_length = decompressed_buffer.capacity();
+  size_t decompressed_buffer_length{0};
+  const auto decompressed_buffer = get_input_buffer(uri, decompressed_buffer_length);
   // Allocate based on compression bound and compress
   const size_t compressed_buffer_length = ZSTD_compressBound(decompressed_buffer_length);
   std::vector<uint8_t> compressed_buffer;
   compressed_buffer.reserve(compressed_buffer_length);
-  // Perform compression and check
+  // Perform compression and check.
+  // compression_result is either the actual compressed size or an error code.
   const size_t compression_result = ZSTD_compress(
     compressed_buffer.data(), compressed_buffer_length,
     decompressed_buffer.data(), decompressed_buffer_length, DEFAULT_ZSTD_COMPRESSION_LEVEL);
   throw_on_zstd_error(compression_result);
-  write_output_buffer(compressed_buffer, uri);
+  write_output_buffer(compressed_buffer.data(), compression_result, uri);
   const auto end = std::chrono::high_resolution_clock::now();
   print_compression_statistics(start, end, decompressed_buffer_length, compression_result);
   return compressed_uri;
