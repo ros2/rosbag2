@@ -35,12 +35,23 @@ constexpr const int DEFAULT_ZSTD_COMPRESSION_LEVEL = 1;
 
 constexpr const char COMPRESSION_IDENTIFIER[] = "zstd";
 
+FILE * open_file(const std::string & uri, const std::string & read_mode)
+{
+  FILE * fp{nullptr};
+#ifdef _WIN32
+  fopen_s(&fp, uri.c_str(), read_mode.c_str());
+#else
+  fp = std::fopen(uri.c_str(), read_mode.c_str());
+#endif
+  return fp;
+}
+
 std::vector<uint8_t> get_input_buffer(const std::string & uri)
 {
   // Get the file size
   const auto decompressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
   // Read in buffer, handling accordingly
-  auto file_pointer = std::fopen(uri.c_str(), "rb");
+  auto file_pointer = open_file(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
     throw std::runtime_error("Error opening file");
   }
@@ -60,7 +71,7 @@ void write_output_buffer(
   const std::vector<uint8_t> & output_buffer,
   const std::string & uri)
 {
-  auto file_pointer = std::fopen(uri.c_str(), "wb");
+  auto file_pointer = open_file(uri.c_str(), "wb");
   fwrite(output_buffer.data(), sizeof(uint8_t), output_buffer.capacity(), file_pointer);
   if (ferror(file_pointer)) {
     fclose(file_pointer);
