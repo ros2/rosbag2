@@ -14,6 +14,8 @@
 
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 
+>>>> !!! THIS IS NOT GOING TO COMPILE !!! <<<<<
+
 namespace rosbag2_storage
 {
 namespace storage_interfaces
