@@ -146,29 +146,31 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::activate_transaction()
 {
-  int rc = -1;
-
-  if (!active_transaction_) {
+  if (active_transaction_)
+    return;
+  else {
+    int rc = SQLITE_ERROR;
     rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
     active_transaction_.store(true, std::memory_order_relaxed);
     if (rc != SQLITE_OK)
-      throw SqliteException("Failed to initialize transaction");
+      throw SqliteException("Failed to begin transaction");
   }
 }
 
 void SqliteStorage::commit_transaction()
 {
-  int rc = -1;
-
-  if (!active_transaction_) {
-    rc = sqlite3_exec(database_->get_db_handle(), "END TRANSACTION;", NULL, 0, NULL);
+  if (!active_transaction_)
+    return;
+  else {
+    int rc = SQLITE_ERROR;
+    rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
     active_transaction_.store(false, std::memory_order_relaxed);
 
     // Reset batch insert counter
-    no_of_inserts = 0;
+    no_of_inserts_ = 0;
 
     if (rc != SQLITE_OK)
-      throw SqliteException("Failed to initialize transaction");
+      throw SqliteException("Failed to commit transaction");
   }
 }
 
@@ -201,8 +203,6 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   if (no_of_inserts_ > 10000) {
     commit_transaction();
   }
-  if (no_of_inserts > 10000)
-    commit_transaction();
 #endif
 }
 

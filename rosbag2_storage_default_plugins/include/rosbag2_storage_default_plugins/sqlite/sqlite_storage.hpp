@@ -46,7 +46,6 @@ public:
   SqliteStorage()
       :no_of_inserts(0) {};
   ~SqliteStorage() override = default;
->>>>>>> First iteration of batched/transation based inserts.
 
   void open(
     const std::string & uri,
