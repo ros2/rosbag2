@@ -8,40 +8,46 @@ jobs:
     name: ament_copyright
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
-      with:
-        linter: copyright
-        package-name: |
-            ros2bag
-            rosbag2
-            rosbag2_compression
-            rosbag2_converter_default_plugins
-            rosbag2_test_common
-            rosbag2_tests
-            rosbag2_transport
-            shared_queues_vendor
+      - name: "Temporarily remove MS apt sources. https://github.com/ros-security/aws-oncall/issues/31"
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+      - uses: actions/checkout@v1
+      - uses: ros-tooling/setup-ros2@0.0.7
+      - uses: ros-tooling/action-ros2-lint@0.0.5
+        with:
+          linter: copyright
+          package-name: |
+              ros2bag
+              rosbag2
+              rosbag2_compression
+              rosbag2_converter_default_plugins
+              rosbag2_test_common
+              rosbag2_tests
+              rosbag2_transport
+              shared_queues_vendor
 
   ament_xmllint:
     name: ament_xmllint
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
-      with:
-        linter: xmllint
-        package-name: |
-            ros2bag
-            rosbag2
-            rosbag2_compression
-            rosbag2_converter_default_plugins
-            rosbag2_test_common
-            rosbag2_tests
-            rosbag2_transport
-            shared_queues_vendor
-            sqlite3_vendor
+      - name: "Temporarily remove MS apt sources. https://github.com/ros-security/aws-oncall/issues/31"
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+      - uses: actions/checkout@v1
+      - uses: ros-tooling/setup-ros2@0.0.7
+      - uses: ros-tooling/action-ros2-lint@0.0.5
+        with:
+          linter: xmllint
+          package-name: |
+              ros2bag
+              rosbag2
+              rosbag2_compression
+              rosbag2_converter_default_plugins
+              rosbag2_test_common
+              rosbag2_tests
+              rosbag2_transport
+              shared_queues_vendor
+              sqlite3_vendor
 
   ament_lint_cpp: # Linters applicable to C++ packages
     name: ament_${{ matrix.linter }}
@@ -51,19 +57,22 @@ jobs:
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
-      with:
-        linter: ${{ matrix.linter }}
-        package-name: |
-            rosbag2
-            rosbag2_compression
-            rosbag2_converter_default_plugins
-            rosbag2_test_common
-            rosbag2_tests
-            rosbag2_transport
-            shared_queues_vendor
+      - name: "Temporarily remove MS apt sources. https://github.com/ros-security/aws-oncall/issues/31"
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+      - uses: actions/checkout@v1
+      - uses: ros-tooling/setup-ros2@0.0.7
+      - uses: ros-tooling/action-ros2-lint@0.0.5
+        with:
+          linter: ${{ matrix.linter }}
+          package-name: |
+              rosbag2
+              rosbag2_compression
+              rosbag2_converter_default_plugins
+              rosbag2_test_common
+              rosbag2_tests
+              rosbag2_transport
+              shared_queues_vendor
 
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
@@ -73,10 +82,13 @@ jobs:
       matrix:
           linter: [flake8, pep257]
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
-      with:
-        linter: ${{ matrix.linter }}
-        package-name: |
-            ros2bag
+      - name: "Temporarily remove MS apt sources. https://github.com/ros-security/aws-oncall/issues/31"
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+      - uses: actions/checkout@v1
+      - uses: ros-tooling/setup-ros2@0.0.7
+      - uses: ros-tooling/action-ros2-lint@0.0.5
+        with:
+          linter: ${{ matrix.linter }}
+          package-name: |
+              ros2bag
