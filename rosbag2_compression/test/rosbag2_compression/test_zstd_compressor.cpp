@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdio>
 #include <fstream>
 #include <string>
 
@@ -90,14 +91,20 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   const auto initial_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
 
   auto zstd_compressor = rosbag2_compression::ZstdCompressor();
-  auto compressed_uri = zstd_compressor.compress_uri(uri);
+  const auto compressed_uri = zstd_compressor.compress_uri(uri);
+
+  ASSERT_EQ(0, std::remove(uri.c_str()));  // the test is invalid if the initial file is not deleted
+
   auto zstd_decompressor = rosbag2_compression::ZstdDecompressor();
-  auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
+  const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
 
   const auto expected_decompressed_uri = uri;
   const auto decompressed_file_size =
     rosbag2_storage::FilesystemHelper::get_file_size(decompressed_uri);
 
+  EXPECT_NE(compressed_uri, uri);
+  EXPECT_NE(decompressed_uri, compressed_uri);
   EXPECT_EQ(uri, expected_decompressed_uri);
   EXPECT_EQ(initial_file_size, decompressed_file_size);
+  EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(decompressed_uri));
 }
