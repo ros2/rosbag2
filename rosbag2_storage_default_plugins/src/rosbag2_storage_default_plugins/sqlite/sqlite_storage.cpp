@@ -112,29 +112,31 @@ void SqliteStorage::open(
 
 void SqliteStorage::activate_transaction()
 {
-  int rc = -1;
-
-  if (!active_transaction_) {
+  if (active_transaction_)
+    return;
+  else {
+    int rc = SQLITE_ERROR;
     rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
     active_transaction_.store(true, std::memory_order_relaxed);
     if (rc != SQLITE_OK)
-      throw SqliteException("Failed to initialize transaction");
+      throw SqliteException("Failed to begin transaction");
   }
 }
 
 void SqliteStorage::commit_transaction()
 {
-  int rc = -1;
-
-  if (!active_transaction_) {
-    rc = sqlite3_exec(database_->get_db_handle(), "END TRANSACTION;", NULL, 0, NULL);
+  if (!active_transaction_)
+    return;
+  else {
+    int rc = SQLITE_ERROR;
+    rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
     active_transaction_.store(false, std::memory_order_relaxed);
 
     // Reset batch insert counter
-    no_of_inserts = 0;
+    no_of_inserts_ = 0;
 
     if (rc != SQLITE_OK)
-      throw SqliteException("Failed to initialize transaction");
+      throw SqliteException("Failed to commit transaction");
   }
 }
 
@@ -150,12 +152,13 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
             "' has not been created yet! Call 'create_topic' first.");
   }
 
+// The #ifdef is for debugging only, we may remove once we've iterated over this
 #ifdef EN_TRANSACTION
   if (!active_transaction_) {
     activate_transaction();
   }
   // To work with a batched insert within a trasaction
-  no_of_inserts++;
+  no_of_inserts_++;
 #endif
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
@@ -163,7 +166,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
 #ifdef EN_TRANSACTION
   // Just for a design perspective we'll move this to a param from command line later
-  if (no_of_inserts > 10000)
+  if (no_of_inserts_ > 10000)
     commit_transaction();
 #endif
 }
