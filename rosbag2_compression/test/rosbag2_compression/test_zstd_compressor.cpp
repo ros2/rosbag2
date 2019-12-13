@@ -68,13 +68,16 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
   const auto uri = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "file1.txt"});
   create_garbage_file(uri);
   auto zstd_compressor = rosbag2_compression::ZstdCompressor();
-  auto compressed_uri = zstd_compressor.compress_uri(uri);
+  const auto compressed_uri = zstd_compressor.compress_uri(uri);
 
   const auto expected_compressed_uri = uri + "." + zstd_compressor.get_compression_identifier();
   const auto uncompressed_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
   const auto compressed_file_size =
     rosbag2_storage::FilesystemHelper::get_file_size(compressed_uri);
 
+  EXPECT_NE(compressed_uri, uri);
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
   EXPECT_LT(compressed_file_size, uncompressed_file_size);
+  EXPECT_GT(compressed_file_size, 0u);
+  EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(compressed_uri));
 }

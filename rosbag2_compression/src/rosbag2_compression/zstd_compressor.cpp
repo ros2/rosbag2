@@ -127,7 +127,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
     compressed_buffer.data(), compressed_buffer_length,
     decompressed_buffer.data(), decompressed_buffer_length, DEFAULT_ZSTD_COMPRESSION_LEVEL);
   throw_on_zstd_error(compression_result);
-  write_output_buffer(compressed_buffer.data(), compression_result, uri);
+  write_output_buffer(compressed_buffer.data(), compression_result, compressed_uri);
   const auto end = std::chrono::high_resolution_clock::now();
   print_compression_statistics(start, end, decompressed_buffer_length, compression_result);
   return compressed_uri;
