@@ -77,4 +77,6 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
 
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
   EXPECT_LT(compressed_file_size, uncompressed_file_size);
+  EXPECT_GT(compressed_file_size, 0u);
+  EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(compressed_uri));
 }
