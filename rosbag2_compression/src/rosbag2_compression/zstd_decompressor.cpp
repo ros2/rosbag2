@@ -60,7 +60,16 @@ std::vector<uint8_t> get_input_buffer(
   // Allocate and read in
   std::vector<uint8_t> compressed_buffer;
   compressed_buffer.reserve(compressed_buffer_length);
-  fread(compressed_buffer.data(), sizeof(uint8_t), compressed_buffer_length, file_pointer);
+
+  const auto nRead = fread(
+    compressed_buffer.data(), sizeof(uint8_t), compressed_buffer_length, file_pointer);
+
+  if (nRead != compressed_buffer_length) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read !(" <<
+      nRead << ") != compressed_buffer_length (" << compressed_buffer_length <<
+      ")!");
+    // An error indicator is set by fread, so the following check will throw.
+  }
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);
@@ -88,7 +97,15 @@ void write_output_buffer(
     throw std::runtime_error(errmsg.str());
   }
 
-  fwrite(output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+  const auto nWrite = fwrite(
+    output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+
+  if (nWrite != output_buffer_length) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" <<
+      nWrite << " != output_buffer_length (" << output_buffer_length <<
+      ")!");
+    // An error indicator is set by fwrite, so the following check will throw.
+  }
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);

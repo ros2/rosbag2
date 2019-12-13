@@ -93,7 +93,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   auto zstd_compressor = rosbag2_compression::ZstdCompressor();
   const auto compressed_uri = zstd_compressor.compress_uri(uri);
 
-  ASSERT_EQ(0, std::remove(uri.c_str()));  // the test is invalid if the initial file is not deleted
+  ASSERT_EQ(0, std::remove(uri.c_str()));  // The test is invalid if the initial file is not deleted
 
   auto zstd_decompressor = rosbag2_compression::ZstdDecompressor();
   const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
