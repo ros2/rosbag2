@@ -13,33 +13,102 @@
 // limitations under the License.
 
 #include <chrono>
-#include <memory>
+#include <cstdio>
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include "rcpputils/filesystem_helper.hpp"
 
-#include "logging.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
+
+#include "rosbag2_storage/filesystem_helper.hpp"
+
+#include "logging.hpp"
 
 namespace
 {
-std::unique_ptr<char[]> get_input_buffer(const std::string & uri, size_t & buffer_length)
+constexpr const char DECOMPRESSION_IDENTIFIER[] = "zstd";
+
+FILE * open_file(const std::string & uri, const std::string & read_mode)
 {
-  try {
-    std::ifstream infile{uri};
-    infile.exceptions(std::ifstream::failbit);
-    // Get size and allocate
-    infile.seekg(0, std::ios::end);
-    buffer_length = infile.tellg();
-    auto decompressed_buffer = std::make_unique<char[]>(buffer_length);
-    // Go back and read in contents
-    infile.seekg(0 /* off */, std::ios::beg);
-    infile.read(decompressed_buffer.get(), buffer_length);
-    return decompressed_buffer;
-  } catch (std::ios_base::failure & fail) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-      "Caught IO stream exception while reading file: " << fail.what());
-    throw fail;
+  FILE * fp{nullptr};
+#ifdef _WIN32
+  fopen_s(&fp, uri.c_str(), read_mode.c_str());
+#else
+  fp = std::fopen(uri.c_str(), read_mode.c_str());
+#endif
+  return fp;
+}
+
+std::vector<uint8_t> get_input_buffer(
+  const std::string & uri,
+  size_t & compressed_buffer_length)
+{
+  // Get the file size
+  compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+
+  // Read in buffer, handling accordingly
+  const auto file_pointer = open_file(uri.c_str(), "rb");
+  if (file_pointer == nullptr) {
+    std::stringstream errmsg;
+    errmsg << "Failed to open file: \"" << uri << "\" for binary reading!";
+
+    throw std::runtime_error(errmsg.str());
+  }
+
+  // Allocate and read in
+  std::vector<uint8_t> compressed_buffer;
+  compressed_buffer.reserve(compressed_buffer_length);
+  fread(compressed_buffer.data(), sizeof(uint8_t), compressed_buffer_length, file_pointer);
+
+  if (ferror(file_pointer)) {
+    fclose(file_pointer);
+
+    std::stringstream errmsg;
+    errmsg << "Unable to read binary data from file: \"" << uri << "\"!";
+
+    throw std::runtime_error(errmsg.str());
+  }
+
+  fclose(file_pointer);
+  return compressed_buffer;
+}
+
+void write_output_buffer(
+  const uint8_t * output_buffer,
+  const size_t output_buffer_length,
+  const std::string & uri)
+{
+  const auto file_pointer = open_file(uri.c_str(), "wb");
+  if (file_pointer == nullptr) {
+    std::stringstream errmsg;
+    errmsg << "Failed to open file: \"" << uri << "\" for binary writing!";
+
+    throw std::runtime_error(errmsg.str());
+  }
+
+  fwrite(output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+
+  if (ferror(file_pointer)) {
+    fclose(file_pointer);
+
+    std::stringstream errmsg;
+    errmsg << "Unable to write decompressed data to file: \"" << uri << "\"!";
+
+    throw std::runtime_error(errmsg.str());
+  }
+
+  fclose(file_pointer);
+}
+
+void throw_on_zstd_error(const size_t compression_result)
+{
+  if (ZSTD_isError(compression_result)) {
+    std::stringstream error;
+    error << "ZSTD decompression error: " << ZSTD_getErrorName(compression_result);
+
+    throw std::runtime_error(error.str());
   }
 }
 
@@ -47,30 +116,25 @@ void check_frame_content(const size_t frame_content)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
     throw std::runtime_error("File not compressed with Zstd.");
-  }
-  if (frame_content == ZSTD_CONTENTSIZE_UNKNOWN) {
-    ROSBAG2_COMPRESSION_LOG_WARN("Unable to determine file size, considering upper bound.");
+  } else if (frame_content == ZSTD_CONTENTSIZE_UNKNOWN) {
+    throw std::runtime_error("Unable to determine file size");
   }
 }
 
-void check_decompression_result(const size_t decompression_result)
+void print_decompression_statistics(
+  const std::chrono::high_resolution_clock::time_point start,
+  const std::chrono::high_resolution_clock::time_point end,
+  const size_t decompressed_size,
+  const size_t compressed_size)
 {
-  if (ZSTD_isError(decompression_result)) {
-    std::stringstream error;
-    error << "ZSTD compression error: " << ZSTD_getErrorName(decompression_result);
-    throw std::runtime_error(error.str());
-  }
-  ROSBAG2_COMPRESSION_LOG_DEBUG("ZSTD decompressed file.");
-}
+  const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  const auto decompression_ratio =
+    static_cast<double>(decompressed_size) / static_cast<double>(compressed_size);
 
-void print_statistics(
-  std::chrono::high_resolution_clock::time_point start,
-  std::chrono::high_resolution_clock::time_point end)
-{
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
     "Decompression statistics:\n" <<
-      "Time: " << duration.count() << " microseconds");
+      "Time: " << duration.count() << " microseconds" <<
+      "Compression Ratio: " << decompression_ratio);
 }
 }  // namespace
 
@@ -79,35 +143,32 @@ namespace rosbag2_compression
 
 std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 {
-  auto start = std::chrono::high_resolution_clock::now();
-  try {
-    // Prepare the compression buffers
-    size_t compressed_buffer_length{0};
-    auto compressed_buffer = get_input_buffer(uri, compressed_buffer_length);
-    const size_t decompressed_buffer_length =
-      ZSTD_getFrameContentSize(compressed_buffer.get(), compressed_buffer_length);
-    check_frame_content(decompressed_buffer_length);
-    auto decompressed_buffer = std::make_unique<char[]>(decompressed_buffer_length);
-    // Perform decompression
-    const size_t decompression_result = ZSTD_decompress(
-      decompressed_buffer.get(), decompressed_buffer_length,
-      compressed_buffer.get(), compressed_buffer_length);
-    check_decompression_result(decompression_result);
-    // Remove extension and write decompressed file
-    auto uri_path = rcpputils::fs::path(uri);
-    auto decompressed_uri = rcpputils::fs::remove_extension(uri_path);
-    std::ofstream outfile(decompressed_uri.string());
-    outfile.exceptions(std::ofstream::failbit);
-    outfile.write(decompressed_buffer.get(), decompression_result);
-    outfile.close();
-    auto end = std::chrono::high_resolution_clock::now();
-    print_statistics(start, end);
-    return decompressed_uri.string();
-  } catch (std::ios_base::failure & fail) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-      "Caught IO stream exception while decompressing: " << fail.what());
-    throw fail;
-  }
+  const auto start = std::chrono::high_resolution_clock::now();
+  const auto uri_path = rcpputils::fs::path(uri);
+  const auto decompressed_uri = rcpputils::fs::remove_extension(uri_path).string();
+
+  size_t compressed_buffer_length{0};
+  const auto compressed_buffer = get_input_buffer(uri, compressed_buffer_length);
+
+  const auto decompressed_buffer_length =
+    ZSTD_getFrameContentSize(compressed_buffer.data(), compressed_buffer_length);
+  check_frame_content(decompressed_buffer_length);
+
+  std::vector<uint8_t> decompressed_buffer;
+  decompressed_buffer.reserve(decompressed_buffer_length);
+
+  const auto decompression_result = ZSTD_decompress(
+    decompressed_buffer.data(), decompressed_buffer_length,
+    compressed_buffer.data(), compressed_buffer_length);
+
+  throw_on_zstd_error(decompression_result);
+
+  write_output_buffer(decompressed_buffer.data(), decompressed_buffer_length, decompressed_uri);
+
+  const auto end = std::chrono::high_resolution_clock::now();
+  print_decompression_statistics(start, end, decompression_result, compressed_buffer_length);
+
+  return decompressed_uri;
 }
 
 void ZstdDecompressor::decompress_serialized_bag_message(
@@ -118,7 +179,6 @@ void ZstdDecompressor::decompress_serialized_bag_message(
 
 std::string ZstdDecompressor::get_decompression_identifier() const
 {
-  static std::string kCompressionIdentifier = "zstd";
-  return kCompressionIdentifier;
+  return DECOMPRESSION_IDENTIFIER;
 }
 }  // namespace rosbag2_compression
