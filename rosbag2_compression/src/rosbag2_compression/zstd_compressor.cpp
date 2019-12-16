@@ -59,7 +59,16 @@ std::vector<uint8_t> get_input_buffer(
   // Allocate and read in
   std::vector<uint8_t> decompressed_buffer;
   decompressed_buffer.reserve(decompressed_buffer_length);
-  fread(decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer_length, file_pointer);
+
+  const auto nRead = fread(
+    decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer_length, file_pointer);
+
+  if (nRead != decompressed_buffer_length) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read (" << nRead <<
+      ") != decompressed_buffer_length (" << decompressed_buffer_length << ")!");
+    // An error indicator is set by this, so the following check will throw
+  }
+
   if (ferror(file_pointer)) {
     fclose(file_pointer);
     throw std::runtime_error("Unable to read file");
@@ -74,7 +83,15 @@ void write_output_buffer(
   const std::string & uri)
 {
   auto file_pointer = open_file(uri.c_str(), "wb");
-  fwrite(output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+  const auto nWrite = fwrite(
+    output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+
+  if (nWrite != output_buffer_length) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" << nWrite <<
+      ") != output_buffer_length (" << output_buffer_length << ")!");
+    // An error indicator is set by fwrite, so the following check will throw.
+  }
+
   if (ferror(file_pointer)) {
     fclose(file_pointer);
     throw std::runtime_error("Unable to write compressed file");
