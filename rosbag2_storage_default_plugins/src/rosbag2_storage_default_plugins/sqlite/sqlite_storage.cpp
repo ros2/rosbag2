@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <atomic>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -65,8 +66,9 @@ namespace rosbag2_storage_plugins
 {
 SqliteStorage::~SqliteStorage()
 {
-  if (active_transaction_)
+  if (active_transaction_) {
     commit_transaction();
+  }
 }
 
 void SqliteStorage::open(
@@ -112,22 +114,23 @@ void SqliteStorage::open(
 
 void SqliteStorage::activate_transaction()
 {
-  if (active_transaction_)
+  if (active_transaction_) {
     return;
-  else {
+  } else {
     int rc = SQLITE_ERROR;
     rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
     active_transaction_.store(true, std::memory_order_relaxed);
-    if (rc != SQLITE_OK)
+    if (rc != SQLITE_OK) {
       throw SqliteException("Failed to begin transaction");
+    }
   }
 }
 
 void SqliteStorage::commit_transaction()
 {
-  if (!active_transaction_)
+  if (!active_transaction_) {
     return;
-  else {
+  } else {
     int rc = SQLITE_ERROR;
     rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
     active_transaction_.store(false, std::memory_order_relaxed);
@@ -135,8 +138,9 @@ void SqliteStorage::commit_transaction()
     // Reset batch insert counter
     no_of_inserts_ = 0;
 
-    if (rc != SQLITE_OK)
+    if (rc != SQLITE_OK) {
       throw SqliteException("Failed to commit transaction");
+    }
   }
 }
 
@@ -166,8 +170,9 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
 #ifdef EN_TRANSACTION
   // Just for a design perspective we'll move this to a param from command line later
-  if (no_of_inserts_ > 10000)
+  if (no_of_inserts_ > 10000) {
     commit_transaction();
+  }
 #endif
 }
 
