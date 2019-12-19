@@ -38,7 +38,7 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-    char template_char[] = "tmp_test_dir.XXXXXX";
+    char template_char[32] = "tmp_test_dir.XXXXXX";
 #ifdef _WIN32
     char temp_path[255];
     GetTempPathA(255, temp_path);
