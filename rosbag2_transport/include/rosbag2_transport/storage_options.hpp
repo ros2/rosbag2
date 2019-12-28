@@ -17,13 +17,11 @@
 
 #include <string>
 
-#include "rosbag2/storage_options.hpp"
+#include "rosbag2_cpp/storage_options.hpp"
 
 namespace rosbag2_transport
 {
-
-using StorageOptions = rosbag2::StorageOptions;
-
+using StorageOptions = rosbag2_cpp::StorageOptions;
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__STORAGE_OPTIONS_HPP_

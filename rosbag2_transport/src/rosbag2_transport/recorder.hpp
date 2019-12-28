@@ -23,11 +23,13 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/types.hpp"
-#include "rosbag2/writer.hpp"
+#include "rosbag2_cpp/writer.hpp"
+
+#include "rosbag2_storage/topic_metadata.hpp"
+
 #include "rosbag2_transport/record_options.hpp"
 
-namespace rosbag2
+namespace rosbag2_cpp
 {
 class Writer;
 }
@@ -41,7 +43,7 @@ class Rosbag2Node;
 class Recorder
 {
 public:
-  explicit Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosbag2Node> node);
+  explicit Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node);
 
   void record(const RecordOptions & record_options);
 
@@ -59,14 +61,14 @@ private:
   void subscribe_topics(
     const std::unordered_map<std::string, std::string> & topics_and_types);
 
-  void subscribe_topic(const rosbag2::TopicMetadata & topic);
+  void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
 
   void record_messages() const;
 
-  std::shared_ptr<rosbag2::Writer> writer_;
+  std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> subscribed_topics_;

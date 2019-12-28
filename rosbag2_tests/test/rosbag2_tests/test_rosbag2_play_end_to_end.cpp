@@ -23,13 +23,15 @@
 
 // rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+
+#include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
-#include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT

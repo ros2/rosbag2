@@ -25,8 +25,8 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
-find_package(rosbag2 REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -45,9 +45,9 @@ ament_target_dependencies(${PROJECT_NAME}
   rcl
   rclcpp
   rcutils
-  rosbag2
-  rosidl_generator_cpp
   rmw
+  rosbag2_cpp
+  rosidl_generator_cpp
   shared_queues_vendor
 )
 
@@ -78,7 +78,7 @@ install(
 ament_export_include_directories(include)
 ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2)
+ament_export_dependencies(rosbag2_cpp)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
@@ -135,7 +135,7 @@ if(BUILD_TESTING)
       $<INSTALL_INTERFACE:include>)
     ament_target_dependencies(test_rosbag2_node
       ament_index_cpp
-      rosbag2
+      rosbag2_cpp
       rclcpp
       test_msgs
       rosbag2_test_common)

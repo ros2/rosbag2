@@ -21,10 +21,13 @@
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
+
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_transport_test_fixture.hpp"
+
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+
+#include "rosbag2_transport_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -40,8 +43,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
 
   auto message_time_difference = std::chrono::seconds(1);
   auto topics_and_types =
-    std::vector<rosbag2::TopicMetadata>{{"topic1", "test_msgs/Strings", ""}};
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
+    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", ""}};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 0, primitive_message1),
     serialize_test_message("topic1", 0, primitive_message2)};
 
@@ -51,7 +54,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topics_and_types);
-  reader_ = std::make_unique<rosbag2::Reader>(std::move(prepared_mock_reader));
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   // We can only assert indirectly that the relative times are respected when playing a bag. So
   // we check that time elapsed during playing is at least the time difference between the two

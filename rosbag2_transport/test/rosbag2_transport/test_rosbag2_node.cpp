@@ -20,9 +20,12 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+
 #include "rosbag2_test_common/memory_management.hpp"
+
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/basic_types.hpp"
+
 #include "../../src/rosbag2_transport/rosbag2_node.hpp"
 
 using namespace ::testing;  // NOLINT

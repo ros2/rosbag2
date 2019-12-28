@@ -19,13 +19,15 @@
 
 #include <string>
 
-#include "rosbag2/info.hpp"
-#include "rosbag2/types.hpp"
+#include "rosbag2_cpp/info.hpp"
 
-class MockInfo : public rosbag2::Info
+#include "rosbag2_storage/bag_metadata.hpp"
+
+class MockInfo : public rosbag2_cpp::Info
 {
 public:
-  MOCK_METHOD2(read_metadata, rosbag2::BagMetadata(const std::string &, const std::string &));
+  MOCK_METHOD2(
+    read_metadata, rosbag2_storage::BagMetadata(const std::string &, const std::string &));
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_INFO_HPP_

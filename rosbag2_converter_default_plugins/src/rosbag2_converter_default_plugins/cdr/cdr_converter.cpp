@@ -23,7 +23,9 @@
 #include "Poco/SharedLibrary.h"
 
 #include "rcutils/strdup.h"
-#include "rosbag2/types/introspection_message.hpp"
+
+#include "rosbag2_cpp/types.hpp"
+
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
 
 #include "../logging.hpp"
@@ -96,11 +98,11 @@ CdrConverter::CdrConverter()
 }
 
 void CdrConverter::deserialize(
-  const std::shared_ptr<const rosbag2::SerializedBagMessage> serialized_message,
+  const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message,
   const rosidl_message_type_support_t * type_support,
-  std::shared_ptr<rosbag2_introspection_message_t> introspection_message)
+  std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t> introspection_message)
 {
-  rosbag2::introspection_message_set_topic_name(
+  rosbag2_cpp::introspection_message_set_topic_name(
     introspection_message.get(), serialized_message->topic_name.c_str());
   introspection_message->time_stamp = serialized_message->time_stamp;
 
@@ -112,9 +114,9 @@ void CdrConverter::deserialize(
 }
 
 void CdrConverter::serialize(
-  const std::shared_ptr<const rosbag2_introspection_message_t> introspection_message,
+  const std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t> introspection_message,
   const rosidl_message_type_support_t * type_support,
-  std::shared_ptr<rosbag2::SerializedBagMessage> serialized_message)
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
 {
   serialized_message->topic_name = std::string(introspection_message->topic_name);
   serialized_message->time_stamp = introspection_message->time_stamp;
@@ -130,4 +132,4 @@ void CdrConverter::serialize(
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_converter_default_plugins::CdrConverter,
-  rosbag2::converter_interfaces::SerializationFormatConverter)
+  rosbag2_cpp::converter_interfaces::SerializationFormatConverter)

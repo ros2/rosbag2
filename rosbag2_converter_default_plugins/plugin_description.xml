@@ -2,7 +2,7 @@
 <class
         name="cdr_converter"
         type="rosbag2_converter_default_plugins::CdrConverter"
-        base_class_type="rosbag2::converter_interfaces::SerializationFormatConverter"
+        base_class_type="rosbag2_cpp::converter_interfaces::SerializationFormatConverter"
 >
   <description>This is a converter plugin for cdr format.</description>
 </class>
