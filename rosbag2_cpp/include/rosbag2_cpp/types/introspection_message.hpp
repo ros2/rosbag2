@@ -32,7 +32,7 @@ struct MessageMembers;
 namespace rosbag2_cpp
 {
 
-typedef struct rosbag2_introspection_message_t
+typedef struct ROSBAG2_CPP_PUBLIC_TYPE rosbag2_introspection_message_t
 {
   void * message;
   char * topic_name;

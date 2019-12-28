@@ -32,11 +32,11 @@ extern "C"
     #define ROSBAG2_CPP_IMPORT __declspec(dllimport)
   #endif
   #ifdef ROSBAG2_CPP_BUILDING_DLL
-    #define ROSBAG2_CPP_PUBLIC ROSBAG2_EXPORT
+    #define ROSBAG2_CPP_PUBLIC ROSBAG2_CPP_EXPORT
   #else
-    #define ROSBAG2_CPP_PUBLIC ROSBAG2_IMPORT
+    #define ROSBAG2_CPP_PUBLIC ROSBAG2_CPP_IMPORT
   #endif
-  #define ROSBAG2_CPP_PUBLIC_TYPE ROSBAG2_PUBLIC
+  #define ROSBAG2_CPP_PUBLIC_TYPE ROSBAG2_CPP_PUBLIC
   #define ROSBAG2_CPP_LOCAL
 #else
   #define ROSBAG2_CPP_EXPORT __attribute__ ((visibility("default")))
