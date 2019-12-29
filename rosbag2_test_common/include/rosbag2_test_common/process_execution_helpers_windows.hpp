@@ -23,6 +23,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <string>
+#include <thread>
 
 using namespace ::testing;  // NOLINT
 
