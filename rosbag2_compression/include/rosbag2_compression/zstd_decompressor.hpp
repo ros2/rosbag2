@@ -29,6 +29,11 @@
 namespace rosbag2_compression
 {
 
+/**
+ * A BaseDecompressorInterface that is used to decompress bagfiles stored using ZStandard compression.
+ *
+ * ZstdDecompressor should only be initialized by Reader.
+ */
 class ROSBAG2_COMPRESSION_PUBLIC ZstdDecompressor : public BaseDecompressorInterface
 {
 public:

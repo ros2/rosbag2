@@ -28,8 +28,16 @@
 
 namespace
 {
-constexpr const char DECOMPRESSION_IDENTIFIER[] = "zstd";
+constexpr const char kDecompressionIdentifier[] = "zstd";
 
+/**
+ * Open a file using the C API.
+ * This function calls OS-specific implementation of fopen.
+ *
+ * \param uri is the path to the file
+ * \param read_mode is the read mode string accepted by fopen.
+ * \return the FILE pointer or nullptr if the file was not opened.
+ */
 FILE * open_file(const std::string & uri, const std::string & read_mode)
 {
   FILE * fp{nullptr};
@@ -41,6 +49,12 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
   return fp;
 }
 
+/**
+ * Read a file from the supplied uri into a vector.
+ *
+ * \param uri is the path to the file.
+ * \return the contents of the buffer as a vector.
+ */
 std::vector<uint8_t> get_input_buffer(
   const std::string & uri,
   size_t & compressed_buffer_length)
@@ -84,6 +98,11 @@ std::vector<uint8_t> get_input_buffer(
   return compressed_buffer;
 }
 
+/**
+ * Writes the output buffer to the specified file path.
+ * \param output_buffer is the data to write.
+ * \param uri is the relative file path to the output storage.
+ */
 void write_output_buffer(
   const uint8_t * output_buffer,
   const size_t output_buffer_length,
@@ -119,6 +138,9 @@ void write_output_buffer(
   fclose(file_pointer);
 }
 
+/**
+ * Checks compression_result and throws a runtime_error if there was a ZSTD error.
+ */
 void throw_on_zstd_error(const size_t compression_result)
 {
   if (ZSTD_isError(compression_result)) {
@@ -129,29 +151,42 @@ void throw_on_zstd_error(const size_t compression_result)
   }
 }
 
+/**
+ * Checks if the frame content is valid.
+ */
 void check_frame_content(const size_t frame_content)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
-    throw std::runtime_error("File not compressed with Zstd.");
+    throw std::runtime_error("Unable to determine file size due to error.");
   } else if (frame_content == ZSTD_CONTENTSIZE_UNKNOWN) {
-    throw std::runtime_error("Unable to determine file size");
+    throw std::runtime_error("Unable to determine file size.");
   }
 }
 
+/**
+ * Prints decompression statistics to the debug log stream.
+ * The log statement is formatted as JSON.
+ *
+ * \param start is the time_point when compression started.
+ * \param end is the time_point when compression ended.
+ * \param decompressed_size is the file size after decompression
+ * \param compressed_size is the compressed file size
+ */
 void print_decompression_statistics(
   const std::chrono::high_resolution_clock::time_point start,
   const std::chrono::high_resolution_clock::time_point end,
   const size_t decompressed_size,
   const size_t compressed_size)
 {
-  const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   const auto decompression_ratio =
     static_cast<double>(decompressed_size) / static_cast<double>(compressed_size);
 
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-    "Decompression statistics:\n" <<
-      "Time: " << duration.count() << " microseconds" <<
-      "Compression Ratio: " << decompression_ratio);
+    "\"Decompression statistics\" : {\n" <<
+      "\"Time\" : " << (duration.count() / 1000.0) <<
+      ", \"Compression Ratio\" : " << decompression_ratio <<
+      "}");
 }
 }  // namespace
 
@@ -196,6 +231,6 @@ void ZstdDecompressor::decompress_serialized_bag_message(
 
 std::string ZstdDecompressor::get_decompression_identifier() const
 {
-  return DECOMPRESSION_IDENTIFIER;
+  return kDecompressionIdentifier;
 }
 }  // namespace rosbag2_compression
