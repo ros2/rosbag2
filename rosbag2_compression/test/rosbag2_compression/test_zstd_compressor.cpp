@@ -54,9 +54,11 @@ std::vector<char> read_file(const std::string & uri)
   std::ifstream infile{uri, std::ios_base::binary | std::ios::ate};
   infile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-  std::vector<char> contents;
   const auto file_size = infile.tellg();
-  contents.resize(file_size);
+  // Initialize contents with size = file_size
+  // Uniform initialization cannot be used here since it will choose
+  // the initializer list constructor instead.
+  std::vector<char> contents(file_size);
 
   infile.seekg(0, std::ios_base::beg);
   infile.read(contents.data(), file_size);

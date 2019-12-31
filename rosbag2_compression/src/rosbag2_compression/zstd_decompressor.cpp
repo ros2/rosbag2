@@ -71,9 +71,10 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     throw std::runtime_error{errmsg.str()};
   }
 
-  // Allocate and read in
-  std::vector<uint8_t> compressed_buffer;
-  compressed_buffer.resize(compressed_buffer_length);
+  // Initialize compress_buffer with size = compressed_buffer_length.
+  // Uniform initialization cannot be used here since it will choose
+  // the initializer list constructor instead.
+  std::vector<uint8_t> compressed_buffer(compressed_buffer_length);
 
   const auto nRead = fread(
     compressed_buffer.data(), sizeof(decltype(compressed_buffer)::value_type),
@@ -207,8 +208,10 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
     ZSTD_getFrameContentSize(compressed_buffer.data(), compressed_buffer_length);
   check_frame_content(decompressed_buffer_length);
 
-  std::vector<uint8_t> decompressed_buffer;
-  decompressed_buffer.resize(decompressed_buffer_length);
+  // Initializes decompressed_buffer with size = decompressed_buffer_length.
+  // Uniform initialization cannot be used here since it will choose
+  // the initializer list constructor instead.
+  std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
 
   const auto decompression_result = ZSTD_decompress(
     decompressed_buffer.data(), decompressed_buffer_length,
