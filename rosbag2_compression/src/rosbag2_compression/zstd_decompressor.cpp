@@ -76,7 +76,8 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   compressed_buffer.resize(compressed_buffer_length);
 
   const auto nRead = fread(
-    compressed_buffer.data(), sizeof(uint8_t), compressed_buffer_length, file_pointer);
+    compressed_buffer.data(), sizeof(decltype(compressed_buffer)::value_type),
+    compressed_buffer_length, file_pointer);
 
   if (nRead != compressed_buffer_length) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read !(" <<
