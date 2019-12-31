@@ -28,6 +28,8 @@
 
 namespace
 {
+
+// String constant used to identify ZstdDecompressor.
 constexpr const char kDecompressionIdentifier[] = "zstd";
 
 /**
@@ -55,12 +57,10 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
  * \param uri is the path to the file.
  * \return the contents of the buffer as a vector.
  */
-std::vector<uint8_t> get_input_buffer(
-  const std::string & uri,
-  size_t & compressed_buffer_length)
+std::vector<uint8_t> get_input_buffer(const std::string & uri)
 {
   // Get the file size
-  compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+  const auto compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
 
   // Read in buffer, handling accordingly
   const auto file_pointer = open_file(uri.c_str(), "rb");
@@ -68,12 +68,12 @@ std::vector<uint8_t> get_input_buffer(
     std::stringstream errmsg;
     errmsg << "Failed to open file: \"" << uri << "\" for binary reading!";
 
-    throw std::runtime_error(errmsg.str());
+    throw std::runtime_error{errmsg.str()};
   }
 
   // Allocate and read in
   std::vector<uint8_t> compressed_buffer;
-  compressed_buffer.reserve(compressed_buffer_length);
+  compressed_buffer.resize(compressed_buffer_length);
 
   const auto nRead = fread(
     compressed_buffer.data(), sizeof(uint8_t), compressed_buffer_length, file_pointer);
@@ -91,7 +91,7 @@ std::vector<uint8_t> get_input_buffer(
     std::stringstream errmsg;
     errmsg << "Unable to read binary data from file: \"" << uri << "\"!";
 
-    throw std::runtime_error(errmsg.str());
+    throw std::runtime_error{errmsg.str()};
   }
 
   fclose(file_pointer);
@@ -101,6 +101,7 @@ std::vector<uint8_t> get_input_buffer(
 /**
  * Writes the output buffer to the specified file path.
  * \param output_buffer is the data to write.
+ * \param output_buffer_length is the number of bytes to write.
  * \param uri is the relative file path to the output storage.
  */
 void write_output_buffer(
@@ -113,7 +114,7 @@ void write_output_buffer(
     std::stringstream errmsg;
     errmsg << "Failed to open file: \"" << uri << "\" for binary writing!";
 
-    throw std::runtime_error(errmsg.str());
+    throw std::runtime_error{errmsg.str()};
   }
 
   const auto nWrite = fwrite(
@@ -132,7 +133,7 @@ void write_output_buffer(
     std::stringstream errmsg;
     errmsg << "Unable to write decompressed data to file: \"" << uri << "\"!";
 
-    throw std::runtime_error(errmsg.str());
+    throw std::runtime_error{errmsg.str()};
   }
 
   fclose(file_pointer);
@@ -147,7 +148,7 @@ void throw_on_zstd_error(const size_t compression_result)
     std::stringstream error;
     error << "ZSTD decompression error: " << ZSTD_getErrorName(compression_result);
 
-    throw std::runtime_error(error.str());
+    throw std::runtime_error{error.str()};
   }
 }
 
@@ -157,9 +158,9 @@ void throw_on_zstd_error(const size_t compression_result)
 void check_frame_content(const size_t frame_content)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
-    throw std::runtime_error("Unable to determine file size due to error.");
+    throw std::runtime_error{"Unable to determine file size due to error."};
   } else if (frame_content == ZSTD_CONTENTSIZE_UNKNOWN) {
-    throw std::runtime_error("Unable to determine file size.");
+    throw std::runtime_error{"Unable to determine file size."};
   }
 }
 
@@ -196,18 +197,17 @@ namespace rosbag2_compression
 std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 {
   const auto start = std::chrono::high_resolution_clock::now();
-  const auto uri_path = rcpputils::fs::path(uri);
+  const auto uri_path = rcpputils::fs::path{uri};
   const auto decompressed_uri = rcpputils::fs::remove_extension(uri_path).string();
-
-  size_t compressed_buffer_length{0};
-  const auto compressed_buffer = get_input_buffer(uri, compressed_buffer_length);
+  const auto compressed_buffer = get_input_buffer(uri);
+  const auto compressed_buffer_length = compressed_buffer.size();
 
   const auto decompressed_buffer_length =
     ZSTD_getFrameContentSize(compressed_buffer.data(), compressed_buffer_length);
   check_frame_content(decompressed_buffer_length);
 
   std::vector<uint8_t> decompressed_buffer;
-  decompressed_buffer.reserve(decompressed_buffer_length);
+  decompressed_buffer.resize(decompressed_buffer_length);
 
   const auto decompression_result = ZSTD_decompress(
     decompressed_buffer.data(), decompressed_buffer_length,
@@ -226,7 +226,7 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 void ZstdDecompressor::decompress_serialized_bag_message(
   rosbag2_storage::SerializedBagMessage *)
 {
-  throw std::logic_error("Not implemented");
+  throw std::logic_error{"Not implemented"};
 }
 
 std::string ZstdDecompressor::get_decompression_identifier() const
