@@ -169,6 +169,9 @@ void check_frame_content(const size_t frame_content)
  * Prints decompression statistics to the debug log stream.
  * The log statement is formatted as JSON.
  *
+ * Example:
+ *  "Decompression statistics" : {"Time" : 1.2, "Compression Ratio" : 0.5}
+ *
  * \param start is the time_point when compression started.
  * \param end is the time_point when compression ended.
  * \param decompressed_size is the file size after decompression
@@ -185,7 +188,7 @@ void print_decompression_statistics(
     static_cast<double>(decompressed_size) / static_cast<double>(compressed_size);
 
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-    "\"Decompression statistics\" : {\n" <<
+    "\"Decompression statistics\" : {" <<
       "\"Time\" : " << (duration.count() / 1000.0) <<
       ", \"Compression Ratio\" : " << decompression_ratio <<
       "}");
