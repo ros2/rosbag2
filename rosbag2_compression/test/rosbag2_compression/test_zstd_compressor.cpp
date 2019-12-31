@@ -144,8 +144,12 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
   const auto decompressed_file_size =
     rosbag2_storage::FilesystemHelper::get_file_size(decompressed_uri);
 
-  EXPECT_EQ(initial_data.size() * sizeof(char), initial_file_size);
-  EXPECT_EQ(decompressed_data.size() * sizeof(char), decompressed_file_size);
+  EXPECT_EQ(
+    initial_data.size() * sizeof(decltype(initial_data)::value_type),
+    initial_file_size);
+  EXPECT_EQ(
+    decompressed_data.size() * sizeof(decltype(initial_data)::value_type),
+    decompressed_file_size);
   EXPECT_EQ(initial_data, decompressed_data);
 }
 

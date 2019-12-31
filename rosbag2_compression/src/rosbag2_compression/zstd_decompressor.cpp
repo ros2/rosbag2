@@ -103,12 +103,10 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
 /**
  * Writes the output buffer to the specified file path.
  * \param output_buffer is the data to write.
- * \param output_buffer_length is the number of bytes to write.
  * \param uri is the relative file path to the output storage.
  */
 void write_output_buffer(
-  const uint8_t * output_buffer,
-  const size_t output_buffer_length,
+  const std::vector<uint8_t> & output_buffer,
   const std::string & uri)
 {
   const auto file_pointer = open_file(uri.c_str(), "wb");
@@ -120,11 +118,12 @@ void write_output_buffer(
   }
 
   const auto nWrite = fwrite(
-    output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+    output_buffer.data(), sizeof(uint8_t),
+    output_buffer.size(), file_pointer);
 
-  if (nWrite != output_buffer_length) {
+  if (nWrite != output_buffer.size()) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" <<
-      nWrite << " != output_buffer_length (" << output_buffer_length <<
+      nWrite << " != output_buffer_length (" << output_buffer.size() <<
       ")!");
     // An error indicator is set by fwrite, so the following check will throw.
   }
@@ -219,7 +218,7 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 
   throw_on_zstd_error(decompression_result);
 
-  write_output_buffer(decompressed_buffer.data(), decompressed_buffer_length, decompressed_uri);
+  write_output_buffer(decompressed_buffer, decompressed_uri);
 
   const auto end = std::chrono::high_resolution_clock::now();
   print_decompression_statistics(start, end, decompression_result, compressed_buffer_length);
