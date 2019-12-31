@@ -155,3 +155,12 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
   auto decompressor = rosbag2_compression::ZstdDecompressor{};
   EXPECT_THROW(decompressor.decompress_uri(uri), std::runtime_error);
 }
+
+TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_uri)
+{
+  const auto bad_uri =
+    rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bad_uri.txt"});
+  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+
+  EXPECT_THROW(decompressor.decompress_uri(bad_uri), std::runtime_error);
+}
