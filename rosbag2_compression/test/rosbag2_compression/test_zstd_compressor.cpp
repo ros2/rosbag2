@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_compression/zstd_compressor.hpp"
@@ -46,6 +47,21 @@ void create_garbage_file(const std::string & uri, int size = DEFAULT_GARBAGE_FIL
   for (int i = 0; i < num_iterations; i++) {
     out << GARBAGE_STATEMENT;
   }
+}
+
+std::vector<char> read_file(const std::string & uri)
+{
+  std::ifstream infile{uri, std::ios_base::binary | std::ios::ate};
+  infile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+  std::vector<char> contents;
+  const auto file_size = infile.tellg();
+  contents.resize(file_size);
+
+  infile.seekg(0, std::ios_base::beg);
+  infile.read(contents.data(), file_size);
+
+  return contents;
 }
 }  // namespace
 
@@ -107,4 +123,35 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   EXPECT_EQ(uri, expected_decompressed_uri);
   EXPECT_EQ(initial_file_size, decompressed_file_size);
   EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(decompressed_uri));
+}
+
+TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
+{
+  const auto uri = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "file2.txt"});
+  create_garbage_file(uri);
+
+  auto compressor = rosbag2_compression::ZstdCompressor{};
+  const auto compressed_uri = compressor.compress_uri(uri);
+
+  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+  const auto decompressed_uri = decompressor.decompress_uri(compressed_uri);
+
+  const auto initial_data = read_file(uri);
+  const auto initial_file_size = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+  const auto decompressed_data = read_file(decompressed_uri);
+  const auto decompressed_file_size =
+    rosbag2_storage::FilesystemHelper::get_file_size(decompressed_uri);
+
+  EXPECT_EQ(initial_data.size() * sizeof(char), initial_file_size);
+  EXPECT_EQ(decompressed_data.size() * sizeof(char), decompressed_file_size);
+  EXPECT_EQ(initial_data, decompressed_data);
+}
+
+TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
+{
+  const auto uri = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "file3.txt"});
+  create_garbage_file(uri);
+
+  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+  EXPECT_THROW(decompressor.decompress_uri(uri), std::runtime_error);
 }
