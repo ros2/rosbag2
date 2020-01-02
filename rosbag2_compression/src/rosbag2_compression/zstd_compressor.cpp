@@ -57,8 +57,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     throw std::runtime_error("Error opening file");
   }
   // Allocate and read in
-  std::vector<uint8_t> decompressed_buffer;
-  decompressed_buffer.resize(decompressed_buffer_length);
+  std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
 
   const auto nRead = fread(
     decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer_length, file_pointer);
@@ -137,8 +136,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
   // Allocate based on compression bound and compress
   const auto compressed_buffer_length = ZSTD_compressBound(decompressed_buffer.size());
 
-  std::vector<uint8_t> compressed_buffer;
-  compressed_buffer.resize(compressed_buffer_length);
+  std::vector<uint8_t> compressed_buffer(compressed_buffer_length);
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
