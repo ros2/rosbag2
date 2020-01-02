@@ -190,7 +190,7 @@ void print_decompression_statistics(
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
     "\"Decompression statistics\" : {" <<
       "\"Time\" : " << (duration.count() / 1000.0) <<
-      ", \"Compression Ratio\" : " << decompression_ratio <<
+      ", \"Decompression Ratio\" : " << decompression_ratio <<
       "}");
 }
 }  // namespace
