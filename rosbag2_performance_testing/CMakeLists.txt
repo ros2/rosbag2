@@ -38,11 +38,15 @@ if(BUILD_PERFORMANCE)
   install(DIRECTORY performance_publishers/large_message_test/launch
     DESTINATION share/${PROJECT_NAME}/)
 
+  install(DIRECTORY performance_publishers/large_message_test/expected
+          DESTINATION share/${PROJECT_NAME}/)
+
+  install(DIRECTORY scripts/
+          DESTINATION share/${PROJECT_NAME}/)
+
   install(TARGETS image_publisher1 image_publisher2 pointcloud_publisher
     EXPORT export_${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME})
-
-  ament_python_install_package(scripts/)
 endif()
 
 if(BUILD_TESTING)
