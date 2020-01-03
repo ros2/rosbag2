@@ -55,6 +55,9 @@ bool is_read_write(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
 }
 
 constexpr const auto FILE_EXTENSION = ".db3";
+
+// Minimum size of a sqlite3 database file in bytes (84 kiB).
+constexpr const uint64_t MIN_SPLIT_FILE_SIZE = 86016;
 }  // namespace
 
 namespace rosbag2_storage_plugins
@@ -234,6 +237,11 @@ std::string SqliteStorage::get_storage_identifier() const
 std::string SqliteStorage::get_relative_file_path() const
 {
   return relative_path_;
+}
+
+uint64_t SqliteStorage::get_minimum_split_file_size() const
+{
+  return MIN_SPLIT_FILE_SIZE;
 }
 
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()

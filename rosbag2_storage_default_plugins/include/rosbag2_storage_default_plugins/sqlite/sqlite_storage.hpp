@@ -70,6 +70,8 @@ public:
 
   std::string get_storage_identifier() const override;
 
+  uint64_t get_minimum_split_file_size() const override;
+
 private:
   void initialize();
   void prepare_for_writing();

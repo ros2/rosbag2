@@ -50,6 +50,8 @@ public:
   uint64_t get_bagfile_size() const override;
 
   std::string get_storage_identifier() const override;
+
+  uint64_t get_minimum_split_file_size() const override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_
