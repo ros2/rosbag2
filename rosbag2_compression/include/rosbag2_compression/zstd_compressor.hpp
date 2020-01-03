@@ -29,6 +29,11 @@
 namespace rosbag2_compression
 {
 
+/**
+ * A BaseCompressorInterface that is used to compress bagfiles stored using ZStandard compression.
+ *
+ * ZstdCompressor should only be initialized by Writer.
+ */
 class ROSBAG2_COMPRESSION_PUBLIC ZstdCompressor : public BaseCompressorInterface
 {
 public:

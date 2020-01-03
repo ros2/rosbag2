@@ -32,8 +32,15 @@ namespace
 // Setting to zero uses Zstd's default value of 3.
 constexpr const int DEFAULT_ZSTD_COMPRESSION_LEVEL = 1;
 
+// String constant used to identify ZstdCompressor.
 constexpr const char COMPRESSION_IDENTIFIER[] = "zstd";
 
+/**
+ * Open a file using the OS-specific C API.
+ * \param uri is the path to the file.
+ * \param read_mode is the read mode accepted by OS-specific fopen.
+ * \return the FILE pointer or nullptr if the file was not opened.
+ */
 FILE * open_file(const std::string & uri, const std::string & read_mode)
 {
   FILE * fp{nullptr};
@@ -45,81 +52,120 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
   return fp;
 }
 
+/**
+ * Read a file from the supplied uri into a vector.
+ * \param uri is the path to the file.
+ * \return the contents of the buffer as a vector.
+ */
 std::vector<uint8_t> get_input_buffer(const std::string & uri)
 {
-  // Get the file size
+  // Read in buffer, handling accordingly
+  const auto file_pointer = open_file(uri.c_str(), "rb");
+  if (file_pointer == nullptr) {
+    throw std::runtime_error{"Error opening file"};
+  }
+
   const auto decompressed_buffer_length =
     rosbag2_storage::FilesystemHelper::get_file_size(uri);
 
-  // Read in buffer, handling accordingly
-  auto file_pointer = open_file(uri.c_str(), "rb");
-  if (file_pointer == nullptr) {
-    throw std::runtime_error("Error opening file");
+  if (decompressed_buffer_length == 0) {
+    fclose(file_pointer);
+
+    std::stringstream errmsg;
+    errmsg << "Unable to get size of file: " << uri;
+
+    throw std::runtime_error{errmsg.str()};
   }
+
   // Allocate and read in
   std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
 
-  const auto nRead = fread(
-    decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer_length, file_pointer);
+  const auto read_count = fread(
+    decompressed_buffer.data(), sizeof(uint8_t), decompressed_buffer.size(), file_pointer);
 
-  if (nRead != decompressed_buffer_length) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read (" << nRead <<
-      ") != decompressed_buffer_length (" << decompressed_buffer_length << ")!");
+  if (read_count != decompressed_buffer_length) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read (" << read_count <<
+      ") != decompressed_buffer_length (" << decompressed_buffer.size() << ")!");
     // An error indicator is set by this, so the following check will throw
   }
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);
-    throw std::runtime_error("Unable to read file");
+    throw std::runtime_error{"Unable to read file"};
   }
   fclose(file_pointer);
   return decompressed_buffer;
 }
 
+/**
+ * Writes the output buffer to the specified file path.
+ * \param output_buffer is the data to write.
+ * \param uri is the relative file path to the output storage.
+ */
 void write_output_buffer(
-  const uint8_t * output_buffer,
-  const size_t output_buffer_length,
+  const std::vector<uint8_t> & output_buffer,
   const std::string & uri)
 {
-  auto file_pointer = open_file(uri.c_str(), "wb");
-  const auto nWrite = fwrite(
-    output_buffer, sizeof(uint8_t), output_buffer_length, file_pointer);
+  if (output_buffer.empty()) {
+    std::stringstream errmsg;
+    errmsg << "Cannot write empty buffer to file: " << uri;
 
-  if (nWrite != output_buffer_length) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" << nWrite <<
-      ") != output_buffer_length (" << output_buffer_length << ")!");
+    throw std::runtime_error{errmsg.str()};
+  }
+
+  const auto file_pointer = open_file(uri.c_str(), "wb");
+  const auto write_count = fwrite(
+    output_buffer.data(),
+    sizeof(uint8_t),
+    output_buffer.size(),
+    file_pointer);
+
+  if (write_count != output_buffer.size()) {
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" << write_count <<
+      ") != output_buffer size (" << output_buffer.size() << ")!");
     // An error indicator is set by fwrite, so the following check will throw.
   }
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);
-    throw std::runtime_error("Unable to write compressed file");
+    throw std::runtime_error{"Unable to write compressed file"};
   }
   fclose(file_pointer);
 }
 
+/**
+ * Checks compression_result and throws a runtime_error if there was a ZSTD error.
+ */
 void throw_on_zstd_error(const size_t compression_result)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
     error << "ZSTD compression error: " << ZSTD_getErrorName(compression_result);
-    throw std::runtime_error(error.str());
+    throw std::runtime_error{error.str()};
   }
-  ROSBAG2_COMPRESSION_LOG_DEBUG("ZSTD compressed file.");
 }
 
+/**
+ * Prints compression statistics to the debug log stream.
+ * The log statement is formatted in JSON.
+ * Time is formatted as a decimal of seconds.
+ *
+ * Example:
+ *   "Compression statistics: {"Time" : 1.2, "Compression Ratio" : 0.5}
+ */
 void print_compression_statistics(
   std::chrono::high_resolution_clock::time_point start,
   std::chrono::high_resolution_clock::time_point end,
   size_t decompressed_size, size_t compressed_size)
 {
-  const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
   const auto compression_ratio =
     static_cast<double>(decompressed_size) / static_cast<double>(compressed_size);
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-    "Compression statistics:\n" <<
-      "Time: " << duration.count() << " microseconds" <<
-      "Compression Ratio: " << compression_ratio
+    "\"Compression statistics\" : {" <<
+      "\"Time\" : " << (duration.count() / 1000.0) <<
+      ", \"Compression Ratio\" : " << compression_ratio <<
+      "}"
   );
 }
 }  // namespace
@@ -143,7 +189,11 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
     compressed_buffer.data(), compressed_buffer.size(),
     decompressed_buffer.data(), decompressed_buffer.size(), DEFAULT_ZSTD_COMPRESSION_LEVEL);
   throw_on_zstd_error(compression_result);
-  write_output_buffer(compressed_buffer.data(), compression_result, compressed_uri);
+
+  // Compression_buffer_length might be larger than the actual compression size
+  // Resize compressed_buffer so its size is the actual compression size.
+  compressed_buffer.resize(compression_result);
+  write_output_buffer(compressed_buffer, compressed_uri);
 
   const auto end = std::chrono::high_resolution_clock::now();
   print_compression_statistics(start, end, decompressed_buffer.size(), compression_result);
@@ -153,7 +203,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 void ZstdCompressor::compress_serialized_bag_message(
   rosbag2_storage::SerializedBagMessage *)
 {
-  throw std::logic_error("Not implemented");
+  throw std::logic_error{"Not implemented"};
 }
 
 std::string ZstdCompressor::get_compression_identifier() const

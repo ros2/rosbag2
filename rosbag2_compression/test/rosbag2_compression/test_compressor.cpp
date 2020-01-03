@@ -29,7 +29,7 @@ public:
 
 TEST_F(FakeCompressorTest, test_compress_file_method)
 {
-  const rcpputils::fs::path test_path("/path/file.txt");
+  const rcpputils::fs::path test_path{"/path/file.txt"};
   const auto expected_compressed_uri = test_path.string() + "." +
     compressor.get_compression_identifier();
   const auto compressed_uri = compressor.compress_uri(test_path.string());
