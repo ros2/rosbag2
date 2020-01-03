@@ -31,27 +31,27 @@ using namespace rosbag2_test_common;  // NOLINT
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   const std::string bagfile = "rosbag2_bagfile_information:\n"
-                        "  version: 2\n"
-                        "  storage_identifier: sqlite3\n"
-                        "  relative_file_paths:\n"
-                        "    - some_relative_path\n"
-                        "    - some_other_relative_path\n"
-                        "  duration:\n"
-                        "    nanoseconds: 100\n"
-                        "  starting_time:\n"
-                        "    nanoseconds_since_epoch: 1000000\n"
-                        "  message_count: 50\n"
-                        "  topics_with_message_count:\n"
-                        "    - topic_metadata:\n"
-                        "        name: topic1\n"
-                        "        type: type1\n"
-                        "        serialization_format: rmw1\n"
-                        "      message_count: 100\n"
-                        "    - topic_metadata:\n"
-                        "        name: topic2\n"
-                        "        type: type2\n"
-                        "        serialization_format: rmw2\n"
-                        "      message_count: 200\n";
+    "  version: 2\n"
+    "  storage_identifier: sqlite3\n"
+    "  relative_file_paths:\n"
+    "    - some_relative_path\n"
+    "    - some_other_relative_path\n"
+    "  duration:\n"
+    "    nanoseconds: 100\n"
+    "  starting_time:\n"
+    "    nanoseconds_since_epoch: 1000000\n"
+    "  message_count: 50\n"
+    "  topics_with_message_count:\n"
+    "    - topic_metadata:\n"
+    "        name: topic1\n"
+    "        type: type1\n"
+    "        serialization_format: rmw1\n"
+    "      message_count: 100\n"
+    "    - topic_metadata:\n"
+    "        name: topic2\n"
+    "        type: type2\n"
+    "        serialization_format: rmw2\n"
+    "      message_count: 200\n";
 
   {
     const auto bagfile_path = rosbag2_storage::FilesystemHelper::concat({
@@ -59,7 +59,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
     });
 
     std::ofstream fout {bagfile_path};
-    fout << bagfile
+    fout << bagfile;
   }
 
   rosbag2::Info info;
@@ -67,27 +67,34 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
 
   EXPECT_EQ(metadata.version, 2);
   EXPECT_EQ(metadata.storage_identifier, "sqlite3");
-  EXPECT_EQ(metadata.relative_file_paths, {"some_relative_path", "some_other_relative_path"});
+
+  const auto expected_paths =
+    std::vector<std::string>{"some_relative_path", "some_other_relative_path"};
+  EXPECT_EQ(metadata.relative_file_paths, expected_paths);
   EXPECT_EQ(metadata.duration, std::chrono::nanoseconds{100});
   EXPECT_EQ(
     metadata.starting_time,
-    std::chrono::time_point<std::chrono::high_resolution_clock>{std::chrono::nanoseconds{1000000});
-  EXPECT_EQ(metadata.message_count, 500);
-  EXPECT_EQ(metadata.topics_with_message_count.size(), 2);
+    std::chrono::time_point<std::chrono::high_resolution_clock>{std::chrono::nanoseconds{1000000}});
+  EXPECT_EQ(metadata.message_count, 50u);
+  EXPECT_EQ(metadata.topics_with_message_count.size(), 2u);
 
   {
     const auto actual_first_topic = metadata.topics_with_message_count[0];
-    const auto expected_first_topic = rosbag2_storage::TopicInformation{{"topic1", "type1", "rmw1"}, 100};
+    const auto expected_first_topic =
+      rosbag2_storage::TopicInformation{{"topic1", "type1", "rmw1"}, 100};
 
-    EXPECT_EQ(actual_first_topic, expected_first_topic);
-  };
+    EXPECT_EQ(actual_first_topic.topic_metadata, expected_first_topic.topic_metadata);
+    EXPECT_EQ(actual_first_topic.message_count, expected_first_topic.message_count);
+  }
 
   {
     const auto actual_second_topic = metadata.topics_with_message_count[1];
-    const auto expected_second_topic = rosbag2_storage::TopicInformation{{"topic2", "type2", "rmw2", 200};
+    const auto expected_second_topic =
+      rosbag2_storage::TopicInformation{{"topic2", "type2", "rmw2"}, 200};
 
-    EXPECT_EQ(actual_second_topic, expected_second_topic);
-  };
+    EXPECT_EQ(actual_second_topic.topic_metadata, expected_second_topic.topic_metadata);
+    EXPECT_EQ(actual_second_topic.message_count, expected_second_topic.message_count);
+  }
 }
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metadata_io_method) {
@@ -116,7 +123,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "        serialization_format: rmw2\n"
     "      message_count: 200\n"
     "  compression_format: \"zstd\"\n"
-    "  compression_mode: \"bagfile\"\n");
+    "  compression_mode: \"file\"\n");
 
   std::ofstream fout(
     rosbag2_storage::FilesystemHelper::concat({
@@ -158,5 +165,5 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 
   EXPECT_EQ(read_metadata.compression_format, "zstd");
-  EXPECT_EQ(read_metadata.compression_mode, "bagfile");
+  EXPECT_EQ(read_metadata.compression_mode, "file");
 }
