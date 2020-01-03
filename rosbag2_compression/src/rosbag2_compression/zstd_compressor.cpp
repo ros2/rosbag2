@@ -135,7 +135,6 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 
   // Allocate based on compression bound and compress
   const auto compressed_buffer_length = ZSTD_compressBound(decompressed_buffer.size());
-
   std::vector<uint8_t> compressed_buffer(compressed_buffer_length);
 
   // Perform compression and check.
