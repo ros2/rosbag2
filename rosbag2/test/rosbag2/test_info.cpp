@@ -123,7 +123,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "        serialization_format: rmw2\n"
     "      message_count: 200\n"
     "  compression_format: \"zstd\"\n"
-    "  compression_mode: \"file\"\n");
+    "  compression_mode: \"FILE\"\n");
 
   std::ofstream fout(
     rosbag2_storage::FilesystemHelper::concat({
@@ -165,5 +165,5 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 
   EXPECT_EQ(read_metadata.compression_format, "zstd");
-  EXPECT_EQ(read_metadata.compression_mode, "file");
+  EXPECT_EQ(read_metadata.compression_mode, "FILE");
 }
