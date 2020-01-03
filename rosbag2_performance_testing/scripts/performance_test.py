@@ -1,3 +1,17 @@
+# Copyright 2019-2020, Martin Idel
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from subprocess import Popen
 from psutil import Process
 from os.path import join, isdir
@@ -10,6 +24,11 @@ from typing import Dict
 
 from ament_index_python import get_package_prefix
 
+# Time monitoring = sleep_between_reading * number_of_readings
+sleep_between_reading = 5.0
+cpu_averaging_time = 1.0  # must be smaller than sleep_between_reading
+number_of_readings = 12
+
 
 def run_record_process(bagfile_name: str):
     record_process_handle = Popen(['ros2', 'bag', 'record', '-a', '-o', bagfile_name], shell=False)
@@ -17,29 +36,28 @@ def run_record_process(bagfile_name: str):
     record_process = Process(record_process_handle.pid)
     resident_memory = []
     cpu_usage = []
-    for i in range(0, 12):
+    for i in range(0, number_of_readings):
         resident_memory.append(record_process.memory_info()[0])
-        cpu_usage.append(record_process.cpu_percent(1.0))
-        sleep(4.0)
+        cpu_usage.append(record_process.cpu_percent(cpu_averaging_time))
+        sleep(sleep_between_reading - cpu_averaging_time)
     record_process_handle.send_signal(SIGINT)
     sleep(2.0)  # need to wait to finish writing bagfile
 
-    resident_memory_average = sum(resident_memory) / len(resident_memory)
-    resident_memory_max = max(resident_memory)
+    resident_memory_average = sum(resident_memory) / len(resident_memory) / 1000000
+    resident_memory_max = max(resident_memory) / 1000000
     cpu_usage_average = sum(cpu_usage) / len(cpu_usage)
     cpu_usage_max = max(cpu_usage)
-    print('Memory usage: maximally ' + str(resident_memory_max / 1000000) +
-          'MB at an average of ' + str(resident_memory_average / 1000000) + 'MB')
+    print(f'Memory usage: maximally {resident_memory_max} MB at an average of {resident_memory_average} MB')
     print(f'CPU usage (in % of one core): maximally {cpu_usage_max}% at an average of {cpu_usage_average}%')
 
 
 def read_expectations_file(test_name) -> Dict[str, int]:
-    package_string = get_package_prefix('rosbag2_performance_testing')
-    expected_dir = join(package_string, 'share', 'rosbag2_performance_testing', 'expected')
+    package_dir = get_package_prefix('rosbag2_performance_testing')
+    expected_dir = join(package_dir, 'share', 'rosbag2_performance_testing', 'expected')
     with open(join(expected_dir, test_name + '_expected.yaml'), 'r') as stream:
         try:
             expectations = safe_load(stream)[test_name]
-            print('Running test ' + test_name + expectations['description'] + '\n'
+            print('Running test ' + test_name + ': ' + expectations['description'] + '\n'
                   + 'Expected I/O-Load: '
                   + str(expectations['expected_size_in_mb']/expectations['expected_duration_in_sec']) + 'MB/sec\n'
                   + 'WARNING: Test will take ' + str(expectations['expected_duration_in_sec']) + 's and take '
@@ -86,9 +104,5 @@ def run_test(bagfile_name: str):
     print(f'Performance test {failed_passed}')
 
 
-def main():
-    run_test('performance_bag')
-
-
 if __name__ == "__main__":
-    main()
+    run_test('performance_bag')

@@ -23,26 +23,26 @@ if(BUILD_PERFORMANCE)
   find_package(sensor_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
 
-  add_executable(image_publisher1 performance_publishers/large_message_test/src/image_publisher1.cpp)
+  add_executable(image_publisher1 publishers/src/image_publisher1.cpp)
   target_include_directories(image_publisher1 PRIVATE large_message_test/src)
   ament_target_dependencies(image_publisher1 rclcpp rclcpp_components sensor_msgs std_msgs)
 
-  add_executable(image_publisher2 performance_publishers/large_message_test/src/image_publisher2.cpp)
+  add_executable(image_publisher2 publishers/src/image_publisher2.cpp)
   target_include_directories(image_publisher2 PRIVATE large_message_test/src)
   ament_target_dependencies(image_publisher2 rclcpp rclcpp_components sensor_msgs std_msgs)
 
-  add_executable(pointcloud_publisher performance_publishers/large_message_test/src/point_cloud2_publisher.cpp)
+  add_executable(pointcloud_publisher publishers/src/point_cloud2_publisher.cpp)
   target_include_directories(pointcloud_publisher PRIVATE large_message_test/src)
   ament_target_dependencies(pointcloud_publisher rclcpp rclcpp_components sensor_msgs std_msgs)
 
-  install(DIRECTORY performance_publishers/large_message_test/launch
+  install(DIRECTORY launch
     DESTINATION share/${PROJECT_NAME}/)
 
-  install(DIRECTORY performance_publishers/large_message_test/expected
-          DESTINATION share/${PROJECT_NAME}/)
+  install(DIRECTORY expected
+    DESTINATION share/${PROJECT_NAME}/)
 
   install(DIRECTORY scripts/
-          DESTINATION share/${PROJECT_NAME}/)
+    DESTINATION share/${PROJECT_NAME}/)
 
   install(TARGETS image_publisher1 image_publisher2 pointcloud_publisher
     EXPORT export_${PROJECT_NAME}

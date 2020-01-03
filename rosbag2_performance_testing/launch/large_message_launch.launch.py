@@ -1,4 +1,4 @@
-# Copyright 2019 Martin Idel
+# Copyright 2019-2020 Martin Idel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,16 +23,8 @@ import launch.event_handlers
 
 from ament_index_python import get_package_prefix
 
-def generate_launch_description():
-    ls = LaunchDescription([
-        launch_ros.actions.Node(
-            package='rosbag2_performance_testing', node_executable='image_publisher1', output='screen'),
-        launch_ros.actions.Node(
-            package='rosbag2_performance_testing', node_executable='image_publisher2', output='screen'),
-        launch_ros.actions.Node(
-            package='rosbag2_performance_testing', node_executable='pointcloud_publisher', output='screen')
-    ])
 
+def add_test_to_description(ls: LaunchDescription) -> LaunchDescription:
     package_string = get_package_prefix('rosbag2_performance_testing')
     perfomance_script = join(package_string, 'share', 'rosbag2_performance_testing', 'performance_test.py')
     test_script_action = launch.actions.ExecuteProcess(
@@ -54,3 +46,16 @@ def generate_launch_description():
     )))
 
     return ls
+
+
+def generate_launch_description():
+    ls = LaunchDescription([
+        launch_ros.actions.Node(
+            package='rosbag2_performance_testing', node_executable='image_publisher1', output='screen'),
+        launch_ros.actions.Node(
+            package='rosbag2_performance_testing', node_executable='image_publisher2', output='screen'),
+        launch_ros.actions.Node(
+            package='rosbag2_performance_testing', node_executable='pointcloud_publisher', output='screen')
+    ])
+
+    return add_test_to_description(ls)
