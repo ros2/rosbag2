@@ -73,7 +73,7 @@ TEST_F(FormatterTestFixture, format_files_prints_newline_if_there_are_no_paths) 
 }
 
 TEST_F(FormatterTestFixture, format_topics_with_type_correctly_layouts_more_topics) {
-  std::vector<rosbag2::TopicInformation> topics;
+  std::vector<rosbag2_storage::TopicInformation> topics;
   topics.push_back({{"topic1", "type1", "rmw1"}, 100});
   topics.push_back({{"topic2", "type2", "rmw2"}, 200});
   std::stringstream formatted_output;
@@ -87,7 +87,7 @@ TEST_F(FormatterTestFixture, format_topics_with_type_correctly_layouts_more_topi
 }
 
 TEST_F(FormatterTestFixture, format_topics_with_type_prints_newline_if_there_are_no_topics) {
-  std::vector<rosbag2::TopicInformation> topics = {};
+  std::vector<rosbag2_storage::TopicInformation> topics = {};
   std::stringstream formatted_output;
 
   formatter_->format_topics_with_type(topics, formatted_output, 0);

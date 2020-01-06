@@ -18,13 +18,16 @@
 #include <string>
 
 #include "rcutils/strdup.h"
-#include "rosbag2/serialization_format_converter_factory.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
-#include "rosbag2/types/introspection_message.hpp"
+
+#include "rosbag2_cpp/serialization_format_converter_factory.hpp"
+#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rosbag2_cpp/types.hpp"
+
 #include "rosbag2_test_common/memory_management.hpp"
+
 #include "test_msgs/message_fixtures.hpp"
 
-using rosbag2::SerializationFormatConverterFactory;
+using rosbag2_cpp::SerializationFormatConverterFactory;
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
@@ -33,28 +36,31 @@ class ConverterTestFixture : public Test
 public:
   ConverterTestFixture()
   {
-    factory_ = std::make_unique<rosbag2::SerializationFormatConverterFactory>();
+    factory_ = std::make_unique<rosbag2_cpp::SerializationFormatConverterFactory>();
     memory_management_ = std::make_unique<MemoryManagement>();
     topic_name_ = "test_topic";
     allocator_ = rcutils_get_default_allocator();
     cdr_serializer_ = factory_->load_serializer("cdr");
     cdr_deserializer_ = factory_->load_deserializer("cdr");
     type_support_ =
-      rosbag2::get_typesupport("test_msgs/MultiNested", "rosidl_typesupport_cpp");
+      rosbag2_cpp::get_typesupport("test_msgs/MultiNested", "rosidl_typesupport_cpp");
   }
 
-  std::shared_ptr<rosbag2_introspection_message_t> allocate_empty_dynamic_array_message()
+  std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t>
+  allocate_empty_dynamic_array_message()
   {
-    auto introspection_type_support = rosbag2::get_typesupport(
+    auto introspection_type_support = rosbag2_cpp::get_typesupport(
       "test_msgs/MultiNested", "rosidl_typesupport_introspection_cpp");
     auto introspection_message =
-      rosbag2::allocate_introspection_message(introspection_type_support, &allocator_);
+      rosbag2_cpp::allocate_introspection_message(introspection_type_support, &allocator_);
     introspection_message->time_stamp = 1;
-    rosbag2::introspection_message_set_topic_name(introspection_message.get(), topic_name_.c_str());
+    rosbag2_cpp::introspection_message_set_topic_name(
+      introspection_message.get(), topic_name_.c_str());
     return introspection_message;
   }
 
-  void fill_dynamic_array_message(std::shared_ptr<rosbag2_introspection_message_t> message)
+  void fill_dynamic_array_message(
+    std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t> message)
   {
     auto correctly_typed_ros_message =
       reinterpret_cast<test_msgs::msg::MultiNested *>(message->message);
@@ -62,10 +68,10 @@ public:
     correctly_typed_ros_message->array_of_arrays = multi_nested->array_of_arrays;
   }
 
-  std::unique_ptr<rosbag2::SerializationFormatConverterFactory> factory_;
-  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatSerializer>
+  std::unique_ptr<rosbag2_cpp::SerializationFormatConverterFactory> factory_;
+  std::unique_ptr<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>
   cdr_serializer_;
-  std::unique_ptr<rosbag2::converter_interfaces::SerializationFormatDeserializer>
+  std::unique_ptr<rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer>
   cdr_deserializer_;
   std::unique_ptr<MemoryManagement> memory_management_;
   std::string topic_name_;
@@ -77,7 +83,7 @@ TEST_F(ConverterTestFixture, cdr_converter_plugin_can_serialize_and_deserialize_
   auto initial_ros_message = allocate_empty_dynamic_array_message();
   fill_dynamic_array_message(initial_ros_message);
 
-  auto serialized_message = std::make_shared<rosbag2::SerializedBagMessage>();
+  auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
 
   cdr_serializer_->serialize(initial_ros_message, type_support_, serialized_message);

@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2/types.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 
@@ -29,7 +28,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
 {
   internal::CaptureStdout();
 
-  rosbag2::BagMetadata bagfile;
+  rosbag2_storage::BagMetadata bagfile;
   bagfile.storage_identifier = "sqlite3";
   bagfile.relative_file_paths.emplace_back("some_relative_path");
   bagfile.relative_file_paths.emplace_back("some_other_relative_path");

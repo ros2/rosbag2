@@ -23,8 +23,10 @@
 #include <utility>
 
 #include "rcl/expand_topic_name.h"
+
+#include "rosbag2_cpp/typesupport_helpers.hpp"
+
 #include "rosbag2_transport/logging.hpp"
-#include "rosbag2/typesupport_helpers.hpp"
 
 namespace rosbag2_transport
 {
@@ -36,7 +38,7 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name)
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
   const std::string & topic, const std::string & type)
 {
-  auto type_support = rosbag2::get_typesupport(type, "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport(type, "rosidl_typesupport_cpp");
   return std::make_shared<GenericPublisher>(get_node_base_interface().get(), topic, *type_support);
 }
 
@@ -45,7 +47,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const std::string & type,
   std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 {
-  auto type_support = rosbag2::get_typesupport(type, "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport(type, "rosidl_typesupport_cpp");
 
   auto subscription = std::shared_ptr<GenericSubscription>();
 

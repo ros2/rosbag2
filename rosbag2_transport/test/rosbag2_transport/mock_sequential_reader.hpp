@@ -20,14 +20,14 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
 
-class MockSequentialReader : public rosbag2::reader_interfaces::BaseReaderInterface
+class MockSequentialReader : public rosbag2_cpp::reader_interfaces::BaseReaderInterface
 {
 public:
   void open(
-    const rosbag2::StorageOptions & storage_options,
-    const rosbag2::ConverterOptions & converter_options) override
+    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_cpp::ConverterOptions & converter_options) override
   {
     (void) storage_options;
     (void) converter_options;
@@ -40,27 +40,27 @@ public:
     return num_read_ < messages_.size();
   }
 
-  std::shared_ptr<rosbag2::SerializedBagMessage> read_next() override
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override
   {
     return messages_[num_read_++];
   }
 
-  std::vector<rosbag2::TopicMetadata> get_all_topics_and_types() override
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override
   {
     return topics_;
   }
 
   void prepare(
-    std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages,
-    std::vector<rosbag2::TopicMetadata> topics)
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
+    std::vector<rosbag2_storage::TopicMetadata> topics)
   {
     messages_ = std::move(messages);
     topics_ = std::move(topics);
   }
 
 private:
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages_;
-  std::vector<rosbag2::TopicMetadata> topics_;
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
+  std::vector<rosbag2_storage::TopicMetadata> topics_;
   size_t num_read_;
 };
 

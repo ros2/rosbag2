@@ -20,14 +20,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rosbag2/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 
-class MockSequentialWriter : public rosbag2::writer_interfaces::BaseWriterInterface
+class MockSequentialWriter : public rosbag2_cpp::writer_interfaces::BaseWriterInterface
 {
 public:
   void open(
-    const rosbag2::StorageOptions & storage_options,
-    const rosbag2::ConverterOptions & converter_options) override
+    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_cpp::ConverterOptions & converter_options) override
   {
     (void) storage_options;
     (void) converter_options;
@@ -35,23 +35,23 @@ public:
 
   void reset() override {}
 
-  void create_topic(const rosbag2::TopicMetadata & topic_with_type) override
+  void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
   {
     topics_.emplace(topic_with_type.name, topic_with_type);
   }
 
-  void remove_topic(const rosbag2::TopicMetadata & topic_with_type) override
+  void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
   {
     (void) topic_with_type;
   }
 
-  void write(std::shared_ptr<rosbag2::SerializedBagMessage> message) override
+  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override
   {
     messages_.push_back(message);
     messages_per_topic_[message->topic_name] += 1;
   }
 
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> get_messages()
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> get_messages()
   {
     return messages_;
   }
@@ -61,14 +61,14 @@ public:
     return messages_per_topic_;
   }
 
-  std::unordered_map<std::string, rosbag2::TopicMetadata> get_topics()
+  std::unordered_map<std::string, rosbag2_storage::TopicMetadata> get_topics()
   {
     return topics_;
   }
 
 private:
-  std::unordered_map<std::string, rosbag2::TopicMetadata> topics_;
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages_;
+  std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_;
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
   std::unordered_map<std::string, size_t> messages_per_topic_;
 };
 

@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rosbag2/types.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_transport
 {
@@ -29,7 +29,7 @@ namespace rosbag2_transport
 class Formatter
 {
 public:
-  static void format_bag_meta_data(const rosbag2::BagMetadata & metadata);
+  static void format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata);
 
   static std::unordered_map<std::string, std::string> format_duration(
     std::chrono::high_resolution_clock::duration duration);
@@ -44,7 +44,7 @@ public:
     int indentation_spaces);
 
   static void format_topics_with_type(
-    const std::vector<rosbag2::TopicInformation> & topics,
+    const std::vector<rosbag2_storage::TopicInformation> & topics,
     std::stringstream & info_stream,
     int indentation_spaces);
 

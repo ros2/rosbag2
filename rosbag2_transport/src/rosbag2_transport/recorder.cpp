@@ -23,14 +23,16 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2/writer.hpp"
+#include "rosbag2_cpp/writer.hpp"
+
 #include "rosbag2_transport/logging.hpp"
+
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
-Recorder::Recorder(std::shared_ptr<rosbag2::Writer> writer, std::shared_ptr<Rosbag2Node> node)
+Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node)
 : writer_(std::move(writer)), node_(std::move(node)) {}
 
 void Recorder::record(const RecordOptions & record_options)
@@ -104,7 +106,7 @@ void Recorder::subscribe_topics(
   }
 }
 
-void Recorder::subscribe_topic(const rosbag2::TopicMetadata & topic)
+void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   auto subscription = create_subscription(topic.name, topic.type);
 
@@ -127,7 +129,7 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
-      auto bag_message = std::make_shared<rosbag2::SerializedBagMessage>();
+      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;

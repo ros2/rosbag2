@@ -17,21 +17,24 @@
 
 #include <gmock/gmock.h>
 
-#include <memory>
 #include <future>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage/filesystem_helper.hpp"
+
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
+
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT

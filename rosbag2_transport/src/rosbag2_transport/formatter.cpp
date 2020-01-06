@@ -29,7 +29,7 @@
 namespace rosbag2_transport
 {
 
-void Formatter::format_bag_meta_data(const rosbag2::BagMetadata & metadata)
+void Formatter::format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -126,7 +126,7 @@ void Formatter::format_file_paths(
 }
 
 void Formatter::format_topics_with_type(
-  const std::vector<rosbag2::TopicInformation> & topics,
+  const std::vector<rosbag2_storage::TopicInformation> & topics,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -136,7 +136,7 @@ void Formatter::format_topics_with_type(
   }
 
   auto print_topic_info =
-    [&info_stream](const rosbag2::TopicInformation & ti) -> void {
+    [&info_stream](const rosbag2_storage::TopicInformation & ti) -> void {
       info_stream << "Topic: " << ti.topic_metadata.name << " | ";
       info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";

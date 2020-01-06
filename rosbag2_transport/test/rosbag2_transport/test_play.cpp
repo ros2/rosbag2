@@ -22,13 +22,16 @@
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_test_common/subscription_manager.hpp"
+
 #include "rosbag2_transport/rosbag2_transport.hpp"
+
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
-#include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -62,12 +65,12 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->float32_values = {{40.0f, 2.0f, 0.0f}};
   complex_message1->bool_values = {{true, false, true}};
 
-  auto topic_types = std::vector<rosbag2::TopicMetadata>{
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"topic1", "test_msgs/BasicTypes", ""},
     {"topic2", "test_msgs/Arrays", ""},
   };
 
-  std::vector<std::shared_ptr<rosbag2::SerializedBagMessage>> messages =
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 500, primitive_message1),
     serialize_test_message("topic1", 700, primitive_message1),
     serialize_test_message("topic1", 900, primitive_message1),
@@ -77,7 +80,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
-  reader_ = std::make_unique<rosbag2::Reader>(std::move(prepared_mock_reader));
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.

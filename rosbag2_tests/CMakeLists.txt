@@ -29,12 +29,13 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
-  find_package(std_msgs REQUIRED)
-  find_package(test_msgs REQUIRED)
   find_package(rmw_fastrtps_cpp QUIET)
+  find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(test_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
@@ -78,7 +79,7 @@ if(BUILD_TESTING)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     if(TARGET test_converter)
       ament_target_dependencies(test_converter
-        rosbag2
+        rosbag2_cpp
         rosbag2_test_common
         test_msgs)
     endif()

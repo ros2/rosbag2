@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 
-#include "record_integration_fixture.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+
+#include "record_integration_fixture.hpp"
 
 TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_announced_topics)
 {
