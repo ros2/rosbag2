@@ -126,6 +126,11 @@ struct convert<rosbag2_storage::BagMetadata>
     node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
     node["topics_with_message_count"] = metadata.topics_with_message_count;
+
+    if (metadata.version >= 3) {  // fields introduced by rosbag2_compression
+      node["compression_format"] = metadata.compression_format;
+      node["compression_mode"] = metadata.compression_mode;
+    }
     return node;
   }
 
@@ -140,6 +145,11 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.message_count = node["message_count"].as<uint64_t>();
     metadata.topics_with_message_count =
       node["topics_with_message_count"].as<std::vector<rosbag2_storage::TopicInformation>>();
+
+    if (metadata.version >= 3) {  // fields introduced by rosbag2_compression
+      metadata.compression_format = node["compression_format"].as<std::string>();
+      metadata.compression_mode = node["compression_mode"].as<std::string>();
+    }
     return true;
   }
 };
