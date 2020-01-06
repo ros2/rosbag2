@@ -123,7 +123,6 @@ void write_output_buffer(
     throw std::runtime_error{errmsg.str()};
   }
 
-
   const auto file_pointer = open_file(uri.c_str(), "wb");
   if (file_pointer == nullptr) {
     std::stringstream errmsg;
