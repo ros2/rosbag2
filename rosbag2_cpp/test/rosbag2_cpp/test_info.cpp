@@ -64,7 +64,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
     fout << bagfile;
   }
 
-  rosbag2::Info info;
+  rosbag2_cpp::Info info;
   const auto metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
 
   EXPECT_EQ(metadata.version, 2);

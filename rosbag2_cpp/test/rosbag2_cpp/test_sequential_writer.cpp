@@ -141,9 +141,9 @@ TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exis
 }
 
 TEST_F(SequentialWriterTest, open_throws_error_on_invalid_splitting_size) {
-  auto sequential_writer = std::make_unique<rosbag2::writers::SequentialWriter>(
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2::Writer>(std::move(sequential_writer));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   // Set minimum file size greater than max bagfile size option
   const uint64_t min_split_file_size = 10;
