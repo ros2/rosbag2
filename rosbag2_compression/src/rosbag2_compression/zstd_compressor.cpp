@@ -30,10 +30,10 @@ namespace
 //   - Increase the time taken to compress
 //   - Decrease the size of the compressed data
 // Setting to zero uses Zstd's default value of 3.
-constexpr const int DEFAULT_ZSTD_COMPRESSION_LEVEL = 1;
+constexpr const int kDefaultZstdCompressionLevel = 1;
 
 // String constant used to identify ZstdCompressor.
-constexpr const char COMPRESSION_IDENTIFIER[] = "zstd";
+constexpr const char kCompressionIdentifier[] = "zstd";
 
 /**
  * Open a file using the OS-specific C API.
@@ -187,7 +187,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
   // compression_result is either the actual compressed size or an error code.
   const size_t compression_result = ZSTD_compress(
     compressed_buffer.data(), compressed_buffer.size(),
-    decompressed_buffer.data(), decompressed_buffer.size(), DEFAULT_ZSTD_COMPRESSION_LEVEL);
+    decompressed_buffer.data(), decompressed_buffer.size(), kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
 
   // Compression_buffer_length might be larger than the actual compression size
@@ -208,7 +208,7 @@ void ZstdCompressor::compress_serialized_bag_message(
 
 std::string ZstdCompressor::get_compression_identifier() const
 {
-  return COMPRESSION_IDENTIFIER;
+  return kCompressionIdentifier;
 }
 
 }  // namespace rosbag2_compression
