@@ -31,6 +31,21 @@
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
 
+namespace
+{
+rosbag2_storage::TopicMetadata create_topic_metadata(
+  const std::string & name = "topic",
+  const std::string & type = "test_msgs/BasicTypes",
+  const std::string & serialization_format = "rmw1_format")
+{
+  rosbag2_storage::TopicMetadata topic_with_type;
+  topic_with_type.name = name;
+  topic_with_type.type = type;
+  topic_with_type.serialization_format = serialization_format;
+  return topic_with_type;
+}
+}  // namespace
+
 using namespace testing;  // NOLINT
 
 class MultifileReaderTest : public Test
