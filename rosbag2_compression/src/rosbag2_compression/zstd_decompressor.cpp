@@ -59,9 +59,6 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
  */
 std::vector<uint8_t> get_input_buffer(const std::string & uri)
 {
-  // Get the file size
-  const auto compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
-
   // Read in buffer, handling accordingly
   const auto file_pointer = open_file(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
@@ -71,18 +68,28 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     throw std::runtime_error{errmsg.str()};
   }
 
+  const auto compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+  if (compressed_buffer_length == 0) {
+    fclose(file_pointer);
+
+    std::stringstream errmsg;
+    errmsg << "Unable to get size of file: " << uri;
+
+    throw std::runtime_error{errmsg.str()};
+  }
+
   // Initialize compress_buffer with size = compressed_buffer_length.
   // Uniform initialization cannot be used here since it will choose
   // the initializer list constructor instead.
   std::vector<uint8_t> compressed_buffer(compressed_buffer_length);
 
-  const auto nRead = fread(
+  const auto read_count = fread(
     compressed_buffer.data(), sizeof(decltype(compressed_buffer)::value_type),
     compressed_buffer_length, file_pointer);
 
-  if (nRead != compressed_buffer_length) {
+  if (read_count != compressed_buffer_length) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read !(" <<
-      nRead << ") != compressed_buffer_length (" << compressed_buffer_length <<
+      read_count << ") != compressed_buffer size (" << compressed_buffer.size() <<
       ")!");
     // An error indicator is set by fread, so the following check will throw.
   }
@@ -109,6 +116,13 @@ void write_output_buffer(
   const std::vector<uint8_t> & output_buffer,
   const std::string & uri)
 {
+  if (output_buffer.empty()) {
+    std::stringstream errmsg;
+    errmsg << "Cannot write empty buffer to file: " << uri;
+
+    throw std::runtime_error{errmsg.str()};
+  }
+
   const auto file_pointer = open_file(uri.c_str(), "wb");
   if (file_pointer == nullptr) {
     std::stringstream errmsg;
@@ -117,13 +131,13 @@ void write_output_buffer(
     throw std::runtime_error{errmsg.str()};
   }
 
-  const auto nWrite = fwrite(
+  const auto write_count = fwrite(
     output_buffer.data(), sizeof(uint8_t),
     output_buffer.size(), file_pointer);
 
-  if (nWrite != output_buffer.size()) {
+  if (write_count != output_buffer.size()) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" <<
-      nWrite << " != output_buffer_length (" << output_buffer.size() <<
+      write_count << " != output_buffer size (" << output_buffer.size() <<
       ")!");
     // An error indicator is set by fwrite, so the following check will throw.
   }
@@ -154,9 +168,10 @@ void throw_on_zstd_error(const size_t compression_result)
 }
 
 /**
- * Checks if the frame content is valid.
+ * Checks frame_content and throws a runtime_error if there was a ZSTD error
+ * or frame_content is invalid.
  */
-void check_frame_content(const size_t frame_content)
+void throw_on_invalid_frame_content(const size_t frame_content)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
     throw std::runtime_error{"Unable to determine file size due to error."};
@@ -168,6 +183,7 @@ void check_frame_content(const size_t frame_content)
 /**
  * Prints decompression statistics to the debug log stream.
  * The log statement is formatted as JSON.
+ * Time is formatted as a decimal of seconds.
  *
  * Example:
  *  "Decompression statistics" : {"Time" : 1.2, "Compression Ratio" : 0.5}
@@ -208,7 +224,8 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 
   const auto decompressed_buffer_length =
     ZSTD_getFrameContentSize(compressed_buffer.data(), compressed_buffer_length);
-  check_frame_content(decompressed_buffer_length);
+
+  throw_on_invalid_frame_content(decompressed_buffer_length);
 
   // Initializes decompressed_buffer with size = decompressed_buffer_length.
   // Uniform initialization cannot be used here since it will choose
@@ -220,6 +237,7 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
     compressed_buffer.data(), compressed_buffer_length);
 
   throw_on_zstd_error(decompression_result);
+  decompressed_buffer.resize(decompression_result);
 
   write_output_buffer(decompressed_buffer, decompressed_uri);
 
