@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <string>
 
 #include "rosbag2_cpp/compression_options.hpp"
@@ -23,19 +24,26 @@ namespace rosbag2_cpp
 namespace
 {
 
-  constexpr const char kCompressionModeNoneStr[] = "NONE";
-  constexpr const char kCompressionModeFileStr[] = "FILE";
-  constexpr const char kCompressionModeMessageStr[] = "MESSAGE";
+constexpr const char kCompressionModeNoneStr[] = "NONE";
+constexpr const char kCompressionModeFileStr[] = "FILE";
+constexpr const char kCompressionModeMessageStr[] = "MESSAGE";
 
+std::string to_upper(const std::string & text)
+{
+  std::string uppercase_text = text;
+  transform(uppercase_text.begin(), uppercase_text.end(), uppercase_text.begin(), ::toupper);
+  return uppercase_text;
+}
 }  // namespace
 
 CompressionMode compression_mode_from_string(const std::string & compression_mode)
 {
-  if (compression_mode.empty() || compression_mode == kCompressionModeNoneStr) {
+  auto compression_mode_upper = to_upper(compression_mode);
+  if (compression_mode.empty() || compression_mode_upper == kCompressionModeNoneStr) {
     return CompressionMode::NONE;
-  } else if (compression_mode == kCompressionModeFileStr) {
+  } else if (compression_mode_upper == kCompressionModeFileStr) {
     return CompressionMode::FILE;
-  } else if (compression_mode == kCompressionModeMessageStr) {
+  } else if (compression_mode_upper == kCompressionModeMessageStr) {
     return CompressionMode::MESSAGE;
   } else {
     ROSBAG2_CPP_LOG_ERROR_STREAM(

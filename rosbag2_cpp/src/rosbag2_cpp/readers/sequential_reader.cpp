@@ -18,11 +18,11 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_cpp/logging.hpp"
-#include "rosbag2_cpp/readers/sequential_reader.hpp"
-
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
+
+#include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 
 namespace rosbag2_cpp
 {
@@ -49,6 +49,30 @@ void SequentialReader::reset()
   storage_.reset();
 }
 
+void SequentialReader::open_storage()
+{
+  storage_ = storage_factory_->open_read_only(
+    *current_file_iterator_, metadata_.storage_identifier);
+  if (!storage_) {
+    throw std::runtime_error("No storage could be initialized. Abort");
+  }
+}
+
+void SequentialReader::setup_compression()
+{
+  compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
+  if (compression_mode_ != rosbag2_cpp::CompressionMode::NONE) {
+    // TODO(piraka9011): Replace this with a compressor_factory.
+    if (metadata_.compression_format == "zstd") {
+      decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
+    } else {
+      std::stringstream err;
+      err << "Unsupported compression format " << metadata_.compression_format;
+      throw std::runtime_error(err.str());
+    }
+  }
+}
+
 void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
@@ -61,26 +85,12 @@ void SequentialReader::open(
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
     }
-
+    open_storage();
+    setup_compression();
     file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
-
-    storage_ = storage_factory_->open_read_only(
-      *current_file_iterator_, metadata_.storage_identifier);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
-    }
-    compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
-    // TODO(piraka9011): replace this with a "compressor_factory" that can select ZstdDecompressor.
-    if (metadata_.compression_format == "zstd") {
-      decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
-    }
   } else {
-    storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
-    }
+    open_storage();
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");

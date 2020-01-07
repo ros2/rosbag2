@@ -112,6 +112,13 @@ if(BUILD_TESTING)
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_cpp test/rosbag2_cpp/converter_test_plugin.xml)
 
+  ament_add_gmock(test_compression_options
+    test/rosbag2_cpp/test_compression_options.cpp)
+  if(TARGET test_compression_options)
+    target_include_directories(test_compression_options PRIVATE include)
+    target_link_libraries(test_compression_options ${PROJECT_NAME})
+  endif()
+
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)
   if(TARGET test_converter_factory)

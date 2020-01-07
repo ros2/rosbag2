@@ -20,6 +20,10 @@
 namespace rosbag2_cpp
 {
 
+/**
+ * Modes are used to specify whether to compress by individual serialized bag messages or by file.
+ * rosbag2_cpp defaults to NONE.
+ */
 enum class CompressionMode
 {
   NONE,
@@ -27,15 +31,21 @@ enum class CompressionMode
   MESSAGE,
 };
 
+/**
+ * Converts a string into a rosbag2_cpp::CompressionMode enum.
+ *
+ * \param compression_mode A case insensitive string that is either "FILE" or "MESSAGE".
+ * \return CompressionMode NONE if compression_mode is invalid. FILE or MESSAGE otherwise.
+ */
 CompressionMode compression_mode_from_string(const std::string & compression_mode);
 
+/**
+ * Converts a rosbag2_cpp::CompressionMode enum into a string.
+ *
+ * \param compression_mode A CompressionMode enum.
+ * \return The corresponding mode as a string.
+ */
 std::string compression_mode_to_string(CompressionMode compression_mode);
-
-struct CompressionOptions
-{
-  std::string compression_format;
-  CompressionMode compression_mode;
-};
 
 }  // namespace rosbag2_cpp
 #endif  // ROSBAG2_CPP__COMPRESSION_OPTIONS_HPP_
