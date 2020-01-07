@@ -18,10 +18,11 @@
 #include <utility>
 #include <vector>
 
-#include "rcpputils/filesystem_helper.hpp"
-
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
+
+#include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_compression/zstd_decompressor.hpp"
 
 namespace rosbag2_cpp
 {
@@ -69,6 +70,11 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error("No storage could be initialized. Abort");
     }
+    compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
+    // TODO(piraka9011): replace this with a "compressor_factory" that can select ZstdDecompressor.
+    if (metadata_.compression_format == "zstd") {
+      decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
+    }
   } else {
     storage_ = storage_factory_->open_read_only(
       storage_options.uri, storage_options.storage_id);
@@ -112,10 +118,19 @@ bool SequentialReader::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
+void SequentialReader::decompress_message(
+  rosbag2_storage::SerializedBagMessage * message)
+{
+  if (compression_mode_ == CompressionMode::MESSAGE) {
+    decompressor_->decompress_serialized_bag_message(message);
+  }
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
     auto message = storage_->read_next();
+    decompress_message(message.get());
     return converter_ ? converter_->convert(message) : message;
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
@@ -134,10 +149,19 @@ bool SequentialReader::has_next_file() const
   return current_file_iterator_ + 1 != file_paths_.end();
 }
 
+void SequentialReader::decompress_file(const std::string & uri)
+{
+  if (compression_mode_ == CompressionMode::FILE) {
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Decompressing " << uri);
+    *current_file_iterator_ = decompressor_->decompress_uri(uri);
+  }
+}
+
 void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  decompress_file(*current_file_iterator_);
 }
 
 std::string SequentialReader::get_current_file() const
