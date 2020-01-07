@@ -18,17 +18,11 @@
 #include <utility>
 #include <vector>
 
-<<<<<<< HEAD
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
-=======
->>>>>>> Enable reader to read from decompressed files & messages
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
-
-#include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_compression/zstd_decompressor.hpp"
 
 namespace rosbag2_cpp
 {
@@ -95,20 +89,6 @@ void SequentialReader::open(
     setup_compression();
     file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
-<<<<<<< HEAD
-=======
-
-    storage_ = storage_factory_->open_read_only(
-      *current_file_iterator_, metadata_.storage_identifier);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
-    }
-    compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
-    // TODO(piraka9011): replace this with a "compressor_factory" that can select ZstdDecompressor.
-    if (metadata_.compression_format == "zstd") {
-      decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
-    }
->>>>>>> Enable reader to read from decompressed files & messages
   } else {
     open_storage();
     metadata_ = storage_->get_metadata();

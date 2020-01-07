@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+=======
+// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+>>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +24,7 @@
 
 TEST(CompressionOptionsFromStringTest, BadInputReturnsNoneMode)
 {
+<<<<<<< HEAD
   const std::string compression_mode_string{"bad_mode"};
   const auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::NONE);
@@ -29,11 +34,16 @@ TEST(CompressionOptionsFromStringTest, EmptyInputReturnsNoneMode)
 {
   const std::string compression_mode_string;
   const auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+=======
+  std::string compression_mode_string{"bad_mode"};
+  auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+>>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::NONE);
 }
 
 TEST(CompressionOptionsFromStringTest, FileStringReturnsFileMode)
 {
+<<<<<<< HEAD
   const std::string compression_mode_string{"file"};
   const auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::FILE);
@@ -66,19 +76,47 @@ TEST(CompressionOptionsToStringTest, MessageModeReturnsMessageString)
 {
   const auto compression_mode = rosbag2_cpp::CompressionMode::MESSAGE;
   const auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+=======
+  std::string compression_mode_string{"file"};
+  auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::FILE);
+}
+
+TEST(CompressionOptionsFromStringTest, MessageStringReturnsMessageMode)
+{
+  std::string compression_mode_string{"MESSAGE"};
+  auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::MESSAGE);
+}
+
+TEST(CompressionOptionsToStringTest, MessageModeReturnsMessageString)
+{
+  auto compression_mode = rosbag2_cpp::CompressionMode::MESSAGE;
+  auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+>>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
   EXPECT_EQ(compression_mode_string, "MESSAGE");
 }
 
 TEST(CompressionOptionsToStringTest, FileModeReturnsFileString)
 {
+<<<<<<< HEAD
   const auto compression_mode = rosbag2_cpp::CompressionMode::FILE;
   const auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+=======
+  auto compression_mode = rosbag2_cpp::CompressionMode::FILE;
+  auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+>>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
   EXPECT_EQ(compression_mode_string, "FILE");
 }
 
 TEST(CompressionOptionsToStringTest, NoneModeReturnsNoneString)
 {
+<<<<<<< HEAD
   const auto compression_mode = rosbag2_cpp::CompressionMode::NONE;
   const auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+=======
+  auto compression_mode = rosbag2_cpp::CompressionMode::NONE;
+  auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+>>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
   EXPECT_EQ(compression_mode_string, "NONE");
 }
