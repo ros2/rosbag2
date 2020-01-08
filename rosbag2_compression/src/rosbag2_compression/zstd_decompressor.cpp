@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
-#include "rcutils/filesystem.h"
-
 #include "rcpputils/filesystem_helper.hpp"
+
+#include "rcutils/filesystem.h"
 
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
