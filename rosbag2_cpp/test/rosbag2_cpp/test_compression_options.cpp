@@ -1,4 +1,4 @@
-// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,14 @@
 
 TEST(CompressionOptionsFromStringTest, BadInputReturnsNoneMode)
 {
-  std::string compression_mode_string{"bad_mode"};
+  const std::string compression_mode_string{"bad_mode"};
+  auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::NONE);
+}
+
+TEST(CompressionOptionsFromStringTest, EmptyInputReturnsNoneMode)
+{
+  const std::string compression_mode_string;
   auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::NONE);
 }
@@ -32,11 +39,25 @@ TEST(CompressionOptionsFromStringTest, FileStringReturnsFileMode)
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::FILE);
 }
 
+TEST(CompressionOptionsFromStringTest, MixedCaseMessageStringReturnsMessageMode)
+{
+  std::string compression_mode_string{"MeSsAgE"};
+  auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::MESSAGE);
+}
+
 TEST(CompressionOptionsFromStringTest, MessageStringReturnsMessageMode)
 {
   std::string compression_mode_string{"MESSAGE"};
   auto compression_mode = rosbag2_cpp::compression_mode_from_string(compression_mode_string);
   EXPECT_EQ(compression_mode, rosbag2_cpp::CompressionMode::MESSAGE);
+}
+
+TEST(CompressionOptionsToStringTest, BadModeReturnsNoneString)
+{
+  const auto compression_mode = static_cast<rosbag2_cpp::CompressionMode>(100);
+  auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
+  EXPECT_EQ(compression_mode_string, "NONE");
 }
 
 TEST(CompressionOptionsToStringTest, MessageModeReturnsMessageString)

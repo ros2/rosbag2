@@ -1,4 +1,4 @@
-// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ constexpr const char kCompressionModeMessageStr[] = "MESSAGE";
 std::string to_upper(const std::string & text)
 {
   std::string uppercase_text = text;
-  transform(uppercase_text.begin(), uppercase_text.end(), uppercase_text.begin(), ::toupper);
+  std::transform(uppercase_text.begin(), uppercase_text.end(), uppercase_text.begin(), ::toupper);
   return uppercase_text;
 }
 }  // namespace
 
 CompressionMode compression_mode_from_string(const std::string & compression_mode)
 {
-  auto compression_mode_upper = to_upper(compression_mode);
+  const auto compression_mode_upper = to_upper(compression_mode);
   if (compression_mode.empty() || compression_mode_upper == kCompressionModeNoneStr) {
     return CompressionMode::NONE;
   } else if (compression_mode_upper == kCompressionModeFileStr) {
