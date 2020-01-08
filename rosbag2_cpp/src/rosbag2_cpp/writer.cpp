@@ -43,7 +43,15 @@ Writer::~Writer()
 void Writer::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
-  writer_impl_->open(storage_options, converter_options);
+  writer_impl_->open(storage_options, converter_options, {});
+}
+
+void Writer::open(
+  const StorageOptions & storage_options,
+  const ConverterOptions & converter_options,
+  const CompressionOptions & compression_options)
+{
+  writer_impl_->open(storage_options, converter_options, compression_options);
 }
 
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)

@@ -31,21 +31,6 @@
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
 
-namespace
-{
-rosbag2_storage::TopicMetadata create_topic_metadata(
-  const std::string & name = "topic",
-  const std::string & type = "test_msgs/BasicTypes",
-  const std::string & serialization_format = "rmw1_format")
-{
-  rosbag2_storage::TopicMetadata topic_with_type;
-  topic_with_type.name = name;
-  topic_with_type.type = type;
-  topic_with_type.serialization_format = serialization_format;
-  return topic_with_type;
-}
-}  // namespace
-
 using namespace testing;  // NOLINT
 
 class MultifileReaderTest : public Test
@@ -167,23 +152,8 @@ public:
     topic_metadata_ =
       rosbag2_storage::TopicMetadata{"test", "test_msgs/BasicTypes", serialization_format_};
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-<<<<<<< HEAD
     message->topic_name = topic_metadata_.name;
-=======
-    message->topic_name = topic_with_type.name;
 
-    auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
-    rosbag2_storage::BagMetadata metadata;
-    metadata.relative_file_paths = {"some_relative_path_1", "some_relative_path_2"};
-    metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
-    metadata.compression_mode = rosbag2_cpp::compression_mode_to_string(
-      rosbag2_cpp::CompressionMode::FILE);
-    metadata.compression_format = "zstd";
-    EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
-    EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
-
-    auto storage_factory = std::make_unique<NiceMock<MockStorageFactory>>();
->>>>>>> Add utility functions for reader, add tests for compression options, write docs, fix styles
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
     EXPECT_CALL(*storage_factory_, open_read_only(_, _)).WillRepeatedly(Return(storage_));
     EXPECT_CALL(*metadata_io_, metadata_file_exists(_)).WillRepeatedly(Return(true));

@@ -22,8 +22,8 @@
 #include <utility>
 
 #include "rcpputils/filesystem_helper.hpp"
-
 #include "rcutils/filesystem.h"
+#include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
@@ -47,6 +47,7 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 }
 }  // namespace
 
+// TODO(piraka9011) Initialize defaults in header file instead.
 SequentialWriter::SequentialWriter(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
@@ -56,31 +57,63 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
+  compressor_(nullptr),
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
   topics_names_to_info_(),
-  metadata_()
-{}
+  metadata_(),
+  compression_mode_{CompressionMode::NONE} {}
+
 
 SequentialWriter::~SequentialWriter()
 {
   reset();
 }
 
-void SequentialWriter::init_metadata()
+void SequentialWriter::check_bagfile_size(const StorageOptions & storage_options)
+{
+  if (storage_options.max_bagfile_size != 0 &&
+    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+  {
+    throw std::runtime_error(
+            "Invalid bag splitting size given. Please provide a different value.");
+  }
+}
+
+void SequentialWriter::init_compression(const CompressionOptions & compression_options)
+{
+  if (compression_options.compression_mode != rosbag2_cpp::CompressionMode::NONE) {
+    if (compression_options.compression_format == "zstd") {
+      compressor_ = std::make_unique<rosbag2_compression::ZstdCompressor>();
+    } else {
+      std::stringstream err;
+      err << "Unsupported compression format " << compression_options.compression_format;
+      throw std::runtime_error(err.str());
+    }
+  }
+}
+
+void SequentialWriter::init_metadata(const CompressionOptions & compression_options)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   metadata_.relative_file_paths = {storage_->get_relative_file_path()};
+  if (compression_options.compression_mode != rosbag2_cpp::CompressionMode::NONE) {
+    metadata_.compression_mode = rosbag2_cpp::compression_mode_to_string(
+      compression_options.compression_mode);
+    metadata_.compression_format = compression_options.compression_format;
+  }
 }
 
 void SequentialWriter::open(
   const StorageOptions & storage_options,
-  const ConverterOptions & converter_options)
+  const ConverterOptions & converter_options,
+  const CompressionOptions & compression_options)
 {
   max_bagfile_size_ = storage_options.max_bagfile_size;
   base_folder_ = storage_options.uri;
+  compression_mode_ = compression_options.compression_mode;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -89,25 +122,20 @@ void SequentialWriter::open(
   }
 
   const auto storage_uri = format_storage_uri(base_folder_, 0);
-
   storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  if (max_bagfile_size_ != 0 &&
-    max_bagfile_size_ < storage_->get_minimum_split_file_size())
-  {
-    throw std::runtime_error(
-            "Invalid bag splitting size given. Please provide a different value.");
-  }
-
-  init_metadata();
+  check_bagfile_size(storage_options);
+  init_compression(compression_options);
+  init_metadata(compression_options);
 }
 
 void SequentialWriter::reset()
 {
   if (!base_folder_.empty()) {
+    compress_file_and_update_metadata();
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
@@ -163,17 +191,32 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
   }
 }
 
+bool SequentialWriter::compress_file_and_update_metadata()
+{
+  if (compressor_ && compression_mode_ == CompressionMode::FILE) {
+    // Get the uri of the last file and pop the uri
+    const auto uncompressed_uri = metadata_.relative_file_paths.back();
+    metadata_.relative_file_paths.pop_back();
+
+    // Compress the last file and push the new uri
+    const auto compressed_uri = compressor_->compress_uri(uncompressed_uri);
+    metadata_.relative_file_paths.push_back(compressed_uri);
+    return true;
+  }
+  return false;
+}
+
 void SequentialWriter::split_bagfile()
 {
+  compress_file_and_update_metadata();
+
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
-
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
-
     throw std::runtime_error(errmsg.str());
   }
 
@@ -183,6 +226,17 @@ void SequentialWriter::split_bagfile()
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }
+}
+
+bool SequentialWriter::compress_message(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+{
+  if (compressor_ && compression_mode_ == CompressionMode::MESSAGE) {
+    auto converted_message = converter_ ? converter_->convert(message) : message;
+    compressor_->compress_serialized_bag_message(converted_message.get());
+    return true;
+  }
+  return false;
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -205,6 +259,7 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
+  compress_message(message);
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
 

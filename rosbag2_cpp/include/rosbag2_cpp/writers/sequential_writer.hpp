@@ -20,12 +20,14 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rosbag2_cpp/compression_options.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_compression/base_compressor_interface.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -71,7 +73,9 @@ public:
    * \param converter_options options to define in which format incoming messages are stored
    **/
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options,
+    const CompressionOptions & compression_options) override;
 
   void reset() override;
 
@@ -109,6 +113,7 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_;
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
@@ -118,17 +123,54 @@ private:
 
   rosbag2_storage::BagMetadata metadata_;
 
+  // Used in invoking compression
+  rosbag2_cpp::CompressionMode compression_mode_;
+
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
+  /**
+   * Checks if the compression by file option is specified and a compressor exists.
+   *
+   * If the above conditions are satisfied, compresses the most recent file and updates the
+   * metadata file paths.
+   *
+   * \return True if compression occurred, false otherwise.
+   */
+  bool compress_file_and_update_metadata();
+
+  /**
+   * Checks if the compression by message option is specified and a compressor exists.
+   *
+   * If the above conditions are satisfied, compresses the serialized bag message.
+   *
+   * \param message The message to compress.
+   * \return True if compression occurred, false otherwise.
+   */
+  bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
   // Prepares the metadata by setting initial values.
-  void init_metadata();
+  void init_metadata(const CompressionOptions & compression_options);
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  /**
+   * Check to make sure a valid bagfile split size is passed.
+   *
+   * \throws runtime_error If the size is too small (plugin specific).
+   */
+  void check_bagfile_size(const StorageOptions & storage_options);
+
+  /**
+   * Initialize the compressor.
+   *
+   * \throws runtime_error If the compression implementation does not exist.
+   */
+  virtual void init_compression(const CompressionOptions & compression_options);
 };
 
 }  // namespace writers

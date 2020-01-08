@@ -30,10 +30,12 @@ namespace writer_interfaces
 class ROSBAG2_CPP_PUBLIC BaseWriterInterface
 {
 public:
-  virtual ~BaseWriterInterface() {}
+  virtual ~BaseWriterInterface() = default;
 
   virtual void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) = 0;
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options,
+    const CompressionOptions & compression_options) = 0;
 
   virtual void reset() = 0;
 

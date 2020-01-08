@@ -250,3 +250,12 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
     EXPECT_EQ(expected_path, path);
   }
 }
+
+TEST_F(SequentialWriterTest, open_throws_error_on_invalid_compression_format) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  auto compression_options =
+    rosbag2_cpp::CompressionOptions{"bad_format", rosbag2_cpp::CompressionMode::FILE};
+  EXPECT_ANY_THROW(writer_->open(storage_options_, {"format1", "format1"}, compression_options));
+}
