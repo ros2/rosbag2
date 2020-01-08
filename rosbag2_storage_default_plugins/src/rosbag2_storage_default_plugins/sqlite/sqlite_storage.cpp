@@ -25,7 +25,10 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_storage/filesystem_helper.hpp"
+#include "rcpputils/filesystem_helper.hpp"
+
+#include "rcutils/filesystem.h"
+
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
@@ -70,7 +73,7 @@ void SqliteStorage::open(
     relative_path_ = uri + FILE_EXTENSION;
 
     // READ_WRITE requires the DB to not exist.
-    if (rosbag2_storage::FilesystemHelper::file_exists(relative_path_)) {
+    if (rcpputils::fs::path(relative_path_).exists()) {
       throw std::runtime_error(
               "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
@@ -78,7 +81,7 @@ void SqliteStorage::open(
     relative_path_ = uri;
 
     // APPEND and READ_ONLY require the DB to exist
-    if (!rosbag2_storage::FilesystemHelper::file_exists(relative_path_)) {
+    if (!rcpputils::fs::path(relative_path_).exists()) {
       throw std::runtime_error(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
     }
@@ -154,8 +157,7 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  return rosbag2_storage::FilesystemHelper::get_file_size(
-    get_relative_file_path());
+  return rcutils_get_file_size(get_relative_file_path().c_str());
 }
 
 void SqliteStorage::initialize()
@@ -284,7 +286,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
-  metadata.bag_size = rosbag2_storage::FilesystemHelper::get_file_size(get_relative_file_path());
+  metadata.bag_size = rcutils_get_file_size(get_relative_file_path().c_str());
 
   return metadata;
 }

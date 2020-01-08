@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>pluginlib</depend>
+  <depend>rcpputils</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
   <depend>sqlite3_vendor</depend>

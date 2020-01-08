@@ -18,7 +18,6 @@
 #include <stdexcept>
 #include <string>
 
-#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 

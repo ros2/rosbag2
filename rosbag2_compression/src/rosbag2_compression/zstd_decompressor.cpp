@@ -18,11 +18,11 @@
 #include <string>
 #include <vector>
 
+#include "rcutils/filesystem.h"
+
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/zstd_decompressor.hpp"
-
-#include "rosbag2_storage/filesystem_helper.hpp"
 
 #include "logging.hpp"
 
@@ -68,7 +68,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     throw std::runtime_error{errmsg.str()};
   }
 
-  const auto compressed_buffer_length = rosbag2_storage::FilesystemHelper::get_file_size(uri);
+  const auto compressed_buffer_length = rcutils_get_file_size(uri.c_str());
   if (compressed_buffer_length == 0) {
     fclose(file_pointer);
 

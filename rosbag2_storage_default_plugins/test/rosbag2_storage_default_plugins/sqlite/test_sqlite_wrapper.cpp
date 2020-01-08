@@ -18,9 +18,10 @@
 #include <string>
 #include <utility>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rcutils/types.h"
 
-#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"
@@ -33,7 +34,7 @@ public:
   SqliteWrapperTestFixture()
   : StorageTestFixture(),
     db_(
-      rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "test.db3"}),
+      (rcpputils::fs::path(temporary_dir_path_) / "test.db3").string(),
       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE)
   {}
 

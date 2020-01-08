@@ -25,10 +25,15 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
+
 #include "rosbag2_storage/metadata_io.hpp"
+
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -91,7 +96,7 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag"});
+    auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
     writable_storage->open(db_file);
 
@@ -116,7 +121,7 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    auto db_file = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "rosbag.db3"});
+    auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
 
     readable_storage->open(
       db_file, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
