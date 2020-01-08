@@ -14,8 +14,10 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
 #include <string>
 
+#include "rclcpp/rclcpp.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
 #include "rosbag2_test_common/process_execution_helpers.hpp"
@@ -68,6 +70,63 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
+}
+
+TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
+  constexpr const char message_str[] = "Test";
+  constexpr const int expected_splits = 4;
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
+  constexpr const int message_size = 1024 * 1024;  // 1MB
+  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+  constexpr const char topic_name[] = "/test_topic";
+
+  std::stringstream command;
+  command << "ros2 bag record" <<
+    " --output " << root_bag_path_ <<
+    " --max-bag-size " << bagfile_split_size <<
+    " " << topic_name;
+  auto process_handle = start_execution(command.str());
+  wait_for_db();
+
+  {
+    // string message from test_msgs
+    auto message = get_messages_strings()[0];
+    {
+      // Calculate how many times to duplicate the content string to fill the desired message size
+      const auto message_contents_length = static_cast<int>(strlen(message_str));
+      const int message_contents_count = message_size / message_contents_length;
+
+      std::stringstream message_contents;
+      for (int i = 0; i < message_contents_count; ++i) {
+        message_contents << message_str;
+      }
+
+      message->string_value = message_contents.str();
+    }
+
+    const auto node = std::make_shared<rclcpp::Node>(
+      "TestMessagePublisher",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
+
+    const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
+    rclcpp::WallRate message_rate{50ms};
+
+    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
+      publisher->publish(*message);
+      message_rate.sleep();
+    }
+  }
+
+  stop_execution(process_handle);
+
+  rosbag2_storage::MetadataIo metadata_io;
+  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+
+  EXPECT_EQ(static_cast<size_t>(expected_splits), metadata.relative_file_paths.size());
+
+  for (const auto & path : metadata.relative_file_paths) {
+    EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(path));
+  }
 }
 
 TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
