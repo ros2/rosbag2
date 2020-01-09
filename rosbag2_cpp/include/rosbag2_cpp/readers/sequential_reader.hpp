@@ -126,14 +126,14 @@ private:
   /**
    * Opens a storage plugin for read only.
    *
-   * \throws runtime_error If no storage could be initialized.
+   * \throws std::runtime_error If no storage could be initialized.
    */
   virtual void open_storage();
 
   /**
    * Initializes the decompressor if a compression mode is specified in the metadata.
    *
-   * \throws runtime_error If compression format doesn't exist.
+   * \throws std::runtime_error If compression format doesn't exist.
    */
   virtual void setup_compression();
 

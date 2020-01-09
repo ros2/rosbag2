@@ -24,11 +24,12 @@ namespace rosbag2_cpp
  * Modes are used to specify whether to compress by individual serialized bag messages or by file.
  * rosbag2_cpp defaults to NONE.
  */
-enum class CompressionMode
+enum class CompressionMode : uint32_t
 {
-  NONE,
+  NONE = 0,
   FILE,
   MESSAGE,
+  LAST_MODE = MESSAGE
 };
 
 /**

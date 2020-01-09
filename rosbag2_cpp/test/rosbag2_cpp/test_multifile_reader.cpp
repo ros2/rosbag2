@@ -30,21 +30,6 @@
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
 
-namespace
-{
-rosbag2_storage::TopicMetadata create_topic_metadata(
-  const std::string & name = "topic",
-  const std::string & type = "test_msgs/BasicTypes",
-  const std::string & serialization_format = "rmw1_format")
-{
-  rosbag2_storage::TopicMetadata topic_with_type;
-  topic_with_type.name = name;
-  topic_with_type.type = type;
-  topic_with_type.serialization_format = serialization_format;
-  return topic_with_type;
-}
-}  // namespace
-
 using namespace testing;  // NOLINT
 
 class MultifileReaderTest : public Test
@@ -57,8 +42,8 @@ public:
     relative_path_1_("some_relative_path_1"),
     relative_path_2_("some_relative_path_2")
   {
-    auto topic_with_type =
-      create_topic_metadata("topic", "test_msgs/BasicTypes", storage_serialization_format_);
+    auto topic_with_type = rosbag2_storage::TopicMetadata{
+      "topic", "test_msgs/BasicTypes", storage_serialization_format_};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
 
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -158,62 +143,62 @@ class ReaderCompressionTest : public Test
 public:
   ReaderCompressionTest()
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
-    converter_factory_(std::make_shared<NiceMock<MockConverterFactory>>())
+    storage_factory_(std::make_unique<NiceMock<MockStorageFactory>>()),
+    converter_factory_(std::make_shared<NiceMock<MockConverterFactory>>()),
+    metadata_io_(std::make_unique<NiceMock<MockMetadataIo>>()),
+    serialization_format_("rmw1_format")
   {
-    auto topic_metadata_ = create_topic_metadata();
+    topic_metadata_ =
+      rosbag2_storage::TopicMetadata{"test", "test_msgs/BasicTypes", serialization_format_};
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_metadata_.name;
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
+    EXPECT_CALL(*storage_factory_, open_read_only(_, _)).WillRepeatedly(Return(storage_));
+    EXPECT_CALL(*metadata_io_, metadata_file_exists(_)).WillRepeatedly(Return(true));
   }
 
   std::shared_ptr<NiceMock<MockStorage>> storage_;
+  std::unique_ptr<NiceMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockConverterFactory>> converter_factory_;
+  std::unique_ptr<NiceMock<MockMetadataIo>> metadata_io_;
   rosbag2_storage::TopicMetadata topic_metadata_;
+  std::string serialization_format_;
 };
 
 TEST_F(ReaderCompressionTest, open_throws_on_bad_compression_format) {
-  auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
   rosbag2_storage::BagMetadata metadata;
   metadata.relative_file_paths = {"some_path"};
-  metadata.topics_with_message_count.push_back({{topic_metadata_}, 1});
   metadata.compression_mode =
     rosbag2_cpp::compression_mode_to_string(rosbag2_cpp::CompressionMode::FILE);
   metadata.compression_format = "bad_format";
-  EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
-  EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*metadata_io_, read_metadata(_)).WillRepeatedly(Return(metadata));
 
-  auto storage_factory = std::make_unique<NiceMock<MockStorageFactory>>();
-  EXPECT_CALL(*storage_factory, open_read_only(_, _)).WillRepeatedly(Return(storage_));
-  auto fake_sequential_reader = std::make_unique<FakeSequentialReader>(
-    std::move(storage_factory), converter_factory_, std::move(metadata_io));
+  auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
 
   EXPECT_THROW(
-    fake_sequential_reader->open(rosbag2_cpp::StorageOptions(), {"rmw1_format", "rmw1_format"}),
+    sequential_reader->open(rosbag2_cpp::StorageOptions(), {"", serialization_format_}),
     std::runtime_error);
 }
 
 TEST_F(ReaderCompressionTest, decompress_if_metadata_has_file_compression) {
-  auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
   rosbag2_storage::BagMetadata metadata;
   metadata.relative_file_paths = {"some_relative_path_1", "some_relative_path_2"};
   metadata.topics_with_message_count.push_back({{topic_metadata_}, 1});
   metadata.compression_mode =
     rosbag2_cpp::compression_mode_to_string(rosbag2_cpp::CompressionMode::FILE);
   metadata.compression_format = "zstd";
-  EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
-  EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*metadata_io_, read_metadata(_)).WillRepeatedly(Return(metadata));
 
-  auto storage_factory = std::make_unique<NiceMock<MockStorageFactory>>();
-  EXPECT_CALL(*storage_factory, open_read_only(_, _)).WillRepeatedly(Return(storage_));
   auto fake_sequential_reader = std::make_unique<FakeSequentialReader>(
-    std::move(storage_factory), converter_factory_, std::move(metadata_io));
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
 
   // storage::has_next() is called twice when reader::has_next() is called
   EXPECT_CALL(*storage_, has_next()).Times(4)
   .WillOnce(Return(true)).WillOnce(Return(true))      // We have a message
   .WillOnce(Return(false))     // No message, load next file
   .WillOnce(Return(true));
-  fake_sequential_reader->open(rosbag2_cpp::StorageOptions(), {"", ""});
+  fake_sequential_reader->open(rosbag2_cpp::StorageOptions(), {"", serialization_format_});
   fake_sequential_reader->has_next();
   fake_sequential_reader->read_next();
   fake_sequential_reader->has_next();

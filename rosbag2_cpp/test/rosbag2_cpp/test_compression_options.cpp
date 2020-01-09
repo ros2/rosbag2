@@ -55,7 +55,9 @@ TEST(CompressionOptionsFromStringTest, MessageStringReturnsMessageMode)
 
 TEST(CompressionOptionsToStringTest, BadModeReturnsNoneString)
 {
-  const auto compression_mode = static_cast<rosbag2_cpp::CompressionMode>(100);
+  // Get an out of bounds enum from CompressionMode
+  const auto compression_mode = static_cast<rosbag2_cpp::CompressionMode>(
+    static_cast<uint32_t>(rosbag2_cpp::CompressionMode::LAST_MODE) + 1);
   const auto compression_mode_string = rosbag2_cpp::compression_mode_to_string(compression_mode);
   EXPECT_EQ(compression_mode_string, "NONE");
 }
