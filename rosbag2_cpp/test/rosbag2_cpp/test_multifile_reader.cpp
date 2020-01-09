@@ -141,16 +141,16 @@ public:
 
   void decompress_message(rosbag2_storage::SerializedBagMessage *) override
   {
-    decompress_message_called = true;
+    decompress_message_call_counter++;
   }
 
   void decompress_file(const std::string &) override
   {
-    decompress_file_called = true;
+    decompress_file_call_counter++;
   }
 
-  bool decompress_message_called = false;
-  bool decompress_file_called = false;
+  int decompress_message_call_counter = 0;
+  int decompress_file_call_counter = 0;
 };
 
 class ReaderCompressionTest : public Test
@@ -160,9 +160,9 @@ public:
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<NiceMock<MockConverterFactory>>())
   {
-    auto topic_with_type = create_topic_metadata();
+    auto topic_metadata_ = create_topic_metadata();
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    message->topic_name = topic_with_type.name;
+    message->topic_name = topic_metadata_.name;
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
   }
 
@@ -217,5 +217,5 @@ TEST_F(ReaderCompressionTest, decompress_if_metadata_has_file_compression) {
   fake_sequential_reader->has_next();
   fake_sequential_reader->read_next();
   fake_sequential_reader->has_next();
-  EXPECT_EQ(fake_sequential_reader->decompress_file_called, true);
+  EXPECT_GT(fake_sequential_reader->decompress_file_call_counter, 0);
 }
