@@ -23,6 +23,25 @@ find_package(pybind11 REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
+pybind11_add_module(_rosbag2_py SHARED
+  src/rosbag2_py/_rosbag2_py.cpp
+)
+# TODO(jacobperron): Consider modifying ament_python_install_module to accept targets
+# ament_python_install_module(_rosbag2_py
+#   DESTINATION_SUFFIX "rosbag2_py"
+# )
+# target_link_libraries(_rosbag2_py
+
+ament_target_dependencies(_rosbag2_py PUBLIC
+  "rosbag2"
+)
+
+# Install cython modules as sub-modules of the project
+install(
+  TARGETS _rosbag2_py
+  DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
