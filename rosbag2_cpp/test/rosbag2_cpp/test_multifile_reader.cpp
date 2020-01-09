@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2_cpp/compression_options.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 

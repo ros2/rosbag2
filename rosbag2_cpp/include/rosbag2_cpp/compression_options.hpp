@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "visibility_control.hpp"
+
 namespace rosbag2_cpp
 {
 
@@ -24,7 +26,7 @@ namespace rosbag2_cpp
  * Modes are used to specify whether to compress by individual serialized bag messages or by file.
  * rosbag2_cpp defaults to NONE.
  */
-enum class CompressionMode : uint32_t
+enum class ROSBAG2_CPP_PUBLIC CompressionMode : uint32_t
 {
   NONE = 0,
   FILE,
@@ -38,7 +40,7 @@ enum class CompressionMode : uint32_t
  * \param compression_mode A case insensitive string that is either "FILE" or "MESSAGE".
  * \return CompressionMode NONE if compression_mode is invalid. FILE or MESSAGE otherwise.
  */
-CompressionMode compression_mode_from_string(const std::string & compression_mode);
+ROSBAG2_CPP_PUBLIC CompressionMode compression_mode_from_string(const std::string & compression_mode);
 
 /**
  * Converts a rosbag2_cpp::CompressionMode enum into a string.
@@ -46,7 +48,7 @@ CompressionMode compression_mode_from_string(const std::string & compression_mod
  * \param compression_mode A CompressionMode enum.
  * \return The corresponding mode as a string.
  */
-std::string compression_mode_to_string(CompressionMode compression_mode);
+ROSBAG2_CPP_PUBLIC std::string compression_mode_to_string(CompressionMode compression_mode);
 
 }  // namespace rosbag2_cpp
 #endif  // ROSBAG2_CPP__COMPRESSION_OPTIONS_HPP_
