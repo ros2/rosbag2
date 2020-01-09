@@ -24,6 +24,33 @@
 
 #include "record_fixture.hpp"
 
+namespace
+{
+/**
+ * Construct an instance of test_msgs::msg::Strings populated with the base_message repeated until it fits the requested size.
+ * \param base_message is the String to repeat.
+ * \param max_message_size_bytes is the size of the message in bytes.
+ * \return an instance of test_msgs::msg::Strings that is the requested size.
+ */
+std::shared_ptr<test_msgs::msg::Strings> create_string_message(
+  const std::string & base_message,
+  const int max_message_size_bytes)
+{
+  const auto base_message_size = base_message.size() * sizeof(std::string::value_type);
+  const auto iterations = max_message_size_bytes / static_cast<int>(base_message_size);
+
+  std::stringstream message_str;
+  for (int i = 0; i < iterations; ++i) {
+    message_str << base_message;
+  }
+
+  auto message = get_messages_strings()[0];
+  message->string_value = message_str.str();
+
+  return message;
+}
+}  // namespace
+
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";
@@ -90,24 +117,10 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
   {
     // string message from test_msgs
-    auto message = get_messages_strings()[0];
-    {
-      // Calculate how many times to duplicate the content string to fill the desired message size
-      const auto message_contents_length = static_cast<int>(strlen(message_str));
-      const int message_contents_count = message_size / message_contents_length;
-
-      std::stringstream message_contents;
-      for (int i = 0; i < message_contents_count; ++i) {
-        message_contents << message_str;
-      }
-
-      message->string_value = message_contents.str();
-    }
-
-    const auto node = std::make_shared<rclcpp::Node>(
+    const auto message = create_string_message(message_str, message_size);
+    const auto node = std::make_unique<rclcpp::Node>(
       "TestMessagePublisher",
       rclcpp::NodeOptions().start_parameter_event_publisher(false));
-
     const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
     rclcpp::WallRate message_rate{50ms};
 
