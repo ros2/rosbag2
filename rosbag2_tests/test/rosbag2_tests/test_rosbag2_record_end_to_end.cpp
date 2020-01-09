@@ -99,6 +99,45 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
 
+TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
+  constexpr const char message_str[] = "Test";
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
+  constexpr const int message_size = 512 * 1024;  // 512KB
+  // only fill the bagfile halfway
+  constexpr const int message_count = bagfile_split_size / message_size / 2;
+  constexpr const char topic_name[] = "/test_topic";
+
+  std::stringstream command;
+  command << "ros2 bag record " <<
+    " --output " << root_bag_path_ <<
+    " --max-bag-size " << bagfile_split_size <<
+    " " << topic_name;
+  auto process_handle = start_execution(command.str());
+  wait_for_db();
+
+  {
+    const auto message = create_string_message(message_str, message_size);
+    const auto node = std::make_unique<rclcpp::Node>(
+      "TestMessagePublisher",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
+    const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
+    rclcpp::WallRate message_rate{50ms};
+
+    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
+      publisher->publish(*message);
+      message_rate.sleep();
+    }
+  }
+
+  stop_execution(process_handle);
+
+  rosbag2_storage::MetadataIo metadataIo;
+  const auto metadata = metadataIo.read_metadata(root_bag_path_);
+
+  EXPECT_EQ(1u, metadata.relative_file_paths.size());
+  EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(metadata.relative_file_paths[0]));
+}
+
 TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   constexpr const char message_str[] = "Test";
   constexpr const int expected_splits = 4;
