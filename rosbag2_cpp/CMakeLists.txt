@@ -34,12 +34,14 @@ find_package(poco_vendor)
 find_package(Poco COMPONENTS Foundation)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/rosbag2_cpp/compression_options.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
@@ -57,6 +59,7 @@ ament_target_dependencies(${PROJECT_NAME}
   Poco
   rcpputils
   rcutils
+  rosbag2_compression
   rosbag2_storage
   rosidl_generator_cpp
   rosidl_typesupport_introspection_cpp
@@ -88,7 +91,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(pluginlib rosbag2_storage rosidl_typesupport_introspection_cpp)
+ament_export_dependencies(pluginlib rosbag2_compression rosbag2_storage rosidl_typesupport_introspection_cpp)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
@@ -108,6 +111,13 @@ if(BUILD_TESTING)
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_cpp test/rosbag2_cpp/converter_test_plugin.xml)
+
+  ament_add_gmock(test_compression_options
+    test/rosbag2_cpp/test_compression_options.cpp)
+  if(TARGET test_compression_options)
+    target_include_directories(test_compression_options PRIVATE include)
+    target_link_libraries(test_compression_options ${PROJECT_NAME})
+  endif()
 
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)
@@ -156,6 +166,7 @@ if(BUILD_TESTING)
       ament_index_cpp
       Poco
       rcutils
+      rosbag2_compression
       rosbag2_storage
       rosidl_generator_cpp
       rosidl_typesupport_introspection_cpp
