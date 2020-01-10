@@ -27,10 +27,12 @@ class MockSequentialWriter : public rosbag2_cpp::writer_interfaces::BaseWriterIn
 public:
   void open(
     const rosbag2_cpp::StorageOptions & storage_options,
-    const rosbag2_cpp::ConverterOptions & converter_options) override
+    const rosbag2_cpp::ConverterOptions & converter_options,
+    const rosbag2_cpp::CompressionOptions & compressionOptions) override
   {
     (void) storage_options;
     (void) converter_options;
+    (void) compressionOptions;
   }
 
   void reset() override {}

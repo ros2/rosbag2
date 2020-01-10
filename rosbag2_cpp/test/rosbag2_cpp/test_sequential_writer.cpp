@@ -255,7 +255,118 @@ TEST_F(SequentialWriterTest, open_throws_error_on_invalid_compression_format) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-  auto compression_options =
+  const auto compression_options =
     rosbag2_cpp::CompressionOptions{"bad_format", rosbag2_cpp::CompressionMode::FILE};
-  EXPECT_ANY_THROW(writer_->open(storage_options_, {"format1", "format1"}, compression_options));
+  const auto converter_options = rosbag2_cpp::ConverterOptions{"format1", "format1"};
+  EXPECT_ANY_THROW(writer_->open(storage_options_, converter_options, compression_options));
+}
+
+class FakeSequentialWriter : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  FakeSequentialWriter(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
+    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+  : SequentialWriter(std::move(storage_factory), converter_factory, std::move(metadata_io)) {}
+
+  ~FakeSequentialWriter() override = default;
+
+  void init_compression(const rosbag2_cpp::CompressionOptions & compression_options) override
+  {
+    std::cout << "init_compression called with " << compression_options.compression_format <<
+      " compression format for " <<
+      rosbag2_cpp::compression_mode_to_string(compression_options.compression_mode) << std::endl;
+  }
+
+  bool compress_file_and_update_metadata() override
+  {
+    compress_file_call_counter++;
+    return true;
+  }
+
+  bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage>) override
+  {
+    compress_message_call_counter++;
+    return true;
+  }
+
+  int compress_file_call_counter = 0;
+  int compress_message_call_counter = 0;
+};
+
+TEST_F(SequentialWriterTest, writer_compresses_file_with_compression_mode_file_flag)
+{
+  const int message_count = 10;
+  const int max_bagfile_size = 5;
+  fake_storage_size_ = 0;
+
+  ON_CALL(*storage_, write).WillByDefault(
+    [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &) {
+      fake_storage_size_ += 1;
+    });
+
+  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+    [this]() {
+      return fake_storage_size_;
+    });
+
+  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+    [this]() {
+      return fake_storage_uri_;
+    });
+
+  EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
+
+  // Intercept the metadata write so we can analyze it.
+  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+      fake_metadata_ = metadata;
+    });
+
+  auto sequential_writer = std::make_unique<FakeSequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  const auto compression_options =
+    rosbag2_cpp::CompressionOptions{"zstd", rosbag2_cpp::CompressionMode::FILE};
+  const auto converter_options = rosbag2_cpp::ConverterOptions{"format1", "format1"};
+
+  sequential_writer->open(storage_options_, converter_options, compression_options);
+  sequential_writer->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  for (auto i = 0; i < message_count; ++i) {
+    sequential_writer->write(message);
+  }
+
+  EXPECT_GT(sequential_writer->compress_file_call_counter, 0);
+}
+
+TEST_F(SequentialWriterTest, writer_compresses_message_with_compression_mode_message_flag)
+{
+  EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
+
+  // Intercept the metadata write so we can analyze it.
+  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+      fake_metadata_ = metadata;
+    });
+
+  auto sequential_writer = std::make_unique<FakeSequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  const auto compression_options =
+    rosbag2_cpp::CompressionOptions{"zstd", rosbag2_cpp::CompressionMode::MESSAGE};
+  const auto converter_options = rosbag2_cpp::ConverterOptions{"format1", "format1"};
+
+  sequential_writer->open(storage_options_, converter_options, compression_options);
+  sequential_writer->create_topic({"test_topic", "test_msgs/BasicTypes", ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  sequential_writer->write(message);
+
+  EXPECT_GT(sequential_writer->compress_message_call_counter, 0);
 }

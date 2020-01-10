@@ -132,26 +132,6 @@ private:
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
-  /**
-   * Checks if the compression by file option is specified and a compressor exists.
-   *
-   * If the above conditions are satisfied, compresses the most recent file and updates the
-   * metadata file paths.
-   *
-   * \return True if compression occurred, false otherwise.
-   */
-  bool compress_file_and_update_metadata();
-
-  /**
-   * Checks if the compression by message option is specified and a compressor exists.
-   *
-   * If the above conditions are satisfied, compresses the serialized bag message.
-   *
-   * \param message The message to compress.
-   * \return True if compression occurred, false otherwise.
-   */
-  bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
-
   // Prepares the metadata by setting initial values.
   void init_metadata(const CompressionOptions & compression_options);
 
@@ -165,12 +145,33 @@ private:
    */
   void check_bagfile_size(const StorageOptions & storage_options);
 
+protected:
   /**
    * Initialize the compressor.
    *
    * \throws runtime_error If the compression implementation does not exist.
    */
   virtual void init_compression(const CompressionOptions & compression_options);
+
+  /**
+   * Checks if the compression by file option is specified and a compressor exists.
+   *
+   * If the above conditions are satisfied, compresses the most recent file and updates the
+   * metadata file paths.
+   *
+   * \return True if compression occurred, false otherwise.
+   */
+  virtual bool compress_file_and_update_metadata();
+
+  /**
+   * Checks if the compression by message option is specified and a compressor exists.
+   *
+   * If the above conditions are satisfied, compresses the serialized bag message.
+   *
+   * \param message The message to compress.
+   * \return True if compression occurred, false otherwise.
+   */
+  virtual bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
 
 }  // namespace writers
