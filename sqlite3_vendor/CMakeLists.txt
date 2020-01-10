@@ -1,8 +1,16 @@
 cmake_minimum_required(VERSION 3.5)
 project(sqlite3_vendor)
 
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-find_package(SQLite3)
+find_package(ament_cmake REQUIRED)
+
+option(FORCE_BUILD_VENDOR_PKG
+  "Build SQLite3 from source, even if system-installed package is available"
+  OFF)
+
+if(NOT FORCE_BUILD_VENDOR_PKG)
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+  find_package(SQLite3 QUIET)
+endif()
 
 if (NOT SQLite3_FOUND)
   set(extra_cmake_args)
@@ -30,16 +38,8 @@ else ()
   message(STATUS "Found SQLite3. Using SQLite3 from system.")
 endif ()
 
-configure_file(sqlite3_vendorConfig.cmake.in "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig.cmake" @ONLY)
-configure_file(sqlite3_vendorConfig-version.cmake.in "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig-version.cmake" @ONLY)
-
 install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
-install(FILES
-  package.xml
-  DESTINATION share/${PROJECT_NAME})
-
-install(FILES
-  "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig.cmake"
-  "${PROJECT_BINARY_DIR}/sqlite3_vendorConfig-version.cmake"
-  DESTINATION share/${PROJECT_NAME}/cmake)
+ament_package(
+  CONFIG_EXTRAS "sqlite3_vendor-extras.cmake"
+)
