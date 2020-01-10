@@ -19,11 +19,12 @@
 #include <string>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/filesystem_helper.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -56,11 +57,9 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
     "      message_count: 200\n";
 
   {
-    const auto bagfile_path = rosbag2_storage::FilesystemHelper::concat({
-      temporary_dir_path_, rosbag2_storage::MetadataIo::metadata_filename
-    });
-
-    std::ofstream fout {bagfile_path};
+    std::ofstream fout {
+      (rcpputils::fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+      .string()};
     fout << bagfile;
   }
 
@@ -127,10 +126,9 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "  compression_format: \"zstd\"\n"
     "  compression_mode: \"FILE\"\n");
 
-  std::ofstream fout(
-    rosbag2_storage::FilesystemHelper::concat({
-    temporary_dir_path_, rosbag2_storage::MetadataIo::metadata_filename
-  }));
+  std::ofstream fout {
+    (rcpputils::fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+    .string()};
   fout << bagfile;
   fout.close();
 

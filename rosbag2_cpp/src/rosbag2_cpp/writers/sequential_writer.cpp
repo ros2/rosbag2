@@ -21,10 +21,12 @@
 #include <string>
 #include <utility>
 
+#include "rcpputils/filesystem_helper.hpp"
+
+#include "rcutils/filesystem.h"
+
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
-
-#include "rosbag2_storage/filesystem_helper.hpp"
 
 namespace rosbag2_cpp
 {
@@ -39,10 +41,9 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
   // The name of the folder needs to be queried in case
   // SequentialWriter is opened with a relative path.
   std::stringstream storage_file_name;
-  storage_file_name << rosbag2_storage::FilesystemHelper::get_folder_name(base_folder) <<
-    "_" << storage_count;
+  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
 
-  return rosbag2_storage::FilesystemHelper::concat({base_folder, storage_file_name.str()});
+  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
 }
 }  // namespace
 
@@ -221,7 +222,7 @@ void SequentialWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    metadata_.bag_size += rosbag2_storage::FilesystemHelper::get_file_size(path);
+    metadata_.bag_size += rcutils_get_file_size(path.c_str());
   }
 
   metadata_.topics_with_message_count.clear();

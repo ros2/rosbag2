@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rcpputils/filesystem_helper.hpp"
 
-#include "rosbag2_storage/filesystem_helper.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
@@ -45,8 +45,8 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture()
   {
-    root_bag_path_ = rosbag2_storage::FilesystemHelper::concat({temporary_dir_path_, "bag"});
-    storage_path_ = rosbag2_storage::FilesystemHelper::concat({root_bag_path_, "bag_0"});
+    root_bag_path_ = (rcpputils::fs::path(temporary_dir_path_) / "bag").string();
+    storage_path_ = (rcpputils::fs::path(root_bag_path_) / "bag_0").string();
     database_path_ = storage_path_ + ".db3";
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }

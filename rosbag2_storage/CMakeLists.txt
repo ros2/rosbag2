@@ -22,6 +22,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
@@ -36,6 +37,7 @@ target_include_directories(rosbag2_storage PUBLIC include)
 ament_target_dependencies(
   rosbag2_storage
   pluginlib
+  rcpputils
   rcutils
   yaml_cpp_vendor)
 
@@ -104,14 +106,6 @@ if(BUILD_TESTING)
     target_include_directories(test_metadata_serialization PRIVATE include)
     target_link_libraries(test_metadata_serialization rosbag2_storage)
     ament_target_dependencies(test_metadata_serialization rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_filesystem_helper
-    test/rosbag2_storage/test_filesystem_helper.cpp)
-  if(TARGET test_filesystem_helper)
-    target_include_directories(test_filesystem_helper PRIVATE include)
-    target_link_libraries(test_filesystem_helper rosbag2_storage)
-    ament_target_dependencies(test_filesystem_helper rosbag2_test_common)
   endif()
 endif()
 
