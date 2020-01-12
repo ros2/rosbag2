@@ -57,11 +57,12 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  compressor_(nullptr),
+  compressor_{nullptr},
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
   topics_names_to_info_(),
   metadata_(),
-  compression_mode_{CompressionMode::NONE} {}
+  compression_mode_{CompressionMode::NONE},
+  should_compress_last_file_{true} {}
 
 
 SequentialWriter::~SequentialWriter()
@@ -74,7 +75,7 @@ void SequentialWriter::check_bagfile_size(const StorageOptions & storage_options
   if (storage_options.max_bagfile_size != 0 &&
     storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
-    throw std::runtime_error(
+    throw std::invalid_argument(
             "Invalid bag splitting size given. Please provide a different value.");
   }
 }
@@ -87,7 +88,7 @@ void SequentialWriter::init_compression(const CompressionOptions & compression_o
     } else {
       std::stringstream err;
       err << "Unsupported compression format " << compression_options.compression_format;
-      throw std::runtime_error(err.str());
+      throw std::runtime_error{err.str()};
     }
   }
 }
@@ -135,7 +136,9 @@ void SequentialWriter::open(
 void SequentialWriter::reset()
 {
   if (!base_folder_.empty()) {
-    compress_file_and_update_metadata();
+    if (max_bagfile_size_ == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
+      compress_file_and_update_metadata();
+    }
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
@@ -194,13 +197,8 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 bool SequentialWriter::compress_file_and_update_metadata()
 {
   if (compressor_ && compression_mode_ == CompressionMode::FILE) {
-    // Get the uri of the last file and pop the uri
-    const auto uncompressed_uri = metadata_.relative_file_paths.back();
-    metadata_.relative_file_paths.pop_back();
-
-    // Compress the last file and push the new uri
-    const auto compressed_uri = compressor_->compress_uri(uncompressed_uri);
-    metadata_.relative_file_paths.push_back(compressed_uri);
+    metadata_.relative_file_paths.back() =
+      compressor_->compress_uri(metadata_.relative_file_paths.back());
     return true;
   }
   return false;

@@ -55,15 +55,6 @@ public:
   ~Writer();
 
   /**
-   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
-   * This must be called before any other function is used.
-   *
-   * \param storage_options Options to configure the storage
-   * \param converter_options options to define in which format incoming messages are stored
-   **/
-  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
-
-  /**
    * Opens a new bagfile and prepares it for writing messages.
    *
    * The bagfile must not exist.
@@ -76,7 +67,8 @@ public:
   void open(
     const StorageOptions & storage_options,
     const ConverterOptions & converter_options,
-    const CompressionOptions & compression_options);
+    const CompressionOptions & compression_options = {"", CompressionMode::NONE});
+
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
    * a message which is passed to write(...).

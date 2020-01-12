@@ -272,11 +272,8 @@ public:
 
   ~FakeSequentialWriter() override = default;
 
-  void init_compression(const rosbag2_cpp::CompressionOptions & compression_options) override
+  void init_compression(const rosbag2_cpp::CompressionOptions &) override
   {
-    std::cout << "init_compression called with " << compression_options.compression_format <<
-      " compression format for " <<
-      rosbag2_cpp::compression_mode_to_string(compression_options.compression_mode) << std::endl;
   }
 
   bool compress_file_and_update_metadata() override

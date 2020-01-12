@@ -41,12 +41,6 @@ Writer::~Writer()
 }
 
 void Writer::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
-{
-  writer_impl_->open(storage_options, converter_options, {});
-}
-
-void Writer::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options,
   const CompressionOptions & compression_options)
