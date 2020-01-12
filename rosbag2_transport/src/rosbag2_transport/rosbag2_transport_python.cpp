@@ -44,16 +44,21 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * storage_id = nullptr;
   char * serilization_format = nullptr;
   char * node_prefix = nullptr;
+  char * compression_mode = nullptr;
+  char * compression_format = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
   unsigned long long max_bagfile_size = 0;  // NOLINT
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
+  // See https://docs.python.org/3/c-api/arg.html for reference on the format string.
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssssss|bbKKO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &serilization_format,
     &node_prefix,
+    &compression_mode,
+    &compression_format,
     &all,
     &no_discovery,
     &polling_interval_ms,
@@ -70,6 +75,9 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.is_discovery_disabled = no_discovery;
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
   record_options.node_prefix = std::string(node_prefix);
+  record_options.compression_mode =
+    rosbag2_cpp::compression_mode_from_string(std::string(compression_mode));
+  record_options.compression_format = compression_format;
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

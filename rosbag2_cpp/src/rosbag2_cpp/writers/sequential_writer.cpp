@@ -119,10 +119,10 @@ void SequentialWriter::open(
   }
 
   if (storage_options.max_bagfile_size != 0 &&
-      storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     throw std::invalid_argument{
-      "Invalid bag splitting size given. Please provide a different value."};
+            "Invalid bag splitting size given. Please provide a different value."};
   }
 
   init_compression(compression_options);
