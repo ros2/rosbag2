@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
@@ -99,10 +100,77 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
 
+// TODO(zmichaels11): Fix and enable this test on Windows.
+// This tests depends on the ability to read the metadata file.
+// Stopping the process on Windows does a hard kill and the metadata file is not written.
+#ifndef _WIN32
+TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
+  constexpr const char message_str[] = "Test";
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
+  constexpr const int message_size = 1024 * 1024;  // 1MB
+  constexpr const int expected_splits = 4;
+  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+  constexpr const char first_topic_name[] = "/test_topic0";
+  constexpr const char second_topic_name[] = "/test_topic1";
+
+  std::stringstream command;
+  command << "ros2 bag record" <<
+    " --output " << root_bag_path_ <<
+    " --max-bag-size " << bagfile_split_size <<
+    " -a";
+  auto process_handle = start_execution(command.str());
+  wait_for_db();
+
+  {
+    const auto message = create_string_message(message_str, message_size);
+    const auto node = std::make_unique<rclcpp::Node>(
+      "TestMessagePublisher",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
+    const auto first_publisher =
+      node->create_publisher<test_msgs::msg::Strings>(first_topic_name, 10);
+    rclcpp::WallRate message_rate{50ms};
+    constexpr const int message_batch_size = message_count / 2;
+
+    // Send first half of messages to /test_topic0
+    for (int i = 0; rclcpp::ok() && i < message_batch_size; ++i) {
+      first_publisher->publish(*message);
+      message_rate.sleep();
+    }
+
+    const auto second_publisher =
+      node->create_publisher<test_msgs::msg::Strings>(second_topic_name, 10);
+
+    // Send second half of messages to /test_topic1
+    for (int i = 0; rclcpp::ok() && i < message_batch_size; ++i) {
+      second_publisher->publish(*message);
+      message_rate.sleep();
+    }
+  }
+
+  stop_execution(process_handle);
+
+  rosbag2_storage::MetadataIo metadataIo;
+  const auto metadata = metadataIo.read_metadata(root_bag_path_);
+  // Verify at least 2 topics are in the metadata.
+  // There may be more if the test system is noisy.
+  EXPECT_GT(metadata.topics_with_message_count.size(), 1u);
+
+  // Transform the topic_names_with_message_count into an unordered set of topic_names.
+  std::unordered_set<std::string> topic_names;
+  for (const auto & topic : metadata.topics_with_message_count) {
+    topic_names.insert(topic.topic_metadata.name);
+  }
+
+  // Verify that first_topic_name and second_topic_name are both in the metadata.
+  EXPECT_NE(topic_names.end(), topic_names.find(first_topic_name));
+  EXPECT_NE(topic_names.end(), topic_names.find(second_topic_name));
+}
+#endif
+
 TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
   constexpr const char message_str[] = "Test";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
-  constexpr const int message_size = 512 * 1024;
+  constexpr const int message_size = 512 * 1024;  // 512KB
   constexpr const int expected_splits = 4;
   constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
   constexpr const char topic_name[] = "/test_topic";
@@ -131,8 +199,34 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   stop_execution(process_handle);
 
-  rosbag2_storage::MetadataIo metadataIo;
-  const auto metadata = metadataIo.read_metadata(root_bag_path_);
+  rosbag2_storage::MetadataIo metadata_io;
+
+#ifdef _WIN32
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 2;
+    metadata.storage_identifier = "sqlite3";
+
+    // Loop until expected_splits in case it split or the bagfile doesn't exist.
+    for (int i = 0; i < expected_splits; ++i) {
+      std::stringstream bagfile_name;
+      bagfile_name = << "bag_" << i << ".db3";
+
+      const auto bagfile_path =
+        rosbag2_storage::FilesystemHelper::concat({root_bag_path_, bagfile_name.str()});
+
+      if (rosbag2_storage::FilesystemHelper::file_exists(bagfile_path)) {
+        metadata.relative_file_paths.push_back(bagfile_path);
+      } else {
+        break;
+      }
+    }
+
+    metadata_io.write_metadata(root_bag_path_, metadata);
+  }
+#endif
+
+  const auto metadata = metadata_io.read_metadata(root_bag_path_);
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < expected_splits - 1; ++i) {
@@ -175,8 +269,25 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 
   stop_execution(process_handle);
 
-  rosbag2_storage::MetadataIo metadataIo;
-  const auto metadata = metadataIo.read_metadata(root_bag_path_);
+  rosbag2_storage::MetadataIo metadata_io;
+
+// TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+// This is required since stop_execution hard kills the proces on Windows,
+// which prevents the metadata from being written.
+#ifdef _WIN32
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 2;
+    metadata.storage_identifier = "sqlite3";
+
+    const auto bag_path =
+      rosbag2_storage::FilesystemHelper::concat({root_bag_path_, "bag_0.db3"});
+
+    metadata.relative_file_paths = {bag_path};
+  }
+#endif
+
+  const auto metadata = metadata_io.read_metadata(root_bag_path_);
 
   EXPECT_EQ(1u, metadata.relative_file_paths.size());
   EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(metadata.relative_file_paths[0]));
@@ -216,6 +327,28 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   stop_execution(process_handle);
 
   rosbag2_storage::MetadataIo metadata_io;
+
+// TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+// This is required since stop_execution hard kills the proces on Windows,
+// which prevents the metadata from being written.
+#ifdef _WIN32
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 2;
+    metadata.storage_identifier = "sqlite3";
+
+    for (int i = 0; i < expected_splits; ++i) {
+      std::stringstream bag_name;
+      bag_name << "bag_" << i << ".db3";
+
+      const auto bag_path =
+        rosbag2_storage::FilesystemHelper::concat({root_bag_path_, bag_name});
+
+      metadata.relative_file_paths.push_back(bag_path);
+    }
+  }
+#endif
+
   const auto metadata = metadata_io.read_metadata(root_bag_path_);
 
   EXPECT_EQ(static_cast<size_t>(expected_splits), metadata.relative_file_paths.size());
