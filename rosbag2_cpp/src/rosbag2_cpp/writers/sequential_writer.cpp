@@ -63,7 +63,8 @@ SequentialWriter::SequentialWriter(
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
   topics_names_to_info_(),
   metadata_(),
-  compression_mode_{CompressionMode::NONE} {}
+  compression_mode_{CompressionMode::NONE},
+  should_compress_last_file_{true} {}
 
 
 SequentialWriter::~SequentialWriter()
@@ -131,7 +132,9 @@ void SequentialWriter::open(
 void SequentialWriter::reset()
 {
   if (!base_folder_.empty()) {
-    if (compressor_ && compression_mode_ == CompressionMode::FILE) {
+    // Reset may be called before initializing the compressor (ex. bad options).
+    // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
+    if (compressor_ && compression_mode_ == CompressionMode::FILE && should_compress_last_file_) {
       try {
         compress_last_file();
       } catch(const std::runtime_error & e) {
@@ -206,6 +209,9 @@ void SequentialWriter::split_bagfile()
     compress_last_file();
   }
 
+  // Add a check to make sure reset() does not compress the file again if we couldn't load the
+  // storage plugin.
+  should_compress_last_file_ = false;
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
@@ -215,6 +221,7 @@ void SequentialWriter::split_bagfile()
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
     throw std::runtime_error(errmsg.str());
   }
+  should_compress_last_file_ = true;
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
 

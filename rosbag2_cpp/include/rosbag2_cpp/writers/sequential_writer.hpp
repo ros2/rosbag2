@@ -149,6 +149,8 @@ private:
   // Used in invoking compression
   rosbag2_cpp::CompressionMode compression_mode_;
 
+  bool should_compress_last_file_;
+
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();
 
