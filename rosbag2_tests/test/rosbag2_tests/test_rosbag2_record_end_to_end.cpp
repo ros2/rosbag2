@@ -19,8 +19,9 @@
 #include <unordered_set>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rcpputils/filesystem_helper.hpp"
+#include "rcutils/filesystem.h"
 #include "rosbag2_storage/metadata_io.hpp"
-
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "record_fixture.hpp"
@@ -213,10 +214,10 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
       bagfile_name = << "bag_" << i << ".db3";
 
       const auto bagfile_path =
-        rosbag2_storage::FilesystemHelper::concat({root_bag_path_, bagfile_name.str()});
+        (rcpputils::fs::path(root_bag_path_) / bagfile_name.str());
 
-      if (rosbag2_storage::FilesystemHelper::file_exists(bagfile_path)) {
-        metadata.relative_file_paths.push_back(bagfile_path);
+      if (bagfile_path.exists()) {
+        metadata.relative_file_paths.push_back(bagfile_path.string());
       } else {
         break;
       }
@@ -227,13 +228,18 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 #endif
 
   const auto metadata = metadata_io.read_metadata(root_bag_path_);
+  const auto actual_splits = static_cast<int>(metadata.relative_file_paths.size());
+
+  EXPECT_EQ(expected_splits, actual_splits);
 
   // Don't include the last bagfile since it won't be full
-  for (int i = 0; i < expected_splits - 1; ++i) {
+  for (int i = 0; i < actual_splits - 1; ++i) {
+    const auto bagfile_path = metadata.relative_file_paths[i];
+    EXPECT_TRUE(rcpputils::fs::exists(bagfile_path));
+
+    const auto actual_split_size = static_cast<int>(rcutils_get_file_size(bagfile_path.c_str()));
     // Actual size is guaranteed to be >= bagfile_split size
-    EXPECT_LT(
-      static_cast<size_t>(bagfile_split_size),
-      rosbag2_storage::FilesystemHelper::get_file_size(metadata.relative_file_paths[i]));
+    EXPECT_LT(bagfile_split_size, actual_split_size);
   }
 }
 
@@ -280,17 +286,20 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     metadata.version = 2;
     metadata.storage_identifier = "sqlite3";
 
-    const auto bag_path =
-      rosbag2_storage::FilesystemHelper::concat({root_bag_path_, "bag_0.db3"});
+    const auto bag_path = rcpputils::fs::path(root_bag_path_) / "bag_0.db3";
 
-    metadata.relative_file_paths = {bag_path};
+    metadata.relative_file_paths = {bag_path.string()};
   }
 #endif
 
   const auto metadata = metadata_io.read_metadata(root_bag_path_);
 
+  // Check that there's only 1 bagfile and that it exists.
   EXPECT_EQ(1u, metadata.relative_file_paths.size());
-  EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(metadata.relative_file_paths[0]));
+  EXPECT_TRUE(rcpputils::fs::exists(metadata.relative_file_paths[0]));
+
+  // Check that the next bagfile does not exist.
+  EXPECT_FALSE((rcpputils::fs::path(root_bag_path_) / "bag_1.db3").exists());
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
@@ -341,10 +350,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
       std::stringstream bag_name;
       bag_name << "bag_" << i << ".db3";
 
-      const auto bag_path =
-        rosbag2_storage::FilesystemHelper::concat({root_bag_path_, bag_name});
+      const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
-      metadata.relative_file_paths.push_back(bag_path);
+      metadata.relative_file_paths.push_back(bag_path.string());
     }
   }
 #endif
@@ -354,7 +362,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   EXPECT_EQ(static_cast<size_t>(expected_splits), metadata.relative_file_paths.size());
 
   for (const auto & path : metadata.relative_file_paths) {
-    EXPECT_TRUE(rosbag2_storage::FilesystemHelper::file_exists(path));
+    EXPECT_TRUE(rcpputils::fs::exists(path));
   }
 }
 
