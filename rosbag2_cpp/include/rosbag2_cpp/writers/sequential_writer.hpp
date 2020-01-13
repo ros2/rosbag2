@@ -106,6 +106,29 @@ public:
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
+protected:
+  /**
+   * Initialize the compressor.
+   *
+   * \throws runtime_error If the compression implementation does not exist.
+   */
+  virtual void init_compression(const CompressionOptions & compression_options);
+
+  /**
+   * Compress the most recent file and update the metadata file path.
+   */
+  virtual void compress_last_file();
+
+  /**
+   * Checks if the compression by message option is specified and a compressor exists.
+   *
+   * If the above conditions are satisfied, compresses the serialized bag message.
+   *
+   * \param message The message to compress.
+   * \return True if compression occurred, false otherwise.
+   */
+  virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
 private:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
@@ -133,33 +156,10 @@ private:
   bool should_split_bagfile() const;
 
   // Prepares the metadata by setting initial values.
-  void init_metadata(const CompressionOptions & compression_options);
+  void init_metadata();
 
   // Record TopicInformation into metadata
   void finalize_metadata();
-
-protected:
-  /**
-   * Initialize the compressor.
-   *
-   * \throws runtime_error If the compression implementation does not exist.
-   */
-  virtual void init_compression(const CompressionOptions & compression_options);
-
-  /**
-   * Compress the most recent file and update the metadata file path.
-   */
-  virtual void compress_last_file();
-
-  /**
-   * Checks if the compression by message option is specified and a compressor exists.
-   *
-   * If the above conditions are satisfied, compresses the serialized bag message.
-   *
-   * \param message The message to compress.
-   * \return True if compression occurred, false otherwise.
-   */
-  virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
 
 }  // namespace writers

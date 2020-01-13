@@ -78,23 +78,21 @@ void SequentialWriter::init_compression(const CompressionOptions & compression_o
     } else {
       std::stringstream err;
       err << "Unsupported compression format " << compression_options.compression_format;
-      throw std::runtime_error{err.str()};
+      throw std::invalid_argument{err.str()};
     }
   }
+  metadata_.compression_format = compression_options.compression_format;
+  metadata_.compression_mode =
+    rosbag2_cpp::compression_mode_to_string(compression_options.compression_mode);
 }
 
-void SequentialWriter::init_metadata(const CompressionOptions & compression_options)
+void SequentialWriter::init_metadata()
 {
   metadata_ = rosbag2_storage::BagMetadata{};
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   metadata_.relative_file_paths = {storage_->get_relative_file_path()};
-  if (compression_options.compression_mode != rosbag2_cpp::CompressionMode::NONE) {
-    metadata_.compression_mode = rosbag2_cpp::compression_mode_to_string(
-      compression_options.compression_mode);
-    metadata_.compression_format = compression_options.compression_format;
-  }
 }
 
 void SequentialWriter::open(
@@ -125,8 +123,8 @@ void SequentialWriter::open(
       "Invalid bag splitting size given. Please provide a different value."};
   }
 
+  init_metadata();
   init_compression(compression_options);
-  init_metadata(compression_options);
 }
 
 void SequentialWriter::reset()
