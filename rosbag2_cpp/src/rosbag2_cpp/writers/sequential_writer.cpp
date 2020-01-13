@@ -27,6 +27,7 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
+#include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 
 namespace rosbag2_cpp
@@ -131,7 +132,11 @@ void SequentialWriter::reset()
 {
   if (!base_folder_.empty()) {
     if (compressor_ && compression_mode_ == CompressionMode::FILE) {
-      compress_last_file();
+      try {
+        compress_last_file();
+      } catch(const std::runtime_error & e) {
+        ROSBAG2_CPP_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
+      }
     }
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
@@ -223,7 +228,6 @@ void SequentialWriter::compress_message(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   assert(compressor_ != nullptr);
-  auto converted_message = converter_ ? converter_->convert(message) : message;
   compressor_->compress_serialized_bag_message(converted_message.get());
 }
 
@@ -247,11 +251,12 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
+  auto converted_message = converter_ ? converter_->convert(message) : message;
   if (compression_mode_ == CompressionMode::MESSAGE) {
-    compress_message(message);
+    compress_message(converted_message);
   }
 
-  storage_->write(converter_ ? converter_->convert(message) : message);
+  storage_->write(converted_message);
 }
 
 bool SequentialWriter::should_split_bagfile() const
