@@ -276,16 +276,14 @@ public:
   {
   }
 
-  bool compress_file_and_update_metadata() override
+  void compress_last_file() override
   {
     compress_file_call_counter++;
-    return true;
   }
 
-  bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage>) override
+  void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage>) override
   {
     compress_message_call_counter++;
-    return true;
   }
 
   int compress_file_call_counter = 0;

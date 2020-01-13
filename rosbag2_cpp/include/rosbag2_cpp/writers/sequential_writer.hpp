@@ -126,8 +126,6 @@ private:
   // Used in invoking compression
   rosbag2_cpp::CompressionMode compression_mode_;
 
-  bool should_compress_last_file_;
-
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();
 
@@ -140,13 +138,6 @@ private:
   // Record TopicInformation into metadata
   void finalize_metadata();
 
-  /**
-   * Check to make sure a valid bagfile split size is passed.
-   *
-   * \throws runtime_error If the size is too small (plugin specific).
-   */
-  void check_bagfile_size(const StorageOptions & storage_options);
-
 protected:
   /**
    * Initialize the compressor.
@@ -156,14 +147,9 @@ protected:
   virtual void init_compression(const CompressionOptions & compression_options);
 
   /**
-   * Checks if the compression by file option is specified and a compressor exists.
-   *
-   * If the above conditions are satisfied, compresses the most recent file and updates the
-   * metadata file paths.
-   *
-   * \return True if compression occurred, false otherwise.
+   * Compress the most recent file and update the metadata file path.
    */
-  virtual bool compress_file_and_update_metadata();
+  virtual void compress_last_file();
 
   /**
    * Checks if the compression by message option is specified and a compressor exists.
@@ -173,7 +159,7 @@ protected:
    * \param message The message to compress.
    * \return True if compression occurred, false otherwise.
    */
-  virtual bool compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+  virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
 
 }  // namespace writers

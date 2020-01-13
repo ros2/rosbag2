@@ -15,6 +15,7 @@
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <memory>
 #include <stdexcept>
@@ -61,23 +62,12 @@ SequentialWriter::SequentialWriter(
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
   topics_names_to_info_(),
   metadata_(),
-  compression_mode_{CompressionMode::NONE},
-  should_compress_last_file_{true} {}
+  compression_mode_{CompressionMode::NONE} {}
 
 
 SequentialWriter::~SequentialWriter()
 {
   reset();
-}
-
-void SequentialWriter::check_bagfile_size(const StorageOptions & storage_options)
-{
-  if (storage_options.max_bagfile_size != 0 &&
-    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
-  {
-    throw std::invalid_argument(
-            "Invalid bag splitting size given. Please provide a different value.");
-  }
 }
 
 void SequentialWriter::init_compression(const CompressionOptions & compression_options)
@@ -128,7 +118,13 @@ void SequentialWriter::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  check_bagfile_size(storage_options);
+  if (storage_options.max_bagfile_size != 0 &&
+      storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+  {
+    throw std::invalid_argument{
+      "Invalid bag splitting size given. Please provide a different value."};
+  }
+
   init_compression(compression_options);
   init_metadata(compression_options);
 }
@@ -136,8 +132,8 @@ void SequentialWriter::open(
 void SequentialWriter::reset()
 {
   if (!base_folder_.empty()) {
-    if (max_bagfile_size_ == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
-      compress_file_and_update_metadata();
+    if (compressor_ && compression_mode_ == CompressionMode::FILE) {
+      compress_last_file();
     }
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
@@ -194,19 +190,18 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
   }
 }
 
-bool SequentialWriter::compress_file_and_update_metadata()
+void SequentialWriter::compress_last_file()
 {
-  if (compressor_ && compression_mode_ == CompressionMode::FILE) {
-    metadata_.relative_file_paths.back() =
-      compressor_->compress_uri(metadata_.relative_file_paths.back());
-    return true;
-  }
-  return false;
+  assert(compressor_ != nullptr);
+  metadata_.relative_file_paths.back() =
+    compressor_->compress_uri(metadata_.relative_file_paths.back());
 }
 
 void SequentialWriter::split_bagfile()
 {
-  compress_file_and_update_metadata();
+  if (compression_mode_ == CompressionMode::FILE) {
+    compress_last_file();
+  }
 
   const auto storage_uri = format_storage_uri(
     base_folder_,
@@ -226,15 +221,12 @@ void SequentialWriter::split_bagfile()
   }
 }
 
-bool SequentialWriter::compress_message(
+void SequentialWriter::compress_message(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-  if (compressor_ && compression_mode_ == CompressionMode::MESSAGE) {
-    auto converted_message = converter_ ? converter_->convert(message) : message;
-    compressor_->compress_serialized_bag_message(converted_message.get());
-    return true;
-  }
-  return false;
+  assert(compressor_ != nullptr);
+  auto converted_message = converter_ ? converter_->convert(message) : message;
+  compressor_->compress_serialized_bag_message(converted_message.get());
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -257,7 +249,10 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
-  compress_message(message);
+  if (compression_mode_ == CompressionMode::MESSAGE) {
+    compress_message(message);
+  }
+
   storage_->write(converter_ ? converter_->convert(message) : message);
 }
 
