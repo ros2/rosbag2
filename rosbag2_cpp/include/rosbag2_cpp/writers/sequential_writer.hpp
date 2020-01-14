@@ -61,7 +61,7 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
-  ~SequentialWriter() override;
+  ~SequentialWriter();
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.

@@ -19,14 +19,12 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_cpp/compression_options.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
-#include "rosbag2_compression/base_decompressor_interface.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -57,7 +55,7 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
-  virtual ~SequentialReader();
+  ~SequentialReader() override;
 
   void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
@@ -70,98 +68,66 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
-  /**
-   * Ask whether there is another database file to read from the list of relative
-   * file paths.
-   *
-   * \return true if there are still files to read in the list
-   */
+/**
+ * Ask whether there is another database file to read from the list of relative
+ * file paths.
+ *
+ * \return true if there are still files to read in the list
+ */
   virtual bool has_next_file() const;
 
-  /**
-  * Return the relative file path pointed to by the current file iterator.
-  */
+/**
+* Return the relative file path pointed to by the current file iterator.
+*/
   virtual std::string get_current_file() const;
 
-  /**
-  * Return the URI of the current file (i.e. no extensions).
-  */
+/**
+* Return the URI of the current file (i.e. no extensions).
+*/
   virtual std::string get_current_uri() const;
 
 protected:
-  /**
-  * Increment the current file iterator to point to the next file in the list of relative file
-  * paths.
-  *
-  * Expected usage:
-  * if (has_next_file()) load_next_file();
-  */
+/**
+* Increment the current file iterator to point to the next file in the list of relative file
+* paths.
+*
+* Expected usage:
+* if (has_next_file()) load_next_file();
+*/
   virtual void load_next_file();
 
 private:
-  /**
-   * Checks if all topics in the bagfile have the same RMW serialization format.
-   * Currently a bag file can only be played if all topics have the same serialization format.
-   *
-   * \param topics Vector of TopicInformation with metadata.
-   * \throws runtime_error if any topic has a different serialization format from the rest.
-   */
+/**
+ * Checks if all topics in the bagfile have the same RMW serialization format.
+ * Currently a bag file can only be played if all topics have the same serialization format.
+ *
+ * \param topics Vector of TopicInformation with metadata.
+ * \throws runtime_error if any topic has a different serialization format from the rest.
+ */
   virtual void check_topics_serialization_formats(
     const std::vector<rosbag2_storage::TopicInformation> & topics);
 
-  /**
-
-  * Checks if the serialization format of the converter factory is the same as that of the storage
-  * factory.
-  * If not, changes the serialization format of the converter factory to use the serialization
-  * format of the storage factory.
-  *
-  * \param converter_serialization_format
-  * \param storage_serialization_format
-  */
+/**
+* Checks if the serialization format of the converter factory is the same as that of the storage
+* factory.
+* If not, changes the serialization format of the converter factory to use the serialization
+* format of the storage factory.
+*
+* \param converter_serialization_format
+* \param storage_serialization_format
+*/
   virtual void check_converter_serialization_format(
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
-
-  /**
-   * Opens a storage plugin for read only.
-   *
-   * \throws std::runtime_error If no storage could be initialized.
-   */
-  virtual void open_storage();
-
-  /**
-   * Initializes the decompressor if a compression mode is specified in the metadata.
-   *
-   * \throws std::runtime_error If compression format doesn't exist.
-   */
-  virtual void setup_compression();
 
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
-  rosbag2_cpp::CompressionMode compression_mode_{rosbag2_cpp::CompressionMode::NONE};
-
-protected:
-  /**
-   * Checks if the compression mode is of type MESSAGE and if so, decompresses the message.
-   *
-   * \param message A serialized bag message
-   */
-  virtual void decompress_message(rosbag2_storage::SerializedBagMessage * message);
-
-  /**
-   * Checks if the compression mode is of type FILE and if so, decompresses the file.
-   *
-   * \param uri Relative path as a string
-   */
-  virtual void decompress_file(const std::string & uri);
 };
 
 }  // namespace readers

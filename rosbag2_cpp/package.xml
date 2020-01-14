@@ -13,7 +13,6 @@
   <depend>pluginlib</depend>
   <depend>poco_vendor</depend>
   <depend>rcutils</depend>
-  <depend>rosbag2_compression</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosidl_generator_cpp</depend>
   <depend>rosidl_typesupport_cpp</depend>
