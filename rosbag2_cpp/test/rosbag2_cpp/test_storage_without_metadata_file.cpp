@@ -29,6 +29,7 @@
 #include "mock_metadata_io.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
+
 using namespace testing;  // NOLINT
 
 namespace
