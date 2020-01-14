@@ -137,6 +137,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
   endif()
 
+  ament_add_gmock(test_storage_without_metadata_file
+    test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
+  if(TARGET test_storage_without_metadata_file)
+    target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
+  endif()
+
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
     test/rosbag2_cpp/types/test_ros2_message.cpp
