@@ -120,6 +120,13 @@ private:
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
 
+  /**
+   * Opens a storage plugin for read only.
+   *
+   * \throws std::runtime_error If no storage could be initialized.
+   */
+  virtual void open_storage();
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};

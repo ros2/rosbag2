@@ -48,6 +48,15 @@ void SequentialReader::reset()
   storage_.reset();
 }
 
+void SequentialReader::open_storage()
+{
+  storage_ = storage_factory_->open_read_only(
+    *current_file_iterator_, metadata_.storage_identifier);
+  if (!storage_) {
+    throw std::runtime_error{"No storage could be initialized. Abort"};
+  }
+}
+
 void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
@@ -60,21 +69,11 @@ void SequentialReader::open(
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
     }
-
+    open_storage();
     file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
-
-    storage_ = storage_factory_->open_read_only(
-      *current_file_iterator_, metadata_.storage_identifier);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
-    }
   } else {
-    storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
-    }
+    open_storage();
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
