@@ -13,18 +13,11 @@
 # limitations under the License.
 
 import datetime
-from enum import Enum
 import os
 
 from ros2bag.verb import VerbExtension
 
 from ros2cli.node import NODE_NAME_PREFIX
-
-
-class CompressionMode(Enum):
-    NONE = 'NONE'
-    MESSAGE = 'MESSAGE'
-    FILE = 'FILE'
 
 
 class RecordVerb(VerbExtension):
@@ -63,9 +56,9 @@ class RecordVerb(VerbExtension):
                   'is disabled.'
         )
         parser.add_argument(
-            '-c', '--compression-mode', type=str, default=CompressionMode.NONE,
-            choices=[mode.value for mode in CompressionMode],
-            help='Determine whether to compress by file or message. Default is "NONE".'
+            '--compression-mode', type=str, default='none',
+            choices=['none', 'file', 'message'],
+            help='Determine whether to compress by file or message. Default is "none".'
         )
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
@@ -88,8 +81,9 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
 
-        if args.compression_format and args.compression_mode == CompressionMode.NONE:
+        if args.compression_format and args.compression_mode == 'none':
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
+        args.compression_mode = args.compression_mode.upper()
 
         self.create_bag_directory(uri)
 

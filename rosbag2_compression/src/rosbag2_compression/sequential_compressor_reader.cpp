@@ -63,6 +63,9 @@ void SequentialCompressorReader::setup_compression()
   if (compression_mode_ != rosbag2_compression::CompressionMode::NONE) {
     if (metadata_.compression_format == "zstd") {
       decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
+      // Decompress the first file so that it is readable.
+      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
+      set_current_file(decompressor_->decompress_uri(get_current_file()));
     } else {
       std::stringstream err;
       err << "Unsupported compression format " << metadata_.compression_format;
@@ -75,28 +78,18 @@ void SequentialCompressorReader::open(
   const rosbag2_cpp::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
-  // If there is a metadata.yaml file present, load it.
-  // If not, let's ask the storage with the given URI for its metadata.
-  // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_COMPRESSION_LOG_WARN("No file paths were found in metadata.");
       return;
     }
-    open_storage();
+    file_paths_ = metadata_.relative_file_paths;
+    current_file_iterator_ = file_paths_.begin();
     setup_compression();
-    file_paths_ = metadata_.relative_file_paths;
-    current_file_iterator_ = file_paths_.begin();
-  } else {
     open_storage();
-    metadata_ = storage_->get_metadata();
-    if (metadata_.relative_file_paths.empty()) {
-      ROSBAG2_COMPRESSION_LOG_WARN("No file paths were found in metadata.");
-      return;
-    }
-    file_paths_ = metadata_.relative_file_paths;
-    current_file_iterator_ = file_paths_.begin();
+  } else {
+    throw std::runtime_error{"Compression is not supported for legacy bag files."};
   }
   auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
@@ -130,7 +123,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressorReade
 {
   if (storage_) {
     auto message = storage_->read_next();
-    if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
+    if (decompressor_ && compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
     }
     return converter_ ? converter_->convert(message) : message;
@@ -146,12 +139,11 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialCompressorReader::get_all_
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-
 void SequentialCompressorReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
-  if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
+  if (decompressor_ && compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
   }

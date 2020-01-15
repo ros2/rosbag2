@@ -109,6 +109,16 @@ protected:
    */
   virtual void setup_compression();
 
+  /**
+   * Set the file path currently pointed to by the iterator.
+   *
+   * \param file Relative path to the file.
+   */
+  virtual void set_current_file(const std::string & file)
+  {
+    *current_file_iterator_ = file;
+  }
+
 private:
   /**
    * Opens a storage plugin for read only.

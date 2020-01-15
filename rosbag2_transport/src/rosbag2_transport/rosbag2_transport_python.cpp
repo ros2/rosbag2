@@ -19,12 +19,14 @@
 #include <vector>
 
 #include "rosbag2_compression/compression_options.hpp"
+#include "rosbag2_compression/sequential_compressor_reader.hpp"
 #include "rosbag2_compression/sequential_compressor_writer.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -108,17 +110,18 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     rmw_get_serialization_format() :
     serilization_format;
 
+  // Specify defaults
+  auto info = std::make_shared<rosbag2_cpp::Info>();
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
     std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-  auto info = std::make_shared<rosbag2_cpp::Info>();
-  std::shared_ptr<rosbag2_cpp::Writer> writer;
+  auto writer = std::make_shared<rosbag2_cpp::Writer>(
+    std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  // Change writer based on recording options
   if (record_options.compression_format == "zstd") {
     writer = std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_compression::SequentialCompressorWriter>(compression_options));
-  } else {
-    writer = std::make_shared<rosbag2_cpp::Writer>(
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
+
   rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
   transport.init();
   transport.record(storage_options, record_options);
@@ -160,7 +163,23 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
 
-  rosbag2_transport::Rosbag2Transport transport;
+  rosbag2_storage::MetadataIo metadata_io{};
+  rosbag2_storage::BagMetadata metadata{};
+  // Specify defaults
+  auto info = std::make_shared<rosbag2_cpp::Info>();
+  auto reader = std::make_shared<rosbag2_cpp::Reader>(
+    std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  auto writer = std::make_shared<rosbag2_cpp::Writer>(
+    std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  // Change reader based on metadata options
+  if (metadata_io.metadata_file_exists(storage_options.uri)) {
+    metadata = metadata_io.read_metadata(storage_options.uri);
+    if (metadata.compression_format == "zstd") {
+      reader = std::make_shared<rosbag2_cpp::Reader>(
+        std::make_unique<rosbag2_compression::SequentialCompressorReader>());
+    }
+  }
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
   transport.init();
   transport.play(storage_options, play_options);
   transport.shutdown();
