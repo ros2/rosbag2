@@ -50,6 +50,22 @@ TEST(CompressionOptionsFromStringTest, MixedCaseMessageStringReturnsMessageMode)
   EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::MESSAGE);
 }
 
+TEST(CompressionOptionsFromStringTest, MixedCaseFileStringReturnsFileMode)
+{
+  const std::string compression_mode_string{"FiLe"};
+  const auto compression_mode = rosbag2_compression::compression_mode_from_string(
+    compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::FILE);
+}
+
+TEST(CompressionOptionsFromStringTest, MixedCaseNoneStringReturnsNoneMode)
+{
+  const std::string compression_mode_string{"nOnE"};
+  const auto compression_mode = rosbag2_compression::compression_mode_from_string(
+    compression_mode_string);
+  EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::NONE);
+}
+
 TEST(CompressionOptionsFromStringTest, MessageStringReturnsMessageMode)
 {
   const std::string compression_mode_string{"MESSAGE"};

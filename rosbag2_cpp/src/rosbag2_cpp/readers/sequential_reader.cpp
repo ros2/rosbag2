@@ -67,14 +67,14 @@ void SequentialReader::open(
     storage_ = storage_factory_->open_read_only(
       storage_options.uri, storage_options.storage_id);
     if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
+      throw std::runtime_error{"No storage could be initialized. Abort"};
     }
 
   } else {
     storage_ = storage_factory_->open_read_only(
       storage_options.uri, storage_options.storage_id);
     if (!storage_) {
-      throw std::runtime_error("No storage could be initialized. Abort");
+      throw std::runtime_error{"No storage could be initialized. Abort"};
     }
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
