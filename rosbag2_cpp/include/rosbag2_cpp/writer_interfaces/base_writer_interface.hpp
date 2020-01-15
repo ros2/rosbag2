@@ -17,6 +17,8 @@
 
 #include <memory>
 
+#include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
