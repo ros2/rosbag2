@@ -17,6 +17,13 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_compression/compression_options.hpp"
+#include "rosbag2_compression/sequential_compressor_writer.hpp"
+#include "rosbag2_cpp/info.hpp"
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
+#include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -33,6 +40,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "storage_id",
     "serialization_format",
     "node_prefix",
+    "compression_mode",
+    "compression_format",
     "all",
     "no_discovery",
     "polling_interval",
@@ -44,16 +53,20 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * storage_id = nullptr;
   char * serilization_format = nullptr;
   char * node_prefix = nullptr;
+  char * compression_mode = nullptr;
+  char * compression_format = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
   unsigned long long max_bagfile_size = 0;  // NOLINT
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssssss|bbKKO", const_cast<char **>(kwlist),
     &uri,
     &storage_id,
     &serilization_format,
     &node_prefix,
+    &compression_mode,
+    &compression_format,
     &all,
     &no_discovery,
     &polling_interval_ms,
@@ -70,6 +83,13 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.is_discovery_disabled = no_discovery;
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
   record_options.node_prefix = std::string(node_prefix);
+  record_options.compression_mode = std::string(compression_mode);
+  record_options.compression_format = compression_format;
+
+  rosbag2_compression::CompressionOptions compression_options{
+    record_options.compression_format,
+    rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
+  };
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
@@ -87,7 +107,18 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     rmw_get_serialization_format() :
     serilization_format;
 
-  rosbag2_transport::Rosbag2Transport transport;
+  auto reader = std::make_shared<rosbag2_cpp::Reader>(
+      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  auto info = std::make_shared<rosbag2_cpp::Info>();
+  std::shared_ptr<rosbag2_cpp::Writer> writer;
+  if (record_options.compression_format == "zstd") {
+    writer = std::make_shared<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_compression::SequentialCompressorWriter>(compression_options));
+  } else {
+    writer = std::make_shared<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  }
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
   transport.init();
   transport.record(storage_options, record_options);
   transport.shutdown();

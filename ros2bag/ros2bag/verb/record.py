@@ -13,11 +13,18 @@
 # limitations under the License.
 
 import datetime
+from enum import Enum
 import os
 
 from ros2bag.verb import VerbExtension
 
 from ros2cli.node import NODE_NAME_PREFIX
+
+
+class CompressionMode(Enum):
+    NONE = 'NONE'
+    MESSAGE = 'MESSAGE'
+    FILE = 'FILE'
 
 
 class RecordVerb(VerbExtension):
@@ -55,6 +62,15 @@ class RecordVerb(VerbExtension):
                   'Default it is zero, recording written in single bagfile and splitting '
                   'is disabled.'
         )
+        parser.add_argument(
+            '-c', '--compression-mode', type=str, default=CompressionMode.NONE,
+            choices=[mode.value for mode in CompressionMode],
+            help='Determine whether to compress by file or message. Default is "NONE".'
+        )
+        parser.add_argument(
+            '--compression-format', type=str, default='', choices=['zstd'],
+            help='Specify the compression format/algorithm. Default is none.'
+        )
         self._subparser = parser
 
     def create_bag_directory(self, uri):
@@ -72,6 +88,9 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
 
+        if args.compression_format and args.compression_mode == CompressionMode.NONE:
+            return 'Invalid choice: Cannot specify compression format without a compression mode.'
+
         self.create_bag_directory(uri)
 
         if args.all:
@@ -87,6 +106,8 @@ class RecordVerb(VerbExtension):
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
                 node_prefix=NODE_NAME_PREFIX,
+                compression_mode=args.compression_mode,
+                compression_format=args.compression_format,
                 all=True,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
@@ -104,6 +125,8 @@ class RecordVerb(VerbExtension):
                 storage_id=args.storage,
                 serialization_format=args.serialization_format,
                 node_prefix=NODE_NAME_PREFIX,
+                compression_mode=args.compression_mode,
+                compression_format=args.compression_format,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,

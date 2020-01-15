@@ -29,6 +29,8 @@ public:
   std::vector<std::string> topics;
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval;
+  std::string compression_mode = "NONE";
+  std::string compression_format = "";
   std::string node_prefix = "";
 };
 
