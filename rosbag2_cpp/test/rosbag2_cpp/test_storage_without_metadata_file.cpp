@@ -34,7 +34,6 @@ using namespace testing;  // NOLINT
 
 namespace
 {
-constexpr const char kTopicName[] = "topic";
 constexpr const char kStorageId[] = "StoragePlugin";
 constexpr const char kRmwFormat[] = "rmw1_format";
 }  // namespace
