@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_compression/zstd_decompressor.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
@@ -49,30 +48,6 @@ void SequentialReader::reset()
   storage_.reset();
 }
 
-void SequentialReader::open_storage()
-{
-  storage_ = storage_factory_->open_read_only(
-    *current_file_iterator_, metadata_.storage_identifier);
-  if (!storage_) {
-    throw std::runtime_error{"No storage could be initialized. Abort"};
-  }
-}
-
-void SequentialReader::setup_compression()
-{
-  compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
-  if (compression_mode_ != rosbag2_cpp::CompressionMode::NONE) {
-    // TODO(piraka9011): Replace this with a compressor_factory.
-    if (metadata_.compression_format == "zstd") {
-      decompressor_ = std::make_unique<rosbag2_compression::ZstdDecompressor>();
-    } else {
-      std::stringstream err;
-      err << "Unsupported compression format " << metadata_.compression_format;
-      throw std::runtime_error(err.str());
-    }
-  }
-}
-
 void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
@@ -85,12 +60,22 @@ void SequentialReader::open(
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
     }
-    open_storage();
-    setup_compression();
+
     file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
+
+    storage_ = storage_factory_->open_read_only(
+      storage_options.uri, storage_options.storage_id);
+    if (!storage_) {
+      throw std::runtime_error("No storage could be initialized. Abort");
+    }
+
   } else {
-    open_storage();
+    storage_ = storage_factory_->open_read_only(
+      storage_options.uri, storage_options.storage_id);
+    if (!storage_) {
+      throw std::runtime_error("No storage could be initialized. Abort");
+    }
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
@@ -128,19 +113,10 @@ bool SequentialReader::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-void SequentialReader::decompress_message(
-  rosbag2_storage::SerializedBagMessage * message)
-{
-  if (compression_mode_ == CompressionMode::MESSAGE) {
-    decompressor_->decompress_serialized_bag_message(message);
-  }
-}
-
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
     auto message = storage_->read_next();
-    decompress_message(message.get());
     return converter_ ? converter_->convert(message) : message;
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
@@ -159,19 +135,10 @@ bool SequentialReader::has_next_file() const
   return current_file_iterator_ + 1 != file_paths_.end();
 }
 
-void SequentialReader::decompress_file(const std::string & uri)
-{
-  if (compression_mode_ == CompressionMode::FILE) {
-    ROSBAG2_CPP_LOG_DEBUG_STREAM("Decompressing " << uri);
-    *current_file_iterator_ = decompressor_->decompress_uri(uri);
-  }
-}
-
 void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
-  decompress_file(*current_file_iterator_);
 }
 
 std::string SequentialReader::get_current_file() const

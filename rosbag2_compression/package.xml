@@ -11,6 +11,7 @@
 
   <depend>rcpputils</depend>
   <depend>rcutils</depend>
+  <depend>rosbag2_cpp</depend>
   <depend>rosbag2_storage</depend>
   <depend>zstd_vendor</depend>
 
