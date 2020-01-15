@@ -68,54 +68,54 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
-/**
- * Ask whether there is another database file to read from the list of relative
- * file paths.
- *
- * \return true if there are still files to read in the list
- */
+  /**
+   * Ask whether there is another database file to read from the list of relative
+   * file paths.
+   *
+   * \return true if there are still files to read in the list
+   */
   virtual bool has_next_file() const;
 
-/**
-* Return the relative file path pointed to by the current file iterator.
-*/
+  /**
+   * Return the relative file path pointed to by the current file iterator.
+   */
   virtual std::string get_current_file() const;
 
-/**
-* Return the URI of the current file (i.e. no extensions).
-*/
+  /**
+   * Return the URI of the current file (i.e. no extensions).
+   */
   virtual std::string get_current_uri() const;
 
 protected:
-/**
-* Increment the current file iterator to point to the next file in the list of relative file
-* paths.
-*
-* Expected usage:
-* if (has_next_file()) load_next_file();
-*/
+  /**
+   * Increment the current file iterator to point to the next file in the list of relative file
+   * paths.
+   *
+   * Expected usage:
+   * if (has_next_file()) load_next_file();
+   */
   virtual void load_next_file();
 
 private:
-/**
- * Checks if all topics in the bagfile have the same RMW serialization format.
- * Currently a bag file can only be played if all topics have the same serialization format.
- *
- * \param topics Vector of TopicInformation with metadata.
- * \throws runtime_error if any topic has a different serialization format from the rest.
- */
+  /**
+   * Checks if all topics in the bagfile have the same RMW serialization format.
+   * Currently a bag file can only be played if all topics have the same serialization format.
+   *
+   * \param topics Vector of TopicInformation with metadata.
+   * \throws runtime_error if any topic has a different serialization format from the rest.
+   */
   virtual void check_topics_serialization_formats(
     const std::vector<rosbag2_storage::TopicInformation> & topics);
 
-/**
-* Checks if the serialization format of the converter factory is the same as that of the storage
-* factory.
-* If not, changes the serialization format of the converter factory to use the serialization
-* format of the storage factory.
-*
-* \param converter_serialization_format
-* \param storage_serialization_format
-*/
+  /**
+   * Checks if the serialization format of the converter factory is the same as that of the storage
+   * factory.
+   * If not, changes the serialization format of the converter factory to use the serialization
+   * format of the storage factory.
+   *
+   * \param converter_serialization_format
+   * \param storage_serialization_format
+   */
   virtual void check_converter_serialization_format(
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);

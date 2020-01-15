@@ -14,6 +14,7 @@
 
 #include <Python.h>
 #include <chrono>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -108,7 +109,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     serilization_format;
 
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
-      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+    std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   auto info = std::make_shared<rosbag2_cpp::Info>();
   std::shared_ptr<rosbag2_cpp::Writer> writer;
   if (record_options.compression_format == "zstd") {

@@ -48,10 +48,10 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
 SequentialCompressorWriter::SequentialCompressorWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
-  : storage_factory_(std::make_unique<rosbag2_storage::StorageFactory>()),
-    converter_factory_(std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()),
-    metadata_io_(std::make_unique<rosbag2_storage::MetadataIo>()),
-    compression_options_(compression_options) {}
+: storage_factory_(std::make_unique<rosbag2_storage::StorageFactory>()),
+  converter_factory_(std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()),
+  metadata_io_(std::make_unique<rosbag2_storage::MetadataIo>()),
+  compression_options_(compression_options) {}
 
 SequentialCompressorWriter::~SequentialCompressorWriter()
 {
@@ -78,7 +78,7 @@ void SequentialCompressorWriter::open(
   base_folder_ = storage_options.uri;
 
   if (converter_options.output_serialization_format !=
-      converter_options.input_serialization_format)
+    converter_options.input_serialization_format)
   {
     converter_ = std::make_unique<rosbag2_cpp::Converter>(converter_options, converter_factory_);
   }
@@ -90,10 +90,10 @@ void SequentialCompressorWriter::open(
   }
 
   if (storage_options.max_bagfile_size != 0 &&
-      storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     throw std::invalid_argument{
-      "Invalid bag splitting size given. Please provide a different value."};
+            "Invalid bag splitting size given. Please provide a different value."};
   }
 
   compressor_ = std::make_unique<rosbag2_compression::ZstdCompressor>();
@@ -107,10 +107,11 @@ void SequentialCompressorWriter::reset()
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
     if (compressor_ &&
       compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
-      should_compress_last_file_) {
+      should_compress_last_file_)
+    {
       try {
         compress_last_file();
-      } catch(const std::runtime_error & e) {
+      } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
       }
     }
@@ -122,7 +123,8 @@ void SequentialCompressorWriter::reset()
   storage_factory_.reset();
 }
 
-void SequentialCompressorWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
+void SequentialCompressorWriter::create_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   if (!storage_) {
     throw std::runtime_error{"Bag is not open. Call open() before writing."};
@@ -133,7 +135,7 @@ void SequentialCompressorWriter::create_topic(const rosbag2_storage::TopicMetada
   }
 
   if (topics_names_to_info_.find(topic_with_type.name) ==
-      topics_names_to_info_.end())
+    topics_names_to_info_.end())
   {
     rosbag2_storage::TopicInformation info{};
     info.topic_metadata = topic_with_type;
@@ -151,7 +153,8 @@ void SequentialCompressorWriter::create_topic(const rosbag2_storage::TopicMetada
   }
 }
 
-void SequentialCompressorWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
+void SequentialCompressorWriter::remove_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before removing.");
@@ -170,7 +173,7 @@ void SequentialCompressorWriter::compress_last_file()
 {
   assert(compressor_ != nullptr);
   metadata_.relative_file_paths.back() =
-  compressor_->compress_uri(metadata_.relative_file_paths.back());
+    compressor_->compress_uri(metadata_.relative_file_paths.back());
 }
 
 void SequentialCompressorWriter::split_bagfile()
@@ -208,7 +211,8 @@ void SequentialCompressorWriter::compress_message(
   compressor_->compress_serialized_bag_message(message.get());
 }
 
-void SequentialCompressorWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+void SequentialCompressorWriter::write(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
@@ -263,4 +267,4 @@ void SequentialCompressorWriter::finalize_metadata()
   }
 }
 
-}  // namespace rosbag2_cpp
+}  // namespace rosbag2_compression

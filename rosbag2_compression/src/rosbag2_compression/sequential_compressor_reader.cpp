@@ -33,9 +33,9 @@ SequentialCompressorReader::SequentialCompressorReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-  : storage_factory_(std::move(storage_factory)),
-    converter_factory_(std::move(converter_factory)),
-    metadata_io_(std::move(metadata_io))
+: storage_factory_(std::move(storage_factory)),
+  converter_factory_(std::move(converter_factory)),
+  metadata_io_(std::move(metadata_io))
 {}
 
 SequentialCompressorReader::~SequentialCompressorReader()
@@ -171,8 +171,8 @@ void SequentialCompressorReader::check_topics_serialization_formats(
   for (const auto & topic : topics) {
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       throw std::runtime_error(
-        "Topics with different rwm serialization format have been found. "
-        "All topics must have the same serialization format.");
+              "Topics with different rwm serialization format have been found. "
+              "All topics must have the same serialization format.");
     }
   }
 }

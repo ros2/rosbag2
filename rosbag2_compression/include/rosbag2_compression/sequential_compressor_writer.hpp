@@ -15,11 +15,11 @@
 #ifndef ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_WRITER_HPP_
 #define ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_WRITER_HPP_
 
-#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
-
 #include <memory>
+#include <string>
 #include <unordered_map>
 
+#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/compression_options.hpp"
@@ -139,4 +139,4 @@ private:
   void finalize_metadata();
 };
 }  // namespace rosbag2_compression
-#endif // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_WRITER_HPP_
+#endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_WRITER_HPP_

@@ -58,8 +58,8 @@ ament_python_install_package(${PROJECT_NAME})
 add_library(rosbag2_transport_py
   SHARED
   src/rosbag2_transport/rosbag2_transport_python.cpp)
-target_link_libraries(rosbag2_transport_py rosbag2_transport rosbag2_compression)
 configure_python_c_extension_library(rosbag2_transport_py)
+target_link_libraries(rosbag2_transport_py rosbag2_transport rosbag2_compression)
 ament_target_dependencies(rosbag2_transport_py rosbag2_compression)
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.

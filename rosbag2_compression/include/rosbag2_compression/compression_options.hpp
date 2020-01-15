@@ -61,4 +61,4 @@ struct CompressionOptions
 };
 
 }  // namespace rosbag2_compression
-#endif // ROSBAG2_COMPRESSION__COMPRESSION_OPTIONS_HPP_
+#endif  // ROSBAG2_COMPRESSION__COMPRESSION_OPTIONS_HPP_

@@ -43,15 +43,15 @@ namespace rosbag2_compression
 {
 
 class ROSBAG2_COMPRESSION_PUBLIC SequentialCompressorReader
-: public ::rosbag2_cpp::reader_interfaces::BaseReaderInterface
+  : public ::rosbag2_cpp::reader_interfaces::BaseReaderInterface
 {
 public:
   explicit SequentialCompressorReader(
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
-  std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory =
+    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>(),
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
   virtual ~SequentialCompressorReader();
@@ -93,7 +93,6 @@ public:
   virtual std::string get_current_uri() const;
 
 protected:
-
   /**
    * Increment the current file iterator to point to the next file in the list of relative file
    * paths.
@@ -156,4 +155,4 @@ private:
 
 }  // namespace rosbag2_compression
 
-#endif // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_READER_HPP_
+#endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSOR_READER_HPP_
