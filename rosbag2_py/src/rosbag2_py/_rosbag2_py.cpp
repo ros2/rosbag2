@@ -123,14 +123,13 @@ public:
   }
 
   /// Return a pair containing the topic name and the serialized ROS message.
-  std::pair<std::string, py::bytes> read_next()
+  pybind11::tuple read_next()
   {
     const auto next = reader_.read_next();
     rcutils_uint8_array_t rcutils_data = *next->serialized_data.get();
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
-    // TODO(jacobperron): Also consider returning the timestamp, next->time_stamp
-    return std::make_pair(next->topic_name, py::bytes(serialized_data));
+    return pybind11::make_tuple(next->topic_name, py::bytes(serialized_data), next->time_stamp);
   }
 
   bool has_next()
