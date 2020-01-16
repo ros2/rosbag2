@@ -44,11 +44,11 @@ public:
    * The Node's scope is tied to the scope of this method.
    * The message may publish less than message_count times if rclcpp encountered an error.
    *
-   * @tparam T the type of message to send.
-   * @param topic_name is the name of the topic to publish to.
-   * @param message is the message to publish.
-   * @param publish_rate is the rate to publish the message
-   * @param message_count is the number of times to publish the message.
+   * \tparam T the type of message to send.
+   * \param topic_name is the name of the topic to publish to.
+   * \param message is the message to publish.
+   * \param publish_rate is the rate to publish the message
+   * \param message_count is the number of times to publish the message.
    */
   template<class T>
   void run_scoped_publisher(
