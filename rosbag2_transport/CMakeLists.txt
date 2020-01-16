@@ -26,6 +26,7 @@ find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
+find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 
@@ -46,6 +47,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rcutils
   rmw
+  rosbag2_compression
   rosbag2_cpp
   rosidl_generator_cpp
   shared_queues_vendor
@@ -58,7 +60,7 @@ add_library(rosbag2_transport_py
   src/rosbag2_transport/rosbag2_transport_python.cpp)
 configure_python_c_extension_library(rosbag2_transport_py)
 target_link_libraries(rosbag2_transport_py rosbag2_transport)
-
+ament_target_dependencies(rosbag2_transport_py rosbag2_compression)
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_TRANSPORT_BUILDING_LIBRARY")
@@ -78,7 +80,7 @@ install(
 ament_export_include_directories(include)
 ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_cpp)
+ament_export_dependencies(rosbag2_cpp rosbag2_compression)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
