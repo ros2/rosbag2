@@ -25,6 +25,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rosbag2_cpp)
 find_package(rosbag2_storage REQUIRED)
 find_package(zstd_vendor REQUIRED)
 
@@ -48,12 +49,33 @@ target_compile_definitions(${PROJECT_NAME}_zstd
   PRIVATE
   ROSBAG2_COMPRESSION_BUILDING_DLL)
 
+add_library(${PROJECT_NAME}
+  SHARED
+  src/rosbag2_compression/compression_options.cpp)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_zstd)
+ament_target_dependencies(${PROJECT_NAME}
+  rcpputils
+  rcutils
+  rosbag2_cpp
+  rosbag2_storage)
+target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+
 install(
   DIRECTORY include/
   DESTINATION include)
 
 install(
   TARGETS ${PROJECT_NAME}_zstd
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+install(
+  TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
@@ -102,6 +124,13 @@ if(BUILD_TESTING)
   target_include_directories(test_zstd_compressor PUBLIC include)
   target_link_libraries(test_zstd_compressor ${PROJECT_NAME}_zstd)
   ament_target_dependencies(test_zstd_compressor rosbag2_test_common rosbag2_storage)
+
+  ament_add_gmock(test_compression_options
+    test/rosbag2_compression/test_compression_options.cpp)
+  if(TARGET test_compression_options)
+    target_include_directories(test_compression_options PRIVATE include)
+    target_link_libraries(test_compression_options ${PROJECT_NAME})
+  endif()
 endif()
 
 ament_package()

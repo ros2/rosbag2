@@ -19,14 +19,12 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_cpp/compression_options.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
-#include "rosbag2_compression/base_decompressor_interface.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -123,45 +121,14 @@ private:
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
 
-  /**
-   * Opens a storage plugin for read only.
-   *
-   * \throws std::runtime_error If no storage could be initialized.
-   */
-  virtual void open_storage();
-
-  /**
-   * Initializes the decompressor if a compression mode is specified in the metadata.
-   *
-   * \throws std::runtime_error If compression format doesn't exist.
-   */
-  virtual void setup_compression();
-
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
-  rosbag2_cpp::CompressionMode compression_mode_{rosbag2_cpp::CompressionMode::NONE};
-
-protected:
-  /**
-   * Checks if the compression mode is of type MESSAGE and if so, decompresses the message.
-   *
-   * \param message A serialized bag message
-   */
-  virtual void decompress_message(rosbag2_storage::SerializedBagMessage * message);
-
-  /**
-   * Checks if the compression mode is of type FILE and if so, decompresses the file.
-   *
-   * \param uri Relative path as a string
-   */
-  virtual void decompress_file(const std::string & uri);
 };
 
 }  // namespace readers
