@@ -18,6 +18,7 @@ jobs:
             rosbag2
             rosbag2_compression
             rosbag2_converter_default_plugins
+            rosbag2_cpp
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
@@ -37,6 +38,7 @@ jobs:
             rosbag2
             rosbag2_compression
             rosbag2_converter_default_plugins
+            rosbag2_cpp
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
@@ -60,6 +62,7 @@ jobs:
             rosbag2
             rosbag2_compression
             rosbag2_converter_default_plugins
+            rosbag2_cpp
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
