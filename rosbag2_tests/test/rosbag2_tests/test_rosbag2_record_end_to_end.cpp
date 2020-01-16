@@ -30,6 +30,7 @@ namespace
 {
 /**
  * Construct an instance of test_msgs::msg::Strings populated with the base_message repeated until it fits the requested size.
+ *
  * \param base_message is the String to repeat.
  * \param max_message_size_bytes is the size of the message in bytes.
  * \return an instance of test_msgs::msg::Strings that is the requested size.
@@ -106,14 +107,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
 #ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
-  constexpr const char message_str[] = "Test";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
-  constexpr const int message_size = 1024 * 1024;  // 1MB
-  constexpr const int expected_splits = 4;
-  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
-  constexpr const char first_topic_name[] = "/test_topic0";
-  constexpr const char second_topic_name[] = "/test_topic1";
-
   std::stringstream command;
   command << "ros2 bag record" <<
     " --output " << root_bag_path_ <<
@@ -122,30 +116,27 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
   auto process_handle = start_execution(command.str());
   wait_for_db();
 
+  constexpr const char first_topic_name[] = "/test_topic0";
+  constexpr const char second_topic_name[] = "/test_topic1";
+  constexpr const int expected_splits = 4;
   {
+    constexpr const char message_str[] = "Test";
+    constexpr const int message_size = 1024 * 1024;  // 1MB
     const auto message = create_string_message(message_str, message_size);
-    const auto node = std::make_unique<rclcpp::Node>(
-      "TestMessagePublisher",
-      rclcpp::NodeOptions().start_parameter_event_publisher(false));
-    const auto first_publisher =
-      node->create_publisher<test_msgs::msg::Strings>(first_topic_name, 10);
-    rclcpp::WallRate message_rate{50ms};
+    constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
     constexpr const int message_batch_size = message_count / 2;
 
-    // Send first half of messages to /test_topic0
-    for (int i = 0; rclcpp::ok() && i < message_batch_size; ++i) {
-      first_publisher->publish(*message);
-      message_rate.sleep();
-    }
+    pub_man_.run_scoped_publisher(
+      first_topic_name,
+      message,
+      50ms,
+      message_batch_size);
 
-    const auto second_publisher =
-      node->create_publisher<test_msgs::msg::Strings>(second_topic_name, 10);
-
-    // Send second half of messages to /test_topic1
-    for (int i = 0; rclcpp::ok() && i < message_batch_size; ++i) {
-      second_publisher->publish(*message);
-      message_rate.sleep();
-    }
+    pub_man_.run_scoped_publisher(
+      second_topic_name,
+      message,
+      50ms,
+      message_batch_size);
   }
 
   stop_execution(process_handle);
@@ -169,13 +160,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
 #endif
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
-  constexpr const char message_str[] = "Test";
-  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
-  constexpr const int message_size = 512 * 1024;  // 512KB
-  constexpr const int expected_splits = 4;
-  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
   constexpr const char topic_name[] = "/test_topic";
-
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
   command << "ros2 bag record " <<
     " --output " << root_bag_path_ <<
@@ -184,18 +170,18 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   auto process_handle = start_execution(command.str());
   wait_for_db();
 
+  constexpr const int expected_splits = 4;
   {
+    constexpr const char message_str[] = "Test";
+    constexpr const int message_size = 512 * 1024;  // 512KB
     const auto message = create_string_message(message_str, message_size);
-    const auto node = std::make_unique<rclcpp::Node>(
-      "TestMessagePublisher",
-      rclcpp::NodeOptions().start_parameter_event_publisher(false));
-    const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
-    rclcpp::WallRate message_rate{50ms};
+    constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
 
-    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
-      publisher->publish(*message);
-      message_rate.sleep();
-    }
+    pub_man_.run_scoped_publisher(
+      topic_name,
+      message,
+      50ms,
+      message_count);
   }
 
   stop_execution(process_handle);
@@ -244,13 +230,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
-  constexpr const char message_str[] = "Test";
-  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
-  constexpr const int message_size = 512 * 1024;  // 512KB
-  // only fill the bagfile halfway
-  constexpr const int message_count = bagfile_split_size / message_size / 2;
   constexpr const char topic_name[] = "/test_topic";
-
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
   command << "ros2 bag record " <<
     " --output " << root_bag_path_ <<
@@ -260,17 +241,17 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   wait_for_db();
 
   {
+    constexpr const int message_size = 512 * 1024;  // 512KB
+    constexpr const char message_str[] = "Test";
     const auto message = create_string_message(message_str, message_size);
-    const auto node = std::make_unique<rclcpp::Node>(
-      "TestMessagePublisher",
-      rclcpp::NodeOptions().start_parameter_event_publisher(false));
-    const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
-    rclcpp::WallRate message_rate{50ms};
+    // only fill the bagfile halfway
+    constexpr const int message_count = bagfile_split_size / message_size / 2;
 
-    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
-      publisher->publish(*message);
-      message_rate.sleep();
-    }
+    pub_man_.run_scoped_publisher(
+      topic_name,
+      message,
+      50ms,
+      message_count);
   }
 
   stop_execution(process_handle);
@@ -303,12 +284,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
-  constexpr const char message_str[] = "Test";
-  constexpr const int expected_splits = 4;
-  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
-  constexpr const int message_size = 1024 * 1024;  // 1MB
-  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
   constexpr const char topic_name[] = "/test_topic";
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
 
   std::stringstream command;
   command << "ros2 bag record" <<
@@ -318,19 +295,19 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   auto process_handle = start_execution(command.str());
   wait_for_db();
 
+  constexpr const int expected_splits = 4;
   {
+    constexpr const char message_str[] = "Test";
+    constexpr const int message_size = 1024 * 1024;  // 1MB
     // string message from test_msgs
     const auto message = create_string_message(message_str, message_size);
-    const auto node = std::make_unique<rclcpp::Node>(
-      "TestMessagePublisher",
-      rclcpp::NodeOptions().start_parameter_event_publisher(false));
-    const auto publisher = node->create_publisher<test_msgs::msg::Strings>(topic_name, 10);
-    rclcpp::WallRate message_rate{50ms};
+    constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
 
-    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
-      publisher->publish(*message);
-      message_rate.sleep();
-    }
+    pub_man_.run_scoped_publisher(
+      topic_name,
+      message,
+      50ms,
+      message_count);
   }
 
   stop_execution(process_handle);
