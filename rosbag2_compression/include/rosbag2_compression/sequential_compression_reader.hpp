@@ -102,7 +102,7 @@ protected:
    *
    * \throws std::invalid_argument If compression format doesn't exist.
    */
-  virtual void setup_compression();
+  virtual void setup_decompression();
 
   /**
    * Set the file path currently pointed to by the iterator.
@@ -137,9 +137,9 @@ private:
 
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{nullptr};
-  std::unique_ptr<rosbag2_cpp::Converter> converter_{nullptr};
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{nullptr};
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
+  std::unique_ptr<rosbag2_cpp::Converter> converter_{};
+  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.

@@ -48,7 +48,7 @@ void SequentialCompressionReader::reset()
   storage_.reset();
 }
 
-void SequentialCompressionReader::setup_compression()
+void SequentialCompressionReader::setup_decompression()
 {
   compression_mode_ = rosbag2_compression::compression_mode_from_string(metadata_.compression_mode);
   if (compression_mode_ != rosbag2_compression::CompressionMode::NONE) {
@@ -62,6 +62,9 @@ void SequentialCompressionReader::setup_compression()
       err << "Unsupported compression format " << metadata_.compression_format;
       throw std::invalid_argument{err.str()};
     }
+  } else {
+    throw std::invalid_argument{
+            "SequentialCompressionReader requires a CompressionMode that is not NONE!"};
   }
 }
 
@@ -77,7 +80,7 @@ void SequentialCompressionReader::open(
     }
     file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
-    setup_compression();
+    setup_decompression();
 
     storage_ = storage_factory_->open_read_only(
       *current_file_iterator_, metadata_.storage_identifier);
@@ -87,7 +90,7 @@ void SequentialCompressionReader::open(
   } else {
     throw std::runtime_error{"Compression is not supported for legacy bag files."};
   }
-  auto topics = metadata_.topics_with_message_count;
+  const auto & topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
     ROSBAG2_COMPRESSION_LOG_WARN("No topics were listed in metadata.");
     return;
@@ -118,8 +121,9 @@ bool SequentialCompressionReader::has_next()
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionReader::read_next()
 {
   if (storage_) {
+    assert(decompressor_);
     auto message = storage_->read_next();
-    if (decompressor_ && compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
+    if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
     }
     return converter_ ? converter_->convert(message) : message;
@@ -137,14 +141,20 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialCompressionReader::get_all
 
 bool SequentialCompressionReader::has_next_file() const
 {
+  // Handle case where bagfile is not split
+  if (current_file_iterator_ == file_paths_.end()) {
+    return false;
+  }
+
   return current_file_iterator_ + 1 != file_paths_.end();
 }
 
 void SequentialCompressionReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
-  current_file_iterator_++;
-  if (decompressor_ && compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
+  assert(decompressor_);
+  ++current_file_iterator_;
+  if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
   }
@@ -152,8 +162,8 @@ void SequentialCompressionReader::load_next_file()
 
 std::string SequentialCompressionReader::get_current_uri() const
 {
-  auto current_file = get_current_file();
-  auto current_uri = rcpputils::fs::remove_extension(current_file);
+  const auto current_file = get_current_file();
+  const auto current_uri = rcpputils::fs::remove_extension(current_file);
   return current_uri.string();
 }
 
@@ -170,7 +180,9 @@ void SequentialCompressionReader::set_current_file(const std::string & file)
 void SequentialCompressionReader::check_topics_serialization_formats(
   const std::vector<rosbag2_storage::TopicInformation> & topics)
 {
-  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
+  const auto & storage_serialization_format =
+    topics[0].topic_metadata.serialization_format;
+
   for (const auto & topic : topics) {
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       throw std::runtime_error{
@@ -189,7 +201,7 @@ void SequentialCompressionReader::check_converter_serialization_format(
       storage_serialization_format,
       converter_serialization_format,
       converter_factory_);
-    auto topics = storage_->get_all_topics_and_types();
+    const auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {
       converter_->add_topic(topic_with_type.name, topic_with_type.type);
     }
