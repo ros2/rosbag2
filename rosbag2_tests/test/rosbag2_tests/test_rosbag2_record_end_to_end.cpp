@@ -273,6 +273,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     const auto bag_path = rcpputils::fs::path(root_bag_path_) / "bag_0.db3";
 
     metadata.relative_file_paths = {bag_path.string()};
+    metadata_io.write_metadata(root_bag_path_, metadata);
   }
 #endif
 
@@ -334,6 +335,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
       metadata.relative_file_paths.push_back(bag_path.string());
     }
+    metadata_io.write_metadata(root_bag_path_, metadata);
   }
 #endif
 
