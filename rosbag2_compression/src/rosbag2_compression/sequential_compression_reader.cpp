@@ -121,8 +121,7 @@ bool SequentialCompressionReader::has_next()
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionReader::read_next()
 {
-  if (storage_) {
-    assert(decompressor_);
+  if (storage_ && decompressor_) {
     auto message = storage_->read_next();
     if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
@@ -152,8 +151,14 @@ bool SequentialCompressionReader::has_next_file() const
 
 void SequentialCompressionReader::load_next_file()
 {
-  assert(current_file_iterator_ != file_paths_.end());
-  assert(decompressor_);
+  if (current_file_iterator_ == file_paths_.end()) {
+    throw std::runtime_error{"Cannot load next file; already on last file!"};
+  }
+
+  if (decompressor_) {
+    throw std::runtime_error{"Bagfile is not opened"};
+  }
+
   ++current_file_iterator_;
   if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
