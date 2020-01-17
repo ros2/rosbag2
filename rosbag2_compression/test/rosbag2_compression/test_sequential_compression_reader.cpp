@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
+
 #include "rosbag2_cpp/reader.hpp"
 
 #include "../../rosbag2_cpp/test/rosbag2_cpp/mock_converter_factory.hpp"
