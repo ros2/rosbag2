@@ -51,7 +51,8 @@ target_compile_definitions(${PROJECT_NAME}_zstd
 
 add_library(${PROJECT_NAME}
   SHARED
-  src/rosbag2_compression/compression_options.cpp)
+  src/rosbag2_compression/compression_options.cpp
+  src/rosbag2_compression/sequential_compression_reader.cpp)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -127,10 +128,14 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
-  if(TARGET test_compression_options)
-    target_include_directories(test_compression_options PRIVATE include)
-    target_link_libraries(test_compression_options ${PROJECT_NAME})
-  endif()
+  target_include_directories(test_compression_options PUBLIC include)
+  target_link_libraries(test_compression_options ${PROJECT_NAME})
+
+  ament_add_gmock(test_sequential_compression_reader
+    test/rosbag2_compression/test_sequential_compression_reader.cpp)
+  target_include_directories(test_sequential_compression_reader PUBLIC include)
+  target_link_libraries(test_sequential_compression_reader ${PROJECT_NAME})
+  ament_target_dependencies(test_sequential_compression_reader rosbag2_cpp)
 endif()
 
 ament_package()
