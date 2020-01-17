@@ -197,7 +197,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bagfile_name;
-      bagfile_name = << "bag_" << i << ".db3";
+      bagfile_name << "bag_" << i << ".db3";
 
       const auto bagfile_path =
         (rcpputils::fs::path(root_bag_path_) / bagfile_name.str());
