@@ -39,6 +39,40 @@ public:
     publisher_nodes_.clear();
   }
 
+  /**
+   * Spin up a Node and publish message to topic_name message_count times at publish_rate.
+   * The Node's scope is tied to the scope of this method.
+   * The message may publish less than message_count times if rclcpp encountered an error.
+   *
+   * \tparam T the type of message to send.
+   * \param topic_name is the name of the topic to publish to.
+   * \param message is the message to publish.
+   * \param publish_rate is the rate to publish the message
+   * \param message_count is the number of times to publish the message.
+   */
+  template<class T>
+  void run_scoped_publisher(
+    const std::string & topic_name,
+    const std::shared_ptr<T> message,
+    const std::chrono::milliseconds publish_rate,
+    const int message_count)
+  {
+    std::stringstream node_name;
+    node_name << "publisher" << counter_++;
+
+    auto publisher_node = std::make_shared<rclcpp::Node>(
+      node_name.str(),
+      rclcpp::NodeOptions().start_parameter_event_publisher(false));
+
+    auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
+    rclcpp::WallRate rate{publish_rate};
+
+    for (int i = 0; rclcpp::ok() && i < message_count; ++i) {
+      publisher->publish(*message);
+      rate.sleep();
+    }
+  }
+
   template<class T>
   void add_publisher(
     const std::string & topic_name, std::shared_ptr<T> message, size_t expected_messages = 0)
