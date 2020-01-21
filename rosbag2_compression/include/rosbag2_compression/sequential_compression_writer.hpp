@@ -20,23 +20,22 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
+#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "base_compressor_interface.hpp"
-#include "visibility_control.hpp"
 #include "compression_options.hpp"
-
+#include "visibility_control.hpp"
 
 namespace rosbag2_compression
 {

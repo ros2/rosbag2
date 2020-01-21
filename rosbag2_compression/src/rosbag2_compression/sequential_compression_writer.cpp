@@ -23,9 +23,11 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/filesystem.h"
+
 #include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
+
 #include "logging.hpp"
 
 namespace rosbag2_compression
