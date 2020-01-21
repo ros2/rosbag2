@@ -38,12 +38,12 @@ class SequentialCompressionWriterTest : public Test
 {
 public:
   SequentialCompressionWriterTest()
-  : storage_factory_(std::make_unique<StrictMock<MockStorageFactory>>()),
-    storage_(std::make_shared<NiceMock<MockStorage>>()),
-    converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
-    metadata_io_(std::make_unique<NiceMock<MockMetadataIo>>()),
-    storage_options_(),
-    serialization_format_("rmw_format")
+  : storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
+    storage_{std::make_shared<NiceMock<MockStorage>>()},
+    converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
+    metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
+    storage_options_{},
+    serialization_format_{"rmw_format"}
   {
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_, _)).Times(AtLeast(0));

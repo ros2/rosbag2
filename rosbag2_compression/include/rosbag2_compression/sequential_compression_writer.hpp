@@ -23,13 +23,15 @@
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2_cpp/compression_options.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
+
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+
+#include "rosbag2_compression/compression_options.hpp"
 
 #include "base_compressor_interface.hpp"
 #include "visibility_control.hpp"
@@ -111,14 +113,21 @@ protected:
    */
   virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 
+  /**
+   * Initializes the compressor if a compression mode is specified.
+   *
+   * \throws std::invalid_argument if compression_options isn't supported.
+   */
+  virtual void setup_compression();
+
 private:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_{nullptr};
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
-  std::unique_ptr<rosbag2_cpp::Converter> converter_{nullptr};
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{nullptr};
+  std::unique_ptr<rosbag2_cpp::Converter> converter_{};
+  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
@@ -128,9 +137,7 @@ private:
 
   rosbag2_storage::BagMetadata metadata_{};
 
-  // Used in invoking compression
   rosbag2_compression::CompressionOptions compression_options_{};
-  std::vector<std::string> supported_compressors_{"zstd"};
 
   bool should_compress_last_file_{true};
 

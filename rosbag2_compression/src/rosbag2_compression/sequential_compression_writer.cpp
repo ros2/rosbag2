@@ -15,7 +15,6 @@
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <chrono>
 #include <memory>
 #include <stdexcept>
@@ -48,20 +47,20 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
-: storage_factory_(std::make_unique<rosbag2_storage::StorageFactory>()),
-  converter_factory_(std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()),
-  metadata_io_(std::make_unique<rosbag2_storage::MetadataIo>()),
-  compression_options_(compression_options) {}
+: storage_factory_{std::make_unique<rosbag2_storage::StorageFactory>()},
+  converter_factory_{std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()},
+  metadata_io_{std::make_unique<rosbag2_storage::MetadataIo>()},
+  compression_options_{compression_options} {}
 
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options,
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-: storage_factory_(std::move(storage_factory)),
-  converter_factory_(std::move(converter_factory)),
-  metadata_io_(std::move(metadata_io)),
-  compression_options_(compression_options) {}
+: storage_factory_{std::move(storage_factory)},
+  converter_factory_{std::move(converter_factory)},
+  metadata_io_{std::move(metadata_io)},
+  compression_options_{compression_options} {}
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
@@ -72,12 +71,29 @@ void SequentialCompressionWriter::init_metadata()
 {
   metadata_ = rosbag2_storage::BagMetadata{};
   metadata_.storage_identifier = storage_->get_storage_identifier();
-  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
+  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>{
+    std::chrono::nanoseconds::max()};
   metadata_.relative_file_paths = {storage_->get_relative_file_path()};
   metadata_.compression_format = compression_options_.compression_format;
   metadata_.compression_mode =
     rosbag2_compression::compression_mode_to_string(compression_options_.compression_mode);
+}
+
+void SequentialCompressionWriter::setup_compression()
+{
+  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::NONE) {
+    throw std::invalid_argument{
+            "SequentialCompressionWriter requires a CompressionMode that is not NONE!"};
+  }
+
+  // TODO(zmichaels11) Support additional compression formats
+  if (compression_options_.compression_format == "zstd") {
+    compressor_ = std::make_unique<rosbag2_compression::ZstdCompressor>();
+  } else {
+    std::stringstream err;
+    err << "Unsupported compression format: \"" << compression_options_.compression_format << "\"";
+    throw std::invalid_argument{err.str()};
+  }
 }
 
 void SequentialCompressionWriter::open(
@@ -96,7 +112,7 @@ void SequentialCompressionWriter::open(
   const auto storage_uri = format_storage_uri(base_folder_, 0);
   storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
   if (!storage_) {
-    throw std::runtime_error("No storage could be initialized. Abort");
+    throw std::runtime_error{"No storage could be initialized. Abort"};
   }
 
   if (storage_options.max_bagfile_size != 0 &&
@@ -106,25 +122,20 @@ void SequentialCompressionWriter::open(
             "Invalid bag splitting size given. Please provide a different value."};
   }
 
-  if (std::find(supported_compressors_.begin(), supported_compressors_.end(),
-    compression_options_.compression_format) == supported_compressors_.end())
-  {
-    std::stringstream err;
-    err << "Compression format " << compression_options_.compression_format << " is not supported.";
-    throw std::invalid_argument{err.str()};
-  }
-  // Currently we support only Zstd compression
-  compressor_ = std::make_unique<rosbag2_compression::ZstdCompressor>();
+  setup_compression();
   init_metadata();
 }
 
 void SequentialCompressionWriter::reset()
 {
   if (!base_folder_.empty()) {
+    if (!compressor_) {
+      throw std::runtime_error{"Compressor was not opened!"};
+    }
+
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
-    if (compressor_ &&
-      compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
+    if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
       should_compress_last_file_)
     {
       try {
@@ -175,7 +186,7 @@ void SequentialCompressionWriter::remove_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   if (!storage_) {
-    throw std::runtime_error("Bag is not open. Call open() before removing.");
+    throw std::runtime_error{"Bag is not open. Call open() before removing."};
   }
 
   if (topics_names_to_info_.erase(topic_with_type.name) > 0) {
@@ -189,9 +200,15 @@ void SequentialCompressionWriter::remove_topic(
 
 void SequentialCompressionWriter::compress_last_file()
 {
-  assert(compressor_ != nullptr);
-  metadata_.relative_file_paths.back() =
-    compressor_->compress_uri(metadata_.relative_file_paths.back());
+  if (!compressor_) {
+    throw std::runtime_error{"Compressor was not opened!"};
+  }
+
+  const auto & to_compress = metadata_.relative_file_paths.back();
+
+  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressing \"" << to_compress << "\"");
+
+  metadata_.relative_file_paths.back() = compressor_->compress_uri(to_compress);
 }
 
 void SequentialCompressionWriter::split_bagfile()
@@ -200,23 +217,25 @@ void SequentialCompressionWriter::split_bagfile()
     compress_last_file();
   }
 
-  // Add a check to make sure reset() does not compress the file again if we couldn't load the
-  // storage plugin.
-  should_compress_last_file_ = false;
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
+
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
   if (!storage_) {
+    // Add a check to make sure reset() does not compress the file again if we couldn't load the
+    // storage plugin.
+    should_compress_last_file_ = false;
+
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
-    throw std::runtime_error(errmsg.str());
+    throw std::runtime_error{errmsg.str()};
   }
-  should_compress_last_file_ = true;
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
 
-// Re-register all topics since we rolled-over to a new bagfile.
+  // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }
@@ -225,7 +244,10 @@ void SequentialCompressionWriter::split_bagfile()
 void SequentialCompressionWriter::compress_message(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-  assert(compressor_ != nullptr);
+  if (!compressor_) {
+    throw std::runtime_error{"Cannot compress message; Writer is not open!"};
+  }
+
   compressor_->compress_serialized_bag_message(message.get());
 }
 
@@ -233,7 +255,7 @@ void SequentialCompressionWriter::write(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   if (!storage_) {
-    throw std::runtime_error("Bag is not open. Call open() before writing.");
+    throw std::runtime_error{"Bag is not open. Call open() before writing."};
   }
 
   // Update the message count for the Topic.
@@ -243,8 +265,8 @@ void SequentialCompressionWriter::write(
     split_bagfile();
   }
 
-  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds(message->time_stamp));
+  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>{
+    std::chrono::nanoseconds(message->time_stamp)};
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
   const auto duration = message_timestamp - metadata_.starting_time;
