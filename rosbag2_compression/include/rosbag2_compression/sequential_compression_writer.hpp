@@ -37,6 +37,11 @@
 #include "compression_options.hpp"
 #include "visibility_control.hpp"
 
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2_compression
 {
 
