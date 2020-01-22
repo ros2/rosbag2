@@ -21,6 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/filesystem.h"
+#include "rosbag2_compression/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
@@ -53,6 +54,72 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
   return message;
 }
 }  // namespace
+
+TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
+  size_t expected_test_messages = 3;
+
+  auto wrong_message = get_messages_strings()[0];
+  wrong_message->string_value = "wrong_content";
+
+  std::stringstream cmd;
+  cmd << "ros2 bag record" <<
+    " --compression-mode file" <<
+    " --compression-format zstd" <<
+    " --output " << root_bag_path_ <<
+    " /test_topic";
+  auto process_handle = start_execution(cmd.str());
+  wait_for_db();
+
+  pub_man_.add_publisher("/test_topic", message, expected_test_messages);
+  pub_man_.add_publisher("/wrong_topic", wrong_message);
+
+  rosbag2_storage_plugins::SqliteWrapper db{
+    database_path_,
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
+
+  pub_man_.run_publishers([this, &db](const std::string & topic_name) {
+      return count_stored_messages(db, topic_name);
+    });
+
+  stop_execution(process_handle);
+
+  // TODO(zmichaels11): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef _WIN32
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 3;
+  metadata.storage_identifier = "sqlite3";
+  metadata.relative_file_paths = {"bag_0.db3.zstd"};
+  metadata.duration = std::chrono::nanoseconds{0};
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>{std::chrono::nanoseconds{0}};
+  metadata.message_count = 0;
+  metadata.compression_mode = "file";
+  metadata.compression_format = "zstd";
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_, metadata);
+#endif
+
+  const auto compressed_database_path = database_path_ + ".zstd";
+  ASSERT_TRUE(rcpputils::fs::path(compressed_database_path).exists());
+
+  rosbag2_compression::ZstdDecompressor decompressor;
+
+  const auto decompressed_uri = decompressor.decompress_uri(compressed_database_path);
+
+  ASSERT_EQ(decompressed_uri, database_path_);
+
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
+  EXPECT_THAT(test_topic_messages,
+    Each(Pointee(Field(&test_msgs::msg::Strings::string_value, "test"))));
+  EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
+
+  auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
+  EXPECT_THAT(wrong_topic_messages, IsEmpty());
+}
 
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
@@ -351,7 +418,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   }
 }
 
-TEST_F(RecordFixture, record_end_to_end_with_zstd_file_compression) {
+TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compresses_files) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
 
@@ -391,12 +458,14 @@ TEST_F(RecordFixture, record_end_to_end_with_zstd_file_compression) {
   #ifdef _WIN32
   {
     rosbag2_storage::BagMetadata metadata;
-    metadata.version = 2;
+    metadata.version = 3;
     metadata.storage_identifier = "sqlite3";
+    metadata.compression_mode = "file";
+    metadata.compression_format = "zstd";
 
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bag_name;
-      bag_name << "bag_" << i << ".db3";
+      bag_name << "bag_" << i << ".db3.zstd";
 
       const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
