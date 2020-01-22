@@ -356,6 +356,73 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   }
 }
 
+TEST_F(RecordFixture, record_end_to_end_with_zstd_file_compression) {
+  constexpr const char topic_name[] = "/test_topic";
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
+
+  std::stringstream command;
+  command << "ros2 bag record" <<
+    " --output " << root_bag_path_ <<
+    " --max-bag-size " << bagfile_split_size <<
+    " --compression-mode file" <<
+    " --compression-format zstd"
+    " " << topic_name;
+
+  auto process_handle = start_execution(command.str());
+  wait_for_db();
+
+  constexpr const int expected_splits = 4;
+  {
+    constexpr const char message_str[] = "Test";
+    constexpr const int message_size = 1024 * 1024;  // 1MB
+    // string message from test_msgs
+    const auto message = create_string_message(message_str, message_size);
+    constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+
+    pub_man_.run_scoped_publisher(
+      topic_name,
+      message,
+      50ms,
+      message_count);
+  }
+
+  stop_execution(process_handle);
+
+  rosbag2_storage::MetadataIo metadata_io;
+
+  // TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+  // This is required since stop_execution hard kills the proces on Windows,
+  // which prevents the metadata from being written.
+  #ifdef _WIN32
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 2;
+    metadata.storage_identifier = "sqlite3";
+
+    for (int i = 0; i < expected_splits; ++i) {
+      std::stringstream bag_name;
+      bag_name << "bag_" << i << ".db3";
+
+      const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
+
+      metadata.relative_file_paths.push_back(bag_path.string());
+    }
+    metadata_io.write_metadata(root_bag_path_, metadata);
+  }
+  #endif
+
+  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+
+  for (const auto & path : metadata.relative_file_paths) {
+    const auto file_path = rcpputils::fs::path(path);
+
+    EXPECT_TRUE(file_path.exists());
+    EXPECT_EQ(file_path.extension().string(), ".zstd");
+
+    EXPECT_LT(static_cast<int>(rcutils_get_file_size(path.c_str())), bagfile_split_size);
+  }
+}
+
 TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   auto database_path = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
 
