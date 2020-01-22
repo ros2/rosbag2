@@ -11,6 +11,11 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
+# Windows supplies macros for min and max by default. We should only use min and max from stl
+if(WIN32)
+  add_definitions(-DNOMINMAX)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -52,7 +57,8 @@ target_compile_definitions(${PROJECT_NAME}_zstd
 add_library(${PROJECT_NAME}
   SHARED
   src/rosbag2_compression/compression_options.cpp
-  src/rosbag2_compression/sequential_compression_reader.cpp)
+  src/rosbag2_compression/sequential_compression_reader.cpp
+  src/rosbag2_compression/sequential_compression_writer.cpp)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -136,6 +142,12 @@ if(BUILD_TESTING)
   target_include_directories(test_sequential_compression_reader PUBLIC include)
   target_link_libraries(test_sequential_compression_reader ${PROJECT_NAME})
   ament_target_dependencies(test_sequential_compression_reader rosbag2_cpp)
+
+  ament_add_gmock(test_sequential_compression_writer
+    test/rosbag2_compression/test_sequential_compression_writer.cpp)
+  target_include_directories(test_sequential_compression_writer PUBLIC include)
+  target_link_libraries(test_sequential_compression_writer ${PROJECT_NAME})
+  ament_target_dependencies(test_sequential_compression_writer rosbag2_cpp)
 endif()
 
 ament_package()
