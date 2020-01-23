@@ -15,7 +15,6 @@ jobs:
         linter: copyright
         package-name: |
             ros2bag
-            rosbag2
             rosbag2_compression
             rosbag2_converter_default_plugins
             rosbag2_cpp
@@ -59,7 +58,6 @@ jobs:
       with:
         linter: ${{ matrix.linter }}
         package-name: |
-            rosbag2
             rosbag2_compression
             rosbag2_converter_default_plugins
             rosbag2_cpp
