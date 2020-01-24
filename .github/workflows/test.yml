@@ -13,8 +13,8 @@ jobs:
   build_and_test:
     runs-on: ubuntu-18.04
     steps:
-    - uses: ros-tooling/setup-ros2@0.0.11
-    - uses: ros-tooling/action-ros2-ci@0.0.11
+    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/action-ros-ci@0.0.13
       with:
         package-name: ros2bag rosbag2_compression rosbag2_cpp rosbag2_storage rosbag2_storage_default_plugins rosbag2_test_common rosbag2_tests shared_queues_vendor sqlite3_vendor
     - uses: actions/upload-artifact@master
