@@ -116,12 +116,14 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   auto info = std::make_shared<rosbag2_cpp::Info>();
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
     std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-  auto writer = std::make_shared<rosbag2_cpp::Writer>(
-    std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  std::shared_ptr<rosbag2_cpp::Writer> writer;
   // Change writer based on recording options
   if (record_options.compression_format == "zstd") {
     writer = std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
+  } else {
+    writer = std::make_shared<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
 
   rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
@@ -170,8 +172,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_storage::BagMetadata metadata{};
   // Specify defaults
   auto info = std::make_shared<rosbag2_cpp::Info>();
-  auto reader = std::make_shared<rosbag2_cpp::Reader>(
-    std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  std::shared_ptr<rosbag2_cpp::Reader> reader;
   auto writer = std::make_shared<rosbag2_cpp::Writer>(
     std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   // Change reader based on metadata options
@@ -180,8 +181,15 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     if (metadata.compression_format == "zstd") {
       reader = std::make_shared<rosbag2_cpp::Reader>(
         std::make_unique<rosbag2_compression::SequentialCompressionReader>());
+    } else {
+      reader = std::make_shared<rosbag2_cpp::Reader>(
+        std::make_unique<rosbag2_cpp::readers::SequentialReader>());
     }
+  } else {
+    reader = std::make_shared<rosbag2_cpp::Reader>(
+      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   }
+
   rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
   transport.init();
   transport.play(storage_options, play_options);
