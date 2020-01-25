@@ -20,4 +20,4 @@ jobs:
     - uses: actions/upload-artifact@master
       with:
         name: colcon-logs
-        path: ros2_ws/log
+        path: ros_ws/log
