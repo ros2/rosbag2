@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
+    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/action-ros-lint@0.0.5
       with:
         linter: copyright
         package-name: |
@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
+    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/action-ros-lint@0.0.5
       with:
         linter: xmllint
         package-name: |
@@ -53,8 +53,8 @@ jobs:
           linter: [cppcheck, cpplint, uncrustify]
     steps:
     - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
+    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/action-ros-lint@0.0.5
       with:
         linter: ${{ matrix.linter }}
         package-name: |
@@ -75,8 +75,8 @@ jobs:
           linter: [flake8, pep257]
     steps:
     - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros2@0.0.7
-    - uses: ros-tooling/action-ros2-lint@0.0.5
+    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/action-ros-lint@0.0.5
       with:
         linter: ${{ matrix.linter }}
         package-name: |
