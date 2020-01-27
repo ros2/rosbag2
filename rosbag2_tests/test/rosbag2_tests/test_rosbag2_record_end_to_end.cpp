@@ -99,7 +99,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   for (const auto & message : test_topic_messages) {
     EXPECT_EQ(message->string_value, message_contents);
   }
-  
+
   EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
