@@ -56,7 +56,8 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
-  message->string_value = "test";
+  constexpr const char message_contents[] = "test";
+  message->string_value = message_contents;
   size_t expected_test_messages = 3;
 
   auto wrong_message = get_messages_strings()[0];
@@ -94,8 +95,11 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
-  EXPECT_THAT(test_topic_messages,
-    Each(Pointee(Field(&test_msgs::msg::Strings::string_value, "test"))));
+
+  for (const auto & message : test_topic_messages) {
+    EXPECT_EQ(message->string_value, message_contents);
+  }
+  
   EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
