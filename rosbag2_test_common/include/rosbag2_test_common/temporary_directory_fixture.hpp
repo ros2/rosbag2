@@ -17,6 +17,7 @@
 
 #include <gmock/gmock.h>
 
+#include <iostream>
 #include <string>
 
 #ifdef _WIN32
@@ -76,7 +77,16 @@ public:
     file_options.lpszProgressTitle = nullptr;
     file_options.hNameMappings = nullptr;
 
-    SHFileOperation(&file_options);
+    const auto rc = SHFileOperation(&file_options);
+    if (0 != rc) {
+      std::cerr << "Failed to recursively delete '" << directory_path <<
+        "' Error code: " << rc << std::endl;
+    }
+
+    if (file_options.fAnyOperationsAborted) {
+      std::cerr << "Recursive delete of '" << directory_path <<
+        "' was aborted." << std::endl;
+    }
     delete[] temp_dir;
 #else
     DIR * dir = opendir(directory_path.c_str());
