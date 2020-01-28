@@ -51,6 +51,11 @@ public:
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }
 
+  void TearDown() override
+  {
+    remove_directory_recursively(root_bag_path_);
+  }
+
   static void SetUpTestCase()
   {
     rclcpp::init(0, nullptr);
