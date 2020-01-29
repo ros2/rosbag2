@@ -25,6 +25,7 @@ namespace py = pybind11;
 #include "rosbag2/readers/sequential_reader.hpp"
 #include "rosbag2/storage_options.hpp"
 #include "rosbag2/converter_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 // #include "rmw/rmw.h"
 
 namespace rosbag2_py
@@ -60,16 +61,9 @@ public:
   }
 
   /// Return a mapping from topic name to topic type.
-  std::map<std::string, std::string> get_all_topics_and_types()
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types()
   {
-    // TODO(jacobperron): pybind TopicMetadata and return the vector of it directly
-    auto topics = reader_.get_all_topics_and_types();
-    // We're making an assumption that there is only one type per topic
-    std::map<std::string, std::string> output;
-    for (const rosbag2::TopicMetadata & topic_metadata : topics) {
-      output[topic_metadata.name] = topic_metadata.type;
-    }
-    return output;
+    return reader_.get_all_topics_and_types();
   }
 
 private:
@@ -101,4 +95,12 @@ PYBIND11_MODULE(_rosbag2_py, m) {
     &rosbag2::ConverterOptions::input_serialization_format)
   .def_readwrite("output_serialization_format",
     &rosbag2::ConverterOptions::output_serialization_format);
+
+  pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
+  .def(pybind11::init())
+  .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
+  .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
+  .def_readwrite("serialization_format",
+    &rosbag2_storage::TopicMetadata::serialization_format)
+  .def("equals", &rosbag2_storage::TopicMetadata::operator==);
 }
