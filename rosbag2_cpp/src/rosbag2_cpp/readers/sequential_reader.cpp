@@ -65,7 +65,7 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
 
     storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
+      get_current_file(), storage_options.storage_id);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
@@ -105,7 +105,7 @@ bool SequentialReader::has_next()
     if (!storage_->has_next() && has_next_file()) {
       load_next_file();
       storage_ = storage_factory_->open_read_only(
-        *current_file_iterator_, metadata_.storage_identifier);
+        get_current_file(), metadata_.storage_identifier);
     }
 
     return storage_->has_next();
