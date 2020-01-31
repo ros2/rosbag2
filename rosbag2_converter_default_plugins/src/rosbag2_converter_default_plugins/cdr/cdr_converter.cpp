@@ -131,5 +131,6 @@ void CdrConverter::serialize(
 }  // namespace rosbag2_converter_default_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(rosbag2_converter_default_plugins::CdrConverter,
+PLUGINLIB_EXPORT_CLASS(
+  rosbag2_converter_default_plugins::CdrConverter,
   rosbag2_cpp::converter_interfaces::SerializationFormatConverter)

@@ -77,14 +77,15 @@ std::shared_ptr<rcutils_string_map_t> get_initialized_string_map()
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to initialize string map within rcutils.");
     return std::shared_ptr<rcutils_string_map_t>();
   }
-  return std::shared_ptr<rcutils_string_map_t>(substitutions_map,
-           [](rcutils_string_map_t * map) {
-             rcl_ret_t cleanup = rcutils_string_map_fini(map);
-             delete map;
-             if (cleanup != RCL_RET_OK) {
-               ROSBAG2_TRANSPORT_LOG_ERROR("Failed to deallocate string map when expanding topic.");
-             }
-           });
+  return std::shared_ptr<rcutils_string_map_t>(
+    substitutions_map,
+    [](rcutils_string_map_t * map) {
+      rcl_ret_t cleanup = rcutils_string_map_fini(map);
+      delete map;
+      if (cleanup != RCL_RET_OK) {
+        ROSBAG2_TRANSPORT_LOG_ERROR("Failed to deallocate string map when expanding topic.");
+      }
+    });
 }
 
 std::string Rosbag2Node::expand_topic_name(const std::string & topic_name)
@@ -135,8 +136,10 @@ std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
 
   std::map<std::string, std::vector<std::string>> filtered_topics_and_types;
   for (const auto & topic_and_type : topics_and_types) {
-    if (std::find(sanitized_topic_names.begin(), sanitized_topic_names.end(),
-      topic_and_type.first) != sanitized_topic_names.end())
+    if (
+      std::find(
+        sanitized_topic_names.begin(), sanitized_topic_names.end(),
+        topic_and_type.first) != sanitized_topic_names.end())
     {
       filtered_topics_and_types.insert(topic_and_type);
     }
@@ -157,8 +160,9 @@ std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_mor
   std::unordered_map<std::string, std::string> filtered_topics_and_types;
   for (const auto & topic_and_type : topics_and_types) {
     if (topic_and_type.second.size() > 1) {
-      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Topic '" << topic_and_type.first <<
-        "' has several types associated. Only topics with one type are supported");
+      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+        "Topic '" << topic_and_type.first <<
+          "' has several types associated. Only topics with one type are supported");
     } else {
       filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
     }

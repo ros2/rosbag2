@@ -60,8 +60,9 @@ void Player::play(const PlayOptions & options)
 {
   prepare_publishers();
 
-  storage_loading_future_ = std::async(std::launch::async,
-      [this, options]() {load_storage_content(options);});
+  storage_loading_future_ = std::async(
+    std::launch::async,
+    [this, options]() {load_storage_content(options);});
 
   wait_for_filled_queue(options);
 
@@ -124,7 +125,8 @@ void Player::play_messages_from_queue()
   do {
     play_messages_until_queue_empty();
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
-      ROSBAG2_TRANSPORT_LOG_WARN("Message queue starved. Messages will be delayed. Consider "
+      ROSBAG2_TRANSPORT_LOG_WARN(
+        "Message queue starved. Messages will be delayed. Consider "
         "increasing the --read-ahead-queue-size option.");
     }
   } while (!is_storage_completely_loaded() && rclcpp::ok());
@@ -145,7 +147,8 @@ void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    publishers_.insert(std::make_pair(
+    publishers_.insert(
+      std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(topic.name, topic.type)));
   }
 }

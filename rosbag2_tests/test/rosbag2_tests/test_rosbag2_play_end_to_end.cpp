@@ -76,16 +76,25 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
-  EXPECT_THAT(primitive_messages,
+  EXPECT_THAT(
+    primitive_messages,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
 
   EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
-  EXPECT_THAT(array_messages,
-    Each(Pointee(Field(&test_msgs::msg::Arrays::bool_values,
-    ElementsAre(true, false, true)))));
-  EXPECT_THAT(array_messages,
-    Each(Pointee(Field(&test_msgs::msg::Arrays::string_values,
-    ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+  EXPECT_THAT(
+    array_messages,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::bool_values,
+          ElementsAre(true, false, true)))));
+  EXPECT_THAT(
+    array_messages,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::string_values,
+          ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
 
 TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {

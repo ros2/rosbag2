@@ -63,13 +63,14 @@ public:
   {
     std::vector<std::string> messages;
     size_t counter = 0;
-    auto subscription = node_->create_generic_subscription(topic_name, type,
-        [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
-          auto string_message =
-          memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
-          messages.push_back(string_message->string_value);
-          counter++;
-        });
+    auto subscription = node_->create_generic_subscription(
+      topic_name, type,
+      [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
+        auto string_message =
+        memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
+        messages.push_back(string_message->string_value);
+        counter++;
+      });
 
     while (counter < expected_messages_number) {
       rclcpp::spin_some(node_);
@@ -106,9 +107,10 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
 
   auto publisher = node_->create_generic_publisher(topic_name, type);
 
-  auto subscriber_future_ = std::async(std::launch::async, [this, topic_name, type] {
-        return subscribe_raw_messages(1, topic_name, type);
-      });
+  auto subscriber_future_ = std::async(
+    std::launch::async, [this, topic_name, type] {
+      return subscribe_raw_messages(1, topic_name, type);
+    });
   // Give time to the subscriber to start.
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -132,7 +134,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_empty_if_topic_does_not
   ASSERT_THAT(topics_and_types, IsEmpty());
 }
 
-TEST_F(RosBag2NodeFixture,
+TEST_F(
+  RosBag2NodeFixture,
   get_topics_with_types_returns_with_topic_string_if_topic_is_specified_without_slash)
 {
   create_publisher("string_topic");
@@ -144,7 +147,8 @@ TEST_F(RosBag2NodeFixture,
   EXPECT_THAT(topics_and_types.begin()->second, StrEq("test_msgs/msg/Strings"));
 }
 
-TEST_F(RosBag2NodeFixture,
+TEST_F(
+  RosBag2NodeFixture,
   get_topics_with_types_returns_with_topic_string_if_topic_is_specified_with_slash)
 {
   create_publisher("string_topic");

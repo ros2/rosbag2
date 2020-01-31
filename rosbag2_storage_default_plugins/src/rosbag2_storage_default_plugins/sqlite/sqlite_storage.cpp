@@ -103,8 +103,8 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Opened database '" <<
-    relative_path_ << "' for " << to_string(io_flag) << ".");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
+    "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -114,7 +114,8 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   }
   auto topic_entry = topics_.find(message->topic_name);
   if (topic_entry == end(topics_)) {
-    throw SqliteException("Topic '" + message->topic_name +
+    throw SqliteException(
+            "Topic '" + message->topic_name +
             "' has not been created yet! Call 'create_topic' first.");
   }
 
@@ -294,5 +295,6 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 }  // namespace rosbag2_storage_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::SqliteStorage,
+PLUGINLIB_EXPORT_CLASS(
+  rosbag2_storage_plugins::SqliteStorage,
   rosbag2_storage::storage_interfaces::ReadWriteInterface)

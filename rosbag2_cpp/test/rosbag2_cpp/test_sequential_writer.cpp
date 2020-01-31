@@ -49,10 +49,11 @@ public:
 
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(
       DoAll(
-        Invoke([this](const std::string & uri, const std::string &) {
-          fake_storage_size_ = 0;
-          fake_storage_uri_ = uri;
-        }),
+        Invoke(
+          [this](const std::string & uri, const std::string &) {
+            fake_storage_size_ = 0;
+            fake_storage_uri_ = uri;
+          }),
         Return(storage_)));
     EXPECT_CALL(
       *storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
@@ -69,7 +70,8 @@ public:
   std::string fake_storage_uri_;
 };
 
-TEST_F(SequentialWriterTest,
+TEST_F(
+  SequentialWriterTest,
   write_uses_converters_to_convert_serialization_format_if_input_and_output_format_are_different) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -234,7 +236,8 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   writer_.reset();
   // metadata should be written now that the Writer was released.
 
-  EXPECT_EQ(fake_metadata_.relative_file_paths.size(),
+  EXPECT_EQ(
+    fake_metadata_.relative_file_paths.size(),
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 

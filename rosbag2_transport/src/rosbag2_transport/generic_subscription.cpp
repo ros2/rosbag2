@@ -87,15 +87,16 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
     rclcpp::exceptions::throw_from_rcl_error(init_return);
   }
 
-  auto serialized_msg = std::shared_ptr<rmw_serialized_message_t>(message,
-      [](rmw_serialized_message_t * msg) {
-        auto fini_return = rmw_serialized_message_fini(msg);
-        delete msg;
-        if (fini_return != RCL_RET_OK) {
-          ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-            "Failed to destroy serialized message: " << rcl_get_error_string().str);
-        }
-      });
+  auto serialized_msg = std::shared_ptr<rmw_serialized_message_t>(
+    message,
+    [](rmw_serialized_message_t * msg) {
+      auto fini_return = rmw_serialized_message_fini(msg);
+      delete msg;
+      if (fini_return != RCL_RET_OK) {
+        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+          "Failed to destroy serialized message: " << rcl_get_error_string().str);
+      }
+    });
 
   return serialized_msg;
 }
