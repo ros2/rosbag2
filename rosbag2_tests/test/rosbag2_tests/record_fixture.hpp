@@ -51,6 +51,14 @@ public:
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }
 
+  void SetUp() override
+  {
+    const auto path = rcpputils::fs::path{root_bag_path_};
+    if (rcpputils::fs::exists(path)) {
+      remove_directory_recursively(path.string());
+    }
+  }
+
   static void SetUpTestCase()
   {
     rclcpp::init(0, nullptr);
