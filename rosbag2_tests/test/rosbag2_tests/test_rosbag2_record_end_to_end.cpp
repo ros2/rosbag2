@@ -55,6 +55,7 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 }  // namespace
 
 TEST_F(RecordFixture, record_end_to_end_test) {
+  set_path("record");
   auto message = get_messages_strings()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
@@ -111,6 +112,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
 #ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
+  set_path("splitting_metadata");
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
   command << "ros2 bag record" <<
@@ -164,6 +166,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
 #endif
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
+  set_path("splitting_size");
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
@@ -237,6 +240,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
+  set_path("not_split");
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
@@ -292,6 +296,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
+  set_path("splits");
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
 
