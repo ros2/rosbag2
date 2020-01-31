@@ -51,6 +51,14 @@ public:
     std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }
 
+  void SetUp() override
+  {
+    const auto path = rcpputils::fs::path{root_bag_path_};
+    if (rcpputils::fs::exists(path)) {
+      remove_directory_recursively(path.string());
+    }
+  }
+
   static void SetUpTestCase()
   {
     rclcpp::init(0, nullptr);
@@ -66,9 +74,11 @@ public:
     while (true) {
       try {
         std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
-        rosbag2_storage_plugins::SqliteWrapper
-          db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-        return;
+        if (rcpputils::fs::exists(rcpputils::fs::path{database_path_})) {
+          rosbag2_storage_plugins::SqliteWrapper
+            db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+          return;
+        }
       } catch (const rosbag2_storage_plugins::SqliteException & ex) {
         (void) ex;  // still waiting
       }
