@@ -85,7 +85,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths = {"bag_0.db3"};
+  metadata.relative_file_paths = {"record_0.db3"};
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
@@ -173,7 +173,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   command << "ros2 bag record " <<
     " --output " << root_bag_path_ <<
     " --max-bag-size " << bagfile_split_size <<
-    " " << topic_name;
+    " " << topic_name <<
+    " __log_level:=debug";
   auto process_handle = start_execution(command.str());
   wait_for_db();
 
@@ -204,7 +205,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bagfile_name;
-      bagfile_name << "bag_" << i << ".db3";
+      bagfile_name << "splitting_size_" << i << ".db3";
 
       const auto bagfile_path =
         (rcpputils::fs::path(root_bag_path_) / bagfile_name.str());
@@ -278,7 +279,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     metadata.version = 2;
     metadata.storage_identifier = "sqlite3";
 
-    const auto bag_path = rcpputils::fs::path(root_bag_path_) / "bag_0.db3";
+    const auto bag_path = rcpputils::fs::path(root_bag_path_) / "not_split_0.db3";
 
     metadata.relative_file_paths = {bag_path.string()};
     metadata_io.write_metadata(root_bag_path_, metadata);
@@ -338,7 +339,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bag_name;
-      bag_name << "bag_" << i << ".db3";
+      bag_name << "splits_" << i << ".db3";
 
       const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
