@@ -333,8 +333,15 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
       const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
-      metadata.relative_file_paths.push_back(bag_path.string());
+      // There is not any guarantee that the bagfile split expected_split times
+      // due to possible io sync delays. Instead, assert that the bagfile split
+      // at least once
+      if (rcpputils::fs::exists(bag_path)) {
+        metadata.relative_file_paths.push_back(bag_path.string());
+      }
     }
+
+    ASSERT_GT(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_, metadata);
   }
 #endif
