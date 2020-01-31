@@ -38,6 +38,7 @@ Clone this repository into the source folder:
 ```
 $ git clone https://github.com/ros2/rosbag2.git
 ```
+**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution. 
 
 Then build all the packages with this command:
 
