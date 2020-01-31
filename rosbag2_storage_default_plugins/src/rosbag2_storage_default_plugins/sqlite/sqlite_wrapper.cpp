@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -37,7 +38,10 @@ SqliteWrapper::SqliteWrapper(
     int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
         SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nullptr);
     if (rc != SQLITE_OK) {
-      throw SqliteException("Could not read-only open database. Error code: " + std::to_string(rc));
+      std::stringstream errmsg;
+      errmsg << "Could not read-only open database. SQLite error (" <<
+        rc << "): " << sqlite3_errstr(rc);
+      throw SqliteException{errmsg.str()};
     }
     // throws an exception if the database is not valid.
     prepare_statement("PRAGMA schema_version;")->execute_and_reset();
@@ -45,12 +49,16 @@ SqliteWrapper::SqliteWrapper(
     int rc = sqlite3_open_v2(uri.c_str(), &db_ptr,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
     if (rc != SQLITE_OK) {
-      throw SqliteException(
-              "Could not read-write open database. Error code: " + std::to_string(rc));
+      std::stringstream errmsg;
+      errmsg << "Could not read-write open database. SQLite error (" <<
+        rc << "): " << sqlite3_errstr(rc);
+      throw SqliteException{errmsg.str()};
     }
     prepare_statement("PRAGMA journal_mode = WAL;")->execute_and_reset();
     prepare_statement("PRAGMA synchronous = NORMAL;")->execute_and_reset();
   }
+
+  sqlite3_extended_result_codes(db_ptr, 1);
 }
 
 SqliteWrapper::SqliteWrapper()

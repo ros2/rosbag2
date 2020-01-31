@@ -16,6 +16,7 @@
 
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -33,8 +34,11 @@ SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, const std::st
   sqlite3_stmt * statement;
   int return_code = sqlite3_prepare_v2(database, query.c_str(), -1, &statement, nullptr);
   if (return_code != SQLITE_OK) {
-    throw SqliteException("SQL error when preparing statement '" + query + "' with return code: " +
-            std::to_string(return_code));
+    std::stringstream errmsg;
+    errmsg << "Error when preparing SQL statement '" << query << "'. SQLite error: (" <<
+      return_code << "): " << sqlite3_errstr(return_code);
+
+    throw SqliteException{errmsg.str()};
   }
 
   statement_ = statement;
@@ -52,8 +56,11 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
 {
   int return_code = sqlite3_step(statement_);
   if (!is_query_ok(return_code)) {
-    throw SqliteException("Error processing SQLite statement. Return code: " +
-            std::to_string(return_code));
+    std::stringstream errmsg;
+    errmsg << "Error when processing SQL statement. SQLite error (" <<
+      return_code << "): " << sqlite3_errstr(return_code);
+
+    throw SqliteException{errmsg.str()};
   }
   return reset();
 }
@@ -121,7 +128,11 @@ bool SqliteStatementWrapper::step()
   } else if (return_code == SQLITE_DONE) {
     return false;
   } else {
-    throw SqliteException("Error reading query result: " + std::to_string(return_code));
+    std::stringstream errmsg;
+    errmsg << "Error reading SQL query. SQLite error (" <<
+      return_code << "): " << sqlite3_errstr(return_code);
+
+    throw SqliteException{errmsg.str()};
   }
 }
 
@@ -157,9 +168,12 @@ void SqliteStatementWrapper::obtain_column_value(
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code)
 {
   if (return_code != SQLITE_OK) {
-    throw SqliteException("SQLite error when binding parameter " +
-            std::to_string(last_bound_parameter_index_) + ". Return code: " +
-            std::to_string(return_code));
+    std::stringstream errmsg;
+    errmsg << "Error when binding SQL parameter " <<
+      last_bound_parameter_index_ << ". SQLite error (" <<
+      return_code << "): " << sqlite3_errstr(return_code);
+
+    throw SqliteException{errmsg.str()};
   }
 }
 
