@@ -74,9 +74,11 @@ public:
     while (true) {
       try {
         std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
-        rosbag2_storage_plugins::SqliteWrapper
-          db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-        return;
+        if (rcpputils::fs::exists(rcpputils::fs::path{database_path_})) {
+          rosbag2_storage_plugins::SqliteWrapper
+            db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+          return;
+        }
       } catch (const rosbag2_storage_plugins::SqliteException & ex) {
         (void) ex;  // still waiting
       }
