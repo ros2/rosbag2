@@ -110,8 +110,8 @@ void stop_execution(const ProcessHandle & handle)
   GetExitCodeProcess(handle.process_info.hProcess, &exit_code);
   // 259 indicates that the process is still active: we want to make sure that the process is
   // still running properly before killing it.
-  EXPECT_THAT(exit_code, Eq(259));
-
+  ASSERT_THAT(exit_code, Eq(259));
+  GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId);
   close_process_handles(handle.process_info);
   CloseHandle(handle.job_handle);
 }
