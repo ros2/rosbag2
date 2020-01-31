@@ -55,6 +55,7 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 }
 }  // namespace
 
+#ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";
@@ -85,23 +86,6 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   stop_execution(process_handle);
 
-  // TODO(zmichaels11): Find out how to correctly send a Ctrl-C signal on Windows
-  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
-#ifdef _WIN32
-  rosbag2_storage::BagMetadata metadata{};
-  metadata.version = 3;
-  metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths = {"bag_0.db3.zstd"};
-  metadata.duration = std::chrono::nanoseconds{0};
-  metadata.starting_time =
-    std::chrono::time_point<std::chrono::high_resolution_clock>{std::chrono::nanoseconds{0}};
-  metadata.message_count = 0;
-  metadata.compression_mode = "file";
-  metadata.compression_format = "zstd";
-  rosbag2_storage::MetadataIo metadata_io;
-  metadata_io.write_metadata(root_bag_path_, metadata);
-#endif
-
   const auto compressed_database_path = database_path_ + ".zstd";
   ASSERT_TRUE(rcpputils::fs::path(compressed_database_path).exists());
 
@@ -120,6 +104,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
+#endif
 
 TEST_F(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
