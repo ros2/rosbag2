@@ -173,8 +173,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   command << "ros2 bag record " <<
     " --output " << root_bag_path_ <<
     " --max-bag-size " << bagfile_split_size <<
-    " " << topic_name <<
-    " __log_level:=debug";
+    " " << topic_name;
   auto process_handle = start_execution(command.str());
   wait_for_db();
 
