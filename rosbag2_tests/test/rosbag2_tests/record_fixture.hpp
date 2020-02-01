@@ -61,7 +61,6 @@ public:
     root_bag_path_ = root_path.string();
     storage_path_ = (root_path / first_bagfile).string();
     database_path_ = storage_path_ + ".db3";
-    std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
   }
 
   static void SetUpTestCase()
