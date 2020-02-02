@@ -470,12 +470,12 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   const auto metadata = metadata_io.read_metadata(root_bag_path_);
 
   for (const auto & path : metadata.relative_file_paths) {
-    const auto file_path = rcpputils::fs::path(path);
+    const auto file_path = rcpputils::fs::path{path};
 
-    EXPECT_TRUE(file_path.exists());
-    EXPECT_EQ(file_path.extension().string(), ".zstd");
-
-    EXPECT_LT(static_cast<int>(rcutils_get_file_size(path.c_str())), bagfile_split_size);
+    EXPECT_TRUE(file_path.exists()) << "File: \"" <<
+      file_path.string() << "\" does not exist!";
+    EXPECT_EQ(file_path.extension().string(), ".zstd") << "File :\"" <<
+      file_path.string() << "\" does not have proper \".zstd\" extension!";
   }
 }
 
