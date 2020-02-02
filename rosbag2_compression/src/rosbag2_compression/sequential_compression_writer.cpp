@@ -141,6 +141,7 @@ void SequentialCompressionWriter::reset()
       should_compress_last_file_)
     {
       try {
+        storage_.reset();  // Storage must be closed before it can be compressed.
         compress_last_file();
       } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
@@ -206,11 +207,28 @@ void SequentialCompressionWriter::compress_last_file()
     throw std::runtime_error{"Compressor was not opened!"};
   }
 
-  const auto & to_compress = metadata_.relative_file_paths.back();
+  const auto to_compress = metadata_.relative_file_paths.back();
 
-  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressing \"" << to_compress << "\"");
+  if (rcpputils::fs::path{to_compress}.exists() ||
+    rcutils_get_file_size(to_compress.c_str()) == 0)
+  {
+    const auto compressed_uri = compressor_->compress_uri(to_compress);
 
-  metadata_.relative_file_paths.back() = compressor_->compress_uri(to_compress);
+    metadata_.relative_file_paths.back() = compressed_uri;
+
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressed \"" << to_compress << "\" to \"" <<
+      compressed_uri << "\"");
+
+    const auto rc = std::remove(to_compress.c_str());
+    if (rc != 0) {
+      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Failed to remove uncompressed bag: \"" <<
+        to_compress << "\"");
+    }
+  } else {
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Last file \"" << to_compress <<
+      "\" is empty; removing...");
+    metadata_.relative_file_paths.pop_back();
+  }
 }
 
 void SequentialCompressionWriter::split_bagfile()
