@@ -112,8 +112,8 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
 #ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
-  constexpr const char bagfile_name[] = "splitting_metadata";
-  set_path(bagfile_name);
+  constexpr const char bag_file_name[] = "splitting_metadata";
+  set_path(bag_file_name);
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
   command << "ros2 bag record" <<
@@ -167,8 +167,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
 #endif
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
-  constexpr const char bagfile_name[] = "splitting_size";
-  set_path(bagfile_name);
+  constexpr const char bag_file_name[] = "splitting_size";
+  set_path(bag_file_name);
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
@@ -205,14 +205,14 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
-      std::stringstream bagfile_name;
-      bagfile_name << bagfile_name << i << ".db3";
+      std::stringstream file_name;
+      file_name << bag_file_name << i << ".db3";
 
-      const auto bagfile_path =
-        (rcpputils::fs::path(root_bag_path_) / bagfile_name.str());
+      const auto bag_file_path =
+        (rcpputils::fs::path(root_bag_path_) / file_name.str());
 
-      if (bagfile_path.exists()) {
-        metadata.relative_file_paths.push_back(bagfile_path.string());
+      if (bag_file_path.exists()) {
+        metadata.relative_file_paths.push_back(bag_file_path.string());
       } else {
         break;
       }
@@ -233,6 +233,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
     const auto bagfile_path = metadata.relative_file_paths[i];
+
+    std::cout << "Checking: " << bagfile_path << std::endl;
+
     EXPECT_TRUE(rcpputils::fs::exists(bagfile_path));
 
     const auto actual_split_size = static_cast<int>(rcutils_get_file_size(bagfile_path.c_str()));
@@ -242,8 +245,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
-  constexpr const char bagfile_name[] = "not_split";
-  set_path(bagfile_name);
+  constexpr const char bag_file_name[] = "not_split";
+  set_path(bag_file_name);
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   std::stringstream command;
@@ -281,9 +284,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     metadata.version = 2;
     metadata.storage_identifier = "sqlite3";
 
-    std::stringstream filename;
-    filename << bagfile_name << "_0.db3";
-    const auto bag_path = rcpputils::fs::path(root_bag_path_) / bagfile_name.str();
+    std::stringstream file_name;
+    file_name << bag_file_name << "_0.db3";
+    const auto bag_path = rcpputils::fs::path(root_bag_path_) / file_name.str();
 
     metadata.relative_file_paths = {bag_path.string()};
     metadata_io.write_metadata(root_bag_path_, metadata);
@@ -301,8 +304,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 }
 
 TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
-  constexpr const char bagfile_name[] = "splits";
-  set_path(bagfile_name);
+  constexpr const char bag_file_name[] = "splits";
+  set_path(bag_file_name);
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
 
@@ -344,7 +347,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bag_name;
-      bag_name << bagfile_name << i << ".db3";
+      bag_name << bag_file_name << i << ".db3";
 
       const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
