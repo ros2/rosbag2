@@ -45,7 +45,8 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   transport.print_bag_info("test", "sqlite3");
 
   std::string output = internal::GetCapturedStdout();
-  EXPECT_THAT(output, ContainsRegex(
+  EXPECT_THAT(
+    output, ContainsRegex(
       "\nFiles:             some_relative_path\n"
       "                   some_other_relative_path\n"
       "Bag size:          0 B\n"
@@ -55,8 +56,10 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
       "End                Sep 27 2018 .*:.*:45.398 \\(1538051985\\.398\\)\n"
       "Messages:          50\n"
       "Topic information: "));
-  EXPECT_THAT(output, HasSubstr(
+  EXPECT_THAT(
+    output, HasSubstr(
       "Topic: topic1 | Type: type1 | Count: 100 | Serialization Format: rmw1"));
-  EXPECT_THAT(output, HasSubstr(
+  EXPECT_THAT(
+    output, HasSubstr(
       "Topic: topic2 | Type: type2 | Count: 200 | Serialization Format: rmw2\n\n"));
 }

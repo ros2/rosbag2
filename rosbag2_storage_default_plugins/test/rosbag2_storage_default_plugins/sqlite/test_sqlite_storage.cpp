@@ -131,7 +131,9 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
     read_only_filename, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
-  EXPECT_THAT(topics_and_types, ElementsAreArray({
+  EXPECT_THAT(
+    topics_and_types, ElementsAreArray(
+  {
     rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1"},
     rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2"}
   }));
@@ -158,14 +160,17 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
-  EXPECT_THAT(metadata.topics_with_message_count, ElementsAreArray({
+  EXPECT_THAT(
+    metadata.topics_with_message_count, ElementsAreArray(
+  {
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
         "topic1", "type1", "rmw_format"}, 2u},
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
         "topic2", "type2", "rmw_format"}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
-  EXPECT_THAT(metadata.starting_time, Eq(
+  EXPECT_THAT(
+    metadata.starting_time, Eq(
       std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::seconds(1))
   ));
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(2)));
@@ -184,7 +189,8 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
   EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
   EXPECT_THAT(metadata.message_count, Eq(0u));
-  EXPECT_THAT(metadata.starting_time, Eq(
+  EXPECT_THAT(
+    metadata.starting_time, Eq(
       std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::seconds(0))
   ));
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(0)));
@@ -208,7 +214,8 @@ TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
   // Remove topics
   auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-  readable_storage->open(read_only_filename,
+  readable_storage->open(
+    read_only_filename,
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   auto topics_and_types = readable_storage->get_all_topics_and_types();
 
@@ -228,20 +235,23 @@ TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
   const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
   const auto storage_filename = read_write_filename + ".db3";
   const auto read_write_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  read_write_storage->open(read_write_filename,
+  read_write_storage->open(
+    read_write_filename,
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
   EXPECT_EQ(read_write_storage->get_relative_file_path(), storage_filename);
 
   // READ_ONLY expects uri to be the relative file path to the sqlite3 db.
   const auto & read_only_filename = storage_filename;
   const auto read_only_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  read_only_storage->open(read_only_filename,
+  read_only_storage->open(
+    read_only_filename,
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
   EXPECT_EQ(read_only_storage->get_relative_file_path(), storage_filename);
 
   const auto & append_filename = storage_filename;
   const auto append_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  append_storage->open(append_filename,
+  append_storage->open(
+    append_filename,
     rosbag2_storage::storage_interfaces::IOFlag::APPEND);
   EXPECT_EQ(append_storage->get_relative_file_path(), storage_filename);
 }

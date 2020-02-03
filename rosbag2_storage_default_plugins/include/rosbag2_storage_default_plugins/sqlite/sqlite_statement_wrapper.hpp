@@ -224,7 +224,8 @@ inline
 void SqliteStatementWrapper::check_and_report_bind_error(int return_code, std::string value)
 {
   if (return_code != SQLITE_OK) {
-    throw SqliteException("SQLite error when binding parameter " +
+    throw SqliteException(
+            "SQLite error when binding parameter " +
             std::to_string(last_bound_parameter_index_) + " to value '" + value +
             "'. Return code: " + std::to_string(return_code));
   }

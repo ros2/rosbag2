@@ -77,10 +77,12 @@ private:
     const std::vector<std::string> & registered_converter_classes,
     const std::vector<std::string> & registered_interface_classes)
   {
-    auto class_exists_in_converters = std::find(registered_converter_classes.begin(),
-        registered_converter_classes.end(), converter_id);
-    auto class_exists_in_deserializers = std::find(registered_interface_classes.begin(),
-        registered_interface_classes.end(), converter_id);
+    auto class_exists_in_converters = std::find(
+      registered_converter_classes.begin(),
+      registered_converter_classes.end(), converter_id);
+    auto class_exists_in_deserializers = std::find(
+      registered_interface_classes.begin(),
+      registered_interface_classes.end(), converter_id);
     return class_exists_in_converters == registered_converter_classes.end() &&
            class_exists_in_deserializers == registered_interface_classes.end();
   }

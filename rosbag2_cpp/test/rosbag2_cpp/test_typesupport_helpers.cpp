@@ -68,7 +68,8 @@ TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_legacy_library) {
   auto string_typesupport =
     rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
 
-  EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
+  EXPECT_THAT(
+    std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));
 }
 
@@ -76,6 +77,7 @@ TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
   auto string_typesupport =
     rosbag2_cpp::get_typesupport("test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp");
 
-  EXPECT_THAT(std::string(string_typesupport->typesupport_identifier),
+  EXPECT_THAT(
+    std::string(string_typesupport->typesupport_identifier),
     ContainsRegex("rosidl_typesupport"));
 }

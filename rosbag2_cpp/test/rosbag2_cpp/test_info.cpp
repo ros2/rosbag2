@@ -136,31 +136,39 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   auto read_metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(read_metadata.relative_file_paths,
+  EXPECT_THAT(
+    read_metadata.relative_file_paths,
     Eq(std::vector<std::string>({"some_relative_path", "some_other_relative_path"})));
   EXPECT_THAT(read_metadata.duration, Eq(std::chrono::nanoseconds(100)));
-  EXPECT_THAT(read_metadata.starting_time,
-    Eq(std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(1000000))));
+  EXPECT_THAT(
+    read_metadata.starting_time,
+    Eq(
+      std::chrono::time_point<std::chrono::high_resolution_clock>(
+        std::chrono::nanoseconds(1000000))));
   EXPECT_THAT(read_metadata.message_count, Eq(50u));
-  EXPECT_THAT(read_metadata.topics_with_message_count,
-    SizeIs(2u));
+  EXPECT_THAT(read_metadata.topics_with_message_count, SizeIs(2u));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
   rosbag2_storage::TopicInformation expected_first_topic = {{"topic1", "type1", "rmw1"}, 100};
-  EXPECT_THAT(actual_first_topic.topic_metadata.name,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.name,
     Eq(expected_first_topic.topic_metadata.name));
-  EXPECT_THAT(actual_first_topic.topic_metadata.type,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.type,
     Eq(expected_first_topic.topic_metadata.type));
-  EXPECT_THAT(actual_first_topic.topic_metadata.serialization_format,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.serialization_format,
     Eq(expected_first_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
   rosbag2_storage::TopicInformation expected_second_topic = {{"topic2", "type2", "rmw2"}, 200};
-  EXPECT_THAT(actual_second_topic.topic_metadata.name,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.name,
     Eq(expected_second_topic.topic_metadata.name));
-  EXPECT_THAT(actual_second_topic.topic_metadata.type,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.type,
     Eq(expected_second_topic.topic_metadata.type));
-  EXPECT_THAT(actual_second_topic.topic_metadata.serialization_format,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.serialization_format,
     Eq(expected_second_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 

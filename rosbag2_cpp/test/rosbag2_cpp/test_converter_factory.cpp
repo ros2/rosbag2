@@ -27,7 +27,8 @@ public:
   rosbag2_cpp::SerializationFormatConverterFactory factory;
 };
 
-TEST_F(ConverterFactoryTest,
+TEST_F(
+  ConverterFactoryTest,
   load_test_plugin_can_load_a_converter_plugin_as_both_deserializer_and_serializer)
 {
   auto deserializer = factory.load_deserializer("a");
