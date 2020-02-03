@@ -58,7 +58,8 @@ public:
       get_message_typesupport(message),
       message.get());
     if (error != RCL_RET_OK) {
-      RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
+      RCUTILS_LOG_ERROR_NAMED(
+        "rosbag2_test_common", "Leaking memory. Error: %s",
         rcutils_get_error_string().str);
     }
     return message;
@@ -84,19 +85,22 @@ private:
     *msg = rmw_get_zero_initialized_serialized_message();
     auto ret = rmw_serialized_message_init(msg, capacity, &rcutils_allocator_);
     if (ret != RCUTILS_RET_OK) {
-      throw std::runtime_error("Error allocating resources for serialized message: " +
+      throw std::runtime_error(
+              "Error allocating resources for serialized message: " +
               std::string(rcutils_get_error_string().str));
     }
 
-    auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(msg,
-        [](rmw_serialized_message_t * msg) {
-          int error = rmw_serialized_message_fini(msg);
-          delete msg;
-          if (error != RCUTILS_RET_OK) {
-            RCUTILS_LOG_ERROR_NAMED("rosbag2_test_common", "Leaking memory. Error: %s",
+    auto serialized_message = std::shared_ptr<rmw_serialized_message_t>(
+      msg,
+      [](rmw_serialized_message_t * msg) {
+        int error = rmw_serialized_message_fini(msg);
+        delete msg;
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED(
+            "rosbag2_test_common", "Leaking memory. Error: %s",
             rcutils_get_error_string().str);
-          }
-        });
+        }
+      });
     return serialized_message;
   }
 

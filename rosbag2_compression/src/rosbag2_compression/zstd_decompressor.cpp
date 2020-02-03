@@ -88,9 +88,10 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     compressed_buffer_length, file_pointer);
 
   if (read_count != compressed_buffer_length) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes read !(" <<
-      read_count << ") != compressed_buffer size (" << compressed_buffer.size() <<
-      ")!");
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+      "Bytes read !(" <<
+        read_count << ") != compressed_buffer size (" << compressed_buffer.size() <<
+        ")!");
     // An error indicator is set by fread, so the following check will throw.
   }
 
@@ -136,9 +137,10 @@ void write_output_buffer(
     output_buffer.size(), file_pointer);
 
   if (write_count != output_buffer.size()) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM("Bytes written (" <<
-      write_count << " != output_buffer size (" << output_buffer.size() <<
-      ")!");
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+      "Bytes written (" <<
+        write_count << " != output_buffer size (" << output_buffer.size() <<
+        ")!");
     // An error indicator is set by fwrite, so the following check will throw.
   }
 

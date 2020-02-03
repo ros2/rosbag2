@@ -49,16 +49,18 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   uint64_t polling_interval_ms = 100;
   unsigned long long max_bagfile_size = 0;  // NOLINT
   PyObject * topics = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
-    &uri,
-    &storage_id,
-    &serilization_format,
-    &node_prefix,
-    &all,
-    &no_discovery,
-    &polling_interval_ms,
-    &max_bagfile_size,
-    &topics))
+  if (
+    !PyArg_ParseTupleAndKeywords(
+      args, kwargs, "ssss|bbKKO", const_cast<char **>(kwlist),
+      &uri,
+      &storage_id,
+      &serilization_format,
+      &node_prefix,
+      &all,
+      &no_discovery,
+      &polling_interval_ms,
+      &max_bagfile_size,
+      &topics))
   {
     return nullptr;
   }
@@ -113,11 +115,12 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * storage_id;
   char * node_prefix;
   size_t read_ahead_queue_size;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|k", const_cast<char **>(kwlist),
-    &uri,
-    &storage_id,
-    &node_prefix,
-    &read_ahead_queue_size))
+  if (!PyArg_ParseTupleAndKeywords(
+      args, kwargs, "sss|k", const_cast<char **>(kwlist),
+      &uri,
+      &storage_id,
+      &node_prefix,
+      &read_ahead_queue_size))
   {
     return nullptr;
   }
@@ -182,7 +185,8 @@ static PyMethodDef rosbag2_transport_methods[] = {
 # pragma GCC diagnostic pop
 #endif
 
-PyDoc_STRVAR(rosbag2_transport__doc__,
+PyDoc_STRVAR(
+  rosbag2_transport__doc__,
   "Python module for rosbag2 transport");
 
 /// Define the Python module

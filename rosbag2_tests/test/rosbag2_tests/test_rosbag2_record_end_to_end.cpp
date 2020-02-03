@@ -71,7 +71,8 @@ TEST_F(RecordFixture, record_end_to_end_test) {
 
   rosbag2_storage_plugins::SqliteWrapper
     db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  pub_man_.run_publishers([this, &db](const std::string & topic_name) {
+  pub_man_.run_publishers(
+    [this, &db](const std::string & topic_name) {
       return count_stored_messages(db, topic_name);
     });
 

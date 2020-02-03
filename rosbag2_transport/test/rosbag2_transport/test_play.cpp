@@ -97,16 +97,25 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/topic1");
   EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_primitives,
+  EXPECT_THAT(
+    replayed_test_primitives,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 42))));
 
   auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
     "/topic2");
   EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
-  EXPECT_THAT(replayed_test_arrays,
-    Each(Pointee(Field(&test_msgs::msg::Arrays::bool_values,
-    ElementsAre(true, false, true)))));
-  EXPECT_THAT(replayed_test_arrays,
-    Each(Pointee(Field(&test_msgs::msg::Arrays::float32_values,
-    ElementsAre(40.0f, 2.0f, 0.0f)))));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::bool_values,
+          ElementsAre(true, false, true)))));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::float32_values,
+          ElementsAre(40.0f, 2.0f, 0.0f)))));
 }

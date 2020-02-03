@@ -84,7 +84,8 @@ public:
     auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
 
     publisher_nodes_.push_back(publisher_node);
-    publishers_.push_back([publisher, topic_name, message, expected_messages](
+    publishers_.push_back(
+      [publisher, topic_name, message, expected_messages](
         CountFunction count_stored_messages) {
         if (expected_messages != 0) {
           while (rclcpp::ok() && count_stored_messages(topic_name) < expected_messages) {

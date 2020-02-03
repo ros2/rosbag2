@@ -65,24 +65,31 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   EXPECT_THAT(read_metadata.duration, Eq(metadata.duration));
   EXPECT_THAT(read_metadata.starting_time, Eq(metadata.starting_time));
   EXPECT_THAT(read_metadata.message_count, Eq(metadata.message_count));
-  EXPECT_THAT(read_metadata.topics_with_message_count,
+  EXPECT_THAT(
+    read_metadata.topics_with_message_count,
     SizeIs(metadata.topics_with_message_count.size()));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
   auto expected_first_topic = metadata.topics_with_message_count[0];
-  EXPECT_THAT(actual_first_topic.topic_metadata.name,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.name,
     Eq(expected_first_topic.topic_metadata.name));
-  EXPECT_THAT(actual_first_topic.topic_metadata.type,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.type,
     Eq(expected_first_topic.topic_metadata.type));
-  EXPECT_THAT(actual_first_topic.topic_metadata.serialization_format,
+  EXPECT_THAT(
+    actual_first_topic.topic_metadata.serialization_format,
     Eq(expected_first_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
   auto expected_second_topic = metadata.topics_with_message_count[1];
-  EXPECT_THAT(actual_second_topic.topic_metadata.name,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.name,
     Eq(expected_second_topic.topic_metadata.name));
-  EXPECT_THAT(actual_second_topic.topic_metadata.type,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.type,
     Eq(expected_second_topic.topic_metadata.type));
-  EXPECT_THAT(actual_second_topic.topic_metadata.serialization_format,
+  EXPECT_THAT(
+    actual_second_topic.topic_metadata.serialization_format,
     Eq(expected_second_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 }
