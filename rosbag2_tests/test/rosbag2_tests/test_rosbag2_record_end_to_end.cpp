@@ -55,7 +55,8 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 }  // namespace
 
 TEST_F(RecordFixture, record_end_to_end_test) {
-  set_path("record");
+  constexpr const char bag_file_name[] = "simple_record";
+  set_path(bag_file_name);
   auto message = get_messages_strings()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
@@ -85,7 +86,8 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths = {"record_0.db3"};
+  std::string bag_file_path = std::string(bag_file_name) + "_0.db3";
+  metadata.relative_file_paths = {bag_file_name};
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
@@ -205,12 +207,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
-      std::stringstream file_name;
-      file_name << bag_file_name << i << ".db3";
-
-      const auto bag_file_path =
-        (rcpputils::fs::path(root_bag_path_) / file_name.str());
-
+      std::stringstream bag_name;
+      bag_name << bag_file_name << "_" << i << ".db3";
+      const auto bag_file_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
       if (bag_file_path.exists()) {
         metadata.relative_file_paths.push_back(bag_file_path.string());
       } else {
@@ -347,7 +346,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bag_name;
-      bag_name << bag_file_name << i << ".db3";
+      bag_name << bag_file_name << "_" << i << ".db3";
 
       const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
 
