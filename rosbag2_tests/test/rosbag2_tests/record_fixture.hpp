@@ -66,14 +66,13 @@ public:
   void set_path(const std::string & bagname)
   {
     auto root_path = rcpputils::fs::path{temporary_dir_path_} / bagname;
+    ASSERT_FALSE(root_path.exists()) << "Path: \"" << bagname <<
+      "\" already exists!";
 
-    if (root_path.exists()) {
-      remove_directory_recursively(root_path.string());
-    }
+    root_bag_path_ = root_path.string();
 
     const std::string first_bagfile = bagname + "_0";
 
-    root_bag_path_ = root_path.string();
     storage_path_ = (root_path / first_bagfile).string();
     database_path_ = storage_path_ + ".db3";
   }
