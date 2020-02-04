@@ -159,7 +159,7 @@ void write_output_buffer(
 /**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
  */
-void throw_on_zstd_error(const size_t compression_result)
+void throw_on_zstd_error(const unsigned long long compression_result)  // NOLINT(runtime/int)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
@@ -173,7 +173,7 @@ void throw_on_zstd_error(const size_t compression_result)
  * Checks frame_content and throws a runtime_error if there was a ZSTD error
  * or frame_content is invalid.
  */
-void throw_on_invalid_frame_content(const size_t frame_content)
+void throw_on_invalid_frame_content(const unsigned long long frame_content)  // NOLINT(runtime/int)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
     throw std::runtime_error{"Unable to determine file size due to error."};

@@ -137,7 +137,7 @@ void write_output_buffer(
 /**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
  */
-void throw_on_zstd_error(const size_t compression_result)
+void throw_on_zstd_error(const unsigned long long compression_result)  // NOLINT(runtime/int)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
@@ -186,7 +186,7 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
-  const size_t compression_result = ZSTD_compress(
+  const auto compression_result = ZSTD_compress(
     compressed_buffer.data(), compressed_buffer.size(),
     decompressed_buffer.data(), decompressed_buffer.size(), kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
