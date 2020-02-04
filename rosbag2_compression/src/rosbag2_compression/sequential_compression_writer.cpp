@@ -141,6 +141,7 @@ void SequentialCompressionWriter::reset()
       should_compress_last_file_)
     {
       try {
+        storage_.reset();  //Storage must be closed before it can be compressed.
         compress_last_file();
       } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
@@ -215,15 +216,15 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
-    compress_last_file();
-  }
-
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
+    compress_last_file();
+  }
 
   if (!storage_) {
     // Add a check to make sure reset() does not compress the file again if we couldn't load the
