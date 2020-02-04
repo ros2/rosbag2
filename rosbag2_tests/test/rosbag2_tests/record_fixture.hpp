@@ -87,17 +87,18 @@ public:
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
   }
 
-  void wait_for_metadata()
+  void wait_for_metadata(int timeout_in_sec = 5)
   {
-    // Waits until metadata is written to disk since some platforms have slower IO sync times
-    // If the metadata does not exist, the test will timeout and fail
     const auto metadata_path = rcpputils::fs::path{root_bag_path_} / "metadata.yaml";
-    while (true) {
+    const auto start_time = std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(timeout_in_sec)) {
       if (metadata_path.exists()) {
         return;
       }
       std::this_thread::sleep_for(50ms);
     }
+    // Final check for metadata if we timeout. Fail otherwise
+    ASSERT_EQ(metadata_path.exists(), true) << "Could not find metadata.yaml";
   }
 
   void wait_for_db()
