@@ -31,6 +31,8 @@ namespace
 
 // String constant used to identify ZstdDecompressor.
 constexpr const char kDecompressionIdentifier[] = "zstd";
+constexpr const uint32_t kMagicNumberLittleEndian = 0xFD2FB528;
+constexpr const uint32_t kMagicNumberBigEndian = 0x28B52FFD;
 
 /**
  * Open a file using the C API.
@@ -157,6 +159,52 @@ void write_output_buffer(
 }
 
 /**
+ * Throws a runtime_error if data does not contain a ZSTD compressed frame.
+ */
+void throw_on_invalid_magic_number(const std::vector<uint8_t> & data)
+{
+  if (data.size() < 4) {
+    throw std::runtime_error{"Data is too small to contain a ZSTD frame!"};
+  }
+
+  uint32_t magic_number = 0;
+  auto ptr_magic_number = reinterpret_cast<uint8_t *>(&magic_number);
+  ptr_magic_number[0] = data[0];
+  ptr_magic_number[1] = data[1];
+  ptr_magic_number[2] = data[2];
+  ptr_magic_number[3] = data[3];
+
+  bool is_little_endian = false;
+  {
+    uint16_t endian_check = 0x0001;
+    auto ptr_endian_check = reinterpret_cast<uint8_t *>(&endian_check);
+
+    // The set high byte would be 1 if system is big endian
+    is_little_endian = (ptr_endian_check[0] == 0x01);
+  }
+
+  if (is_little_endian) {
+    if (magic_number != kMagicNumberLittleEndian) {
+      std::stringstream errmsg;
+      errmsg << "Invalid magic number! Expected: 0x" <<
+        std::hex << kMagicNumberLittleEndian <<
+        " but got: 0x" << std::hex << magic_number;
+
+      throw std::runtime_error{errmsg.str()};
+    }
+  } else {
+    if (magic_number != kMagicNumberBigEndian) {
+      std::stringstream errmsg;
+      errmsg << "Invalid magic number! Expected: 0x" <<
+        std::hex << kMagicNumberBigEndian <<
+        " but got: 0x" << std::hex << magic_number;
+
+      throw std::runtime_error{errmsg.str()};
+    }
+  }
+}
+
+/**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
  */
 void throw_on_zstd_error(const size_t compression_result)
@@ -222,6 +270,7 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
   const auto uri_path = rcpputils::fs::path{uri};
   const auto decompressed_uri = rcpputils::fs::remove_extension(uri_path).string();
   const auto compressed_buffer = get_input_buffer(uri);
+  throw_on_invalid_magic_number(compressed_buffer);
   const auto compressed_buffer_length = compressed_buffer.size();
 
   const auto decompressed_buffer_length =
