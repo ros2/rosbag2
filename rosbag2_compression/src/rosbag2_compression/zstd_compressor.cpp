@@ -34,6 +34,7 @@ constexpr const int kDefaultZstdCompressionLevel = 1;
 
 // String constant used to identify ZstdCompressor.
 constexpr const char kCompressionIdentifier[] = "zstd";
+using ZstdCompressReturnType = decltype(ZSTD_compress(nullptr, 0, nullptr, 0, 0));
 
 /**
  * Open a file using the OS-specific C API.
@@ -136,8 +137,9 @@ void write_output_buffer(
 
 /**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
+ * \param compression_result is the return value of ZSTD_compress.
  */
-void throw_on_zstd_error(const unsigned long long compression_result)  // NOLINT(runtime/int)
+void throw_on_zstd_error(const ZstdCompressReturnType compression_result)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
