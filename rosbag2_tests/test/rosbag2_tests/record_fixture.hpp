@@ -87,6 +87,19 @@ public:
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
   }
 
+  void wait_for_metadata()
+  {
+    // Waits until metadata is written to disk since some platforms have slower IO sync times
+    // If the metadata does not exist, the test will timeout and fail
+    const auto metadata_path = rcpputils::fs::path{root_bag_path_} / "metadata.yaml";
+    while (true) {
+      if (metadata_path.exists()) {
+        return;
+      }
+      std::this_thread::sleep_for(50ms);
+    }
+  }
+
   void wait_for_db()
   {
     const auto database_path = get_bag_file_path(0);
