@@ -87,7 +87,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
   std::string bag_file_path = std::string(bag_file_name) + "_0.db3";
-  metadata.relative_file_paths = {bag_file_name};
+  metadata.relative_file_paths = {bag_file_path};
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
@@ -209,7 +209,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
     for (int i = 0; i < expected_splits; ++i) {
       std::stringstream bag_name;
       bag_name << bag_file_name << "_" << i << ".db3";
-      const auto bag_file_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
+      const auto bag_file_path = rcpputils::fs::path{root_bag_path_} / bag_name.str();
       if (bag_file_path.exists()) {
         metadata.relative_file_paths.push_back(bag_file_path.string());
       } else {
@@ -232,8 +232,6 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
     const auto bagfile_path = metadata.relative_file_paths[i];
-
-    std::cout << "Checking: " << bagfile_path << std::endl;
 
     EXPECT_TRUE(rcpputils::fs::exists(bagfile_path));
 
@@ -285,7 +283,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 
     std::stringstream file_name;
     file_name << bag_file_name << "_0.db3";
-    const auto bag_path = rcpputils::fs::path(root_bag_path_) / file_name.str();
+    const auto bag_path = rcpputils::fs::path{root_bag_path_} / file_name.str();
 
     metadata.relative_file_paths = {bag_path.string()};
     metadata_io.write_metadata(root_bag_path_, metadata);
