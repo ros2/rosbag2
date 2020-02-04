@@ -48,6 +48,21 @@ public:
     set_path("bag");
   }
 
+  /**
+   * Return the name of the currently executing unit test.
+   */
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+
+    return test_info->name();
+  }
+
+  /**
+   * Configures all bag related paths.
+   * A unique bagname should be used for each test to make it so each test cannot reuse resources.
+   * Resources may be left over from tests depending on the filesystem and if tests properly terminated.
+   */
   void set_path(const std::string & bagname)
   {
     auto root_path = rcpputils::fs::path{temporary_dir_path_} / bagname;
