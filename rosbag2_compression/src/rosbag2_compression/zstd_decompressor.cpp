@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Required to check for endianness on Linux
+#ifdef __linux__
+#include <endian.h>
+#endif
+
 #include <chrono>
 #include <cstdio>
 #include <sstream>
@@ -31,8 +36,6 @@ namespace
 
 // String constant used to identify ZstdDecompressor.
 constexpr const char kDecompressionIdentifier[] = "zstd";
-constexpr const uint32_t kMagicNumberLittleEndian = 0xFD2FB528;
-constexpr const uint32_t kMagicNumberBigEndian = 0x28B52FFD;
 constexpr const auto kMagicNumberSize = sizeof(uint32_t);
 
 /**
@@ -165,7 +168,12 @@ void write_output_buffer(
 void throw_on_invalid_magic_number(const std::vector<uint8_t> & data)
 {
   if (data.size() < kMagicNumberSize) {
-    throw std::runtime_error{"Data is too small to contain a ZSTD frame!"};
+    std::stringstream errmsg;
+    errmsg << "Failed to process data; data frame size: " <<
+      data.size() << " bytes is too small to contain a ZSTD frame. " <<
+      "Required size is at least " << kMagicNumberSize << " bytes.";
+
+    throw std::runtime_error{errmsg.str()};
   }
 
   uint32_t magic_number = 0;
@@ -174,33 +182,18 @@ void throw_on_invalid_magic_number(const std::vector<uint8_t> & data)
     ptr_magic_number[i] = data[i];
   }
 
-  bool is_little_endian = false;
-  {
-    uint16_t endian_check = 0x0001;
-    auto ptr_endian_check = reinterpret_cast<uint8_t *>(&endian_check);
+  // Windows and macOS are explicitly little endian.
+#ifdef __linux__
+  magic_number = htole32(magic_number);
+#endif
 
-    // The set high byte would be 1 if system is big endian
-    is_little_endian = (ptr_endian_check[0] == 0x01);
-  }
+  if (magic_number != ZSTD_MAGICNUMBER) {
+    std::stringstream errmsg;
+    errmsg << "Invalid magic number! Expected: 0x" <<
+      std::hex << ZSTD_MAGICNUMBER <<
+      " but got: 0x" << std::hex << magic_number;
 
-  if (is_little_endian) {
-    if (magic_number != kMagicNumberLittleEndian) {
-      std::stringstream errmsg;
-      errmsg << "Invalid magic number! Expected: 0x" <<
-        std::hex << kMagicNumberLittleEndian <<
-        " but got: 0x" << std::hex << magic_number;
-
-      throw std::runtime_error{errmsg.str()};
-    }
-  } else {
-    if (magic_number != kMagicNumberBigEndian) {
-      std::stringstream errmsg;
-      errmsg << "Invalid magic number! Expected: 0x" <<
-        std::hex << kMagicNumberBigEndian <<
-        " but got: 0x" << std::hex << magic_number;
-
-      throw std::runtime_error{errmsg.str()};
-    }
+    throw std::runtime_error{errmsg.str()};
   }
 }
 
