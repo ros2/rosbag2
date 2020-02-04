@@ -33,6 +33,7 @@ namespace
 constexpr const char kDecompressionIdentifier[] = "zstd";
 constexpr const uint32_t kMagicNumberLittleEndian = 0xFD2FB528;
 constexpr const uint32_t kMagicNumberBigEndian = 0x28B52FFD;
+constexpr const auto kMagicNumberSize = sizeof(uint32_t);
 
 /**
  * Open a file using the C API.
@@ -163,16 +164,15 @@ void write_output_buffer(
  */
 void throw_on_invalid_magic_number(const std::vector<uint8_t> & data)
 {
-  if (data.size() < 4) {
+  if (data.size() < kMagicNumberSize) {
     throw std::runtime_error{"Data is too small to contain a ZSTD frame!"};
   }
 
   uint32_t magic_number = 0;
   auto ptr_magic_number = reinterpret_cast<uint8_t *>(&magic_number);
-  ptr_magic_number[0] = data[0];
-  ptr_magic_number[1] = data[1];
-  ptr_magic_number[2] = data[2];
-  ptr_magic_number[3] = data[3];
+  for (int i = 0; i < static_cast<int>(kMagicNumberSize); ++i) {
+    ptr_magic_number[i] = data[i];
+  }
 
   bool is_little_endian = false;
   {
