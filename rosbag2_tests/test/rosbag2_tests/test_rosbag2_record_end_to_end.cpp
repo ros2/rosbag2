@@ -68,7 +68,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   cmd << "ros2 bag record" <<
     " --compression-mode file" <<
     " --compression-format zstd" <<
-    " --output " << root_bag_path_ <<
+    " --output " << root_bag_path_.string() <<
     " /test_topic";
   auto process_handle = start_execution(cmd.str());
   wait_for_db();
@@ -76,8 +76,10 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   pub_man_.add_publisher("/test_topic", message, expected_test_messages);
   pub_man_.add_publisher("/wrong_topic", wrong_message);
 
+  const auto database_path = get_bag_file_path(0).string();
+
   rosbag2_storage_plugins::SqliteWrapper db{
-    database_path_,
+    database_path,
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
 
   pub_man_.run_publishers([this, &db](const std::string & topic_name) {
@@ -86,19 +88,25 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   stop_execution(process_handle);
 
-  const auto compressed_database_path = database_path_ + ".zstd";
-  ASSERT_TRUE(rcpputils::fs::path(compressed_database_path).exists());
+  const auto compressed_bag_file_path = get_compressed_bag_file_path(0);
+  ASSERT_TRUE(compressed_bag_file_path.exists()) <<
+    "Expected compressed bag file path: \"" <<
+    compressed_bag_file_path.string() << "\" to exist!";
 
   rosbag2_compression::ZstdDecompressor decompressor;
 
-  const auto decompressed_uri = decompressor.decompress_uri(compressed_database_path);
+  const auto decompressed_uri = decompressor.decompress_uri(compressed_bag_file_path.string());
 
-  ASSERT_EQ(decompressed_uri, database_path_);
+  ASSERT_EQ(decompressed_uri, database_path) <<
+    "Expected decompressed URI to be same as uncompressed bag file path!";
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
-  EXPECT_THAT(test_topic_messages,
-    Each(Pointee(Field(&test_msgs::msg::Strings::string_value, "test"))));
+
+  for (const auto & message : test_topic_messages) {
+    EXPECT_EQ(message->string_value, "test");
+  }
+
   EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
 
   auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
@@ -414,7 +422,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
 
   std::stringstream command;
   command << "ros2 bag record" <<
-    " --output " << root_bag_path_ <<
+    " --output " << root_bag_path_.string() <<
     " --max-bag-size " << bagfile_split_size <<
     " --compression-mode file" <<
     " --compression-format zstd"
@@ -454,25 +462,22 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
     metadata.compression_format = "zstd";
 
     for (int i = 0; i < expected_splits; ++i) {
-      std::stringstream bag_name;
-      bag_name << "bag_" << i << ".db3.zstd";
-
-      const auto bag_path = rcpputils::fs::path(root_bag_path_) / bag_name.str();
+      const auto compressed_bag_path = get_compressed_bag_file_path(i);
 
       // There is no guarantee that the bagfile split expected_split times
       // due to possible io sync delays. Instead, assert that the bagfile
       // split at least once.
-      if (bag_path.exists()) {
-        metadata.relative_file_paths.push_back(bag_path.string());
+      if (compressed_bag_path.exists()) {
+        metadata.relative_file_paths.push_back(compressed_bag_path.string());
       }
     }
 
     ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
-    metadata_io.write_metadata(root_bag_path_, metadata);
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
   #endif
 
-  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   for (const auto & path : metadata.relative_file_paths) {
     const auto file_path = rcpputils::fs::path{path};
