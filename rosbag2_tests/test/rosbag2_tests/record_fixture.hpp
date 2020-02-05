@@ -101,7 +101,8 @@ public:
       std::this_thread::sleep_for(50ms);
     }
     // Final check for metadata if we timeout. Fail otherwise
-    ASSERT_EQ(metadata_path.exists(), true) << "Could not find metadata.yaml";
+    ASSERT_EQ(metadata_path.exists(), true) << "Could not find metadata file: \"" <<
+      metadata_path.string() << "\"";
   }
 
   void wait_for_db()
