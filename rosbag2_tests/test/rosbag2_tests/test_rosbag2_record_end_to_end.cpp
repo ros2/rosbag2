@@ -69,10 +69,10 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   pub_man_.add_publisher("/test_topic", message, expected_test_messages);
   pub_man_.add_publisher("/wrong_topic", wrong_message);
 
-  const auto database_path = get_bag_file_path(0);
+  const auto database_path = get_bag_file_path(0).string();
 
   rosbag2_storage_plugins::SqliteWrapper db{
-    database_path.string(), rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
+    database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
   pub_man_.run_publishers(
     [this, &db](const std::string & topic_name) {
       return count_stored_messages(db, topic_name);
@@ -86,7 +86,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths = {"bag_0.db3"};
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
   metadata.duration = std::chrono::nanoseconds(0);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));

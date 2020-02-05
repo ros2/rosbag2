@@ -43,13 +43,12 @@ using namespace rosbag2_test_common;  // NOLINT
 class RecordFixture : public TemporaryDirectoryFixture
 {
 public:
-  RecordFixture()
-  {
-    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  }
+  RecordFixture() = default;
 
   void SetUp() override
   {
+    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / get_test_name();
+
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
@@ -68,10 +67,17 @@ public:
     rclcpp::shutdown();
   }
 
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+
+    return test_info->name();
+  }
+
   std::string get_bag_file_name(int split_index) const
   {
     std::stringstream bag_file_name;
-    bag_file_name << "bag_" << split_index;
+    bag_file_name << get_test_name() << "_" << split_index;
 
     return bag_file_name.str();
   }
