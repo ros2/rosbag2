@@ -45,17 +45,13 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture()
   {
-    root_bag_path_ = (rcpputils::fs::path(temporary_dir_path_) / "bag").string();
-    storage_path_ = (rcpputils::fs::path(root_bag_path_) / "bag_0").string();
-    database_path_ = storage_path_ + ".db3";
-    std::cout << "Database " << database_path_ << " in " << temporary_dir_path_ << std::endl;
+    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / "bag";
   }
 
   void SetUp() override
   {
-    const auto path = rcpputils::fs::path{root_bag_path_};
-    if (rcpputils::fs::exists(path)) {
-      remove_directory_recursively(path.string());
+    if (root_bag_path_.exists()) {
+      remove_directory_recursively(root_bag_path_.string());
     }
   }
 
@@ -69,14 +65,29 @@ public:
     rclcpp::shutdown();
   }
 
+  std::string get_bag_file_name(int split_index) const
+  {
+    std::stringstream bag_file_name;
+    bag_file_name << "bag_" << split_index;
+
+    return bag_file_name.str();
+  }
+
+  rcpputils::fs::path get_bag_file_path(int split_index)
+  {
+    return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
+  }
+
   void wait_for_db()
   {
+    const auto database_path = get_bag_file_path(0);
+
     while (true) {
       try {
         std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
-        if (rcpputils::fs::exists(rcpputils::fs::path{database_path_})) {
-          rosbag2_storage_plugins::SqliteWrapper
-            db(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+        if (database_path.exists()) {
+          rosbag2_storage_plugins::SqliteWrapper db{
+            database_path.string(), rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
           return;
         }
       } catch (const rosbag2_storage_plugins::SqliteException & ex) {
@@ -133,7 +144,8 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-    storage->open(database_path_, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    const auto database_path = get_bag_file_path(0).string();
+    storage->open(database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
 
     while (storage->has_next()) {
       table_msgs.push_back(storage->read_next());
@@ -153,12 +165,8 @@ public:
   }
 
   // relative path to the root of the bag file.
-  std::string root_bag_path_;
-  // relative path including file name (excludes extension
-  // used to open a storage plugin only for read-write)
-  std::string database_path_;
-  // path to the SQLite3 db.
-  std::string storage_path_;
+  rcpputils::fs::path root_bag_path_;
+
   PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };
