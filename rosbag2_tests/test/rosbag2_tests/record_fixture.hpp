@@ -91,7 +91,10 @@ public:
   {
     const auto metadata_path = rcpputils::fs::path{root_bag_path_} / "metadata.yaml";
     const auto start_time = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(timeout_in_sec)) {
+
+    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(timeout_in_sec) &&
+      rclcpp::ok())
+    {
       if (metadata_path.exists()) {
         return;
       }
