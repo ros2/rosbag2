@@ -82,6 +82,11 @@ public:
     return bag_file_name.str();
   }
 
+  rcpputils::fs::path get_compressed_bag_file_path(int split_index)
+  {
+    return root_bag_path_ / (get_bag_file_name(split_index) + ".db3.zstd");
+  }
+
   rcpputils::fs::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
