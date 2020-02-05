@@ -31,6 +31,10 @@ namespace
 
 // String constant used to identify ZstdDecompressor.
 constexpr const char kDecompressionIdentifier[] = "zstd";
+// Used as a parameter type in a function that accepts the output of ZSTD_decompress.
+using ZstdDecompressReturnType = decltype(ZSTD_decompress(nullptr, 0, nullptr, 0));
+// Used as a parameter type in a function that accepts the output of ZSTD_getFrameContentSize.
+using ZstdGetFrameContentSizeReturnType = decltype(ZSTD_getFrameContentSize(nullptr, 0));
 
 /**
  * Open a file using the C API.
@@ -158,8 +162,9 @@ void write_output_buffer(
 
 /**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
+ * \param compression_result is the return value of ZSTD_decompress.
  */
-void throw_on_zstd_error(const size_t compression_result)
+void throw_on_zstd_error(const ZstdDecompressReturnType compression_result)
 {
   if (ZSTD_isError(compression_result)) {
     std::stringstream error;
@@ -172,8 +177,9 @@ void throw_on_zstd_error(const size_t compression_result)
 /**
  * Checks frame_content and throws a runtime_error if there was a ZSTD error
  * or frame_content is invalid.
+ * \param frame_content is the return value of ZSTD_getFrameContentSize.
  */
-void throw_on_invalid_frame_content(const size_t frame_content)
+void throw_on_invalid_frame_content(const ZstdGetFrameContentSizeReturnType frame_content)
 {
   if (frame_content == ZSTD_CONTENTSIZE_ERROR) {
     throw std::runtime_error{"Unable to determine file size due to error."};
