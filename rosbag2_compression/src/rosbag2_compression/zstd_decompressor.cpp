@@ -31,7 +31,9 @@ namespace
 
 // String constant used to identify ZstdDecompressor.
 constexpr const char kDecompressionIdentifier[] = "zstd";
+// Used as a parameter type in a function that accepts the output of ZSTD_decompress.
 using ZstdDecompressReturnType = decltype(ZSTD_decompress(nullptr, 0, nullptr, 0));
+// Used as a parameter type in a function that accepts the output of ZSTD_getFrameContentSize.
 using ZstdGetFrameContentSizeReturnType = decltype(ZSTD_getFrameContentSize(nullptr, 0));
 
 /**

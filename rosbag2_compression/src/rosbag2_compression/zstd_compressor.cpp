@@ -34,6 +34,7 @@ constexpr const int kDefaultZstdCompressionLevel = 1;
 
 // String constant used to identify ZstdCompressor.
 constexpr const char kCompressionIdentifier[] = "zstd";
+// Used as a parameter type in a function that accepts the output of ZSTD_compress.
 using ZstdCompressReturnType = decltype(ZSTD_compress(nullptr, 0, nullptr, 0, 0));
 
 /**
