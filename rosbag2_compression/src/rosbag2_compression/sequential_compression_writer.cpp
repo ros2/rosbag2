@@ -233,15 +233,15 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
-    compress_last_file();
-  }
-
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
+    compress_last_file();
+  }
 
   if (!storage_) {
     // Add a check to make sure reset() does not compress the file again if we couldn't load the

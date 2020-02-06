@@ -64,7 +64,11 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   // Read in buffer, handling accordingly
   const auto file_pointer = open_file(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
-    throw std::runtime_error{"Error opening file"};
+    std::stringstream errmsg;
+    errmsg << "Error opening file: \"" << uri <<
+      "\" caused by errno(" << errno << ")";
+
+    throw std::runtime_error{errmsg.str()};
   }
 
   const auto decompressed_buffer_length = rcutils_get_file_size(uri.c_str());
