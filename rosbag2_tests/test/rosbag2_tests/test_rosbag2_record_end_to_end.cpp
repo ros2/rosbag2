@@ -82,7 +82,8 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
     database_path,
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
 
-  pub_man_.run_publishers([this, &db](const std::string & topic_name) {
+  pub_man_.run_publishers(
+    [this, &db](const std::string & topic_name) {
       return count_stored_messages(db, topic_name);
     });
 

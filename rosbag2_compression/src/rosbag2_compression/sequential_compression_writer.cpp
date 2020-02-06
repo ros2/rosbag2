@@ -216,17 +216,20 @@ void SequentialCompressionWriter::compress_last_file()
 
     metadata_.relative_file_paths.back() = compressed_uri;
 
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressed \"" << to_compress << "\" to \"" <<
-      compressed_uri << "\"");
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+      "Compressed \"" << to_compress << "\" to \"" <<
+        compressed_uri << "\"");
 
     const auto rc = std::remove(to_compress.c_str());
     if (rc != 0) {
-      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Failed to remove uncompressed bag: \"" <<
-        to_compress << "\"");
+      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+        "Failed to remove uncompressed bag: \"" <<
+          to_compress << "\"");
     }
   } else {
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Last file \"" << to_compress <<
-      "\" is empty; removing...");
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+      "Last file \"" << to_compress <<
+        "\" is empty; removing...");
     metadata_.relative_file_paths.pop_back();
   }
 }
