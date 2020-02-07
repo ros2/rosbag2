@@ -57,39 +57,34 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 
 #ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
+  constexpr const char topic_name[] = "/test_topic";
+
   auto message = get_messages_strings()[0];
   message->string_value = "test";
-  size_t expected_test_messages = 3;
-
-  auto wrong_message = get_messages_strings()[0];
-  wrong_message->string_value = "wrong_content";
+  size_t expected_test_messages = 100;
 
   std::stringstream cmd;
   cmd << "ros2 bag record" <<
     " --compression-mode file" <<
     " --compression-format zstd" <<
     " --output " << root_bag_path_.string() <<
-    " /test_topic";
+    " " << topic_name;
+
   auto process_handle = start_execution(cmd.str());
   wait_for_db();
 
-  pub_man_.add_publisher("/test_topic", message, expected_test_messages);
-  pub_man_.add_publisher("/wrong_topic", wrong_message);
-
-  const auto database_path = get_bag_file_path(0).string();
-
-  rosbag2_storage_plugins::SqliteWrapper db{
-    database_path,
-    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
-
-  pub_man_.run_publishers(
-    [this, &db](const std::string & topic_name) {
-      return count_stored_messages(db, topic_name);
-    });
+  pub_man_.run_scoped_publisher(
+    topic_name,
+    message,
+    50ms,
+    expected_test_messages);
 
   stop_execution(process_handle);
 
+  wait_for_metadata();
+
   const auto compressed_bag_file_path = get_compressed_bag_file_path(0);
+
   ASSERT_TRUE(compressed_bag_file_path.exists()) <<
     "Expected compressed bag file path: \"" <<
     compressed_bag_file_path.string() << "\" to exist!";
@@ -97,21 +92,19 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   rosbag2_compression::ZstdDecompressor decompressor;
 
   const auto decompressed_uri = decompressor.decompress_uri(compressed_bag_file_path.string());
+  const auto database_path = get_bag_file_path(0).string();
 
   ASSERT_EQ(decompressed_uri, database_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";
+  ASSERT_TRUE(rcpputils::fs::exists(database_path)) <<
+    "Expected decompressed first bag file to exist!";
 
-  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
-  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
+  EXPECT_GT(test_topic_messages.size(), 0u);
 
   for (const auto & message : test_topic_messages) {
     EXPECT_EQ(message->string_value, "test");
   }
-
-  EXPECT_THAT(get_rwm_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
-
-  auto wrong_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/wrong_topic");
-  EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
 #endif
 
