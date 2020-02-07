@@ -30,6 +30,8 @@ public:
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval;
   std::string node_prefix = "";
+  std::string compression_mode = "";
+  std::string compression_format = "";
 };
 
 }  // namespace rosbag2_transport

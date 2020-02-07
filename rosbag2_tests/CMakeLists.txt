@@ -30,6 +30,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(rmw_fastrtps_cpp QUIET)
+  find_package(rosbag2_compression REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
@@ -47,6 +48,7 @@ if(BUILD_TESTING)
     if(TARGET test_rosbag2_record_end_to_end)
       ament_target_dependencies(test_rosbag2_record_end_to_end
         rclcpp
+        rosbag2_compression
         rosbag2_storage
         rosbag2_storage_default_plugins
         rosbag2_test_common
