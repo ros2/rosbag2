@@ -141,6 +141,7 @@ void SequentialCompressionWriter::reset()
       should_compress_last_file_)
     {
       try {
+        storage_.reset();  // Storage must be closed before it can be compressed.
         compress_last_file();
       } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
@@ -206,24 +207,38 @@ void SequentialCompressionWriter::compress_last_file()
     throw std::runtime_error{"Compressor was not opened!"};
   }
 
-  const auto & to_compress = metadata_.relative_file_paths.back();
+  const auto to_compress = metadata_.relative_file_paths.back();
 
-  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressing \"" << to_compress << "\"");
+  if (rcpputils::fs::exists(to_compress) && rcutils_get_file_size(to_compress.c_str()) > 0) {
+    const auto compressed_uri = compressor_->compress_uri(to_compress);
 
-  metadata_.relative_file_paths.back() = compressor_->compress_uri(to_compress);
+    metadata_.relative_file_paths.back() = compressed_uri;
+
+    const auto rc = std::remove(to_compress.c_str());
+    if (rc != 0) {
+      ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+        "Failed to remove uncompressed bag: \"" << to_compress << "\"");
+    }
+  } else {
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+      "Removing last file: \"" << to_compress <<
+        "\" because it either is empty or does not exist.");
+
+    metadata_.relative_file_paths.pop_back();
+  }
 }
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
-    compress_last_file();
-  }
-
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
+    compress_last_file();
+  }
 
   if (!storage_) {
     // Add a check to make sure reset() does not compress the file again if we couldn't load the
