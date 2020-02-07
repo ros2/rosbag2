@@ -94,6 +94,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   rosbag2_storage::MetadataIo metadata_io;
   metadata_io.write_metadata(root_bag_path_.string(), metadata);
 #endif
+
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
@@ -217,7 +218,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 #endif
 
   wait_for_metadata();
-  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
   const auto actual_splits = static_cast<int>(metadata.relative_file_paths.size());
 
   // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.
@@ -279,7 +280,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 #endif
 
   wait_for_metadata();
-  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   // Check that there's only 1 bagfile and that it exists.
   EXPECT_EQ(1u, metadata.relative_file_paths.size());
@@ -348,7 +349,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 #endif
 
   wait_for_metadata();
-  const auto metadata = metadata_io.read_metadata(root_bag_path_);
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   for (const auto & path : metadata.relative_file_paths) {
     EXPECT_TRUE(rcpputils::fs::exists(path));
