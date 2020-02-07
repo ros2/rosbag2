@@ -87,12 +87,12 @@ public:
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
   }
 
-  void wait_for_metadata(int timeout_in_sec = 5)
+  void wait_for_metadata()
   {
     const auto metadata_path = root_bag_path_ / "metadata.yaml";
     const auto start_time = std::chrono::steady_clock::now();
 
-    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(timeout_in_sec) &&
+    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(5) &&
       rclcpp::ok())
     {
       if (metadata_path.exists()) {
