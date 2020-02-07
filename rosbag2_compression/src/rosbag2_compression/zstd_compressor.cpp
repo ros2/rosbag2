@@ -64,7 +64,11 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   // Read in buffer, handling accordingly
   const auto file_pointer = open_file(uri.c_str(), "rb");
   if (file_pointer == nullptr) {
-    throw std::runtime_error{"Error opening file"};
+    std::stringstream errmsg;
+    errmsg << "Error opening file: \"" << uri <<
+      "\" for binary reading! errno(" << errno << ")";
+
+    throw std::runtime_error{errmsg.str()};
   }
 
   const auto decompressed_buffer_length = rcutils_get_file_size(uri.c_str());
@@ -73,7 +77,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     fclose(file_pointer);
 
     std::stringstream errmsg;
-    errmsg << "Unable to get size of file: " << uri;
+    errmsg << "Unable to get size of file: \"" << uri << "\"";
 
     throw std::runtime_error{errmsg.str()};
   }
@@ -93,7 +97,11 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);
-    throw std::runtime_error{"Unable to read file"};
+
+    std::stringstream errmsg;
+    errmsg << "Unable to read binary data from file: \"" << uri << "\"!";
+
+    throw std::runtime_error{errmsg.str()};
   }
   fclose(file_pointer);
   return decompressed_buffer;
@@ -110,7 +118,7 @@ void write_output_buffer(
 {
   if (output_buffer.empty()) {
     std::stringstream errmsg;
-    errmsg << "Cannot write empty buffer to file: " << uri;
+    errmsg << "Cannot write empty buffer to file: \"" << uri << "\"";
 
     throw std::runtime_error{errmsg.str()};
   }
@@ -131,7 +139,11 @@ void write_output_buffer(
 
   if (ferror(file_pointer)) {
     fclose(file_pointer);
-    throw std::runtime_error{"Unable to write compressed file"};
+
+    std::stringstream errmsg;
+    errmsg << "Unable to write compressed data to file: \"" << uri << "\"!";
+
+    throw std::runtime_error{errmsg.str()};
   }
   fclose(file_pointer);
 }
