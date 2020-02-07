@@ -87,6 +87,24 @@ public:
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
   }
 
+  void wait_for_metadata()
+  {
+    const auto metadata_path = root_bag_path_ / "metadata.yaml";
+    const auto start_time = std::chrono::steady_clock::now();
+
+    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(5) &&
+      rclcpp::ok())
+    {
+      if (metadata_path.exists()) {
+        return;
+      }
+      std::this_thread::sleep_for(50ms);
+    }
+    // Final check for metadata if we timeout. Fail otherwise
+    ASSERT_EQ(metadata_path.exists(), true) << "Could not find metadata file: \"" <<
+      metadata_path.string() << "\"";
+  }
+
   void wait_for_db()
   {
     const auto database_path = get_bag_file_path(0);
