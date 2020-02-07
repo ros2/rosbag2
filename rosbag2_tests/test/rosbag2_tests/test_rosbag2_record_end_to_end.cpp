@@ -478,6 +478,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   }
   #endif
 
+  wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   for (const auto & path : metadata.relative_file_paths) {
