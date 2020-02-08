@@ -21,8 +21,6 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 
-#include "rcutils/filesystem.h"
-
 #include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
@@ -95,8 +93,8 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
   const auto compressed_uri = zstd_compressor.compress_uri(uri);
 
   const auto expected_compressed_uri = uri + "." + zstd_compressor.get_compression_identifier();
-  const auto uncompressed_file_size = rcutils_get_file_size(uri.c_str());
-  const auto compressed_file_size = rcutils_get_file_size(compressed_uri.c_str());
+  const auto uncompressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{uri});
+  const auto compressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{compressed_uri});
 
   EXPECT_NE(compressed_uri, uri);
   EXPECT_EQ(compressed_uri, expected_compressed_uri);
@@ -110,7 +108,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
 {
   const auto uri = (rcpputils::fs::path(temporary_dir_path_) / "file1.txt").string();
   create_garbage_file(uri);
-  const auto initial_file_size = rcutils_get_file_size(uri.c_str());
+  const auto initial_file_size = rcpputils::fs::file_size(rcpputils::fs::path{uri});
 
   auto zstd_compressor = rosbag2_compression::ZstdCompressor{};
   const auto compressed_uri = zstd_compressor.compress_uri(uri);
@@ -124,7 +122,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
 
   const auto expected_decompressed_uri = uri;
-  const auto decompressed_file_size = rcutils_get_file_size(decompressed_uri.c_str());
+  const auto decompressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
 
   EXPECT_NE(compressed_uri, uri);
   EXPECT_NE(decompressed_uri, compressed_uri);
@@ -143,7 +141,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
     "Expected initial file: \"" << uri << "\" to exist!";
 
   const auto initial_data = read_file(uri);
-  const auto initial_file_size = rcutils_get_file_size(uri.c_str());
+  const auto initial_file_size = rcpputils::fs::file_size(rcpputils::fs::path{uri});
 
   EXPECT_EQ(
     initial_data.size() * sizeof(decltype(initial_data)::value_type),
@@ -169,7 +167,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
     "Expected decompressed file name to be same as initial!";
 
   const auto decompressed_data = read_file(decompressed_uri);
-  const auto decompressed_file_size = rcutils_get_file_size(decompressed_uri.c_str());
+  const auto decompressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
 
   EXPECT_EQ(
     decompressed_data.size() * sizeof(decltype(initial_data)::value_type),

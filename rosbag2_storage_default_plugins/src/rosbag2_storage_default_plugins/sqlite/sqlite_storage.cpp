@@ -27,8 +27,6 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 
-#include "rcutils/filesystem.h"
-
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
@@ -158,7 +156,7 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  return rcutils_get_file_size(get_relative_file_path().c_str());
+  return rcpputils::fs::file_size(rcpputils::fs::path{get_relative_file_path()});
 }
 
 void SqliteStorage::initialize()
@@ -287,7 +285,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
-  metadata.bag_size = rcutils_get_file_size(get_relative_file_path().c_str());
+  metadata.bag_size = get_bagfile_size();
 
   return metadata;
 }

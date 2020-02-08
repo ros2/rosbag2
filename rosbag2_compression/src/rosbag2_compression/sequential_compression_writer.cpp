@@ -209,7 +209,7 @@ void SequentialCompressionWriter::compress_last_file()
 
   const auto to_compress = metadata_.relative_file_paths.back();
 
-  if (rcpputils::fs::exists(to_compress) && rcutils_get_file_size(to_compress.c_str()) > 0) {
+  if (rcpputils::fs::exists(to_compress) && rcpputils::fs::file_size(rcpputils::fs::path{to_compress}) > 0u) {
     const auto compressed_uri = compressor_->compress_uri(to_compress);
 
     metadata_.relative_file_paths.back() = compressed_uri;
@@ -311,7 +311,7 @@ void SequentialCompressionWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    metadata_.bag_size += rcutils_get_file_size(path.c_str());
+    metadata_.bag_size += rcpputils::fs::file_size(rcpputils::fs::path{path});
   }
 
   metadata_.topics_with_message_count.clear();

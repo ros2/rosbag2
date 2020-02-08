@@ -23,8 +23,6 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 
-#include "rcutils/filesystem.h"
-
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 
@@ -222,7 +220,7 @@ void SequentialWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    metadata_.bag_size += rcutils_get_file_size(path.c_str());
+    metadata_.bag_size += rcpputils::fs::file_size(rcpputils::fs::path{path});
   }
 
   metadata_.topics_with_message_count.clear();
