@@ -285,7 +285,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
     const auto bagfile_path = metadata.relative_file_paths[i];
     EXPECT_TRUE(rcpputils::fs::exists(bagfile_path));
 
-    const auto actual_split_size = static_cast<int>(rcpputils::fs::file_size(rcpputils::fs::path{bagfile_path}));
+    const auto actual_split_size =
+      static_cast<int>(rcpputils::fs::file_size(rcpputils::fs::path{bagfile_path}));
     // Actual size is guaranteed to be >= bagfile_split size
     EXPECT_LT(bagfile_split_size, actual_split_size);
   }

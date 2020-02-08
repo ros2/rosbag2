@@ -122,7 +122,8 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
 
   const auto expected_decompressed_uri = uri;
-  const auto decompressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
+  const auto decompressed_file_size =
+    rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
 
   EXPECT_NE(compressed_uri, uri);
   EXPECT_NE(decompressed_uri, compressed_uri);
@@ -167,7 +168,8 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
     "Expected decompressed file name to be same as initial!";
 
   const auto decompressed_data = read_file(decompressed_uri);
-  const auto decompressed_file_size = rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
+  const auto decompressed_file_size =
+    rcpputils::fs::file_size(rcpputils::fs::path{decompressed_uri});
 
   EXPECT_EQ(
     decompressed_data.size() * sizeof(decltype(initial_data)::value_type),

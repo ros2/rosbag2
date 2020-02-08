@@ -209,7 +209,9 @@ void SequentialCompressionWriter::compress_last_file()
 
   const auto to_compress = metadata_.relative_file_paths.back();
 
-  if (rcpputils::fs::exists(to_compress) && rcpputils::fs::file_size(rcpputils::fs::path{to_compress}) > 0u) {
+  if (rcpputils::fs::exists(to_compress) &&
+    rcpputils::fs::file_size(rcpputils::fs::path{to_compress}) > 0u)
+  {
     const auto compressed_uri = compressor_->compress_uri(to_compress);
 
     metadata_.relative_file_paths.back() = compressed_uri;
