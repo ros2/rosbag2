@@ -312,8 +312,8 @@ void SequentialCompressionWriter::finalize_metadata()
   for (const auto & path : metadata_.relative_file_paths) {
     const auto bag_path = rcpputils::fs::path{path};
 
-    if (rcpputils::fs::exists(bag_path)) {
-      metadata_.bag_size += rcpputils::fs::file_size(bag_path);
+    if (bag_path.exists()) {
+      metadata_.bag_size += bag_path.file_size();
     }
   }
 
