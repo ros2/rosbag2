@@ -158,11 +158,7 @@ uint64_t SqliteStorage::get_bagfile_size() const
 {
   const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
 
-  if (bag_path.exists()) {
-    return bag_path.file_size();
-  } else {
-    return 0u;
-  }
+  return bag_path.exists() ? bag_path.file_size() : 0;
 }
 
 void SqliteStorage::initialize()
