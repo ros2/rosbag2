@@ -72,7 +72,7 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
   }
 
   const auto file_path = rcpputils::fs::path{uri};
-  const auto compressed_buffer_length = file_path.exists() ? file_path.file_size() : 0;
+  const auto compressed_buffer_length = file_path.exists() ? file_path.file_size() : 0u;
   if (compressed_buffer_length == 0) {
     fclose(file_pointer);
 
