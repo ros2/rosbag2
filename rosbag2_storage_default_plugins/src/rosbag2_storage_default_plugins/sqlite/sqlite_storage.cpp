@@ -156,7 +156,13 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  return rcpputils::fs::file_size(rcpputils::fs::path{get_relative_file_path()});
+  const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
+
+  if (bag_path.exists()) {
+    return bag_path.file_size();
+  } else {
+    return 0u;
+  }
 }
 
 void SqliteStorage::initialize()

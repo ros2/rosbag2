@@ -207,23 +207,20 @@ void SequentialCompressionWriter::compress_last_file()
     throw std::runtime_error{"Compressor was not opened!"};
   }
 
-  const auto to_compress = metadata_.relative_file_paths.back();
+  const auto to_compress = rcpputils::fs::path{metadata_.relative_file_paths.back()};
 
-  if (rcpputils::fs::exists(to_compress) &&
-    rcpputils::fs::file_size(rcpputils::fs::path{to_compress}) > 0u)
-  {
-    const auto compressed_uri = compressor_->compress_uri(to_compress);
+  if (to_compress.exists() && to_compress.file_size() > 0u) {
+    const auto compressed_uri = compressor_->compress_uri(to_compress.string());
 
     metadata_.relative_file_paths.back() = compressed_uri;
 
-    const auto rc = std::remove(to_compress.c_str());
-    if (rc != 0) {
+    if (rcpputils::fs::remove(to_compress)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-        "Failed to remove uncompressed bag: \"" << to_compress << "\"");
+        "Failed to remove uncompressed bag: \"" << to_compress.string() << "\"");
     }
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-      "Removing last file: \"" << to_compress <<
+      "Removing last file: \"" << to_compress.string() <<
         "\" because it either is empty or does not exist.");
 
     metadata_.relative_file_paths.pop_back();
@@ -313,7 +310,11 @@ void SequentialCompressionWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    metadata_.bag_size += rcpputils::fs::file_size(rcpputils::fs::path{path});
+    const auto bag_path = rcpputils::fs::path{path};
+
+    if (rcpputils::fs::exists(bag_path)) {
+      metadata_.bag_size += rcpputils::fs::file_size(bag_path);
+    }
   }
 
   metadata_.topics_with_message_count.clear();

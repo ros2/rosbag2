@@ -220,7 +220,11 @@ void SequentialWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    metadata_.bag_size += rcpputils::fs::file_size(rcpputils::fs::path{path});
+    const auto bag_path = rcpputils::fs::path{path};
+
+    if (rcpputils::fs::exists(bag_path)) {
+      metadata_.bag_size += rcpputils::fs::file_size(bag_path);
+    }
   }
 
   metadata_.topics_with_message_count.clear();
