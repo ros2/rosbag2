@@ -43,9 +43,8 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
   : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  SqliteStorage()
-      :no_of_inserts(0) {};
-  ~SqliteStorage() override = default;
+  SqliteStorage() = default;
+  ~SqliteStorage() override;
 
   void open(
     const std::string & uri,

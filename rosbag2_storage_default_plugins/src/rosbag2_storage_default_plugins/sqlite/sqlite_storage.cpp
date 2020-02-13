@@ -144,38 +144,6 @@ void SqliteStorage::commit_transaction()
   }
 }
 
-void SqliteStorage::activate_transaction()
-{
-  if (active_transaction_) {
-    return;
-  } else {
-    int rc = SQLITE_ERROR;
-    rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
-    active_transaction_.store(true, std::memory_order_relaxed);
-    if (rc != SQLITE_OK) {
-      throw SqliteException("Failed to begin transaction");
-    }
-  }
-}
-
-void SqliteStorage::commit_transaction()
-{
-  if (!active_transaction_) {
-    return;
-  } else {
-    int rc = SQLITE_ERROR;
-    rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
-    active_transaction_.store(false, std::memory_order_relaxed);
-
-    // Reset batch insert counter
-    no_of_inserts_ = 0;
-
-    if (rc != SQLITE_OK) {
-      throw SqliteException("Failed to commit transaction");
-    }
-  }
-}
-
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {

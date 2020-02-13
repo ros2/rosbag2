@@ -31,6 +31,13 @@ public:
    * A value of 0 indicates that bagfile splitting will not be used.
    */
   uint64_t max_bagfile_size;
+  /**
+   * The chunk_size value is used to control writes to sqlite db,
+   * Selecting a optimal chunk_size, optimizes the sqlite writes by
+   * enabling transaction's
+   */
+
+  size_t chunk_size;
 };
 
 }  // namespace rosbag2_cpp
