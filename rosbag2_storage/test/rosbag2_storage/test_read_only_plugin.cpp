@@ -80,7 +80,7 @@ std::string TestReadOnlyPlugin::get_storage_identifier() const
 }
 
 void TestReadOnlyPlugin::set_filter(
-  const std::shared_ptr<rosbag2_storage::StorageFilter> & /*storage_filter*/)
+  const rosbag2_storage::StorageFilter & /*storage_filter*/)
 {
   std::cout << "\nsetting storage filter\n";
 }

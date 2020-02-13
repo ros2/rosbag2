@@ -53,7 +53,7 @@ public:
 
   uint64_t get_minimum_split_file_size() const override;
 
-  void set_filter(const std::shared_ptr<rosbag2_storage::StorageFilter> & storage_filter) override;
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_

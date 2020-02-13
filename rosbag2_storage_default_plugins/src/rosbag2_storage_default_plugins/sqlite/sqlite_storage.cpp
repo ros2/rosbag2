@@ -138,10 +138,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
     prepare_for_reading();
   }
 
-  if (!storage_filter_->topics.empty()) {
+  if (!storage_filter_.topics.empty()) {
     bool found_next = false;
     while (!found_next) {
-      for (auto & topic : storage_filter_->topics) {
+      for (auto & topic : storage_filter_.topics) {
         if (std::get<2>(*current_message_row_).compare(topic) == 0) {
           found_next = true;
           break;
@@ -309,7 +309,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 }
 
 void SqliteStorage::set_filter(
-  const std::shared_ptr<rosbag2_storage::StorageFilter> & storage_filter)
+  const rosbag2_storage::StorageFilter & storage_filter)
 {
   storage_filter_ = storage_filter;
 }

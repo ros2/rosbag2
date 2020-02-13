@@ -73,7 +73,7 @@ public:
 
   uint64_t get_minimum_split_file_size() const override;
 
-  void set_filter(const std::shared_ptr<rosbag2_storage::StorageFilter> & storage_filter);
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter);
 
 private:
   void initialize();
@@ -93,7 +93,7 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
-  std::shared_ptr<rosbag2_storage::StorageFilter> storage_filter_ {nullptr};
+  rosbag2_storage::StorageFilter storage_filter_ {};
 };
 
 }  // namespace rosbag2_storage_plugins
