@@ -15,8 +15,10 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 
+#include <memory>
 #include <string>
 
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
@@ -39,6 +41,8 @@ public:
   std::string get_storage_identifier() const override = 0;
 
   virtual uint64_t get_minimum_split_file_size() const = 0;
+
+  virtual void set_filter(const std::shared_ptr<StorageFilter> & storage_filter) = 0;
 };
 
 }  // namespace storage_interfaces

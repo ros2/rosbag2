@@ -138,6 +138,22 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
     prepare_for_reading();
   }
 
+  if (!storage_filter_->topics.empty()) {
+    bool found_next = false;
+    while (!found_next) {
+      for (auto & topic : storage_filter_->topics) {
+        if (std::get<2>(*current_message_row_).compare(topic) == 0) {
+          found_next = true;
+          break;
+        }
+      }
+      if (found_next) {
+        break;
+      }
+      ++current_message_row_;
+    }
+  }
+
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   bag_message->serialized_data = std::get<0>(*current_message_row_);
   bag_message->time_stamp = std::get<1>(*current_message_row_);
@@ -290,6 +306,12 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.bag_size = rcutils_get_file_size(get_relative_file_path().c_str());
 
   return metadata;
+}
+
+void SqliteStorage::set_filter(
+  const std::shared_ptr<rosbag2_storage::StorageFilter> & storage_filter)
+{
+  storage_filter_ = storage_filter;
 }
 
 }  // namespace rosbag2_storage_plugins
