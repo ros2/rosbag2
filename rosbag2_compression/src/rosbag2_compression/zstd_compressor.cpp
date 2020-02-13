@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "rcutils/filesystem.h"
+#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/zstd_compressor.hpp"
 
@@ -71,7 +71,8 @@ std::vector<uint8_t> get_input_buffer(const std::string & uri)
     throw std::runtime_error{errmsg.str()};
   }
 
-  const auto decompressed_buffer_length = rcutils_get_file_size(uri.c_str());
+  const auto file_path = rcpputils::fs::path{uri};
+  const auto decompressed_buffer_length = file_path.exists() ? file_path.file_size() : 0u;
 
   if (decompressed_buffer_length == 0) {
     fclose(file_pointer);

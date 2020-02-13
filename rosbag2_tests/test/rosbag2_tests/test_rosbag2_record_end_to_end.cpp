@@ -282,10 +282,11 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
-    const auto bagfile_path = metadata.relative_file_paths[i];
-    EXPECT_TRUE(rcpputils::fs::exists(bagfile_path));
+    const auto bagfile_path = rcpputils::fs::path{metadata.relative_file_paths[i]};
+    ASSERT_TRUE(bagfile_path.exists()) <<
+      "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
-    const auto actual_split_size = static_cast<int>(rcutils_get_file_size(bagfile_path.c_str()));
+    const auto actual_split_size = static_cast<int>(bagfile_path.file_size());
     // Actual size is guaranteed to be >= bagfile_split size
     EXPECT_LT(bagfile_split_size, actual_split_size);
   }
