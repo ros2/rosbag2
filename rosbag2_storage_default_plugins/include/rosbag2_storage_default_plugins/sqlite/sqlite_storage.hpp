@@ -58,6 +58,9 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
+  // API for bulk writes
+  void bulk_write(std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> messages) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;

@@ -188,24 +188,30 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
             "' has not been created yet! Call 'create_topic' first.");
   }
 
-// The #ifdef is for debugging only, we may remove once we've iterated over this
-#ifdef EN_TRANSACTION
-  if (!active_transaction_) {
-    activate_transaction();
-  }
-  // To work with a batched insert within a trasaction
-  no_of_inserts_++;
-#endif
-
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
+}
 
-#ifdef EN_TRANSACTION
-  // Just for a design perspective we'll move this to a param from command line later
-  if (no_of_inserts_ > 10000) {
-    commit_transaction();
+void SqliteStorage::bulk_write(std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> messages)
+{
+  if (!write_statement_) {
+    prepare_for_writing();
   }
-#endif
+
+  activate_transaction();
+
+  for (auto & message : messages) {
+       auto topic_entry = topics_.find(message->topic_name);
+       if (topic_entry == end(topics_)) {
+	    throw SqliteException("Topic '" + message->topic_name +
+				  "' has not been created yet! Call 'create_topic' first.");
+       }
+
+       write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+       write_statement_->execute_and_reset();
+  }
+
+  commit_transaction();
 }
 
 bool SqliteStorage::has_next()
