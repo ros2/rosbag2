@@ -151,12 +151,16 @@ void SequentialCompressionReader::load_next_file()
     throw std::runtime_error{"Cannot load next file; already on last file!"};
   }
 
-  if (decompressor_) {
-    throw std::runtime_error{"Bagfile is not opened"};
+  if (compression_mode_ == rosbag2_compression::CompressionMode::NONE) {
+    throw std::runtime_error{"cannot use SequentialCompressionWriter with NONE compression."};
   }
 
   ++current_file_iterator_;
   if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
+    if (decompressor_ == nullptr) {
+      throw std::runtime_error{"Bagfile is not opened."};
+    }
+
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
   }
