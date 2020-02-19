@@ -16,6 +16,9 @@
 #define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
 #include <chrono>
+#include <climits>
+#include <cmath>
+#include <cstring>
 #include <future>
 #include <memory>
 #include <queue>
@@ -25,6 +28,13 @@
 #include "moodycamel/readerwriterqueue.h"
 
 #include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_node.hpp"
+
+
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
+#include "rosidl_typesupport_introspection_cpp/field_types.hpp"
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+#include "rosidl_typesupport_introspection_c/message_introspection.h"
 
 #include "replayable_message.hpp"
 
@@ -37,6 +47,11 @@ class Reader;
 
 namespace rosbag2_transport
 {
+
+typedef struct{
+    int stop_index;
+    const rosidl_typesupport_introspection_cpp::MessageMember * msg_member_ptr;
+}header_support_struct;
 
 class GenericPublisher;
 class Rosbag2Node;
@@ -58,6 +73,9 @@ private:
   void play_messages_from_queue();
   void play_messages_until_queue_empty();
   void prepare_publishers();
+  void prepare_topic_ts_map();
+  void calculate_position_with_align(const uint8_t * dds_buffer, const rosidl_typesupport_introspection_cpp::MessageMember *message_member, unsigned long stop_index);
+  void deal_with_string(const uint8_t * dds_buffer, bool is_wstring);
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
@@ -68,8 +86,14 @@ private:
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
+  std::unordered_map<std::string, header_support_struct> topics_ts_map_;
+
+  size_t last_data_size = ULONG_MAX;
+  unsigned long current_position = 0;
+  uint8_t *dds_buffer_ptr;
 };
 
 }  // namespace rosbag2_transport
+
 
 #endif  // ROSBAG2_TRANSPORT__PLAYER_HPP_

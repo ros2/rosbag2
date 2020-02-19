@@ -60,6 +60,11 @@ void Player::play(const PlayOptions & options)
 {
   prepare_publishers();
 
+  if(options.use_current_time)
+  {
+    prepare_topic_ts_map();
+  }
+
   storage_loading_future_ = std::async(
     std::launch::async,
     [this, options]() {load_storage_content(options);});
@@ -132,15 +137,206 @@ void Player::play_messages_from_queue()
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
+//Dynamic Alignment as Fastrtps
+unsigned long alignment(unsigned long data_size, unsigned long last_data_size, unsigned long current_position)
+{
+  return data_size > last_data_size ? (data_size - current_position % data_size) & (data_size-1):0;
+}
+
+//deal with string
+void Player::deal_with_string(const uint8_t *dds_buffer, bool is_wstring)
+{
+  uint32_t length;
+  size_t string_header = sizeof(uint32_t);//string header 4 Bytes
+
+  unsigned long one_offset = alignment(string_header, last_data_size, current_position);
+  current_position = current_position + one_offset;
+  memcpy(&length, (dds_buffer + current_position + 4), string_header);
+
+  if(!is_wstring)
+    {
+      last_data_size = sizeof(char);
+      current_position += (string_header + length);
+    }
+  else {
+      last_data_size = sizeof(uint32_t);
+      current_position += (string_header + length * sizeof(uint32_t));
+  }
+}
+
+//find out the real position of header in fastrtps serialized data
+void Player::calculate_position_with_align(const uint8_t * dds_buffer_ptr, const rosidl_typesupport_introspection_cpp::MessageMember *message_member, unsigned long stop_index)
+{
+  unsigned long one_offset = 0;
+  unsigned long data_size = 0;
+
+  for (unsigned int i=0; i < stop_index; i++) {
+    bool is_string = false;
+    bool is_wstring = false;
+    bool is_ros_msg_type = false;
+    const rosidl_typesupport_introspection_cpp::MessageMembers * sub_members;
+    //reference:https://github.com/ros2/rmw_fastrtps/blob/9438cca2a6a21b2436684607fea8a78624363f80/rmw_fastrtps_cpp/include/rmw_fastrtps_cpp/TypeSupport_impl.hpp#L525
+    switch (message_member[i].type_id_) {
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BOOL:
+        data_size = sizeof(bool);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE:
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8:
+        data_size = sizeof (uint8_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8:
+        data_size = sizeof (char);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT:
+        data_size = sizeof (float);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT64:
+        data_size = sizeof (double);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT16:
+        data_size = sizeof (int16_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT16:
+        data_size = sizeof (uint16_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT32:
+        data_size = sizeof (int32_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT32:
+        data_size = sizeof (uint32_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT64:
+        data_size = sizeof (int64_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT64:
+        data_size = sizeof (uint64_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_LONG_DOUBLE:
+        data_size = 8;
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_STRING:
+        deal_with_string(dds_buffer_ptr, is_wstring);
+        is_string = true;
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_WCHAR:
+        data_size = sizeof(uint16_t);
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_WSTRING:
+        deal_with_string(dds_buffer_ptr, is_wstring);
+        is_wstring = true;
+        break;
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE:
+        sub_members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(message_member[i].members_->data);
+        calculate_position_with_align(dds_buffer_ptr, sub_members->members_, sub_members->member_count_);
+        is_ros_msg_type = true;
+        break;
+      }
+    //standard element
+    if(!is_string && !is_wstring && !is_ros_msg_type && !message_member[i].is_array_)
+      {
+        one_offset = alignment(data_size, last_data_size, current_position);
+        current_position += (one_offset + data_size);
+        last_data_size = data_size;
+      }
+    //standard array
+    else if(!is_string && !is_wstring && !is_ros_msg_type && message_member[i].is_array_)
+      {
+        for (uint j = 0;j < message_member[i].array_size_; j++) {
+          one_offset = alignment(data_size, last_data_size, current_position);
+          current_position += (one_offset + data_size);
+          last_data_size = data_size;
+        }
+      }
+    //array of string
+    else if (is_string && !is_wstring && !is_ros_msg_type && message_member[i].is_array_)
+      {
+        for (uint j = 0;j < message_member[i].array_size_ - 1; j++) {
+          deal_with_string(dds_buffer_ptr, false);
+        }
+      }
+    //array of wstring
+    else if (is_wstring && !is_string && !is_ros_msg_type && message_member[i].is_array_)
+      {
+        for (uint j = 0;j < message_member[i].array_size_ - 1; j++) {
+          deal_with_string(dds_buffer_ptr, true);
+        }
+      }
+    else if (is_ros_msg_type && !is_string && !is_wstring && message_member[i].is_array_)
+      {
+        for (uint j = 0;j < message_member[i].array_size_ - 1; j++) {
+          calculate_position_with_align(dds_buffer_ptr, sub_members->members_, sub_members->member_count_);
+        }
+      }
+  }
+
+}
+
 void Player::play_messages_until_queue_empty()
 {
   ReplayableMessage message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     std::this_thread::sleep_until(start_time_ + message.time_since_start);
+
+    auto it = topics_ts_map_.find(message.message->topic_name);
+    if (it != topics_ts_map_.end() ) {
+      builtin_interfaces::msg::Time ros_time_to_set;
+
+      std::chrono::time_point<std::chrono::high_resolution_clock> time_to_be_set = start_time_ + message.time_since_start;
+
+      auto offset_index = it->second.stop_index;
+      const rosidl_typesupport_introspection_cpp::MessageMember * msg_ptr = it->second.msg_member_ptr;
+
+      std::chrono::duration_cast<std::chrono::nanoseconds>(time_to_be_set.time_since_epoch());
+
+      ros_time_to_set.sec = static_cast<int32_t>(floor(time_to_be_set.time_since_epoch().count()/1e9));
+      ros_time_to_set.nanosec = static_cast<uint32_t>(round(time_to_be_set.time_since_epoch().count() - ros_time_to_set.sec*1e9));
+
+      //memcpy
+      uint8_t * buffer_temp = message.message->serialized_data->buffer;
+      dds_buffer_ptr = message.message->serialized_data->buffer;
+      calculate_position_with_align(dds_buffer_ptr, msg_ptr, offset_index);
+      size_t header_time_sec_size = sizeof (int32_t);
+      unsigned long last_offset = alignment(header_time_sec_size, last_data_size, current_position);
+      current_position += last_offset;
+      buffer_temp = buffer_temp + current_position + 4; //plus dds header
+
+      memcpy(buffer_temp, &ros_time_to_set, sizeof(builtin_interfaces::msg::Time));
+
+      current_position = 0;
+      last_data_size = ULONG_MAX;
+    }
+
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
   }
+}
+
+
+void Player::prepare_topic_ts_map()
+{
+  auto topics = reader_->get_all_topics_and_types();
+
+  //build the map
+  for (const auto & topic : topics){
+      auto type_support = rosbag2::get_typesupport(topic.type, "rosidl_typesupport_introspection_cpp");
+      auto msg_members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(type_support->data);
+
+      const rosidl_typesupport_introspection_cpp::MessageMember *msg_member_ptr = msg_members->members_;
+      auto msg_member_count = msg_members->member_count_;
+      for (unsigned int i = 0;i < msg_member_count;i++) {
+          if(strcmp(msg_member_ptr[i].name_, "header") == 0)
+          {
+            header_support_struct header_support;
+            header_support.stop_index = i;
+            header_support.msg_member_ptr = msg_member_ptr;
+            topics_ts_map_.insert(std::make_pair(topic.name, header_support));
+            break;
+          }
+      }
+  }
+
 }
 
 void Player::prepare_publishers()

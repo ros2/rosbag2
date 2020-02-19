@@ -25,6 +25,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rosidl_typesupport_introspection_cpp)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
@@ -46,6 +47,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rcl
   rclcpp
   rcutils
+  rosidl_generator_cpp
+  rosidl_typesupport_introspection_cpp
   rmw
   rosbag2_compression
   rosbag2_cpp

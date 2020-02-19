@@ -144,6 +144,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "uri",
     "storage_id",
     "node_prefix",
+    "use_current_time",
     "read_ahead_queue_size",
     nullptr
   };
@@ -151,12 +152,13 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * uri;
   char * storage_id;
   char * node_prefix;
+  bool use_current_time = false;
   size_t read_ahead_queue_size;
-  if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|k", const_cast<char **>(kwlist),
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss|bk", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
+      &use_current_time,
       &read_ahead_queue_size))
   {
     return nullptr;
@@ -167,6 +169,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
+  play_options.use_current_time = use_current_time;
 
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
