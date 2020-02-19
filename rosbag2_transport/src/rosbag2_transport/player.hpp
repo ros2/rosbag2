@@ -51,7 +51,7 @@ namespace rosbag2_transport
 typedef struct{
     int stop_index;
     const rosidl_typesupport_introspection_cpp::MessageMember * msg_member_ptr;
-}header_support_struct;
+}HeaderSupportStruct;
 
 class GenericPublisher;
 class Rosbag2Node;
@@ -78,6 +78,9 @@ private:
   void deal_with_string(const uint8_t * dds_buffer, bool is_wstring);
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
+  size_t last_data_size_ = ULONG_MAX;
+  unsigned long current_position_ = 0;
+  uint8_t *dds_buffer_ptr_;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
@@ -87,10 +90,6 @@ private:
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
   std::unordered_map<std::string, header_support_struct> topics_ts_map_;
-
-  size_t last_data_size = ULONG_MAX;
-  unsigned long current_position = 0;
-  uint8_t *dds_buffer_ptr;
 };
 
 }  // namespace rosbag2_transport
