@@ -42,7 +42,7 @@ public:
 
   virtual uint64_t get_minimum_split_file_size() const = 0;
 
-  virtual void set_filter(const StorageFilter & storage_filter) = 0;
+  void set_filter(const StorageFilter & storage_filter) override = 0;
 };
 
 }  // namespace storage_interfaces

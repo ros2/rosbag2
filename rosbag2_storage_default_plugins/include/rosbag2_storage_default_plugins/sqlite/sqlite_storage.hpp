@@ -73,7 +73,7 @@ public:
 
   uint64_t get_minimum_split_file_size() const override;
 
-  void set_filter(const rosbag2_storage::StorageFilter & storage_filter);
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
 private:
   void initialize();
