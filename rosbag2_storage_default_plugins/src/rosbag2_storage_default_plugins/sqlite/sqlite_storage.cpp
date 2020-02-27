@@ -216,11 +216,11 @@ void SqliteStorage::prepare_for_reading()
   if (!storage_filter_.topics.empty()) {
     // Construct string for selected topics
     std::string topic_list{""};
-    for (auto & topic : storage_filter_.topics)
-    {
+    for (auto & topic : storage_filter_.topics) {
       topic_list += "'" + topic + "'";
-      if (&topic != &storage_filter_.topics.back())
+      if (&topic != &storage_filter_.topics.back()) {
         topic_list += ",";
+      }
     }
 
     read_statement_ = database_->prepare_statement(
@@ -228,8 +228,7 @@ void SqliteStorage::prepare_for_reading()
       "FROM messages JOIN topics ON messages.topic_id = topics.id "
       "WHERE topics.name IN (" + topic_list + ")"
       "ORDER BY messages.timestamp;");
-  }
-  else {
+  } else {
     read_statement_ = database_->prepare_statement(
       "SELECT data, timestamp, topics.name "
       "FROM messages JOIN topics ON messages.topic_id = topics.id "
