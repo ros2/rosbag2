@@ -31,8 +31,6 @@
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
-#include "rcutils/filesystem.h"
-
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
 // b) there are no inline functions.

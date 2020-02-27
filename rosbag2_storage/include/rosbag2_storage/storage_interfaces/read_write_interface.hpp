@@ -15,7 +15,6 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_WRITE_INTERFACE_HPP_
 
-#include <memory>
 #include <string>
 
 #include "rosbag2_storage/storage_filter.hpp"
