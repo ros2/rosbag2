@@ -129,15 +129,8 @@ bool SqliteStorage::has_next()
     prepare_for_reading();
   }
 
-  return current_message_row_ != message_result_.end();
-}
-
-std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
-{
-  if (!read_statement_) {
-    prepare_for_reading();
-  }
-
+  // This logic should be in the sql stmt in prepare_for_reading()
+  /*
   if (!storage_filter_.topics.empty()) {
     bool found_next = false;
     while (!found_next) {
@@ -152,6 +145,21 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
       }
       ++current_message_row_;
     }
+  }
+
+  if (current_message_row_ ==
+    SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END) {
+    current_message_row_ = message_result_.end();
+  }
+  */
+
+  return current_message_row_ != message_result_.end();
+}
+
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next()
+{
+  if (!read_statement_) {
+    prepare_for_reading();
   }
 
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -229,10 +237,27 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ = database_->prepare_statement(
-    "SELECT data, timestamp, topics.name "
-    "FROM messages JOIN topics ON messages.topic_id = topics.id "
-    "ORDER BY messages.timestamp;");
+  if (!storage_filter_.topics.empty()) {
+    std::string topic_list{""};
+    for (auto & topic : storage_filter_.topics)
+    {
+      topic_list += topic;
+      if (&topic != &storage_filter_.topics.back())
+        topic_list += ",";
+    }
+
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "WHERE topics.name IN (" + topic_list + ")"
+      "ORDER BY messages.timestamp;");
+  }
+  else {
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "ORDER BY messages.timestamp;");
+  }
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
