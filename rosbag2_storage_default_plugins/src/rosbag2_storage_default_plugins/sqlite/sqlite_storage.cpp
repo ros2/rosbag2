@@ -103,6 +103,8 @@ void SqliteStorage::open(
 
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
+
+  storage_filter_.topics.clear();
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -211,10 +213,27 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ = database_->prepare_statement(
-    "SELECT data, timestamp, topics.name "
-    "FROM messages JOIN topics ON messages.topic_id = topics.id "
-    "ORDER BY messages.timestamp;");
+  if (!storage_filter_.topics.empty()) {
+    // Construct string for selected topics
+    std::string topic_list{""};
+    for (auto & topic : storage_filter_.topics) {
+      topic_list += "'" + topic + "'";
+      if (&topic != &storage_filter_.topics.back()) {
+        topic_list += ",";
+      }
+    }
+
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "WHERE topics.name IN (" + topic_list + ")"
+      "ORDER BY messages.timestamp;");
+  } else {
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "ORDER BY messages.timestamp;");
+  }
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
@@ -290,6 +309,12 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.bag_size = get_bagfile_size();
 
   return metadata;
+}
+
+void SqliteStorage::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  storage_filter_ = storage_filter;
 }
 
 }  // namespace rosbag2_storage_plugins

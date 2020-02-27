@@ -23,6 +23,7 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
@@ -72,6 +73,8 @@ public:
 
   uint64_t get_minimum_split_file_size() const override;
 
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -90,6 +93,7 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
+  rosbag2_storage::StorageFilter storage_filter_ {};
 };
 
 }  // namespace rosbag2_storage_plugins

@@ -79,4 +79,10 @@ std::string TestReadOnlyPlugin::get_storage_identifier() const
   return test_constants::READ_ONLY_PLUGIN_IDENTIFIER;
 }
 
+void TestReadOnlyPlugin::set_filter(
+  const rosbag2_storage::StorageFilter & /*storage_filter*/)
+{
+  std::cout << "\nsetting storage filter\n";
+}
+
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

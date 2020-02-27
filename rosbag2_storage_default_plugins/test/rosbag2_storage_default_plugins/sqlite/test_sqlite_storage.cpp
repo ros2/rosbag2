@@ -14,6 +14,8 @@
 
 #include <gmock/gmock.h>
 
+#include <rosbag2_storage/storage_filter.hpp>
+
 #include <memory>
 #include <string>
 #include <tuple>
@@ -109,6 +111,33 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
   auto second_message = readable_storage->read_next();
   EXPECT_THAT(second_message->time_stamp, Eq(6));
   EXPECT_FALSE(readable_storage->has_next());
+}
+
+TEST_F(StorageTestFixture, read_next_returns_filtered_messages) {
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
+  string_messages =
+  {std::make_tuple("topic1 message", 1, "topic1", "", ""),
+    std::make_tuple("topic2 message", 2, "topic2", "", ""),
+    std::make_tuple("topic3 message", 3, "topic3", "", "")};
+
+  write_messages_to_sqlite(string_messages);
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  auto db_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
+  readable_storage->open(db_filename);
+
+  rosbag2_storage::StorageFilter storage_filter;
+  storage_filter.topics.push_back("topic2");
+  storage_filter.topics.push_back("topic3");
+  readable_storage->set_filter(storage_filter);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->topic_name, Eq("topic3"));
 }
 
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
