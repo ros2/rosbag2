@@ -129,30 +129,6 @@ bool SqliteStorage::has_next()
     prepare_for_reading();
   }
 
-  // This logic should be in the sql stmt in prepare_for_reading()
-  /*
-  if (!storage_filter_.topics.empty()) {
-    bool found_next = false;
-    while (!found_next) {
-      for (auto & topic : storage_filter_.topics) {
-        if (std::get<2>(*current_message_row_).compare(topic) == 0) {
-          found_next = true;
-          break;
-        }
-      }
-      if (found_next) {
-        break;
-      }
-      ++current_message_row_;
-    }
-  }
-
-  if (current_message_row_ ==
-    SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END) {
-    current_message_row_ = message_result_.end();
-  }
-  */
-
   return current_message_row_ != message_result_.end();
 }
 
@@ -238,10 +214,11 @@ void SqliteStorage::prepare_for_writing()
 void SqliteStorage::prepare_for_reading()
 {
   if (!storage_filter_.topics.empty()) {
+    // Construct string for selected topics
     std::string topic_list{""};
     for (auto & topic : storage_filter_.topics)
     {
-      topic_list += topic;
+      topic_list += "'" + topic + "'";
       if (&topic != &storage_filter_.topics.back())
         topic_list += ",";
     }
