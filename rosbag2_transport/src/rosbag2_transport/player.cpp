@@ -66,7 +66,7 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
-  play_messages_from_queue();
+  play_messages_from_queue(options);
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
@@ -119,11 +119,11 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::play_messages_from_queue()
+void Player::play_messages_from_queue(const PlayOptions & options)
 {
   start_time_ = std::chrono::system_clock::now();
   do {
-    play_messages_until_queue_empty();
+    play_messages_until_queue_empty(options);
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -132,11 +132,13 @@ void Player::play_messages_from_queue()
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty()
+void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(start_time_ + message.time_since_start);
+    std::this_thread::sleep_until(start_time_ +
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+        1.0 / options.rate * message.time_since_start));
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
