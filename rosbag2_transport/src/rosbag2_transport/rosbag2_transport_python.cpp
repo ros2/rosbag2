@@ -28,6 +28,7 @@
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/convert_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
@@ -225,18 +226,30 @@ rosbag2_transport_convert(PyObject * Py_UNUSED(self), PyObject * args, PyObject 
 {
   rosbag2_transport::StorageOptions in_options{};
   rosbag2_transport::StorageOptions out_options{};
-  static const char * kwlist[] = {"in_uri", "in_storage_id", "out_uri", "out_storage_id", "serialization_format", nullptr};
-
+  rosbag2_transport::ConvertOptions convert_options{};
+  static const char * kwlist[] = {
+    "in_uri",
+    "in_storage_id",
+    "out_uri",
+    "out_storage_id",
+    "serialization_format",
+    "compression_mode",
+    "compression_format", nullptr
+  };
   char * in_uri;
   char * in_storage_id;
   char * out_uri;
   char * out_storage_id;
   char * serialization_format;
+  char * compression_mode;
+  char * compression_format;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sssss", const_cast<char **>(kwlist), &in_uri, &in_storage_id,
+      args, kwargs, "sssssss", const_cast<char **>(kwlist), &in_uri, &in_storage_id,
       &out_uri,
       &out_storage_id,
-      &serialization_format))
+      &serialization_format,
+      &compression_mode,
+      &compression_format))
   {
     return nullptr;
   }
@@ -247,12 +260,50 @@ rosbag2_transport_convert(PyObject * Py_UNUSED(self), PyObject * args, PyObject 
   out_options.uri = std::string(out_uri);
   out_options.storage_id = std::string(out_storage_id);
 
-  std::string rmw_serialization_format = std::string(serialization_format).empty() ?
+  convert_options.rmw_serialization_format = std::string(serialization_format).empty() ?
     rmw_get_serialization_format() :
     serialization_format;
+  convert_options.compression_mode = compression_mode;
+  convert_options.compression_format = compression_format;
 
-  rosbag2_transport::Rosbag2Transport transport;
-  transport.convert(in_options, out_options, rmw_serialization_format);
+  rosbag2_compression::CompressionOptions compression_options{
+    convert_options.compression_format,
+    rosbag2_compression::compression_mode_from_string(convert_options.compression_mode)
+  };
+
+  rosbag2_storage::MetadataIo metadata_io{};
+  rosbag2_storage::BagMetadata metadata{};
+  // Specify defaults
+  auto info = std::make_shared<rosbag2_cpp::Info>();
+  
+  std::shared_ptr<rosbag2_cpp::Reader> reader;
+  // Change reader based on metadata options
+  if (metadata_io.metadata_file_exists(in_options.uri)) {
+    metadata = metadata_io.read_metadata(in_options.uri);
+    if (metadata.compression_format == "zstd") {
+      reader = std::make_shared<rosbag2_cpp::Reader>(
+        std::make_unique<rosbag2_compression::SequentialCompressionReader>());
+    } else {
+      reader = std::make_shared<rosbag2_cpp::Reader>(
+        std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+    }
+  } else {
+    reader = std::make_shared<rosbag2_cpp::Reader>(
+      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  }
+
+  std::shared_ptr<rosbag2_cpp::Writer> writer;
+  // Change writer based on recording options
+  if (convert_options.compression_format == "zstd") {
+    writer = std::make_shared<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
+  } else {
+    writer = std::make_shared<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  }
+
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  transport.convert(in_options, out_options, convert_options);
 
   Py_RETURN_NONE;
 }
@@ -278,7 +329,7 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "convert", reinterpret_cast<PyCFunction>(rosbag2_transport_convert),
     METH_VARARGS | METH_KEYWORDS,
-    "Convert bag storage"
+    "Convert bag storage or serialization format"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

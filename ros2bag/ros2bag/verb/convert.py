@@ -38,6 +38,13 @@ class ConvertVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
                  ' rmw currently in use')
+        parser.add_argument(
+            '--compression-mode', type=str, default='none',
+            choices=['none', 'file', 'message'],
+            help='Determine whether to compress by file or message. Default is "none".')
+        parser.add_argument(
+            '--compression-format', type=str, default='', choices=['zstd'],
+            help='Specify the compression format/algorithm. Default is none.')
 
     def create_bag_directory(self, uri):
         try:
@@ -49,6 +56,10 @@ class ConvertVerb(VerbExtension):
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
             return "[ERROR] [ros2bag] bag file '{}' does not exist!".format(bag_file)
+
+        if args.compression_format and args.compression_mode == 'none':
+            return 'Invalid choice: Cannot specify compression format without a compression mode.'
+        args.compression_mode = args.compression_mode.upper()
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
         self.create_bag_directory(uri)
@@ -65,7 +76,9 @@ class ConvertVerb(VerbExtension):
             in_storage_id=args.storage,
             out_uri=uri,
             out_storage_id=args.out_storage,
-            serialization_format=args.serialization_format)
+            serialization_format=args.serialization_format,
+            compression_mode=args.compression_mode,
+            compression_format=args.compression_format)
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)

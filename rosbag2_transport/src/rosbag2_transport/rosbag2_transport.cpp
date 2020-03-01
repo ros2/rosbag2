@@ -108,16 +108,16 @@ void Rosbag2Transport::play(
 void Rosbag2Transport::convert(
   const StorageOptions & input_storage_options,
   const StorageOptions & output_storage_options,
-  std::string output_serialization_format)
+  const ConvertOptions & convert_options)
 {
   try {
-    reader_->open(input_storage_options, {"", output_serialization_format});
+    reader_->open(input_storage_options, {"", convert_options.rmw_serialization_format});
     writer_->open(
       output_storage_options,
-      {output_serialization_format, output_serialization_format});
+      {convert_options.rmw_serialization_format, convert_options.rmw_serialization_format});
 
     Converter converter(reader_, writer_);
-    converter.convert(output_serialization_format);
+    converter.convert(convert_options.rmw_serialization_format);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to convert: %s", e.what());
   }
