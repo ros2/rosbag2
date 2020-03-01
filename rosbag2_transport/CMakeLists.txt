@@ -101,6 +101,14 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_info rosbag2_test_common)
   endif()
 
+  ament_add_gmock(test_convert
+    test/rosbag2_transport/test_convert.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_convert)
+    target_link_libraries(test_convert rosbag2_transport)
+    ament_target_dependencies(test_convert test_msgs rosbag2_test_common)
+  endif()
+
   ament_add_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
