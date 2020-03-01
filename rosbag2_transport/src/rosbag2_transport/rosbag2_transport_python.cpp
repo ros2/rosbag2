@@ -275,7 +275,7 @@ rosbag2_transport_convert(PyObject * Py_UNUSED(self), PyObject * args, PyObject 
   rosbag2_storage::BagMetadata metadata{};
   // Specify defaults
   auto info = std::make_shared<rosbag2_cpp::Info>();
-  
+
   std::shared_ptr<rosbag2_cpp::Reader> reader;
   // Change reader based on metadata options
   if (metadata_io.metadata_file_exists(in_options.uri)) {

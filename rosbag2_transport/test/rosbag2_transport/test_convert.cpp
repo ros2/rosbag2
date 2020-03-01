@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/convert_options.hpp"

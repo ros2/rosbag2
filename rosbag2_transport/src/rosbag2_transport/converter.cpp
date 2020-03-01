@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <utility>
+#include <string>
 #include "converter.hpp"
 
 #include "rosbag2_cpp/reader.hpp"
