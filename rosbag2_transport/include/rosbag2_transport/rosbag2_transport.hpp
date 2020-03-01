@@ -77,6 +77,18 @@ public:
   void play(const StorageOptions & storage_options, const PlayOptions & play_options);
 
   /**
+   * Convert a bagfile from one storage to another.
+   *
+   * \param input_storage_options Options regarding the input storage (e.g. input bag file name)
+   * \param output_storage_options Options regarding the output storage (e.g. bag file name)
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void convert(
+    const StorageOptions & input_storage_options,
+    const StorageOptions & output_storage_options,
+    std::string output_serialization_format);
+
+  /**
    * Print the bag info contained in the metadata yaml file.
    *
    * \param uri path to the metadata yaml file.

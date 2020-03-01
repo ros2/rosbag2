@@ -220,6 +220,43 @@ rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   Py_RETURN_NONE;
 }
 
+static PyObject *
+rosbag2_transport_convert(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
+{
+  rosbag2_transport::StorageOptions in_options{};
+  rosbag2_transport::StorageOptions out_options{};
+  static const char * kwlist[] = {"in_uri", "in_storage_id", "out_uri", "out_storage_id", "serialization_format", nullptr};
+
+  char * in_uri;
+  char * in_storage_id;
+  char * out_uri;
+  char * out_storage_id;
+  char * serialization_format;
+  if (!PyArg_ParseTupleAndKeywords(
+      args, kwargs, "sssss", const_cast<char **>(kwlist), &in_uri, &in_storage_id,
+      &out_uri,
+      &out_storage_id,
+      &serialization_format))
+  {
+    return nullptr;
+  }
+
+  in_options.uri = std::string(in_uri);
+  in_options.storage_id = std::string(in_storage_id);
+
+  out_options.uri = std::string(out_uri);
+  out_options.storage_id = std::string(out_storage_id);
+
+  std::string rmw_serialization_format = std::string(serialization_format).empty() ?
+    rmw_get_serialization_format() :
+    serialization_format;
+
+  rosbag2_transport::Rosbag2Transport transport;
+  transport.convert(in_options, out_options, rmw_serialization_format);
+
+  Py_RETURN_NONE;
+}
+
 /// Define the public methods of this module
 #if __GNUC__ >= 8
 # pragma GCC diagnostic push
@@ -237,6 +274,11 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "info", reinterpret_cast<PyCFunction>(rosbag2_transport_info), METH_VARARGS | METH_KEYWORDS,
     "Print bag info"
+  },
+  {
+    "convert", reinterpret_cast<PyCFunction>(rosbag2_transport_convert),
+    METH_VARARGS | METH_KEYWORDS,
+    "Convert bag storage"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

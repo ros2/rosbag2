@@ -33,6 +33,7 @@
 
 #include "rosbag2_transport/logging.hpp"
 
+#include "converter.hpp"
 #include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
@@ -101,6 +102,24 @@ void Rosbag2Transport::play(
     player.play(play_options);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
+  }
+}
+
+void Rosbag2Transport::convert(
+  const StorageOptions & input_storage_options,
+  const StorageOptions & output_storage_options,
+  std::string output_serialization_format)
+{
+  try {
+    reader_->open(input_storage_options, {"", output_serialization_format});
+    writer_->open(
+      output_storage_options,
+      {output_serialization_format, output_serialization_format});
+
+    Converter converter(reader_, writer_);
+    converter.convert(output_serialization_format);
+  } catch (std::runtime_error & e) {
+    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to convert: %s", e.what());
   }
 }
 
