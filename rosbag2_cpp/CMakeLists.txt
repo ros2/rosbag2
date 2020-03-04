@@ -36,6 +36,8 @@ find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
+find_package(rosidl_runtime_c REQUIRED)
+find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
@@ -59,6 +61,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rcutils
   rosbag2_storage
   rosidl_generator_cpp
+  rosidl_runtime_c
+  rosidl_runtime_cpp
   rosidl_typesupport_introspection_cpp
   rosidl_typesupport_cpp
 )
