@@ -26,6 +26,12 @@
 namespace rosbag2_compression
 {
 
+/**
+ * Implementation of CompressionFactory.
+ * This class implements methods for creating instances of a BaseCompressionInterface and
+ * BaseDecompressionInterface.
+ * This class should only be used by CompressionFactory.
+ */
 class CompressionFactoryImpl;
 
 class ROSBAG2_COMPRESSION_PUBLIC CompressionFactory

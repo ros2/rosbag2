@@ -32,13 +32,13 @@ public:
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string &)
   {
-    return std::unique_ptr<rosbag2_compression::BaseCompressorInterface>();
+    throw std::logic_error{"Not implemented"};
   }
 
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string &)
   {
-    return std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>();
+    throw std::logic_error{"Not implemented"};
   }
 };
 }  // namespace rosbag2_compression
