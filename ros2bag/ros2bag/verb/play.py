@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from argparse import ArgumentTypeError
+import os
 
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
@@ -41,10 +41,10 @@ class PlayVerb(VerbExtension):
         try:
             fvalue = float(value)
             if fvalue <= 0.0:
-                raise ArgumentTypeError("%s is not in the valid range (> 0.0)" % value)
+                raise ArgumentTypeError('%s is not in the valid range (> 0.0)' % value)
             return fvalue
         except ValueError:
-            raise ArgumentTypeError("%s is not of the valid type (float)" % value)
+            raise ArgumentTypeError('%s is not of the valid type (float)' % value)
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
