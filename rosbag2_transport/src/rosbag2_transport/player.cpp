@@ -135,10 +135,17 @@ void Player::play_messages_from_queue(const PlayOptions & options)
 void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
+
+  float rate = 1.0;
+  // Use rate if in valid range
+  if (options.rate > 0.0) {
+    rate = options.rate;
+  }
+
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     std::this_thread::sleep_until(start_time_ +
       std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / options.rate * message.time_since_start));
+        1.0 / rate * message.time_since_start));
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
