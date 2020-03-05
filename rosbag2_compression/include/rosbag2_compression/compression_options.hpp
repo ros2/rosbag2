@@ -51,6 +51,32 @@ ROSBAG2_COMPRESSION_PUBLIC CompressionMode compression_mode_from_string(
  */
 ROSBAG2_COMPRESSION_PUBLIC std::string compression_mode_to_string(CompressionMode compression_mode);
 
+enum class ROSBAG2_COMPRESSION_PUBLIC CompressionFormat: uint32_t
+{
+  NONE = 0,
+  ZSTD,
+  LAST_FORMAT = ZSTD
+};
+
+/**
+ * Converts a string into a rosbag2_compression::CompressionFormat enum.
+ *
+ * \param compression_format A case insensitive string of the compression format.
+ * \return The corresponding CompressionFormat enum.
+ *         Returns NONE if compression_format is invalid.
+ */
+ROSBAG2_COMPRESSION_PUBLIC std::string compression_format_from_string(
+  const std::string & compression_format);
+
+/**
+ * Converts a rosbag2_compression::CompressionFormat enum into a string.
+ *
+ * \param compression_format A CompressionFormat enum.
+ * \return The corresponding format as a string.
+ */
+ROSBAG2_COMPRESSION_PUBLIC std::string compression_format_to_string(
+  CompressionFormat compression_format);
+
 /**
  * Compression options used in the writer which are passed down from the CLI in rosbag2_transport.
  */

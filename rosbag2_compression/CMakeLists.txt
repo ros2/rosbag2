@@ -56,6 +56,7 @@ target_compile_definitions(${PROJECT_NAME}_zstd
 
 add_library(${PROJECT_NAME}
   SHARED
+  src/rosbag2_compression/compression_factory.cpp
   src/rosbag2_compression/compression_options.cpp
   src/rosbag2_compression/sequential_compression_reader.cpp
   src/rosbag2_compression/sequential_compression_writer.cpp)
