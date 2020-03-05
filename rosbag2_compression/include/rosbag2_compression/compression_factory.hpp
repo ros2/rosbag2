@@ -16,6 +16,7 @@
 #define ROSBAG2_COMPRESSION__COMPRESSION_FACTORY_HPP_
 
 #include <memory>
+#include <string>
 
 #include "base_compressor_interface.hpp"
 #include "base_decompressor_interface.hpp"
@@ -40,7 +41,7 @@ public:
    * \return A unique pointer to the newly created compressor.
    */
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
-  create_compressor(rosbag2_compression::CompressionFormat compression_format);
+  create_compressor(const std::string & compression_format);
 
   /**
    * Create a decompressor based on the specified compression format.
@@ -49,7 +50,7 @@ public:
    * \return A unique pointer to the newly created decompressor.
    */
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
-  create_decompressor(rosbag2_compression::CompressionFormat compression_format);
+  create_decompressor(const std::string & compression_format);
 
 private:
   std::unique_ptr<CompressionFactoryImpl> impl_;

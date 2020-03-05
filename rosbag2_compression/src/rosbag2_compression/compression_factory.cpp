@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include <memory>
+#include <string>
 
 #include "rosbag2_compression/compression_factory.hpp"
-#include "rosbag2_compression/compression_options.hpp"
 
 #include "compression_factory_impl.hpp"
 
@@ -25,18 +25,16 @@ namespace rosbag2_compression
 CompressionFactory::CompressionFactory()
 : impl_(new CompressionFactoryImpl()) {}
 
-CompressionFactory::~CompressionFactory() {}
+CompressionFactory::~CompressionFactory() = default;
 
 std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
-CompressionFactory::create_compressor(
-  const rosbag2_compression::CompressionFormat compression_format)
+CompressionFactory::create_compressor(const std::string & compression_format)
 {
   return impl_->create_compressor(compression_format);
 }
 
 std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
-CompressionFactory::create_decompressor(
-  const rosbag2_compression::CompressionFormat compression_format)
+CompressionFactory::create_decompressor(const std::string & compression_format)
 {
   return impl_->create_decompressor(compression_format);
 }

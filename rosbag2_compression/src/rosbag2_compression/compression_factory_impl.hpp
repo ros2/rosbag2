@@ -16,6 +16,7 @@
 #define ROSBAG2_COMPRESSION__COMPRESSION_FACTORY_IMPL_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rosbag2_compression/compression_factory.hpp"
 
@@ -29,13 +30,13 @@ public:
   ~CompressionFactoryImpl() = default;
 
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
-  create_compressor(const rosbag2_compression::CompressionFormat)
+  create_compressor(const std::string &)
   {
     return std::unique_ptr<rosbag2_compression::BaseCompressorInterface>();
   }
 
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
-  create_decompressor(const rosbag2_compression::CompressionFormat)
+  create_decompressor(const std::string &)
   {
     return std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>();
   }
