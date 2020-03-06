@@ -109,6 +109,10 @@ if(BUILD_TESTING)
     VISIBILITY_INLINES_HIDDEN 1)
   target_compile_definitions(fake_compressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
 
+  ament_add_gtest(test_compression_factory
+    test/rosbag2_compression/test_compression_factory.cpp)
+  target_link_libraries(test_compression_factory ${PROJECT_NAME})
+
   ament_add_gmock(test_compressor
     test/rosbag2_compression/test_compressor.cpp)
   target_link_libraries(test_compressor fake_compressor)
