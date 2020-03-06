@@ -44,6 +44,8 @@ public:
   std::string get_storage_identifier() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_READ_ONLY_PLUGIN_HPP_

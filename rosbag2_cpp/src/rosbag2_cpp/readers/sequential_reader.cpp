@@ -133,7 +133,19 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and
 void SequentialReader::set_filter(
   const rosbag2_storage::StorageFilter & storage_filter)
 {
-  storage_->set_filter(storage_filter);
+  if (storage_) {
+    storage_->set_filter(storage_filter);
+    return;
+  }
+  throw std::runtime_error("Bag is not open. Call open() before setting "
+    "filter.");
+}
+
+void SequentialReader::reset_filter()
+{
+  if (storage_) {
+    storage_->reset_filter();
+  }
 }
 
 bool SequentialReader::has_next_file() const

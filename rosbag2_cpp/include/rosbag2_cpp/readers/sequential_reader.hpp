@@ -71,6 +71,8 @@ public:
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter);
 
+  void reset_filter();
+
   /**
    * Ask whether there is another database file to read from the list of relative
    * file paths.

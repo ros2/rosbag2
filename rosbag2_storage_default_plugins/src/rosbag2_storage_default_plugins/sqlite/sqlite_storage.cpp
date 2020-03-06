@@ -103,8 +103,6 @@ void SqliteStorage::open(
 
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
-
-  storage_filter_.topics.clear();
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -315,6 +313,11 @@ void SqliteStorage::set_filter(
   const rosbag2_storage::StorageFilter & storage_filter)
 {
   storage_filter_ = storage_filter;
+}
+
+void SqliteStorage::reset_filter()
+{
+  storage_filter_ = rosbag2_storage::StorageFilter();
 }
 
 }  // namespace rosbag2_storage_plugins

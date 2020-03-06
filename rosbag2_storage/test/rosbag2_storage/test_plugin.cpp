@@ -110,4 +110,9 @@ void TestPlugin::set_filter(
   std::cout << "\nsetting storage filter\n";
 }
 
+void TestPlugin::reset_filter()
+{
+  std::cout << "\nresetting storage filter\n";
+}
+
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

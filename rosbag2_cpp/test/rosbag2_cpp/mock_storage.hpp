@@ -38,6 +38,7 @@ public:
   MOCK_METHOD1(write, void(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));
   MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicMetadata>());
   MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
+  MOCK_METHOD0(reset_filter, void());
   MOCK_METHOD1(set_filter, void(const rosbag2_storage::StorageFilter &));
   MOCK_CONST_METHOD0(get_bagfile_size, uint64_t());
   MOCK_CONST_METHOD0(get_relative_file_path, std::string());

@@ -75,6 +75,8 @@ public:
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
+  void reset_filter() override;
+
 private:
   void initialize();
   void prepare_for_writing();

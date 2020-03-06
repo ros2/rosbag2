@@ -85,4 +85,9 @@ void TestReadOnlyPlugin::set_filter(
   std::cout << "\nsetting storage filter\n";
 }
 
+void TestReadOnlyPlugin::reset_filter()
+{
+  std::cout << "\nresetting storage filter\n";
+}
+
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

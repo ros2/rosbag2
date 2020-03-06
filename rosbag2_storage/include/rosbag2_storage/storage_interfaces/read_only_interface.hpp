@@ -41,6 +41,8 @@ public:
   std::string get_storage_identifier() const override = 0;
 
   virtual void set_filter(const StorageFilter & storage_filter) = 0;
+
+  virtual void reset_filter() = 0;
 };
 
 }  // namespace storage_interfaces
