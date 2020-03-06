@@ -43,7 +43,7 @@ public:
   /**
    * Create a compressor based on the specified compression format.
    *
-   * \param compression_format The compression format enum
+   * \param compression_format The compression format as a string.
    * \return A unique pointer to the newly created compressor.
    */
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
@@ -52,7 +52,7 @@ public:
   /**
    * Create a decompressor based on the specified compression format.
    *
-   * \param compression_format The compression format enum
+   * \param compression_format The compression format as a string.
    * \return A unique pointer to the newly created decompressor.
    */
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
