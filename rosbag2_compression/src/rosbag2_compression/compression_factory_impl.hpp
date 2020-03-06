@@ -23,18 +23,21 @@
 namespace rosbag2_compression
 {
 
+/// Implementation of the CompressionFactory. See CompressionFactory for documentation.
 class CompressionFactoryImpl
 {
 public:
   CompressionFactoryImpl() = default;
   ~CompressionFactoryImpl() = default;
 
+  /// See CompressionFactory::create_compressor for documentation.
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string &)
   {
     throw std::logic_error{"Not implemented"};
   }
 
+  /// See CompressionFactory::create_decompressor for documentation.
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string &)
   {
