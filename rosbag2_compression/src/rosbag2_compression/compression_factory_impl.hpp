@@ -16,6 +16,7 @@
 #define ROSBAG2_COMPRESSION__COMPRESSION_FACTORY_IMPL_HPP_
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "rosbag2_compression/compression_factory.hpp"
