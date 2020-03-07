@@ -31,7 +31,7 @@ namespace
 constexpr const char kCompressionFormatZstd[] = "zstd";
 
 /// Verify whether two case-insensitive chars are equal
-bool compare_char(const char & c1, const char & c2)
+bool compare_char(const char c1, const char c2)
 {
   return c1 == c2 || std::tolower(c1) == std::tolower(c2);
 }
