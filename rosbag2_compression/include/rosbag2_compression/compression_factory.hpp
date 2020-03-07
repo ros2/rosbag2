@@ -23,6 +23,12 @@
 #include "compression_options.hpp"
 #include "visibility_control.hpp"
 
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
+
 namespace rosbag2_compression
 {
 
@@ -63,5 +69,9 @@ private:
 };
 
 }  // namespace rosbag2_compression
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_COMPRESSION__COMPRESSION_FACTORY_HPP_
