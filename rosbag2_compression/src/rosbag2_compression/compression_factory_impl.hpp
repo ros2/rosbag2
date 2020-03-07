@@ -30,12 +30,17 @@ namespace
 
 constexpr const char kCompressionFormatZstd[] = "zstd";
 
-/// Convert a string to lowercase
-std::string to_lower(const std::string & text)
+/// Verify whether two case-insensitive chars are equal
+bool compare_char(const char & c1, const char & c2)
 {
-  std::string lowercase_text = text;
-  std::transform(lowercase_text.begin(), lowercase_text.end(), lowercase_text.begin(), ::tolower);
-  return lowercase_text;
+  return c1 == c2 || std::tolower(c1) == std::tolower(c2);
+}
+
+/// Performs a case-insensitive comparison of two strings
+bool case_insensitive_compare(const std::string & str1, const std::string & str2) noexcept
+{
+  return (str1.size() == str2.size()) &&
+         std::equal(str1.begin(), str1.end(), str2.begin(), &compare_char);
 }
 }  // namespace
 
@@ -53,14 +58,13 @@ public:
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string & compression_format)
   {
-    const auto lowercase_format = to_lower(compression_format);
-    if (lowercase_format == kCompressionFormatZstd) {
+    if (case_insensitive_compare(compression_format, kCompressionFormatZstd)) {
       return std::make_unique<rosbag2_compression::ZstdCompressor>();
     } else {
       std::stringstream errmsg;
-      errmsg << "Compression format \"" << lowercase_format << "\" is not supported.";
+      errmsg << "Compression format \"" << compression_format << "\" is not supported.";
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(errmsg.str());
-      throw std::invalid_argument(errmsg.str());
+      throw std::invalid_argument{errmsg.str()};
     }
   }
 
@@ -68,14 +72,13 @@ public:
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string & compression_format)
   {
-    const auto lowercase_format = to_lower(compression_format);
-    if (lowercase_format == kCompressionFormatZstd) {
+    if (case_insensitive_compare(compression_format, kCompressionFormatZstd)) {
       return std::make_unique<rosbag2_compression::ZstdDecompressor>();
     } else {
       std::stringstream errmsg;
-      errmsg << "Compression format \"" << lowercase_format << "\" is not supported.";
+      errmsg << "Compression format \"" << compression_format << "\" is not supported.";
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(errmsg.str());
-      throw std::invalid_argument(errmsg.str());
+      throw std::invalid_argument{errmsg.str()};
     }
   }
 };
