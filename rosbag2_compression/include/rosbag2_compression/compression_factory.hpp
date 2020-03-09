@@ -51,6 +51,7 @@ public:
    *
    * \param compression_format The compression format as a string.
    * \return A unique pointer to the newly created compressor.
+   * \throw invalid_argument If the compression format does not exist.
    */
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string & compression_format);
@@ -60,6 +61,7 @@ public:
    *
    * \param compression_format The compression format as a string.
    * \return A unique pointer to the newly created decompressor.
+   * \throw invalid_argument If the compression format does not exist.
    */
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string & compression_format);
