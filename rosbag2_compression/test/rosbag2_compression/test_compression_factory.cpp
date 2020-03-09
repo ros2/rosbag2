@@ -87,5 +87,5 @@ TEST_F(CompressionFactoryTest, throws_on_bad_compressor_format) {
 
 TEST_F(CompressionFactoryTest, throws_on_bad_decompressor_format) {
   const auto compression_format = "bar";
-  ASSERT_THROW(factory.create_compressor(compression_format), std::invalid_argument);
+  ASSERT_THROW(factory.create_decompressor(compression_format), std::invalid_argument);
 }
