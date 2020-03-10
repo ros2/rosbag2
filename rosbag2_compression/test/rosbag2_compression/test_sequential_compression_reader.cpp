@@ -28,13 +28,17 @@
 #include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage.hpp"
 #include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage_factory.hpp"
 
+#include "mock_compression.hpp"
+#include "mock_compression_factory.hpp"
+
 using namespace testing;  // NOLINT
 
 class SequentialCompressionReaderTest : public Test
 {
 public:
   SequentialCompressionReaderTest()
-  : storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
+  : compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
+    storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
@@ -51,6 +55,7 @@ public:
     ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
   }
 
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_;
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
@@ -72,7 +77,10 @@ TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
   EXPECT_CALL(*metadata_io_, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
-    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+    std::move(compression_factory_),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   EXPECT_THROW(
@@ -92,11 +100,13 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
   ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
-    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+    std::move(compression_factory_),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   // Throws runtime_error b/c compressor can't read
-  // TODO(piraka9011): Use a compression factory in reader.
   EXPECT_THROW(
     reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
     std::runtime_error);

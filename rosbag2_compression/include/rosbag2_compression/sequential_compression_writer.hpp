@@ -34,6 +34,7 @@
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "base_compressor_interface.hpp"
+#include "compression_factory.hpp"
 #include "compression_options.hpp"
 #include "visibility_control.hpp"
 
@@ -55,6 +56,7 @@ public:
 
   SequentialCompressionWriter(
     const rosbag2_compression::CompressionOptions & compression_options,
+    std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory,
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
     std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io);
@@ -132,6 +134,7 @@ private:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   std::unique_ptr<rosbag2_cpp::Converter> converter_{};
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};

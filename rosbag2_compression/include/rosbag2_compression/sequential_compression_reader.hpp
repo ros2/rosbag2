@@ -32,8 +32,10 @@
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
+#include "compression_factory.hpp"
 #include "visibility_control.hpp"
 #include "zstd_decompressor.hpp"
+
 
 #ifdef _WIN32
 # pragma warning(push)
@@ -48,6 +50,8 @@ class ROSBAG2_COMPRESSION_PUBLIC SequentialCompressionReader
 {
 public:
   explicit SequentialCompressionReader(
+    std::unique_ptr<rosbag2_compression::CompressionFactory> =
+    std::make_unique<rosbag2_compression::CompressionFactory>(),
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory =
@@ -146,6 +150,7 @@ private:
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
 };
 
 }  // namespace rosbag2_compression
