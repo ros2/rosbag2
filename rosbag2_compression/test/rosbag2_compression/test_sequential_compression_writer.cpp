@@ -29,6 +29,7 @@
 #include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage.hpp"
 #include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage_factory.hpp"
 
+#include "mock_compression_factory.hpp"
 
 using namespace testing;  // NOLINT
 
@@ -36,8 +37,7 @@ class SequentialCompressionWriterTest : public Test
 {
 public:
   SequentialCompressionWriterTest()
-  : compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
-    storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
+  : storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
@@ -48,7 +48,6 @@ public:
     EXPECT_CALL(*storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
   }
 
-  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_;
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
@@ -63,10 +62,11 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 {
   rosbag2_compression::CompressionOptions compression_options{
     "bad_format", rosbag2_compression::CompressionMode::FILE};
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
     compression_options,
-    std::move(compression_factory_),
+    std::move(compression_factory),
     std::move(storage_factory_),
     converter_factory_,
     std::move(metadata_io_));
@@ -81,10 +81,11 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
 {
   rosbag2_compression::CompressionOptions compression_options{
     "zstd", rosbag2_compression::CompressionMode::FILE};
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
     compression_options,
-    std::move(compression_factory_),
+    std::move(compression_factory),
     std::move(storage_factory_),
     converter_factory_,
     std::move(metadata_io_));
@@ -92,4 +93,21 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
 
   EXPECT_NO_THROW(
     writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_}));
+}
+
+TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
+{
+  rosbag2_compression::CompressionOptions compression_options{
+    "zstd", rosbag2_compression::CompressionMode::FILE};
+  auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
+  EXPECT_CALL(*compression_factory, create_compressor(_)).Times(1);
+
+  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+    compression_options,
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_});
 }

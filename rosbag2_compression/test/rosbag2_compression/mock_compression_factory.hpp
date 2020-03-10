@@ -33,7 +33,7 @@ public:
   MOCK_METHOD1(
     create_decompressor,
     std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>(
-      const std::string & compression_format));
+      const std::string &));
 };
 
 #endif  // ROSBAG2_COMPRESSION__MOCK_COMPRESSION_FACTORY_HPP_

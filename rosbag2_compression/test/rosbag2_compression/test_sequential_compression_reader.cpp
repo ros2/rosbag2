@@ -37,8 +37,7 @@ class SequentialCompressionReaderTest : public Test
 {
 public:
   SequentialCompressionReaderTest()
-  : compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
-    storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
+  : storage_factory_{std::make_unique<StrictMock<MockStorageFactory>>()},
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
@@ -55,7 +54,6 @@ public:
     ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
   }
 
-  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_;
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
@@ -75,9 +73,10 @@ TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
     rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
   EXPECT_CALL(*metadata_io_, read_metadata(_)).WillRepeatedly(Return(metadata));
   EXPECT_CALL(*metadata_io_, metadata_file_exists(_)).WillRepeatedly(Return(true));
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
-    std::move(compression_factory_),
+    std::move(compression_factory),
     std::move(storage_factory_),
     converter_factory_,
     std::move(metadata_io_));
@@ -98,9 +97,10 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
     rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
   ON_CALL(*metadata_io_, read_metadata(_)).WillByDefault(Return(metadata));
   ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
-    std::move(compression_factory_),
+    std::move(compression_factory),
     std::move(storage_factory_),
     converter_factory_,
     std::move(metadata_io_));
@@ -110,4 +110,36 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
   EXPECT_THROW(
     reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
     std::runtime_error);
+}
+
+TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
+{
+  rosbag2_storage::BagMetadata metadata;
+  metadata.relative_file_paths = {"/path/to/storage"};
+  metadata.topics_with_message_count.push_back({{topic_with_type_}, 1});
+  metadata.compression_format = "zstd";
+  metadata.compression_mode =
+    rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
+  ON_CALL(*metadata_io_, read_metadata(_)).WillByDefault(Return(metadata));
+  ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
+
+  auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
+  ON_CALL(*decompressor, decompress_uri(_)).WillByDefault(Return("some/path"));
+  EXPECT_CALL(*decompressor, decompress_uri(_)).Times(1);
+
+  auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
+  ON_CALL(*compression_factory, create_decompressor(_))
+  .WillByDefault(Return(ByMove(std::move(decompressor))));
+  EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
+  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(1);
+
+  auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
+  reader_->open(
+    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
 }
