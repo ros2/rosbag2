@@ -143,3 +143,47 @@ TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
   reader_->open(
     rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
 }
+
+TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfile)
+{
+  const auto relative_path_1 = "/path/to/storage1";
+  const auto relative_path_2 = "/path/to/storage2";
+  rosbag2_storage::BagMetadata metadata;
+  metadata.relative_file_paths = {relative_path_1, relative_path_2};
+  metadata.topics_with_message_count.push_back({{topic_with_type_}, 10});
+  metadata.bag_size = 512000;
+  metadata.compression_format = "zstd";
+  metadata.compression_mode =
+    rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
+  ON_CALL(*metadata_io_, read_metadata(_)).WillByDefault(Return(metadata));
+  ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
+
+  auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
+  // We are mocking two splits, so decompression should occur twice
+  EXPECT_CALL(*decompressor, decompress_uri(_))
+  .WillOnce(Return(relative_path_1))
+  .WillOnce(Return(relative_path_2));
+
+  auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
+  ON_CALL(*compression_factory, create_decompressor(_))
+  .WillByDefault(Return(ByMove(std::move(decompressor))));
+  EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
+  // open_read_only should be called twice when opening 2 split storage objects
+  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(2);
+  // storage::has_next() is called twice when reader::has_next() is called
+  EXPECT_CALL(*storage_, has_next()).Times(2)
+  .WillOnce(Return(false))  // Load the next file
+  .WillOnce(Return(true));  // We have a message from the new file
+
+  auto compression_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+
+  compression_reader->open(
+    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+  EXPECT_EQ(compression_reader->has_next_file(), true);
+  compression_reader->has_next();
+  compression_reader->read_next();
+}
