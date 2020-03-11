@@ -143,8 +143,8 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(start_time_ +
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::this_thread::sleep_until(
+      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
         1.0 / rate * message.time_since_start));
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
