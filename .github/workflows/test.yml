@@ -21,6 +21,7 @@ jobs:
     - uses: ros-tooling/action-ros-ci@0.0.13
       with:
         package-name: ros2bag rosbag2_compression rosbag2_cpp rosbag2_storage rosbag2_storage_default_plugins rosbag2_test_common rosbag2_tests shared_queues_vendor sqlite3_vendor
+        vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/rosbag2.repos"
     - uses: actions/upload-artifact@master
       with:
         name: colcon-logs
