@@ -159,16 +159,17 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
   ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
 
   auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
-  // We are mocking two splits, so decompression should occur twice
-  EXPECT_CALL(*decompressor, decompress_uri(_))
+  // We are mocking two splits, so only file decompression should occur twice
+  EXPECT_CALL(*decompressor, decompress_uri(_)).Times(2)
   .WillOnce(Return(relative_path_1))
   .WillOnce(Return(relative_path_2));
+  EXPECT_CALL(*decompressor, decompress_serialized_bag_message(_)).Times(0);
 
   auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
   ON_CALL(*compression_factory, create_decompressor(_))
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
-  // open_read_only should be called twice when opening 2 split storage objects
+  // open_read_only should be called twice when opening 2 split bags
   EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(2);
   // storage::has_next() is called twice when reader::has_next() is called
   EXPECT_CALL(*storage_, has_next()).Times(2)
@@ -184,6 +185,6 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
   compression_reader->open(
     rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
   EXPECT_EQ(compression_reader->has_next_file(), true);
-  compression_reader->has_next();
+  EXPECT_EQ(compression_reader->has_next(), true);
   compression_reader->read_next();
 }

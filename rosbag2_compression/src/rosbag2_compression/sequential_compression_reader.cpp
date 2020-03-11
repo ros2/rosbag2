@@ -159,7 +159,7 @@ void SequentialCompressionReader::load_next_file()
   }
 
   if (compression_mode_ == rosbag2_compression::CompressionMode::NONE) {
-    throw std::runtime_error{"Cannot use SequentialCompressionWriter with NONE compression."};
+    throw std::runtime_error{"Cannot use SequentialCompressionWriter with NONE compression mode."};
   }
 
   ++current_file_iterator_;
