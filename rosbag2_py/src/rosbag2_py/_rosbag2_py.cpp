@@ -72,7 +72,7 @@ private:
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_rosbag2_py, m) {
-  m.doc() = "Python wrapper of rosbag2 implementation";
+  m.doc() = "Python wrapper of the rosbag2_cpp API";
 
   pybind11::class_<rosbag2_py::SequentialReader>(m, "SequentialReader")
   .def(pybind11::init())

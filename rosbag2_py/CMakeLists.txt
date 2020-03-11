@@ -17,9 +17,8 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
-find_package(rosbag2_cpp REQUIRED)
-
 find_package(pybind11 REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
