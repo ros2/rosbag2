@@ -11,9 +11,13 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    name: build_and_test_${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-2019]
     steps:
-    - uses: ros-tooling/setup-ros@0.0.13
+    - uses: ros-tooling/setup-ros@0.0.15
     - uses: ros-tooling/action-ros-ci@0.0.13
       with:
         package-name: ros2bag rosbag2_compression rosbag2_cpp rosbag2_storage rosbag2_storage_default_plugins rosbag2_test_common rosbag2_tests shared_queues_vendor sqlite3_vendor
