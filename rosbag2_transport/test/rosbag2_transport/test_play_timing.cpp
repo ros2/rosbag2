@@ -146,7 +146,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
   prepared_mock_reader->prepare(messages, topics_and_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  play_options_.rate = -1.23;
+  play_options_.rate = -1.23f;
   start = std::chrono::steady_clock::now();
   rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
   rosbag2_transport.play(storage_options_, play_options_);
