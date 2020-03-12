@@ -52,14 +52,13 @@ private:
     std::chrono::milliseconds topic_polling_interval,
     const std::vector<std::string> & requested_topics = {});
 
-  std::unordered_map<std::string, std::string>
+  TopicNamesToTypes
   get_requested_or_available_topics(const std::vector<std::string> & requested_topics);
 
-  std::unordered_map<std::string, std::string>
-  get_missing_topics(const std::unordered_map<std::string, std::string> & topics);
+  TopicNamesToTypes
+  get_missing_topics(const TopicNamesToTypes & topics);
 
-  void subscribe_topics(
-    const std::unordered_map<std::string, std::string> & topics_and_types);
+  void subscribe_topics(const TopicNamesToTypes & topics_and_types);
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 

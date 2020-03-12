@@ -78,7 +78,7 @@ void Recorder::topics_discovery(
   }
 }
 
-std::unordered_map<std::string, std::string>
+TopicNamesToTypes
 Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
 {
   return requested_topics.empty() ?
@@ -86,10 +86,9 @@ Recorder::get_requested_or_available_topics(const std::vector<std::string> & req
          node_->get_topics_with_types(requested_topics);
 }
 
-std::unordered_map<std::string, std::string>
-Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & topics)
+TopicNamesToTypes Recorder::get_missing_topics(const TopicNamesToTypes & topics)
 {
-  std::unordered_map<std::string, std::string> missing_topics;
+  TopicNamesToTypes missing_topics;
   for (const auto & i : topics) {
     if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
       missing_topics.emplace(i.first, i.second);
@@ -98,8 +97,7 @@ Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> 
   return missing_topics;
 }
 
-void Recorder::subscribe_topics(
-  const std::unordered_map<std::string, std::string> & topics_and_types)
+void Recorder::subscribe_topics(const TopicNamesToTypes & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
     subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});

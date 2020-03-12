@@ -30,6 +30,8 @@
 namespace rosbag2_transport
 {
 
+typedef std::unordered_map<std::string, std::string> TopicNamesToTypes;
+
 class Rosbag2Node : public rclcpp::Node
 {
 public:
@@ -46,16 +48,16 @@ public:
     const std::string & type,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
-  std::unordered_map<std::string, std::string>
+  TopicNamesToTypes
   get_topics_with_types(const std::vector<std::string> & topic_names);
 
   std::string
   expand_topic_name(const std::string & topic_name);
 
-  std::unordered_map<std::string, std::string>
+  TopicNamesToTypes
   get_all_topics_with_types();
 
-  std::unordered_map<std::string, std::string>
+  TopicNamesToTypes
   filter_topics_with_more_than_one_type(
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };
