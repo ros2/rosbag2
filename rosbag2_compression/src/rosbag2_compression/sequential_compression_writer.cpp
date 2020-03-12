@@ -211,7 +211,7 @@ void SequentialCompressionWriter::compress_last_file()
 
     metadata_.relative_file_paths.back() = compressed_uri;
 
-    if (rcpputils::fs::remove(to_compress)) {
+    if (!rcpputils::fs::remove(to_compress)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
         "Failed to remove uncompressed bag: \"" << to_compress.string() << "\"");
     }
