@@ -82,10 +82,17 @@ void SequentialCompressionReader::open(
     storage_ = storage_factory_->open_read_only(
       *current_file_iterator_, metadata_.storage_identifier);
     if (!storage_) {
-      throw std::runtime_error{"No storage could be initialized. Abort"};
+      std::stringstream errmsg;
+      errmsg << "No storage could be initialized for: \"" <<
+        storage_options.uri << "\".";
+
+      throw std::runtime_error{errmsg.str()};
     }
   } else {
-    throw std::runtime_error{"Compression is not supported for legacy bag files."};
+    std::stringstream errmsg;
+    errmsg << "Could not find metadata for bag: \"" << storage_options.uri <<
+      "\". Legacy bag files are not supported if this is a ROS 1 bag file.";
+    throw std::runtime_error{errmsg.str()};
   }
   const auto & topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
@@ -151,12 +158,19 @@ void SequentialCompressionReader::load_next_file()
     throw std::runtime_error{"Cannot load next file; already on last file!"};
   }
 
-  if (decompressor_) {
-    throw std::runtime_error{"Bagfile is not opened"};
+  if (compression_mode_ == rosbag2_compression::CompressionMode::NONE) {
+    throw std::runtime_error{"Cannot use SequentialCompressionWriter with NONE compression mode."};
   }
 
   ++current_file_iterator_;
   if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
+    if (decompressor_ == nullptr) {
+      throw std::runtime_error{
+              "The bag file was not properly opened. "
+              "Somehow the compression mode was set without opening a decompressor."
+      };
+    }
+
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
   }
