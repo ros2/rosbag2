@@ -90,7 +90,12 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(pluginlib rosbag2_storage rosidl_typesupport_introspection_cpp)
+ament_export_dependencies(pluginlib
+  rosbag2_storage
+  rosidl_runtime_c
+  rosidl_runtime_cpp
+  rosidl_typesupport_introspection_cpp
+  )
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
@@ -165,7 +170,7 @@ if(BUILD_TESTING)
       Poco
       rcutils
       rosbag2_storage
-      rosidl_generator_cpp
+      rosidl_runtime_cpp
       rosidl_typesupport_introspection_cpp
       rosidl_typesupport_cpp
       test_msgs)
