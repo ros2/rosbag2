@@ -49,7 +49,6 @@ ament_target_dependencies(${PROJECT_NAME}
   rmw
   rosbag2_compression
   rosbag2_cpp
-  rosidl_generator_cpp
   shared_queues_vendor
 )
 
