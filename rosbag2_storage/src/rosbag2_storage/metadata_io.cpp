@@ -48,6 +48,9 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
+    for (auto s : topic.offered_qos_profiles) {
+      node["offered_qos_profiles"].push_back(s);
+    }
     return node;
   }
 
@@ -56,7 +59,10 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
-
+    auto profiles = node["offered_qos_profiles"];
+    for (auto p : profiles) {
+      topic.offered_qos_profiles.push_back(p.as<std::string>());
+    }
     return true;
   }
 };
