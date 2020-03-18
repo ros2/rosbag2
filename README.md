@@ -154,7 +154,7 @@ def generate_launch_description():
 Use the `ros2 launch` command line tool to launch either of the above launch scripts.
 For example, if we named the above XML launch script, `record_all.launch.xml`:
 
-```
+```sh
 $ ros2 launch record_all.launch.xml
 ```
 
