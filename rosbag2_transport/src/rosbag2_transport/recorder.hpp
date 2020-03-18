@@ -62,7 +62,10 @@ private:
 
   void subscribe_topics(const TopicsMap & topics_and_types);
 
-  void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
+  void subscribe_topic(
+    std::string name,
+    std::string type,
+    std::string serialization_format);
 
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);

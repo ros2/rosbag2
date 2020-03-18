@@ -32,6 +32,76 @@
 #include "rosbag2_node.hpp"
 #include "types.hpp"
 
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
+namespace YAML
+{
+
+template<>
+struct convert<rmw_time_t>
+{
+  static Node encode(const rmw_time_t & time)
+  {
+    Node node;
+    node["sec"] = time.sec;
+    node["nsec"] = time.nsec;
+    return node;
+  }
+  static bool decode(const Node & node, rmw_time_t & time)
+  {
+    time.sec = node["sec"].as<int>();
+    time.nsec = node["nsec"].as<int>();
+    return true;
+  }
+};
+
+template<>
+struct convert<rclcpp::QoS>
+{
+  static Node encode(const rclcpp::QoS & qos)
+  {
+    const auto & p = qos.get_rmw_qos_profile();
+    Node node;
+    node["history"] = (int)p.history;
+    node["depth"] = p.depth;
+    node["reliability"] = (int)p.reliability;
+    node["durability"] = (int)p.durability;
+    node["deadline"] = p.deadline;
+    node["lifespan"] = p.lifespan;
+    node["liveliness"] = (int)p.liveliness;
+    node["liveliness_lease_duration"] = p.liveliness_lease_duration;
+    node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
+    return node;
+  }
+  static bool decode(const Node & node, rclcpp::QoS & qos)
+  {
+    qos
+      .keep_last(node["depth"].as<int>())
+      .history((rmw_qos_history_policy_t)node["history"].as<int>())
+      .reliability((rmw_qos_reliability_policy_t)node["reliability"].as<int>())
+      .durability((rmw_qos_durability_policy_t)node["durability"].as<int>())
+      .deadline(node["deadline"].as<rmw_time_t>())
+      .lifespan(node["lifespan"].as<rmw_time_t>())
+      .liveliness((rmw_qos_liveliness_policy_t)node["liveliness"].as<int>())
+      .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
+      .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>())
+    ;
+    return true;
+  }
+};
+}  // namespace YAML
+
 namespace rosbag2_transport
 {
 
@@ -131,17 +201,24 @@ TopicsMap Recorder::get_missing_topics(const TopicsMap & topics)
 void Recorder::subscribe_topics(const TopicsMap & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
+    subscribe_topic(topic_with_type.first, topic_with_type.second, serialization_format_);
   }
 }
 
-void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
+void Recorder::subscribe_topic(std::string name, std::string type, std::string serialization_format)
 {
-  auto endpoint_info = node_->get_publishers_info_by_topic(topic.name);
+  rosbag2_storage::TopicMetadata topic {name, type, serialization_format, {}};
+
+  auto publishers_info = node_->get_publishers_info_by_topic(topic.name);
   ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
-  for (auto info : endpoint_info) {
+  for (auto info : publishers_info) {
+    YAML::Node profile_node;
+    profile_node = info.qos_profile();
+    std::string serialized = YAML::Dump(profile_node);
+
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  Node " << info.node_namespace() << "/" << info.node_name());
     ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  QoS " << info.qos_profile());
+    topic.offered_qos_profiles.push_back(serialized);
   }
 
   // Need to create topic in writer before we are trying to create subscription. Since in
@@ -149,7 +226,6 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
   auto subscription = create_subscription(topic.name, topic.type);
-
   if (subscription) {
     subscribed_topics_.insert(topic.name);
     subscriptions_.push_back(subscription);
