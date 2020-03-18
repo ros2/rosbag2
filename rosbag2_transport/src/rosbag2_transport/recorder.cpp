@@ -27,11 +27,42 @@
 
 #include "rosbag2_transport/logging.hpp"
 
+#include "enum.h"
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
+#include "types.hpp"
 
 namespace rosbag2_transport
 {
+
+BETTER_ENUM(Reliability, int, SYSTEM_DEFAULT, RELIABLE, BEST_EFFORT, UNKNOWN)
+BETTER_ENUM(History, int, SYSTEM_DEFAULT, KEEP_LAST, KEEP_ALL, UNKNOWN)
+BETTER_ENUM(Durability, int, SYSTEM_DEFAULT, TRANSIENT_LOCAL, VOLATILE, UNKNOWN)
+BETTER_ENUM(Liveliness, int, SYSTEM_DEFAULT, AUTOMATIC, MANUAL_BY_NODE, MANUAL_BY_TOPIC, UNKNOWN)
+
+
+std::ostream& operator<<(std::ostream& os, rmw_time_t time)
+{
+  os.precision(3);
+  double ms = (time.sec * 1000L) + (time.nsec / 1000000.0);
+  os << ms << " ms";
+  return os;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const rclcpp::QoS& qos)
+{
+  const auto & p = qos.get_rmw_qos_profile();
+  os << "History: " << History::_from_integral(p.history) << " (" << p.depth << ")" << std::endl;
+  os << "Reliability: " << Reliability::_from_integral(p.reliability) << std::endl;
+  os << "Durability: " << Durability::_from_integral(p.durability) << std::endl;
+  os << "Deadline: " << p.deadline << std::endl;
+  os << "Lifespan: " << p.lifespan << std::endl;
+  os << "Liveliness: " << Liveliness::_from_integral(p.liveliness)
+     << " (" << p.liveliness_lease_duration << ")" << std::endl;
+  return os;
+}
+
 Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node)
 : writer_(std::move(writer)), node_(std::move(node)) {}
 
@@ -106,6 +137,13 @@ void Recorder::subscribe_topics(const TopicNamesToTypes & topics_and_types)
 
 void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  auto endpoint_info = node_->get_publishers_info_by_topic(topic.name);
+  ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
+  for (auto info : endpoint_info) {
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  Node " << info.node_namespace() << "/" << info.node_name());
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  QoS " << info.qos_profile());
+  }
+
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)

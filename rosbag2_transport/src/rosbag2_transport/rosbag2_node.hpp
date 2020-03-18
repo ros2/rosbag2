@@ -26,11 +26,10 @@
 
 #include "generic_publisher.hpp"
 #include "generic_subscription.hpp"
+#include "types.hpp"
 
 namespace rosbag2_transport
 {
-
-typedef std::unordered_map<std::string, std::string> TopicNamesToTypes;
 
 class Rosbag2Node : public rclcpp::Node
 {

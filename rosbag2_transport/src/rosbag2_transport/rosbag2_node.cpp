@@ -27,6 +27,8 @@
 
 #include "rosbag2_transport/logging.hpp"
 
+#include "types.hpp"
+
 namespace rosbag2_transport
 {
 
