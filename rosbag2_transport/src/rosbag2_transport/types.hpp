@@ -21,7 +21,15 @@
 namespace rosbag2_transport
 {
 
-typedef std::unordered_map<std::string, std::string> TopicNamesToTypes;
+typedef std::string TopicType;
+typedef std::vector<std::string> TopicQoSProfiles;
+struct TopicDetails {
+  TopicType type;
+  TopicQoSProfiles offered_qos_profiles;
+};
+
+typedef std::unordered_map<std::string, std::string> TopicsMap;
+// typedef std::unordered_map<std::string, TopicDetails> TopicsMap;
 
 }  // namespace rosbag2_transport
 

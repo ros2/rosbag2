@@ -109,7 +109,7 @@ void Recorder::topics_discovery(
   }
 }
 
-TopicNamesToTypes
+TopicsMap
 Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
 {
   return requested_topics.empty() ?
@@ -117,9 +117,9 @@ Recorder::get_requested_or_available_topics(const std::vector<std::string> & req
          node_->get_topics_with_types(requested_topics);
 }
 
-TopicNamesToTypes Recorder::get_missing_topics(const TopicNamesToTypes & topics)
+TopicsMap Recorder::get_missing_topics(const TopicsMap & topics)
 {
-  TopicNamesToTypes missing_topics;
+  TopicsMap missing_topics;
   for (const auto & i : topics) {
     if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
       missing_topics.emplace(i.first, i.second);
@@ -128,7 +128,7 @@ TopicNamesToTypes Recorder::get_missing_topics(const TopicNamesToTypes & topics)
   return missing_topics;
 }
 
-void Recorder::subscribe_topics(const TopicNamesToTypes & topics_and_types)
+void Recorder::subscribe_topics(const TopicsMap & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
     subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});

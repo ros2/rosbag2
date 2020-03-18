@@ -47,16 +47,16 @@ public:
     const std::string & type,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
-  TopicNamesToTypes
+  TopicsMap
   get_topics_with_types(const std::vector<std::string> & topic_names);
 
   std::string
   expand_topic_name(const std::string & topic_name);
 
-  TopicNamesToTypes
+  TopicsMap
   get_all_topics_with_types();
 
-  TopicNamesToTypes
+  TopicsMap
   filter_topics_with_more_than_one_type(
     std::map<std::string, std::vector<std::string>> topics_and_types);
 };

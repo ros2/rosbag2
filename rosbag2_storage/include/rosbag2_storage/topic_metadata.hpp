@@ -16,6 +16,7 @@
 #define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
 #include <string>
+#include <vector>
 
 namespace rosbag2_storage
 {
@@ -25,8 +26,7 @@ struct TopicMetadata
   std::string name;
   std::string type;
   std::string serialization_format;
-  // Serialized representation of all QoS profiles that were offered by Publishers of this topic.
-  // std::vector<std::string> offered_qos_profiles;
+  std::vector<std::string> offered_qos_profiles;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {

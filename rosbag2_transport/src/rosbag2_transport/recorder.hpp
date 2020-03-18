@@ -54,13 +54,13 @@ private:
     std::chrono::milliseconds topic_polling_interval,
     const std::vector<std::string> & requested_topics = {});
 
-  TopicNamesToTypes
+  TopicsMap
   get_requested_or_available_topics(const std::vector<std::string> & requested_topics);
 
-  TopicNamesToTypes
-  get_missing_topics(const TopicNamesToTypes & topics);
+  TopicsMap
+  get_missing_topics(const TopicsMap & topics);
 
-  void subscribe_topics(const TopicNamesToTypes & topics_and_types);
+  void subscribe_topics(const TopicsMap & topics_and_types);
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
