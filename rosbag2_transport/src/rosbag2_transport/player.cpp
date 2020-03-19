@@ -64,7 +64,7 @@ rclcpp::QoS get_publisher_qos(const std::string & serialized_profiles)
     return previous;
   } else {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Topic " << topic.name << " had publishers offering different QoS settings. "
+      "Topic had publishers offering different QoS settings. "
       "Can't guess what QoS to offer, falling back to default QoS profile."
     );
     return rclcpp::QoS(10);
