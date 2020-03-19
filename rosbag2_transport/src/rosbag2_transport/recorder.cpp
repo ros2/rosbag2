@@ -119,6 +119,11 @@ std::ostream& operator<<(std::ostream& os, rmw_time_t time)
   return os;
 }
 
+bool operator==(const rmw_time_t & left, const rmw_time_t & right)
+{
+  return left.sec == right.sec && left.nsec == right.nsec;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const rclcpp::QoS& qos)
 {
@@ -131,6 +136,20 @@ std::ostream& operator<<(std::ostream& os, const rclcpp::QoS& qos)
   os << "Liveliness: " << Liveliness::_from_integral(p.liveliness)
      << " (" << p.liveliness_lease_duration << ")" << std::endl;
   return os;
+}
+
+bool operator==(const rclcpp::QoS& left, const rclcpp::QoS & right)
+{
+  const auto & pl = left.get_rmw_qos_profile();
+  const auto & pr = right.get_rmw_qos_profile();
+  return pl.history == pr.history &&
+         pl.depth == pr.depth &&
+         pl.reliability == pr.reliability &&
+         pl.durability == pr.durability &&
+         pl.deadline == pr.deadline &&
+         pl.lifespan == pr.lifespan &&
+         pl.liveliness == pr.liveliness &&
+         pl.liveliness_lease_duration == pr.liveliness_lease_duration;
 }
 
 Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node)
@@ -208,6 +227,10 @@ void Recorder::subscribe_topics(const TopicsMap & topics_and_types)
 void Recorder::subscribe_topic(std::string name, std::string type, std::string serialization_format)
 {
   rosbag2_storage::TopicMetadata topic {name, type, serialization_format, {}};
+  rclcpp::QoS last_qos(10);
+  bool first = true;
+  bool all_qos_same = true;
+  rclcpp::QoS subscription_qos(10);
 
   auto publishers_info = node_->get_publishers_info_by_topic(topic.name);
   ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
@@ -215,17 +238,33 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
     YAML::Node profile_node;
     profile_node = info.qos_profile();
     std::string serialized = YAML::Dump(profile_node);
-
-    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  Node " << info.node_namespace() << "/" << info.node_name());
-    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("  QoS " << info.qos_profile());
     topic.offered_qos_profiles.push_back(serialized);
+
+
+    if (!first) {
+      all_qos_same &= last_qos == info.qos_profile();
+    }
+    first = false;
+    last_qos = info.qos_profile();
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("---" << std::endl << last_qos);
+  }
+  if (all_qos_same) {
+    subscription_qos = last_qos;
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM(
+      "OK! All publishers for topic " << topic.name <<
+      " offering the same QoS profile - using it to subscribe.");
+  } else {
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "Topic " << topic.name << " has publishers offering different QoS settings. "
+      "Can't guess what QoS to request, falling back to default QoS profile."
+    );
   }
 
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
-  auto subscription = create_subscription(topic.name, topic.type);
+  auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscribed_topics_.insert(topic.name);
     subscriptions_.push_back(subscription);
@@ -238,11 +277,12 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
 
 std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
-  const std::string & topic_name, const std::string & topic_type)
+  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
+    qos,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;

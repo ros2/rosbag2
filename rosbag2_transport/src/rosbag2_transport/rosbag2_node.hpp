@@ -45,6 +45,7 @@ public:
   create_generic_subscription(
     const std::string & topic,
     const std::string & type,
+    const rclcpp::QoS & qos,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   TopicsMap

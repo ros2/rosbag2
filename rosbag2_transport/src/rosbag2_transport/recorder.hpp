@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -68,7 +69,7 @@ private:
     std::string serialization_format);
 
   std::shared_ptr<GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type);
+    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   void record_messages() const;
 

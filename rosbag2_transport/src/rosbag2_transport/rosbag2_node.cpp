@@ -46,6 +46,7 @@ std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
 std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const std::string & topic,
   const std::string & type,
+  const rclcpp::QoS & qos,
   std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 {
   auto type_support = rosbag2_cpp::get_typesupport(type, "rosidl_typesupport_cpp");
@@ -57,6 +58,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
       get_node_base_interface().get(),
       *type_support,
       topic,
+      qos,
       callback);
 
     get_node_topics_interface()->add_subscription(subscription, nullptr);
