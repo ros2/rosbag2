@@ -226,12 +226,12 @@ void SqliteStorage::prepare_for_reading()
 void SqliteStorage::fill_topics_and_types()
 {
   auto statement = database_->prepare_statement(
-    "SELECT name, type, offered_qos_profiles FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<std::string, std::string, std::string>();
+    "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string, std::string, std::string>();
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), {}});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)});
   }
 }
 
@@ -271,9 +271,17 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
+    std::string name = std::get<0>(result);
+    std::string type = std::get<1>(result);
+    std::string serialization_format = std::get<2>(result);
+    std::string offered_qos_profiles = std::get<3>(result);
+
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+      "READING METADATA FOR TOPIC " << name << " qos " << offered_qos_profiles);
+
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)},
+        {name, type, serialization_format, offered_qos_profiles},
         static_cast<size_t>(std::get<4>(result))
       });
 

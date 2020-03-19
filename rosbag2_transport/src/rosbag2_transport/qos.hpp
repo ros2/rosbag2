@@ -58,8 +58,8 @@ struct convert<rmw_time_t>
   }
   static bool decode(const Node & node, rmw_time_t & time)
   {
-    time.sec = node["sec"].as<int>();
-    time.nsec = node["nsec"].as<int>();
+    time.sec = node["sec"].as<uint>();
+    time.nsec = node["nsec"].as<uint>();
     return true;
   }
 };
