@@ -18,8 +18,11 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <memory>
 
 #include "rosbag2_cpp/visibility_control.hpp"
+
+#include "rcpputils/shared_library.hpp"
 
 #include "rosidl_generator_cpp/message_type_support_decl.hpp"
 
@@ -28,7 +31,9 @@ namespace rosbag2_cpp
 
 ROSBAG2_CPP_PUBLIC
 const rosidl_message_type_support_t *
-get_typesupport(const std::string & type, const std::string & typesupport_identifier);
+get_typesupport(
+  const std::string & type, const std::string & typesupport_identifier,
+  std::shared_ptr<rcpputils::SharedLibrary> & library);
 
 ROSBAG2_CPP_PUBLIC
 const std::tuple<std::string, std::string, std::string>
