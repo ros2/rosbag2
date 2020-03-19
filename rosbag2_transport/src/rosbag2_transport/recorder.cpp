@@ -31,6 +31,7 @@
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
 #include "types.hpp"
+#include "qos.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -45,112 +46,8 @@
 # pragma warning(pop)
 #endif
 
-namespace YAML
-{
-
-template<>
-struct convert<rmw_time_t>
-{
-  static Node encode(const rmw_time_t & time)
-  {
-    Node node;
-    node["sec"] = time.sec;
-    node["nsec"] = time.nsec;
-    return node;
-  }
-  static bool decode(const Node & node, rmw_time_t & time)
-  {
-    time.sec = node["sec"].as<int>();
-    time.nsec = node["nsec"].as<int>();
-    return true;
-  }
-};
-
-template<>
-struct convert<rclcpp::QoS>
-{
-  static Node encode(const rclcpp::QoS & qos)
-  {
-    const auto & p = qos.get_rmw_qos_profile();
-    Node node;
-    node["history"] = (int)p.history;
-    node["depth"] = p.depth;
-    node["reliability"] = (int)p.reliability;
-    node["durability"] = (int)p.durability;
-    node["deadline"] = p.deadline;
-    node["lifespan"] = p.lifespan;
-    node["liveliness"] = (int)p.liveliness;
-    node["liveliness_lease_duration"] = p.liveliness_lease_duration;
-    node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
-    return node;
-  }
-  static bool decode(const Node & node, rclcpp::QoS & qos)
-  {
-    qos
-      .keep_last(node["depth"].as<int>())
-      .history((rmw_qos_history_policy_t)node["history"].as<int>())
-      .reliability((rmw_qos_reliability_policy_t)node["reliability"].as<int>())
-      .durability((rmw_qos_durability_policy_t)node["durability"].as<int>())
-      .deadline(node["deadline"].as<rmw_time_t>())
-      .lifespan(node["lifespan"].as<rmw_time_t>())
-      .liveliness((rmw_qos_liveliness_policy_t)node["liveliness"].as<int>())
-      .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
-      .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>())
-    ;
-    return true;
-  }
-};
-}  // namespace YAML
-
 namespace rosbag2_transport
 {
-
-BETTER_ENUM(Reliability, int, SYSTEM_DEFAULT, RELIABLE, BEST_EFFORT, UNKNOWN)
-BETTER_ENUM(History, int, SYSTEM_DEFAULT, KEEP_LAST, KEEP_ALL, UNKNOWN)
-BETTER_ENUM(Durability, int, SYSTEM_DEFAULT, TRANSIENT_LOCAL, VOLATILE, UNKNOWN)
-BETTER_ENUM(Liveliness, int, SYSTEM_DEFAULT, AUTOMATIC, MANUAL_BY_NODE, MANUAL_BY_TOPIC, UNKNOWN)
-
-
-std::ostream& operator<<(std::ostream& os, rmw_time_t time)
-{
-  os.precision(3);
-  double ms = (time.sec * 1000L) + (time.nsec / 1000000.0);
-  os << ms << " ms";
-  return os;
-}
-
-bool operator==(const rmw_time_t & left, const rmw_time_t & right)
-{
-  return left.sec == right.sec && left.nsec == right.nsec;
-}
-
-
-std::ostream& operator<<(std::ostream& os, const rclcpp::QoS& qos)
-{
-  const auto & p = qos.get_rmw_qos_profile();
-  os << "History: " << History::_from_integral(p.history) << " (" << p.depth << ")" << std::endl;
-  os << "Reliability: " << Reliability::_from_integral(p.reliability) << std::endl;
-  os << "Durability: " << Durability::_from_integral(p.durability) << std::endl;
-  os << "Deadline: " << p.deadline << std::endl;
-  os << "Lifespan: " << p.lifespan << std::endl;
-  os << "Liveliness: " << Liveliness::_from_integral(p.liveliness)
-     << " (" << p.liveliness_lease_duration << ")" << std::endl;
-  return os;
-}
-
-bool operator==(const rclcpp::QoS& left, const rclcpp::QoS & right)
-{
-  const auto & pl = left.get_rmw_qos_profile();
-  const auto & pr = right.get_rmw_qos_profile();
-  return pl.history == pr.history &&
-         pl.depth == pr.depth &&
-         pl.reliability == pr.reliability &&
-         pl.durability == pr.durability &&
-         pl.deadline == pr.deadline &&
-         pl.lifespan == pr.lifespan &&
-         pl.liveliness == pr.liveliness &&
-         pl.liveliness_lease_duration == pr.liveliness_lease_duration;
-}
 
 Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node)
 : writer_(std::move(writer)), node_(std::move(node)) {}
@@ -236,7 +133,7 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
   ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
   for (auto info : publishers_info) {
     YAML::Node profile_node;
-    profile_node = info.qos_profile();
+    profile_node = Rosbag2QoS(info.qos_profile());
     std::string serialized = YAML::Dump(profile_node);
     topic.offered_qos_profiles.push_back(serialized);
 

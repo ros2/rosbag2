@@ -37,10 +37,10 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name)
 {}
 
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
-  const std::string & topic, const std::string & type)
+  const std::string & topic, const std::string & type, const rclcpp::QoS & qos)
 {
   auto type_support = rosbag2_cpp::get_typesupport(type, "rosidl_typesupport_cpp");
-  return std::make_shared<GenericPublisher>(get_node_base_interface().get(), topic, *type_support);
+  return std::make_shared<GenericPublisher>(get_node_base_interface().get(), topic, qos, *type_support);
 }
 
 std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(

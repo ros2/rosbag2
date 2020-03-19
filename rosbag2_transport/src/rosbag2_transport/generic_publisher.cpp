@@ -17,14 +17,29 @@
 #include <memory>
 #include <string>
 
+namespace {
+rcl_publisher_options_t rosbag2_get_publisher_options(const rclcpp::QoS & qos)
+{
+  auto publisher_qos = qos;
+  publisher_qos.keep_last(10);
+  return {
+    publisher_qos.get_rmw_qos_profile(),
+    rcl_get_default_allocator(),
+    rmw_get_default_publisher_options(),
+  };
+}
+
+}
+
 namespace rosbag2_transport
 {
 
 GenericPublisher::GenericPublisher(
   rclcpp::node_interfaces::NodeBaseInterface * node_base,
   const std::string & topic,
+  const rclcpp::QoS & qos,
   const rosidl_message_type_support_t & type_support)
-: rclcpp::PublisherBase(node_base, topic, type_support, rcl_publisher_get_default_options())
+: rclcpp::PublisherBase(node_base, topic, type_support, rosbag2_get_publisher_options(qos))
 {}
 
 void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message)

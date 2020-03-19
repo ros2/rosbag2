@@ -36,6 +36,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/recorder.cpp
+  src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
