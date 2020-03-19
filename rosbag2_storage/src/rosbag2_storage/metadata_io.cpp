@@ -23,8 +23,9 @@
 #include "rcutils/filesystem.h"
 
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/logging.hpp"
 
-#ifdef _WIN32
+#ifdef _WIN2
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
 // This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
@@ -48,9 +49,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
-    for (auto s : topic.offered_qos_profiles) {
-      node["offered_qos_profiles"].push_back(s);
-    }
+    node["offered_qos_profiles"] = topic.offered_qos_profiles;
     return node;
   }
 
@@ -59,10 +58,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
-    auto profiles = node["offered_qos_profiles"];
-    for (auto p : profiles) {
-      topic.offered_qos_profiles.push_back(p.as<std::string>());
-    }
+    topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
     return true;
   }
 };

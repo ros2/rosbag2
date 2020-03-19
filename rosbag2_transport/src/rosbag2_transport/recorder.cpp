@@ -131,13 +131,9 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
 
   auto publishers_info = node_->get_publishers_info_by_topic(topic.name);
   ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
+  YAML::Node offered_qos_profiles;
   for (auto info : publishers_info) {
-    YAML::Node profile_node;
-    profile_node = Rosbag2QoS(info.qos_profile());
-    std::string serialized = YAML::Dump(profile_node);
-    topic.offered_qos_profiles.push_back(serialized);
-
-
+    offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
     if (!first) {
       all_qos_same &= last_qos == info.qos_profile();
     }
@@ -145,6 +141,8 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
     last_qos = info.qos_profile();
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("---" << std::endl << last_qos);
   }
+
+  topic.offered_qos_profiles = YAML::Dump(offered_qos_profiles);
   if (all_qos_same) {
     subscription_qos = last_qos;
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM(
