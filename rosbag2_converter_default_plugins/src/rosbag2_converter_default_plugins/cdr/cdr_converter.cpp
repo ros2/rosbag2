@@ -67,6 +67,8 @@ CdrConverter::CdrConverter()
   } catch (std::runtime_error &) {
     throw std::runtime_error(
             std::string("poco exception: library could not be found:") + library_path);
+  } catch (std::bad_alloc &) {
+    throw std::bad_alloc();
   }
 
   std::string serialize_symbol = "rmw_serialize";

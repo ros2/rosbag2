@@ -139,6 +139,8 @@ get_typesupport(
     return type_support;
   } catch (std::runtime_error &) {
     throw std::runtime_error(rcutils_dynamic_loading_error.str() + " Library could not be found.");
+  } catch (std::bad_alloc &) {
+    throw std::bad_alloc();
   }
 }
 
