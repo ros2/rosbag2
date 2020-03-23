@@ -49,11 +49,13 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
     "        name: topic1\n"
     "        type: type1\n"
     "        serialization_format: rmw1\n"
+    "        qos_profile: qosprofile1\n"
     "      message_count: 100\n"
     "    - topic_metadata:\n"
     "        name: topic2\n"
     "        type: type2\n"
     "        serialization_format: rmw2\n"
+    "        qos_profile: qosprofile2\n"
     "      message_count: 200\n";
 
   {
@@ -82,7 +84,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   {
     const auto actual_first_topic = metadata.topics_with_message_count[0];
     const auto expected_first_topic =
-      rosbag2_storage::TopicInformation{{"topic1", "type1", "rmw1"}, 100};
+      rosbag2_storage::TopicInformation{{"topic1", "type1", "rmw1", "qosprofile1"}, 100};
 
     EXPECT_EQ(actual_first_topic.topic_metadata, expected_first_topic.topic_metadata);
     EXPECT_EQ(actual_first_topic.message_count, expected_first_topic.message_count);
@@ -91,7 +93,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   {
     const auto actual_second_topic = metadata.topics_with_message_count[1];
     const auto expected_second_topic =
-      rosbag2_storage::TopicInformation{{"topic2", "type2", "rmw2"}, 200};
+      rosbag2_storage::TopicInformation{{"topic2", "type2", "rmw2", "qosprofile2"}, 200};
 
     EXPECT_EQ(actual_second_topic.topic_metadata, expected_second_topic.topic_metadata);
     EXPECT_EQ(actual_second_topic.message_count, expected_second_topic.message_count);
@@ -117,11 +119,13 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     "        name: topic1\n"
     "        type: type1\n"
     "        serialization_format: rmw1\n"
+    "        qos_profile: qos_profile1\n"
     "      message_count: 100\n"
     "    - topic_metadata:\n"
     "        name: topic2\n"
     "        type: type2\n"
     "        serialization_format: rmw2\n"
+    "        qos_profile: qos_profile2\n"
     "      message_count: 200\n"
     "  compression_format: \"zstd\"\n"
     "  compression_mode: \"FILE\"\n");
@@ -148,7 +152,8 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_THAT(read_metadata.message_count, Eq(50u));
   EXPECT_THAT(read_metadata.topics_with_message_count, SizeIs(2u));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
-  rosbag2_storage::TopicInformation expected_first_topic = {{"topic1", "type1", "rmw1"}, 100};
+  rosbag2_storage::TopicInformation expected_first_topic =
+    {{"topic1", "type1", "rmw1", "qosprofile1"}, 100};
   EXPECT_THAT(
     actual_first_topic.topic_metadata.name,
     Eq(expected_first_topic.topic_metadata.name));
@@ -160,7 +165,8 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
     Eq(expected_first_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_first_topic.message_count, Eq(expected_first_topic.message_count));
   auto actual_second_topic = read_metadata.topics_with_message_count[1];
-  rosbag2_storage::TopicInformation expected_second_topic = {{"topic2", "type2", "rmw2"}, 200};
+  rosbag2_storage::TopicInformation expected_second_topic =
+    {{"topic2", "type2", "rmw2", "qosprofile2"}, 200};
   EXPECT_THAT(
     actual_second_topic.topic_metadata.name,
     Eq(expected_second_topic.topic_metadata.name));

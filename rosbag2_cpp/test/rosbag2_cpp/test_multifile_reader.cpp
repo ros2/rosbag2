@@ -43,7 +43,7 @@ public:
     relative_path_2_("some_relative_path_2")
   {
     auto topic_with_type = rosbag2_storage::TopicMetadata{
-      "topic", "test_msgs/BasicTypes", storage_serialization_format_};
+      "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
 
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
