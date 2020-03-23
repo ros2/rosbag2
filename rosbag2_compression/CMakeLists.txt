@@ -56,6 +56,7 @@ target_compile_definitions(${PROJECT_NAME}_zstd
 
 add_library(${PROJECT_NAME}
   SHARED
+  src/rosbag2_compression/compression_factory.cpp
   src/rosbag2_compression/compression_options.cpp
   src/rosbag2_compression/sequential_compression_reader.cpp
   src/rosbag2_compression/sequential_compression_writer.cpp)
@@ -107,6 +108,10 @@ if(BUILD_TESTING)
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN 1)
   target_compile_definitions(fake_compressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+
+  ament_add_gmock(test_compression_factory
+    test/rosbag2_compression/test_compression_factory.cpp)
+  target_link_libraries(test_compression_factory ${PROJECT_NAME})
 
   ament_add_gmock(test_compressor
     test/rosbag2_compression/test_compressor.cpp)

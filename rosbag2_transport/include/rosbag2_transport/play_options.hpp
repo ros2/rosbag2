@@ -26,6 +26,7 @@ struct PlayOptions
 public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
+  float rate = 1.0;
 };
 
 }  // namespace rosbag2_transport

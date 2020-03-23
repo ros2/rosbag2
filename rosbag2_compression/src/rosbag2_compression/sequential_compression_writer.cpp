@@ -52,17 +52,22 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 : storage_factory_{std::make_unique<rosbag2_storage::StorageFactory>()},
   converter_factory_{std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()},
   metadata_io_{std::make_unique<rosbag2_storage::MetadataIo>()},
-  compression_options_{compression_options} {}
+  compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
+  compression_options_{compression_options}
+{}
 
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options,
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory,
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_{std::move(storage_factory)},
   converter_factory_{std::move(converter_factory)},
   metadata_io_{std::move(metadata_io)},
-  compression_options_{compression_options} {}
+  compression_factory_{std::move(compression_factory)},
+  compression_options_{compression_options}
+{}
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
@@ -87,15 +92,7 @@ void SequentialCompressionWriter::setup_compression()
     throw std::invalid_argument{
             "SequentialCompressionWriter requires a CompressionMode that is not NONE!"};
   }
-
-  // TODO(zmichaels11) Support additional compression formats
-  if (compression_options_.compression_format == "zstd") {
-    compressor_ = std::make_unique<rosbag2_compression::ZstdCompressor>();
-  } else {
-    std::stringstream err;
-    err << "Unsupported compression format: \"" << compression_options_.compression_format << "\"";
-    throw std::invalid_argument{err.str()};
-  }
+  compressor_ = compression_factory_->create_compressor(compression_options_.compression_format);
 }
 
 void SequentialCompressionWriter::open(
@@ -214,7 +211,7 @@ void SequentialCompressionWriter::compress_last_file()
 
     metadata_.relative_file_paths.back() = compressed_uri;
 
-    if (rcpputils::fs::remove(to_compress)) {
+    if (!rcpputils::fs::remove(to_compress)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
         "Failed to remove uncompressed bag: \"" << to_compress.string() << "\"");
     }
