@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -64,7 +65,10 @@ private:
   void subscribe_topics(
     const std::unordered_map<std::string, std::string> & topics_and_types);
 
-  void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
+  void subscribe_topic(
+    std::string name,
+    std::string type,
+    std::string serialization_format);
 
   std::shared_ptr<GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type);
