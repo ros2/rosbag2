@@ -34,8 +34,8 @@ public:
   virtual ~BaseWriteInterface() = default;
 
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
-  // Method for bulk writes based on transactions
-  virtual void bulk_write(std::vector<std::shared_ptr<const SerializedBagMessage>> msg) = 0;
+
+  virtual void bulk_write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
 
   virtual void create_topic(const TopicMetadata & topic) = 0;
 

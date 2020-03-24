@@ -81,6 +81,8 @@ void SequentialWriter::open(
   base_folder_ = storage_options.uri;
   chunk_size_ = storage_options.chunk_size;
 
+  cache_.reserve(chunk_size_);
+
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
   {
@@ -205,7 +207,6 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   metadata_.duration = std::max(metadata_.duration, duration);
 
   cache_.push_back(converter_ ? converter_->convert(message) : message);
-
   if (cache_.size() >= chunk_size_) {
     storage_->bulk_write(cache_);
   }
