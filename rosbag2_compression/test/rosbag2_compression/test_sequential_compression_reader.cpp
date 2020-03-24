@@ -44,7 +44,7 @@ public:
     storage_serialization_format_{"rmw1_format"}
   {
     topic_with_type_ = rosbag2_storage::TopicMetadata{
-      "topic", "test_msgs/BasicTypes", storage_serialization_format_};
+      "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type_};
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type_.name;

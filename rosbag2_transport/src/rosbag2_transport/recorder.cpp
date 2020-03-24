@@ -110,20 +110,24 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic(topic_with_type.first, topic_with_type.second, serialization_format_);
+    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_, ""});
   }
 }
 
-void Recorder::subscribe_topic(std::string name, std::string type, std::string serialization_format)
+void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic_without_qos)
 {
-  rosbag2_storage::TopicMetadata topic {name, type, serialization_format, {}};
+  rosbag2_storage::TopicMetadata topic {
+    topic_without_qos.name,
+    topic_without_qos.type,
+    topic_without_qos.serialization_format,
+    ""};
   rclcpp::QoS last_qos(10);
   bool first = true;
   bool all_qos_same = true;
   rclcpp::QoS subscription_qos(10);
 
   auto publishers_info = node_->get_publishers_info_by_topic(topic.name);
-  ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Endpoints for topic " << topic.name);
+  ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Querying endpoints for topic " << topic.name);
   YAML::Node offered_qos_profiles;
   for (auto info : publishers_info) {
     offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
@@ -132,7 +136,7 @@ void Recorder::subscribe_topic(std::string name, std::string type, std::string s
     }
     first = false;
     last_qos = info.qos_profile();
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("---" << std::endl << last_qos);
+    // ROSBAG2_TRANSPORT_LOG_INFO_STREAM("---" << std::endl << last_qos);
   }
 
   topic.offered_qos_profiles = YAML::Dump(offered_qos_profiles);
