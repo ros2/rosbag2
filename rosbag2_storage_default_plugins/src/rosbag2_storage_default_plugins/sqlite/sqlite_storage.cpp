@@ -167,7 +167,8 @@ void SqliteStorage::initialize()
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
-    "serialization_format TEXT NOT NULL);";
+    "serialization_format TEXT NOT NULL," \
+    "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
@@ -182,10 +183,12 @@ void SqliteStorage::initialize()
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   if (topics_.find(topic.name) == std::end(topics_)) {
+
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM("sql creating topic " << topic.name << " with " << topic.offered_qos_profiles);
     auto insert_topic =
       database_->prepare_statement(
-      "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
-    insert_topic->bind(topic.name, topic.type, topic.serialization_format);
+      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) VALUES (?, ?, ?, ?)");
+    insert_topic->bind(topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
@@ -223,12 +226,12 @@ void SqliteStorage::prepare_for_reading()
 void SqliteStorage::fill_topics_and_types()
 {
   auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<std::string, std::string, std::string>();
+    "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string, std::string, std::string>();
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)});
   }
 }
 
@@ -257,26 +260,34 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.topics_with_message_count = {};
 
   auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
-    "MAX(messages.timestamp) "
+    "SELECT name, type, serialization_format, offered_qos_profiles, "
+    "COUNT(messages.id), MIN(messages.timestamp), MAX(messages.timestamp) "
     "FROM messages JOIN topics on topics.id = messages.topic_id "
     "GROUP BY topics.name;");
   auto query_results = statement->execute_query<
-    std::string, std::string, std::string, int, rcutils_time_point_value_t,
+    std::string, std::string, std::string, std::string, int, rcutils_time_point_value_t,
     rcutils_time_point_value_t>();
 
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
+    std::string name = std::get<0>(result);
+    std::string type = std::get<1>(result);
+    std::string serialization_format = std::get<2>(result);
+    std::string offered_qos_profiles = std::get<3>(result);
+
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+      "READING METADATA FOR TOPIC " << name << " qos " << offered_qos_profiles);
+
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
-        static_cast<size_t>(std::get<3>(result))
+        {name, type, serialization_format, offered_qos_profiles},
+        static_cast<size_t>(std::get<4>(result))
       });
 
-    metadata.message_count += std::get<3>(result);
-    min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
-    max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
+    metadata.message_count += std::get<4>(result);
+    min_time = std::get<4>(result) < min_time ? std::get<5>(result) : min_time;
+    max_time = std::get<5>(result) > max_time ? std::get<6>(result) : max_time;
   }
 
   if (metadata.message_count == 0) {

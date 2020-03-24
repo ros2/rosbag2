@@ -23,6 +23,7 @@
 #include "rcutils/filesystem.h"
 
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/logging.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -48,6 +49,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
+    node["offered_qos_profiles"] = topic.offered_qos_profiles;
     return node;
   }
 
@@ -56,7 +58,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
-
+    topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
     return true;
   }
 };
