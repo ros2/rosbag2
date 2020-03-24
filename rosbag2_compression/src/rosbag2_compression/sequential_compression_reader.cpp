@@ -142,6 +142,24 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialCompressionReader::get_all
   throw std::runtime_error{"Bag is not open. Call open() before reading."};
 }
 
+void SequentialCompressionReader::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  if (storage_) {
+    storage_->set_filter(storage_filter);
+    return;
+  }
+  throw std::runtime_error("Bag is not open. Call open() before setting "
+          "filter.");
+}
+
+void SequentialCompressionReader::reset_filter()
+{
+  if (storage_) {
+    storage_->reset_filter();
+  }
+}
+
 bool SequentialCompressionReader::has_next_file() const
 {
   // Handle case where bagfile is not split

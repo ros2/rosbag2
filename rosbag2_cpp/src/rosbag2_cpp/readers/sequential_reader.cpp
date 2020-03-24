@@ -138,7 +138,7 @@ void SequentialReader::set_filter(
     return;
   }
   throw std::runtime_error("Bag is not open. Call open() before setting "
-    "filter.");
+          "filter.");
 }
 
 void SequentialReader::reset_filter()
