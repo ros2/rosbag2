@@ -23,7 +23,6 @@
 #include "rcutils/filesystem.h"
 
 #include "rosbag2_storage/topic_metadata.hpp"
-#include "rosbag2_storage/logging.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake

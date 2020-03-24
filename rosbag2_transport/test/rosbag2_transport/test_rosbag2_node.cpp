@@ -64,7 +64,7 @@ public:
     std::vector<std::string> messages;
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(
-      topic_name, type, rclcpp::QoS(rclcpp::KeepAll()),
+      topic_name, type,
       [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
         auto string_message =
         memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
@@ -105,8 +105,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   std::string topic_name = "string_topic";
   std::string type = "test_msgs/Strings";
 
-  auto publisher = node_->create_generic_publisher(
-    topic_name, type, rclcpp::QoS(rclcpp::KeepAll()));
+  auto publisher = node_->create_generic_publisher(topic_name, type);
 
   auto subscriber_future_ = std::async(
     std::launch::async, [this, topic_name, type] {

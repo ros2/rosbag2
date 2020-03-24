@@ -183,8 +183,6 @@ void SqliteStorage::initialize()
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   if (topics_.find(topic.name) == std::end(topics_)) {
-
-    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM("sql creating topic " << topic.name << " with " << topic.offered_qos_profiles);
     auto insert_topic =
       database_->prepare_statement(
       "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) VALUES (?, ?, ?, ?)");
@@ -271,17 +269,9 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
-    std::string name = std::get<0>(result);
-    std::string type = std::get<1>(result);
-    std::string serialization_format = std::get<2>(result);
-    std::string offered_qos_profiles = std::get<3>(result);
-
-    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
-      "READING METADATA FOR TOPIC " << name << " qos " << offered_qos_profiles);
-
     metadata.topics_with_message_count.push_back(
       {
-        {name, type, serialization_format, offered_qos_profiles},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)},
         static_cast<size_t>(std::get<4>(result))
       });
 
