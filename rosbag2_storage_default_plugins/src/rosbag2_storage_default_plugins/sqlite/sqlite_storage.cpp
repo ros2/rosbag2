@@ -229,7 +229,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), {}});
   }
 }
 
@@ -271,7 +271,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), {}},
         static_cast<size_t>(std::get<3>(result))
       });
 
