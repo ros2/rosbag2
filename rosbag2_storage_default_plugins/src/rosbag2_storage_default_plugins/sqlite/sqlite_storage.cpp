@@ -224,12 +224,12 @@ void SqliteStorage::prepare_for_reading()
 void SqliteStorage::fill_topics_and_types()
 {
   auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<std::string, std::string, std::string, std::string>();
+    "SELECT name, type, serialization_format FROM topics ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string, std::string>();
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
   }
 }
 
@@ -258,12 +258,12 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.topics_with_message_count = {};
 
   auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format, offered_qos_profiles, "
-    "COUNT(messages.id), MIN(messages.timestamp), MAX(messages.timestamp) "
+    "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
+    "MAX(messages.timestamp) "
     "FROM messages JOIN topics on topics.id = messages.topic_id "
     "GROUP BY topics.name;");
   auto query_results = statement->execute_query<
-    std::string, std::string, std::string, std::string, int, rcutils_time_point_value_t,
+    std::string, std::string, std::string, int, rcutils_time_point_value_t,
     rcutils_time_point_value_t>();
 
   rcutils_time_point_value_t min_time = INT64_MAX;
@@ -271,13 +271,13 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)},
-        static_cast<size_t>(std::get<4>(result))
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        static_cast<size_t>(std::get<3>(result))
       });
 
-    metadata.message_count += std::get<4>(result);
-    min_time = std::get<4>(result) < min_time ? std::get<5>(result) : min_time;
-    max_time = std::get<5>(result) > max_time ? std::get<6>(result) : max_time;
+    metadata.message_count += std::get<3>(result);
+    min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
+    max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
   }
 
   if (metadata.message_count == 0) {

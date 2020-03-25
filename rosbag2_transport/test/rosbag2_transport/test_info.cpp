@@ -36,8 +36,8 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
     std::chrono::nanoseconds(1538051985348887471));    // corresponds to Sept 27 14:39:45.348
   bagfile.duration = std::chrono::nanoseconds(50000000);
   bagfile.message_count = 50;
-  bagfile.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos_profile1"}, 100});
-  bagfile.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos_profile2"}, 200});
+  bagfile.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", ""}, 100});
+  bagfile.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", ""}, 200});
   EXPECT_CALL(*info_, read_metadata(_, _)).WillOnce(Return(bagfile));
 
   // the expected output uses a regex to handle different time zones.

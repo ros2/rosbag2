@@ -57,7 +57,6 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
-    topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
     return true;
   }
 };
