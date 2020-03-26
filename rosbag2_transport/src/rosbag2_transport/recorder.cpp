@@ -42,13 +42,16 @@ void Recorder::record(const RecordOptions & record_options)
   }
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
-  subscribe_topics(get_requested_or_available_topics(record_options.topics));
+  subscribe_topics(
+    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
     auto discovery = std::bind(
       &Recorder::topics_discovery, this,
-      record_options.topic_polling_interval, record_options.topics);
+      record_options.topic_polling_interval,
+      record_options.topics,
+      record_options.include_hidden_topics);
     discovery_future = std::async(std::launch::async, discovery);
   }
 
@@ -63,10 +66,12 @@ void Recorder::record(const RecordOptions & record_options)
 
 void Recorder::topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
-  const std::vector<std::string> & requested_topics)
+  const std::vector<std::string> & requested_topics,
+  bool include_hidden_topics)
 {
   while (rclcpp::ok()) {
-    auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
+    auto topics_to_subscribe =
+      get_requested_or_available_topics(requested_topics, include_hidden_topics);
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
@@ -79,18 +84,20 @@ void Recorder::topics_discovery(
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
+Recorder::get_requested_or_available_topics(
+  const std::vector<std::string> & requested_topics,
+  bool include_hidden_topics)
 {
   return requested_topics.empty() ?
-         node_->get_all_topics_with_types() :
+         node_->get_all_topics_with_types(include_hidden_topics) :
          node_->get_topics_with_types(requested_topics);
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & topics)
+Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics)
 {
   std::unordered_map<std::string, std::string> missing_topics;
-  for (const auto & i : topics) {
+  for (const auto & i : all_topics) {
     if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
       missing_topics.emplace(i.first, i.second);
     }
