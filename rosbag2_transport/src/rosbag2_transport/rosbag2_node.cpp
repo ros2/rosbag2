@@ -24,6 +24,8 @@
 
 #include "rcl/expand_topic_name.h"
 
+#include "rcpputils/split.hpp"
+
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "rosbag2_transport/logging.hpp"
@@ -149,13 +151,15 @@ std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
 }
 
 std::unordered_map<std::string, std::string>
-Rosbag2Node::get_all_topics_with_types()
+Rosbag2Node::get_all_topics_with_types(bool include_hidden_topics)
 {
-  return filter_topics_with_more_than_one_type(this->get_topic_names_and_types());
+  return filter_topics_with_more_than_one_type(
+    this->get_topic_names_and_types(), include_hidden_topics);
 }
 
 std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_more_than_one_type(
-  std::map<std::string, std::vector<std::string>> topics_and_types)
+  const std::map<std::string, std::vector<std::string>> & topics_and_types,
+  bool include_hidden_topics)
 {
   std::unordered_map<std::string, std::string> filtered_topics_and_types;
   for (const auto & topic_and_type : topics_and_types) {
@@ -163,9 +167,26 @@ std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_mor
       ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
         "Topic '" << topic_and_type.first <<
           "' has several types associated. Only topics with one type are supported");
-    } else {
-      filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
+      continue;
     }
+
+    // According to rclpy's implementation, the indicator for a hidden topic is a leading '_'
+    // https://github.com/ros2/rclpy/blob/master/rclpy/rclpy/topic_or_service_is_hidden.py#L15
+    if (!include_hidden_topics) {
+      auto tokens = rcpputils::split(topic_and_type.first, '/', true);  // skip empty
+      auto is_hidden = std::find_if(
+        tokens.begin(), tokens.end(), [](const auto & token) -> bool {
+          return token[0] == '_';
+        });
+      if (is_hidden != tokens.end()) {
+        RCLCPP_WARN_ONCE(
+          rclcpp::get_logger("rosbag2_transport"),
+          "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+        continue;
+      }
+    }
+
+    filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
   }
   return filtered_topics_and_types;
 }
