@@ -188,7 +188,6 @@ std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_mor
 
     filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
   }
-
   return filtered_topics_and_types;
 }
 
