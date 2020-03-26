@@ -92,10 +92,4 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
     actual_second_topic.topic_metadata.serialization_format,
     Eq(expected_second_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
-  EXPECT_EQ(
-    actual_first_topic.topic_metadata.offered_qos_profiles,
-    expected_first_topic.topic_metadata.offered_qos_profiles);
-  EXPECT_EQ(
-    actual_second_topic.topic_metadata.offered_qos_profiles,
-    expected_second_topic.topic_metadata.offered_qos_profiles);
 }
