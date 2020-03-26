@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "rmw/types.h"
+
 #include "qos.hpp"
 
 TEST(TestQoS, serialization)
@@ -76,4 +78,23 @@ TEST(TestQoS, supports_version_4)
   .avoid_ros_namespace_conventions(false);
   // Any values not present in the YAML should take the default value in both profiles
   EXPECT_EQ(actual_qos, expected_qos);
+}
+
+TEST(TestQoS, detect_new_qos_fields)
+{
+  // By trying to construct a profile explicitly by fields, the build fails if policies are added
+  // This build failure indicates that we need to update QoS serialization in rosbag2_transport
+  rmw_time_t notime{0, 0};
+  rmw_qos_profile_t profile{
+    RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT,
+    10,
+    RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT,
+    RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT,
+    notime,
+    notime,
+    RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+    notime,
+    false,
+  };
+  EXPECT_EQ(profile.history, RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT);  // fix "unused variable"
 }
