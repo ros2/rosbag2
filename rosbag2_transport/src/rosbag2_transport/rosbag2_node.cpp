@@ -179,7 +179,7 @@ std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_mor
           return token[0] == '_';
         });
       if (is_hidden != tokens.end()) {
-        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
           "Hidden topics are not recorded. Topic '" <<
             topic_and_type.first << "' will be skipped." <<
             "You can enable them with --include-hidden-topics");
