@@ -35,6 +35,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/formatter.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
+  src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
@@ -174,6 +175,18 @@ if(BUILD_TESTING)
   if(TARGET test_play)
     target_link_libraries(test_play rosbag2_transport)
     ament_target_dependencies(test_play test_msgs rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_qos
+    test/rosbag2_transport/test_qos.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if(TARGET test_qos)
+    target_link_libraries(test_qos rosbag2_transport)
+    target_include_directories(test_qos
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
+    ament_target_dependencies(test_qos rosbag2_test_common)
   endif()
 
 endif()

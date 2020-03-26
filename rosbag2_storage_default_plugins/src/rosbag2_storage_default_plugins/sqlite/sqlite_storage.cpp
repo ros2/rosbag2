@@ -167,7 +167,8 @@ void SqliteStorage::initialize()
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
-    "serialization_format TEXT NOT NULL);";
+    "serialization_format TEXT NOT NULL," \
+    "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
@@ -184,8 +185,10 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
-      "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
-    insert_topic->bind(topic.name, topic.type, topic.serialization_format);
+      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) "
+      "VALUES (?, ?, ?, ?)");
+    insert_topic->bind(
+      topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
@@ -228,7 +231,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
   }
 }
 
@@ -270,7 +273,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
         static_cast<size_t>(std::get<3>(result))
       });
 
