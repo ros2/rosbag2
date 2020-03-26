@@ -181,7 +181,7 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_qos.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     ${SKIP_TEST})
-  if (TARGET test_qos)
+  if(TARGET test_qos)
     target_link_libraries(test_qos rosbag2_transport)
     target_include_directories(test_qos
       PUBLIC

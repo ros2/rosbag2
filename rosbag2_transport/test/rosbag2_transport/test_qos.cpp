@@ -14,6 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <string>
+#include <vector>
+
 #include "qos.hpp"
 
 TEST(TestQoS, serialization)
@@ -26,7 +29,7 @@ TEST(TestQoS, serialization)
   printf("%s\n", serialized.c_str());
 
   YAML::Node loaded_node = YAML::Load(serialized);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS> >();
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
 
   rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
@@ -55,7 +58,7 @@ TEST(TestQoS, supports_version_4)
     "  avoid_ros_namespace_conventions: false\n";
 
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS> >();
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
 
