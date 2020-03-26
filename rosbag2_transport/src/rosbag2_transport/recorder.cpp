@@ -114,43 +114,8 @@ void Recorder::subscribe_topics(
   }
 }
 
-void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic_without_qos)
+void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  rosbag2_storage::TopicMetadata topic {
-    topic_without_qos.name,
-    topic_without_qos.type,
-    topic_without_qos.serialization_format,
-    ""};
-  rclcpp::QoS last_qos(10);
-  bool first = true;
-  bool all_qos_same = true;
-  rclcpp::QoS subscription_qos(10);
-
-  auto publishers_info = node_->get_publishers_info_by_topic(topic.name);
-  ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Querying endpoints for topic " << topic.name);
-  YAML::Node offered_qos_profiles;
-  for (auto info : publishers_info) {
-    offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
-    if (!first) {
-      all_qos_same &= last_qos == info.qos_profile();
-    }
-    first = false;
-    last_qos = info.qos_profile();
-    // ROSBAG2_TRANSPORT_LOG_INFO_STREAM("---" << std::endl << last_qos);
-  }
-
-  topic.offered_qos_profiles = YAML::Dump(offered_qos_profiles);
-  if (all_qos_same) {
-    subscription_qos = last_qos;
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM(
-      "OK! All publishers for topic " << topic.name <<
-        " offering the same QoS profile - using it to subscribe.");
-  } else {
-    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Topic " << topic.name << " has publishers offering different QoS settings. "
-        "Can't guess what QoS to request, falling back to default QoS profile.");
-  }
-
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)

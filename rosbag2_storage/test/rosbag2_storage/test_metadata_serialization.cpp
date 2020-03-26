@@ -53,8 +53,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
-  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", ""}, 100});
-  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", ""}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos1"}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos2"}, 200});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
@@ -92,4 +92,10 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
     actual_second_topic.topic_metadata.serialization_format,
     Eq(expected_second_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
+  EXPECT_EQ(
+    actual_first_topic.topic_metadata.offered_qos_profiles,
+    expected_first_topic.topic_metadata.offered_qos_profiles);
+  EXPECT_EQ(
+    actual_second_topic.topic_metadata.offered_qos_profiles,
+    expected_second_topic.topic_metadata.offered_qos_profiles);
 }

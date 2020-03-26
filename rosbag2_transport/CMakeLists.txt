@@ -177,6 +177,18 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_play test_msgs rosbag2_test_common)
   endif()
 
+  ament_add_gmock(test_qos
+    test/rosbag2_transport/test_qos.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if (TARGET test_qos)
+    target_link_libraries(test_qos rosbag2_transport)
+    target_include_directories(test_qos
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
+    ament_target_dependencies(test_qos rosbag2_test_common)
+  endif()
+
 endif()
 
 ament_package()
