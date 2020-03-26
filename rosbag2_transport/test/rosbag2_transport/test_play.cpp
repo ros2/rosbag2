@@ -32,30 +32,12 @@
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-#include "rosbag2_transport_test_fixture.hpp"
+#include "rosbag2_play_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
-
-class RosBag2PlayTestFixture : public Rosbag2TransportTestFixture
-{
-public:
-  RosBag2PlayTestFixture()
-  : Rosbag2TransportTestFixture()
-  {
-    rclcpp::init(0, nullptr);
-    sub_ = std::make_shared<SubscriptionManager>();
-  }
-
-  ~RosBag2PlayTestFixture() override
-  {
-    rclcpp::shutdown();
-  }
-
-  std::shared_ptr<SubscriptionManager> sub_;
-};
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {

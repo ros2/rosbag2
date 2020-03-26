@@ -48,6 +48,10 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
+        parser.add_argument(
+            '-l', '--loop', action='store_true',
+            help='enables loop playback when playing a bagfile: it starts back at the beginning '
+                 'on reaching the end and plays indefinitely.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -72,4 +76,5 @@ class PlayVerb(VerbExtension):
             read_ahead_queue_size=args.read_ahead_queue_size,
             rate=args.rate,
             topics=args.topics,
-            qos_profile_overrides=qos_profile_overrides)
+            qos_profile_overrides=qos_profile_overrides,
+            loop=args.loop)
