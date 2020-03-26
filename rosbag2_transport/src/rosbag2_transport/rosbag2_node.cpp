@@ -174,9 +174,10 @@ std::unordered_map<std::string, std::string> Rosbag2Node::filter_topics_with_mor
     // https://github.com/ros2/rclpy/blob/master/rclpy/rclpy/topic_or_service_is_hidden.py#L15
     if (!include_hidden_topics) {
       auto tokens = rcpputils::split(topic_and_type.first, '/', true);  // skip empty
-      auto is_hidden = std::find_if(tokens.begin(), tokens.end(), [](const auto & token) -> bool {
+      auto is_hidden = std::find_if(
+        tokens.begin(), tokens.end(), [](const auto & token) -> bool {
           return token[0] == '_';
-          });
+        });
       if (is_hidden != tokens.end()) {
         ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
           "Hidden topics are not recorded. Topic '" <<
