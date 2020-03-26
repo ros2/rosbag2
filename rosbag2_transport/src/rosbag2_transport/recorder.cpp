@@ -119,7 +119,8 @@ Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> 
   return missing_topics;
 }
 
-namespace {
+namespace
+{
 std::string serialized_offered_qos_profiles_for_topic(
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node,
   const std::string & topic_name)
@@ -137,11 +138,12 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({
-      topic_with_type.first,
-      topic_with_type.second,
-      serialization_format_,
-      serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)});
+    subscribe_topic(
+      {
+        topic_with_type.first,
+        topic_with_type.second,
+        serialization_format_,
+        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)});
   }
 }
 
