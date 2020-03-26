@@ -28,8 +28,6 @@ TEST(TestQoS, serialization)
   offered_qos_profiles.push_back(expected_qos);
 
   std::string serialized = YAML::Dump(offered_qos_profiles);
-  printf("%s\n", serialized.c_str());
-
   YAML::Node loaded_node = YAML::Load(serialized);
   auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
