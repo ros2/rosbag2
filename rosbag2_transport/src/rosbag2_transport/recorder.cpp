@@ -29,7 +29,6 @@
 
 #include "generic_subscription.hpp"
 #include "rosbag2_node.hpp"
-#include "qos.hpp"
 
 namespace rosbag2_transport
 {
