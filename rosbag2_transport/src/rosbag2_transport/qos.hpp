@@ -17,7 +17,18 @@
 
 #include "rclcpp/qos.hpp"
 
-#include "yaml.hpp"
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 
 namespace rosbag2_transport
@@ -26,8 +37,10 @@ namespace rosbag2_transport
 class Rosbag2QoS : public rclcpp::QoS
 {
 public:
-  explicit Rosbag2QoS() : rclcpp::QoS(10) {}
-  explicit Rosbag2QoS(const rclcpp::QoS & value) : rclcpp::QoS(value) {}
+  Rosbag2QoS()
+  : rclcpp::QoS(10) {}
+  explicit Rosbag2QoS(const rclcpp::QoS & value)
+  : rclcpp::QoS(value) {}
 };
 }  // namespace rosbag2_transport
 
@@ -50,4 +63,4 @@ struct convert<rosbag2_transport::Rosbag2QoS>
 }  // namespace YAML
 
 
-#endif
+#endif  // ROSBAG2_TRANSPORT__QOS_HPP_

@@ -144,12 +144,11 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic_with
     subscription_qos = last_qos;
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM(
       "OK! All publishers for topic " << topic.name <<
-      " offering the same QoS profile - using it to subscribe.");
+        " offering the same QoS profile - using it to subscribe.");
   } else {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
       "Topic " << topic.name << " has publishers offering different QoS settings. "
-      "Can't guess what QoS to request, falling back to default QoS profile."
-    );
+        "Can't guess what QoS to request, falling back to default QoS profile.");
   }
 
   // Need to create topic in writer before we are trying to create subscription. Since in

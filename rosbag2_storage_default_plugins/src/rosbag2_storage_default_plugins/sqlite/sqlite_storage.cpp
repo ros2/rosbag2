@@ -185,8 +185,10 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
-      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) VALUES (?, ?, ?, ?)");
-    insert_topic->bind(topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
+      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) "
+      "VALUES (?, ?, ?, ?)");
+    insert_topic->bind(
+      topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
