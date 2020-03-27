@@ -30,7 +30,6 @@
 # pragma warning(pop)
 #endif
 
-
 namespace rosbag2_transport
 {
 /// Simple wrapper around rclcpp::QoS to provide a default constructor for YAML deserialization.
@@ -43,7 +42,6 @@ public:
   : rclcpp::QoS(value) {}
 };
 }  // namespace rosbag2_transport
-
 
 namespace YAML
 {
@@ -61,6 +59,5 @@ struct convert<rosbag2_transport::Rosbag2QoS>
   static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
 };
 }  // namespace YAML
-
 
 #endif  // ROSBAG2_TRANSPORT__QOS_HPP_
