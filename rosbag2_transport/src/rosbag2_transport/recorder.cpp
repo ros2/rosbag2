@@ -143,7 +143,8 @@ void Recorder::subscribe_topics(
         topic_with_type.first,
         topic_with_type.second,
         serialization_format_,
-        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)});
+        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
+      });
   }
 }
 
