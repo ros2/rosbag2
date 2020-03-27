@@ -79,5 +79,22 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   auto recorded_topics = writer.get_topics();
   std::string serialized_profiles = recorded_topics.at(topic).offered_qos_profiles;
   // Basic smoke test that the profile was serialized into the metadata as a string.
-  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability"));
+  EXPECT_THAT(
+    serialized_profiles, ContainsRegex(
+      "- history: 3\n"
+      "  depth: 0\n"
+      "  reliability: 1\n"
+      "  durability: 2\n"
+      "  deadline:\n"
+      "    sec: 2147483647\n"
+      "    nsec: 4294967295\n"
+      "  lifespan:\n"
+      "    sec: 2147483647\n"
+      "    nsec: 4294967295\n"
+      "  liveliness: 1\n"
+      "  liveliness_lease_duration:\n"
+      "    sec: 2147483647\n"
+      "    nsec: 4294967295\n"
+      "  avoid_ros_namespace_conventions: false"
+  ));
 }
