@@ -11,7 +11,12 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, windows-2019]
+    runs-on: ${{ matrix.os }}
+    name: build_and_test-${{ matrix.os }}
     steps:
     - uses: ros-tooling/setup-ros@0.0.13
     - uses: ros-tooling/action-ros-ci@0.0.13
