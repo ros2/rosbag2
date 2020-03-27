@@ -109,7 +109,7 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_, ""});
+    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
   }
 }
 
