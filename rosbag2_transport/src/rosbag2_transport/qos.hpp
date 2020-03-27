@@ -17,6 +17,7 @@
 
 #include "rclcpp/qos.hpp"
 
+
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
@@ -29,6 +30,8 @@
 #ifdef _WIN32
 # pragma warning(pop)
 #endif
+
+#include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
 {
@@ -55,7 +58,10 @@ struct convert<rmw_time_t>
 template<>
 struct convert<rosbag2_transport::Rosbag2QoS>
 {
+  ROSBAG2_TRANSPORT_PUBLIC
   static Node encode(const rosbag2_transport::Rosbag2QoS & qos);
+
+  ROSBAG2_TRANSPORT_PUBLIC
   static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
 };
 }  // namespace YAML
