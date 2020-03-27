@@ -26,8 +26,8 @@ Node convert<rmw_time_t>::encode(const rmw_time_t & time)
 
 bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
 {
-  time.sec = node["sec"].as<uint>();
-  time.nsec = node["nsec"].as<uint>();
+  time.sec = node["sec"].as<uint64_t>();
+  time.nsec = node["nsec"].as<uint64_t>();
   return true;
 }
 
