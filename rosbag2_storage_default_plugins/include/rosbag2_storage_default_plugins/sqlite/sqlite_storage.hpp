@@ -15,11 +15,11 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <atomic>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -44,6 +44,7 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
 {
 public:
   SqliteStorage() = default;
+
   ~SqliteStorage() override;
 
   void open(
@@ -57,8 +58,9 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
-  using SerializedBagMessage = const rosbag2_storage::SerializedBagMessage;
-  void bulk_write(const std::vector<std::shared_ptr<SerializedBagMessage>> & messages) override;
+  void write(
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+  override;
 
   bool has_next() override;
 
@@ -75,16 +77,14 @@ public:
   std::string get_storage_identifier() const override;
 
   uint64_t get_minimum_split_file_size() const override;
-  // APIs to handle/control transactions
-  void activate_transaction();
-
-  void commit_transaction();
 
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  void activate_transaction();
+  void commit_transaction();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;

@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <iostream>
@@ -24,7 +25,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <atomic>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -116,32 +116,34 @@ void SqliteStorage::activate_transaction()
 {
   if (active_transaction_) {
     return;
-  } else {
-    int rc = SQLITE_ERROR;
-    rc = sqlite3_exec(database_->get_db_handle(), "BEGIN TRANSACTION;", NULL, 0, NULL);
-    active_transaction_.store(true, std::memory_order_relaxed);
-    if (rc != SQLITE_OK) {
-      throw SqliteException("Failed to begin transaction");
-    }
   }
+
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+
+  write_statement_->bind("BEGIN TRANSACTION;");
+  write_statement_->execute_and_reset();
+
+  active_transaction_.store(true, std::memory_order_relaxed);
 }
 
 void SqliteStorage::commit_transaction()
 {
   if (!active_transaction_) {
     return;
-  } else {
-    int rc = SQLITE_ERROR;
-    rc = sqlite3_exec(database_->get_db_handle(), "COMMIT;", NULL, 0, NULL);
-    active_transaction_.store(false, std::memory_order_relaxed);
-
-    // Reset batch insert counter
-    no_of_inserts_ = 0;
-
-    if (rc != SQLITE_OK) {
-      throw SqliteException("Failed to commit transaction");
-    }
   }
+
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+
+  write_statement_->bind("COMMIT;");
+  write_statement_->execute_and_reset();
+
+  active_transaction_.store(false, std::memory_order_relaxed);
+  // Reset batch insert counter
+  no_of_inserts_ = 0;
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -160,7 +162,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
   write_statement_->execute_and_reset();
 }
 
-void SqliteStorage::bulk_write(
+void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
   if (!write_statement_) {

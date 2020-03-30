@@ -109,10 +109,11 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
-  size_t chunk_size_;
 
-  // Intermediate caching to enable bulk writes using transaction on SQLITE3
-  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>  cache_;
+  // Intermediate cache to write multiple messages into the storage.
+  // chunk size is the amount of messages to hold in storage before writing to disk.
+  size_t chunk_size_;
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
