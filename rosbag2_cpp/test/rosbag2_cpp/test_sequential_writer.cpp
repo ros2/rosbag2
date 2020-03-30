@@ -227,6 +227,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   message->topic_name = "test_topic";
 
   storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.chunk_size = 1;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});

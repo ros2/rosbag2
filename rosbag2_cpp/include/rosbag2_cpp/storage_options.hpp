@@ -30,8 +30,10 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_size;
 
-  // The chunk_size value is used to control cache sizes for bulk writes.
-  size_t chunk_size;
+  // The chunk size indiciates how many messages should be hold in cache
+  // before these being written to disk.
+  // Defaults to 1, and effectively disables the caching.
+  size_t chunk_size = 1;
 };
 
 }  // namespace rosbag2_cpp

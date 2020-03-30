@@ -206,6 +206,13 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
+  // No need to cache if there's only space for 1 message
+  // We'll call write directly in this case.
+  if (chunk_size_ <= 1) {
+    storage_->write(converter_ ? converter_->convert(message) : message);
+    return;
+  }
+
   cache_.push_back(converter_ ? converter_->convert(message) : message);
   if (cache_.size() >= chunk_size_) {
     storage_->write(cache_);
