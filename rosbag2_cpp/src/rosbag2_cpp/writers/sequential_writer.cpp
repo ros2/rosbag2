@@ -209,6 +209,9 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   cache_.push_back(converter_ ? converter_->convert(message) : message);
   if (cache_.size() >= chunk_size_) {
     storage_->write(cache_);
+    // reset cache
+    cache_.clear();
+    cache_.reserve(chunk_size_);
   }
 }
 

@@ -194,7 +194,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 
   ON_CALL(
     *storage_,
-    write(Matcher<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>(_))).WillByDefault(
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
     [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
       fake_storage_size_ += 1;
     });
