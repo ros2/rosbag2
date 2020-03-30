@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
