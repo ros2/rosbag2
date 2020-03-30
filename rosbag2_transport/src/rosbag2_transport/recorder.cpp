@@ -28,7 +28,21 @@
 #include "rosbag2_transport/logging.hpp"
 
 #include "generic_subscription.hpp"
+#include "qos.hpp"
 #include "rosbag2_node.hpp"
+
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 namespace rosbag2_transport
 {
@@ -105,11 +119,32 @@ Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> 
   return missing_topics;
 }
 
+namespace
+{
+std::string serialized_offered_qos_profiles_for_topic(
+  std::shared_ptr<rosbag2_transport::Rosbag2Node> node,
+  const std::string & topic_name)
+{
+  YAML::Node offered_qos_profiles;
+  auto publishers_info = node->get_publishers_info_by_topic(topic_name);
+  for (auto info : publishers_info) {
+    offered_qos_profiles.push_back(rosbag2_transport::Rosbag2QoS(info.qos_profile()));
+  }
+  return YAML::Dump(offered_qos_profiles);
+}
+}  // unnamed namespace
+
 void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_, ""});
+    subscribe_topic(
+      {
+        topic_with_type.first,
+        topic_with_type.second,
+        serialization_format_,
+        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
+      });
   }
 }
 

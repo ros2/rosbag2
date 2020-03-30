@@ -17,7 +17,6 @@
 
 #include "rclcpp/qos.hpp"
 
-
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
