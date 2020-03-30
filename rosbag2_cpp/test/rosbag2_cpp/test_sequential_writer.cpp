@@ -260,8 +260,13 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   const size_t counter = 1000;
   const size_t chunk_size = 100;
 
-  EXPECT_CALL(*storage_, write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).Times(counter / chunk_size);
-  EXPECT_CALL(*storage_, write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
+  EXPECT_CALL(
+    *storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
+  Times(counter / chunk_size);
+  EXPECT_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -287,8 +292,13 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_chunk_size_is_one) {
   const size_t counter = 1000;
   const size_t chunk_size = 1;
 
-  EXPECT_CALL(*storage_, write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).Times(0);
-  EXPECT_CALL(*storage_, write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(counter);
+  EXPECT_CALL(
+    *storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
+  Times(0);
+  EXPECT_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(counter);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
