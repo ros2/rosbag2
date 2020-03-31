@@ -45,7 +45,9 @@ SequentialReader::~SequentialReader()
 
 void SequentialReader::reset()
 {
-  storage_.reset();
+  if (storage_) {
+    storage_.reset();
+  }
 }
 
 void SequentialReader::open(
@@ -145,7 +147,10 @@ void SequentialReader::reset_filter()
 {
   if (storage_) {
     storage_->reset_filter();
+    return;
   }
+  throw std::runtime_error("Bag is not open. Call open() before resetting "
+          "filter.");
 }
 
 bool SequentialReader::has_next_file() const
