@@ -173,7 +173,6 @@ Recorder::create_subscription(
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
-    Rosbag2QoS{},
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;

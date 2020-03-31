@@ -32,7 +32,6 @@
 
 #include "rosbag2_transport/logging.hpp"
 
-#include "qos.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
 
@@ -159,8 +158,7 @@ void Player::prepare_publishers()
   for (const auto & topic : topics) {
     publishers_.insert(
       std::make_pair(
-        topic.name, rosbag2_transport_->create_generic_publisher(
-          topic.name, topic.type, Rosbag2QoS{})));
+        topic.name, rosbag2_transport_->create_generic_publisher(topic.name, topic.type)));
   }
 }
 

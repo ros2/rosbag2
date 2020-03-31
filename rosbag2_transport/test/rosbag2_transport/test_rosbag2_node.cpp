@@ -26,8 +26,7 @@
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
-#include "qos.hpp"
-#include "rosbag2_node.hpp"
+#include "../../src/rosbag2_transport/rosbag2_node.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
@@ -65,7 +64,7 @@ public:
     std::vector<std::string> messages;
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(
-      topic_name, type, rosbag2_transport::Rosbag2QoS{},
+      topic_name, type,
       [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
         auto string_message =
         memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
@@ -92,20 +91,6 @@ public:
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
-  template<typename Condition, typename Duration>
-  bool wait_for(const Condition & condition, const Duration & timeout)
-  {
-    using clock = std::chrono::system_clock;
-    auto start = clock::now();
-    while (!condition()) {
-      if ((clock::now() - start) > timeout) {
-        return false;
-      }
-      rclcpp::spin_some(node_);
-    }
-    return true;
-  }
-
   MemoryManagement memory_management_;
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node_;
   rclcpp::Node::SharedPtr publisher_node_;
@@ -120,8 +105,7 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   std::string topic_name = "string_topic";
   std::string type = "test_msgs/Strings";
 
-  auto publisher = node_->create_generic_publisher(
-    topic_name, type, rosbag2_transport::Rosbag2QoS{});
+  auto publisher = node_->create_generic_publisher(topic_name, type);
 
   auto subscriber_future_ = std::async(
     std::launch::async, [this, topic_name, type] {
@@ -139,46 +123,6 @@ TEST_F(RosBag2NodeFixture, publisher_and_subscriber_work)
   auto subscribed_messages = subscriber_future_.get();
   EXPECT_THAT(subscribed_messages, SizeIs(Not(0)));
   EXPECT_THAT(subscribed_messages[0], StrEq("Hello World"));
-}
-
-TEST_F(RosBag2NodeFixture, generic_subscription_uses_qos)
-{
-  // If the GenericSubscription does not use the provided QoS profile,
-  // its request will be incompatible with the Publisher's offer and no messages will be passed.
-  using namespace std::chrono_literals;
-  std::string topic_name = "string_topic";
-  std::string topic_type = "test_msgs/Strings";
-  rclcpp::QoS qos = rclcpp::SensorDataQoS();
-
-  auto publisher = node_->create_publisher<test_msgs::msg::Strings>(topic_name, qos);
-  auto subscription = node_->create_generic_subscription(
-    topic_name, topic_type, qos,
-    [](std::shared_ptr<rmw_serialized_message_t>/* message */) {});
-  auto connected = [publisher, subscription]() -> bool {
-      return publisher->get_subscription_count() && subscription->get_publisher_count();
-    };
-  // It normally takes < 20ms, 5s chosen as "a very long time"
-  ASSERT_TRUE(wait_for(connected, 5s));
-}
-
-TEST_F(RosBag2NodeFixture, generic_publisher_uses_qos)
-{
-  // If the GenericPublisher does not use the provided QoS profile,
-  // its offer will be incompatible with the Subscription's request and no messages will be passed.
-  using namespace std::chrono_literals;
-  std::string topic_name = "string_topic";
-  std::string topic_type = "test_msgs/Strings";
-  rclcpp::QoS qos = rosbag2_transport::Rosbag2QoS().transient_local();
-
-  auto publisher = node_->create_generic_publisher(topic_name, topic_type, qos);
-  auto subscription = node_->create_subscription<test_msgs::msg::Strings>(
-    topic_name, qos,
-    [](std::shared_ptr<test_msgs::msg::Strings>/* message */) {});
-  auto connected = [publisher, subscription]() -> bool {
-      return publisher->get_subscription_count() && subscription->get_publisher_count();
-    };
-  // It normally takes < 20ms, 5s chosen as "a very long time"
-  ASSERT_TRUE(wait_for(connected, 5s));
 }
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_empty_if_topic_does_not_exist) {
