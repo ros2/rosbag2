@@ -121,19 +121,19 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   // Prior to opening the file, setting filter should throw exception
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics.push_back("topic");
-  EXPECT_ANY_THROW(reader_->set_filter(storage_filter));
-  EXPECT_ANY_THROW(reader_->reset_filter());
+  EXPECT_ANY_THROW(reader_->get_implementation_handle().set_filter(storage_filter));
+  EXPECT_ANY_THROW(reader_->get_implementation_handle().reset_filter());
 
   EXPECT_CALL(*storage_, set_filter(_)).Times(2);
   reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
-  reader_->set_filter(storage_filter);
+  reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
   storage_filter.topics.clear();
   storage_filter.topics.push_back("topic2");
-  reader_->set_filter(storage_filter);
+  reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
 
   EXPECT_CALL(*storage_, reset_filter()).Times(1);
-  reader_->reset_filter();
+  reader_->get_implementation_handle().reset_filter();
   reader_->read_next();
 }
