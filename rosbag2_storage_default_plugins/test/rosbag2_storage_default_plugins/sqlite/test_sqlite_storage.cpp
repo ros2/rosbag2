@@ -14,8 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <rosbag2_storage/storage_filter.hpp>
-
 #include <memory>
 #include <string>
 #include <tuple>
@@ -25,6 +23,8 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rcutils/snprintf.h"
+
+#include "rosbag2_storage/storage_filter.hpp"
 
 #include "storage_test_fixture.hpp"
 
