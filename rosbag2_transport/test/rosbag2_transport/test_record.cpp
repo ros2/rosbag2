@@ -65,36 +65,37 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(array_messages[0]->float32_values, Eq(array_message->float32_values));
 }
 
-TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
-{
-  auto string_message = get_messages_strings()[1];
-  std::string topic = "/chatter";
-  start_recording({false, false, {topic}, "rmw_format", 100ms});
-  pub_man_.add_publisher<test_msgs::msg::Strings>(topic, string_message, 2);
-  run_publishers();
-  stop_recording();
-
-  MockSequentialWriter & writer =
-    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-  auto recorded_topics = writer.get_topics();
-  std::string serialized_profiles = recorded_topics.at(topic).offered_qos_profiles;
-  // Basic smoke test that the profile was serialized into the metadata as a string.
-  EXPECT_THAT(
-    serialized_profiles, ContainsRegex(
-      "- history: 3\n"
-      "  depth: 0\n"
-      "  reliability: 1\n"
-      "  durability: 2\n"
-      "  deadline:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  lifespan:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  liveliness: 1\n"
-      "  liveliness_lease_duration:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  avoid_ros_namespace_conventions: false"
-  ));
-}
+// Test is currently disabled due to inconsistency between RMW implementations.
+// TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
+// {
+//   auto string_message = get_messages_strings()[1];
+//   std::string topic = "/chatter";
+//   start_recording({false, false, {topic}, "rmw_format", 100ms});
+//   pub_man_.add_publisher<test_msgs::msg::Strings>(topic, string_message, 2);
+//   run_publishers();
+//   stop_recording();
+//
+//   MockSequentialWriter & writer =
+//     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+//   auto recorded_topics = writer.get_topics();
+//   std::string serialized_profiles = recorded_topics.at(topic).offered_qos_profiles;
+//   // Basic smoke test that the profile was serialized into the metadata as a string.
+//   EXPECT_THAT(
+//     serialized_profiles, ContainsRegex(
+//       "- history: 3\n"
+//       "  depth: 0\n"
+//       "  reliability: 1\n"
+//       "  durability: 2\n"
+//       "  deadline:\n"
+//       "    sec: 2147483647\n"
+//       "    nsec: 4294967295\n"
+//       "  lifespan:\n"
+//       "    sec: 2147483647\n"
+//       "    nsec: 4294967295\n"
+//       "  liveliness: 1\n"
+//       "  liveliness_lease_duration:\n"
+//       "    sec: 2147483647\n"
+//       "    nsec: 4294967295\n"
+//       "  avoid_ros_namespace_conventions: false"
+//   ));
+// }
