@@ -92,8 +92,9 @@ public:
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
-  template <typename Condition, typename Duration>
-  bool wait_for(const Condition & condition, const Duration & timeout) {
+  template<typename Condition, typename Duration>
+  bool wait_for(const Condition & condition, const Duration & timeout)
+  {
     using clock = std::chrono::system_clock;
     auto start = clock::now();
     while (!condition()) {
@@ -151,11 +152,11 @@ TEST_F(RosBag2NodeFixture, generic_subscription_uses_qos)
 
   auto publisher = node_->create_publisher<test_msgs::msg::Strings>(topic_name, qos);
   auto subscription = node_->create_generic_subscription(
-      topic_name, topic_type, qos,
-      [](std::shared_ptr<rmw_serialized_message_t> /* message */) {});
+    topic_name, topic_type, qos,
+    [](std::shared_ptr<rmw_serialized_message_t>/* message */) {});
   auto connected = [publisher, subscription]() -> bool {
-    return publisher->get_subscription_count() && subscription->get_publisher_count();
-  };
+      return publisher->get_subscription_count() && subscription->get_publisher_count();
+    };
   // It normally takes < 20ms, 5s chosen as "a very long time"
   ASSERT_TRUE(wait_for(connected, 5s));
 }
@@ -171,11 +172,11 @@ TEST_F(RosBag2NodeFixture, generic_publisher_uses_qos)
 
   auto publisher = node_->create_generic_publisher(topic_name, topic_type, qos);
   auto subscription = node_->create_subscription<test_msgs::msg::Strings>(
-      topic_name, qos,
-      [](std::shared_ptr<test_msgs::msg::Strings> /* message */) {});
+    topic_name, qos,
+    [](std::shared_ptr<test_msgs::msg::Strings>/* message */) {});
   auto connected = [publisher, subscription]() -> bool {
-    return publisher->get_subscription_count() && subscription->get_publisher_count();
-  };
+      return publisher->get_subscription_count() && subscription->get_publisher_count();
+    };
   // It normally takes < 20ms, 5s chosen as "a very long time"
   ASSERT_TRUE(wait_for(connected, 5s));
 }
