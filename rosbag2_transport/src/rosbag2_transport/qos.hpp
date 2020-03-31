@@ -30,8 +30,6 @@
 # pragma warning(pop)
 #endif
 
-#include "rosbag2_transport/visibility_control.hpp"
-
 namespace rosbag2_transport
 {
 /// Simple wrapper around rclcpp::QoS to provide a default constructor for YAML deserialization.
@@ -39,7 +37,7 @@ class Rosbag2QoS : public rclcpp::QoS
 {
 public:
   Rosbag2QoS()
-  : rclcpp::QoS(0) {}  // 0 history depth is always overwritten on deserializing
+  : rclcpp::QoS(rmw_qos_profile_default.depth) {}
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
 };
@@ -57,10 +55,7 @@ struct convert<rmw_time_t>
 template<>
 struct convert<rosbag2_transport::Rosbag2QoS>
 {
-  ROSBAG2_TRANSPORT_PUBLIC
   static Node encode(const rosbag2_transport::Rosbag2QoS & qos);
-
-  ROSBAG2_TRANSPORT_PUBLIC
   static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
 };
 }  // namespace YAML
