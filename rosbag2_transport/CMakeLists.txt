@@ -52,7 +52,6 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_compression
   rosbag2_cpp
   shared_queues_vendor
-  yaml_cpp_vendor
 )
 
 include(cmake/configure_python.cmake)
@@ -127,25 +126,22 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_rosbag2_node
+    test/rosbag2_transport/test_rosbag2_node.cpp
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
-    src/rosbag2_transport/qos.cpp
     src/rosbag2_transport/rosbag2_node.cpp
-    test/rosbag2_transport/test_rosbag2_node.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_node)
     target_include_directories(test_rosbag2_node
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
       $<INSTALL_INTERFACE:include>)
     ament_target_dependencies(test_rosbag2_node
       ament_index_cpp
-      rclcpp
       rosbag2_cpp
-      rosbag2_test_common
+      rclcpp
       test_msgs
-      yaml_cpp_vendor)
+      rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_formatter
@@ -183,18 +179,15 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_qos
-    src/rosbag2_transport/qos.cpp
     test/rosbag2_transport/test_qos.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     ${SKIP_TEST})
   if(TARGET test_qos)
+    target_link_libraries(test_qos rosbag2_transport)
     target_include_directories(test_qos
       PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-    ament_target_dependencies(test_qos
-      rosbag2_test_common
-      yaml_cpp_vendor)
+    ament_target_dependencies(test_qos rosbag2_test_common)
   endif()
 
 endif()

@@ -49,7 +49,6 @@ public:
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
-    const rclcpp::QoS & qos,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
