@@ -117,3 +117,43 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
   EXPECT_THAT(
     error_output, HasSubstr("Requested converter for format 'wrong_format' does not exist"));
 }
+
+/* TODO implement this test after (re)set_filter() has been added to Reader and transport
+TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
+
+  auto subscription_future = sub_->spin_subscriptions();
+
+  auto exit_code = execute_and_wait_until_completion("ros2 bag play cdr_test", database_path_);
+
+  subscription_future.get();
+
+  auto topic1_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+  auto topic2_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/array_topic");
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+
+  EXPECT_THAT(topic1_messages, SizeIs(Ge(3u)));
+  EXPECT_THAT(
+    topic1_messages,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
+
+  EXPECT_THAT(topic2_messages, SizeIs(Ge(2u)));
+  EXPECT_THAT(
+    topic2_messages,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::bool_values,
+          ElementsAre(true, false, true)))));
+  EXPECT_THAT(
+    topic2_messages,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::string_values,
+          ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+}
+*/
