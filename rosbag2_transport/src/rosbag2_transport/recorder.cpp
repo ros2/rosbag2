@@ -57,7 +57,8 @@ void Recorder::record(const RecordOptions & record_options)
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
   subscribe_topics(
-    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
+    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics),
+    record_options.qos_profile);
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
@@ -135,16 +136,29 @@ std::string serialized_offered_qos_profiles_for_topic(
 }  // unnamed namespace
 
 void Recorder::subscribe_topics(
-  const std::unordered_map<std::string, std::string> & topics_and_types)
+  const std::unordered_map<std::string, std::string> & topics_and_types,
+  std::string offered_qos_profile)
 {
-  for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic(
-      {
-        topic_with_type.first,
-        topic_with_type.second,
-        serialization_format_,
-        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
-      });
+  if (offered_qos_profile.empty()) {
+    for (const auto & topic_with_type : topics_and_types) {
+      subscribe_topic(
+        {
+          topic_with_type.first,
+          topic_with_type.second,
+          serialization_format_,
+          serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
+        });
+    }
+  } else {
+    for (const auto & topic_with_type : topics_and_types) {
+      subscribe_topic(
+        {
+          topic_with_type.first,
+          topic_with_type.second,
+          serialization_format_,
+          offered_qos_profile
+        });
+    }
   }
 }
 

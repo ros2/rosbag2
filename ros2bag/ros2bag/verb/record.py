@@ -72,6 +72,10 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--include-hidden-topics', action='store_true',
             help='record also hidden topics.')
+        parser.add_argument(
+            '--qos-profile', type=str, default='',
+            help='Path to a yaml file with a QoS policy to override the default profile.'
+        )
         self._subparser = parser
 
     def create_bag_directory(self, uri):
@@ -92,6 +96,14 @@ class RecordVerb(VerbExtension):
         if args.compression_format and args.compression_mode == 'none':
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
+
+        qos_profile = args.qos_profile
+        if qos_profile:
+            if os.path.isfile(qos_profile):
+                with open(qos_profile, 'r') as file:
+                    qos_profile = file.read()
+            else:
+                return "[ERROR] [ros2bag]: {} does not exist.".format(args.qos_profile)
 
         self.create_bag_directory(uri)
 
@@ -115,7 +127,7 @@ class RecordVerb(VerbExtension):
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
-                include_hidden_topics=args.include_hidden_topics)
+                qos_profile=qos_profile)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -136,7 +148,8 @@ class RecordVerb(VerbExtension):
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
-                include_hidden_topics=args.include_hidden_topics)
+                include_hidden_topics=args.include_hidden_topics,
+                qos_profile=qos_profile)
         else:
             self._subparser.print_help()
 

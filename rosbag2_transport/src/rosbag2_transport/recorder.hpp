@@ -62,7 +62,8 @@ private:
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
 
   void subscribe_topics(
-    const std::unordered_map<std::string, std::string> & topics_and_types);
+    const std::unordered_map<std::string, std::string> & topics_and_types,
+    std::string offered_qos_profile = "");
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 

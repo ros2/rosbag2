@@ -1,0 +1,15 @@
+history: 3
+depth: 0
+reliability: 1
+durability: 2
+deadline:
+  sec: 2147483647
+  nsec: 4294967295
+lifespan:
+  sec: 2147483647
+  nsec: 4294967295
+liveliness: 2147483647
+liveliness_lease_duration:
+  sec: 2147483647
+  nsec: 4294967295
+avoid_ros_namespace_conventions: false

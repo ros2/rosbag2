@@ -196,6 +196,15 @@ public:
     return std::get<0>(topic_format);
   }
 
+  std::string get_qos_profile_for_topic(
+    const std::string & topic_name, rosbag2_storage_plugins::SqliteWrapper & db)
+  {
+    std::string sql_query = "SELECT offered_qos_profiles FROM topics WHERE name = ?;";
+    auto qos_profile = db.prepare_statement(sql_query)
+      ->bind(topic_name)->execute_query<std::string>().get_single_line();
+    return std::get<0>(qos_profile);
+  }
+
   // relative path to the root of the bag file.
   rcpputils::fs::path root_bag_path_;
 

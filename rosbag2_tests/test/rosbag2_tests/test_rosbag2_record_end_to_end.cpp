@@ -564,3 +564,77 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
     get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
 }
+
+TEST_F(RecordFixture, record_end_to_end_test_with_qos_profile) {
+  auto topic = "/test_topic";
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
+  size_t expected_test_messages = 3;
+
+  auto qos_profile_path =
+    rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / "qos_test" / "qos_profile.yaml";
+  std::stringstream command;
+  command << "ros2 bag record" <<
+    " --qos-profile " << qos_profile_path.string() <<
+    " --output " << root_bag_path_.string() << " " << topic;
+  auto process_handle = start_execution(command.str());
+  wait_for_db();
+
+  pub_man_.add_publisher(topic, message, expected_test_messages);
+
+  const auto database_path = get_bag_file_path(0).string();
+
+  rosbag2_storage_plugins::SqliteWrapper db{
+    database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
+  pub_man_.run_publishers(
+    [this, &db](const std::string & topic_name) {
+      return count_stored_messages(db, topic_name);
+    });
+
+  stop_execution(process_handle);
+
+  // TODO(piraka9011): Remove when stop_execution properly SIGINT on Windows.
+  // This is required since stop_execution hard kills the process on Windows,
+  // which prevents the metadata from being written.
+#ifdef _WIN32
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 4;
+  metadata.storage_identifier = "sqlite3";
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_.string(), metadata);
+#endif
+
+  wait_for_metadata();
+  auto test_topic_messages =
+    get_messages_for_topic<test_msgs::msg::Strings>(topic);
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
+
+  for (const auto & message : test_topic_messages) {
+    EXPECT_EQ(message->string_value, "test");
+  }
+
+  // sec and nsec are LONG_MAX and ULONG_MAX respectively
+  std::string expected_serialized_profiles =
+    "- history: 3\n"
+    "  depth: 0\n"
+    "  reliability: 1\n"
+    "  durability: 2\n"
+    "  deadline:\n"
+    "    sec: 2147483647\n"
+    "    nsec: 4294967295\n"
+    "  lifespan:\n"
+    "    sec: 2147483647\n"
+    "    nsec: 4294967295\n"
+    "  liveliness: 1\n"
+    "  liveliness_lease_duration:\n"
+    "    sec: 2147483647\n"
+    "    nsec: 4294967295\n"
+    "  avoid_ros_namespace_conventions: false";
+
+  EXPECT_THAT(get_qos_profile_for_topic(topic, db), Eq(expected_serialized_profiles));
+}
