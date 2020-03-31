@@ -50,6 +50,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "polling_interval",
     "max_bagfile_size",
     "topics",
+    "include_hidden_topics",
     nullptr};
 
   char * uri = nullptr;
@@ -63,9 +64,10 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   uint64_t polling_interval_ms = 100;
   unsigned long long max_bagfile_size = 0;  // NOLINT
   PyObject * topics = nullptr;
+  bool include_hidden_topics = false;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKO", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKOb", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
@@ -76,7 +78,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &no_discovery,
       &polling_interval_ms,
       &max_bagfile_size,
-      &topics))
+      &topics,
+      &include_hidden_topics))
   {
     return nullptr;
   }
@@ -90,6 +93,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.node_prefix = std::string(node_prefix);
   record_options.compression_mode = std::string(compression_mode);
   record_options.compression_format = compression_format;
+  record_options.include_hidden_topics = include_hidden_topics;
 
   rosbag2_compression::CompressionOptions compression_options{
     record_options.compression_format,
@@ -145,6 +149,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "storage_id",
     "node_prefix",
     "read_ahead_queue_size",
+    "rate",
     nullptr
   };
 
@@ -152,12 +157,14 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * storage_id;
   char * node_prefix;
   size_t read_ahead_queue_size;
+  float rate;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|k", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kf", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
-      &read_ahead_queue_size))
+      &read_ahead_queue_size,
+      &rate))
   {
     return nullptr;
   }
@@ -167,6 +174,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
+  play_options.rate = rate;
 
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
