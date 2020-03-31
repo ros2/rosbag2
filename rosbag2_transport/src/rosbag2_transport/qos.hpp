@@ -39,7 +39,7 @@ class Rosbag2QoS : public rclcpp::QoS
 {
 public:
   Rosbag2QoS()
-  : rclcpp::QoS(0) {}  // 0 history depth is always overwritten on deserializing
+  : rclcpp::QoS(rmw_qos_profile_default.depth) {}
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
 };
