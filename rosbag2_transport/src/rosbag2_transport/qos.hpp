@@ -30,8 +30,6 @@
 # pragma warning(pop)
 #endif
 
-#include "rosbag2_transport/visibility_control.hpp"
-
 namespace rosbag2_transport
 {
 /// Simple wrapper around rclcpp::QoS to provide a default constructor for YAML deserialization.
@@ -57,10 +55,7 @@ struct convert<rmw_time_t>
 template<>
 struct convert<rosbag2_transport::Rosbag2QoS>
 {
-  ROSBAG2_TRANSPORT_PUBLIC
   static Node encode(const rosbag2_transport::Rosbag2QoS & qos);
-
-  ROSBAG2_TRANSPORT_PUBLIC
   static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
 };
 }  // namespace YAML
