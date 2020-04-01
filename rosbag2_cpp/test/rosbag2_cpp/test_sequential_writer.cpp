@@ -192,7 +192,9 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   const auto expected_splits = message_count / max_bagfile_size;
   fake_storage_size_ = 0;
 
-  ON_CALL(*storage_, write).WillByDefault(
+  ON_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
     [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
       fake_storage_size_ += 1;
     });
@@ -251,5 +253,69 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
     const auto expected_path = ss.str();
     counter++;
     EXPECT_EQ(expected_path, path);
+  }
+}
+
+TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
+  const size_t counter = 1000;
+  const uint64_t max_cache_size = 100;
+
+  EXPECT_CALL(
+    *storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
+  Times(counter / max_cache_size);
+  EXPECT_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_bagfile_size = 0;
+  storage_options_.max_cache_size = max_cache_size;
+
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
+
+  for (auto i = 0u; i < counter; ++i) {
+    writer_->write(message);
+  }
+}
+
+TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
+  const size_t counter = 1000;
+  const uint64_t max_cache_size = 0;
+
+  EXPECT_CALL(
+    *storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
+  Times(0);
+  EXPECT_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(counter);
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_bagfile_size = 0;
+  storage_options_.max_cache_size = max_cache_size;
+
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
+
+  for (auto i = 0u; i < counter; ++i) {
+    writer_->write(message);
   }
 }

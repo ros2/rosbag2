@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <iostream>
@@ -63,6 +64,12 @@ constexpr const uint64_t MIN_SPLIT_FILE_SIZE = 86016;
 
 namespace rosbag2_storage_plugins
 {
+SqliteStorage::~SqliteStorage()
+{
+  if (active_transaction_) {
+    commit_transaction();
+  }
+}
 
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
@@ -105,6 +112,30 @@ void SqliteStorage::open(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
+void SqliteStorage::activate_transaction()
+{
+  if (active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("begin transaction");
+  database_->prepare_statement("BEGIN TRANSACTION;")->execute_and_reset();
+
+  active_transaction_ = true;
+}
+
+void SqliteStorage::commit_transaction()
+{
+  if (!active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("commit transaction");
+  database_->prepare_statement("COMMIT;")->execute_and_reset();
+
+  active_transaction_ = false;
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
@@ -119,6 +150,22 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
+}
+
+void SqliteStorage::write(
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+{
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+
+  activate_transaction();
+
+  for (auto & message : messages) {
+    write(message);
+  }
+
+  commit_transaction();
 }
 
 bool SqliteStorage::has_next()
