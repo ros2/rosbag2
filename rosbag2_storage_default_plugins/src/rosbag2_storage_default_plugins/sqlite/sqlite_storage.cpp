@@ -118,14 +118,10 @@ void SqliteStorage::activate_transaction()
     return;
   }
 
-  if (!write_statement_) {
-    prepare_for_writing();
-  }
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("begin transaction");
+  database_->prepare_statement("BEGIN TRANSACTION;")->execute_and_reset();
 
-  write_statement_->bind("BEGIN TRANSACTION;");
-  write_statement_->execute_and_reset();
-
-  active_transaction_.store(true, std::memory_order_relaxed);
+  active_transaction_ = true;
 }
 
 void SqliteStorage::commit_transaction()
@@ -134,16 +130,10 @@ void SqliteStorage::commit_transaction()
     return;
   }
 
-  if (!write_statement_) {
-    prepare_for_writing();
-  }
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("commit transaction");
+  database_->prepare_statement("COMMIT;")->execute_and_reset();
 
-  write_statement_->bind("COMMIT;");
-  write_statement_->execute_and_reset();
-
-  active_transaction_.store(false, std::memory_order_relaxed);
-  // Reset batch insert counter
-  no_of_inserts_ = 0;
+  active_transaction_ = false;
 }
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
@@ -172,15 +162,7 @@ void SqliteStorage::write(
   activate_transaction();
 
   for (auto & message : messages) {
-    auto topic_entry = topics_.find(message->topic_name);
-    if (topic_entry == end(topics_)) {
-      throw SqliteException(
-              "Topic '" + message->topic_name +
-              "' has not been created yet! Call 'create_topic' first.");
-    }
-
-    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-    write_statement_->execute_and_reset();
+    write(message);
   }
 
   commit_transaction();

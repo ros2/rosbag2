@@ -99,7 +99,6 @@ private:
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
-  uint64_t no_of_inserts_;
 };
 
 }  // namespace rosbag2_storage_plugins
