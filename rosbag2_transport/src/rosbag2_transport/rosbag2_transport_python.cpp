@@ -83,7 +83,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_cache_size,
       &topics,
       &include_hidden_topics
-      ))
+  ))
   {
     return nullptr;
   }

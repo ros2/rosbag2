@@ -58,7 +58,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--max-cache-size', type=int, default=0,
             help='maximum amount of messages to hold in cache before writing to disk. '
-                  'Default it is zero, writing every message directly to disk.'
+                 'Default it is zero, writing every message directly to disk.'
         )
         parser.add_argument(
             '--compression-mode', type=str, default='none',
