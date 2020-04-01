@@ -215,7 +215,7 @@ rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
 {
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   if (!endpoints.empty() && all_qos_same(endpoints)) {
-    return endpoints[0].qos_profile();
+    return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
   }
   ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
     "Topic " << topic_name << " has publishers offering different QoS settings. "
