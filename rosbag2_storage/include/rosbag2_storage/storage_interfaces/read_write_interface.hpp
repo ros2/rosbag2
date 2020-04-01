@@ -43,7 +43,7 @@ public:
 
   void set_filter(const StorageFilter & storage_filter) override = 0;
 
-  void reset_filter() = 0;
+  void reset_filter() override = 0;
 };
 
 }  // namespace storage_interfaces
