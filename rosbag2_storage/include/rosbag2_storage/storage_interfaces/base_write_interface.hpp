@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
@@ -34,6 +35,8 @@ public:
   virtual ~BaseWriteInterface() = default;
 
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
+
+  virtual void write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
 
   virtual void create_topic(const TopicMetadata & topic) = 0;
 
