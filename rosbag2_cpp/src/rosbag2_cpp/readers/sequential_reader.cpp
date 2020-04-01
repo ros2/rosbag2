@@ -139,8 +139,8 @@ void SequentialReader::set_filter(
     storage_->set_filter(storage_filter);
     return;
   }
-  throw std::runtime_error("Bag is not open. Call open() before setting "
-          "filter.");
+  throw std::runtime_error(
+          "Bag is not open. Call open() before setting filter.");
 }
 
 void SequentialReader::reset_filter()
@@ -149,8 +149,8 @@ void SequentialReader::reset_filter()
     storage_->reset_filter();
     return;
   }
-  throw std::runtime_error("Bag is not open. Call open() before resetting "
-          "filter.");
+  throw std::runtime_error(
+          "Bag is not open. Call open() before resetting filter.");
 }
 
 bool SequentialReader::has_next_file() const
