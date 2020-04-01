@@ -246,6 +246,7 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
           "you will not record messages from this new publisher."
       );
       topics_warned_about_incompatibility_.insert(topic_name);
+      return;
     }
   }
 }
