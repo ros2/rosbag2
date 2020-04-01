@@ -219,7 +219,7 @@ rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
   }
   ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
     "Topic " << topic_name << " has publishers offering different QoS settings. "
-    "Can't guess what QoS to request, falling back to default QoS profile."
+      "Can't guess what QoS to request, falling back to default QoS profile."
   );
   topics_warned_about_incompatibility_.insert(topic_name);
   return Rosbag2QoS{};
@@ -242,8 +242,8 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     if (info.qos_profile() != used_qos) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "A new publisher for subscribed topic " << topic_name << " was found that is offering "
-        "a (possibly) incompatible QoS profile. Not changing subscription QoS. It is possible "
-        "you will not record messages from this new publisher."
+          "a (possibly) incompatible QoS profile. Not changing subscription QoS. It is possible "
+          "you will not record messages from this new publisher."
       );
       topics_warned_about_incompatibility_.insert(topic_name);
     }
