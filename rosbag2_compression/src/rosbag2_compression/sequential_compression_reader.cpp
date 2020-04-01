@@ -158,6 +158,8 @@ void SequentialCompressionReader::reset_filter()
   if (storage_) {
     storage_->reset_filter();
   }
+  throw std::runtime_error("Bag is not open. Call open() before resetting "
+          "filter.");
 }
 
 bool SequentialCompressionReader::has_next_file() const

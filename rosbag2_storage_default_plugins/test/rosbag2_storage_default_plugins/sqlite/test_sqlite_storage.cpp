@@ -138,6 +138,26 @@ TEST_F(StorageTestFixture, read_next_returns_filtered_messages) {
   EXPECT_TRUE(readable_storage->has_next());
   auto second_message = readable_storage->read_next();
   EXPECT_THAT(second_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage->has_next());
+
+  // Test reset filter
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage2 =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  readable_storage2->open(db_filename);
+  readable_storage2->set_filter(storage_filter);
+  readable_storage2->reset_filter();
+
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto third_message = readable_storage2->read_next();
+  EXPECT_THAT(third_message->topic_name, Eq("topic1"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fourth_message = readable_storage2->read_next();
+  EXPECT_THAT(fourth_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fifth_message = readable_storage2->read_next();
+  EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage2->has_next());
 }
 
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
