@@ -23,6 +23,19 @@
 #include <utility>
 #include <vector>
 
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -62,8 +75,7 @@ private:
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
 
   void subscribe_topics(
-    const std::unordered_map<std::string, std::string> & topics_and_types,
-    std::string offered_qos_profile = "");
+    const std::unordered_map<std::string, std::string> & topics_and_types);
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
@@ -77,6 +89,7 @@ private:
   std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> subscribed_topics_;
   std::string serialization_format_;
+  YAML::Node qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport

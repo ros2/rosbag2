@@ -51,14 +51,14 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  qos_profile_overrides_ = YAML::Load(record_options.qos_profiles);
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
   subscribe_topics(
-    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics),
-    record_options.qos_profile);
+    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
@@ -122,6 +122,9 @@ Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> 
 
 namespace
 {
+// YAML key for global QoS profile fallback
+constexpr const char kFallbackKey[] = "fallback";
+
 std::string serialized_offered_qos_profiles_for_topic(
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node,
   const std::string & topic_name)
@@ -136,29 +139,16 @@ std::string serialized_offered_qos_profiles_for_topic(
 }  // unnamed namespace
 
 void Recorder::subscribe_topics(
-  const std::unordered_map<std::string, std::string> & topics_and_types,
-  std::string offered_qos_profile)
+  const std::unordered_map<std::string, std::string> & topics_and_types)
 {
-  if (offered_qos_profile.empty()) {
-    for (const auto & topic_with_type : topics_and_types) {
-      subscribe_topic(
-        {
-          topic_with_type.first,
-          topic_with_type.second,
-          serialization_format_,
-          serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
-        });
-    }
-  } else {
-    for (const auto & topic_with_type : topics_and_types) {
-      subscribe_topic(
-        {
-          topic_with_type.first,
-          topic_with_type.second,
-          serialization_format_,
-          offered_qos_profile
-        });
-    }
+  for (const auto & topic_with_type : topics_and_types) {
+    subscribe_topic(
+      {
+        topic_with_type.first,
+        topic_with_type.second,
+        serialization_format_,
+        serialized_offered_qos_profiles_for_topic(node_, topic_with_type.first)
+      });
   }
 }
 
@@ -169,6 +159,16 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
   auto subscription = create_subscription(topic.name, topic.type);
+  // Get QoS profile based on the following order:
+  // Topic Override -> Fallback -> Topic Default
+  Rosbag2QoS subscription_qos;
+  if (qos_profile_overrides_[topic.name]) {
+    subscription_qos = qos_profile_overrides_[topic.name].as<rosbag2_transport::Rosbag2QoS>();
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("override topic " << topic.name << " qos " << subscription_qos)
+  }
+  if (qos_profile_overrides_[kFallbackKey]) {
+    subscription_qos = qos_profile_overrides_[std::string(kFallbackKey)].as<rosbag2_transport::Rosbag2QoS>();
+  }
 
   if (subscription) {
     subscribed_topics_.insert(topic.name);

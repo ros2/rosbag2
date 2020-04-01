@@ -16,8 +16,8 @@ import datetime
 import os
 
 from ros2bag.verb import VerbExtension
-
 from ros2cli.node import NODE_NAME_PREFIX
+import yaml
 
 
 class RecordVerb(VerbExtension):
@@ -73,7 +73,7 @@ class RecordVerb(VerbExtension):
             '--include-hidden-topics', action='store_true',
             help='record also hidden topics.')
         parser.add_argument(
-            '--qos-profile', type=str, default='',
+            '--qos-profiles', type=str, default='',
             help='Path to a yaml file with a QoS policy to override the default profile.'
         )
         self._subparser = parser
@@ -83,6 +83,27 @@ class RecordVerb(VerbExtension):
             os.makedirs(uri)
         except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
+
+    def validate_qos_profiles(self, qos_profile_path):
+        """Validate the QoS profile yaml file path and its structure."""
+        if os.path.isfile(qos_profile_path):
+            with open(qos_profile_path, 'r') as file:
+                # Load as a dict first to verify contents
+                qos_profile = yaml.safe_load(file)
+                if not qos_profile.get('fallback'):
+                    raise ValueError(
+                        "[ERROR] [ros2bag]: QoS override must include a 'fallback' profile")
+                topic_names = list(qos_profile)
+                for name in topic_names:
+                    if type(qos_profile.get(name)) != dict:
+                        raise ValueError(
+                            '[ERROR] [ros2bag]: QoS profile configuration for topic {} is invalid.'
+                            .format(name))
+                # Read file as a string
+                file.seek(0)
+                return file.read()
+        else:
+            raise ValueError('[ERROR] [ros2bag]: {} does not exist.'.format(qos_profile_path))
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -97,13 +118,12 @@ class RecordVerb(VerbExtension):
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
 
-        qos_profile = args.qos_profile
-        if qos_profile:
-            if os.path.isfile(qos_profile):
-                with open(qos_profile, 'r') as file:
-                    qos_profile = file.read()
-            else:
-                return "[ERROR] [ros2bag]: {} does not exist.".format(args.qos_profile)
+        qos_profiles = args.qos_profiles
+        if qos_profiles:
+            try:
+                qos_profiles = self.validate_qos_profiles(qos_profiles)
+            except ValueError as e:
+                return str(e)
 
         self.create_bag_directory(uri)
 
@@ -127,7 +147,9 @@ class RecordVerb(VerbExtension):
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
-                qos_profile=qos_profile)
+                include_hidden_topics=args.include_hidden_topics,
+                qos_profiles=qos_profiles)
+
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -149,7 +171,7 @@ class RecordVerb(VerbExtension):
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,
-                qos_profile=qos_profile)
+                qos_profiles=qos_profiles)
         else:
             self._subparser.print_help()
 

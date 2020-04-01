@@ -52,7 +52,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "max_cache_size",
     "topics",
     "include_hidden_topics",
-    "qos_profile",
+    "qos_profiles",
     nullptr};
 
   char * uri = nullptr;
@@ -61,7 +61,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * node_prefix = nullptr;
   char * compression_mode = nullptr;
   char * compression_format = nullptr;
-  char * qos_profile = nullptr;
+  char * qos_profiles = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
@@ -85,7 +85,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_cache_size,
       &topics,
       &include_hidden_topics,
-      &qos_profile))
+      &qos_profiles))
   {
     return nullptr;
   }
@@ -101,7 +101,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.compression_mode = std::string(compression_mode);
   record_options.compression_format = compression_format;
   record_options.include_hidden_topics = include_hidden_topics;
-  record_options.qos_profile = qos_profile;
+  record_options.qos_profiles = qos_profiles;
 
   rosbag2_compression::CompressionOptions compression_options{
     record_options.compression_format,
