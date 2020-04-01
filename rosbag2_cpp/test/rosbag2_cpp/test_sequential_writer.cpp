@@ -258,7 +258,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 
 TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   const size_t counter = 1000;
-  const size_t max_cache_size = 100;
+  const uint64_t max_cache_size = 100;
 
   EXPECT_CALL(
     *storage_,
@@ -290,7 +290,7 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
 
 TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   const size_t counter = 1000;
-  const size_t max_cache_size = 0;
+  const uint64_t max_cache_size = 0;
 
   EXPECT_CALL(
     *storage_,

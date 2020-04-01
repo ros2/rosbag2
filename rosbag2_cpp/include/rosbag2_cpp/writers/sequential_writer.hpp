@@ -115,7 +115,7 @@ private:
 
   // Intermediate cache to write multiple messages into the storage.
   // `max_cache_size` is the amount of messages to hold in storage before writing to disk.
-  size_t max_cache_size_;
+  uint64_t max_cache_size_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used to track topic -> message count
