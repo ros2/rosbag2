@@ -30,10 +30,10 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_size;
 
-  // The chunk size indiciates how many messages should be hold in cache
+  // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.
-  // Defaults to 1, and effectively disables the caching.
-  size_t chunk_size = 1;
+  // Defaults to 0, and effectively disables the caching.
+  uint64_t max_cache_size = 0;
 };
 
 }  // namespace rosbag2_cpp

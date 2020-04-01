@@ -258,12 +258,12 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 
 TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   const size_t counter = 1000;
-  const size_t chunk_size = 100;
+  const size_t max_cache_size = 100;
 
   EXPECT_CALL(
     *storage_,
     write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  Times(counter / chunk_size);
+  Times(counter / max_cache_size);
   EXPECT_CALL(
     *storage_,
     write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
@@ -278,7 +278,7 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   message->topic_name = "test_topic";
 
   storage_options_.max_bagfile_size = 0;
-  storage_options_.chunk_size = chunk_size;
+  storage_options_.max_cache_size = max_cache_size;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
@@ -288,9 +288,9 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   }
 }
 
-TEST_F(SequentialWriterTest, do_not_use_cache_if_chunk_size_is_one) {
+TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   const size_t counter = 1000;
-  const size_t chunk_size = 1;
+  const size_t max_cache_size = 0;
 
   EXPECT_CALL(
     *storage_,
@@ -310,7 +310,7 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_chunk_size_is_one) {
   message->topic_name = "test_topic";
 
   storage_options_.max_bagfile_size = 0;
-  storage_options_.chunk_size = chunk_size;
+  storage_options_.max_cache_size = max_cache_size;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});

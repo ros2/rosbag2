@@ -77,11 +77,11 @@ void SequentialWriter::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
-  max_bagfile_size_ = storage_options.max_bagfile_size;
   base_folder_ = storage_options.uri;
-  chunk_size_ = storage_options.chunk_size;
+  max_bagfile_size_ = storage_options.max_bagfile_size;
+  max_cache_size_ = storage_options.max_cache_size;
 
-  cache_.reserve(chunk_size_);
+  cache_.reserve(max_cache_size_);
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -206,19 +206,17 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
-  // No need to cache if there's only space for 1 message
-  // We'll call write directly in this case.
-  if (chunk_size_ <= 1) {
+  // if cache size is set to zero, we directly call write
+  if (max_cache_size_ == 0u) {
     storage_->write(converter_ ? converter_->convert(message) : message);
-    return;
-  }
-
-  cache_.push_back(converter_ ? converter_->convert(message) : message);
-  if (cache_.size() >= chunk_size_) {
-    storage_->write(cache_);
-    // reset cache
-    cache_.clear();
-    cache_.reserve(chunk_size_);
+  } else {
+    cache_.push_back(converter_ ? converter_->convert(message) : message);
+    if (cache_.size() >= max_cache_size_) {
+      storage_->write(cache_);
+      // reset cache
+      cache_.clear();
+      cache_.reserve(max_cache_size_);
+    }
   }
 }
 
