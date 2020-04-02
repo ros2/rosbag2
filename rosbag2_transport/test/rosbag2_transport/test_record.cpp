@@ -118,7 +118,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
       publisher->publish(msg);
     }
   );
-  MockSequentialWriter &writer =
+  MockSequentialWriter & writer =
     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
   auto start = clock::now();

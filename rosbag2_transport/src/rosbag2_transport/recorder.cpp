@@ -170,7 +170,7 @@ std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
-  auto subscription_qos = Rosbag2QoS();
+  Rosbag2QoS subscription_qos(qos);
   if (qos_profile_overrides_[topic_name]) {
     subscription_qos = qos_profile_overrides_[topic_name].as<Rosbag2QoS>();
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
