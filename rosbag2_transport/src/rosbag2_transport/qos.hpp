@@ -40,6 +40,8 @@ public:
   : rclcpp::QoS(rmw_qos_profile_default.depth) {}
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
+
+  friend std::ostream & operator<< (std::ostream & stream, const Rosbag2QoS & qos);
 };
 }  // namespace rosbag2_transport
 

@@ -122,8 +122,6 @@ Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> 
 
 namespace
 {
-// YAML key for global QoS profile fallback
-constexpr const char kFallbackKey[] = "fallback";
 
 std::string serialized_offered_qos_profiles_for_topic(
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node,
@@ -159,17 +157,10 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
   auto subscription = create_subscription(topic.name, topic.type);
-  // Get QoS profile based on the following order:
-  // Topic Override -> Fallback -> Topic Default
-  Rosbag2QoS subscription_qos;
   if (qos_profile_overrides_[topic.name]) {
-    subscription_qos = qos_profile_overrides_[topic.name].as<rosbag2_transport::Rosbag2QoS>();
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("override topic " << topic.name << " qos " << subscription_qos)
+    const auto profile_override = YAML::Dump(qos_profile_overrides_[topic.name]);
+    topic.offered_qos_profiles = profile_override;
   }
-  if (qos_profile_overrides_[kFallbackKey]) {
-    subscription_qos = qos_profile_overrides_[std::string(kFallbackKey)].as<rosbag2_transport::Rosbag2QoS>();
-  }
-
   if (subscription) {
     subscribed_topics_.insert(topic.name);
     subscriptions_.push_back(subscription);
