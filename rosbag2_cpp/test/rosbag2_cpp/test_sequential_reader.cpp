@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
 
@@ -40,7 +42,9 @@ public:
   SequentialReaderTest()
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
-    storage_serialization_format_("rmw1_format")
+    storage_serialization_format_("rmw1_format"),
+    storage_uri_(rcpputils::fs::temp_directory_path().string()),
+    default_storage_options_({storage_uri_, ""})
   {
     rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
@@ -56,17 +60,23 @@ public:
     rosbag2_storage::BagMetadata metadata;
     metadata.relative_file_paths = {"/path/to/storage"};
     metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
+
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
-    EXPECT_CALL(*storage_factory, open_read_only(_, _)).WillOnce(Return(storage_));
+
+    EXPECT_CALL(*storage_factory, open_read_only(_, _));
+    ON_CALL(*storage_factory, open_read_only).WillByDefault(
+      [this](const std::string & path, const std::string & /* storage_id */) {
+        EXPECT_STREQ("/path/to/storage", path.c_str());
+        return storage_;
+      });
 
     auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
       std::move(storage_factory), converter_factory_, std::move(metadata_io));
-
     reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   }
 
@@ -74,6 +84,8 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::string storage_serialization_format_;
+  std::string storage_uri_;
+  rosbag2_cpp::StorageOptions default_storage_options_;
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {
@@ -89,7 +101,7 @@ TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_
   EXPECT_CALL(*converter_factory_, load_serializer(output_format))
   .WillOnce(Return(ByMove(std::move(format2_converter))));
 
-  reader_->open(rosbag2_cpp::StorageOptions(), {"", output_format});
+  reader_->open(default_storage_options_, {"", output_format});
   reader_->read_next();
 }
 
@@ -102,7 +114,7 @@ TEST_F(SequentialReaderTest, open_throws_error_if_converter_plugin_does_not_exis
   EXPECT_CALL(*converter_factory_, load_serializer(output_format))
   .WillOnce(Return(ByMove(nullptr)));
 
-  EXPECT_ANY_THROW(reader_->open(rosbag2_cpp::StorageOptions(), {"", output_format}));
+  EXPECT_ANY_THROW(reader_->open(default_storage_options_, {"", output_format}));
 }
 
 TEST_F(
@@ -113,7 +125,7 @@ TEST_F(
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format)).Times(0);
   EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format)).Times(0);
 
-  reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format});
+  reader_->open(default_storage_options_, {"", storage_serialization_format});
   reader_->read_next();
 }
 

@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 
@@ -40,7 +42,10 @@ public:
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
     relative_path_1_("some_relative_path_1"),
-    relative_path_2_("some_relative_path_2")
+    relative_path_2_("some_relative_path_2"),
+    absolute_path_1_("/some/absolute/path1"),
+    storage_uri_(rcpputils::fs::temp_directory_path().string()),
+    default_storage_options_({storage_uri_, ""})
   {
     auto topic_with_type = rosbag2_storage::TopicMetadata{
       "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
@@ -49,15 +54,16 @@ public:
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
 
+    auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     rosbag2_storage::BagMetadata metadata;
     metadata.relative_file_paths.push_back(relative_path_1_);
     metadata.relative_file_paths.push_back(relative_path_2_);
+    metadata.relative_file_paths.push_back(absolute_path_1_);
     metadata.topics_with_message_count.push_back({topic_with_type, 10});
     ON_CALL(*metadata_io, read_metadata(_)).WillByDefault(Return(metadata));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
-    auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
@@ -65,7 +71,6 @@ public:
 
     auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
       std::move(storage_factory), converter_factory_, std::move(metadata_io));
-
     reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   }
 
@@ -75,27 +80,37 @@ public:
   std::string storage_serialization_format_;
   std::string relative_path_1_;
   std::string relative_path_2_;
+  std::string absolute_path_1_;
+  std::string storage_uri_;
+  rosbag2_cpp::StorageOptions default_storage_options_;
 };
 
 TEST_F(MultifileReaderTest, has_next_reads_next_file)
 {
   // storage::has_next() is called twice when reader::has_next() is called
-  EXPECT_CALL(*storage_, has_next()).Times(4)
+  EXPECT_CALL(*storage_, has_next()).Times(6)
   .WillOnce(Return(true)).WillOnce(Return(true))  // We have a message
   .WillOnce(Return(false))  // No message, load next file
   .WillOnce(Return(true));  // True since we now have a message
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format_)).Times(0);
   EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format_)).Times(0);
-  reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
 
   auto & sr = static_cast<rosbag2_cpp::readers::SequentialReader &>(
     reader_->get_implementation_handle());
 
-  EXPECT_EQ(sr.get_current_file(), relative_path_1_);
+  auto resolved_relative_path_1 =
+    (rcpputils::fs::path(storage_uri_).parent_path() / relative_path_1_).string();
+  auto resolved_relative_path_2 =
+    (rcpputils::fs::path(storage_uri_).parent_path() / relative_path_2_).string();
+  EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
   reader_->has_next();
   reader_->read_next();
   reader_->has_next();
-  EXPECT_EQ(sr.get_current_file(), relative_path_2_);
+  EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
+  reader_->read_next();
+  reader_->has_next();
+  EXPECT_EQ(sr.get_current_file(), absolute_path_1_);
 }
 
 TEST_F(MultifileReaderTest, has_next_throws_if_no_storage)
