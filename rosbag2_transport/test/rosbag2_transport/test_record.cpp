@@ -18,19 +18,6 @@
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
-
 #include "rclcpp/rclcpp.hpp"
 
 #include "../src/rosbag2_transport/qos.hpp"
@@ -117,58 +104,96 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
 
 TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 {
-    auto string_message = get_messages_strings()[1];
-    std::string topic = "/chatter";
-    rosbag2_transport::RecordOptions record_options = {false, false, {topic}, "rmw_format", 100ms};
-    record_options.qos_profiles =
-            "fallback:\n"
-            "  history: 0\n"
-            "test_topic:\n"
-            "  history: 3\n"
-            "  depth: 0\n"
-            "  reliability: 1\n"
-            "  durability: 2\n"
-            "  deadline:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  lifespan:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  liveliness: 1\n"
-            "  liveliness_lease_duration:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  avoid_ros_namespace_conventions: false";
-    YAML::Node node = YAML::Load(record_options.qos_profiles);
-    //std::cout << node["test_topic"].as<rosbag2_transport::Rosbag2QoS>() << std::endl;
-    //std::string back = YAML::Dump(node["test_topic"]);
-    //std::cout << back << std::endl;
-    start_recording(record_options);
-    pub_man_.add_publisher<test_msgs::msg::Strings>(topic, string_message, 2);
-    run_publishers();
-    stop_recording();
+  using namespace std::chrono_literals;
+  auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
+  strict_msg->string_value = "strict";
+  auto relaxed_msg = std::make_shared<test_msgs::msg::Strings>();
+  strict_msg->string_value = "relaxed";
+  std::string strict_topic = "/strict_topic";
+  std::string relaxed_topic = "/relaxed_topic";
 
-    MockSequentialWriter & writer =
-            static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-    auto recorded_topics = writer.get_topics();
-    std::string serialized_profiles = recorded_topics.at(topic).offered_qos_profiles;
-    // Basic smoke test that the profile was serialized into the metadata as a string.
-    EXPECT_THAT(
-            serialized_profiles, ContainsRegex(
-            "- history: 3\n"
-            "  depth: 0\n"
-            "  reliability: 1\n"
-            "  durability: 2\n"
-            "  deadline:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  lifespan:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  liveliness: 1\n"
-            "  liveliness_lease_duration:\n"
-            "    sec: 2147483647\n"
-            "    nsec: 4294967295\n"
-            "  avoid_ros_namespace_conventions: false"
-    ));
+  rosbag2_transport::RecordOptions record_options =
+    {false, false, {strict_topic, relaxed_topic}, "rmw_format", 100ms};
+  record_options.qos_profiles =
+    "/relaxed_topic:\n"
+    "  history: 0\n"
+    "  depth: 0\n"
+    "  reliability: 1\n"  //  RELIABLE
+    "  durability: 0\n"
+    "  deadline:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  lifespan:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  liveliness: 0\n"
+    "  liveliness_lease_duration:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  avoid_ros_namespace_conventions: false\n"
+    "/strict_topic:\n"
+    "  history: 1\n"
+    "  depth: 0\n"
+    "  reliability: 1\n"  // RELIABLE
+    "  durability: 0\n"
+    "  deadline:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  lifespan:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  liveliness: 0\n"
+    "  liveliness_lease_duration:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  avoid_ros_namespace_conventions: false\n";
+
+  auto profile = Rosbag2QoS().best_effort();
+  auto sys_default_profile = rclcpp::SystemDefaultsQoS();
+//  pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3);
+//  pub_man_.add_publisher<test_msgs::msg::Strings>(relaxed_topic, relaxed_msg, 3);
+//  start_recording(record_options);
+//  run_publishers();
+//  stop_recording();
+
+
+  // Start recording
+  auto future = std::async(
+    std::launch::async, [this, record_options]() {
+      rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+      rosbag2_transport.record(storage_options_, record_options);
+    });
+
+  // Run publishers
+  auto publisher_node = std::make_shared<rclcpp::Node>(
+    "qos_publisher",
+    rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false));
+  auto strict_publisher =
+    publisher_node->create_publisher<test_msgs::msg::Strings>(strict_topic, profile);
+  auto relaxed_publisher =
+    publisher_node->create_publisher<test_msgs::msg::Strings>(relaxed_topic, sys_default_profile);
+  auto publish_timer = publisher_node->create_wall_timer(
+    300ms, [strict_publisher, relaxed_publisher]() -> void {
+      test_msgs::msg::Strings msg;
+      msg.string_value = "strict";
+      strict_publisher->publish(msg);
+      msg.string_value = "relaxed";
+      relaxed_publisher->publish(msg);
+    }
+  );
+
+  // Stop recording
+  rclcpp::shutdown();
+  future.get();
+
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_messages = writer.get_messages();
+  auto recorded_topics = writer.get_topics();
+
+  std::cout << "topics" << std::endl;
+  for (const auto & topic : recorded_topics) {
+    std::cout << topic.first << std::endl;
+  }
+  std::cout << "End";
 }

@@ -157,10 +157,6 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
   auto subscription = create_subscription(topic.name, topic.type);
-  if (qos_profile_overrides_[topic.name]) {
-    const auto profile_override = YAML::Dump(qos_profile_overrides_[topic.name]);
-    topic.offered_qos_profiles = profile_override;
-  }
   if (subscription) {
     subscribed_topics_.insert(topic.name);
     subscriptions_.push_back(subscription);
@@ -175,10 +171,15 @@ std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type)
 {
+  auto subscription_qos = Rosbag2QoS(rclcpp::SystemDefaultsQoS());
+  if (qos_profile_overrides_[topic_name]) {
+    subscription_qos = qos_profile_overrides_[topic_name].as<Rosbag2QoS>();
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+  }
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
-    Rosbag2QoS{},
+    subscription_qos,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;

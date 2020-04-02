@@ -139,6 +139,7 @@ if(BUILD_TESTING)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
       $<INSTALL_INTERFACE:include>)
+    target_link_libraries(test_rosbag2_node rosbag2_transport)
     ament_target_dependencies(test_rosbag2_node
       ament_index_cpp
       rclcpp

@@ -41,7 +41,7 @@ public:
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
 
-  friend std::ostream & operator<< (std::ostream & stream, const Rosbag2QoS & qos);
+  friend std::ostream & operator<<(std::ostream & stream, const Rosbag2QoS & qos);
 };
 }  // namespace rosbag2_transport
 

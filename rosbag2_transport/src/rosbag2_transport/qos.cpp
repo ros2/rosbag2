@@ -16,9 +16,10 @@
 
 namespace rosbag2_transport
 {
-  std::ostream & operator<< (std::ostream & stream, const Rosbag2QoS & qos) {
-    const auto profile = qos.get_rmw_qos_profile();
-    stream << "history: " << profile.history << std::endl <<
+std::ostream & operator<<(std::ostream & stream, const Rosbag2QoS & qos)
+{
+  const auto profile = qos.get_rmw_qos_profile();
+  stream << "history: " << profile.history << std::endl <<
     "depth: " << profile.depth << std::endl <<
     "reliability: " << profile.reliability << std::endl <<
     "durability: " << profile.durability << std::endl <<
@@ -28,8 +29,8 @@ namespace rosbag2_transport
     "liveliness_lease_duration: " << profile.liveliness_lease_duration.sec << "." <<
     profile.liveliness_lease_duration.nsec << std::endl <<
     "avoid_ros_namespace_conventions: " << profile.avoid_ros_namespace_conventions << std::endl;
-    return stream;
-  }
+  return stream;
+}
 }
 
 namespace YAML

@@ -19,15 +19,35 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_cpp/writer.hpp"
+
 #include "rosbag2_test_common/memory_management.hpp"
+#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/storage_options.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
 #include "qos.hpp"
+#include "recorder.hpp"
 #include "rosbag2_node.hpp"
+
+#include "mock_sequential_writer.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
@@ -251,3 +271,5 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
   EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
+
+
