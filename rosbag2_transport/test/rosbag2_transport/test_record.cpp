@@ -147,10 +147,9 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
   strict_msg->string_value = "strict";
   std::string strict_topic = "/strict_topic";
-  std::string relaxed_topic = "/relaxed_topic";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, {strict_topic, relaxed_topic}, "rmw_format", 100ms};
+  {false, false, {strict_topic}, "rmw_format", 100ms};
   // 0 means system default for all options
   record_options.qos_profiles =
     "/strict_topic:\n"
