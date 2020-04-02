@@ -160,7 +160,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  Rosbag2QoS subscription_qos(common_qos_or_fallback(topic.name));
+  Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -219,7 +219,7 @@ rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
   }
   ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
     "Topic " << topic_name << " has publishers offering different QoS settings. "
-      "Can't guess what QoS to request, falling back to default QoS profile."
+      "Cannot determine what QoS to request, falling back to default QoS profile."
   );
   topics_warned_about_incompatibility_.insert(topic_name);
   return Rosbag2QoS{};
@@ -236,14 +236,14 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     // Already warned about this topic
     return;
   }
-  const rclcpp::QoS & used_qos = existing_subscription->second->qos_profile();
+  const auto & used_qos = existing_subscription->second->qos_profile();
   auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
     if (info.qos_profile() != used_qos) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "A new publisher for subscribed topic " << topic_name << " was found that is offering "
-          "a (possibly) incompatible QoS profile. Not changing subscription QoS. It is possible "
-          "you will not record messages from this new publisher."
+          "a (possibly) incompatible QoS profile. Not changing subscription QoS. "
+          "Messages from this publisher may not be recorded."
       );
       topics_warned_about_incompatibility_.insert(topic_name);
       return;

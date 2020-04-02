@@ -299,7 +299,7 @@ TEST_F(RosBag2NodeFixture, mixed_qos_falls_back_to_default)
       break;
     }
     // rate limit the busy-wait and let other threads work
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(10ms);
   }
   ASSERT_FALSE(timed_out);
   // We must shut down rclcpp before returning from this test case or recording will block forever
