@@ -48,6 +48,14 @@ public:
   explicit Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node);
 
   void record(const RecordOptions & record_options);
+  const std::unordered_set<std::string> & topics_using_fallback_qos() const
+  {
+    return topics_warned_about_incompatibility_;
+  }
+  const std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> & subscriptions()
+  {
+    return subscriptions_;
+  }
 
 private:
   void topics_discovery(
