@@ -281,18 +281,18 @@ TEST_F(RosBag2NodeFixture, mixed_qos_falls_back_to_default)
   writer->open(storage_options, {rmw_get_serialization_format(), "rmw_format"});
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(writer, node_);
   auto recording_future = std::async(
-    std::launch::async, [recorder, topic]() {
+    std::launch::async,
+    [recorder, topic]() {
       recorder->record({false, false, {topic}, "rmw_format", 100ms});
-    }
-  );
+    });
 
   auto start = clock::now();
   // Takes < 20ms normally, timeout chosen as "a very long time"
   auto timeout = 5s;
   bool timed_out = false;
   auto success_condition = [recorder, topic]() -> bool {
-    return recorder->topics_using_fallback_qos().count(topic) != 0;
-  };
+      return recorder->topics_using_fallback_qos().count(topic) != 0;
+    };
   while (!success_condition()) {
     if ((clock::now() - start) > timeout) {
       timed_out = true;
