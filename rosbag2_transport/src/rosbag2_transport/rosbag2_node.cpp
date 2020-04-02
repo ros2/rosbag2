@@ -56,7 +56,6 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   auto type_support = rosbag2_cpp::get_typesupport(
     type, "rosidl_typesupport_cpp",
     library_generic_subscriptor_);
-  auto type_support = rosbag2_cpp::get_typesupport(type, "rosidl_typesupport_cpp");
   auto subscription = std::shared_ptr<GenericSubscription>();
 
   try {
