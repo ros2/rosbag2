@@ -1,0 +1,73 @@
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import contextlib
+from pathlib import Path
+import tempfile
+
+import unittest
+
+from launch import LaunchDescription
+from launch.actions import ExecuteProcess
+
+import launch_testing
+import launch_testing.actions
+import launch_testing.asserts
+import launch_testing.markers
+import launch_testing.tools
+
+import pytest
+
+
+TEST_NODE = 'cli_qos_profile_test_node'
+TEST_NAMESPACE = 'cli_qos_profile'
+
+
+@pytest.mark.rostest
+@launch_testing.markers.keep_alive
+def generate_test_description():
+    return LaunchDescription([launch_testing.actions.ReadyToTest()])
+
+
+class TestROS2PkgCLI(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls, launch_service, proc_info, proc_output):
+        @contextlib.contextmanager
+        def launch_bag_command(self, arguments, **kwargs):
+            pkg_command_action = ExecuteProcess(
+                cmd=['ros2', 'bag', *arguments],
+                additional_env={'PYTHONUNBUFFERED': '1'},
+                name='ros2bag-cli',
+                output='screen',
+                **kwargs
+            )
+            with launch_testing.tools.launch_process(
+                    launch_service, pkg_command_action, proc_info, proc_output
+            ) as pkg_command:
+                yield pkg_command
+        cls.launch_bag_command = launch_bag_command
+
+    def test_qos_simple(self):
+        profile_path = Path(__file__) / 'qos_profile.yaml'
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            arguments = ['record', '--qos-profile', profile_path.as_posix(),
+                         '--output', tmpdirname]
+            with self.launch_bag_command(arguments=arguments) as bag_command:
+                assert bag_command.wait_for_shutdown(timeout=5)
+            output = bag_command.output.splitlines()
+            error_string = '[ERROR] [ros2bag]:'
+            for line in output:
+                assert error_string not in line, \
+                  print('ros2bag CLI failed: {}'.format(line))
