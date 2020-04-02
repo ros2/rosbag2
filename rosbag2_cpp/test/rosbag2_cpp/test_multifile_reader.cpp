@@ -81,9 +81,7 @@ public:
   {
     rosbag2_storage::BagMetadata metadata;
 
-    metadata.relative_file_paths.push_back(relative_path_1_);
-    metadata.relative_file_paths.push_back(relative_path_2_);
-    metadata.relative_file_paths.push_back(absolute_path_1_);
+    metadata.relative_file_paths = {relative_path_1_, relative_path_2_, absolute_path_1_};
 
     return metadata;
   }
