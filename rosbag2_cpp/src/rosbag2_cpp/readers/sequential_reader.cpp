@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
@@ -30,7 +31,7 @@ namespace readers
 namespace details
 {
 std::vector<std::string> resolve_relative_paths(
-  const std::string & base_folder, std::vector<std::string> relative_files, size_t version = 4)
+  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
 {
   auto base_path = rcpputils::fs::path(base_folder);
   if (version < 4) {
@@ -38,10 +39,10 @@ std::vector<std::string> resolve_relative_paths(
     base_path = rcpputils::fs::path(base_folder).parent_path();
   }
 
-  rcpputils::require_true(base_path.exists(), "base folder does not exist: " + base_folder);
-  if (!base_path.is_directory()) {
-    throw std::invalid_argument("base folder has to be a directory: " + base_folder);
-  }
+  rcpputils::require_true(
+    base_path.exists(), "base folder does not exist: " + base_folder);
+  rcpputils::require_true(
+    base_path.is_directory(), "base folder has to be a directory: " + base_folder);
 
   for (auto & file : relative_files) {
     auto path = rcpputils::fs::path(file);
