@@ -133,7 +133,6 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
     }
     rclcpp::spin_some(publisher_node);
   }
-
   stop_recording();
 
   ASSERT_FALSE(timed_out);

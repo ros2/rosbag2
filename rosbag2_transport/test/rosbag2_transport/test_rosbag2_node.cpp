@@ -260,14 +260,21 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
 
-TEST(RosBag2Recorder, mixed_qos_falls_back_to_default)
+TEST_F(RosBag2NodeFixture, mixed_qos_falls_back_to_default)
 {
   using clock = std::chrono::system_clock;
   using namespace std::chrono_literals;
-  rclcpp::init(0, nullptr);
-  auto node_ = std::make_shared<rosbag2_transport::Rosbag2Node>("rosbag2");
 
   std::string topic = "/string_topic";
+  test_msgs::msg::Strings msg;
+  msg.string_value = "Hello";
+
+  // two QoS profiles that are not compatible with the default request, but are not equal
+  auto profile1 = rosbag2_transport::Rosbag2QoS().best_effort().durability_volatile();
+  auto publisher1 = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic, profile1);
+
+  auto profile2 = rosbag2_transport::Rosbag2QoS().best_effort().transient_local();
+  auto publisher2 = publisher_node_->create_publisher<test_msgs::msg::Strings>(topic, profile2);
 
   rosbag2_transport::StorageOptions storage_options {"uri", "storage_id", 0};
   auto writer = std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>());
@@ -279,48 +286,23 @@ TEST(RosBag2Recorder, mixed_qos_falls_back_to_default)
     }
   );
 
-  // two QoS profiles that are not compatible with the default request, but are not equal
-  auto profile1 = rosbag2_transport::Rosbag2QoS().best_effort().durability_volatile();
-  auto profile2 = rosbag2_transport::Rosbag2QoS().best_effort().transient_local();
-  test_msgs::msg::Strings msg;
-  msg.string_value = "Hello";
-
-  auto publisher1 = node_->create_publisher<test_msgs::msg::Strings>(topic, profile1);
-  auto publisher2 = node_->create_publisher<test_msgs::msg::Strings>(topic, profile2);
-  auto publish1_timer = node_->create_wall_timer(
-    100ms, [publisher1, msg]() -> void {
-      publisher1->publish(msg);
-    }
-  );
-  auto publish2_timer = node_->create_wall_timer(
-    100ms, [publisher2, msg]() -> void {
-      publisher2->publish(msg);
-    }
-  );
-
   auto start = clock::now();
   // Takes < 20ms normally, timeout chosen as "a very long time"
   auto timeout = 5s;
   bool timed_out = false;
   auto success_condition = [recorder, topic]() -> bool {
-    // We really care about the warning, but if we shutdown rclcpp before the subscription
-    // is created it will throw an exception when the recorder tries to subscribe
-    bool warned = recorder->topics_using_fallback_qos().count(topic) != 0;
-    bool subscribed = recorder->subscriptions().count(topic) != 0;
-    return warned && subscribed;
+    return recorder->topics_using_fallback_qos().count(topic) != 0;
   };
   while (!success_condition()) {
     if ((clock::now() - start) > timeout) {
       timed_out = true;
       break;
     }
-    // the Recorder spins the node for us, so we don't need to, but we do need to
-    // relinquish control to let the Recorder thread do some work
-    std::this_thread::sleep_for(5ms);
+    // rate limit the busy-wait and let other threads work
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-
+  ASSERT_FALSE(timed_out);
+  // We must shut down rclcpp before returning from this test case or recording will block forever
   rclcpp::shutdown();
   recording_future.get();
-
-  ASSERT_FALSE(timed_out);
 }
