@@ -30,10 +30,13 @@ namespace readers
 namespace details
 {
 std::vector<std::string> resolve_relative_paths(
-  const std::string & base_folder, std::vector<std::string> relative_files)
+  const std::string & base_folder, std::vector<std::string> relative_files, size_t version = 4)
 {
-  // TODO(Karsten1987): It's extremely weird that relative files are prefixed with a folder name
-  auto base_path = rcpputils::fs::path(base_folder).parent_path();
+  auto base_path = rcpputils::fs::path(base_folder);
+  if (version < 4) {
+    // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
+    base_path = rcpputils::fs::path(base_folder).parent_path();
+  }
 
   if (!base_path.exists()) {
     throw std::invalid_argument("base folder does not exist: " + base_folder);
@@ -89,8 +92,8 @@ void SequentialReader::open(
       return;
     }
 
-    file_paths_ =
-      details::resolve_relative_paths(storage_options.uri, metadata_.relative_file_paths);
+    file_paths_ = details::resolve_relative_paths(
+      storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
 
     storage_ = storage_factory_->open_read_only(
