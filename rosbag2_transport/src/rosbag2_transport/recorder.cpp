@@ -31,19 +31,6 @@
 #include "qos.hpp"
 #include "rosbag2_node.hpp"
 
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
-
 namespace
 {
 bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
@@ -67,6 +54,7 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  qos_profile_overrides_ = YAML::Load(record_options.qos_profiles);
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -182,10 +170,15 @@ std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+  auto subscription_qos = Rosbag2QoS();
+  if (qos_profile_overrides_[topic_name]) {
+    subscription_qos = qos_profile_overrides_[topic_name].as<Rosbag2QoS>();
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+  }
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
-    qos,
+    subscription_qos,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;

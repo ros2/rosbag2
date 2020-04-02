@@ -32,6 +32,7 @@ public:
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";
+  std::string qos_profiles = "";
   bool include_hidden_topics = false;
 };
 

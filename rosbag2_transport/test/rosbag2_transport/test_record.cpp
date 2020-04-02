@@ -20,6 +20,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "../../src/rosbag2_transport/qos.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -100,8 +101,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   ));
 }
 
-TEST_F(RecordIntegrationTestFixture, records_sensor_data)
-{
+TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
   using clock = std::chrono::system_clock;
   using namespace std::chrono_literals;
 
@@ -118,7 +118,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
       publisher->publish(msg);
     }
   );
-  MockSequentialWriter & writer =
+  MockSequentialWriter &writer =
     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
   auto start = clock::now();
@@ -141,3 +141,50 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   EXPECT_FALSE(recorded_messages.empty());
 }
 #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+
+TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
+{
+  auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
+  strict_msg->string_value = "strict";
+  std::string strict_topic = "/strict_topic";
+  std::string relaxed_topic = "/relaxed_topic";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, {strict_topic, relaxed_topic}, "rmw_format", 100ms};
+  // 0 means system default for all options
+  record_options.qos_profiles =
+    "/strict_topic:\n"
+    "  history: 2\n"      // Keep All
+    "  depth: 0\n"
+    "  reliability: 2\n"  // Best Effort
+    "  durability: 2\n"   // Volatile
+    "  deadline:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  lifespan:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "    nsec: 0\n"
+    "  liveliness: 0\n"
+    "  liveliness_lease_duration:\n"
+    "    sec: 0\n"
+    "    nsec: 0\n"
+    "  avoid_ros_namespace_conventions: false\n";
+
+  // Create two publishers on the same topic with different QoS profiles.
+  // If no override is specified, then the recorder cannot see any published messages.
+  auto profile1 = rosbag2_transport::Rosbag2QoS().best_effort().durability_volatile();
+  auto profile2 = rosbag2_transport::Rosbag2QoS().best_effort().transient_local();
+  pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile1);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile2);
+
+  start_recording(record_options);
+  run_publishers();
+  stop_recording();
+
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_messages = writer.get_messages();
+
+  ASSERT_GE(recorded_messages.size(), 0u);
+}
