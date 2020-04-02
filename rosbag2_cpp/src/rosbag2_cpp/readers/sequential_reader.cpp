@@ -38,9 +38,7 @@ std::vector<std::string> resolve_relative_paths(
     base_path = rcpputils::fs::path(base_folder).parent_path();
   }
 
-  if (!base_path.exists()) {
-    throw std::invalid_argument("base folder does not exist: " + base_folder);
-  }
+  rcpputils::require_true(base_path.exists(), "base folder does not exist: " + base_folder);
   if (!base_path.is_directory()) {
     throw std::invalid_argument("base folder has to be a directory: " + base_folder);
   }
