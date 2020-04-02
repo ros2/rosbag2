@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -43,7 +44,8 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
 {
 public:
   SqliteStorage() = default;
-  ~SqliteStorage() override = default;
+
+  ~SqliteStorage() override;
 
   void open(
     const std::string & uri,
@@ -55,6 +57,10 @@ public:
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
+
+  void write(
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+  override;
 
   bool has_next() override;
 
@@ -77,6 +83,8 @@ private:
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  void activate_transaction();
+  void commit_transaction();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
@@ -90,6 +98,7 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
+  std::atomic_bool active_transaction_ {false};
 };
 
 }  // namespace rosbag2_storage_plugins

@@ -517,3 +517,50 @@ TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_
   EXPECT_THAT(
     error_output, HasSubstr("Requested converter for format 'some_rmw' does not exist"));
 }
+
+TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
+  auto max_cache_size = 10;
+  auto topic_name = "/rosbag2_cache_test_topic";
+
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
+  size_t expected_test_messages = 33;
+
+  auto process_handle = start_execution(
+    "ros2 bag record --output " + root_bag_path_.string() + " " + topic_name + " " +
+    "--max-cache-size " + std::to_string(max_cache_size));
+  wait_for_db();
+
+  pub_man_.add_publisher(topic_name, message, expected_test_messages);
+
+  const auto database_path = get_bag_file_path(0).string();
+
+  rosbag2_storage_plugins::SqliteWrapper db{
+    database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
+  pub_man_.run_publishers(
+    [this, &db](const std::string & topic_name) {
+      return count_stored_messages(db, topic_name);
+    });
+
+  stop_execution(process_handle);
+
+  // TODO(Martin-Idel-SI): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef _WIN32
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 1;
+  metadata.storage_identifier = "sqlite3";
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_.string(), metadata);
+#endif
+
+  wait_for_metadata();
+  auto test_topic_messages =
+    get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
+}

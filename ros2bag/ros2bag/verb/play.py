@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import ArgumentTypeError
 import os
 
 from ros2bag.verb import VerbExtension
@@ -28,10 +29,22 @@ class PlayVerb(VerbExtension):
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
         parser.add_argument(
-            '-r', '--read-ahead-queue-size', type=int, default=1000,
+            '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
                  'playback. Larger size will result in larger memory needs but might prevent '
                  'delay of message playback.')
+        parser.add_argument(
+            '-r', '--rate', type=self.check_positive_float, default=1.0,
+            help='rate at which to play back messages. Valid range > 0.0.')
+
+    def check_positive_float(self, value):
+        try:
+            fvalue = float(value)
+            if fvalue <= 0.0:
+                raise ArgumentTypeError('%s is not in the valid range (> 0.0)' % value)
+            return fvalue
+        except ValueError:
+            raise ArgumentTypeError('%s is not of the valid type (float)' % value)
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
@@ -47,4 +60,5 @@ class PlayVerb(VerbExtension):
             uri=bag_file,
             storage_id=args.storage,
             node_prefix=NODE_NAME_PREFIX,
-            read_ahead_queue_size=args.read_ahead_queue_size)
+            read_ahead_queue_size=args.read_ahead_queue_size,
+            rate=args.rate)

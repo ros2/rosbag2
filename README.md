@@ -125,6 +125,39 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
+### Using in launch
+
+We can invoke the command line tool from a ROS launch script as an *executable* (not a *node* action).
+For example, to launch the command to record all topics you can use the following launch script:
+
+```xml
+<launch>
+  <executable cmd="ros2 bag record -a" output="screen" />
+</launch>
+```
+
+Here's the equivalent Python launch script:
+
+```python
+import launch
+
+
+def generate_launch_description():
+    return launch.LaunchDescription([
+        launch.actions.ExecuteProcess(
+            cmd=['ros2', 'bag', 'record', '-a'],
+            output='screen'
+        )
+    ])
+```
+
+Use the `ros2 launch` command line tool to launch either of the above launch scripts.
+For example, if we named the above XML launch script, `record_all.launch.xml`:
+
+```sh
+$ ros2 launch record_all.launch.xml
+```
+
 ## Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field called `storage id:`.

@@ -29,12 +29,14 @@ find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/formatter.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
+  src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
@@ -49,8 +51,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rmw
   rosbag2_compression
   rosbag2_cpp
-  rosidl_generator_cpp
   shared_queues_vendor
+  yaml_cpp_vendor
 )
 
 include(cmake/configure_python.cmake)
@@ -60,7 +62,7 @@ add_library(rosbag2_transport_py
   src/rosbag2_transport/rosbag2_transport_python.cpp)
 configure_python_c_extension_library(rosbag2_transport_py)
 target_link_libraries(rosbag2_transport_py rosbag2_transport)
-ament_target_dependencies(rosbag2_transport_py rosbag2_compression)
+ament_target_dependencies(rosbag2_transport_py rosbag2_compression yaml_cpp_vendor)
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_TRANSPORT_BUILDING_LIBRARY")
@@ -80,7 +82,7 @@ install(
 ament_export_include_directories(include)
 ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_cpp rosbag2_compression)
+ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
@@ -125,22 +127,25 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_rosbag2_node
-    test/rosbag2_transport/test_rosbag2_node.cpp
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
+    src/rosbag2_transport/qos.cpp
     src/rosbag2_transport/rosbag2_node.cpp
+    test/rosbag2_transport/test_rosbag2_node.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_node)
     target_include_directories(test_rosbag2_node
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
       $<INSTALL_INTERFACE:include>)
     ament_target_dependencies(test_rosbag2_node
       ament_index_cpp
-      rosbag2_cpp
       rclcpp
+      rosbag2_cpp
+      rosbag2_test_common
       test_msgs
-      rosbag2_test_common)
+      yaml_cpp_vendor)
   endif()
 
   ament_add_gmock(test_formatter
@@ -175,6 +180,21 @@ if(BUILD_TESTING)
   if(TARGET test_play)
     target_link_libraries(test_play rosbag2_transport)
     ament_target_dependencies(test_play test_msgs rosbag2_test_common)
+  endif()
+
+  ament_add_gmock(test_qos
+    src/rosbag2_transport/qos.cpp
+    test/rosbag2_transport/test_qos.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if(TARGET test_qos)
+    target_include_directories(test_qos
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
+    ament_target_dependencies(test_qos
+      rosbag2_test_common
+      yaml_cpp_vendor)
   endif()
 
 endif()

@@ -80,7 +80,7 @@ public:
     auto node_name = std::string("publisher") + std::to_string(counter_++);
     auto publisher_node = std::make_shared<rclcpp::Node>(
       node_name,
-      rclcpp::NodeOptions().start_parameter_event_publisher(false));
+      rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false));
     auto publisher = publisher_node->create_publisher<T>(topic_name, 10);
 
     publisher_nodes_.push_back(publisher_node);
