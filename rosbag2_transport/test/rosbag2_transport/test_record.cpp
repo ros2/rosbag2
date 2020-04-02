@@ -100,3 +100,44 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   ));
 }
 #endif  // ENABLE_TEST_QOS_IS_STORED_IN_METADATA
+
+TEST_F(RecordIntegrationTestFixture, records_sensor_data)
+{
+  using clock = std::chrono::system_clock;
+  using namespace std::chrono_literals;
+
+  std::string topic = "/string_topic";
+  start_recording({false, false, {topic}, "rmw_format", 100ms});
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for_qos_test");
+  auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, rclcpp::SensorDataQoS());
+  auto publish_timer = publisher_node->create_wall_timer(
+    50ms, [publisher]() -> void {
+      test_msgs::msg::Strings msg;
+      msg.string_value = "Hello";
+      publisher->publish(msg);
+    }
+  );
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+
+  auto start = clock::now();
+  // Takes ~200ms normally, 5s chosen as "a very long time"
+  auto timeout = 5s;
+  bool timed_out = false;
+  while (writer.get_messages().empty()) {
+    if ((clock::now() - start) > timeout) {
+      timed_out = true;
+      break;
+    }
+    rclcpp::spin_some(publisher_node);
+  }
+  stop_recording();
+
+  ASSERT_FALSE(timed_out);
+  auto recorded_messages = writer.get_messages();
+  auto recorded_topics = writer.get_topics();
+  EXPECT_EQ(recorded_topics.size(), 1u);
+  EXPECT_FALSE(recorded_messages.empty());
+}

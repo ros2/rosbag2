@@ -48,7 +48,8 @@ GenericSubscription::GenericSubscription(
     rosbag2_get_subscription_options(qos),
     true),
   default_allocator_(rcutils_get_default_allocator()),
-  callback_(callback)
+  callback_(callback),
+  qos_(qos)
 {}
 
 std::shared_ptr<void> GenericSubscription::create_message()
@@ -86,6 +87,11 @@ void GenericSubscription::return_serialized_message(
   std::shared_ptr<rmw_serialized_message_t> & message)
 {
   message.reset();
+}
+
+const rclcpp::QoS & GenericSubscription::qos_profile() const
+{
+  return qos_;
 }
 
 std::shared_ptr<rmw_serialized_message_t>

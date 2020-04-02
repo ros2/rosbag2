@@ -130,6 +130,7 @@ if(BUILD_TESTING)
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
     src/rosbag2_transport/qos.cpp
+    src/rosbag2_transport/recorder.cpp
     src/rosbag2_transport/rosbag2_node.cpp
     test/rosbag2_transport/test_rosbag2_node.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

@@ -40,6 +40,12 @@ public:
   : rclcpp::QoS(rmw_qos_profile_default.depth) {}
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
+
+  Rosbag2QoS & default_history()
+  {
+    keep_last(rmw_qos_profile_default.depth);
+    return *this;
+  }
 };
 }  // namespace rosbag2_transport
 
