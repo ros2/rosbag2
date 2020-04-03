@@ -16,7 +16,10 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
+#include <utility>
+
+#include "rclcpp/qos.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
@@ -31,6 +34,55 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
+
+namespace
+{
+/// Convert a Python3 unicode string to a native C++ std::string
+std::string python_object_to_string(PyObject * object)
+{
+  PyObject * python_string;
+  if (PyUnicode_Check(object)) {
+    python_string = PyUnicode_AsUTF8String(object);
+  } else {
+    throw std::runtime_error("Unable to decode Python string to std::string.");
+  }
+  return std::string(PyBytes_AsString(python_string));
+}
+
+/// Convert a Python dictionary to rmw_time_t
+rmw_time_t python_dict_to_rmw_time(PyObject * object)
+{
+  rmw_time_t new_time{};
+  new_time.sec = PyLong_AsSize_t(PyDict_GetItemString(object, "sec"));
+  new_time.nsec = PyLong_AsSize_t(PyDict_GetItemString(object, "nsec"));
+  return new_time;
+}
+
+/// Map a Python dictionary object to a QoS profile
+rclcpp::QoS python_dict_to_qos(PyObject * object)
+{
+  rclcpp::QoS profile{10};
+  profile.history(
+    static_cast<rmw_qos_history_policy_t>(
+      PyLong_AsSize_t(PyDict_GetItemString(object, "history"))));
+  profile.reliability(
+    static_cast<rmw_qos_reliability_policy_t>(
+      PyLong_AsSize_t(PyDict_GetItemString(object, "reliability"))));
+  profile.durability(
+    static_cast<rmw_qos_durability_policy_t>(
+      PyLong_AsSize_t(PyDict_GetItemString(object, "durability"))));
+  profile.deadline(python_dict_to_rmw_time(PyDict_GetItemString(object, "deadline")));
+  profile.lifespan(python_dict_to_rmw_time(PyDict_GetItemString(object, "lifespan")));
+  profile.liveliness(
+    static_cast<rmw_qos_liveliness_policy_t>(
+      PyLong_AsSize_t(PyDict_GetItemString(object, "liveliness"))));
+  profile.liveliness_lease_duration(
+    python_dict_to_rmw_time(PyDict_GetItemString(object, "liveliness_lease_duration")));
+  profile.avoid_ros_namespace_conventions(
+    PyObject_IsTrue(PyDict_GetItemString(object, "avoid_ros_namespace_conventions")));
+  return profile;
+}
+}  // namespace
 
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
@@ -52,7 +104,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "max_cache_size",
     "topics",
     "include_hidden_topics",
-    "qos_profiles",
+    "qos_profile_overrides",
     nullptr};
 
   char * uri = nullptr;
@@ -61,7 +113,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * node_prefix = nullptr;
   char * compression_mode = nullptr;
   char * compression_format = nullptr;
-  char * qos_profile_overrides = nullptr;
+  PyObject * qos_profile_overrides = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
@@ -71,7 +123,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool include_hidden_topics = false;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKObs", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKKObO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
@@ -107,6 +159,17 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     record_options.compression_format,
     rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
   };
+
+  if (qos_profile_overrides) {
+    PyObject * key, * value;
+    Py_ssize_t pos = 0;
+    std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
+    while (PyDict_Next(qos_profile_overrides, &pos, &key, &value)) {
+      auto topic_name = python_object_to_string(key);
+      auto profile = python_dict_to_qos(value);
+      topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, profile));
+    }
+  }
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

@@ -64,10 +64,11 @@ class TestROS2PkgCLI(unittest.TestCase):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / 'ros2bag_test_basic'
-            arguments = ['record', '--qos-profile', profile_path.as_posix(),
+            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_shutdown(timeout=5)
+                assert bag_command.wait_for_shutdown(timeout=5), \
+                    print('ros2bag CLI failed on shutdown.')
             output = bag_command.output.splitlines()
             error_string = '[ERROR] [ros2bag]:'
             for line in output:
@@ -78,11 +79,13 @@ class TestROS2PkgCLI(unittest.TestCase):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
-            arguments = ['record', '--qos-profile', profile_path.as_posix(),
+            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_shutdown(timeout=5)
+                assert bag_command.wait_for_shutdown(timeout=5), \
+                    print('ros2bag CLI failed on shutdown.')
             output = bag_command.output.splitlines()
             error_string = '[ERROR] [ros2bag]:'
-            assert any(error_string in line for line in output), \
-                print('ros2bag CLI succeeded when it should have failed')
+            for line in output:
+                assert error_string not in line, \
+                    print('ros2bag CLI failed: {}'.format(line))

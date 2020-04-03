@@ -9,7 +9,7 @@
   lifespan:
     sec: 2147483647
     nsec: 4294967295
-  liveliness: 2147483647
+  liveliness: 0
   liveliness_lease_duration:
     sec: 2147483647
     nsec: 4294967295

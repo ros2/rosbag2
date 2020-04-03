@@ -14,9 +14,14 @@
 
 import datetime
 import os
+from typing import Dict
+from typing import Optional
 
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rclpy.duration import Duration
+from rclpy.qos import InvalidQoSProfileException
+from rclpy.qos import QoSProfile
 import yaml
 
 
@@ -86,28 +91,33 @@ class RecordVerb(VerbExtension):
         except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
 
-    def validate_qos_profile_overrides(self, qos_profile_path: str) -> str:
+    def _dict_to_duration(self, time_dict: Optional[Dict[str, int]]) -> Duration:
+        if time_dict:
+            return Duration(seconds=time_dict.get('sec', 0), nanoseconds=time_dict.get('nsec', 0))
+        else:
+            return Duration()
+
+    def validate_qos_profile_overrides(self, qos_profile_path: str) -> Dict[str, Dict]:
         """Validate the QoS profile yaml file path and its structure."""
-        qos_params = ['history', 'depth', 'reliability', 'durability',
-                      'deadline', 'lifespan', 'liveliness', 'liveliness_lease_duration',
-                      'avoid_ros_namespace_conventions']
         if not os.path.isfile(qos_profile_path):
             raise ValueError('[ERROR] [ros2bag]: {} does not exist.'.format(qos_profile_path))
         with open(qos_profile_path, 'r') as file:
-            # Load as a dict first to verify contents
-            qos_profile = yaml.safe_load(file)
-            file.seek(0)
-            qos_profile_string = file.read()
-        topic_names = list(qos_profile)
+            qos_profile_dict = yaml.safe_load(file)
+        topic_names = list(qos_profile_dict)
         for name in topic_names:
-            if type(qos_profile.get(name)) != dict:
+            try:
+                profile = qos_profile_dict.get(name)
+                # Convert dict to Duration. Required for construction
+                profile['deadline'] = self._dict_to_duration(profile.get('deadline'))
+                profile['lifespan'] = self._dict_to_duration(profile.get('lifespan'))
+                profile['liveliness_lease_duration'] = self._dict_to_duration(
+                    profile.get('liveliness_lease_duration'))
+                QoSProfile(**qos_profile_dict.get(name))
+            except InvalidQoSProfileException as e:
                 raise ValueError(
-                    '[ERROR] [ros2bag]: QoS profile configuration for topic {} is invalid.'
-                    .format(name))
-            if not all(param in qos_profile.get(name) for param in qos_params):
-                print('[ERROR] [ros2bag]: Missing a QoS parameter in your override.\n'
-                      'Valid parameters are: {}'.format(' '.join(qos_params)))
-        return qos_profile_string
+                    '[ERROR] [ros2bag]: Invalid QoS profile configuration for topic {}.\n{}'
+                    .format(name, str(e)))
+        return qos_profile_dict
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -122,10 +132,12 @@ class RecordVerb(VerbExtension):
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
 
-        qos_profile_overrides = args.qos_profile_overrides
-        if qos_profile_overrides:
+        qos_profile_overrides_path = args.qos_profile_overrides
+        qos_profile_overrides = {}  # Specify a valid default
+        if qos_profile_overrides_path:
             try:
-                qos_profile_overrides = self.validate_qos_profile_overrides(qos_profile_overrides)
+                qos_profile_overrides = self.validate_qos_profile_overrides(
+                    qos_profile_overrides_path)
             except ValueError as e:
                 return str(e)
 
