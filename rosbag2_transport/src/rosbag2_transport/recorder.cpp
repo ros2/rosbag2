@@ -150,9 +150,9 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
+  // TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
   #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
-  Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
+  Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   #else
   Rosbag2QoS subscription_qos{};
   #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
@@ -206,7 +206,7 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
   return YAML::Dump(offered_qos_profiles);
 }
 
-rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
+rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
 {
   rclcpp::QoS subscription_qos{10};
   if (topic_qos_profile_overrides_.count(topic_name)) {

@@ -98,11 +98,18 @@ private:
 
   void record_messages() const;
 
-  /** Find the QoS profile that should be used for subscribing.
-    * If all currently offered QoS Profiles for a topic are the same, return that profile.
-    * Otherwise, print a warning and return a fallback value.
-    */
-  rclcpp::QoS common_qos_or_fallback(const std::string & topic_name);
+  /**
+   * Find the QoS profile that should be used for subscribing.
+   *
+   * Profiles are prioritized by:
+   *   1. The override specified in the record_options, if one exists for the topic.
+   *   2. The common offered QoS profile.
+   *   2. A fallback QoS profile if the offered and requested profiles are different.
+   *
+   *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+   *   \return The QoS profile to be used for subscribing.
+   */
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name);
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
