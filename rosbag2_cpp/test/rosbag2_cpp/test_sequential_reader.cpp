@@ -139,7 +139,7 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   EXPECT_ANY_THROW(reader_->get_implementation_handle().reset_filter());
 
   EXPECT_CALL(*storage_, set_filter(_)).Times(2);
-  reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
   reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
   storage_filter.topics.clear();
