@@ -164,9 +164,9 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
   #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
-  Rosbag2QoS subscription_qos{};
-  #else
   Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
+  #else
+  Rosbag2QoS subscription_qos{};
   #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
