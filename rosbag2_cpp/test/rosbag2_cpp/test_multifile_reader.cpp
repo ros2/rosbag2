@@ -43,7 +43,7 @@ public:
     storage_serialization_format_("rmw1_format"),
     relative_path_1_("some_relative_path_1"),
     relative_path_2_("some_relative_path_2"),
-    absolute_path_1_("/some/absolute/path1"),
+    absolute_path_1_(rcpputils::fs::path("/some/absolute/path1").string()),  // convert to MS
     storage_uri_(rcpputils::fs::temp_directory_path().string()),
     default_storage_options_({storage_uri_, ""})
   {}
@@ -81,7 +81,8 @@ public:
   {
     rosbag2_storage::BagMetadata metadata;
 
-    metadata.relative_file_paths = {relative_path_1_, relative_path_2_, absolute_path_1_};
+    metadata.relative_file_paths =
+      {relative_path_1_, relative_path_2_, absolute_path_1_};
 
     return metadata;
   }
@@ -105,7 +106,7 @@ public:
   {
     relative_path_1_ = "rosbag_name/some_relative_path_1";
     relative_path_2_ = "rosbag_name/some_relative_path_2";
-    absolute_path_1_ = "/some/absolute/path1";
+    absolute_path_1_ = rcpputils::fs::path("/some/absolute/path1").string();
   }
 
   rosbag2_storage::BagMetadata get_metadata() const override
@@ -139,6 +140,8 @@ TEST_F(MultifileReaderTest, has_next_reads_next_file)
     (rcpputils::fs::path(storage_uri_) / relative_path_1_).string();
   auto resolved_relative_path_2 =
     (rcpputils::fs::path(storage_uri_) / relative_path_2_).string();
+  auto resolved_absolute_path_1 =
+    rcpputils::fs::path(absolute_path_1_).string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
   reader_->has_next();
   reader_->read_next();
@@ -146,7 +149,7 @@ TEST_F(MultifileReaderTest, has_next_reads_next_file)
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
   reader_->read_next();
   reader_->has_next();
-  EXPECT_EQ(sr.get_current_file(), absolute_path_1_);
+  EXPECT_EQ(sr.get_current_file(), resolved_absolute_path_1);
 }
 
 TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
@@ -172,6 +175,8 @@ TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
     (rcpputils::fs::path(storage_uri_).parent_path() / relative_path_1_).string();
   auto resolved_relative_path_2 =
     (rcpputils::fs::path(storage_uri_).parent_path() / relative_path_2_).string();
+  auto resolved_absolute_path_1 =
+    rcpputils::fs::path(absolute_path_1_).string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
   reader_->has_next();
   reader_->read_next();
@@ -179,7 +184,7 @@ TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
   reader_->read_next();
   reader_->has_next();
-  EXPECT_EQ(sr.get_current_file(), absolute_path_1_);
+  EXPECT_EQ(sr.get_current_file(), resolved_absolute_path_1);
 }
 
 TEST_F(MultifileReaderTest, has_next_throws_if_no_storage)

@@ -55,10 +55,11 @@ public:
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
 
+    auto relative_file_path = rcpputils::fs::path("/absolute/path/to/storage").string();
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     rosbag2_storage::BagMetadata metadata;
-    metadata.relative_file_paths = {"/path/to/storage"};
+    metadata.relative_file_paths = {relative_file_path};
     metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
 
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
@@ -71,7 +72,7 @@ public:
     EXPECT_CALL(*storage_factory, open_read_only(_, _));
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
       [this](const std::string & path, const std::string & /* storage_id */) {
-        EXPECT_STREQ("/path/to/storage", path.c_str());
+        EXPECT_STREQ(relative_file_path.c_str(), path.c_str());
         return storage_;
       });
 
