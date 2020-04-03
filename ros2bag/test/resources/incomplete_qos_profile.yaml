@@ -1,0 +1,5 @@
+/test_topic:
+  history: 3
+  depth: 0
+  reliability: 1
+  durability: 2

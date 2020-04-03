@@ -30,6 +30,7 @@ import launch_testing.tools
 import pytest
 
 
+PROFILE_PATH = Path(__file__).parent / 'resources'
 TEST_NODE = 'cli_qos_profile_test_node'
 TEST_NAMESPACE = 'cli_qos_profile'
 
@@ -60,14 +61,28 @@ class TestROS2PkgCLI(unittest.TestCase):
         cls.launch_bag_command = launch_bag_command
 
     def test_qos_simple(self):
-        profile_path = Path(__file__) / 'qos_profile.yaml'
+        profile_path = PROFILE_PATH / 'qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / 'ros2bag_test_basic'
             arguments = ['record', '--qos-profile', profile_path.as_posix(),
-                         '--output', tmpdirname]
+                         '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
                 assert bag_command.wait_for_shutdown(timeout=5)
             output = bag_command.output.splitlines()
             error_string = '[ERROR] [ros2bag]:'
             for line in output:
                 assert error_string not in line, \
-                  print('ros2bag CLI failed: {}'.format(line))
+                    print('ros2bag CLI failed: {}'.format(line))
+
+    def test_incomplete_qos_profile(self):
+        profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
+            arguments = ['record', '--qos-profile', profile_path.as_posix(),
+                         '--output', output_path.as_posix()]
+            with self.launch_bag_command(arguments=arguments) as bag_command:
+                assert bag_command.wait_for_shutdown(timeout=5)
+            output = bag_command.output.splitlines()
+            error_string = '[ERROR] [ros2bag]:'
+            assert any(error_string in line for line in output), \
+                print('ros2bag CLI succeeded when it should have failed')

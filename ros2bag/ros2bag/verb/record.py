@@ -15,8 +15,8 @@
 import datetime
 import os
 
-from ros2cli.node import NODE_NAME_PREFIX
 from ros2bag.verb import VerbExtension
+from ros2cli.node import NODE_NAME_PREFIX
 import yaml
 
 
@@ -100,7 +100,7 @@ class RecordVerb(VerbExtension):
                         raise ValueError(
                             '[ERROR] [ros2bag]: QoS profile configuration for topic {} is invalid.'
                             .format(name))
-                    if all(param in qos_profile.get(name) for param in qos_params):
+                    if not all(param in qos_profile.get(name) for param in qos_params):
                         print('[ERROR] [ros2bag]: Missing a QoS parameter in your override.\n'
                               'Valid parameters are: {}'.format(' '.join(qos_params)))
                 # Read file as a string
