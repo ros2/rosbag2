@@ -329,7 +329,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     rosbag2_storage::BagMetadata metadata;
     metadata.version = 4;
     metadata.storage_identifier = "sqlite3";
-    metadata.relative_file_paths = {get_bag_file_name(0)};
+    metadata.relative_file_paths = {get_bag_file_name(0) + ".db3"};
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
 #endif
