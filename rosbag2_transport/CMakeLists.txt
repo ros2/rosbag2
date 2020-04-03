@@ -85,36 +85,6 @@ ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
 
-function(rosbag2_transport_add_gmock target_base)
-  cmake_parse_arguments(ARG
-    "SKIP_TEST"
-    ""
-    "LINK_LIBS;AMENT_DEPS;INCLUDE_DIRS"
-    ${ARGN})
-  if(NOT ARG_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "rosbag2_transport_add_gmock() must be invoked with "
-      "at least one source file")
-  endif()
-  if(${ARG_SKIP_TEST})
-    set(SKIP_TEST "SKIP_TEST")
-  else()
-    set(SKIP_TEST "")
-  endif()
-
-  set(target_name ${target_base}${target_suffix})
-  set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
-  ament_add_gmock(${target_name}
-    ${ARG_UNPARSED_ARGUMENTS}
-    ENV ${rmw_implementation_env_var}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ${SKIP_TEST})
-  if(TARGET ${target_name})
-    target_link_libraries(${target_name} ${ARG_LINK_LIBS})
-    target_include_directories(${target_name} PUBLIC ${ARG_INCLUDE_DIRS})
-    ament_target_dependencies(${target_name} ${ARG_AMENT_DEPS})
-  endif()
-endfunction()
-
 function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_info
     test/rosbag2_transport/test_info.cpp
@@ -197,6 +167,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
+  include(cmake/rosbag2_transport_add_gmock.cmake)
   # explicitly disable cppcheck
   set(ament_cmake_cppcheck_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
