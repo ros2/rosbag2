@@ -260,6 +260,7 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
 
+#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 TEST_F(RosBag2NodeFixture, mixed_qos_falls_back_to_default)
 {
   using clock = std::chrono::system_clock;
@@ -306,3 +307,4 @@ TEST_F(RosBag2NodeFixture, mixed_qos_falls_back_to_default)
   rclcpp::shutdown();
   recording_future.get();
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION

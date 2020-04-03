@@ -102,9 +102,11 @@ void Recorder::topics_discovery(
   while (rclcpp::ok()) {
     auto topics_to_subscribe =
       get_requested_or_available_topics(requested_topics, include_hidden_topics);
+    #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
+    #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
@@ -160,7 +162,12 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
+  // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
+  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
+  #else
+  Rosbag2QoS subscription_qos{};
+  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});

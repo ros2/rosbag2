@@ -65,7 +65,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(array_messages[0]->float32_values, Eq(array_message->float32_values));
 }
 
-#ifdef ENABLE_TEST_QOS_IS_STORED_IN_METADATA
+#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
 {
   auto string_message = get_messages_strings()[1];
@@ -99,7 +99,6 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
       "  avoid_ros_namespace_conventions: false"
   ));
 }
-#endif  // ENABLE_TEST_QOS_IS_STORED_IN_METADATA
 
 TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 {
@@ -141,3 +140,4 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
