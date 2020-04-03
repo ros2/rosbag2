@@ -1,15 +1,15 @@
 /test_topic:
-  history: 2
+  history: keep_all
   depth: 0
-  reliability: 1
-  durability: 2
+  reliability: reliable
+  durability: transient_local
   deadline:
     sec: 2147483647
     nsec: 4294967295
   lifespan:
     sec: 2147483647
     nsec: 4294967295
-  liveliness: 0
+  liveliness: automatic
   liveliness_lease_duration:
     sec: 2147483647
     nsec: 4294967295

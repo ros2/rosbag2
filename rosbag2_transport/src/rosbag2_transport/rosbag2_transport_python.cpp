@@ -140,13 +140,13 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
     while (PyDict_Next(qos_profile_overrides, &pos, &key, &value)) {
       auto topic_name = PyObject_AsStdString(key);
-      auto profile = PyQoSProfile_AsRmwQoSProfile(value);
-      auto init = rclcpp::QoSInitialization::from_rmw(*profile);
-      auto qos_profile = rclcpp::QoS(init, *profile);
+      auto rmw_qos_profile = PyQoSProfile_AsRmwQoSProfile(value);
+      auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
+      auto qos_profile = rclcpp::QoS(qos_init, *rmw_qos_profile);
       topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, qos_profile));
     }
   } else {
-    throw std::runtime_error{"QoS profile overrides is not a Python dictionary."};
+    throw std::runtime_error{"QoS profile overrides object is not a Python dictionary."};
   }
 
   if (topics) {

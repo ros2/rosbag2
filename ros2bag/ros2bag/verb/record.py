@@ -18,13 +18,21 @@ import os
 from typing import Dict
 from typing import Optional
 
-from ros2bag.verb import VerbExtension
-from ros2cli.node import NODE_NAME_PREFIX
+import rclpy
 from rclpy.duration import Duration
 from rclpy.qos import InvalidQoSProfileException
 from rclpy.qos import QoSProfile
+from ros2bag.verb import VerbExtension
+from ros2cli.node import NODE_NAME_PREFIX
 import yaml
 
+
+POLICY_MAP = {
+    'history': rclpy.qos.QoSHistoryPolicy.get_from_short_key,
+    'reliability': rclpy.qos.QoSReliabilityPolicy.get_from_short_key,
+    'durability': rclpy.qos.QoSDurabilityPolicy.get_from_short_key,
+    'liveliness': rclpy.qos.QoSLivelinessPolicy.get_from_short_key
+}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('ros2bag')
@@ -98,7 +106,8 @@ class RecordVerb(VerbExtension):
 
     def _dict_to_duration(self, time_dict: Optional[Dict[str, int]]) -> Duration:
         if not all(key in time_dict for key in ['sec', 'nsec']):
-            raise ValueError("Time overrides must include both seconds (sec) and nanoseconds (nsec)")
+            raise ValueError(
+                'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
         if time_dict:
             return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
         else:
@@ -110,12 +119,14 @@ class RecordVerb(VerbExtension):
             raise ValueError('{} does not exist.'.format(qos_profile_path))
         with open(qos_profile_path, 'r') as file:
             qos_profile_dict = yaml.safe_load(file)
-        for name in qos_profile_dict:
+        for name in qos_profile_dict.keys():
             profile = qos_profile_dict[name]
             # Convert dict to Duration. Required for construction
             conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
             for k in conversion_keys:
                 profile[k] = self._dict_to_duration(profile.get(k))
+            for policy in POLICY_MAP.keys():
+                profile[policy] = POLICY_MAP[policy](profile.get(policy, 'system_default'))
             qos_profile_dict[name] = QoSProfile(**profile)
         return qos_profile_dict
 

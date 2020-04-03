@@ -42,7 +42,7 @@ def generate_test_description():
     return LaunchDescription([launch_testing.actions.ReadyToTest()])
 
 
-class TestROS2PkgCLI(unittest.TestCase):
+class TestRos2BagCLI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls, launch_service, proc_info, proc_output):

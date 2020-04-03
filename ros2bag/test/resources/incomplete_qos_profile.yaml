@@ -1,5 +1,5 @@
 /test_topic:
-  history: 2
+  history: keep_all
   depth: 0
-  reliability: 1
-  durability: 2
+  reliability: reliable
+  durability: volatile
