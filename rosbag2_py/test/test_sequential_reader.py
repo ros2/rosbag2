@@ -38,7 +38,7 @@ def test_sequential_reader():
   converter_options.input_serialization_format = 'cdr'
   converter_options.output_serialization_format = 'cdr'
 
-  reader = rosbag2_py.SequentialReader()
+  reader = rosbag2_py.Reader('SequentialReader')
   reader.open(storage_options, converter_options)
 
   topic_types = reader.get_all_topics_and_types()

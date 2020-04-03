@@ -17,41 +17,55 @@
 
 #include <chrono>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_py
 {
 
-class SequentialReader
+class Reader
 {
 public:
-  SequentialReader()
-  : reader_()
-  {}
+  Reader(const std::string & reader_class)
+  {
+    if (!reader_class.compare("SequentialReader")) {
+      auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>();
+      reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
+    }
+    else if (!reader_class.compare("SequentialCompressionReader")) {
+      auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>();
+      reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
+    }
+    else {
+      throw std::runtime_error{"Reader class type " + reader_class + " not supported."};
+    }
+  }
 
   void open(
     rosbag2_cpp::StorageOptions & storage_options,
     rosbag2_cpp::ConverterOptions & converter_options)
   {
-    reader_.open(storage_options, converter_options);
+    reader_->open(storage_options, converter_options);
   }
 
   bool has_next()
   {
-    return reader_.has_next();
+    return reader_->has_next();
   }
 
   /// Return a pair containing the topic name and the serialized ROS message.
   pybind11::tuple read_next()
   {
-    const auto next = reader_.read_next();
+    const auto next = reader_->read_next();
     rcutils_uint8_array_t rcutils_data = *next->serialized_data.get();
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
@@ -62,11 +76,11 @@ public:
   /// Return a mapping from topic name to topic type.
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types()
   {
-    return reader_.get_all_topics_and_types();
+    return reader_->get_all_topics_and_types();
   }
 
 private:
-  rosbag2_cpp::readers::SequentialReader reader_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
 
 }  // namespace rosbag2_py
@@ -74,12 +88,12 @@ private:
 PYBIND11_MODULE(_rosbag2_py, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp API";
 
-  pybind11::class_<rosbag2_py::SequentialReader>(m, "SequentialReader")
-  .def(pybind11::init())
-  .def("open", &rosbag2_py::SequentialReader::open)
-  .def("read_next", &rosbag2_py::SequentialReader::read_next)
-  .def("has_next", &rosbag2_py::SequentialReader::has_next)
-  .def("get_all_topics_and_types", &rosbag2_py::SequentialReader::get_all_topics_and_types);
+  pybind11::class_<rosbag2_py::Reader>(m, "Reader")
+  .def(pybind11::init<const std::string &>())
+  .def("open", &rosbag2_py::Reader::open)
+  .def("read_next", &rosbag2_py::Reader::read_next)
+  .def("has_next", &rosbag2_py::Reader::has_next)
+  .def("get_all_topics_and_types", &rosbag2_py::Reader::get_all_topics_and_types);
 
   pybind11::class_<rosbag2_cpp::StorageOptions>(m, "StorageOptions")
   .def(pybind11::init())

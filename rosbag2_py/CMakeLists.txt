@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_compression REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
@@ -35,6 +36,7 @@ pybind11_add_module(_rosbag2_py SHARED
 
 ament_target_dependencies(_rosbag2_py PUBLIC
   "rosbag2_cpp"
+  "rosbag2_compression"
 )
 
 # Install cython modules as sub-modules of the project
