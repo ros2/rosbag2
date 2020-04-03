@@ -41,6 +41,9 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
+  void write(const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg)
+  override;
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;

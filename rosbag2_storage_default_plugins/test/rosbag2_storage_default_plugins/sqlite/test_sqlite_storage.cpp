@@ -26,6 +26,8 @@
 
 #include "rcutils/snprintf.h"
 
+#include "rosbag2_storage/storage_filter.hpp"
+
 #include "storage_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -138,6 +140,26 @@ TEST_F(StorageTestFixture, read_next_returns_filtered_messages) {
   EXPECT_TRUE(readable_storage->has_next());
   auto second_message = readable_storage->read_next();
   EXPECT_THAT(second_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage->has_next());
+
+  // Test reset filter
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage2 =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  readable_storage2->open(db_filename);
+  readable_storage2->set_filter(storage_filter);
+  readable_storage2->reset_filter();
+
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto third_message = readable_storage2->read_next();
+  EXPECT_THAT(third_message->topic_name, Eq("topic1"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fourth_message = readable_storage2->read_next();
+  EXPECT_THAT(fourth_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fifth_message = readable_storage2->read_next();
+  EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage2->has_next());
 }
 
 TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) {
@@ -148,8 +170,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
   writable_storage->open(read_write_filename);
-  writable_storage->create_topic({"topic1", "type1", "rmw1"});
-  writable_storage->create_topic({"topic2", "type2", "rmw2"});
+  writable_storage->create_topic({"topic1", "type1", "rmw1", ""});
+  writable_storage->create_topic({"topic2", "type2", "rmw2", ""});
 
   const auto read_only_filename = writable_storage->get_relative_file_path();
 
@@ -163,8 +185,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   EXPECT_THAT(
     topics_and_types, ElementsAreArray(
   {
-    rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1"},
-    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2"}
+    rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", ""},
+    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", ""}
   }));
 }
 
@@ -193,9 +215,9 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
     metadata.topics_with_message_count, ElementsAreArray(
   {
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
-        "topic1", "type1", "rmw_format"}, 2u},
+        "topic1", "type1", "rmw_format", ""}, 2u},
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
-        "topic2", "type2", "rmw_format"}, 1u}
+        "topic2", "type2", "rmw_format", ""}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
   EXPECT_THAT(
@@ -233,8 +255,8 @@ TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
   const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
   writable_storage->open(read_write_filename);
-  writable_storage->create_topic({"topic1", "type1", "rmw1"});
-  writable_storage->remove_topic({"topic1", "type1", "rmw1"});
+  writable_storage->create_topic({"topic1", "type1", "rmw1", ""});
+  writable_storage->remove_topic({"topic1", "type1", "rmw1", ""});
 
   const auto read_only_filename = writable_storage->get_relative_file_path();
 

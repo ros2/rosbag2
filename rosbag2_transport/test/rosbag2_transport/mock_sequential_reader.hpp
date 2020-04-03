@@ -37,7 +37,7 @@ public:
 
   bool has_next() override
   {
-    if (filter_.topics.size() == 0) {
+    if (filter_.topics.empty()) {
       return num_read_ < messages_.size();
     }
 

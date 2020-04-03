@@ -56,6 +56,11 @@ class RecordVerb(VerbExtension):
                   'is disabled.'
         )
         parser.add_argument(
+            '--max-cache-size', type=int, default=0,
+            help='maximum amount of messages to hold in cache before writing to disk. '
+                 'Default it is zero, writing every message directly to disk.'
+        )
+        parser.add_argument(
             '--compression-mode', type=str, default='none',
             choices=['none', 'file', 'message'],
             help='Determine whether to compress by file or message. Default is "none".'
@@ -64,6 +69,9 @@ class RecordVerb(VerbExtension):
             '--compression-format', type=str, default='', choices=['zstd'],
             help='Specify the compression format/algorithm. Default is none.'
         )
+        parser.add_argument(
+            '--include-hidden-topics', action='store_true',
+            help='record also hidden topics.')
         self._subparser = parser
 
     def create_bag_directory(self, uri):
@@ -105,7 +113,9 @@ class RecordVerb(VerbExtension):
                 all=True,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
-                max_bagfile_size=args.max_bag_size)
+                max_bagfile_size=args.max_bag_size,
+                max_cache_size=args.max_cache_size,
+                include_hidden_topics=args.include_hidden_topics)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -124,7 +134,9 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
-                topics=args.topics)
+                max_cache_size=args.max_cache_size,
+                topics=args.topics,
+                include_hidden_topics=args.include_hidden_topics)
         else:
             self._subparser.print_help()
 

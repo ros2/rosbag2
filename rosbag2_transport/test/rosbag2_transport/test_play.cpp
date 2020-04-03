@@ -66,8 +66,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", ""},
-    {"topic2", "test_msgs/Arrays", ""},
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "test_msgs/Arrays", "", ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -130,8 +130,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", ""},
-    {"topic2", "test_msgs/Arrays", ""},
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "test_msgs/Arrays", "", ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =

@@ -38,12 +38,13 @@ public:
 
   std::shared_ptr<GenericPublisher>
   create_generic_publisher(
-    const std::string & topic, const std::string & type);
+    const std::string & topic, const std::string & type, const rclcpp::QoS & qos);
 
   std::shared_ptr<GenericSubscription>
   create_generic_subscription(
     const std::string & topic,
     const std::string & type,
+    const rclcpp::QoS & qos,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   std::unordered_map<std::string, std::string>
@@ -53,11 +54,12 @@ public:
   expand_topic_name(const std::string & topic_name);
 
   std::unordered_map<std::string, std::string>
-  get_all_topics_with_types();
+  get_all_topics_with_types(bool include_hidden_topics = false);
 
   std::unordered_map<std::string, std::string>
   filter_topics_with_more_than_one_type(
-    std::map<std::string, std::vector<std::string>> topics_and_types);
+    const std::map<std::string, std::vector<std::string>> & topics_and_types,
+    bool include_hidden_topics = false);
 };
 
 }  // namespace rosbag2_transport

@@ -28,7 +28,37 @@
 #include "rosbag2_transport/logging.hpp"
 
 #include "generic_subscription.hpp"
+#include "qos.hpp"
 #include "rosbag2_node.hpp"
+
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
+namespace
+{
+bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
+{
+  auto adjacent_different_elements_it = std::adjacent_find(
+    values.begin(),
+    values.end(),
+    [](const rclcpp::TopicEndpointInfo & left, const rclcpp::TopicEndpointInfo & right) -> bool {
+      return left.qos_profile() != right.qos_profile();
+    }
+  );
+  // No adjacent elements were different, so all are the same.
+  return adjacent_different_elements_it == values.end();
+}
+}  // unnamed namespace
 
 namespace rosbag2_transport
 {
@@ -42,13 +72,16 @@ void Recorder::record(const RecordOptions & record_options)
   }
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
-  subscribe_topics(get_requested_or_available_topics(record_options.topics));
+  subscribe_topics(
+    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
     auto discovery = std::bind(
       &Recorder::topics_discovery, this,
-      record_options.topic_polling_interval, record_options.topics);
+      record_options.topic_polling_interval,
+      record_options.topics,
+      record_options.include_hidden_topics);
     discovery_future = std::async(std::launch::async, discovery);
   }
 
@@ -63,14 +96,21 @@ void Recorder::record(const RecordOptions & record_options)
 
 void Recorder::topics_discovery(
   std::chrono::milliseconds topic_polling_interval,
-  const std::vector<std::string> & requested_topics)
+  const std::vector<std::string> & requested_topics,
+  bool include_hidden_topics)
 {
   while (rclcpp::ok()) {
-    auto topics_to_subscribe = get_requested_or_available_topics(requested_topics);
+    auto topics_to_subscribe =
+      get_requested_or_available_topics(requested_topics, include_hidden_topics);
+    #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+    for (const auto & topic_and_type : topics_to_subscribe) {
+      warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
+    }
+    #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
-    if (!requested_topics.empty() && subscribed_topics_.size() == requested_topics.size()) {
+    if (!requested_topics.empty() && subscriptions_.size() == requested_topics.size()) {
       ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
       return;
     }
@@ -79,30 +119,39 @@ void Recorder::topics_discovery(
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_requested_or_available_topics(const std::vector<std::string> & requested_topics)
+Recorder::get_requested_or_available_topics(
+  const std::vector<std::string> & requested_topics,
+  bool include_hidden_topics)
 {
   return requested_topics.empty() ?
-         node_->get_all_topics_with_types() :
+         node_->get_all_topics_with_types(include_hidden_topics) :
          node_->get_topics_with_types(requested_topics);
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & topics)
+Recorder::get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics)
 {
   std::unordered_map<std::string, std::string> missing_topics;
-  for (const auto & i : topics) {
-    if (subscribed_topics_.find(i.first) == subscribed_topics_.end()) {
+  for (const auto & i : all_topics) {
+    if (subscriptions_.find(i.first) == subscriptions_.end()) {
       missing_topics.emplace(i.first, i.second);
     }
   }
   return missing_topics;
 }
 
+
 void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    subscribe_topic({topic_with_type.first, topic_with_type.second, serialization_format_});
+    subscribe_topic(
+      {
+        topic_with_type.first,
+        topic_with_type.second,
+        serialization_format_,
+        serialized_offered_qos_profiles_for_topic(topic_with_type.first)
+      });
   }
 }
 
@@ -112,25 +161,31 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
-  auto subscription = create_subscription(topic.name, topic.type);
 
+  // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
+  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
+  #else
+  Rosbag2QoS subscription_qos{};
+  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
-    subscribed_topics_.insert(topic.name);
-    subscriptions_.push_back(subscription);
+    subscriptions_.insert({topic.name, subscription});
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic.name << "'");
   } else {
     writer_->remove_topic(topic);
-    subscribed_topics_.erase(topic.name);
+    subscriptions_.erase(topic.name);
   }
 }
 
 std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
-  const std::string & topic_name, const std::string & topic_type)
+  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
+    qos,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;
@@ -151,6 +206,56 @@ Recorder::create_subscription(
 void Recorder::record_messages() const
 {
   spin(node_);
+}
+
+std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)
+{
+  YAML::Node offered_qos_profiles;
+  auto endpoints = node_->get_publishers_info_by_topic(topic_name);
+  for (const auto & info : endpoints) {
+    offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
+  }
+  return YAML::Dump(offered_qos_profiles);
+}
+
+rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
+{
+  auto endpoints = node_->get_publishers_info_by_topic(topic_name);
+  if (!endpoints.empty() && all_qos_same(endpoints)) {
+    return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
+  }
+  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+    "Topic " << topic_name << " has publishers offering different QoS settings. "
+      "Cannot determine what QoS to request, falling back to default QoS profile."
+  );
+  topics_warned_about_incompatibility_.insert(topic_name);
+  return Rosbag2QoS{};
+}
+
+void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
+{
+  auto existing_subscription = subscriptions_.find(topic_name);
+  if (existing_subscription == subscriptions_.end()) {
+    // Not subscribed yet
+    return;
+  }
+  if (topics_warned_about_incompatibility_.count(topic_name) > 0) {
+    // Already warned about this topic
+    return;
+  }
+  const auto & used_qos = existing_subscription->second->qos_profile();
+  auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
+  for (const auto & info : publishers_info) {
+    if (info.qos_profile() != used_qos) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "A new publisher for subscribed topic " << topic_name << " was found that is offering "
+          "a (possibly) incompatible QoS profile. Not changing subscription QoS. "
+          "Messages from this publisher may not be recorded."
+      );
+      topics_warned_about_incompatibility_.insert(topic_name);
+      return;
+    }
+  }
 }
 
 }  // namespace rosbag2_transport

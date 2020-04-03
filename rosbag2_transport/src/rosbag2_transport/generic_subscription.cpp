@@ -22,6 +22,16 @@
 
 #include "rosbag2_transport/logging.hpp"
 
+namespace
+{
+rcl_subscription_options_t rosbag2_get_subscription_options(const rclcpp::QoS & qos)
+{
+  auto options = rcl_subscription_get_default_options();
+  options.qos = qos.get_rmw_qos_profile();
+  return options;
+}
+}  // unnamed namespace
+
 namespace rosbag2_transport
 {
 
@@ -29,15 +39,17 @@ GenericSubscription::GenericSubscription(
   rclcpp::node_interfaces::NodeBaseInterface * node_base,
   const rosidl_message_type_support_t & ts,
   const std::string & topic_name,
+  const rclcpp::QoS & qos,
   std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback)
 : SubscriptionBase(
     node_base,
     ts,
     topic_name,
-    rcl_subscription_get_default_options(),
+    rosbag2_get_subscription_options(qos),
     true),
   default_allocator_(rcutils_get_default_allocator()),
-  callback_(callback)
+  callback_(callback),
+  qos_(qos)
 {}
 
 std::shared_ptr<void> GenericSubscription::create_message()
@@ -75,6 +87,11 @@ void GenericSubscription::return_serialized_message(
   std::shared_ptr<rmw_serialized_message_t> & message)
 {
   message.reset();
+}
+
+const rclcpp::QoS & GenericSubscription::qos_profile() const
+{
+  return qos_;
 }
 
 std::shared_ptr<rmw_serialized_message_t>

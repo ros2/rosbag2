@@ -23,6 +23,9 @@ namespace rosbag2_storage
 
 struct StorageFilter
 {
+  // Topic names to whitelist when reading a bag. Only messages matching these
+  // specified topics will be returned. If list is empty, the filter is ignored
+  // and all messages are returned.
   std::vector<std::string> topics;
 };
 
