@@ -14,8 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <rosbag2_storage/storage_filter.hpp>
-
 #include <memory>
 #include <string>
 #include <tuple>
