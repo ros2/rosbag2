@@ -21,7 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "../../src/rosbag2_transport/qos.hpp"
+#include "qos.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -140,6 +140,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 
 TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 {
@@ -174,4 +175,3 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 
   ASSERT_GE(recorded_messages.size(), 0u);
 }
-#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION

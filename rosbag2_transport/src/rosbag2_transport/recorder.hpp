@@ -23,19 +23,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
-
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
@@ -103,8 +90,9 @@ private:
    *
    * Profiles are prioritized by:
    *   1. The override specified in the record_options, if one exists for the topic.
-   *   2. The common offered QoS profile.
-   *   2. A fallback QoS profile if the offered and requested profiles are different.
+   *   2. The publisher's offered QoS profile.
+   *      If all current publishers are offering the exact same compatibility profile.
+   *   3. The default Rosbag2QoS profile, if the above conditions are not met.
    *
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    *   \return The QoS profile to be used for subscribing.
