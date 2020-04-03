@@ -81,21 +81,24 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   // Basic smoke test that the profile was serialized into the metadata as a string.
   EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: 1\n"));
   EXPECT_THAT(serialized_profiles, ContainsRegex("durability: 2\n"));
-  EXPECT_THAT(serialized_profiles, ContainsRegex(
-    "deadline:\n"
-    "    sec: .+\n"
-    "    nsec: .+\n"
+  EXPECT_THAT(
+    serialized_profiles, ContainsRegex(
+      "deadline:\n"
+      "    sec: .+\n"
+      "    nsec: .+\n"
   ));
-  EXPECT_THAT(serialized_profiles, ContainsRegex(
-    "lifespan:\n"
-    "    sec: .+\n"
-    "    nsec: .+\n"
+  EXPECT_THAT(
+    serialized_profiles, ContainsRegex(
+      "lifespan:\n"
+      "    sec: .+\n"
+      "    nsec: .+\n"
   ));
   EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: 1\n"));
-  EXPECT_THAT(serialized_profiles, ContainsRegex(
-    "liveliness_lease_duration:\n"
-    "    sec: .+\n"
-    "    nsec: .+\n"
+  EXPECT_THAT(
+    serialized_profiles, ContainsRegex(
+      "liveliness_lease_duration:\n"
+      "    sec: .+\n"
+      "    nsec: .+\n"
   ));
 }
 
