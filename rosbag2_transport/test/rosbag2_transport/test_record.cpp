@@ -65,7 +65,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(array_messages[0]->float32_values, Eq(array_message->float32_values));
 }
 
-#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
 {
   auto string_message = get_messages_strings()[1];
@@ -80,26 +79,27 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   auto recorded_topics = writer.get_topics();
   std::string serialized_profiles = recorded_topics.at(topic).offered_qos_profiles;
   // Basic smoke test that the profile was serialized into the metadata as a string.
-  EXPECT_THAT(
-    serialized_profiles, ContainsRegex(
-      "- history: 3\n"
-      "  depth: 0\n"
-      "  reliability: 1\n"
-      "  durability: 2\n"
-      "  deadline:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  lifespan:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  liveliness: 1\n"
-      "  liveliness_lease_duration:\n"
-      "    sec: 2147483647\n"
-      "    nsec: 4294967295\n"
-      "  avoid_ros_namespace_conventions: false"
+  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: 1\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("durability: 2\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex(
+    "deadline:\n"
+    "    sec: .+\n"
+    "    nsec: .+\n"
+  ));
+  EXPECT_THAT(serialized_profiles, ContainsRegex(
+    "lifespan:\n"
+    "    sec: .+\n"
+    "    nsec: .+\n"
+  ));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: 1\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex(
+    "liveliness_lease_duration:\n"
+    "    sec: .+\n"
+    "    nsec: .+\n"
   ));
 }
 
+#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 {
   using clock = std::chrono::system_clock;

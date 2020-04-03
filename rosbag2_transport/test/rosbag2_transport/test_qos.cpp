@@ -64,18 +64,16 @@ TEST(TestQoS, supports_version_4)
 
   rmw_time_t zerotime{0, 0};
   // Explicitly set up the same QoS profile in case defaults change
-  rclcpp::QoS expected_qos(10);
-  expected_qos
-  .keep_last(10)
+  auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  .default_history()
   .reliable()
   .durability_volatile()
   .deadline(zerotime)
   .lifespan(zerotime)
   .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
-  .liveliness_lease_duration(zerotime)
-  .avoid_ros_namespace_conventions(false);
+  .liveliness_lease_duration(zerotime);
   // Any values not present in the YAML should take the default value in both profiles
-  EXPECT_EQ(actual_qos, expected_qos);
+  EXPECT_TRUE(actual_qos.compatibility_policies_equal(expected_qos));
 }
 
 TEST(TestQoS, detect_new_qos_fields)
