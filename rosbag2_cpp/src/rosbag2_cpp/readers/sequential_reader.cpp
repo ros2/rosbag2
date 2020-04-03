@@ -45,7 +45,9 @@ SequentialReader::~SequentialReader()
 
 void SequentialReader::reset()
 {
-  storage_.reset();
+  if (storage_) {
+    storage_.reset();
+  }
 }
 
 void SequentialReader::open(
@@ -128,6 +130,27 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and
     return storage_->get_all_topics_and_types();
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
+}
+
+void SequentialReader::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  if (storage_) {
+    storage_->set_filter(storage_filter);
+    return;
+  }
+  throw std::runtime_error(
+          "Bag is not open. Call open() before setting filter.");
+}
+
+void SequentialReader::reset_filter()
+{
+  if (storage_) {
+    storage_->reset_filter();
+    return;
+  }
+  throw std::runtime_error(
+          "Bag is not open. Call open() before resetting filter.");
 }
 
 bool SequentialReader::has_next_file() const

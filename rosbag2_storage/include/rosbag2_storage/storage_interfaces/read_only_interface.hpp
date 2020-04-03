@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
@@ -38,6 +39,10 @@ public:
   uint64_t get_bagfile_size() const override = 0;
 
   std::string get_storage_identifier() const override = 0;
+
+  virtual void set_filter(const StorageFilter & storage_filter) = 0;
+
+  virtual void reset_filter() = 0;
 };
 
 }  // namespace storage_interfaces

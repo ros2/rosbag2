@@ -30,6 +30,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
 #include "compression_factory.hpp"
@@ -72,6 +73,10 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
 
   /**
    * Ask whether there is another database file to read from the list of relative
