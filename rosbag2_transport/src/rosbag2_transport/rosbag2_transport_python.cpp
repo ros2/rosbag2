@@ -71,7 +71,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool include_hidden_topics = false;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKOb", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKKObs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
