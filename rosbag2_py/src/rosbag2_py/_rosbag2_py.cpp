@@ -62,7 +62,8 @@ public:
     return reader_->has_next();
   }
 
-  /// Return a pair containing the topic name and the serialized ROS message.
+  /// Return a tuple containing the topic name, the serialized ROS message, and
+  /// the timestamp.
   pybind11::tuple read_next()
   {
     const auto next = reader_->read_next();

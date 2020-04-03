@@ -27,8 +27,6 @@ import rosbag2_py._rosbag2_py as rosbag2_py
 
 def test_sequential_reader():
 
-  #print(_SRC_RESOURCES_DIR_PATH)
-
   storage_options = rosbag2_py.StorageOptions()
   storage_options.uri = os.path.join(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'talker')

@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_py)
 
-#add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources")
-
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
