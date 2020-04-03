@@ -338,8 +338,10 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   // Check that there's only 1 bagfile and that it exists.
-  EXPECT_EQ(1u, metadata.relative_file_paths.size());
-  EXPECT_TRUE((root_bag_path_ / metadata.relative_file_paths[0]).exists());
+  ASSERT_EQ(1u, metadata.relative_file_paths.size());
+  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[0]};
+  ASSERT_TRUE(bagfile_path.exists()) <<
+    "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
   // Check that the next bagfile does not exist.
   const auto next_bag_file = get_bag_file_path(1);
