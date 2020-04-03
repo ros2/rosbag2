@@ -28,6 +28,7 @@ find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(rmw_implementation_cmake REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
@@ -84,6 +85,112 @@ ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
 
+function(rosbag2_transport_add_gmock target_base)
+  cmake_parse_arguments(ARG
+    "SKIP_TEST"
+    ""
+    "LINK_LIBS;AMENT_DEPS;INCLUDE_DIRS"
+    ${ARGN})
+  if(NOT ARG_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "rosbag2_transport_add_gmock() must be invoked with "
+      "at least one source file")
+  endif()
+  if(${ARG_SKIP_TEST})
+    set(SKIP_TEST "SKIP_TEST")
+  else()
+    set(SKIP_TEST "")
+  endif()
+
+  set(target_name ${target_base}${target_suffix})
+  set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
+  ament_add_gmock(${target_name}
+    ${ARG_UNPARSED_ARGUMENTS}
+    ENV ${rmw_implementation_env_var}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    ${SKIP_TEST})
+  if(TARGET ${target_name})
+    target_link_libraries(${target_name} ${ARG_LINK_LIBS})
+    target_include_directories(${target_name} PUBLIC ${ARG_INCLUDE_DIRS})
+    ament_target_dependencies(${target_name} ${ARG_AMENT_DEPS})
+  endif()
+endfunction()
+
+function(create_tests_for_rmw_implementation)
+  rosbag2_transport_add_gmock(test_info
+    test/rosbag2_transport/test_info.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_record_all
+    test/rosbag2_transport/test_record_all.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_record_all_no_discovery
+    test/rosbag2_transport/test_record_all_no_discovery.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_play_timing
+    test/rosbag2_transport/test_play_timing.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_rosbag2_node
+    src/rosbag2_transport/generic_publisher.cpp
+    src/rosbag2_transport/generic_subscription.cpp
+    src/rosbag2_transport/qos.cpp
+    src/rosbag2_transport/recorder.cpp
+    src/rosbag2_transport/rosbag2_node.cpp
+    test/rosbag2_transport/test_rosbag2_node.cpp
+    INCLUDE_DIRS
+      PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+      $<INSTALL_INTERFACE:include>
+    AMENT_DEPS
+      ament_index_cpp
+      rclcpp
+      rosbag2_cpp
+      rosbag2_test_common
+      test_msgs
+      yaml_cpp_vendor)
+
+  rosbag2_transport_add_gmock(test_formatter
+    test/rosbag2_transport/test_formatter.cpp
+    src/rosbag2_transport/formatter.cpp
+    LINK_LIBS rosbag2_transport)
+
+  rosbag2_transport_add_gmock(test_qos
+    src/rosbag2_transport/qos.cpp
+    test/rosbag2_transport/test_qos.cpp
+    INCLUDE_DIRS
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    AMENT_DEPS
+      rosbag2_test_common
+      yaml_cpp_vendor)
+
+  # disable the following tests for connext
+  # due to slower discovery of nodes
+  set(SKIP_TEST "")
+  if(${rmw_implementation} MATCHES "(.*)connext(.*)")
+    set(SKIP_TEST "SKIP_TEST")
+  endif()
+
+  rosbag2_transport_add_gmock(test_record
+    test/rosbag2_transport/test_record.cpp
+    ${SKIP_TEST}
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_play
+    test/rosbag2_transport/test_play.cpp
+    ${SKIP_TEST}
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+endfunction()
+
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_index_cpp REQUIRED)
@@ -93,111 +200,7 @@ if(BUILD_TESTING)
   # explicitly disable cppcheck
   set(ament_cmake_cppcheck_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
-
-  ament_add_gmock(test_info
-    test/rosbag2_transport/test_info.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_info)
-    target_link_libraries(test_info rosbag2_transport)
-    ament_target_dependencies(test_info rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_record_all
-    test/rosbag2_transport/test_record_all.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_record_all)
-    target_link_libraries(test_record_all rosbag2_transport)
-    ament_target_dependencies(test_record_all test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_record_all_no_discovery
-    test/rosbag2_transport/test_record_all_no_discovery.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_record_all_no_discovery)
-    target_link_libraries(test_record_all_no_discovery rosbag2_transport)
-    ament_target_dependencies(test_record_all_no_discovery test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_play_timing
-    test/rosbag2_transport/test_play_timing.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_play_timing)
-    target_link_libraries(test_play_timing rosbag2_transport)
-    ament_target_dependencies(test_play_timing test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_rosbag2_node
-    src/rosbag2_transport/generic_publisher.cpp
-    src/rosbag2_transport/generic_subscription.cpp
-    src/rosbag2_transport/qos.cpp
-    src/rosbag2_transport/recorder.cpp
-    src/rosbag2_transport/rosbag2_node.cpp
-    test/rosbag2_transport/test_rosbag2_node.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_rosbag2_node)
-    target_include_directories(test_rosbag2_node
-      PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
-      $<INSTALL_INTERFACE:include>)
-    ament_target_dependencies(test_rosbag2_node
-      ament_index_cpp
-      rclcpp
-      rosbag2_cpp
-      rosbag2_test_common
-      test_msgs
-      yaml_cpp_vendor)
-  endif()
-
-  ament_add_gmock(test_formatter
-    test/rosbag2_transport/test_formatter.cpp
-    src/rosbag2_transport/formatter.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_formatter)
-    target_link_libraries(test_formatter rosbag2_transport)
-  endif()
-
-  # disable the following tests for connext
-  # due to slower discovery of nodes
-  get_default_rmw_implementation(rmw_default)
-  set(SKIP_TEST "")
-  if(${rmw_default} MATCHES "(.*)connext(.*)")
-    set(SKIP_TEST "SKIP_TEST")
-  endif()
-
-  ament_add_gmock(test_record
-    test/rosbag2_transport/test_record.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ${SKIP_TEST})
-  if(TARGET test_record)
-    target_link_libraries(test_record rosbag2_transport)
-    ament_target_dependencies(test_record test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_play
-    test/rosbag2_transport/test_play.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ${SKIP_TEST})
-  if(TARGET test_play)
-    target_link_libraries(test_play rosbag2_transport)
-    ament_target_dependencies(test_play test_msgs rosbag2_test_common)
-  endif()
-
-  ament_add_gmock(test_qos
-    src/rosbag2_transport/qos.cpp
-    test/rosbag2_transport/test_qos.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    ${SKIP_TEST})
-  if(TARGET test_qos)
-    target_include_directories(test_qos
-      PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-    ament_target_dependencies(test_qos
-      rosbag2_test_common
-      yaml_cpp_vendor)
-  endif()
-
+  call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
 endif()
 
 ament_package()
