@@ -38,7 +38,7 @@
 namespace
 {
 /// Convert a Python3 unicode string to a native C++ std::string
-std::string python_object_to_string(PyObject * object)
+std::string PyObject_AsStdString(PyObject * object)
 {
   PyObject * python_string;
   if (PyUnicode_Check(object)) {
@@ -49,38 +49,12 @@ std::string python_object_to_string(PyObject * object)
   return std::string(PyBytes_AsString(python_string));
 }
 
-/// Convert a Python dictionary to rmw_time_t
-rmw_time_t python_dict_to_rmw_time(PyObject * object)
+/// Get the rmw_qos_profile_t pointer from the rclpy QoSProfile
+rmw_qos_profile_t * PyQoSProfile_AsRmwQoSProfile(PyObject * object)
 {
-  rmw_time_t new_time{};
-  new_time.sec = PyLong_AsSize_t(PyDict_GetItemString(object, "sec"));
-  new_time.nsec = PyLong_AsSize_t(PyDict_GetItemString(object, "nsec"));
-  return new_time;
-}
-
-/// Map a Python dictionary object to a QoS profile
-rclcpp::QoS python_dict_to_qos(PyObject * object)
-{
-  rclcpp::QoS profile{10};
-  profile.history(
-    static_cast<rmw_qos_history_policy_t>(
-      PyLong_AsSize_t(PyDict_GetItemString(object, "history"))));
-  profile.reliability(
-    static_cast<rmw_qos_reliability_policy_t>(
-      PyLong_AsSize_t(PyDict_GetItemString(object, "reliability"))));
-  profile.durability(
-    static_cast<rmw_qos_durability_policy_t>(
-      PyLong_AsSize_t(PyDict_GetItemString(object, "durability"))));
-  profile.deadline(python_dict_to_rmw_time(PyDict_GetItemString(object, "deadline")));
-  profile.lifespan(python_dict_to_rmw_time(PyDict_GetItemString(object, "lifespan")));
-  profile.liveliness(
-    static_cast<rmw_qos_liveliness_policy_t>(
-      PyLong_AsSize_t(PyDict_GetItemString(object, "liveliness"))));
-  profile.liveliness_lease_duration(
-    python_dict_to_rmw_time(PyDict_GetItemString(object, "liveliness_lease_duration")));
-  profile.avoid_ros_namespace_conventions(
-    PyObject_IsTrue(PyDict_GetItemString(object, "avoid_ros_namespace_conventions")));
-  return profile;
+  auto py_capsule = PyObject_CallMethod(object, "get_c_qos_profile", "");
+  return reinterpret_cast<rmw_qos_profile_t *>(
+    PyCapsule_GetPointer(py_capsule, "rmw_qos_profile_t"));
 }
 }  // namespace
 
@@ -165,9 +139,11 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     Py_ssize_t pos = 0;
     std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
     while (PyDict_Next(qos_profile_overrides, &pos, &key, &value)) {
-      auto topic_name = python_object_to_string(key);
-      auto profile = python_dict_to_qos(value);
-      topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, profile));
+      auto topic_name = PyObject_AsStdString(key);
+      auto profile = PyQoSProfile_AsRmwQoSProfile(value);
+      auto init = rclcpp::QoSInitialization::from_rmw(*profile);
+      auto qos_profile = rclcpp::QoS(init, *profile);
+      topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, qos_profile));
     }
   }
 

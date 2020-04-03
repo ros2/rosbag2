@@ -103,16 +103,14 @@ class RecordVerb(VerbExtension):
             raise ValueError('[ERROR] [ros2bag]: {} does not exist.'.format(qos_profile_path))
         with open(qos_profile_path, 'r') as file:
             qos_profile_dict = yaml.safe_load(file)
-        topic_names = list(qos_profile_dict)
-        for name in topic_names:
+        for name in qos_profile_dict:
             try:
-                profile = qos_profile_dict.get(name)
+                profile = qos_profile_dict[name]
                 # Convert dict to Duration. Required for construction
-                profile['deadline'] = self._dict_to_duration(profile.get('deadline'))
-                profile['lifespan'] = self._dict_to_duration(profile.get('lifespan'))
-                profile['liveliness_lease_duration'] = self._dict_to_duration(
-                    profile.get('liveliness_lease_duration'))
-                QoSProfile(**qos_profile_dict.get(name))
+                conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
+                for k in conversion_keys:
+                    profile[k] = self._dict_to_duration(profile.get(k))
+                qos_profile_dict[name] = QoSProfile(**profile)
             except InvalidQoSProfileException as e:
                 raise ValueError(
                     '[ERROR] [ros2bag]: Invalid QoS profile configuration for topic {}.\n{}'

@@ -67,8 +67,8 @@ class TestROS2PkgCLI(unittest.TestCase):
             arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_shutdown(timeout=5), \
-                    print('ros2bag CLI failed on shutdown.')
+                assert bag_command.wait_for_output(timeout=5), \
+                    print('ros2bag CLI failed to start.')
             output = bag_command.output.splitlines()
             error_string = '[ERROR] [ros2bag]:'
             for line in output:
@@ -82,8 +82,8 @@ class TestROS2PkgCLI(unittest.TestCase):
             arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_shutdown(timeout=5), \
-                    print('ros2bag CLI failed on shutdown.')
+                assert bag_command.wait_for_output(timeout=5), \
+                    print('ros2bag CLI failed to start.')
             output = bag_command.output.splitlines()
             error_string = '[ERROR] [ros2bag]:'
             for line in output:
