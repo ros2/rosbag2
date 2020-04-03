@@ -24,10 +24,13 @@ class PlayVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
-            'bag_file', help='bag file to replay')
+            'topics', help='topics to replay. If none specified, all topics will be replayed.')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
+        parser.add_argument(
+            '-i', '--input', type=str,
+            help='bag file to replay')
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -47,7 +50,7 @@ class PlayVerb(VerbExtension):
             raise ArgumentTypeError('%s is not of the valid type (float)' % value)
 
     def main(self, *, args):  # noqa: D102
-        bag_file = args.bag_file
+        bag_file = args.input
         if not os.path.exists(bag_file):
             return "[ERROR] [ros2bag] bag file '{}' does not exist!".format(bag_file)
         # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
@@ -61,4 +64,5 @@ class PlayVerb(VerbExtension):
             storage_id=args.storage,
             node_prefix=NODE_NAME_PREFIX,
             read_ahead_queue_size=args.read_ahead_queue_size,
-            rate=args.rate)
+            rate=args.rate,
+            topics=args.topics)

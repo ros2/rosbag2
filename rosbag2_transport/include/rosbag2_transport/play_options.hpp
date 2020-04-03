@@ -28,7 +28,7 @@ public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
   float rate = 1.0;
-  std::vector<std::string> topics = std::vector<std::string>();
+  std::vector<std::string> topics;
 };
 
 }  // namespace rosbag2_transport
