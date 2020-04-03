@@ -134,7 +134,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
   };
 
-  if (qos_profile_overrides) {
+  if (PyDict_Check(qos_profile_overrides)) {
     PyObject * key, * value;
     Py_ssize_t pos = 0;
     std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
@@ -145,6 +145,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       auto qos_profile = rclcpp::QoS(init, *profile);
       topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, qos_profile));
     }
+  } else {
+    throw std::runtime_error{"QoS profile overrides is not a Python dictionary."};
   }
 
   if (topics) {
