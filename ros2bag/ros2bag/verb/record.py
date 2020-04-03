@@ -97,8 +97,10 @@ class RecordVerb(VerbExtension):
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
 
     def _dict_to_duration(self, time_dict: Optional[Dict[str, int]]) -> Duration:
+        if not all(key in time_dict for key in ['sec', 'nsec']):
+            raise ValueError("Time overrides must include both seconds (sec) and nanoseconds (nsec)")
         if time_dict:
-            return Duration(seconds=time_dict.get('sec', 0), nanoseconds=time_dict.get('nsec', 0))
+            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
         else:
             return Duration()
 
