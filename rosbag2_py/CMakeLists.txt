@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_py)
 
+#add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -44,8 +46,22 @@ install(
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_pytest REQUIRED)
 
-  # TODO(jacobperron): Add pytests
+  set(_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}")
+  if(WIN32 AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set(_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
+  endif()
+  set(pythonpath "${CMAKE_CURRENT_BINARY_DIR}/rosbag2_py;${CMAKE_CURRENT_SOURCE_DIR}")
+  if(NOT WIN32)
+    string(REPLACE ";" ":" pythonpath "${pythonpath}")
+  endif()
+  ament_add_pytest_test(test_sequential_reader_py "test/test_sequential_reader.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV "PYTHONPATH=${pythonpath}"
+    APPEND_LIBRARY_DIRS "${_append_library_dirs}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+  )
 endif()
 
 ament_package()
