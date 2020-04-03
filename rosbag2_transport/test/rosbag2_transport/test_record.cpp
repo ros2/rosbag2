@@ -172,8 +172,8 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 
   // Create two publishers on the same topic with different QoS profiles.
   // If no override is specified, then the recorder cannot see any published messages.
-  auto profile1 = rosbag2_transport::Rosbag2QoS().best_effort().durability_volatile();
-  auto profile2 = rosbag2_transport::Rosbag2QoS().best_effort().transient_local();
+  auto profile1 = rosbag2_transport::Rosbag2QoS{}.best_effort().durability_volatile();
+  auto profile2 = rosbag2_transport::Rosbag2QoS{}.best_effort().transient_local();
   pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile1);
   pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile2);
 
@@ -181,7 +181,7 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   run_publishers();
   stop_recording();
 
-  MockSequentialWriter & writer =
+  auto & writer =
     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
   auto recorded_messages = writer.get_messages();
 

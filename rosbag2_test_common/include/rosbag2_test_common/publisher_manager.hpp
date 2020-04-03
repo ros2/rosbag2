@@ -78,7 +78,7 @@ public:
     const std::string & topic_name,
     std::shared_ptr<T> message,
     size_t expected_messages = 0,
-    const rclcpp::QoS & qos = rclcpp::QoS(10))
+    const rclcpp::QoS & qos = rclcpp::QoS{10})
   {
     auto node_name = std::string("publisher") + std::to_string(counter_++);
     auto publisher_node = std::make_shared<rclcpp::Node>(
