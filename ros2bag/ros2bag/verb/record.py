@@ -74,8 +74,9 @@ class RecordVerb(VerbExtension):
             help='record also hidden topics.'
         )
         parser.add_argument(
-            '--qos-profiles', type=str, default='',
-            help='Path to a yaml file with a QoS policy to override the default profile.'
+            '--qos-profile-overrides', type=str, default='',
+            help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
+                 'See docs/qos_profiles_overrides.md for more info.'
         )
         self._subparser = parser
 
@@ -85,29 +86,28 @@ class RecordVerb(VerbExtension):
         except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
 
-    def validate_qos_profiles(self, qos_profile_path):
+    def validate_qos_profile_overrides(self, qos_profile_path: str) -> str:
         """Validate the QoS profile yaml file path and its structure."""
         qos_params = ['history', 'depth', 'reliability', 'durability',
                       'deadline', 'lifespan', 'liveliness', 'liveliness_lease_duration',
                       'avoid_ros_namespace_conventions']
-        if os.path.isfile(qos_profile_path):
-            with open(qos_profile_path, 'r') as file:
-                # Load as a dict first to verify contents
-                qos_profile = yaml.safe_load(file)
-                topic_names = list(qos_profile)
-                for name in topic_names:
-                    if type(qos_profile.get(name)) != dict:
-                        raise ValueError(
-                            '[ERROR] [ros2bag]: QoS profile configuration for topic {} is invalid.'
-                            .format(name))
-                    if not all(param in qos_profile.get(name) for param in qos_params):
-                        print('[ERROR] [ros2bag]: Missing a QoS parameter in your override.\n'
-                              'Valid parameters are: {}'.format(' '.join(qos_params)))
-                # Read file as a string
-                file.seek(0)
-                return file.read()
-        else:
+        if not os.path.isfile(qos_profile_path):
             raise ValueError('[ERROR] [ros2bag]: {} does not exist.'.format(qos_profile_path))
+        with open(qos_profile_path, 'r') as file:
+            # Load as a dict first to verify contents
+            qos_profile = yaml.safe_load(file)
+            file.seek(0)
+            qos_profile_string = file.read()
+        topic_names = list(qos_profile)
+        for name in topic_names:
+            if type(qos_profile.get(name)) != dict:
+                raise ValueError(
+                    '[ERROR] [ros2bag]: QoS profile configuration for topic {} is invalid.'
+                    .format(name))
+            if not all(param in qos_profile.get(name) for param in qos_params):
+                print('[ERROR] [ros2bag]: Missing a QoS parameter in your override.\n'
+                      'Valid parameters are: {}'.format(' '.join(qos_params)))
+        return qos_profile_string
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -122,10 +122,10 @@ class RecordVerb(VerbExtension):
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
 
-        qos_profiles = args.qos_profiles
-        if qos_profiles:
+        qos_profile_overrides = args.qos_profile_overrides
+        if qos_profile_overrides:
             try:
-                qos_profiles = self.validate_qos_profiles(qos_profiles)
+                qos_profile_overrides = self.validate_qos_profile_overrides(qos_profile_overrides)
             except ValueError as e:
                 return str(e)
 
@@ -152,7 +152,7 @@ class RecordVerb(VerbExtension):
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
                 include_hidden_topics=args.include_hidden_topics,
-                qos_profiles=qos_profiles)
+                qos_profile_overrides=qos_profile_overrides)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -174,7 +174,7 @@ class RecordVerb(VerbExtension):
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,
-                qos_profiles=qos_profiles)
+                qos_profile_overrides=qos_profile_overrides)
         else:
             self._subparser.print_help()
 
