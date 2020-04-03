@@ -54,7 +54,7 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
-  qos_profile_overrides_ = YAML::Load(record_options.qos_profiles);
+  topic_qos_profile_overrides_ = record_options.topic_qos_profile_overrides;
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -170,15 +170,10 @@ std::shared_ptr<GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
-  Rosbag2QoS subscription_qos(qos);
-  if (qos_profile_overrides_[topic_name]) {
-    subscription_qos = qos_profile_overrides_[topic_name].as<Rosbag2QoS>();
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
-  }
   auto subscription = node_->create_generic_subscription(
     topic_name,
     topic_type,
-    subscription_qos,
+    qos,
     [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = message;
@@ -213,6 +208,11 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
 
 rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
 {
+  rclcpp::QoS subscription_qos{10};
+  if (topic_qos_profile_overrides_.count(topic_name)) {
+    subscription_qos = topic_qos_profile_overrides_.at(topic_name);
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+  }
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   if (!endpoints.empty() && all_qos_same(endpoints)) {
     return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
@@ -222,7 +222,7 @@ rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
       "Cannot determine what QoS to request, falling back to default QoS profile."
   );
   topics_warned_about_incompatibility_.insert(topic_name);
-  return Rosbag2QoS{};
+  return subscription_qos;
 }
 
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)

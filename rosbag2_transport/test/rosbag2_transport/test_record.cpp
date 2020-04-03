@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -24,7 +25,6 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "record_integration_fixture.hpp"
@@ -140,7 +140,6 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
-#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 
 TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 {
@@ -151,24 +150,12 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   rosbag2_transport::RecordOptions record_options =
   {false, false, {strict_topic}, "rmw_format", 100ms};
   // 0 means system default for all options
-  record_options.qos_profiles =
-    "/strict_topic:\n"
-    "  history: 2\n"      // Keep All
-    "  depth: 0\n"
-    "  reliability: 2\n"  // Best Effort
-    "  durability: 2\n"   // Volatile
-    "  deadline:\n"
-    "    sec: 0\n"
-    "    nsec: 0\n"
-    "  lifespan:\n"
-    "    sec: 0\n"
-    "    nsec: 0\n"
-    "    nsec: 0\n"
-    "  liveliness: 0\n"
-    "  liveliness_lease_duration:\n"
-    "    sec: 0\n"
-    "    nsec: 0\n"
-    "  avoid_ros_namespace_conventions: false\n";
+  const auto profile_override = rclcpp::QoS{10}
+  .best_effort().durability_volatile().keep_all().avoid_ros_namespace_conventions(false);
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {
+    {"/strict_topic", profile_override}
+  };
+  record_options.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
   // Create two publishers on the same topic with different QoS profiles.
   // If no override is specified, then the recorder cannot see any published messages.
@@ -187,3 +174,4 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 
   ASSERT_GE(recorded_messages.size(), 0u);
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION

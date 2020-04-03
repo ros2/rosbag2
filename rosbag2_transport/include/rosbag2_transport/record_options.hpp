@@ -17,7 +17,10 @@
 
 #include <chrono>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace rosbag2_transport
 {
@@ -32,7 +35,7 @@ public:
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";
-  std::string qos_profiles = "";
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
 };
 

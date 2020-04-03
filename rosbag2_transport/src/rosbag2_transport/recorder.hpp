@@ -114,7 +114,7 @@ private:
   std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
-  YAML::Node qos_profile_overrides_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport
