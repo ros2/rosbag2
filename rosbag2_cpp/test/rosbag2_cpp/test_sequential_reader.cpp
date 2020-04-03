@@ -71,7 +71,7 @@ public:
 
     EXPECT_CALL(*storage_factory, open_read_only(_, _));
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
-      [this](const std::string & path, const std::string & /* storage_id */) {
+      [this, relative_file_path](const std::string & path, const std::string & /* storage_id */) {
         EXPECT_STREQ(relative_file_path.c_str(), path.c_str());
         return storage_;
       });
