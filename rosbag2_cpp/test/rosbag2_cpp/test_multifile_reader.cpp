@@ -41,10 +41,10 @@ public:
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
+    storage_uri_(rcpputils::fs::temp_directory_path().string()),
     relative_path_1_("some_relative_path_1"),
     relative_path_2_("some_relative_path_2"),
-    absolute_path_1_(rcpputils::fs::path("/some/absolute/path1").string()),  // convert to MS
-    storage_uri_(rcpputils::fs::temp_directory_path().string()),
+    absolute_path_1_((rcpputils::fs::path(storage_uri_) / "some/folder").string()),
     default_storage_options_({storage_uri_, ""})
   {}
 
@@ -91,10 +91,10 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::string storage_serialization_format_;
+  std::string storage_uri_;
   std::string relative_path_1_;
   std::string relative_path_2_;
   std::string absolute_path_1_;
-  std::string storage_uri_;
   rosbag2_cpp::StorageOptions default_storage_options_;
 };
 
@@ -106,7 +106,7 @@ public:
   {
     relative_path_1_ = "rosbag_name/some_relative_path_1";
     relative_path_2_ = "rosbag_name/some_relative_path_2";
-    absolute_path_1_ = rcpputils::fs::path("/some/absolute/path1").string();
+    absolute_path_1_ = (rcpputils::fs::path(storage_uri_) / "some/folder").string();
   }
 
   rosbag2_storage::BagMetadata get_metadata() const override
