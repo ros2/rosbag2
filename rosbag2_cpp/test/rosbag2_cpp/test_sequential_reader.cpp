@@ -55,7 +55,8 @@ public:
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
 
-    auto relative_file_path = rcpputils::fs::path("/absolute/path/to/storage").string();
+    auto relative_file_path =
+      (rcpputils::fs::path(storage_uri_) / rcpputils::fs::path("some/folder")).string();
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     rosbag2_storage::BagMetadata metadata;
