@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import datetime
+import logging
 import os
 from typing import Dict
 from typing import Optional
@@ -23,6 +24,10 @@ from rclpy.duration import Duration
 from rclpy.qos import InvalidQoSProfileException
 from rclpy.qos import QoSProfile
 import yaml
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('ros2bag')
 
 
 class RecordVerb(VerbExtension):
@@ -100,21 +105,16 @@ class RecordVerb(VerbExtension):
     def validate_qos_profile_overrides(self, qos_profile_path: str) -> Dict[str, Dict]:
         """Validate the QoS profile yaml file path and its structure."""
         if not os.path.isfile(qos_profile_path):
-            raise ValueError('[ERROR] [ros2bag]: {} does not exist.'.format(qos_profile_path))
+            raise ValueError('{} does not exist.'.format(qos_profile_path))
         with open(qos_profile_path, 'r') as file:
             qos_profile_dict = yaml.safe_load(file)
         for name in qos_profile_dict:
-            try:
-                profile = qos_profile_dict[name]
-                # Convert dict to Duration. Required for construction
-                conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
-                for k in conversion_keys:
-                    profile[k] = self._dict_to_duration(profile.get(k))
-                qos_profile_dict[name] = QoSProfile(**profile)
-            except InvalidQoSProfileException as e:
-                raise ValueError(
-                    '[ERROR] [ros2bag]: Invalid QoS profile configuration for topic {}.\n{}'
-                    .format(name, str(e)))
+            profile = qos_profile_dict[name]
+            # Convert dict to Duration. Required for construction
+            conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
+            for k in conversion_keys:
+                profile[k] = self._dict_to_duration(profile.get(k))
+            qos_profile_dict[name] = QoSProfile(**profile)
         return qos_profile_dict
 
     def main(self, *, args):  # noqa: D102
@@ -136,7 +136,8 @@ class RecordVerb(VerbExtension):
             try:
                 qos_profile_overrides = self.validate_qos_profile_overrides(
                     qos_profile_overrides_path)
-            except ValueError as e:
+            except (InvalidQoSProfileException, ValueError) as e:
+                logger.error(str(e))
                 return str(e)
 
         self.create_bag_directory(uri)

@@ -33,6 +33,7 @@ import pytest
 PROFILE_PATH = Path(__file__).parent / 'resources'
 TEST_NODE = 'cli_qos_profile_test_node'
 TEST_NAMESPACE = 'cli_qos_profile'
+ERROR_STRING = 'ERROR:ros2bag:'
 
 
 @pytest.mark.rostest
@@ -70,9 +71,8 @@ class TestROS2PkgCLI(unittest.TestCase):
                 assert bag_command.wait_for_output(timeout=5), \
                     print('ros2bag CLI failed to start.')
             output = bag_command.output.splitlines()
-            error_string = '[ERROR] [ros2bag]:'
             for line in output:
-                assert error_string not in line, \
+                assert ERROR_STRING not in line, \
                     print('ros2bag CLI failed: {}'.format(line))
 
     def test_incomplete_qos_profile(self):
@@ -85,7 +85,20 @@ class TestROS2PkgCLI(unittest.TestCase):
                 assert bag_command.wait_for_output(timeout=5), \
                     print('ros2bag CLI failed to start.')
             output = bag_command.output.splitlines()
-            error_string = '[ERROR] [ros2bag]:'
             for line in output:
-                assert error_string not in line, \
+                assert ERROR_STRING not in line, \
                     print('ros2bag CLI failed: {}'.format(line))
+
+    def test_nonexistent_qos_profile(self):
+        profile_path = PROFILE_PATH / 'foobar.yaml'
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
+            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
+                         '--output', output_path.as_posix()]
+            with self.launch_bag_command(arguments=arguments) as bag_command:
+                assert bag_command.wait_for_output(timeout=5), \
+                    print('ros2bag CLI failed to start.')
+            output = bag_command.output.splitlines()
+            for line in output:
+                assert ERROR_STRING in line, \
+                    print('ros2bag CLI succeeded when is should have failed: {}'.format(line))
