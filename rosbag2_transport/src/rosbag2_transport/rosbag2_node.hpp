@@ -38,12 +38,13 @@ public:
 
   std::shared_ptr<GenericPublisher>
   create_generic_publisher(
-    const std::string & topic, const std::string & type);
+    const std::string & topic, const std::string & type, const rclcpp::QoS & qos);
 
   std::shared_ptr<GenericSubscription>
   create_generic_subscription(
     const std::string & topic,
     const std::string & type,
+    const rclcpp::QoS & qos,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   std::unordered_map<std::string, std::string>

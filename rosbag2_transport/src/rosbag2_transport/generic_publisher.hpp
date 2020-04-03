@@ -28,8 +28,9 @@ class GenericPublisher : public rclcpp::PublisherBase
 public:
   GenericPublisher(
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
-    const std::string & topic,
-    const rosidl_message_type_support_t & type_support);
+    const rosidl_message_type_support_t & type_support,
+    const std::string & topic_name,
+    const rclcpp::QoS & qos);
 
   virtual ~GenericPublisher() = default;
 

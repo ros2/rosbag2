@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
+
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -47,6 +49,18 @@ public:
 
   void record(const RecordOptions & record_options);
 
+  const std::unordered_set<std::string> &
+  topics_using_fallback_qos() const
+  {
+    return topics_warned_about_incompatibility_;
+  }
+
+  const std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> &
+  subscriptions() const
+  {
+    return subscriptions_;
+  }
+
 private:
   void topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
@@ -67,14 +81,25 @@ private:
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
   std::shared_ptr<GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type);
+    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   void record_messages() const;
 
+  /** Find the QoS profile that should be used for subscribing.
+    * If all currently offered QoS Profiles for a topic are the same, return that profile.
+    * Otherwise, print a warning and return a fallback value.
+    */
+  rclcpp::QoS common_qos_or_fallback(const std::string & topic_name);
+
+  // Serialize all currently offered QoS profiles for a topic into a YAML list.
+  std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
+
+  void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
+
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
-  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
-  std::unordered_set<std::string> subscribed_topics_;
+  std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
 };
 
