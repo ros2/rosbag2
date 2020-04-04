@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
@@ -27,6 +28,33 @@ namespace rosbag2_cpp
 {
 namespace readers
 {
+namespace details
+{
+std::vector<std::string> resolve_relative_paths(
+  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
+{
+  auto base_path = rcpputils::fs::path(base_folder);
+  if (version < 4) {
+    // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
+    base_path = rcpputils::fs::path(base_folder).parent_path();
+  }
+
+  rcpputils::require_true(
+    base_path.exists(), "base folder does not exist: " + base_folder);
+  rcpputils::require_true(
+    base_path.is_directory(), "base folder has to be a directory: " + base_folder);
+
+  for (auto & file : relative_files) {
+    auto path = rcpputils::fs::path(file);
+    if (path.is_absolute()) {
+      continue;
+    }
+    file = (base_path / path).string();
+  }
+
+  return relative_files;
+}
+}  // namespace details
 
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
@@ -63,7 +91,8 @@ void SequentialReader::open(
       return;
     }
 
-    file_paths_ = metadata_.relative_file_paths;
+    file_paths_ = details::resolve_relative_paths(
+      storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
 
     storage_ = storage_factory_->open_read_only(
@@ -71,7 +100,6 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
-
   } else {
     storage_ = storage_factory_->open_read_only(
       storage_options.uri, storage_options.storage_id);

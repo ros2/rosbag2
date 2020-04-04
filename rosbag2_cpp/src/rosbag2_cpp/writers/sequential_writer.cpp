@@ -43,6 +43,12 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
   return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
 }
+
+std::string strip_parent_path(const std::string & relative_path)
+{
+  return rcpputils::fs::path(relative_path).filename().string();
+}
+
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -70,7 +76,7 @@ void SequentialWriter::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
+  metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
 }
 
 void SequentialWriter::open(
@@ -178,7 +184,7 @@ void SequentialWriter::split_bagfile()
     throw std::runtime_error(errmsg.str());
   }
 
-  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
+  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
