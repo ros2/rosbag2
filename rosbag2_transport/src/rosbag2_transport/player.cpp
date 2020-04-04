@@ -157,7 +157,6 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
 void Player::prepare_publishers(const PlayOptions & options)
 {
-  // TODO(mabelzhang) uncomment these when set_filter is added to Reader
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = options.topics;
   reader_->set_filter(storage_filter);
