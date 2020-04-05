@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import re
 import unittest
 
 import launch
@@ -62,25 +63,19 @@ class TestInfo(unittest.TestCase):
               launch_service, rosbag_info_process, proc_info, proc_output) as command:
             assert command.wait_for_shutdown(timeout=3)
             assert command.exit_code == launch_testing.asserts.EXIT_OK
-        # Using the SequentialStdout context manager asserts that the following stdout
-        # happened in the same order that it's checked
-        with launch_testing.asserts.assertSequentialStdout(proc_output, rosbag_info_process) as cm:
-            cm.assertInStdout('Files:             cdr_test.db3')
-            # cm.assertInStdout('Bag size:          .*B')
-            cm.assertInStdout('Storage id:        sqlite3')
-            cm.assertInStdout('Duration:          0.155s')
-            # cm.assertInStdout('Start:             Sep 18 2018 .*:.*:44.241 (1537282604.241)')
-            # cm.assertInStdout('End                Sep 18 2018 .*:.*:44.397 (1537282604.397)')
-            cm.assertInStdout('Messages:          7')
-            cm.assertInStdout(
-                ('Topic information: Topic: /test_topic | Type: test_msgs/BasicTypes '
-                 '| Count: 3 | Serialization Format: cdr'))
-            cm.assertInStdout(
-                ('Topic: /array_topic | Type: test_msgs/Arrays '
-                 '| Count: 4 | Serialization Format: cdr'))
-        # TODO(Karsten1987): Regex doesn't seem to work.
-        # launch_testing.asserts.assertInStdout(
-        #     proc_output, 'Files:\s+cdr_test.db3', rosbag_info_process)
+        p = re.compile(
+            (r'Files:\s+cdr_test.db3\n'
+             r'Bag size:\s+.*B\n'
+             r'Storage id:\s+sqlite3\n'
+             r'Duration:\s+0.155s\n'
+             r'Start:\s+Sep 18 2018 \d{2}:\d{2}:44.241 \(1537282604.241\)\n'
+             r'End:\s+Sep 18 2018 \d{2}:\d{2}:44.397 \(1537282604.397\)\n'
+             r'Messages:\s+7\n'
+             r'Topic information:\s+Topic: /test_topic \| Type: test_msgs/BasicTypes '
+             r'\| Count: 3 \| Serialization Format: cdr\n'
+             r'\s+Topic: /array_topic \| Type: test_msgs/Arrays '
+             r'\| Count: 4 \| Serialization Format: cdr'))
+        launch_testing.asserts.assertInStdout(proc_output, p, rosbag_info_process)
 
     def test_ros2_bag_info_fail(self, launch_service, proc_info, proc_output):
         """Test ros2 bag info with a non existing bag file."""
