@@ -26,37 +26,36 @@ import launch_testing.markers
 import pytest
 
 
-# This is necessary to get unbuffered output from the process under test
-proc_env = os.environ.copy()
-proc_env['PYTHONUNBUFFERED'] = '1'
-
-rosbag_info_process = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'bag', 'info', launch.substitutions.LaunchConfiguration('bag_file_path')],
-    output='screen', env=proc_env,
-)
-
-rosbag_info_process_wrong = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'bag', 'info', '/path/to/non/existing/bag_file'],
-    output='screen', env=proc_env,
-)
-
-
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
+    # This is necessary to get unbuffered output from the process under test
+    proc_env = os.environ.copy()
+    proc_env['PYTHONUNBUFFERED'] = '1'
+
+    rosbag_info_process = launch.actions.ExecuteProcess(
+        cmd=['ros2', 'bag', 'info', launch.substitutions.LaunchConfiguration('bag_file_path')],
+        output='screen', env=proc_env,
+    )
+
+    rosbag_info_process_wrong = launch.actions.ExecuteProcess(
+        cmd=['ros2', 'bag', 'info', '/path/to/non/existing/bag_file'],
+        output='screen', env=proc_env,
+    )
+
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
             'bag_file_path',
             description='Absolute path to a bag file.',
             default_value='../resources/cdr_test'
         ),
-        launch_testing.actions.ReadyToTest(),
-    ])
+        launch_testing.actions.ReadyToTest()
+    ]), locals()
 
 
 class TestInfo(unittest.TestCase):
 
-    def test_ros2_bag_info(self, launch_service, proc_info, proc_output):
+    def test_ros2_bag_info(self, launch_service, proc_info, proc_output, rosbag_info_process):
         """Test terminating_proc without command line arguments."""
         print('Running ros2 bag info')
         with launch_testing.tools.launch_process(
@@ -77,7 +76,11 @@ class TestInfo(unittest.TestCase):
              r'\| Count: 4 \| Serialization Format: cdr'))
         launch_testing.asserts.assertInStdout(proc_output, p, rosbag_info_process)
 
-    def test_ros2_bag_info_fail(self, launch_service, proc_info, proc_output):
+    def test_ros2_bag_info_fail(self,
+                                launch_service,
+                                proc_info,
+                                proc_output,
+                                rosbag_info_process_wrong):
         """Test ros2 bag info with a non existing bag file."""
         print('Running ros2 bag info with non existing bag file')
         with launch_testing.tools.launch_process(

@@ -26,26 +26,24 @@ import launch_testing.markers
 import pytest
 
 
-# This is necessary to get unbuffered output from the process under test
-proc_env = os.environ.copy()
-proc_env['PYTHONUNBUFFERED'] = '1'
-
-rosbag_play_process = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'bag', 'play', launch.substitutions.LaunchConfiguration('bag_file_path')],
-    output='screen', env=proc_env,
-)
-
-ros2_topic_echo_process = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'topic', 'echo', '/test_msg_strings', 'test_msgs/msg/Strings'],
-    output='screen', env=proc_env,
-    sigterm_timeout='20',
-    sigkill_timeout='10'
-)
-
-
 @pytest.mark.launch_test
-#@launch_testing.markers.keep_alive
 def generate_test_description():
+    # This is necessary to get unbuffered output from the process under test
+    proc_env = os.environ.copy()
+    proc_env['PYTHONUNBUFFERED'] = '1'
+
+    rosbag_play_process = launch.actions.ExecuteProcess(
+        cmd=['ros2', 'bag', 'play', launch.substitutions.LaunchConfiguration('bag_file_path')],
+        output='screen', env=proc_env,
+    )
+
+    ros2_topic_echo_process = launch.actions.ExecuteProcess(
+        cmd=['ros2', 'topic', 'echo', '/test_msg_strings', 'test_msgs/msg/Strings'],
+        output='screen', env=proc_env,
+        sigterm_timeout='20',
+        sigkill_timeout='10'
+    )
+
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
             'bag_file_path',
@@ -58,27 +56,32 @@ def generate_test_description():
         rosbag_play_process,
 
         launch_testing.actions.ReadyToTest(),
-    ])
+    ]), locals()
 
 
 class TestPlay(unittest.TestCase):
 
-    def test_ros2_bag_play(self, launch_service, proc_info, proc_output):
+    def test_ros2_bag_play(self,
+                           launch_service,
+                           proc_info,
+                           proc_output,
+                           rosbag_play_process,
+                           ros2_topic_echo_process):
         """Test that ros2 topic echo received messages."""
         print('Analyzing ros2 topic echo output')
         proc_info.assertWaitForShutdown(rosbag_play_process, timeout=15)
         p = re.compile(
-            (r"(string_value: rosbag2 test message\n"
-             r"string_value_default1: Hello world!\n"
-             r"string_value_default2: Hello'world!\n"
-             r"string_value_default3: Hello\"world!\n"
-             r"string_value_default4: Hello\'world!\n"
-             r"string_value_default5: Hello\"world!\n"
+            (r'(string_value: rosbag2 test message\n'
+             r'string_value_default1: Hello world!\n'
+             r'string_value_default2: Hello\'world!\n'
+             r'string_value_default3: Hello"world!\n'
+             r'string_value_default4: Hello\'world!\n'
+             r'string_value_default5: Hello"world!\n'
              r"bounded_string_value: ''\n"
-             r"bounded_string_value_default1: Hello world!\n"
-             r"bounded_string_value_default2: Hello\'world!\n"
-             r"bounded_string_value_default3: Hello\"world!\n"
-             r"bounded_string_value_default4: Hello\'world!\n"
-             r"bounded_string_value_default5: Hello\"world!\n"
-             r"---\n){8}"))
+             r'bounded_string_value_default1: Hello world!\n'
+             r'bounded_string_value_default2: Hello\'world!\n'
+             r'bounded_string_value_default3: Hello"world!\n'
+             r'bounded_string_value_default4: Hello\'world!\n'
+             r'bounded_string_value_default5: Hello"world!\n'
+             r'---\n){8}'))
         launch_testing.asserts.assertInStdout(proc_output, p, ros2_topic_echo_process)
