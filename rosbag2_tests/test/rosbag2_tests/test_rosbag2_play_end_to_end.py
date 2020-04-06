@@ -38,18 +38,13 @@ rosbag_play_process = launch.actions.ExecuteProcess(
 ros2_topic_echo_process = launch.actions.ExecuteProcess(
     cmd=['ros2', 'topic', 'echo', '/test_msg_strings', 'test_msgs/msg/Strings'],
     output='screen', env=proc_env,
-    sigterm_timeout='30',
-    sigkill_timeout='30'
-)
-
-rosbag_info_process_wrong = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'bag', 'info', '/path/to/non/existing/bag_file'],
-    output='screen', env=proc_env,
+    sigterm_timeout='20',
+    sigkill_timeout='10'
 )
 
 
 @pytest.mark.launch_test
-@launch_testing.markers.keep_alive
+#@launch_testing.markers.keep_alive
 def generate_test_description():
     return launch.LaunchDescription([
         launch.actions.DeclareLaunchArgument(
@@ -71,4 +66,19 @@ class TestPlay(unittest.TestCase):
     def test_ros2_bag_play(self, launch_service, proc_info, proc_output):
         """Test that ros2 topic echo received messages."""
         print('Analyzing ros2 topic echo output')
-        launch_testing.asserts.assertExitCodes(proc_info)
+        proc_info.assertWaitForShutdown(rosbag_play_process, timeout=15)
+        p = re.compile(
+            (r"(string_value: rosbag2 test message\n"
+             r"string_value_default1: Hello world!\n"
+             r"string_value_default2: Hello'world!\n"
+             r"string_value_default3: Hello\"world!\n"
+             r"string_value_default4: Hello\'world!\n"
+             r"string_value_default5: Hello\"world!\n"
+             r"bounded_string_value: ''\n"
+             r"bounded_string_value_default1: Hello world!\n"
+             r"bounded_string_value_default2: Hello\'world!\n"
+             r"bounded_string_value_default3: Hello\"world!\n"
+             r"bounded_string_value_default4: Hello\'world!\n"
+             r"bounded_string_value_default5: Hello\"world!\n"
+             r"---\n){8}"))
+        launch_testing.asserts.assertInStdout(proc_output, p, ros2_topic_echo_process)
