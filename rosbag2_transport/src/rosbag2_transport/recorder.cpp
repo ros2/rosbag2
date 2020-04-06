@@ -203,7 +203,7 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
 
 rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
 {
-  rclcpp::QoS subscription_qos{10};
+  rclcpp::QoS subscription_qos{rclcpp::KeepAll()};
   if (topic_qos_profile_overrides_.count(topic_name)) {
     subscription_qos = topic_qos_profile_overrides_.at(topic_name);
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
