@@ -21,7 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "qos.hpp"
+#include "rosbag2_transport/qos.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -144,17 +144,17 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
 
 TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 {
+  const auto num_expected_msgs = 3;
   auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
   strict_msg->string_value = "strict";
-  std::string strict_topic = "/strict_topic";
+  const auto strict_topic = "/strict_topic";
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, {strict_topic}, "rmw_format", 100ms};
-  // 0 means system default for all options
-  const auto profile_override = rclcpp::QoS{10}
-  .best_effort().durability_volatile().keep_all().avoid_ros_namespace_conventions(false);
+  const auto profile_override = rclcpp::QoS{rclcpp::KeepAll()}
+  .best_effort().durability_volatile().avoid_ros_namespace_conventions(false);
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {
-    {"/strict_topic", profile_override}
+    {strict_topic, profile_override}
   };
   record_options.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
@@ -162,8 +162,10 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   // If no override is specified, then the recorder cannot see any published messages.
   auto profile1 = rosbag2_transport::Rosbag2QoS{}.best_effort().durability_volatile();
   auto profile2 = rosbag2_transport::Rosbag2QoS{}.best_effort().transient_local();
-  pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile1);
-  pub_man_.add_publisher<test_msgs::msg::Strings>(strict_topic, strict_msg, 3, profile2);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    strict_topic, strict_msg, num_expected_msgs, profile1);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    strict_topic, strict_msg, num_expected_msgs, profile2);
 
   start_recording(record_options);
   run_publishers();
