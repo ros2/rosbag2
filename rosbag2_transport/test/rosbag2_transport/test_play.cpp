@@ -119,3 +119,57 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           &test_msgs::msg::Arrays::float32_values,
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
+
+TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden)
+{
+  const auto topic1 = "topic1";
+  const auto topic2 = "topic2";
+  const auto msg_type = "test_msgs/BasicTypes";
+  auto basic_msg = get_messages_basic_types()[0];
+  basic_msg->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {topic1, msg_type, "", ""},
+    {topic2, msg_type, "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+    {serialize_test_message(topic1, 500, basic_msg),
+     serialize_test_message(topic1, 700, basic_msg),
+     serialize_test_message(topic1, 900, basic_msg),
+     serialize_test_message(topic2, 550, basic_msg),
+     serialize_test_message(topic2, 750, basic_msg),
+     serialize_test_message(topic2, 950, basic_msg)};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 2);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  const auto profile1 = rclcpp::QoS{0}.keep_all().durability_volatile();
+  const auto profile2 = rclcpp::QoS{0}.keep_last(10).reliable();
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{"/topic1", profile1},
+    std::pair<std::string, rclcpp::QoS>{"/topic2", profile2}
+  };
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto received_messages_1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+
+  auto received_messages_2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic2");
+
+  std::cout << "end" << std::endl;
+}

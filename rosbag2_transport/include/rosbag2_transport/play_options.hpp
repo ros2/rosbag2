@@ -17,6 +17,9 @@
 
 #include <cstddef>
 #include <string>
+#include <unordered_map>
+
+#include "rclcpp/qos.hpp"
 
 namespace rosbag2_transport
 {
@@ -27,6 +30,7 @@ public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
   float rate = 1.0;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
 };
 
 }  // namespace rosbag2_transport
