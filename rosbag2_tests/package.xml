@@ -18,6 +18,7 @@
   <test_depend>launch_testing_ament_cmake</test_depend>
   <test_depend>rclcpp</test_depend>
   <test_depend>ros2bag</test_depend>
+  <test_depend>ros2topic</test_depend>
   <test_depend>rosbag2_compression</test_depend>
   <test_depend>rosbag2_cpp</test_depend>
   <test_depend>rosbag2_converter_default_plugins</test_depend>
