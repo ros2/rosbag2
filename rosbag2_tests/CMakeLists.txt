@@ -71,6 +71,9 @@ if(BUILD_TESTING)
     add_launch_test(test/rosbag2_tests/test_rosbag2_info_end_to_end.py
       ARGS "bag_file_path:=${CMAKE_CURRENT_SOURCE_DIR}/resources/cdr_test"
     )
+    add_launch_test(test/rosbag2_tests/test_rosbag2_play_end_to_end.py
+      ARGS "bag_file_path:=${CMAKE_CURRENT_SOURCE_DIR}/resources/cdr_test"
+    )
 
     ament_add_gmock(test_converter
       test/rosbag2_tests/test_converter.cpp
