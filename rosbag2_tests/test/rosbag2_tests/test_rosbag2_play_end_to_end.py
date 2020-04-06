@@ -36,7 +36,7 @@ rosbag_play_process = launch.actions.ExecuteProcess(
 )
 
 ros2_topic_echo_process = launch.actions.ExecuteProcess(
-    cmd=['ros2', 'topic', 'echo', '/test_topic'],
+    cmd=['ros2', 'topic', 'echo', '/test_msg_strings', 'test_msgs/msg/Strings'],
     output='screen', env=proc_env,
     sigterm_timeout='30',
     sigkill_timeout='30'
@@ -58,9 +58,9 @@ def generate_test_description():
             default_value='../resources/cdr_test'
         ),
 
-        rosbag_play_process,
-
         ros2_topic_echo_process,
+
+        rosbag_play_process,
 
         launch_testing.actions.ReadyToTest(),
     ])
@@ -71,7 +71,4 @@ class TestPlay(unittest.TestCase):
     def test_ros2_bag_play(self, launch_service, proc_info, proc_output):
         """Test that ros2 topic echo received messages."""
         print('Analyzing ros2 topic echo output')
-        with launch_testing.tools.launch_process(
-              launch_service, rosbag_info_process, proc_info, proc_output) as command:
-            assert command.wait_for_shutdown(timeout=3)
-            assert command.exit_code == launch_testing.asserts.EXIT_OK
+        launch_testing.asserts.assertExitCodes(proc_info)

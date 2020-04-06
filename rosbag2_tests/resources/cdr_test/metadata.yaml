@@ -1,5 +1,5 @@
 rosbag2_bagfile_information:
-  version: 3
+  version: 4
   storage_identifier: sqlite3
   relative_file_paths:
     - cdr_test.db3
