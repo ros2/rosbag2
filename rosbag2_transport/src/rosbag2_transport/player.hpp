@@ -24,6 +24,8 @@
 
 #include "moodycamel/readerwriterqueue.h"
 
+#include "rclcpp/qos.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
 
 #include "replayable_message.hpp"
@@ -68,6 +70,7 @@ private:
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport

@@ -59,6 +59,7 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
+  topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
   prepare_publishers();
 
   storage_loading_future_ = std::async(
@@ -157,10 +158,14 @@ void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
+    rclcpp::QoS topic_qos{10};
+    if (topic_qos_profile_overrides_.count(topic.name)) {
+      topic_qos = topic_qos_profile_overrides_.at(topic.name);
+    }
     publishers_.insert(
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(
-          topic.name, topic.type, Rosbag2QoS{})));
+          topic.name, topic.type, topic_qos)));
   }
 }
 
