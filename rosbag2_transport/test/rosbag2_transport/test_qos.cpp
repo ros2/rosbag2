@@ -73,7 +73,7 @@ TEST(TestQoS, supports_version_4)
   .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
   .liveliness_lease_duration(zerotime);
   // Any values not present in the YAML should take the default value in both profiles
-  EXPECT_TRUE(actual_qos.compatibility_policies_equal(expected_qos));
+  EXPECT_TRUE(actual_qos.compatibility_policies_exactly_equal(expected_qos));
 }
 
 TEST(TestQoS, detect_new_qos_fields)
