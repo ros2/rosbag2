@@ -40,7 +40,7 @@ namespace
 /// Convert a Python3 unicode string to a native C++ std::string
 std::string PyObject_AsStdString(PyObject * object)
 {
-  PyObject * python_string;
+  PyObject * python_string = nullptr;
   if (PyUnicode_Check(object)) {
     python_string = PyUnicode_AsUTF8String(object);
   } else {
@@ -135,7 +135,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   };
 
   if (PyDict_Check(qos_profile_overrides)) {
-    PyObject * key, * value;
+    PyObject * key = nullptr;
+    PyObject * value = nullptr;
     Py_ssize_t pos = 0;
     std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
     while (PyDict_Next(qos_profile_overrides, &pos, &key, &value)) {

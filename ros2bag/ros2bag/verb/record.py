@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import datetime
 import logging
 import os
@@ -36,6 +37,34 @@ POLICY_MAP = {
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('ros2bag')
+
+
+def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
+    return all(key in duration_dict for key in ['sec', 'nsec'])
+
+
+def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
+    if not is_dict_valid_duration(time_dict):
+        raise ValueError(
+            'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
+    if time_dict:
+        return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+    else:
+        return Duration()
+
+
+def validate_qos_profile_overrides(qos_profile_dict: Dict) -> Dict[str, Dict]:
+    """Validate the QoS profile yaml file path and its structure."""
+    for name in qos_profile_dict.keys():
+        profile = qos_profile_dict[name]
+        # Convert dict to Duration. Required for construction
+        conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
+        for k in conversion_keys:
+            profile[k] = dict_to_duration(profile.get(k))
+        for policy in POLICY_MAP.keys():
+            profile[policy] = POLICY_MAP[policy](profile.get(policy, 'system_default'))
+        qos_profile_dict[name] = QoSProfile(**profile)
+    return qos_profile_dict
 
 
 class RecordVerb(VerbExtension):
@@ -92,9 +121,8 @@ class RecordVerb(VerbExtension):
             help='record also hidden topics.'
         )
         parser.add_argument(
-            '--qos-profile-overrides', type=str, default='',
+            '--qos-profile-overrides-path', type=argparse.FileType('r'), default='',
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
-                 'See docs/qos_profiles_overrides.md for more info.'
         )
         self._subparser = parser
 
@@ -103,32 +131,6 @@ class RecordVerb(VerbExtension):
             os.makedirs(uri)
         except OSError:
             return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
-
-    def _dict_to_duration(self, time_dict: Optional[Dict[str, int]]) -> Duration:
-        if not all(key in time_dict for key in ['sec', 'nsec']):
-            raise ValueError(
-                'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
-        if time_dict:
-            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
-        else:
-            return Duration()
-
-    def validate_qos_profile_overrides(self, qos_profile_path: str) -> Dict[str, Dict]:
-        """Validate the QoS profile yaml file path and its structure."""
-        if not os.path.isfile(qos_profile_path):
-            raise ValueError('{} does not exist.'.format(qos_profile_path))
-        with open(qos_profile_path, 'r') as file:
-            qos_profile_dict = yaml.safe_load(file)
-        for name in qos_profile_dict.keys():
-            profile = qos_profile_dict[name]
-            # Convert dict to Duration. Required for construction
-            conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
-            for k in conversion_keys:
-                profile[k] = self._dict_to_duration(profile.get(k))
-            for policy in POLICY_MAP.keys():
-                profile[policy] = POLICY_MAP[policy](profile.get(policy, 'system_default'))
-            qos_profile_dict[name] = QoSProfile(**profile)
-        return qos_profile_dict
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
@@ -143,12 +145,12 @@ class RecordVerb(VerbExtension):
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
 
-        qos_profile_overrides_path = args.qos_profile_overrides
         qos_profile_overrides = {}  # Specify a valid default
-        if qos_profile_overrides_path:
+        if args.qos_profile_overrides_path:
+            qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
             try:
-                qos_profile_overrides = self.validate_qos_profile_overrides(
-                    qos_profile_overrides_path)
+                qos_profile_overrides = validate_qos_profile_overrides(
+                    qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 logger.error(str(e))
                 return str(e)
