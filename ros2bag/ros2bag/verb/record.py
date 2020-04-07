@@ -12,12 +12,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import datetime
+import logging
 import os
+from typing import Dict
+from typing import Optional
 
+import rclpy
+from rclpy.duration import Duration
+from rclpy.qos import InvalidQoSProfileException
+from rclpy.qos import QoSProfile
 from ros2bag.verb import VerbExtension
-
 from ros2cli.node import NODE_NAME_PREFIX
+import yaml
+
+# This map needs to be updated when new policies are introduced
+POLICY_MAP = {
+    'history': rclpy.qos.QoSHistoryPolicy.get_from_short_key,
+    'reliability': rclpy.qos.QoSReliabilityPolicy.get_from_short_key,
+    'durability': rclpy.qos.QoSDurabilityPolicy.get_from_short_key,
+    'liveliness': rclpy.qos.QoSLivelinessPolicy.get_from_short_key
+}
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('ros2bag')
+
+
+def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
+    return all(key in duration_dict for key in ['sec', 'nsec'])
+
+
+def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
+    if time_dict:
+        if is_dict_valid_duration(time_dict):
+            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+        else:
+            raise ValueError(
+                'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
+    else:
+        return Duration()
+
+
+def validate_qos_profile_overrides(qos_profile_dict: Dict) -> Dict[str, Dict]:
+    """Validate the QoS profile yaml file path and its structure."""
+    for name in qos_profile_dict.keys():
+        profile = qos_profile_dict[name]
+        # Convert dict to Duration. Required for construction
+        conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
+        for k in conversion_keys:
+            profile[k] = dict_to_duration(profile.get(k))
+        for policy in POLICY_MAP.keys():
+            profile[policy] = POLICY_MAP[policy](profile.get(policy, 'system_default'))
+        qos_profile_dict[name] = QoSProfile(**profile)
+    return qos_profile_dict
 
 
 class RecordVerb(VerbExtension):
@@ -71,7 +119,12 @@ class RecordVerb(VerbExtension):
         )
         parser.add_argument(
             '--include-hidden-topics', action='store_true',
-            help='record also hidden topics.')
+            help='record also hidden topics.'
+        )
+        parser.add_argument(
+            '--qos-profile-overrides-path', type=argparse.FileType('r'),
+            help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
+        )
         self._subparser = parser
 
     def create_bag_directory(self, uri):
@@ -92,6 +145,16 @@ class RecordVerb(VerbExtension):
         if args.compression_format and args.compression_mode == 'none':
             return 'Invalid choice: Cannot specify compression format without a compression mode.'
         args.compression_mode = args.compression_mode.upper()
+
+        qos_profile_overrides = {}  # Specify a valid default
+        if args.qos_profile_overrides_path:
+            qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
+            try:
+                qos_profile_overrides = validate_qos_profile_overrides(
+                    qos_profile_dict)
+            except (InvalidQoSProfileException, ValueError) as e:
+                logger.error(str(e))
+                return str(e)
 
         self.create_bag_directory(uri)
 
@@ -115,7 +178,8 @@ class RecordVerb(VerbExtension):
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
-                include_hidden_topics=args.include_hidden_topics)
+                include_hidden_topics=args.include_hidden_topics,
+                qos_profile_overrides=qos_profile_overrides)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -136,7 +200,8 @@ class RecordVerb(VerbExtension):
                 max_bagfile_size=args.max_bag_size,
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
-                include_hidden_topics=args.include_hidden_topics)
+                include_hidden_topics=args.include_hidden_topics,
+                qos_profile_overrides=qos_profile_overrides)
         else:
             self._subparser.print_help()
 
