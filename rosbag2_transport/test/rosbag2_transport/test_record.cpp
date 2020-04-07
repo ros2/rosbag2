@@ -175,6 +175,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
     [&writer, num_latched_messages]() {
       return writer.get_messages().size() == num_latched_messages;
     });
+  stop_recording();
   ASSERT_TRUE(succeeded);
 }
 
