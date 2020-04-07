@@ -158,9 +158,9 @@ void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    rclcpp::QoS topic_qos{rclcpp::KeepAll()};
+    Rosbag2QoS topic_qos{};
     if (topic_qos_profile_overrides_.count(topic.name)) {
-      topic_qos = topic_qos_profile_overrides_.at(topic.name);
+      topic_qos = Rosbag2QoS{topic_qos_profile_overrides_.at(topic.name)};
       ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
     }
     publishers_.insert(

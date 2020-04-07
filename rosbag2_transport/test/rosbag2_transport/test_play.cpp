@@ -136,7 +136,7 @@ TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden)
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
   messages.reserve(topic_timestamps_ms.size());
   for (const auto topic_timestamp : topic_timestamps_ms) {
-     messages.push_back(serialize_test_message(topic_name, topic_timestamp, basic_msg));
+    messages.push_back(serialize_test_message(topic_name, topic_timestamp, basic_msg));
   }
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
