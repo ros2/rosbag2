@@ -20,6 +20,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_test_common/wait_for.hpp"
+
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -28,19 +30,6 @@
 
 #include "record_integration_fixture.hpp"
 
-template<typename Timeout, typename Node, typename Condition>
-bool wait_for(Timeout timeout, const Node & node, Condition condition)
-{
-  using clock = std::chrono::system_clock;
-  auto start = clock::now();
-  while (!condition()) {
-    if ((clock::now() - start) > timeout) {
-      return false;
-    }
-    rclcpp::spin_some(node);
-  }
-  return true;
-}
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -134,7 +123,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
   // Takes ~200ms in local testing, 5s chosen as a very long timeout
-  bool succeeded = wait_for(
+  bool succeeded = rosbag2_test_common::spin_and_wait_for(
     std::chrono::seconds(5), publisher_node,
     [&writer]() {
       return writer.get_messages().size() > 0;
@@ -170,7 +159,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
   // Takes ~100ms in local testing, 5s chosen as a very long timeout
-  bool succeeded = wait_for(
+  bool succeeded = rosbag2_test_common::spin_and_wait_for(
     std::chrono::seconds(5), publisher_node,
     [&writer]() {
       return writer.get_messages().size() == num_latched_messages;
@@ -198,7 +187,7 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
 
   start_recording({false, false, {topic}, "rmw_format", 100ms});
   // Takes ~100ms in local testing, 5s chosen as a very long timeout
-  bool succeeded = wait_for(
+  bool succeeded = rosbag2_test_common::spin_and_wait_for(
     std::chrono::seconds(5), publisher_node,
     [publisher_volatile, publisher_transient_local]() {
       // This test is a success if rosbag2 has connected to both publishers
@@ -241,7 +230,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
 
   start_recording({false, false, {topic}, "rmw_format", 100ms});
   // Takes ~200ms in local testing, 5s chosen as a very long timeout
-  bool succeeded = wait_for(
+  bool succeeded = rosbag2_test_common::spin_and_wait_for(
     std::chrono::seconds(5), publisher_node,
     [publisher_history, publisher_lifespan, publisher_deadline, publisher_liveliness]() {
       return

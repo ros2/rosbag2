@@ -224,8 +224,9 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
     if (reliability_reliable_endpoints_count > 0) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
-          "are offering Reliable reliability. "
-          "Falling back to Best Effort as it will connect to all publishers. "
+          "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
+          "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
+          "as it will connect to all publishers. "
           "Some messages from Reliable publishers could be dropped.");
     }
     request_qos.best_effort();
@@ -239,8 +240,9 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
     if (durability_transient_local_endpoints_count > 0) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
-          "are offering Transient Local durability. "
-          "Falling back to Volatile as it will connect to all publishers. "
+          "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
+          "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
+          "as it will connect to all publishers. "
           "Previously-published latched messages will not be retrieved.");
     }
     request_qos.durability_volatile();
