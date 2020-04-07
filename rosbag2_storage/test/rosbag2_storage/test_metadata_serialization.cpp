@@ -93,3 +93,42 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
     Eq(expected_second_topic.topic_metadata.serialization_format));
   EXPECT_THAT(actual_second_topic.message_count, Eq(expected_second_topic.message_count));
 }
+
+TEST_F(MetadataFixture, metadata_reads_v3_check_offered_qos_profiles_empty)
+{
+  // Make sure that when reading a v3 metadata, the deserialization
+  // does not attempt to fill the offered_qos_profiles field
+  const std::string offered_qos_profiles = "qos_profile_string_data";
+  const size_t message_count = 100;  // arbitrary value
+
+  BagMetadata metadata{};
+  metadata.version = 3;
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+  metadata_io_->write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
+  ASSERT_THAT(
+    read_metadata.topics_with_message_count,
+    SizeIs(metadata.topics_with_message_count.size()));
+  auto actual_first_topic = read_metadata.topics_with_message_count[0];
+  EXPECT_TRUE(actual_first_topic.topic_metadata.offered_qos_profiles.empty());
+}
+
+TEST_F(MetadataFixture, metadata_reads_v4_fills_offered_qos_profiles)
+{
+  // Make sure when reading a v4 metadata that the deserialization fills "offered_qos_profiles"
+  const std::string offered_qos_profiles = "qos_profile_string_data";
+  const size_t message_count = 100;  // arbitrary value
+
+  BagMetadata metadata{};
+  metadata.version = 4;
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+  metadata_io_->write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
+  ASSERT_THAT(
+    read_metadata.topics_with_message_count,
+    SizeIs(metadata.topics_with_message_count.size()));
+  auto actual_first_topic = read_metadata.topics_with_message_count[0];
+  EXPECT_THAT(actual_first_topic.topic_metadata.offered_qos_profiles, Eq(offered_qos_profiles));
+}
