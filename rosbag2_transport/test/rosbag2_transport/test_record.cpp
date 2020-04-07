@@ -133,7 +133,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   );
   auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
-  // Takes ~200ms normally, 5s chosen as "a very long time"
+  // Takes ~200ms in local testing, 5s chosen as a very long timeout
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
     [&writer]() {
@@ -169,7 +169,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   start_recording({false, false, {topic}, "rmw_format", 100ms});
   auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
-  // Takes ~200ms normally, 5s chosen as "a very long time"
+  // Takes ~100ms in local testing, 5s chosen as a very long timeout
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
     [&writer, num_latched_messages]() {
@@ -196,20 +196,8 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
   auto publisher_transient_local = publisher_node->create_publisher<test_msgs::msg::Strings>(
     topic, profile_transient_local);
 
-  // auto publish_timer_volatile = publisher_node->create_wall_timer(
-  //   50ms, [msg, publisher_volatile]() -> void {
-  //       publisher_volatile->publish(msg);
-  //   }
-  // );
-  // auto publish_timer_transient_local = publisher_node->create_wall_timer(
-  //   50ms, [msg, publisher_transient_local]() -> void {
-  //       publisher_transient_local->publish(msg);
-  //   }
-  // );
-
   start_recording({false, false, {topic}, "rmw_format", 100ms});
-
-  // Takes ~200ms normally, 5s chosen as "a very long time"
+  // Takes ~100ms in local testing, 5s chosen as a very long timeout
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
     [publisher_volatile, publisher_transient_local]() {
@@ -252,6 +240,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   auto publisher_liveliness = create_pub(profile_liveliness);
 
   start_recording({false, false, {topic}, "rmw_format", 100ms});
+  // Takes ~200ms in local testing, 5s chosen as a very long timeout
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
     [publisher_history, publisher_lifespan, publisher_deadline, publisher_liveliness]() {
