@@ -32,8 +32,8 @@ import pytest
 
 
 PROFILE_PATH = Path(__file__).parent / 'resources'
-TEST_NODE = 'cli_qos_profile_test_node'
-TEST_NAMESPACE = 'cli_qos_profile'
+TEST_NODE = 'ros2bag_play_qos_profile_test_node'
+TEST_NAMESPACE = 'ros2bag_play_qos_profile'
 ERROR_STRING = 'ERROR:ros2bag:'
 
 
@@ -43,7 +43,7 @@ def generate_test_description():
     return LaunchDescription([launch_testing.actions.ReadyToTest()])
 
 
-class TestRos2BagCLI(unittest.TestCase):
+class TestRos2BagPlay(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls, launch_service, proc_info, proc_output):

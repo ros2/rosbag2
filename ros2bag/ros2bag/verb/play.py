@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentTypeError
+
 import os
 
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+
+from ros2bag.api import check_positive_float
 
 
 class PlayVerb(VerbExtension):
@@ -34,17 +36,8 @@ class PlayVerb(VerbExtension):
                  'playback. Larger size will result in larger memory needs but might prevent '
                  'delay of message playback.')
         parser.add_argument(
-            '-r', '--rate', type=self.check_positive_float, default=1.0,
+            '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
-
-    def check_positive_float(self, value):
-        try:
-            fvalue = float(value)
-            if fvalue <= 0.0:
-                raise ArgumentTypeError('%s is not in the valid range (> 0.0)' % value)
-            return fvalue
-        except ValueError:
-            raise ArgumentTypeError('%s is not of the valid type (float)' % value)
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
