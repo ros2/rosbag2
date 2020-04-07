@@ -36,7 +36,6 @@ if(BUILD_TESTING)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
-  find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
