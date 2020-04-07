@@ -9,16 +9,13 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>rosidl_runtime_cpp</build_depend>
-
-  <build_export_depend>rosidl_runtime_cpp</build_export_depend>
-
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
   <depend>poco_vendor</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosidl_runtime_c</depend>
+  <depend>rosidl_runtime_cpp</depend>
   <depend>rosidl_typesupport_cpp</depend>
   <depend>rosidl_typesupport_introspection_cpp</depend>
   <depend>shared_queues_vendor</depend>
