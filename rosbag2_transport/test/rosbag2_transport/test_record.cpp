@@ -28,6 +28,19 @@
 
 #include "record_integration_fixture.hpp"
 
+template <typename Timeout, typename Node, typename Condition>
+bool wait_for(Timeout timeout, const Node & node, Condition condition) {
+  using clock = std::chrono::system_clock;
+  auto start = clock::now();
+  while (!condition()) {
+    if ((clock::now() - start) > timeout) {
+      return false;
+    }
+    rclcpp::spin_some(node);
+  }
+  return true;
+}
+
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
   auto array_message = get_messages_arrays()[0];
@@ -104,9 +117,6 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
 
 TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 {
-  using clock = std::chrono::system_clock;
-  using namespace std::chrono_literals;
-
   std::string topic = "/string_topic";
   start_recording({false, false, {topic}, "rmw_format", 100ms});
 
@@ -120,25 +130,133 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
       publisher->publish(msg);
     }
   );
-  MockSequentialWriter & writer =
-    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
 
-  auto start = clock::now();
   // Takes ~200ms normally, 5s chosen as "a very long time"
-  auto timeout = 5s;
-  bool timed_out = false;
-  while (writer.get_messages().empty()) {
-    if ((clock::now() - start) > timeout) {
-      timed_out = true;
-      break;
-    }
-    rclcpp::spin_some(publisher_node);
-  }
+  bool succeeded = wait_for(
+    std::chrono::seconds(5), publisher_node,
+    [&writer]() {
+      return writer.get_messages().size() > 0;
+    });
+  ASSERT_TRUE(succeeded);
   stop_recording();
 
-  ASSERT_FALSE(timed_out);
   auto recorded_messages = writer.get_messages();
   auto recorded_topics = writer.get_topics();
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
+}
+
+TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
+{
+  // Ensure rosbag2 can receive Transient Local Durability "latched messages"
+  const std::string topic = "/latched_topic";
+  const size_t num_latched_messages = 3;
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for_latched_test");
+  auto profile_transient_local = rclcpp::QoS(num_latched_messages).transient_local();
+  auto publisher_transient_local = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, profile_transient_local);
+
+  // Publish messages before starting recording
+  test_msgs::msg::Strings msg;
+  msg.string_value = "Hello";
+  for (size_t i = 0; i < num_latched_messages; i++) {
+    publisher_transient_local->publish(msg);
+    rclcpp::spin_some(publisher_node);
+  }
+  start_recording({false, false, {topic}, "rmw_format", 100ms});
+  auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+
+  // Takes ~200ms normally, 5s chosen as "a very long time"
+  bool succeeded = wait_for(
+    std::chrono::seconds(5), publisher_node,
+    [&writer, num_latched_messages]() {
+      return writer.get_messages().size() == num_latched_messages;
+    });
+  ASSERT_TRUE(succeeded);
+}
+
+TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
+  // Ensure that rosbag2 subscribes to publishers that offer different durability policies
+  const size_t arbitrary_history = 5;
+
+  std::string topic = "/string_topic";
+  test_msgs::msg::Strings msg;
+  msg.string_value = "Hello";
+
+  auto profile_volatile = rclcpp::QoS(arbitrary_history).reliable().durability_volatile();
+  auto profile_transient_local = rclcpp::QoS(arbitrary_history).reliable().transient_local();
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for_qos_test");
+  auto publisher_volatile = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, profile_volatile);
+  auto publisher_transient_local = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, profile_transient_local);
+
+  // auto publish_timer_volatile = publisher_node->create_wall_timer(
+  //   50ms, [msg, publisher_volatile]() -> void {
+  //       publisher_volatile->publish(msg);
+  //   }
+  // );
+  // auto publish_timer_transient_local = publisher_node->create_wall_timer(
+  //   50ms, [msg, publisher_transient_local]() -> void {
+  //       publisher_transient_local->publish(msg);
+  //   }
+  // );
+
+  start_recording({false, false, {topic}, "rmw_format", 100ms});
+
+  // Takes ~200ms normally, 5s chosen as "a very long time"
+  bool succeeded = wait_for(
+    std::chrono::seconds(5), publisher_node,
+    [publisher_volatile, publisher_transient_local]() {
+      // This test is a success if rosbag2 has connected to both publishers
+      return publisher_volatile->get_subscription_count() &&
+             publisher_transient_local->get_subscription_count();
+    });
+  stop_recording();
+  ASSERT_TRUE(succeeded);
+}
+
+TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixed) {
+  // Ensure that the duration-based and non-compatibility QoS policies don't affect subscription
+  // These values are arbitrary, the significance is that they are non-default
+  const std::string topic = "/mixed_nondelivery_policies";
+  const size_t same_history = 5;
+  const size_t different_history = 12;
+  const rmw_time_t deadline{0, 1000};
+  const rmw_time_t lifespan{3, 12};
+  const auto liveliness = RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_NODE;
+  const rmw_time_t liveliness_lease_duration{0, 5000000};
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for");
+  auto create_pub = [publisher_node, topic](auto qos) {
+    return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
+  };
+
+  auto profile_history = rclcpp::QoS(different_history);
+  auto publisher_history = create_pub(profile_history);
+
+  auto profile_lifespan = rclcpp::QoS(same_history).lifespan(lifespan);
+  auto publisher_lifespan = create_pub(profile_lifespan);
+
+  auto profile_deadline = rclcpp::QoS(same_history).deadline(deadline);
+  auto publisher_deadline = create_pub(profile_deadline);
+
+  auto profile_liveliness = rclcpp::QoS(same_history)
+    .liveliness(liveliness).liveliness_lease_duration(liveliness_lease_duration);
+  auto publisher_liveliness = create_pub(profile_liveliness);
+
+  start_recording({false, false, {topic}, "rmw_format", 100ms});
+  bool succeeded = wait_for(
+    std::chrono::seconds(5), publisher_node,
+    [publisher_history, publisher_lifespan, publisher_deadline, publisher_liveliness]() {
+      return publisher_history->get_subscription_count() &&
+             publisher_lifespan->get_subscription_count() &&
+             publisher_deadline->get_subscription_count() &&
+             publisher_liveliness->get_subscription_count();
+    });
+  stop_recording();
+  ASSERT_TRUE(succeeded);
 }

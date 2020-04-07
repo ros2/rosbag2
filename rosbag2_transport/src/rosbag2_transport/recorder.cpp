@@ -221,14 +221,14 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
   if (reliability_reliable_endpoints_count == num_endpoints) {
     request_qos.reliable();
   } else {
+    if (reliability_reliable_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering Reliable reliability. "
+          "Falling back to Best Effort as it will connect to all publishers. "
+          "Some messages from Reliable publishers could be dropped.");
+    }
     request_qos.best_effort();
-  }
-  if (reliability_reliable_endpoints_count > 0) {
-    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Some, but not all, publishers on topic \"" << topic_name << "\" "
-        "are offering Reliable reliability. "
-        "Falling back to Best Effort as it will connect to all publishers. "
-        "Some messages from Reliable publishers could be dropped.");
   }
 
   // Policy: durability
@@ -236,14 +236,14 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
   if (durability_transient_local_endpoints_count == num_endpoints) {
     request_qos.transient_local();
   } else {
+    if (durability_transient_local_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering Transient Local durability. "
+          "Falling back to Volatile as it will connect to all publishers. "
+          "Previously-published latched messages will not be retrieved.");
+    }
     request_qos.durability_volatile();
-  }
-  if (durability_transient_local_endpoints_count > 0) {
-    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Some, but not all, publishers on topic \"" << topic_name << "\" "
-        "are offering Transient Local durability. "
-        "Falling back to Volatile as it will connect to all publishers. "
-        "Previously-published latched messages will not be retrieved.");
   }
 
   // Policy: deadline
