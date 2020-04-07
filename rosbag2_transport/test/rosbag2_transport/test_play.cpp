@@ -125,6 +125,7 @@ TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden)
 {
   const auto topic_name = "/test_topic";
   const auto msg_type = "test_msgs/BasicTypes";
+  const auto num_msgs = 3;
   auto basic_msg = get_messages_basic_types()[0];
   basic_msg->int32_value = 42;
   const auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
@@ -143,7 +144,7 @@ TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden)
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.durability_volatile();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, 3, qos_request);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, num_msgs, qos_request);
   auto await_received_messages = sub_->spin_subscriptions();
 
   // The previous subscriber requested durability VOLATILE which is the default in rosbag2.
