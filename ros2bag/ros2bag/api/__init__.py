@@ -25,12 +25,15 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 
 # This map needs to be updated when new policies are introduced
-POLICY_MAP = {
+_QOS_POLICY_FROM_SHORT_NAME = {
     'history': QoSHistoryPolicy.get_from_short_key,
     'reliability': QoSReliabilityPolicy.get_from_short_key,
     'durability': QoSDurabilityPolicy.get_from_short_key,
     'liveliness': QoSLivelinessPolicy.get_from_short_key
 }
+_DURATION_KEYS = ['deadline', 'lifespan', 'liveliness_lease_duration']
+_ENUM_KEYS = ['history', 'reliability', 'durability', 'liveliness']
+_VALUE_KEYS = ['depth', 'avoid_ros_namespace_conventions']
 
 
 def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
@@ -41,27 +44,38 @@ def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     """Convert a QoS duration profile from YAML into an rclpy Duration."""
     if time_dict:
-        if is_dict_valid_duration(time_dict):
-            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
-        else:
+        try:
+            if is_dict_valid_duration(time_dict):
+                return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+        except ValueError:
             raise ValueError(
                 'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
     else:
         return Duration()
 
 
-def validate_qos_profile_overrides(qos_profile_dict: Dict) -> Dict[str, Dict]:
-    """Validate the QoS profile yaml file path and its structure."""
-    for name in qos_profile_dict.keys():
-        profile = qos_profile_dict[name]
-        # Convert dict to Duration. Required for construction
-        conversion_keys = ['deadline', 'lifespan', 'liveliness_lease_duration']
-        for k in conversion_keys:
-            profile[k] = dict_to_duration(profile.get(k))
-        for policy in POLICY_MAP.keys():
-            profile[policy] = POLICY_MAP[policy](profile.get(policy, 'system_default'))
-        qos_profile_dict[name] = QoSProfile(**profile)
+def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> Dict[str, Dict]:
+    """Sanitize a user provided dict of a QoS profile and verify all keys are valid."""
+    new_profile_dict = {}
+    for policy_key, policy_value in qos_profile_dict.items():
+        if policy_key in _DURATION_KEYS:
+            new_profile_dict[policy_key] = dict_to_duration(policy_value)
+        elif policy_key in _ENUM_KEYS:
+            new_profile_dict[policy_key] = _QOS_POLICY_FROM_SHORT_NAME[policy_key](policy_value)
+        elif policy_key in _VALUE_KEYS:
+            new_profile_dict[policy_key] = policy_value
+        else:
+            raise ValueError('Unexpected key for QoS profile.')
     return qos_profile_dict
+
+
+def convert_yaml_to_qos_profile(qos_profile_dict: Dict) -> Dict[str, QoSProfile]:
+    """Convert a YAML file to use rclpy's QoSProfile."""
+    topic_profile_dict = {}
+    for topic, profile in qos_profile_dict.items():
+        qos_profile = interpret_dict_as_qos_profile(profile)
+        topic_profile_dict[topic] = QoSProfile(**qos_profile)
+    return topic_profile_dict
 
 
 def create_bag_directory(uri: str) -> str:
@@ -73,7 +87,7 @@ def create_bag_directory(uri: str) -> str:
 
 
 def check_positive_float(value: float) -> float:
-    """Verify value a float and positive."""
+    """Argparse validator to verify that a value is a float and positive."""
     try:
         fvalue = float(value)
         if fvalue <= 0.0:

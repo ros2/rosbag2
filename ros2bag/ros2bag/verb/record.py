@@ -19,7 +19,7 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import create_bag_directory
-from ros2bag.api import validate_qos_profile_overrides
+from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 import yaml
@@ -104,7 +104,7 @@ class RecordVerb(VerbExtension):
         if args.qos_profile_overrides_path:
             qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
             try:
-                qos_profile_overrides = validate_qos_profile_overrides(
+                qos_profile_overrides = convert_yaml_to_qos_profile(
                     qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 logger.error(str(e))
