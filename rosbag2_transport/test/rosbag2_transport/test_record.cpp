@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -25,11 +26,10 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
+#include "qos.hpp"
 #include "record_integration_fixture.hpp"
-
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -136,7 +136,6 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
-
 TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
 {
   // Ensure rosbag2 can receive Transient Local Durability "latched messages"
@@ -241,4 +240,40 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
     });
   stop_recording();
   ASSERT_TRUE(succeeded);
+}
+
+TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
+{
+  const auto num_msgs = 3;
+  auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
+  strict_msg->string_value = "strict";
+  const auto strict_topic = "/strict_topic";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, {strict_topic}, "rmw_format", 100ms};
+  const auto profile_override = rclcpp::QoS{rclcpp::KeepAll()}
+  .best_effort().durability_volatile().avoid_ros_namespace_conventions(false);
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {
+    {strict_topic, profile_override}
+  };
+  record_options.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  // Create two BEST_EFFORT publishers on the same topic with different Durability policies.
+  // If no override is specified, then the recorder cannot see any published messages.
+  auto profile1 = rosbag2_transport::Rosbag2QoS{}.best_effort().durability_volatile();
+  auto profile2 = rosbag2_transport::Rosbag2QoS{}.best_effort().transient_local();
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    strict_topic, strict_msg, num_msgs, profile1);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    strict_topic, strict_msg, num_msgs, profile2);
+
+  start_recording(record_options);
+  run_publishers();
+  stop_recording();
+
+  auto & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_messages = writer.get_messages();
+
+  ASSERT_GE(recorded_messages.size(), 0u);
 }

@@ -51,6 +51,7 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  topic_qos_profile_overrides_ = record_options.topic_qos_profile_overrides;
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -144,7 +145,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  Rosbag2QoS subscription_qos{qos_for_topic(topic.name)};
+  Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -197,6 +198,8 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
 
 rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) const
 {
+  // TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
+  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   size_t num_endpoints = endpoints.size();
   size_t reliability_reliable_endpoints_count = 0;
@@ -247,7 +250,6 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
     }
     request_qos.durability_volatile();
   }
-
   // Policy: deadline
   // Deadline does not affect delivery of messages,
   // and we do not record Deadline"Missed events.
@@ -265,6 +267,13 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
 
 rclcpp::QoS Recorder::qos_for_topic(const std::string & topic_name) const
 {
+  rosbag2_transport::Rosbag2QoS subscription_qos{};
+  if (topic_qos_profile_overrides_.count(topic_name)) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+    return topic_qos_profile_overrides_.at(topic_name);
+  } else {
+    return adapt_qos_to_publishers(topic_name);
+  }
   return adapt_qos_to_publishers(topic_name);
 }
 

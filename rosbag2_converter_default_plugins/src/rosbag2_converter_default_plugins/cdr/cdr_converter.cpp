@@ -20,8 +20,7 @@
 #include "ament_index_cpp/get_resources.hpp"
 #include "ament_index_cpp/get_package_prefix.hpp"
 
-#include "Poco/SharedLibrary.h"
-
+#include "rcpputils/shared_library.hpp"
 #include "rcutils/strdup.h"
 
 #include "rosbag2_cpp/types.hpp"
@@ -63,10 +62,9 @@ std::string get_package_library_path(const std::string & package_name)
 CdrConverter::CdrConverter()
 {
   auto library_path = get_package_library_path("rmw_fastrtps_cpp");
-  std::shared_ptr<Poco::SharedLibrary> library;
   try {
-    library = std::make_shared<Poco::SharedLibrary>(library_path);
-  } catch (Poco::LibraryLoadException &) {
+    library = std::make_shared<rcpputils::SharedLibrary>(library_path);
+  } catch (std::runtime_error &) {
     throw std::runtime_error(
             std::string("poco exception: library could not be found:") + library_path);
   }
@@ -74,26 +72,26 @@ CdrConverter::CdrConverter()
   std::string serialize_symbol = "rmw_serialize";
   std::string deserialize_symbol = "rmw_deserialize";
 
-  if (!library->hasSymbol(serialize_symbol)) {
-    throw std::runtime_error(
-            std::string("poco exception: symbol not found: ") + serialize_symbol);
+  if (!library->has_symbol(serialize_symbol.c_str())) {
+    throw std::runtime_error{std::string("rcutils exception: symbol not found: ") +
+            serialize_symbol};
   }
 
-  if (!library->hasSymbol(deserialize_symbol)) {
-    throw std::runtime_error(
-            std::string("poco exception: symbol not found: ") + deserialize_symbol);
+  if (!library->has_symbol(deserialize_symbol.c_str())) {
+    throw std::runtime_error{
+            std::string("rcutils exception: symbol not found: ") + deserialize_symbol};
   }
 
-  serialize_fcn_ = (decltype(serialize_fcn_))library->getSymbol(serialize_symbol);
+  serialize_fcn_ = (decltype(serialize_fcn_))library->get_symbol(serialize_symbol.c_str());
   if (!serialize_fcn_) {
-    throw std::runtime_error(
-            std::string("poco exception: symbol of wrong type: ") + serialize_symbol);
+    throw std::runtime_error{
+            std::string("rcutils exception: symbol of wrong type: ") + serialize_symbol};
   }
 
-  deserialize_fcn_ = (decltype(deserialize_fcn_))library->getSymbol(deserialize_symbol);
+  deserialize_fcn_ = (decltype(deserialize_fcn_))library->get_symbol(deserialize_symbol.c_str());
   if (!deserialize_fcn_) {
-    throw std::runtime_error(
-            std::string("poco exception: symbol of wrong type: ") + deserialize_symbol);
+    throw std::runtime_error{
+            std::string("rcutils exception: symbol of wrong type: ") + deserialize_symbol};
   }
 }
 

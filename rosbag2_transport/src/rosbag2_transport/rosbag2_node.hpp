@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "rclcpp/node.hpp"
+#include "rcpputils/shared_library.hpp"
 #include "rcutils/types.h"
 
 #include "generic_publisher.hpp"
@@ -60,6 +61,10 @@ public:
   filter_topics_with_more_than_one_type(
     const std::map<std::string, std::vector<std::string>> & topics_and_types,
     bool include_hidden_topics = false);
+
+private:
+  std::shared_ptr<rcpputils::SharedLibrary> library_generic_subscriptor_;
+  std::shared_ptr<rcpputils::SharedLibrary> library_generic_publisher_;
 };
 
 }  // namespace rosbag2_transport

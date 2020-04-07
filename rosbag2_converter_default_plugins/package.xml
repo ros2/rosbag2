@@ -11,9 +11,8 @@
 
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
-  <depend>poco_vendor</depend>
   <depend>rosidl_generator_cpp</depend>
-  <depend>rcutils</depend>
+  <depend>rcpputils</depend>
   <depend>rmw</depend>
   <depend>rmw_fastrtps_cpp</depend>
   <depend>rosbag2_cpp</depend>
@@ -21,7 +20,7 @@
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>rcutils</test_depend>
+  <test_depend>rcpputils</test_depend>
   <test_depend>rmw_fastrtps_cpp</test_depend>
   <test_depend>rosbag2_cpp</test_depend>
   <test_depend>rosbag2_test_common</test_depend>

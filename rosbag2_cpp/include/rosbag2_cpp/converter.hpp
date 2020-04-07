@@ -28,6 +28,8 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
+#include "rcpputils/shared_library.hpp"
+
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
 // b) there are no inline functions.
@@ -82,6 +84,8 @@ private:
   std::unique_ptr<converter_interfaces::SerializationFormatDeserializer> input_converter_;
   std::unique_ptr<converter_interfaces::SerializationFormatSerializer> output_converter_;
   std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
+  std::shared_ptr<rcpputils::SharedLibrary> library_rosidl_typesupport_cpp_;
+  std::shared_ptr<rcpputils::SharedLibrary> library_rosidl_typesupport_introspection_cpp_;
 };
 
 }  // namespace rosbag2_cpp
