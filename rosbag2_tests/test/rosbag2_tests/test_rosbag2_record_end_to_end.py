@@ -53,35 +53,41 @@ def generate_test_description():
 
 class TestRecord(unittest.TestCase):
 
+    def setUp(self):
+        self.dir_path = 'rosbag2_tmp_bag'
+        print('setting up record end to end test, deleting tmp bag file')
+        try:
+            shutil.rmtree(self.dir_path)
+        except OSError as e:
+            print("Error: %s : %s" % (self.dir_path, e.strerror))
+
+    def tearDown(self):
+        try:
+            shutil.rmtree(self.dir_path)
+        except OSError as e:
+            print("Error: %s : %s" % (sel.dir_path, e.strerror))
+
     def test_ros2_bag_record(self, launch_service, proc_info, proc_output, proc_env):
         """Test terminating_proc without command line arguments."""
         print('Running ros2 bag record')
 
-        dir_path = 'rosbag2_tmp_bag'
-        try:
-            shutil.rmtree(dir_path)
-        except OSError as e:
-            print("Error: %s : %s" % (dir_path, e.strerror))
         rosbag_record_process = launch.actions.ExecuteProcess(
-            cmd=['ros2', 'bag', 'record', '/rosbag2_record_topic1', '/rosbag2_record_topic2', '-o', dir_path],
+            cmd=['ros2', 'bag', 'record', '/rosbag2_record_topic1', '/rosbag2_record_topic2', '-o', self.dir_path],
             output='screen', env=proc_env,
         )
         with launch_testing.tools.launch_process(
               launch_service, rosbag_record_process, proc_info, proc_output) as command:
-            time.sleep(10)
+            command.wait_for_shutdown(timeout=10)
         proc_info.assertWaitForShutdown(rosbag_record_process, timeout=5)
         # not sure how to verify that process has stopped correctly.
-        metadata_filepath = os.path.join(dir_path, 'metadata.yaml')
+        metadata_filepath = os.path.join(self.dir_path, 'metadata.yaml')
         assert(os.path.isfile(metadata_filepath))
 
         with open(metadata_filepath, 'r') as metadata_file:
             filetext = metadata_file.read()
+            matches_messages = re.search(r'message_count:', filetext)
             matches_topic1 = re.search(r'/rosbag2_record_topic1', filetext)
             matches_topic2 = re.search(r'/rosbag2_record_topic2', filetext)
+            assert(matches_messages != None)
             assert(matches_topic1 != None)
             assert(matches_topic2 != None)
-
-        try:
-            shutil.rmtree(dir_path)
-        except OSError as e:
-            print("Error: %s : %s" % (dir_path, e.strerror))
