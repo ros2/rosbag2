@@ -225,9 +225,10 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
   }
   if (reliability_reliable_endpoints_count > 0) {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Some, but not all, publishers on topic \"" << topic_name << "\" are offering "
-      "Reliable reliability. Falling back to Best Effort as it will connect to all publishers. "
-      "Some messages from Reliable publishers could be dropped.");
+      "Some, but not all, publishers on topic \"" << topic_name << "\" "
+        "are offering Reliable reliability. "
+        "Falling back to Best Effort as it will connect to all publishers. "
+        "Some messages from Reliable publishers could be dropped.");
   }
 
   // Policy: durability
@@ -239,15 +240,15 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
   }
   if (durability_transient_local_endpoints_count > 0) {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-      "Some, but not all, publishers on topic \"" << topic_name << "\" are offering "
-      "Transient Local durability. Falling back to Volatile as it will connect to all publishers. "
-      "Previously-published latched messages will not be retrieved for this topic."
-    );
+      "Some, but not all, publishers on topic \"" << topic_name << "\" "
+        "are offering Transient Local durability. "
+        "Falling back to Volatile as it will connect to all publishers. "
+        "Previously-published latched messages will not be retrieved.");
   }
 
   // Policy: deadline
   // Deadline does not affect delivery of messages,
-  // and we do not record DeadlineMissed events.
+  // and we do not record Deadline"Missed events.
   // We can always use unspecified deadline, which will be compatible with all publishers.
 
   // Policy: lifespan
@@ -276,17 +277,28 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     // Already warned about this topic
     return;
   }
-  const auto & used_qos = existing_subscription->second->qos_profile();
+  const auto & used_profile = existing_subscription->second->qos_profile().get_rmw_qos_profile();
   auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
-    if (info.qos_profile() != used_qos) {
+    auto new_profile = info.qos_profile().get_rmw_qos_profile();
+    if (
+      new_profile.reliability == RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT &&
+      used_profile.reliability != RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+    {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "A new publisher for subscribed topic " << topic_name << " was found that is offering "
-          "a (possibly) incompatible QoS profile. Not changing subscription QoS. "
-          "Messages from this publisher may not be recorded."
-      );
+        "A new publisher for subscribed topic " << topic_name << " was found offering "
+          "Best Effort reliability, but rosbag already subscribed requesting Reliable. "
+          "Messages will not be recorded from this new publisher.");
       topics_warned_about_incompatibility_.insert(topic_name);
-      return;
+    } else if (
+      new_profile.durability == RMW_QOS_POLICY_DURABILITY_VOLATILE &&
+      used_profile.durability != RMW_QOS_POLICY_DURABILITY_VOLATILE)
+    {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "A new publisher for susbcribed topic " << topic_name << " was found offering "
+          "Volatile durability, but rosbag2 already subscribed requesting Transient Local. "
+          "Messages from this new publisher will not be recorded.");
+      topics_warned_about_incompatibility_.insert(topic_name);
     }
   }
 }
