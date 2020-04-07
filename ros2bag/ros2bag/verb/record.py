@@ -121,7 +121,7 @@ class RecordVerb(VerbExtension):
             help='record also hidden topics.'
         )
         parser.add_argument(
-            '--qos-profile-overrides-path', type=argparse.FileType('r'), default='',
+            '--qos-profile-overrides-path', type=argparse.FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         self._subparser = parser

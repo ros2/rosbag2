@@ -14,6 +14,7 @@
 
 import contextlib
 from pathlib import Path
+import re
 import tempfile
 
 import unittest
@@ -65,11 +66,10 @@ class TestRos2BagCLI(unittest.TestCase):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / 'ros2bag_test_basic'
-            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
+            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_output(timeout=5), \
-                    print('ros2bag CLI failed to start.')
+                bag_command.wait_for_shutdown(timeout=5)
             output = bag_command.output.splitlines()
             for line in output:
                 assert ERROR_STRING not in line, \
@@ -79,11 +79,10 @@ class TestRos2BagCLI(unittest.TestCase):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
-            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
+            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_output(timeout=5), \
-                    print('ros2bag CLI failed to start.')
+                bag_command.wait_for_shutdown(timeout=5)
             output = bag_command.output.splitlines()
             for line in output:
                 assert ERROR_STRING not in line, \
@@ -93,12 +92,13 @@ class TestRos2BagCLI(unittest.TestCase):
         profile_path = PROFILE_PATH / 'foobar.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
-            arguments = ['record', '-a', '--qos-profile-overrides', profile_path.as_posix(),
+            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
-                assert bag_command.wait_for_output(timeout=5), \
-                    print('ros2bag CLI failed to start.')
-            output = bag_command.output.splitlines()
-            for line in output:
-                assert ERROR_STRING in line, \
-                    print('ros2bag CLI succeeded when is should have failed: {}'.format(line))
+                bag_command.wait_for_shutdown(timeout=5)
+            assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
+            expected_string_regex = re.compile(
+                r"ros2 bag record: error: argument --qos-profile-overrides-path: can't open")
+            matches = expected_string_regex.search(bag_command.output)
+            assert matches, \
+                print('ros2bag CLI did not produce the expected output')
