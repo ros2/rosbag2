@@ -46,6 +46,8 @@
 
 namespace
 {
+// TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
+#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
 {
   auto adjacent_different_elements_it = std::adjacent_find(
@@ -58,6 +60,7 @@ bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
   // No adjacent elements were different, so all are the same.
   return adjacent_different_elements_it == values.end();
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 }  // unnamed namespace
 
 namespace rosbag2_transport
@@ -67,6 +70,7 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  topic_qos_profile_overrides_ = record_options.topic_qos_profile_overrides;
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -162,12 +166,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
-  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
-  Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
-  #else
-  Rosbag2QoS subscription_qos{};
-  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -218,8 +217,15 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
   return YAML::Dump(offered_qos_profiles);
 }
 
-rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
+rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
 {
+  rclcpp::QoS subscription_qos{rclcpp::KeepAll()};
+  if (topic_qos_profile_overrides_.count(topic_name)) {
+    subscription_qos = topic_qos_profile_overrides_.at(topic_name);
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+  }
+  // TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
+  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   if (!endpoints.empty() && all_qos_same(endpoints)) {
     return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
@@ -229,7 +235,8 @@ rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
       "Cannot determine what QoS to request, falling back to default QoS profile."
   );
   topics_warned_about_incompatibility_.insert(topic_name);
-  return Rosbag2QoS{};
+  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  return subscription_qos;
 }
 
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
