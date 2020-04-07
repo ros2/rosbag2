@@ -90,8 +90,8 @@ private:
    *
    * Profiles are prioritized by:
    *   1. The override specified in the record_options, if one exists for the topic.
-   *   2. The publisher's offered QoS profile.
-   *      If all current publishers are offering the exact same compatibility profile.
+   *   2. The publisher's offered QoS profile if all current publishers are offering the exact same
+   *      compatibility profile.
    *   3. The default Rosbag2QoS profile, if the above conditions are not met.
    *
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).

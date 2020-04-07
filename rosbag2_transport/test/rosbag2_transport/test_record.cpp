@@ -144,7 +144,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data) {
 
 TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
 {
-  const auto num_expected_msgs = 3;
+  const auto num_msgs = 3;
   auto strict_msg = std::make_shared<test_msgs::msg::Strings>();
   strict_msg->string_value = "strict";
   const auto strict_topic = "/strict_topic";
@@ -158,14 +158,14 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   };
   record_options.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
-  // Create two publishers on the same topic with different QoS profiles.
+  // Create two BEST_EFFORT publishers on the same topic with different Durability policies.
   // If no override is specified, then the recorder cannot see any published messages.
   auto profile1 = rosbag2_transport::Rosbag2QoS{}.best_effort().durability_volatile();
   auto profile2 = rosbag2_transport::Rosbag2QoS{}.best_effort().transient_local();
   pub_man_.add_publisher<test_msgs::msg::Strings>(
-    strict_topic, strict_msg, num_expected_msgs, profile1);
+    strict_topic, strict_msg, num_msgs, profile1);
   pub_man_.add_publisher<test_msgs::msg::Strings>(
-    strict_topic, strict_msg, num_expected_msgs, profile2);
+    strict_topic, strict_msg, num_msgs, profile2);
 
   start_recording(record_options);
   run_publishers();

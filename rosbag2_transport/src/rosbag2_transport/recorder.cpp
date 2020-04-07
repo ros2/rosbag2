@@ -31,8 +31,23 @@
 #include "qos.hpp"
 #include "rosbag2_node.hpp"
 
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 namespace
 {
+// TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
+#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
 {
   auto adjacent_different_elements_it = std::adjacent_find(
@@ -45,6 +60,7 @@ bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
   // No adjacent elements were different, so all are the same.
   return adjacent_different_elements_it == values.end();
 }
+#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 }  // unnamed namespace
 
 namespace rosbag2_transport
@@ -209,7 +225,7 @@ rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
   }
   // TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
-#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   if (!endpoints.empty() && all_qos_same(endpoints)) {
     return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
@@ -219,7 +235,7 @@ rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
       "Cannot determine what QoS to request, falling back to default QoS profile."
   );
   topics_warned_about_incompatibility_.insert(topic_name);
-#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   return subscription_qos;
 }
 
