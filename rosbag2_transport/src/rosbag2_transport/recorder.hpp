@@ -85,7 +85,6 @@ private:
 
   void record_messages() const;
 
-  rclcpp::QoS adapt_qos_to_publishers(const std::string & topic_name) const;
   /**
    * Find the QoS profile that should be used for subscribing.
    *
@@ -96,7 +95,14 @@ private:
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    *   \return The QoS profile to be used for subscribing.
    */
-  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name);
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
+  /**
+    * Try to subscribe using publishers' offered QoS policies.
+    *
+    * Fall back to sensible defaults when we can't adapt robustly,
+    * erring in favor of creating compatible connections.
+    */
+  rclcpp::QoS adapt_qos_to_publishers(const std::string & topic_name) const;
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);

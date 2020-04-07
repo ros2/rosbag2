@@ -196,10 +196,19 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
   return YAML::Dump(offered_qos_profiles);
 }
 
+rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name) const
+{
+  if (topic_qos_profile_overrides_.count(topic_name)) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+    return topic_qos_profile_overrides_.at(topic_name);
+  } else {
+    return adapt_qos_to_publishers(topic_name);
+  }
+  return adapt_qos_to_publishers(topic_name);
+}
+
 rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) const
 {
-  // TODO(emersonknapp) re-enable subscription_qos_for_topic once the cyclone situation is resolved
-  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
   size_t num_endpoints = endpoints.size();
   size_t reliability_reliable_endpoints_count = 0;
@@ -265,18 +274,6 @@ rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) co
   return request_qos;
 }
 
-rclcpp::QoS Recorder::qos_for_topic(const std::string & topic_name) const
-{
-  rosbag2_transport::Rosbag2QoS subscription_qos{};
-  if (topic_qos_profile_overrides_.count(topic_name)) {
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
-    return topic_qos_profile_overrides_.at(topic_name);
-  } else {
-    return adapt_qos_to_publishers(topic_name);
-  }
-  return adapt_qos_to_publishers(topic_name);
-}
-
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
 {
   auto existing_subscription = subscriptions_.find(topic_name);
@@ -301,14 +298,16 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
 
     if (incompatible_reliability) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "A new publisher for subscribed topic " << topic_name << " was found offering "
-          "Best Effort reliability, but rosbag already subscribed requesting Reliable. "
-          "Messages will not be recorded from this new publisher.");
+        "A new publisher for subscribed topic " << topic_name << " "
+          "was found offering RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, "
+          "but rosbag already subscribed requesting RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
+          "Messages from this new publisher will not be recorded.");
       topics_warned_about_incompatibility_.insert(topic_name);
     } else if (incompatible_durability) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "A new publisher for susbcribed topic " << topic_name << " was found offering "
-          "Volatile durability, but rosbag2 already subscribed requesting Transient Local. "
+        "A new publisher for susbcribed topic " << topic_name << " "
+          "was found offering RMW_QOS_POLICY_DURABILITY_VOLATILE, "
+          "but rosbag2 already subscribed requesting RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
           "Messages from this new publisher will not be recorded.");
       topics_warned_about_incompatibility_.insert(topic_name);
     }
