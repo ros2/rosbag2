@@ -21,7 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_transport/qos.hpp"
+#include "qos.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
