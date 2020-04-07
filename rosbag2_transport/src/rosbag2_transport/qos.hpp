@@ -46,13 +46,6 @@ public:
     keep_last(rmw_qos_profile_default.depth);
     return *this;
   }
-
-  /// Determine if all policies that affect QoS compatibility are equal.
-  /**
-    * Note that this method does not check if the QoS policies are compatible.
-    * This is a simple check for exact equality in all policies that affect compatibility.
-    */
-  bool compatibility_policies_exactly_equal(const rclcpp::QoS & other) const;
 };
 }  // namespace rosbag2_transport
 

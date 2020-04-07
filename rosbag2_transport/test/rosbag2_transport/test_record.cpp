@@ -102,7 +102,6 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   ));
 }
 
-#ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
 TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 {
   using clock = std::chrono::system_clock;
@@ -143,4 +142,3 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
-#endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION

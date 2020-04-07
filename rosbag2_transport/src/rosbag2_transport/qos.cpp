@@ -68,35 +68,3 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   return true;
 }
 }  // namespace YAML
-
-
-namespace
-{
-/// Check if two rmw_time_t have the same values.
-bool operator==(const rmw_time_t & left, const rmw_time_t & right)
-{
-  return left.sec == right.sec && left.nsec == right.nsec;
-}
-}  // unnamed namespace
-
-
-namespace rosbag2_transport
-{
-// TODO(emersonknapp) it is the long term goal to have similar logic exist within rmw/rcl/rclcpp,
-//  but it's not yet determined where that logic will go. We should remove this function before
-//  G-Turtle
-bool Rosbag2QoS::compatibility_policies_exactly_equal(const rclcpp::QoS & other) const
-{
-  // Note that these policies do not affect QoS compatibility
-  // * History + Depth (relevant only for local behavior)
-  // * Lifespan (only relevant locally on Publishers)
-  // * avoid ros namespace conventions (this affects choice of topic names, not quality of service)
-  const auto & pl = get_rmw_qos_profile();
-  const auto & pr = other.get_rmw_qos_profile();
-  return pl.reliability == pr.reliability &&
-         pl.durability == pr.durability &&
-         pl.deadline == pr.deadline &&
-         pl.liveliness == pr.liveliness &&
-         pl.liveliness_lease_duration == pr.liveliness_lease_duration;
-}
-}  // namespace rosbag2_transport

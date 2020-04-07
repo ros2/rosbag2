@@ -85,11 +85,8 @@ private:
 
   void record_messages() const;
 
-  /** Find the QoS profile that should be used for subscribing.
-    * If all currently offered QoS Profiles for a topic are the same, return that profile.
-    * Otherwise, print a warning and return a fallback value.
-    */
-  rclcpp::QoS common_qos_or_fallback(const std::string & topic_name);
+  rclcpp::QoS qos_for_topic(const std::string & topic_name) const;
+  rclcpp::QoS adapt_qos_to_publishers(const std::string & topic_name) const;
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
