@@ -18,13 +18,11 @@ import logging
 import os
 
 from rclpy.qos import InvalidQoSProfileException
-
+from ros2bag.api import create_bag_directory
+from ros2bag.api import validate_qos_profile_overrides
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 import yaml
-
-from ros2bag.api import create_bag_directory
-from ros2bag.api import validate_qos_profile_overrides
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('ros2bag')
