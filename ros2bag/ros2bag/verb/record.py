@@ -27,7 +27,7 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 import yaml
 
-
+# This map needs to be updated when new policies are introduced
 POLICY_MAP = {
     'history': rclpy.qos.QoSHistoryPolicy.get_from_short_key,
     'reliability': rclpy.qos.QoSReliabilityPolicy.get_from_short_key,
@@ -46,10 +46,10 @@ def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     if time_dict:
         if is_dict_valid_duration(time_dict):
+            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+        else:
             raise ValueError(
                 'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
-        else:
-            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
     else:
         return Duration()
 
