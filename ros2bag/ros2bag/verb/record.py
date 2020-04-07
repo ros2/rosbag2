@@ -44,11 +44,12 @@ def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
 
 
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
-    if not is_dict_valid_duration(time_dict):
-        raise ValueError(
-            'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
     if time_dict:
-        return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+        if is_dict_valid_duration(time_dict):
+            raise ValueError(
+                'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
+        else:
+            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
     else:
         return Duration()
 
