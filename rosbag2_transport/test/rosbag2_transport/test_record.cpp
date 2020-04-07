@@ -28,8 +28,9 @@
 
 #include "record_integration_fixture.hpp"
 
-template <typename Timeout, typename Node, typename Condition>
-bool wait_for(Timeout timeout, const Node & node, Condition condition) {
+template<typename Timeout, typename Node, typename Condition>
+bool wait_for(Timeout timeout, const Node & node, Condition condition)
+{
   using clock = std::chrono::system_clock;
   auto start = clock::now();
   while (!condition()) {
@@ -212,8 +213,9 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
     std::chrono::seconds(5), publisher_node,
     [publisher_volatile, publisher_transient_local]() {
       // This test is a success if rosbag2 has connected to both publishers
-      return publisher_volatile->get_subscription_count() &&
-             publisher_transient_local->get_subscription_count();
+      return
+      publisher_volatile->get_subscription_count() &&
+      publisher_transient_local->get_subscription_count();
     });
   stop_recording();
   ASSERT_TRUE(succeeded);
@@ -232,8 +234,8 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
 
   auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for");
   auto create_pub = [publisher_node, topic](auto qos) {
-    return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
-  };
+      return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
+    };
 
   auto profile_history = rclcpp::QoS(different_history);
   auto publisher_history = create_pub(profile_history);
@@ -252,10 +254,11 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
     [publisher_history, publisher_lifespan, publisher_deadline, publisher_liveliness]() {
-      return publisher_history->get_subscription_count() &&
-             publisher_lifespan->get_subscription_count() &&
-             publisher_deadline->get_subscription_count() &&
-             publisher_liveliness->get_subscription_count();
+      return
+      publisher_history->get_subscription_count() &&
+      publisher_lifespan->get_subscription_count() &&
+      publisher_deadline->get_subscription_count() &&
+      publisher_liveliness->get_subscription_count();
     });
   stop_recording();
   ASSERT_TRUE(succeeded);

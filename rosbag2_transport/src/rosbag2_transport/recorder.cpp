@@ -281,19 +281,20 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
   auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
     auto new_profile = info.qos_profile().get_rmw_qos_profile();
-    if (
+    bool incompatible_reliability =
       new_profile.reliability == RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT &&
-      used_profile.reliability != RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-    {
+      used_profile.reliability != RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+    bool incompatible_durability =
+      new_profile.durability == RMW_QOS_POLICY_DURABILITY_VOLATILE &&
+      used_profile.durability != RMW_QOS_POLICY_DURABILITY_VOLATILE;
+
+    if (incompatible_reliability) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "A new publisher for subscribed topic " << topic_name << " was found offering "
           "Best Effort reliability, but rosbag already subscribed requesting Reliable. "
           "Messages will not be recorded from this new publisher.");
       topics_warned_about_incompatibility_.insert(topic_name);
-    } else if (
-      new_profile.durability == RMW_QOS_POLICY_DURABILITY_VOLATILE &&
-      used_profile.durability != RMW_QOS_POLICY_DURABILITY_VOLATILE)
-    {
+    } else if (incompatible_durability) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "A new publisher for susbcribed topic " << topic_name << " was found offering "
           "Volatile durability, but rosbag2 already subscribed requesting Transient Local. "
