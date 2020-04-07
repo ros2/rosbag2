@@ -172,7 +172,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   // Takes ~100ms in local testing, 5s chosen as a very long timeout
   bool succeeded = wait_for(
     std::chrono::seconds(5), publisher_node,
-    [&writer, num_latched_messages]() {
+    [&writer]() {
       return writer.get_messages().size() == num_latched_messages;
     });
   stop_recording();
