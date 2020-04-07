@@ -18,8 +18,8 @@ import logging
 import os
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import create_bag_directory
 from ros2bag.api import convert_yaml_to_qos_profile
+from ros2bag.api import create_bag_directory
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 import yaml

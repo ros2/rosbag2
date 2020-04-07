@@ -45,16 +45,15 @@ def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     """Convert a QoS duration profile from YAML into an rclpy Duration."""
     if time_dict:
         try:
-            if is_dict_valid_duration(time_dict):
-                return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
-        except ValueError:
+            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
+        except TypeError:
             raise ValueError(
                 'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
     else:
         return Duration()
 
 
-def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> Dict[str, Dict]:
+def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> QoSProfile:
     """Sanitize a user provided dict of a QoS profile and verify all keys are valid."""
     new_profile_dict = {}
     for policy_key, policy_value in qos_profile_dict.items():
@@ -66,15 +65,14 @@ def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> Dict[str, Dict]:
             new_profile_dict[policy_key] = policy_value
         else:
             raise ValueError('Unexpected key for QoS profile.')
-    return qos_profile_dict
+    return QoSProfile(**new_profile_dict)
 
 
 def convert_yaml_to_qos_profile(qos_profile_dict: Dict) -> Dict[str, QoSProfile]:
     """Convert a YAML file to use rclpy's QoSProfile."""
     topic_profile_dict = {}
     for topic, profile in qos_profile_dict.items():
-        qos_profile = interpret_dict_as_qos_profile(profile)
-        topic_profile_dict[topic] = QoSProfile(**qos_profile)
+        topic_profile_dict[topic] = interpret_dict_as_qos_profile(profile)
     return topic_profile_dict
 
 
