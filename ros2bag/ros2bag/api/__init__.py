@@ -13,7 +13,9 @@
 # limitations under the License.
 
 from argparse import ArgumentTypeError
+import datetime
 import os
+from typing import Any
 from typing import Dict
 from typing import Optional
 
@@ -82,12 +84,22 @@ def create_bag_directory(uri: str) -> Optional[str]:
         return print_error("Could not create bag folder '{}'.".format(uri))
 
 
-def check_positive_float(value: float) -> float:
+def check_positive_float(value: Any) -> float:
     """Argparse validator to verify that a value is a float and positive."""
     try:
         fvalue = float(value)
         if fvalue <= 0.0:
-            raise ArgumentTypeError('%s is not in the valid range (> 0.0)' % value)
+            raise ArgumentTypeError('{} is not in the valid range (> 0.0)'.format(value))
         return fvalue
     except ValueError:
-        raise ArgumentTypeError('%s is not of the valid type (float)' % value)
+        raise ArgumentTypeError('{} is not the valid type (float)'.format(value))
+
+
+def check_path_exists(value: Any) -> str:
+    """Argparse validator to verify a path exists."""
+    try:
+        if os.path.exists(value):
+            return value
+        raise ArgumentTypeError("Bag file '{}' does not exist!".format(value))
+    except ValueError:
+        raise ArgumentTypeError('{} is not the valid type (string)'.format(value))
