@@ -113,7 +113,7 @@ struct convert<std::vector<rosbag2_storage::TopicInformation>>
 {
   static Node encode(const std::vector<rosbag2_storage::TopicInformation> & rhs)
   {
-    Node node(NodeType::Sequence);
+    Node node{NodeType::Sequence};
     for (const auto & value : rhs) {
       node.push_back(value);
     }
