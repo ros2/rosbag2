@@ -60,22 +60,21 @@ TEST(TestQoS, supports_version_4)
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
   auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
-  rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
+  auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
   rmw_time_t zerotime{0, 0};
   // Explicitly set up the same QoS profile in case defaults change
-  rclcpp::QoS expected_qos(10);
-  expected_qos
-  .keep_last(10)
+  auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  .default_history()
   .reliable()
   .durability_volatile()
   .deadline(zerotime)
   .lifespan(zerotime)
   .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
-  .liveliness_lease_duration(zerotime)
-  .avoid_ros_namespace_conventions(false);
-  // Any values not present in the YAML should take the default value in both profiles
-  EXPECT_EQ(actual_qos, expected_qos);
+  .liveliness_lease_duration(zerotime).get_rmw_qos_profile();
+
+  EXPECT_EQ(actual_qos.reliability, expected_qos.reliability);
+  EXPECT_EQ(actual_qos.durability, expected_qos.durability);
 }
 
 TEST(TestQoS, detect_new_qos_fields)

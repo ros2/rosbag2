@@ -90,14 +90,19 @@ private:
    *
    * Profiles are prioritized by:
    *   1. The override specified in the record_options, if one exists for the topic.
-   *   2. The publisher's offered QoS profile if all current publishers are offering the exact same
-   *      compatibility profile.
-   *   3. The default Rosbag2QoS profile, if the above conditions are not met.
+   *   2. Adapted subscription via `adapt_qos_to_publishers`
    *
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    *   \return The QoS profile to be used for subscribing.
    */
-  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name);
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
+  /**
+    * Try to subscribe using publishers' offered QoS policies.
+    *
+    * Fall back to sensible defaults when we can't adapt robustly,
+    * erring in favor of creating compatible connections.
+    */
+  rclcpp::QoS adapt_qos_to_publishers(const std::string & topic_name) const;
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
