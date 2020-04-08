@@ -24,13 +24,11 @@ class PlayVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
-            'topics', help='topics to replay. If none specified, all topics will be replayed.')
+            'input', type=str,
+            help='bag file to replay')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')
-        parser.add_argument(
-            '-i', '--input', type=str,
-            help='bag file to replay')
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -39,6 +37,9 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '-r', '--rate', type=self.check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
+        parser.add_argument(
+            '--topics', type=str, default='', nargs='*',
+            help='topics to replay, separated by space. If none specified, all topics will be replayed.')
 
     def check_positive_float(self, value):
         try:

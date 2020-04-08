@@ -164,9 +164,9 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * node_prefix;
   size_t read_ahead_queue_size;
   float rate;
-  std::vector<std::string> topics;
+  PyObject * topics = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kf", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
@@ -183,7 +183,19 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
-  play_options.topics = topics;
+
+  if (topics) {
+    PyObject * topic_iterator = PyObject_GetIter(topics);
+    if (topic_iterator != nullptr) {
+      PyObject * topic;
+      while ((topic = PyIter_Next(topic_iterator))) {
+        play_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
+
+        Py_DECREF(topic);
+      }
+      Py_DECREF(topic_iterator);
+    }
+  }
 
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
