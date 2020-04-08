@@ -159,7 +159,7 @@ rclcpp::QoS Player::publisher_qos_for_topic(const std::string & topic_name)
   auto qos_it = topic_qos_profile_overrides_.find(topic_name);
   if (qos_it != topic_qos_profile_overrides_.end()) {
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic_name);
-    return Rosbag2QoS{topic_qos_profile_overrides_.at(topic_name)};
+    return Rosbag2QoS{qos_it->second};
   } else {
     return Rosbag2QoS{};
   }
