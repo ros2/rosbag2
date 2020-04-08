@@ -169,7 +169,7 @@ void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    rclcpp::QoS topic_qos = publisher_qos_for_topic(topic.name);
+    auto topic_qos = publisher_qos_for_topic(topic.name);
     publishers_.insert(
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(

@@ -164,7 +164,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden)
   };
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport{reader_, writer_, info_};
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -189,7 +189,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden_incompati
   };
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport{reader_, writer_, info_};
   rosbag2_transport.play(storage_options_, play_options_);
 
   using namespace std::chrono_literals;
