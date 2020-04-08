@@ -74,7 +74,7 @@ def convert_yaml_to_qos_profile(qos_profile_dict: Dict) -> Dict[str, QoSProfile]
     return topic_profile_dict
 
 
-def create_bag_directory(uri: str) -> str:
+def create_bag_directory(uri: str) -> Optional[str]:
     """Create a directory."""
     try:
         os.makedirs(uri)
