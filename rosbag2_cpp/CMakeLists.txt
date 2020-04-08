@@ -92,7 +92,7 @@ ament_export_dependencies(pluginlib
   rosidl_runtime_c
   rosidl_runtime_cpp
   rosidl_typesupport_introspection_cpp
-  )
+)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
