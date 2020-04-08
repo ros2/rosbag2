@@ -22,6 +22,7 @@ from ros2bag.api import interpret_dict_as_qos_profile
 
 
 class TestRos2BagRecord(unittest.TestCase):
+
     def test_dict_to_duration_valid(self):
         expected_nanoseconds = 1000000002
         duration_dict = {'sec': 1, 'nsec': 2}

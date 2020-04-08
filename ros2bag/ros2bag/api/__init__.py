@@ -36,7 +36,7 @@ _VALUE_KEYS = ['depth', 'avoid_ros_namespace_conventions']
 
 
 def print_error(string: str) -> str:
-    return "[ERROR] [ros2bag]: {}".format(string)
+    return '[ERROR] [ros2bag]: {}'.format(string)
 
 
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
