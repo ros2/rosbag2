@@ -15,6 +15,7 @@
 import os
 
 from ros2bag.api import check_positive_float
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 
@@ -40,7 +41,8 @@ class PlayVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
         if not os.path.exists(bag_file):
-            return "[ERROR] [ros2bag] bag file '{}' does not exist!".format(bag_file)
+            return print_error("Bag file '{}' does not exist!".format(bag_file))
+
         # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
         #               combined with constrained environments (as imposed by colcon test)
         #               may result in DLL loading failures when attempting to import a C

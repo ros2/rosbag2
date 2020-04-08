@@ -14,18 +14,15 @@
 
 from argparse import FileType
 import datetime
-import logging
 import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import create_bag_directory
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 import yaml
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('ros2bag')
 
 
 class RecordVerb(VerbExtension):
@@ -89,15 +86,17 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         if args.all and args.topics:
-            return 'Invalid choice: Can not specify topics and -a at the same time.'
+            return print_error('Invalid choice: Can not specify topics and -a at the same time.')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
-            return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
+            return print_error("Output folder '{}' already exists.".format(uri))
 
         if args.compression_format and args.compression_mode == 'none':
-            return 'Invalid choice: Cannot specify compression format without a compression mode.'
+            return print_error('Invalid choice: Cannot specify compression format '
+                               'without a compression mode.')
+
         args.compression_mode = args.compression_mode.upper()
 
         qos_profile_overrides = {}  # Specify a valid default
@@ -107,8 +106,7 @@ class RecordVerb(VerbExtension):
                 qos_profile_overrides = convert_yaml_to_qos_profile(
                     qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
-                logger.error(str(e))
-                return str(e)
+                return print_error(str(e))
 
         create_bag_directory(uri)
 

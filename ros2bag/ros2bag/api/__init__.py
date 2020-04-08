@@ -32,21 +32,19 @@ _QOS_POLICY_FROM_SHORT_NAME = {
     'liveliness': QoSLivelinessPolicy.get_from_short_key
 }
 _DURATION_KEYS = ['deadline', 'lifespan', 'liveliness_lease_duration']
-_ENUM_KEYS = ['history', 'reliability', 'durability', 'liveliness']
 _VALUE_KEYS = ['depth', 'avoid_ros_namespace_conventions']
 
 
-def is_dict_valid_duration(duration_dict: Dict[str, int]) -> bool:
-    """Check if dictionary contains the keys `sec` and `nsec`."""
-    return all(key in duration_dict for key in ['sec', 'nsec'])
+def print_error(string: str) -> str:
+    return "[ERROR] [ros2bag]: {}".format(string)
 
 
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     """Convert a QoS duration profile from YAML into an rclpy Duration."""
     if time_dict:
         try:
-            return Duration(seconds=time_dict.get('sec'), nanoseconds=time_dict.get('nsec'))
-        except TypeError:
+            return Duration(seconds=time_dict['sec'], nanoseconds=time_dict['nsec'])
+        except KeyError:
             raise ValueError(
                 'Time overrides must include both seconds (sec) and nanoseconds (nsec).')
     else:
@@ -59,12 +57,12 @@ def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> QoSProfile:
     for policy_key, policy_value in qos_profile_dict.items():
         if policy_key in _DURATION_KEYS:
             new_profile_dict[policy_key] = dict_to_duration(policy_value)
-        elif policy_key in _ENUM_KEYS:
+        elif policy_key in _QOS_POLICY_FROM_SHORT_NAME:
             new_profile_dict[policy_key] = _QOS_POLICY_FROM_SHORT_NAME[policy_key](policy_value)
         elif policy_key in _VALUE_KEYS:
             new_profile_dict[policy_key] = policy_value
         else:
-            raise ValueError('Unexpected key for QoS profile.')
+            raise ValueError('Unexpected key `{}` for QoS profile.'.format(policy_key))
     return QoSProfile(**new_profile_dict)
 
 
@@ -81,7 +79,7 @@ def create_bag_directory(uri: str) -> str:
     try:
         os.makedirs(uri)
     except OSError:
-        return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
+        return print_error("Could not create bag folder '{}'.".format(uri))
 
 
 def check_positive_float(value: float) -> float:
