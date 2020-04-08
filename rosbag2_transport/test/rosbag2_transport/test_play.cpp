@@ -166,3 +166,49 @@ TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden)
 
   EXPECT_GT(received_messages_1.size(), 0u);
 }
+
+TEST_F(RosBag2PlayTestFixture, topic_qos_profiles_overriden_incompatible)
+{
+  const auto topic_name = "/test_topic";
+  const auto msg_type = "test_msgs/BasicTypes";
+  const auto num_msgs = 3;
+  auto basic_msg = get_messages_basic_types()[0];
+  basic_msg->int32_value = 42;
+  const auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {topic_name, msg_type, "" /*serialization_format*/, "" /*offered_qos_profiles*/}
+  };
+
+  const std::vector<int64_t> topic_timestamps_ms = {500, 700, 900};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
+  messages.reserve(topic_timestamps_ms.size());
+  for (const auto topic_timestamp : topic_timestamps_ms) {
+    messages.push_back(serialize_test_message(topic_name, topic_timestamp, basic_msg));
+  }
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.durability_volatile();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, num_msgs, qos_request);
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  // The previous subscriber requested durability VOLATILE which is the default in rosbag2.
+  // We override the requested durability to TRANSIENT_LOCAL so that we can receive messages.
+  // If the previous subscription requested TRANSIENT_LOCAL and we overrode with VOLATILE, then we
+  // would not receive any messages.
+  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.transient_local();
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{topic_name, qos_override},
+  };
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+  const auto received_messages_1 =
+    sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name);
+
+  EXPECT_GT(received_messages_1.size(), 0u);
+}

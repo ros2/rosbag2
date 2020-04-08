@@ -154,15 +154,22 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 }
 
+rclcpp::QoS Player::publisher_qos_for_topic(const std::string & topic_name)
+{
+  auto qos_it = topic_qos_profile_overrides_.find(topic_name);
+  if (qos_it != topic_qos_profile_overrides_.end()) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic_name);
+    return Rosbag2QoS{topic_qos_profile_overrides_.at(topic_name)};
+  } else {
+    return Rosbag2QoS{};
+  }
+}
+
 void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    Rosbag2QoS topic_qos{};
-    if (topic_qos_profile_overrides_.count(topic.name)) {
-      topic_qos = Rosbag2QoS{topic_qos_profile_overrides_.at(topic.name)};
-      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
-    }
+    rclcpp::QoS topic_qos = publisher_qos_for_topic(topic.name);
     publishers_.insert(
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(

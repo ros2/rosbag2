@@ -43,7 +43,7 @@ public:
   void add_subscription(
     const std::string & topic_name,
     size_t expected_number_of_messages,
-    const rclcpp::QoS & qos = rclcpp::QoS{rclcpp::KeepAll()})
+    const rclcpp::QoS & qos = rclcpp::QoS{rmw_qos_profile_default.depth})
   {
     expected_topics_with_size_[topic_name] = expected_number_of_messages;
 
