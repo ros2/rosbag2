@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <iostream>
@@ -63,6 +64,12 @@ constexpr const uint64_t MIN_SPLIT_FILE_SIZE = 86016;
 
 namespace rosbag2_storage_plugins
 {
+SqliteStorage::~SqliteStorage()
+{
+  if (active_transaction_) {
+    commit_transaction();
+  }
+}
 
 void SqliteStorage::open(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
@@ -105,6 +112,30 @@ void SqliteStorage::open(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
+void SqliteStorage::activate_transaction()
+{
+  if (active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("begin transaction");
+  database_->prepare_statement("BEGIN TRANSACTION;")->execute_and_reset();
+
+  active_transaction_ = true;
+}
+
+void SqliteStorage::commit_transaction()
+{
+  if (!active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("commit transaction");
+  database_->prepare_statement("COMMIT;")->execute_and_reset();
+
+  active_transaction_ = false;
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
@@ -119,6 +150,22 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
+}
+
+void SqliteStorage::write(
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+{
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+
+  activate_transaction();
+
+  for (auto & message : messages) {
+    write(message);
+  }
+
+  commit_transaction();
 }
 
 bool SqliteStorage::has_next()
@@ -167,7 +214,8 @@ void SqliteStorage::initialize()
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
-    "serialization_format TEXT NOT NULL);";
+    "serialization_format TEXT NOT NULL," \
+    "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
@@ -184,8 +232,10 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
-      "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
-    insert_topic->bind(topic.name, topic.type, topic.serialization_format);
+      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) "
+      "VALUES (?, ?, ?, ?)");
+    insert_topic->bind(
+      topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
@@ -211,10 +261,27 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ = database_->prepare_statement(
-    "SELECT data, timestamp, topics.name "
-    "FROM messages JOIN topics ON messages.topic_id = topics.id "
-    "ORDER BY messages.timestamp;");
+  if (!storage_filter_.topics.empty()) {
+    // Construct string for selected topics
+    std::string topic_list{""};
+    for (auto & topic : storage_filter_.topics) {
+      topic_list += "'" + topic + "'";
+      if (&topic != &storage_filter_.topics.back()) {
+        topic_list += ",";
+      }
+    }
+
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "WHERE topics.name IN (" + topic_list + ")"
+      "ORDER BY messages.timestamp;");
+  } else {
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "ORDER BY messages.timestamp;");
+  }
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
@@ -228,7 +295,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
   }
 }
 
@@ -270,7 +337,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
         static_cast<size_t>(std::get<3>(result))
       });
 
@@ -290,6 +357,17 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.bag_size = get_bagfile_size();
 
   return metadata;
+}
+
+void SqliteStorage::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  storage_filter_ = storage_filter;
+}
+
+void SqliteStorage::reset_filter()
+{
+  storage_filter_ = rosbag2_storage::StorageFilter();
 }
 
 }  // namespace rosbag2_storage_plugins

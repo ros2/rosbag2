@@ -41,6 +41,9 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
+  void write(const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg)
+  override;
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
@@ -52,6 +55,10 @@ public:
   std::string get_storage_identifier() const override;
 
   uint64_t get_minimum_split_file_size() const override;
+
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_

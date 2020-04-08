@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
@@ -39,6 +40,10 @@ public:
   std::string get_storage_identifier() const override = 0;
 
   virtual uint64_t get_minimum_split_file_size() const = 0;
+
+  void set_filter(const StorageFilter & storage_filter) override = 0;
+
+  void reset_filter() override = 0;
 };
 
 }  // namespace storage_interfaces

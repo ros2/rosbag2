@@ -49,6 +49,7 @@ public:
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
+    const rclcpp::QoS & qos,
     std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
@@ -67,12 +68,16 @@ public:
 
   void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
 
+  // Provide a const reference to the QoS Profile used to create this subscription.
+  const rclcpp::QoS & qos_profile() const;
+
 private:
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
   std::shared_ptr<rmw_serialized_message_t> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
   std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback_;
+  const rclcpp::QoS qos_;
 };
 
 }  // namespace rosbag2_transport

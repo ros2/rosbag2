@@ -43,6 +43,12 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
   return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
 }
+
+std::string strip_parent_path(const std::string & relative_path)
+{
+  return rcpputils::fs::path(relative_path).filename().string();
+}
+
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -70,15 +76,18 @@ void SequentialWriter::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
+  metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
 }
 
 void SequentialWriter::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
-  max_bagfile_size_ = storage_options.max_bagfile_size;
   base_folder_ = storage_options.uri;
+  max_bagfile_size_ = storage_options.max_bagfile_size;
+  max_cache_size_ = storage_options.max_cache_size;
+
+  cache_.reserve(max_cache_size_);
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -175,7 +184,7 @@ void SequentialWriter::split_bagfile()
     throw std::runtime_error(errmsg.str());
   }
 
-  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
+  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
@@ -203,7 +212,18 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
-  storage_->write(converter_ ? converter_->convert(message) : message);
+  // if cache size is set to zero, we directly call write
+  if (max_cache_size_ == 0u) {
+    storage_->write(converter_ ? converter_->convert(message) : message);
+  } else {
+    cache_.push_back(converter_ ? converter_->convert(message) : message);
+    if (cache_.size() >= max_cache_size_) {
+      storage_->write(cache_);
+      // reset cache
+      cache_.clear();
+      cache_.reserve(max_cache_size_);
+    }
+  }
 }
 
 bool SequentialWriter::should_split_bagfile() const

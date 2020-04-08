@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2020 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
-#define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
+#ifndef ROSBAG2_STORAGE__STORAGE_FILTER_HPP_
+#define ROSBAG2_STORAGE__STORAGE_FILTER_HPP_
 
 #include <string>
+#include <vector>
 
 namespace rosbag2_storage
 {
 
-struct TopicMetadata
+struct StorageFilter
 {
-  std::string name;
-  std::string type;
-  std::string serialization_format;
-  // Serialized std::vector<rclcpp::QoS> as a YAML string
-  std::string offered_qos_profiles;
-
-  bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
-  {
-    return name == rhs.name && type == rhs.type && serialization_format == rhs.serialization_format;
-  }
+  // Topic names to whitelist when reading a bag. Only messages matching these
+  // specified topics will be returned. If list is empty, the filter is ignored
+  // and all messages are returned.
+  std::vector<std::string> topics;
 };
 
 }  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
+#endif  // ROSBAG2_STORAGE__STORAGE_FILTER_HPP_
