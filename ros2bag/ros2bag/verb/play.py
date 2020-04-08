@@ -14,6 +14,7 @@
 
 from ros2bag.api import check_path_exists
 from ros2bag.api import check_positive_float
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 
