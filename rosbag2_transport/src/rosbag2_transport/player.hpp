@@ -63,7 +63,9 @@ private:
 
   /**
    * Determine which QoS to offer for a topic.
-   * Overrides the QoS for a topic if one is specified in the play_options.
+   * The priority of the profile selected is:
+   *   1. The override specified in play_options (if one exists for the topic).
+   *   2. The default RMW QoS profile.
    *
    * \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    * @return The QoS profile to be used for subscribing.

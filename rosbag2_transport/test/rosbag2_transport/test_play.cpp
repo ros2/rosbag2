@@ -167,10 +167,14 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden)
   Rosbag2Transport rosbag2_transport{reader_, writer_, info_};
   rosbag2_transport.play(storage_options_, play_options_);
 
-  await_received_messages.get();
+  using namespace std::chrono_literals;
+  // Avoid timeouts by only waiting for 3 seconds if no messages are received.
+  const auto future_result = await_received_messages.wait_for(3s);
+  EXPECT_EQ(future_result, std::future_status::ready);
+
+  rosbag2_transport.shutdown();
   const auto received_messages =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name_);
-
   EXPECT_GT(received_messages.size(), 0u);
 }
 
