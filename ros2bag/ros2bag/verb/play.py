@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag.api import check_positive_float
 from ros2bag.api import check_path_exists
+from ros2bag.api import check_positive_float
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 
