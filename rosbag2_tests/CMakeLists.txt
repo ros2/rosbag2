@@ -77,20 +77,6 @@ if(BUILD_TESTING)
         rosbag2_test_common)
     endif()
 
-    ament_add_gmock(test_rosbag2_read_end_to_end
-      test/rosbag2_tests/test_rosbag2_read_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_read_end_to_end)
-      ament_target_dependencies(test_rosbag2_read_end_to_end
-        rclcpp
-        rcpputils
-        rosbag2_cpp
-        rosbag2_storage
-        rosbag2_storage_default_plugins
-        rosbag2_test_common
-        test_msgs)
-    endif()
-
     ament_add_gmock(test_converter
       test/rosbag2_tests/test_converter.cpp
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
