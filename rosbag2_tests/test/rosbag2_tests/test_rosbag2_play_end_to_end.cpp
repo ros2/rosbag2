@@ -59,7 +59,6 @@ public:
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
-// test_msgs::msg::BasicTypes::string_value does not exist. Possibly needs re-recording
 TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
