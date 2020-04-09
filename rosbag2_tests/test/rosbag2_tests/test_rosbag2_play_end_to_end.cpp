@@ -59,6 +59,7 @@ public:
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
+// test_msgs::msg::BasicTypes::string_value does not exist. Possibly needs re-recording
 TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
@@ -78,7 +79,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(
     primitive_messages,
-    Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 123))));
 
   EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
   EXPECT_THAT(

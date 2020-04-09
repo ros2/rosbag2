@@ -1,23 +1,25 @@
 rosbag2_bagfile_information:
-  version: 3
+  version: 4
   storage_identifier: sqlite3
   relative_file_paths:
-    - cdr_test.db3
+    - cdr_test_0.db3
   duration:
-    nanoseconds: 155979811
+    nanoseconds: 151137181
   starting_time:
-    nanoseconds_since_epoch: 1537282604241440135
+    nanoseconds_since_epoch: 1586406456763032325
   message_count: 7
   topics_with_message_count:
     - topic_metadata:
         name: /test_topic
-        type: test_msgs/BasicTypes
+        type: test_msgs/msg/BasicTypes
         serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 2147483647\n    nsec: 4294967295\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
       message_count: 3
     - topic_metadata:
         name: /array_topic
-        type: test_msgs/Arrays
+        type: test_msgs/msg/Arrays
         serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 2147483647\n    nsec: 4294967295\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
       message_count: 4
   compression_format: ""
   compression_mode: ""

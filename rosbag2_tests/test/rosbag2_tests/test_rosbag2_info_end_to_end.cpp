@@ -42,20 +42,21 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   // The bag size depends on the os and is not asserted, the time is asserted time zone independent
   EXPECT_THAT(
     output, ContainsRegex(
-      "\nFiles:             cdr_test\\.db3"
+      "\nFiles:             cdr_test_0\\.db3"
       "\nBag size:          .*B"
       "\nStorage id:        sqlite3"
-      "\nDuration:          0\\.155s"
-      "\nStart:             Sep 18 2018 .*:.*:44.241 \\(1537282604\\.241\\)"
-      "\nEnd                Sep 18 2018 .*:.*:44.397 \\(1537282604\\.397\\)"
+      "\nDuration:          0\\.151s"
+      "\nStart:             Apr  9 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
+      "\nEnd                Apr  9 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(
     output, HasSubstr(
-      "Topic: /test_topic | Type: test_msgs/BasicTypes | Count: 3 | Serialization Format: cdr\n"));
+      "Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Serialization Format: cdr\n"));
   EXPECT_THAT(
     output, HasSubstr(
-      "Topic: /array_topic | Type: test_msgs/Arrays | Count: 4 | "
+      "Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
       "Serialization Format: cdr"));
 }
 
