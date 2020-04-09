@@ -81,8 +81,8 @@ install(
 )
 
 ament_export_include_directories(include)
-ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
