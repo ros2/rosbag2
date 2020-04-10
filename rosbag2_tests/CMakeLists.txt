@@ -28,6 +28,7 @@ find_package(ament_index_cpp REQUIRED)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(launch_testing_ament_cmake REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(rmw_fastrtps_cpp QUIET)
   find_package(rosbag2_compression REQUIRED)
@@ -35,7 +36,6 @@ if(BUILD_TESTING)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
-  find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
@@ -67,14 +67,15 @@ if(BUILD_TESTING)
     #     test_msgs)
     # endif()
 
-    ament_add_gmock(test_rosbag2_info_end_to_end
-      test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_info_end_to_end)
-      ament_target_dependencies(test_rosbag2_info_end_to_end
-        rosbag2_storage
-        rosbag2_test_common)
-    endif()
+    add_launch_test(test/rosbag2_tests/test_rosbag2_info_end_to_end.py
+      ARGS "bag_file_path:=${CMAKE_CURRENT_SOURCE_DIR}/resources/cdr_test"
+    )
+    add_launch_test(test/rosbag2_tests/test_rosbag2_play_end_to_end.py
+      ARGS "bag_file_path:=${CMAKE_CURRENT_SOURCE_DIR}/resources/test_msgs_string"
+    )
+    add_launch_test(test/rosbag2_tests/test_rosbag2_record_end_to_end.py
+      ARGS "bag_file_path:=${CMAKE_CURRENT_SOURCE_DIR}/resources/test_msgs_string"
+    )
 
     ament_add_gmock(test_converter
       test/rosbag2_tests/test_converter.cpp

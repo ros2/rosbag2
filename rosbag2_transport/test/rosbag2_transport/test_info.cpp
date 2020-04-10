@@ -53,7 +53,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
       "Storage id:        sqlite3\n"
       "Duration:          0\\.50s\n"
       "Start:             Sep 27 2018 .*:.*:45.348 \\(1538051985\\.348\\)\n"
-      "End                Sep 27 2018 .*:.*:45.398 \\(1538051985\\.398\\)\n"
+      "End:               Sep 27 2018 .*:.*:45.398 \\(1538051985\\.398\\)\n"
       "Messages:          50\n"
       "Topic information: "));
   EXPECT_THAT(
