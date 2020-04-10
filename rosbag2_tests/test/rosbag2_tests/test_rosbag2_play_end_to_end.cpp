@@ -78,7 +78,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(
     primitive_messages,
-    Each(Pointee(Field(&test_msgs::msg::BasicTypes::string_value, "test"))));
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 123))));
 
   EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
   EXPECT_THAT(
@@ -103,7 +103,8 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
     execute_and_wait_until_completion("ros2 bag play does_not_exist", database_path_);
   auto error_output = internal::GetCapturedStderr();
 
-  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  // Exit code could be EXIT_FAILURE (1) or 2 (no such file or directory)
+  EXPECT_THAT(exit_code, Ne(EXIT_SUCCESS));
   EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
 }
 
