@@ -61,15 +61,15 @@ std::unordered_map<std::string, rclcpp::QoS> PyObject_AsTopicQoSMap(PyObject * o
 {
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
   if (PyDict_Check(object)) {
-    PyObject * key = nullptr;
-    PyObject * value = nullptr;
-    Py_ssize_t pos = 0;
+    PyObject * key{nullptr};
+    PyObject * value{nullptr};
+    Py_ssize_t pos{0};
     while (PyDict_Next(object, &pos, &key, &value)) {
       auto topic_name = PyObject_AsStdString(key);
       auto rmw_qos_profile = PyQoSProfile_AsRmwQoSProfile(value);
       auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
       auto qos_profile = rclcpp::QoS(qos_init, *rmw_qos_profile);
-      topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, qos_profile));
+      topic_qos_overrides.insert({topic_name, qos_profile});
     }
   } else {
     throw std::runtime_error{"QoS profile overrides object is not a Python dictionary."};
@@ -216,7 +216,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * node_prefix;
   size_t read_ahead_queue_size;
   float rate;
-  PyObject * qos_profile_overrides;
+  PyObject * qos_profile_overrides{nullptr};
   if (!PyArg_ParseTupleAndKeywords(
       args, kwargs, "sss|kfO", const_cast<char **>(kwlist),
       &uri,

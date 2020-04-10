@@ -60,6 +60,7 @@ class TestRos2BagPlay(unittest.TestCase):
         cls.launch_bag_command = launch_bag_command
 
     def test_qos_simple(self):
+        """Test with a full QoS profile override for a single topic."""
         profile_path = RESOURCES_PATH / 'qos_profile.yaml'
         bag_path = RESOURCES_PATH / 'empty_bag'
         arguments = ['play', '--qos-profile-overrides-path', profile_path.as_posix(),
@@ -71,6 +72,7 @@ class TestRos2BagPlay(unittest.TestCase):
         assert not matches, print('ros2bag CLI did not produce the expected output')
 
     def test_qos_incomplete(self):
+        """Test a partially filled QoS profile for a single topic."""
         profile_path = RESOURCES_PATH / 'incomplete_qos_profile.yaml'
         bag_path = RESOURCES_PATH / 'empty_bag'
         arguments = ['play', '--qos-profile-overrides-path', profile_path.as_posix(),
