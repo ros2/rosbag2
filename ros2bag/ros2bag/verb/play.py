@@ -24,8 +24,7 @@ class PlayVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
-            'input', type=str,
-            help='bag file to replay')
+            'bag_file', help='bag file to replay')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used, defaults to "sqlite3"')

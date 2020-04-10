@@ -158,7 +158,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 void Player::prepare_publishers(const PlayOptions & options)
 {
   rosbag2_storage::StorageFilter storage_filter;
-  storage_filter.topics = options.topics;
+  storage_filter.topics = options.topics_to_filter;
   reader_->set_filter(storage_filter);
 
   auto topics = reader_->get_all_topics_and_types();

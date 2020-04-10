@@ -28,7 +28,11 @@ public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
   float rate = 1.0;
-  std::vector<std::string> topics = std::vector<std::string>();
+
+  // Topic names to whitelist when playing a bag. Only messages matching these
+  // specified topics will be played. If list is empty, the filter is ignored
+  // and all messages are played.
+  std::vector<std::string> topics_to_filter = std::vector<std::string>();
 };
 
 }  // namespace rosbag2_transport

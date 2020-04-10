@@ -187,9 +187,9 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
     if (topic_iterator != nullptr) {
-      PyObject * topic;
+      PyObject * topic = nullptr;
       while ((topic = PyIter_Next(topic_iterator))) {
-        play_options.topics.emplace_back(PyUnicode_AsUTF8(topic));
+        play_options.topics_to_filter.emplace_back(PyUnicode_AsUTF8(topic));
 
         Py_DECREF(topic);
       }
