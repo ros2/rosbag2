@@ -20,6 +20,8 @@
 
 #include "ament_index_cpp/get_package_prefix.hpp"
 
+#include "rcpputils/shared_library.hpp"
+
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -60,13 +62,17 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
 }
 
 TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
+  std::shared_ptr<rcpputils::SharedLibrary> library;
   EXPECT_THROW(
-    rosbag2_cpp::get_typesupport("invalid/message", "rosidl_typesupport_cpp"), std::runtime_error);
+    rosbag2_cpp::get_typesupport(
+      "invalid/message", "rosidl_typesupport_cpp",
+      library), std::runtime_error);
 }
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_legacy_library) {
+  std::shared_ptr<rcpputils::SharedLibrary> library;
   auto string_typesupport =
-    rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+    rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp", library);
 
   EXPECT_THAT(
     std::string(string_typesupport->typesupport_identifier),
@@ -74,8 +80,9 @@ TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_legacy_library) {
 }
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
+  std::shared_ptr<rcpputils::SharedLibrary> library;
   auto string_typesupport =
-    rosbag2_cpp::get_typesupport("test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp");
+    rosbag2_cpp::get_typesupport("test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp", library);
 
   EXPECT_THAT(
     std::string(string_typesupport->typesupport_identifier),

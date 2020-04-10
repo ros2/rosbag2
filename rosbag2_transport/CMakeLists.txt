@@ -81,8 +81,8 @@ install(
 )
 
 ament_export_include_directories(include)
-ament_export_interfaces(export_${PROJECT_NAME})
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
@@ -150,9 +150,10 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_record
     test/rosbag2_transport/test_record.cpp
-    ${SKIP_TEST}
+    AMENT_DEPS test_msgs rosbag2_test_common
+    INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common)
+    ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_play
     test/rosbag2_transport/test_play.cpp

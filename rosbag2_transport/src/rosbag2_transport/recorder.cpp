@@ -44,22 +44,6 @@
 # pragma warning(pop)
 #endif
 
-namespace
-{
-bool all_qos_same(const std::vector<rclcpp::TopicEndpointInfo> & values)
-{
-  auto adjacent_different_elements_it = std::adjacent_find(
-    values.begin(),
-    values.end(),
-    [](const rclcpp::TopicEndpointInfo & left, const rclcpp::TopicEndpointInfo & right) -> bool {
-      return left.qos_profile() != right.qos_profile();
-    }
-  );
-  // No adjacent elements were different, so all are the same.
-  return adjacent_different_elements_it == values.end();
-}
-}  // unnamed namespace
-
 namespace rosbag2_transport
 {
 Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node)
@@ -67,6 +51,7 @@ Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<
 
 void Recorder::record(const RecordOptions & record_options)
 {
+  topic_qos_profile_overrides_ = record_options.topic_qos_profile_overrides;
   if (record_options.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -102,11 +87,9 @@ void Recorder::topics_discovery(
   while (rclcpp::ok()) {
     auto topics_to_subscribe =
       get_requested_or_available_topics(requested_topics, include_hidden_topics);
-    #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
-    #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
@@ -162,12 +145,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  // TODO(emersonknapp) re-enable common_qos_or_fallback once the cyclone situation is resolved
-  #ifdef ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
-  Rosbag2QoS subscription_qos{common_qos_or_fallback(topic.name)};
-  #else
-  Rosbag2QoS subscription_qos{};
-  #endif  // ROSBAG2_ENABLE_ADAPTIVE_QOS_SUBSCRIPTION
+  Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -218,18 +196,82 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
   return YAML::Dump(offered_qos_profiles);
 }
 
-rclcpp::QoS Recorder::common_qos_or_fallback(const std::string & topic_name)
+rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name) const
+{
+  if (topic_qos_profile_overrides_.count(topic_name)) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+    return topic_qos_profile_overrides_.at(topic_name);
+  } else {
+    return adapt_qos_to_publishers(topic_name);
+  }
+  return adapt_qos_to_publishers(topic_name);
+}
+
+rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) const
 {
   auto endpoints = node_->get_publishers_info_by_topic(topic_name);
-  if (!endpoints.empty() && all_qos_same(endpoints)) {
-    return Rosbag2QoS(endpoints[0].qos_profile()).default_history();
+  size_t num_endpoints = endpoints.size();
+  size_t reliability_reliable_endpoints_count = 0;
+  size_t durability_transient_local_endpoints_count = 0;
+  for (const auto & endpoint : endpoints) {
+    const auto & profile = endpoint.qos_profile().get_rmw_qos_profile();
+    if (profile.reliability == RMW_QOS_POLICY_RELIABILITY_RELIABLE) {
+      reliability_reliable_endpoints_count++;
+    }
+    if (profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
+      durability_transient_local_endpoints_count++;
+    }
   }
-  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-    "Topic " << topic_name << " has publishers offering different QoS settings. "
-      "Cannot determine what QoS to request, falling back to default QoS profile."
-  );
-  topics_warned_about_incompatibility_.insert(topic_name);
-  return Rosbag2QoS{};
+
+  // We set policies in order as defined in rmw_qos_profile_t
+  Rosbag2QoS request_qos;
+  // Policy: history, depth
+  // History does not affect compatibility
+  request_qos.default_history();
+
+  // Policy: reliability
+  if (reliability_reliable_endpoints_count == num_endpoints) {
+    request_qos.reliable();
+  } else {
+    if (reliability_reliable_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
+          "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
+          "as it will connect to all publishers. "
+          "Some messages from Reliable publishers could be dropped.");
+    }
+    request_qos.best_effort();
+  }
+
+  // Policy: durability
+  // If all publishers offer transient_local, we can request it and receive latched messages
+  if (durability_transient_local_endpoints_count == num_endpoints) {
+    request_qos.transient_local();
+  } else {
+    if (durability_transient_local_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
+          "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
+          "as it will connect to all publishers. "
+          "Previously-published latched messages will not be retrieved.");
+    }
+    request_qos.durability_volatile();
+  }
+  // Policy: deadline
+  // Deadline does not affect delivery of messages,
+  // and we do not record Deadline"Missed events.
+  // We can always use unspecified deadline, which will be compatible with all publishers.
+
+  // Policy: lifespan
+  // Lifespan does not affect compatibiliy
+
+  // Policy: liveliness, liveliness_lease_duration
+  // Liveliness does not affect delivery of messages,
+  // and we do not record LivelinessChanged events.
+  // We can always use unspecified liveliness, which will be compatible with all publishers.
+  return request_qos;
 }
 
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
@@ -243,17 +285,31 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     // Already warned about this topic
     return;
   }
-  const auto & used_qos = existing_subscription->second->qos_profile();
+  const auto & used_profile = existing_subscription->second->qos_profile().get_rmw_qos_profile();
   auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
-    if (info.qos_profile() != used_qos) {
+    auto new_profile = info.qos_profile().get_rmw_qos_profile();
+    bool incompatible_reliability =
+      new_profile.reliability == RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT &&
+      used_profile.reliability != RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+    bool incompatible_durability =
+      new_profile.durability == RMW_QOS_POLICY_DURABILITY_VOLATILE &&
+      used_profile.durability != RMW_QOS_POLICY_DURABILITY_VOLATILE;
+
+    if (incompatible_reliability) {
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "A new publisher for subscribed topic " << topic_name << " was found that is offering "
-          "a (possibly) incompatible QoS profile. Not changing subscription QoS. "
-          "Messages from this publisher may not be recorded."
-      );
+        "A new publisher for subscribed topic " << topic_name << " "
+          "was found offering RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, "
+          "but rosbag already subscribed requesting RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
+          "Messages from this new publisher will not be recorded.");
       topics_warned_about_incompatibility_.insert(topic_name);
-      return;
+    } else if (incompatible_durability) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "A new publisher for susbcribed topic " << topic_name << " "
+          "was found offering RMW_QOS_POLICY_DURABILITY_VOLATILE, "
+          "but rosbag2 already subscribed requesting RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
+          "Messages from this new publisher will not be recorded.");
+      topics_warned_about_incompatibility_.insert(topic_name);
     }
   }
 }

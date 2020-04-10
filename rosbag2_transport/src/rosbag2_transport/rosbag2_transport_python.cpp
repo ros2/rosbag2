@@ -16,7 +16,10 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
+#include <utility>
+
+#include "rclcpp/qos.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
@@ -31,6 +34,29 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
+
+namespace
+{
+/// Convert a Python3 unicode string to a native C++ std::string
+std::string PyObject_AsStdString(PyObject * object)
+{
+  PyObject * python_string = nullptr;
+  if (PyUnicode_Check(object)) {
+    python_string = PyUnicode_AsUTF8String(object);
+  } else {
+    throw std::runtime_error("Unable to decode Python string to std::string.");
+  }
+  return std::string(PyBytes_AsString(python_string));
+}
+
+/// Get the rmw_qos_profile_t pointer from the rclpy QoSProfile
+rmw_qos_profile_t * PyQoSProfile_AsRmwQoSProfile(PyObject * object)
+{
+  auto py_capsule = PyObject_CallMethod(object, "get_c_qos_profile", "");
+  return reinterpret_cast<rmw_qos_profile_t *>(
+    PyCapsule_GetPointer(py_capsule, "rmw_qos_profile_t"));
+}
+}  // namespace
 
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
@@ -52,6 +78,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "max_cache_size",
     "topics",
     "include_hidden_topics",
+    "qos_profile_overrides",
     nullptr};
 
   char * uri = nullptr;
@@ -60,6 +87,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * node_prefix = nullptr;
   char * compression_mode = nullptr;
   char * compression_format = nullptr;
+  PyObject * qos_profile_overrides = nullptr;
   bool all = false;
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
@@ -69,7 +97,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool include_hidden_topics = false;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKOb", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKKObO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
@@ -82,7 +110,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_bagfile_size,
       &max_cache_size,
       &topics,
-      &include_hidden_topics
+      &include_hidden_topics,
+      &qos_profile_overrides
   ))
   {
     return nullptr;
@@ -104,6 +133,22 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     record_options.compression_format,
     rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
   };
+
+  if (PyDict_Check(qos_profile_overrides)) {
+    PyObject * key = nullptr;
+    PyObject * value = nullptr;
+    Py_ssize_t pos = 0;
+    std::unordered_map<std::string, rclcpp::QoS> topic_qos_overrides{};
+    while (PyDict_Next(qos_profile_overrides, &pos, &key, &value)) {
+      auto topic_name = PyObject_AsStdString(key);
+      auto rmw_qos_profile = PyQoSProfile_AsRmwQoSProfile(value);
+      auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
+      auto qos_profile = rclcpp::QoS(qos_init, *rmw_qos_profile);
+      topic_qos_overrides.insert(std::pair<std::string, rclcpp::QoS>(topic_name, qos_profile));
+    }
+  } else {
+    throw std::runtime_error{"QoS profile overrides object is not a Python dictionary."};
+  }
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
