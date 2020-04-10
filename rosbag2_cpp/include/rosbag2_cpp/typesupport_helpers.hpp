@@ -24,7 +24,7 @@
 
 #include "rcpputils/shared_library.hpp"
 
-#include "rosidl_generator_cpp/message_type_support_decl.hpp"
+#include "rosidl_runtime_cpp/message_type_support_decl.hpp"
 
 namespace rosbag2_cpp
 {
