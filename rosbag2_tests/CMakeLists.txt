@@ -57,8 +57,7 @@ if(BUILD_TESTING)
 
     ament_add_gmock(test_rosbag2_play_end_to_end
       test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      TIMEOUT 10)
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     if(TARGET test_rosbag2_play_end_to_end)
       ament_target_dependencies(test_rosbag2_play_end_to_end
         rclcpp
