@@ -11,10 +11,14 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-latest, ubuntu-18.04]
     steps:
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-ci@0.0.13
+    - uses: ros-tooling/setup-ros@0.0.19
+    - uses: ros-tooling/action-ros-ci@0.0.15
       with:
         package-name: |
           ros2bag
