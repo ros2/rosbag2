@@ -150,15 +150,15 @@ public:
 
 TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden)
 {
-  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.durability_volatile();
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.best_effort();
   sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name_, num_msgs_, qos_request);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  // The previous subscriber requested durability VOLATILE which is the default in rosbag2.
-  // We override the requested durability to TRANSIENT_LOCAL so that we can receive messages.
-  // If the previous subscription requested TRANSIENT_LOCAL and we overrode with VOLATILE, then we
+  // The previous subscriber requested reliability BEST_EFFORT.
+  // We override the requested reliability to RELIABLE so that we can receive messages.
+  // If the previous subscription requested BEST_EFFORT and we overrode with RELIABLE, then we
   // would not receive any messages.
-  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.transient_local();
+  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.reliable();
   const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
     std::pair<std::string, rclcpp::QoS>{topic_name_, qos_override},
   };
@@ -180,14 +180,14 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden)
 
 TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden_incompatible)
 {
-  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.transient_local();
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.reliable();
   sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name_, num_msgs_, qos_request);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  // The previous subscriber requested durability TRANSIENT_LOCAL.
-  // We override the requested durability to VOLATILE.
+  // The previous subscriber requested reliability RELIABLE.
+  // We override the requested reliability to BEST_EFFORT.
   // Since they are incompatible policies, we will not receive any messages.
-  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.durability_volatile();
+  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.best_effort();
   const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
     std::pair<std::string, rclcpp::QoS>{topic_name_, qos_override},
   };

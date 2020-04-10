@@ -60,18 +60,6 @@ private:
   void play_messages_from_queue(const PlayOptions & options);
   void play_messages_until_queue_empty(const PlayOptions & options);
   void prepare_publishers();
-
-  /**
-   * Determine which QoS to offer for a topic.
-   * The priority of the profile selected is:
-   *   1. The override specified in play_options (if one exists for the topic).
-   *   2. The default RMW QoS profile.
-   *
-   * \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
-   * @return The QoS profile to be used for subscribing.
-   */
-  rclcpp::QoS publisher_qos_for_topic(const std::string & topic_name);
-
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 

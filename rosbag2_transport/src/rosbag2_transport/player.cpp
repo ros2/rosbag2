@@ -18,7 +18,7 @@
 #include <memory>
 #include <queue>
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <utility>
 
 #include "rcl/graph.h"
@@ -35,6 +35,31 @@
 #include "qos.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
+
+namespace
+{
+/**
+ * Determine which QoS to offer for a topic.
+ * The priority of the profile selected is:
+ *   1. The override specified in play_options (if one exists for the topic).
+ *   2. The default RMW QoS profile.
+ *
+ * \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+ * \param topic_qos_profile_overrides A map of topic to QoS profile overrides.
+ * @return The QoS profile to be used for subscribing.
+ */
+rclcpp::QoS publisher_qos_for_topic(
+  const std::string & topic_name,
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides)
+{
+  auto qos_it = topic_qos_profile_overrides.find(topic_name);
+  if (qos_it != topic_qos_profile_overrides.end()) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic_name);
+    return rosbag2_transport::Rosbag2QoS{qos_it->second};
+  }
+  return rosbag2_transport::Rosbag2QoS{};
+}
+}  // namespace
 
 namespace rosbag2_transport
 {
@@ -154,22 +179,11 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 }
 
-rclcpp::QoS Player::publisher_qos_for_topic(const std::string & topic_name)
-{
-  auto qos_it = topic_qos_profile_overrides_.find(topic_name);
-  if (qos_it != topic_qos_profile_overrides_.end()) {
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic_name);
-    return Rosbag2QoS{qos_it->second};
-  } else {
-    return Rosbag2QoS{};
-  }
-}
-
 void Player::prepare_publishers()
 {
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    auto topic_qos = publisher_qos_for_topic(topic.name);
+    auto topic_qos = publisher_qos_for_topic(topic.name, topic_qos_profile_overrides_);
     publishers_.insert(
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(
