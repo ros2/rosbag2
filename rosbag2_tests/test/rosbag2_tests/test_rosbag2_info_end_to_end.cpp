@@ -47,7 +47,7 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nStorage id:        sqlite3"
       "\nDuration:          0\\.151s"
       "\nStart:             Apr  9 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
-      "\nEnd                Apr  9 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
+      "\nEnd:               Apr  9 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(

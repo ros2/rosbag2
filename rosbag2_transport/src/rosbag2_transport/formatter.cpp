@@ -46,7 +46,7 @@ void Formatter::format_bag_meta_data(const rosbag2_storage::BagMetadata & metada
     metadata.duration)["time_in_sec"] << "s" << std::endl;
   info_stream << "Start:             " << format_time_point(start_time) <<
     std::endl;
-  info_stream << "End                " << format_time_point(end_time) << std::endl;
+  info_stream << "End:               " << format_time_point(end_time) << std::endl;
   info_stream << "Messages:          " << metadata.message_count << std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
