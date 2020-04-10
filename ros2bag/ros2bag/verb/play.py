@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import FileType
+
+from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import check_path_exists
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_yaml_to_qos_profile
