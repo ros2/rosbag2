@@ -39,7 +39,8 @@ class PlayVerb(VerbExtension):
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
             '--topics', type=str, default='', nargs='*',
-            help='topics to replay, separated by space. If none specified, all topics will be replayed.')
+            help='topics to replay, separated by space. If none specified, all topics will be '
+                 'replayed.')
 
     def check_positive_float(self, value):
         try:
