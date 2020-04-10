@@ -33,7 +33,8 @@ find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_package(rosidl_generator_cpp REQUIRED)
+find_package(rosidl_runtime_c REQUIRED)
+find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
@@ -55,7 +56,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rcpputils
   rcutils
   rosbag2_storage
-  rosidl_generator_cpp
+  rosidl_runtime_c
+  rosidl_runtime_cpp
   rosidl_typesupport_introspection_cpp
   rosidl_typesupport_cpp
 )
@@ -85,7 +87,12 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(pluginlib rosbag2_storage rosidl_typesupport_introspection_cpp)
+ament_export_dependencies(pluginlib
+  rosbag2_storage
+  rosidl_runtime_c
+  rosidl_runtime_cpp
+  rosidl_typesupport_introspection_cpp
+)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
@@ -159,7 +166,7 @@ if(BUILD_TESTING)
       ament_index_cpp
       rcpputils
       rosbag2_storage
-      rosidl_generator_cpp
+      rosidl_runtime_cpp
       rosidl_typesupport_introspection_cpp
       rosidl_typesupport_cpp
       test_msgs)

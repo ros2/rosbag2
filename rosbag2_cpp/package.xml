@@ -12,8 +12,10 @@
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
+  <depend>rcpputils</depend>
   <depend>rosbag2_storage</depend>
-  <depend>rosidl_generator_cpp</depend>
+  <depend>rosidl_runtime_c</depend>
+  <depend>rosidl_runtime_cpp</depend>
   <depend>rosidl_typesupport_cpp</depend>
   <depend>rosidl_typesupport_introspection_cpp</depend>
   <depend>shared_queues_vendor</depend>

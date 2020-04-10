@@ -27,7 +27,7 @@ find_package(rcpputils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rmw_fastrtps_cpp QUIET)
 find_package(rosbag2_cpp REQUIRED)
-find_package(rosidl_generator_cpp REQUIRED)
+find_package(rosidl_runtime_cpp REQUIRED)
 
 if(rmw_fastrtps_cpp_FOUND)
   add_library(${PROJECT_NAME} SHARED
@@ -39,7 +39,7 @@ if(rmw_fastrtps_cpp_FOUND)
     rcpputils
     rmw
     rosbag2_cpp
-    rosidl_generator_cpp)
+    rosidl_runtime_cpp)
 
   target_include_directories(${PROJECT_NAME}
     PUBLIC
