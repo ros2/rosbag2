@@ -13,9 +13,11 @@ jobs:
   build_and_test:
     runs-on: ubuntu-18.04
     steps:
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-ci@0.0.13
+    - uses: ros-tooling/setup-ros@0.0.19
+    - uses: ros-tooling/action-ros-ci@0.0.15
       with:
+        extra-cmake-args: | 
+          -DSECURITY=ON
         package-name: |
           ros2bag
           rosbag2_compression
