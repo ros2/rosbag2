@@ -21,6 +21,7 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "moodycamel/readerwriterqueue.h"
 
@@ -28,6 +29,7 @@
 
 #include "rosbag2_transport/play_options.hpp"
 
+#include "qos.hpp"
 #include "replayable_message.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -70,6 +72,7 @@ private:
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
+  std::unordered_map<std::string, std::vector<Rosbag2QoS>> recorded_qos_profiles_;
 };
 
 }  // namespace rosbag2_transport

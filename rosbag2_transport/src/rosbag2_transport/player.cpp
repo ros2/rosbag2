@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rcl/graph.h"
 
@@ -68,9 +69,16 @@ const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
-  std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
+  std::shared_ptr<rosbag2_cpp::Reader> reader,
+  std::shared_ptr<Rosbag2Node> rosbag2_transport)
 : reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
-{}
+{
+  for (const auto & topic_metadata : reader->get_all_topics_and_types()) {
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM("READIN: " << topic_metadata.offered_qos_profiles);
+    const auto & loaded_profiles = YAML::Load(topic_metadata.offered_qos_profiles);
+    recorded_qos_profiles_[topic_metadata.name] = loaded_profiles.as<std::vector<Rosbag2QoS>>();
+  }
+}
 
 bool Player::is_storage_completely_loaded() const
 {
