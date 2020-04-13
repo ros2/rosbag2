@@ -156,6 +156,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   };
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
+  record_options.topic_qos_profile_overrides = topic_qos_overrides;
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
@@ -237,6 +238,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.rate = rate;
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
+  play_options.topic_qos_profile_overrides = topic_qos_overrides;
 
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
