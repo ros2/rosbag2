@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
@@ -118,4 +119,85 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
         Field(
           &test_msgs::msg::Arrays::float32_values,
           ElementsAre(40.0f, 2.0f, 0.0f)))));
+}
+
+class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
+{
+public:
+  RosBag2PlayQosOverrideTestFixture()
+  : RosBag2PlayTestFixture()
+  {
+    messages_.reserve(topic_timestamps_ms_.size());
+    for (const auto topic_timestamp : topic_timestamps_ms_) {
+      messages_.push_back(serialize_test_message(topic_name_, topic_timestamp, basic_msg_));
+    }
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages_, topic_types_);
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  }
+
+  const std::string topic_name_{"/test_topic"};
+  const std::string msg_type_{"test_msgs/BasicTypes"};
+  const size_t num_msgs_{3};
+  test_msgs::msg::BasicTypes::SharedPtr basic_msg_{get_messages_basic_types()[0]};
+  const std::vector<rosbag2_storage::TopicMetadata> topic_types_{
+    {topic_name_, msg_type_, "" /*serialization_format*/, "" /*offered_qos_profiles*/}
+  };
+  const std::vector<int64_t> topic_timestamps_ms_ = {500, 700, 900};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
+};
+
+TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden)
+{
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.best_effort();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name_, num_msgs_, qos_request);
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  // The previous subscriber requested reliability BEST_EFFORT.
+  // We override the requested reliability to RELIABLE so that we can receive messages.
+  // If the previous subscription requested BEST_EFFORT and we overrode with RELIABLE, then we
+  // would not receive any messages.
+  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.reliable();
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{topic_name_, qos_override},
+  };
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  Rosbag2Transport rosbag2_transport{reader_, writer_, info_};
+  rosbag2_transport.play(storage_options_, play_options_);
+  await_received_messages.get();
+  rosbag2_transport.shutdown();
+
+  const auto received_messages =
+    sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name_);
+  EXPECT_GT(received_messages.size(), 0u);
+}
+
+TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overriden_incompatible)
+{
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.reliable();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name_, num_msgs_, qos_request);
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  // The previous subscriber requested reliability RELIABLE.
+  // We override the requested reliability to BEST_EFFORT.
+  // Since they are incompatible policies, we will not receive any messages.
+  const auto qos_override = rclcpp::QoS{rclcpp::KeepAll()}.best_effort();
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{topic_name_, qos_override},
+  };
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  Rosbag2Transport rosbag2_transport{reader_, writer_, info_};
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  using namespace std::chrono_literals;
+  const auto future_result = await_received_messages.wait_for(3s);
+  EXPECT_EQ(future_result, std::future_status::timeout);
+
+  rosbag2_transport.shutdown();
+  const auto received_messages =
+    sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name_);
+  EXPECT_EQ(received_messages.size(), 0u);
 }
