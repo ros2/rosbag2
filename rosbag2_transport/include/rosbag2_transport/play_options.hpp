@@ -18,6 +18,9 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <unordered_map>
+
+#include "rclcpp/qos.hpp"
 
 namespace rosbag2_transport
 {
@@ -33,6 +36,8 @@ public:
   // specified topics will be played. If list is empty, the filter is ignored
   // and all messages are played.
   std::vector<std::string> topics_to_filter = std::vector<std::string>();
+
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
 };
 
 }  // namespace rosbag2_transport
