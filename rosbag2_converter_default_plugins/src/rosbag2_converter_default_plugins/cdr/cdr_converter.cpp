@@ -66,7 +66,7 @@ CdrConverter::CdrConverter()
     library = std::make_shared<rcpputils::SharedLibrary>(library_path);
   } catch (std::runtime_error &) {
     throw std::runtime_error(
-            std::string("poco exception: library could not be found:") + library_path);
+            std::string("rcpputils exception: library could not be found:") + library_path);
   }
 
   std::string serialize_symbol = "rmw_serialize";
