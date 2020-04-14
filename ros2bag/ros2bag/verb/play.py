@@ -45,6 +45,7 @@ class PlayVerb(VerbExtension):
             '--topics', type=str, default='', nargs='+',
             help='topics to replay, separated by space. If none specified, all topics will be '
                  'replayed.')
+        parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
 

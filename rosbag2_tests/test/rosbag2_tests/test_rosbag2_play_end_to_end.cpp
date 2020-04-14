@@ -148,8 +148,9 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   subscription_future = sub_->spin_subscriptions();
 
-  exit_code = execute_and_wait_until_completion("ros2 bag play --topics /array_topic -- cdr_test",
-      database_path_);
+  exit_code = execute_and_wait_until_completion(
+    "ros2 bag play --topics /array_topic -- cdr_test",
+    database_path_);
 
   subscription_future.get();
 

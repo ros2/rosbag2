@@ -221,7 +221,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   PyObject * topics = nullptr;
   PyObject * qos_profile_overrides{nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
