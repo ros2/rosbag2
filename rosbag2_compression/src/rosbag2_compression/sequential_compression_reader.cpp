@@ -35,21 +35,12 @@ SequentialCompressionReader::SequentialCompressionReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-: storage_factory_{std::move(storage_factory)},
-  converter_factory_{std::move(converter_factory)},
-  metadata_io_{std::move(metadata_io)},
+: SequentialReader(std::move(storage_factory), converter_factory, std::move(metadata_io)),
   compression_factory_{std::move(compression_factory)}
 {}
 
 SequentialCompressionReader::~SequentialCompressionReader()
-{
-  reset();
-}
-
-void SequentialCompressionReader::reset()
-{
-  storage_.reset();
-}
+{}
 
 void SequentialCompressionReader::setup_decompression()
 {
@@ -58,7 +49,7 @@ void SequentialCompressionReader::setup_decompression()
     decompressor_ = compression_factory_->create_decompressor(metadata_.compression_format);
     // Decompress the first file so that it is readable.
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
-    set_current_file(decompressor_->decompress_uri(get_current_file()));
+    *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
   } else {
     throw std::invalid_argument{
             "SequentialCompressionReader requires a CompressionMode that is not NONE!"};
@@ -107,21 +98,6 @@ void SequentialCompressionReader::open(
     topics[0].topic_metadata.serialization_format);
 }
 
-bool SequentialCompressionReader::has_next()
-{
-  if (storage_) {
-    // If there's no new message, check if there's at least another file to read and update storage
-    // to read from there. Otherwise, check if there's another message.
-    if (!storage_->has_next() && has_next_file()) {
-      load_next_file();
-      storage_ = storage_factory_->open_read_only(
-        *current_file_iterator_, metadata_.storage_identifier);
-    }
-    return storage_->has_next();
-  }
-  throw std::runtime_error{"Bag is not open. Call open() before reading."};
-}
-
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionReader::read_next()
 {
   if (storage_ && decompressor_) {
@@ -134,43 +110,6 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionRead
   throw std::runtime_error{"Bag is not open. Call open() before reading."};
 }
 
-std::vector<rosbag2_storage::TopicMetadata> SequentialCompressionReader::get_all_topics_and_types()
-{
-  if (storage_) {
-    return storage_->get_all_topics_and_types();
-  }
-  throw std::runtime_error{"Bag is not open. Call open() before reading."};
-}
-
-void SequentialCompressionReader::set_filter(
-  const rosbag2_storage::StorageFilter & storage_filter)
-{
-  if (storage_) {
-    storage_->set_filter(storage_filter);
-    return;
-  }
-  throw std::runtime_error(
-          "Bag is not open. Call open() before setting filter.");
-}
-
-void SequentialCompressionReader::reset_filter()
-{
-  if (storage_) {
-    storage_->reset_filter();
-  }
-  throw std::runtime_error(
-          "Bag is not open. Call open() before resetting filter.");
-}
-
-bool SequentialCompressionReader::has_next_file() const
-{
-  // Handle case where bagfile is not split
-  if (current_file_iterator_ == file_paths_.end()) {
-    return false;
-  }
-
-  return current_file_iterator_ + 1 != file_paths_.end();
-}
 
 void SequentialCompressionReader::load_next_file()
 {
@@ -179,7 +118,7 @@ void SequentialCompressionReader::load_next_file()
   }
 
   if (compression_mode_ == rosbag2_compression::CompressionMode::NONE) {
-    throw std::runtime_error{"Cannot use SequentialCompressionWriter with NONE compression mode."};
+    throw std::runtime_error{"Cannot use SequentialCompressionReader with NONE compression mode."};
   }
 
   ++current_file_iterator_;
@@ -193,54 +132,6 @@ void SequentialCompressionReader::load_next_file()
 
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
-  }
-}
-
-std::string SequentialCompressionReader::get_current_uri() const
-{
-  const auto current_file = get_current_file();
-  const auto current_uri = rcpputils::fs::remove_extension(current_file);
-  return current_uri.string();
-}
-
-std::string SequentialCompressionReader::get_current_file() const
-{
-  return *current_file_iterator_;
-}
-
-void SequentialCompressionReader::set_current_file(const std::string & file)
-{
-  *current_file_iterator_ = file;
-}
-
-void SequentialCompressionReader::check_topics_serialization_formats(
-  const std::vector<rosbag2_storage::TopicInformation> & topics)
-{
-  const auto & storage_serialization_format =
-    topics[0].topic_metadata.serialization_format;
-
-  for (const auto & topic : topics) {
-    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
-      throw std::runtime_error{
-              "Topics with different rwm serialization format have been found. "
-              "All topics must have the same serialization format."};
-    }
-  }
-}
-
-void SequentialCompressionReader::check_converter_serialization_format(
-  const std::string & converter_serialization_format,
-  const std::string & storage_serialization_format)
-{
-  if (converter_serialization_format != storage_serialization_format) {
-    converter_ = std::make_unique<rosbag2_cpp::Converter>(
-      storage_serialization_format,
-      converter_serialization_format,
-      converter_factory_);
-    const auto topics = storage_->get_all_topics_and_types();
-    for (const auto & topic_with_type : topics) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
-    }
   }
 }
 }  // namespace rosbag2_compression

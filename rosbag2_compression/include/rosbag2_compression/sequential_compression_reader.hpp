@@ -23,7 +23,7 @@
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
-#include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 
@@ -47,7 +47,7 @@ namespace rosbag2_compression
 {
 
 class ROSBAG2_COMPRESSION_PUBLIC SequentialCompressionReader
-  : public ::rosbag2_cpp::reader_interfaces::BaseReaderInterface
+  : public rosbag2_cpp::readers::SequentialReader
 {
 public:
   explicit SequentialCompressionReader(
@@ -66,35 +66,7 @@ public:
     const rosbag2_cpp::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
-  void reset() override;
-
-  bool has_next() override;
-
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
-
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
-
-  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
-
-  void reset_filter() override;
-
-  /**
-   * Ask whether there is another database file to read from the list of relative
-   * file paths.
-   *
-   * \return true if there are still files to read in the list
-   */
-  virtual bool has_next_file() const;
-
-  /**
-   * Return the relative file path pointed to by the current file iterator.
-   */
-  virtual std::string get_current_file() const;
-
-  /**
-   * Return the URI of the current file (i.e. no extensions).
-   */
-  virtual std::string get_current_uri() const;
 
 protected:
   /**
@@ -104,7 +76,7 @@ protected:
    * Expected usage:
    * if (has_next_file()) load_next_file();
    */
-  virtual void load_next_file();
+  void load_next_file() override;
 
   /**
    * Initializes the decompressor if a compression mode is specified in the metadata.
@@ -113,46 +85,8 @@ protected:
    */
   virtual void setup_decompression();
 
-  /**
-   * Set the file path currently pointed to by the iterator.
-   *
-   * \param file Relative path to the file.
-   */
-  virtual void set_current_file(const std::string & file);
-
 private:
-  /**
-   * Checks if all topics in the bagfile have the same RMW serialization format.
-   * Currently a bag file can only be played if all topics have the same serialization format.
-   *
-   * \param topics Vector of TopicInformation with metadata.
-   * \throws runtime_error if any topic has a different serialization format from the rest.
-   */
-  virtual void check_topics_serialization_formats(
-    const std::vector<rosbag2_storage::TopicInformation> & topics);
-
-  /**
-   * Checks if the serialization format of the converter factory is the same as that of the storage
-   * factory.
-   * If not, changes the serialization format of the converter factory to use the serialization
-   * format of the storage factory.
-   *
-   * \param converter_serialization_format
-   * \param storage_serialization_format
-   */
-  virtual void check_converter_serialization_format(
-    const std::string & converter_serialization_format,
-    const std::string & storage_serialization_format);
-
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
-  std::unique_ptr<rosbag2_cpp::Converter> converter_{};
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
-  rosbag2_storage::BagMetadata metadata_{};
-  std::vector<std::string> file_paths_{};  // List of database files.
-  std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
