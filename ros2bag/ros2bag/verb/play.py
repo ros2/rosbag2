@@ -42,7 +42,7 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
-            '--topics', type=str, default='', nargs='*',
+            '--topics', type=str, default='', nargs='+',
             help='topics to replay, separated by space. If none specified, all topics will be '
                  'replayed.')
             '--qos-profile-overrides-path', type=FileType('r'),
