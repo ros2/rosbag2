@@ -61,9 +61,9 @@ SequentialReader::SequentialReader(
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
-  converter_factory_(std::move(converter_factory)),
   converter_(nullptr),
-  metadata_io_(std::move(metadata_io))
+  metadata_io_(std::move(metadata_io)),
+  converter_factory_(std::move(converter_factory))
 {}
 
 SequentialReader::~SequentialReader()
