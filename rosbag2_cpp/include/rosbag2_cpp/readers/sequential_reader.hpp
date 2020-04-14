@@ -101,7 +101,6 @@ protected:
   */
   virtual void load_next_file();
 
-private:
   /**
    * Checks if all topics in the bagfile have the same RMW serialization format.
    * Currently a bag file can only be played if all topics have the same serialization format.
