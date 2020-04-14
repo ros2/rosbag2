@@ -70,8 +70,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    "/array_topic");
+  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
@@ -133,8 +132,7 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    "/array_topic");
+  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
@@ -176,8 +174,7 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   subscription_future.get();
 
   primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    "/array_topic");
+  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
@@ -197,8 +194,7 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   subscription_future.get();
 
   primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    "/array_topic");
+  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
