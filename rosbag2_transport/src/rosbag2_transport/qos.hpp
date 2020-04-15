@@ -15,6 +15,9 @@
 #ifndef ROSBAG2_TRANSPORT__QOS_HPP_
 #define ROSBAG2_TRANSPORT__QOS_HPP_
 
+#include <string>
+#include <vector>
+
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
 

@@ -95,3 +95,96 @@ TEST(TestQoS, detect_new_qos_fields)
   };
   EXPECT_EQ(profile.history, RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT);  // fix "unused variable"
 }
+
+class AdaptiveQoSTest : public ::testing::Test
+{
+public:
+  explicit AdaptiveQoSTest()
+  {
+    memset(endpoint_gid_, 0, RMW_GID_STORAGE_SIZE);
+  }
+
+  rclcpp::TopicEndpointInfo make_endpoint(const rclcpp::QoS & qos)
+  {
+    rcl_topic_endpoint_info_t endpoint_info {
+      "some_node_name",
+      "some_node_namespace",
+      "some_topic_type",
+      RMW_ENDPOINT_PUBLISHER,
+      {0},
+      qos.get_rmw_qos_profile(),
+    };
+
+    return rclcpp::TopicEndpointInfo(endpoint_info);
+  }
+
+  void add_endpoint(const rclcpp::QoS & qos)
+  {
+    endpoints_.push_back(make_endpoint(qos));
+  }
+
+  const std::string topic_name_{"/topic"};
+  std::vector<rclcpp::TopicEndpointInfo> endpoints_{};
+};
+
+TEST_F(AdaptiveQoSTest, adapt_request_empty_returns_default)
+{
+  using rosbag2_transport::Rosbag2QoS;
+  auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+  EXPECT_EQ(Rosbag2QoS{}, adapted_request);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_request_single_offer_returns_same_values)
+{
+  using rosbag2_transport::Rosbag2QoS;
+  // Set up this offer to use nondefault reliability and durability,
+  // expect to see those values in the output
+  auto nondefault_offer = Rosbag2QoS{}
+    .best_effort()
+    .transient_local();
+  add_endpoint(nondefault_offer);
+
+  auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+
+  auto expected = nondefault_offer.get_rmw_qos_profile();
+  auto actual = adapted_request.get_rmw_qos_profile();
+  EXPECT_EQ(expected.reliability, actual.reliability);
+  EXPECT_EQ(expected.durability, actual.durability);
+}
+
+// TEST_F(AdaptiveQoSTest, adapt_request_multiple_offers_with_same_settings_return_identical)
+// {
+//   using rosbag2_transport::Rosbag2QoS;
+//   auto nondefault_offer = Rosbag2QoS{}
+//     .best_effort()
+//     .transient_local();
+//   const size_t num_endpoints{3};
+//   for (size_t i = 0; i < num_endpoints; i++) {
+//     add_endpoint(nondefault_offer);
+//   }
+//
+//   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+//
+//   auto expected = nondefault_offer.get_rmw_qos_profile();
+//   auto actual = adapted_request.get_rmw_qos_profile();
+//   EXPECT_EQ(expected.reliability, actual.reliability);
+//   EXPECT_EQ(expected.durability, actual.durability);
+// }
+
+// TEST_F(AdaptiveQoSTest, adapt_request_mixed_reliability_offers_return_best_effort)
+// {
+//   using rosbag2_transport::Rosbag2QoS;
+//   add_endpoint(Rosbag2QoS{}.best_effort());
+//   add_endpoint(Rosbag2QoS{}.reliable());
+//   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+//   EXPECT_EQ(adapted_request.get_rmw_qos_profile().reliability, RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);
+// }
+//
+// TEST_F(AdaptiveQoSTest, adapt_request_mixed_durability_offers_return_volatile)
+// {
+//   using rosbag2_transport::Rosbag2QoS;
+//   add_endpoint(Rosbag2QoS{}.transient_local());
+//   add_endpoint(Rosbag2QoS{}.durability_volatile());
+//   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+//   EXPECT_EQ(adapted_request.get_rmw_qos_profile().durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
+// }

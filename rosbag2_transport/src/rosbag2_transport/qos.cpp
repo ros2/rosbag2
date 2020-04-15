@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <vector>
+
 #include "rosbag2_transport/logging.hpp"
 
 #include "qos.hpp"
@@ -73,7 +76,6 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
 
 namespace rosbag2_transport
 {
-
 Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
 {
@@ -91,10 +93,9 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   }
 
   // We set policies in order as defined in rmw_qos_profile_t
-  Rosbag2QoS request_qos;
+  Rosbag2QoS request_qos{};
   // Policy: history, depth
   // History does not affect compatibility
-  request_qos.default_history();
 
   // Policy: reliability
   if (reliability_reliable_endpoints_count == num_endpoints) {
@@ -188,5 +189,4 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(const std::vector<Rosbag2Q
     "Falling back to the rosbag2_transport default publisher offer.");
   return Rosbag2QoS{};
 }
-
 }  // namespace rosbag2_transport
