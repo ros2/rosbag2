@@ -57,6 +57,11 @@ public:
     return messages_[num_read_++];
   }
 
+  const rosbag2_storage::BagMetadata & get_metadata() const override
+  {
+    return metadata_;
+  }
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override
   {
     return topics_;
@@ -82,6 +87,7 @@ public:
 
 private:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
+  rosbag2_storage::BagMetadata metadata_;
   std::vector<rosbag2_storage::TopicMetadata> topics_;
   size_t num_read_;
   rosbag2_storage::StorageFilter filter_;

@@ -67,6 +67,7 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
+  const rosbag2_storage::BagMetadata & get_metadata() const override;
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -130,6 +131,7 @@ protected:
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
+  std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
