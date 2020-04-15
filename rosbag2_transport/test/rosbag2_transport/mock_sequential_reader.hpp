@@ -62,7 +62,7 @@ public:
     return metadata_;
   }
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override
   {
     return topics_;
   }

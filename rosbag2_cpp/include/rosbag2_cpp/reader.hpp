@@ -25,6 +25,7 @@
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -88,12 +89,20 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next();
 
   /**
+    * Ask bagfile for its full metadata.
+    *
+    * \return a const reference to a BagMetadata owned by the Reader
+    * \throws runtime_error if the Reader is not open.
+    */
+  const rosbag2_storage::BagMetadata & get_metadata() const;
+
+  /**
    * Ask bagfile for all topics (including their type identifier) that were recorded.
    *
    * \return vector of topics with topic name and type as std::string
    * \throws runtime_error if the Reader is not open.
    */
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types();
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
 
   reader_interfaces::BaseReaderInterface & get_implementation_handle() const
   {

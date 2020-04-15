@@ -155,7 +155,10 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_ne
 
 const rosbag2_storage::BagMetadata & SequentialReader::get_metadata() const
 {
-  return metadata_;
+  if (storage_) {
+    return metadata_;
+  }
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
 
@@ -167,9 +170,12 @@ void SequentialReader::fill_topics_and_types()
   }
 }
 
-std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types()
+std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types() const
 {
-  return topics_metadata_;
+  if (storage_) {
+    return topics_metadata_;
+  }
+  throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
 void SequentialReader::set_filter(

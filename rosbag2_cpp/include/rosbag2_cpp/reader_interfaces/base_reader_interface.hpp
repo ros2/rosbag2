@@ -48,7 +48,7 @@ public:
 
   virtual const rosbag2_storage::BagMetadata & get_metadata() const = 0;
 
-  virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() = 0;
+  virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const = 0;
 
   virtual void set_filter(const rosbag2_storage::StorageFilter & storage_filter) = 0;
 

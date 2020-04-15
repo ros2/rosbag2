@@ -69,7 +69,7 @@ public:
 
   const rosbag2_storage::BagMetadata & get_metadata() const override;
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
