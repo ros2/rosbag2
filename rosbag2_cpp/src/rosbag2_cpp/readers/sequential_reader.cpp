@@ -161,8 +161,7 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and
 {
   topics_metadata_.clear();
   topics_metadata_.reserve(metadata_.topics_with_message_count.size());
-  for (const auto & topic_information : metadata_.topics_with_message_count)
-  {
+  for (const auto & topic_information : metadata_.topics_with_message_count) {
     topics_metadata_.push_back(topic_information.topic_metadata);
   }
   return topics_metadata_;
