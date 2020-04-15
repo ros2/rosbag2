@@ -27,7 +27,6 @@
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
-#include "rosbag2_transport/logging.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
