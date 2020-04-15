@@ -119,6 +119,7 @@ void SequentialReader::open(
     ROSBAG2_CPP_LOG_WARN("No topics were listed in metadata.");
     return;
   }
+  fill_topics_and_types();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   check_topics_serialization_formats(topics);
