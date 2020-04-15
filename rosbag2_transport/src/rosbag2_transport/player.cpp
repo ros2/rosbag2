@@ -30,6 +30,8 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
+#include "rosbag2_storage/storage_filter.hpp"
+
 #include "rosbag2_transport/logging.hpp"
 
 #include "qos.hpp"
@@ -85,7 +87,7 @@ bool Player::is_storage_completely_loaded() const
 void Player::play(const PlayOptions & options)
 {
   topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
-  prepare_publishers();
+  prepare_publishers(options);
 
   storage_loading_future_ = std::async(
     std::launch::async,
@@ -179,8 +181,12 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 }
 
-void Player::prepare_publishers()
+void Player::prepare_publishers(const PlayOptions & options)
 {
+  rosbag2_storage::StorageFilter storage_filter;
+  storage_filter.topics = options.topics_to_filter;
+  reader_->set_filter(storage_filter);
+
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
     auto topic_qos = publisher_qos_for_topic(topic.name, topic_qos_profile_overrides_);

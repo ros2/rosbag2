@@ -42,6 +42,10 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
+            '--topics', type=str, default='', nargs='+',
+            help='topics to replay, separated by space. If none specified, all topics will be '
+                 'replayed.')
+        parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
 
@@ -67,4 +71,5 @@ class PlayVerb(VerbExtension):
             node_prefix=NODE_NAME_PREFIX,
             read_ahead_queue_size=args.read_ahead_queue_size,
             rate=args.rate,
+            topics=args.topics,
             qos_profile_overrides=qos_profile_overrides)

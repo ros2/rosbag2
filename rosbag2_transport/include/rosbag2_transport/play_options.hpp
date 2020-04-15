@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "rclcpp/qos.hpp"
 
@@ -30,6 +31,12 @@ public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
   float rate = 1.0;
+
+  // Topic names to whitelist when playing a bag.
+  // Only messages matching these specified topics will be played.
+  // If list is empty, the filter is ignored and all messages are played.
+  std::vector<std::string> topics_to_filter = {};
+
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
 };
 

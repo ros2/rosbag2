@@ -208,6 +208,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "node_prefix",
     "read_ahead_queue_size",
     "rate",
+    "topics",
     "qos_profile_overrides",
     nullptr
   };
@@ -217,14 +218,16 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * node_prefix;
   size_t read_ahead_queue_size;
   float rate;
+  PyObject * topics = nullptr;
   PyObject * qos_profile_overrides{nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
       &read_ahead_queue_size,
       &rate,
+      &topics,
       &qos_profile_overrides))
   {
     return nullptr;
@@ -236,6 +239,19 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
+
+  if (topics) {
+    PyObject * topic_iterator = PyObject_GetIter(topics);
+    if (topic_iterator != nullptr) {
+      PyObject * topic = nullptr;
+      while ((topic = PyIter_Next(topic_iterator))) {
+        play_options.topics_to_filter.emplace_back(PyUnicode_AsUTF8(topic));
+
+        Py_DECREF(topic);
+      }
+      Py_DECREF(topic_iterator);
+    }
+  }
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
   play_options.topic_qos_profile_overrides = topic_qos_overrides;
