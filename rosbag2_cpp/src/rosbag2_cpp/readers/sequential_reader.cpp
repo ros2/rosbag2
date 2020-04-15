@@ -157,13 +157,17 @@ const rosbag2_storage::BagMetadata & SequentialReader::get_metadata() const
   return metadata_;
 }
 
-std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types()
+
+void SequentialReader::fill_topics_and_types()
 {
-  topics_metadata_.clear();
   topics_metadata_.reserve(metadata_.topics_with_message_count.size());
   for (const auto & topic_information : metadata_.topics_with_message_count) {
     topics_metadata_.push_back(topic_information.topic_metadata);
   }
+}
+
+std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types()
+{
   return topics_metadata_;
 }
 

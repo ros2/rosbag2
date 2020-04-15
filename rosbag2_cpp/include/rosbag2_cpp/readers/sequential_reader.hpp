@@ -68,6 +68,7 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
   const rosbag2_storage::BagMetadata & get_metadata() const override;
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -136,6 +137,8 @@ protected:
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
 private:
+  void fill_topics_and_types();
+
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 };
 
