@@ -137,8 +137,6 @@ protected:
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
 private:
-  void fill_topics_and_types();
-
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 };
 
