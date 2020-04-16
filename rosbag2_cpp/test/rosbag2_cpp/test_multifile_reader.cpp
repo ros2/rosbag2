@@ -201,9 +201,30 @@ TEST_F(MultifileReaderTest, read_next_throws_if_no_storage)
   EXPECT_ANY_THROW(reader_->read_next());
 }
 
-TEST_F(MultifileReaderTest, get_all_topics_and_types_throws_if_no_storage)
+TEST_F(MultifileReaderTest, get_metadata_throws_if_not_open)
 {
   init();
+  EXPECT_ANY_THROW(reader_->get_metadata());
+}
 
+TEST_F(MultifileReaderTest, get_all_topics_and_types_throws_if_not_open)
+{
+  init();
   EXPECT_ANY_THROW(reader_->get_all_topics_and_types());
+}
+
+TEST_F(MultifileReaderTest, get_metadata_returns_metadata_from_io)
+{
+  init();
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
+  const auto & metadata = reader_->get_metadata();
+  EXPECT_FALSE(metadata.topics_with_message_count.empty());
+}
+
+TEST_F(MultifileReaderTest, get_all_topics_and_types_returns_from_io_metadata)
+{
+  init();
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
+  const auto all_topics_and_types = reader_->get_all_topics_and_types();
+  EXPECT_FALSE(all_topics_and_types.empty());
 }
