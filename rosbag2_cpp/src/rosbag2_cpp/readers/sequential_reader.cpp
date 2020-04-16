@@ -30,6 +30,7 @@ void fill_topics_and_types(
   const rosbag2_storage::BagMetadata & metadata,
   std::vector<rosbag2_storage::TopicMetadata> & topics_and_types)
 {
+  topics_and_types.clear();
   topics_and_types.reserve(metadata.topics_with_message_count.size());
   for (const auto & topic_information : metadata.topics_with_message_count) {
     topics_and_types.push_back(topic_information.topic_metadata);
