@@ -65,7 +65,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   bool loop_playback = true;
   std::thread loop_thread(&rosbag2_transport::Rosbag2Transport::play, rosbag2_transport_ptr,
     storage_options_,
-    rosbag2_transport::PlayOptions{1000, "", 1.0, {}, loop_playback});
+    rosbag2_transport::PlayOptions{1000, "", 1.0, {}, {}, loop_playback});
   std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
   rclcpp::shutdown();
   loop_thread.join();
