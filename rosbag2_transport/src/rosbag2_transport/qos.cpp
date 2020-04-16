@@ -79,6 +79,9 @@ namespace rosbag2_transport
 Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
 {
+  if (endpoints.empty()) {
+    return Rosbag2QoS{};
+  }
   size_t num_endpoints = endpoints.size();
   size_t reliability_reliable_endpoints_count = 0;
   size_t durability_transient_local_endpoints_count = 0;
