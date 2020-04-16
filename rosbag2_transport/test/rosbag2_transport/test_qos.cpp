@@ -186,3 +186,8 @@ TEST_F(AdaptiveQoSTest, adapt_request_mixed_durability_offers_return_volatile)
   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
   EXPECT_EQ(adapted_request.get_rmw_qos_profile().durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
 }
+
+TEST_F(AdaptiveQoSTest, adapt_offer)
+{
+  
+}
