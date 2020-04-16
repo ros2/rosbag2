@@ -24,6 +24,8 @@
 
 #include "moodycamel/readerwriterqueue.h"
 
+#include "rclcpp/qos.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
 
 #include "replayable_message.hpp"
@@ -57,8 +59,7 @@ private:
   void wait_for_filled_queue(const PlayOptions & options) const;
   void play_messages_from_queue(const PlayOptions & options);
   void play_messages_until_queue_empty(const PlayOptions & options);
-  void prepare_publishers();
-
+  void prepare_publishers(const PlayOptions & options);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
@@ -68,6 +69,7 @@ private:
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport

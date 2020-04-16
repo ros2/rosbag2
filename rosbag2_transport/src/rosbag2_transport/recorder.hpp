@@ -85,11 +85,24 @@ private:
 
   void record_messages() const;
 
-  /** Find the QoS profile that should be used for subscribing.
-    * If all currently offered QoS Profiles for a topic are the same, return that profile.
-    * Otherwise, print a warning and return a fallback value.
+  /**
+   * Find the QoS profile that should be used for subscribing.
+   *
+   * Profiles are prioritized by:
+   *   1. The override specified in the record_options, if one exists for the topic.
+   *   2. Adapted subscription via `adapt_qos_to_publishers`
+   *
+   *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+   *   \return The QoS profile to be used for subscribing.
+   */
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
+  /**
+    * Try to subscribe using publishers' offered QoS policies.
+    *
+    * Fall back to sensible defaults when we can't adapt robustly,
+    * erring in favor of creating compatible connections.
     */
-  rclcpp::QoS common_qos_or_fallback(const std::string & topic_name);
+  rclcpp::QoS adapt_qos_to_publishers(const std::string & topic_name) const;
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
@@ -101,6 +114,7 @@ private:
   std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport

@@ -253,15 +253,15 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 #ifdef _WIN32
   {
     rosbag2_storage::BagMetadata metadata;
-    metadata.version = 2;
+    metadata.version = 4;
     metadata.storage_identifier = "sqlite3";
 
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
-      const auto bag_file_path = get_bag_file_path(i);
+      const auto bag_file_path = get_bag_file_name(i);
 
-      if (bag_file_path.exists()) {
-        metadata.relative_file_paths.push_back(bag_file_path.string());
+      if (rcpputils::fs::path(bag_file_path).exists()) {
+        metadata.relative_file_paths.push_back(bag_file_path);
       } else {
         break;
       }
@@ -282,7 +282,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
-    const auto bagfile_path = rcpputils::fs::path{metadata.relative_file_paths[i]};
+    const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[i]};
     ASSERT_TRUE(bagfile_path.exists()) <<
       "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
@@ -327,9 +327,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 #ifdef _WIN32
   {
     rosbag2_storage::BagMetadata metadata;
-    metadata.version = 2;
+    metadata.version = 4;
     metadata.storage_identifier = "sqlite3";
-    metadata.relative_file_paths = {get_bag_file_path(0).string()};
+    metadata.relative_file_paths = {get_bag_file_name(0) + ".db3"};
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
 #endif
@@ -338,8 +338,10 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   // Check that there's only 1 bagfile and that it exists.
-  EXPECT_EQ(1u, metadata.relative_file_paths.size());
-  EXPECT_TRUE(rcpputils::fs::exists(metadata.relative_file_paths[0]));
+  ASSERT_EQ(1u, metadata.relative_file_paths.size());
+  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[0]};
+  ASSERT_TRUE(bagfile_path.exists()) <<
+    "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
   // Check that the next bagfile does not exist.
   const auto next_bag_file = get_bag_file_path(1);
@@ -384,17 +386,17 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 #ifdef _WIN32
   {
     rosbag2_storage::BagMetadata metadata;
-    metadata.version = 2;
+    metadata.version = 4;
     metadata.storage_identifier = "sqlite3";
 
     for (int i = 0; i < expected_splits; ++i) {
-      const auto bag_file_path = get_bag_file_path(i);
+      const auto bag_file_path = get_bag_file_name(i);
 
       // There is no guarantee that the bagfile split expected_split times
       // due to possible io sync delays. Instead, assert that the bagfile split
       // at least once
-      if (bag_file_path.exists()) {
-        metadata.relative_file_paths.push_back(bag_file_path.string());
+      if (rcpputils::fs::path(bag_file_path).exists()) {
+        metadata.relative_file_paths.push_back(bag_file_path);
       }
     }
 
@@ -406,7 +408,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
-  for (const auto & path : metadata.relative_file_paths) {
+  for (const auto & rel_path : metadata.relative_file_paths) {
+    auto path = root_bag_path_ / rcpputils::fs::path(rel_path);
     EXPECT_TRUE(rcpputils::fs::exists(path));
   }
 }

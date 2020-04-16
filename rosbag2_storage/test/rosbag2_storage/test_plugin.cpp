@@ -111,4 +111,15 @@ uint64_t TestPlugin::get_minimum_split_file_size() const
   return test_constants::MIN_SPLIT_FILE_SIZE;
 }
 
+void TestPlugin::set_filter(
+  const rosbag2_storage::StorageFilter & /*storage_filter*/)
+{
+  std::cout << "\nsetting storage filter\n";
+}
+
+void TestPlugin::reset_filter()
+{
+  std::cout << "\nresetting storage filter\n";
+}
+
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

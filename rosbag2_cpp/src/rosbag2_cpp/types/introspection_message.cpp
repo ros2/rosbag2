@@ -42,7 +42,7 @@ allocate_introspection_message(
   raw_ros2_message->message = raw_ros2_message->allocator.zero_allocate(
     1, intro_ts_members->size_of_, raw_ros2_message->allocator.state);
   intro_ts_members->init_function(
-    raw_ros2_message->message, rosidl_generator_cpp::MessageInitialization::ALL);
+    raw_ros2_message->message, rosidl_runtime_cpp::MessageInitialization::ALL);
 
   auto deleter = [introspection_ts](rosbag2_introspection_message_t * msg) {
       deallocate_introspection_message(msg, introspection_ts);

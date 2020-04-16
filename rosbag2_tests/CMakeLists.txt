@@ -29,6 +29,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(rclcpp REQUIRED)
+  find_package(rcpputils REQUIRED)
   find_package(rmw_fastrtps_cpp QUIET)
   find_package(rosbag2_compression REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
@@ -55,17 +56,17 @@ if(BUILD_TESTING)
         test_msgs)
     endif()
 
-    # ament_add_gmock(test_rosbag2_play_end_to_end
-    #   test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
-    #   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    # if(TARGET test_rosbag2_play_end_to_end)
-    #   ament_target_dependencies(test_rosbag2_play_end_to_end
-    #     rclcpp
-    #     rosbag2_storage
-    #     rosbag2_storage_default_plugins
-    #     rosbag2_test_common
-    #     test_msgs)
-    # endif()
+    ament_add_gmock(test_rosbag2_play_end_to_end
+      test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    if(TARGET test_rosbag2_play_end_to_end)
+      ament_target_dependencies(test_rosbag2_play_end_to_end
+        rclcpp
+        rosbag2_storage
+        rosbag2_storage_default_plugins
+        rosbag2_test_common
+        test_msgs)
+    endif()
 
     ament_add_gmock(test_rosbag2_info_end_to_end
       test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
