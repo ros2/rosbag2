@@ -122,17 +122,15 @@ public:
 
   const std::string topic_name_{"/topic"};
   std::vector<rclcpp::TopicEndpointInfo> endpoints_{};
+  const rosbag2_transport::Rosbag2QoS default_offer_{};
+  const rosbag2_transport::Rosbag2QoS default_request_{};
 };
 
 TEST_F(AdaptiveQoSTest, adapt_request_empty_returns_default)
 {
   using rosbag2_transport::Rosbag2QoS;
   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
-
-  auto expected = Rosbag2QoS{}.get_rmw_qos_profile();
-  auto actual = adapted_request.get_rmw_qos_profile();
-  EXPECT_EQ(expected.reliability, actual.reliability);
-  EXPECT_EQ(expected.durability, actual.durability);
+  EXPECT_EQ(default_request_, adapted_request);
 }
 
 TEST_F(AdaptiveQoSTest, adapt_request_single_offer_returns_same_values)
@@ -151,7 +149,7 @@ TEST_F(AdaptiveQoSTest, adapt_request_single_offer_returns_same_values)
   EXPECT_EQ(expected.durability, actual.durability);
 }
 
-TEST_F(AdaptiveQoSTest, adapt_request_multiple_offers_with_same_settings_return_identical)
+TEST_F(AdaptiveQoSTest, adapt_request_multiple_similar_offers_returns_same_values)
 {
   using rosbag2_transport::Rosbag2QoS;
   auto nondefault_offer = Rosbag2QoS{}.best_effort().transient_local();
@@ -187,7 +185,58 @@ TEST_F(AdaptiveQoSTest, adapt_request_mixed_durability_offers_return_volatile)
   EXPECT_EQ(adapted_request.get_rmw_qos_profile().durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
 }
 
-TEST_F(AdaptiveQoSTest, adapt_offer)
+TEST_F(AdaptiveQoSTest, adapt_offer_empty_returns_default)
 {
-  
+  using rosbag2_transport::Rosbag2QoS;
+  auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(topic_name_, {});
+  EXPECT_EQ(adapted_offer, default_offer_);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_offer_single_offer_returns_same_values)
+{
+  using rosbag2_transport::Rosbag2QoS;
+  // Set up this offer to use nondefault reliability and durability,
+  // expect to see those values in the output
+  auto nondefault_offer = Rosbag2QoS{Rosbag2QoS{}.best_effort().transient_local()};
+  std::vector<Rosbag2QoS> offers = {nondefault_offer};
+
+  auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(topic_name_, offers);
+  EXPECT_EQ(nondefault_offer, adapted_offer);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_offer_multiple_offers_with_same_settings_return_identical)
+{
+  using rosbag2_transport::Rosbag2QoS;
+  auto nondefault_offer = Rosbag2QoS{Rosbag2QoS{}.best_effort().transient_local()};
+  auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(
+    topic_name_, {nondefault_offer, nondefault_offer, nondefault_offer});
+  EXPECT_EQ(nondefault_offer, adapted_offer);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_offer_mixed_compatibility_returns_default)
+{
+  // When the offers have mixed values for policies that affect compatibility,
+  // it should fall back to the default.
+  using rosbag2_transport::Rosbag2QoS;
+  std::vector<Rosbag2QoS> offers = {
+    Rosbag2QoS{Rosbag2QoS{}.best_effort()},
+    Rosbag2QoS{Rosbag2QoS{}.reliable()},
+  };
+  auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(topic_name_, offers);
+  EXPECT_EQ(adapted_offer, default_offer_);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_offer_mixed_non_compatibility_returns_first)
+{
+  // Some QoS policies don't affect compatibility, so even if their values are mixed we should
+  // receive the first value.
+  using rosbag2_transport::Rosbag2QoS;
+  rclcpp::Duration nonstandard_duration(12, 34);
+  size_t nonstandard_history{20};
+  std::vector<Rosbag2QoS> offers = {
+    Rosbag2QoS{Rosbag2QoS{}.lifespan(nonstandard_duration)},
+    Rosbag2QoS{Rosbag2QoS{}.keep_last(nonstandard_history)},
+  };
+  auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(topic_name_, offers);
+  EXPECT_EQ(adapted_offer, offers[0]);
 }

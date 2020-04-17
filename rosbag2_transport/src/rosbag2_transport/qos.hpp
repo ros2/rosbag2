@@ -71,7 +71,9 @@ public:
     * that exact value is returned.
     * Otherwise, fall back to the rosbag2 default and emit a warning.
     */
-  static Rosbag2QoS adapt_offer_to_recorded_offers(const std::vector<Rosbag2QoS> & profiles);
+  static Rosbag2QoS adapt_offer_to_recorded_offers(
+    const std::string & topic_name,
+    const std::vector<Rosbag2QoS> & profiles);
 };
 }  // namespace rosbag2_transport
 

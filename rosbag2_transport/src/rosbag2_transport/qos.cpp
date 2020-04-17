@@ -79,8 +79,9 @@ namespace rosbag2_transport
 Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
 {
+  static const Rosbag2QoS default_request{};
   if (endpoints.empty()) {
-    return Rosbag2QoS{};
+    return default_request;
   }
   size_t num_endpoints = endpoints.size();
   size_t reliability_reliable_endpoints_count = 0;
@@ -96,7 +97,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   }
 
   // We set policies in order as defined in rmw_qos_profile_t
-  Rosbag2QoS request_qos{};
+  Rosbag2QoS request_qos = default_request;
   // Policy: history, depth
   // History does not affect compatibility
 
@@ -176,10 +177,12 @@ bool all_profiles_effectively_same(const std::vector<Rosbag2QoS> & profiles)
 }
 }  // unnamed namespace
 
-Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(const std::vector<Rosbag2QoS> & profiles)
+Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
+  const std::string & topic_name, const std::vector<Rosbag2QoS> & profiles)
 {
+  static const Rosbag2QoS default_offer{};
   if (profiles.empty()) {
-    return Rosbag2QoS{};
+    return default_offer;
   }
   if (all_profiles_effectively_same(profiles)) {
     auto result = profiles[0];
@@ -187,9 +190,9 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(const std::vector<Rosbag2Q
   }
 
   ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-    "Not all original publishers offered the same QoS profiles. "
+    "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
     "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
     "Falling back to the rosbag2_transport default publisher offer.");
-  return Rosbag2QoS{};
+  return default_offer;
 }
 }  // namespace rosbag2_transport
