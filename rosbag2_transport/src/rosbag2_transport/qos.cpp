@@ -191,8 +191,8 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
 
   ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
     "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
-    "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
-    "Falling back to the rosbag2_transport default publisher offer.");
+      "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
+      "Falling back to the rosbag2_transport default publisher offer.");
   return default_offer;
 }
 }  // namespace rosbag2_transport
