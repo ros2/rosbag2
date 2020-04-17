@@ -57,6 +57,9 @@ if (NOT SQLite3_FOUND)
     if(SQLite3_ROOT_DIR)
         set(SQLite3_INCLUDE_PATH PATHS "${SQLite3_ROOT_DIR}/include" NO_DEFAULT_PATH)
         set(SQLite3_LIBRARY_PATH PATHS "${SQLite3_ROOT_DIR}/lib"     NO_DEFAULT_PATH)
+    else()
+        set(SQLite3_INCLUDE_PATH "")
+        set(SQLite3_LIBRARY_PATH "")
     endif()
 
     # Find headers and libraries
