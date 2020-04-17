@@ -15,6 +15,10 @@
 #ifndef ROSBAG2_TRANSPORT__QOS_HPP_
 #define ROSBAG2_TRANSPORT__QOS_HPP_
 
+#include <string>
+#include <vector>
+
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
 
 #ifdef _WIN32
@@ -46,6 +50,30 @@ public:
     keep_last(rmw_qos_profile_default.depth);
     return *this;
   }
+
+  // Create an adaptive QoS profile to use for subscribing to a set of offers from publishers.
+  /**
+    * - Uses rosbag2_transport defaults for History since they do not affect compatibility.
+    * - Adapts Durability and Reliability, falling back to the least strict publisher when there
+    * is a mixed offer. This behavior errs on the side of forming connections with all publishers.
+    * - Does not specify Lifespan, Deadline, or Liveliness to be maximally compatible, because
+    * these policies do not affect message delivery.
+    */
+  static Rosbag2QoS adapt_request_to_offers(
+    const std::string & topic_name,
+    const std::vector<rclcpp::TopicEndpointInfo> & endpoints);
+
+  // Create a QoS profile to offer for playback.
+  /**
+    * This logic exists because rosbag2 does not record on a per-publisher basis, so we try to
+    * get as close as possible to the original system's behavior, given a single publisher.
+    * If all profiles are the same (excepting History & Lifespan, which are purely local),
+    * that exact value is returned.
+    * Otherwise, fall back to the rosbag2 default and emit a warning.
+    */
+  static Rosbag2QoS adapt_offer_to_recorded_offers(
+    const std::string & topic_name,
+    const std::vector<Rosbag2QoS> & profiles);
 };
 }  // namespace rosbag2_transport
 
