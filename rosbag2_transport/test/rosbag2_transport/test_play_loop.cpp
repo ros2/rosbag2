@@ -35,23 +35,29 @@
 #include "rosbag2_play_test_fixture.hpp"
 
 TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
-  auto primitive_message1 = get_messages_basic_types()[0];
+  //  test constants
   const int test_value = 42;
+  const size_t num_messages = 3;
+  const int64_t time_stamp_in_milliseconds = 700;
+  const size_t expected_number_of_messages = num_messages * 2;
+  const size_t read_ahead_queue_size = 1000;
+  const float rate = 1.0;
+  const bool loop_playback = true;
+
+  auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->int32_value = test_value;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"loop_test_topic", "test_msgs/BasicTypes", "", ""}
   };
 
-  size_t num_messages = 3;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages(num_messages,
-    serialize_test_message("loop_test_topic", 700, primitive_message1));
+    serialize_test_message("loop_test_topic", time_stamp_in_milliseconds, primitive_message1));
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  size_t expected_number_of_messages = num_messages * 2;
   sub_->add_subscription<test_msgs::msg::BasicTypes>(
     "/loop_test_topic",
     expected_number_of_messages);
@@ -62,11 +68,10 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
     reader_,
     writer_,
     info_);
-  bool loop_playback = true;
   std::thread loop_thread(&rosbag2_transport::Rosbag2Transport::play, rosbag2_transport_ptr,
     storage_options_,
-    rosbag2_transport::PlayOptions{1000, "", 1.0, {}, {}, loop_playback});
-  std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
+    rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback});
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   rclcpp::shutdown();
   loop_thread.join();
 
