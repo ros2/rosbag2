@@ -37,6 +37,10 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name)
 : rclcpp::Node(node_name)
 {}
 
+Rosbag2Node::Rosbag2Node(const std::string & node_name, const rclcpp::NodeOptions & options)
+: rclcpp::Node(node_name, options)
+{}
+
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
   const std::string & topic, const std::string & type, const rclcpp::QoS & qos)
 {
