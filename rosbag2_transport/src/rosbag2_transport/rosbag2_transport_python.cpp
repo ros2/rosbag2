@@ -1,4 +1,5 @@
 // Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2020, TNG Technology Consulting GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -210,6 +211,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "rate",
     "topics",
     "qos_profile_overrides",
+    "loop",
     nullptr
   };
 
@@ -220,15 +222,18 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   float rate;
   PyObject * topics = nullptr;
   PyObject * qos_profile_overrides{nullptr};
+  bool loop = false;
+
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOOb", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
       &read_ahead_queue_size,
       &rate,
       &topics,
-      &qos_profile_overrides))
+      &qos_profile_overrides,
+      &loop))
   {
     return nullptr;
   }
@@ -239,6 +244,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
+  play_options.loop = loop;
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

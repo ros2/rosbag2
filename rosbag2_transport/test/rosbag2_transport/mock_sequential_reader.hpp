@@ -31,6 +31,7 @@ public:
   {
     (void) storage_options;
     (void) converter_options;
+    num_read_ = 0;
   }
 
   void reset() override {}

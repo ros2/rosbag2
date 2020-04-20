@@ -1,4 +1,5 @@
 // Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2020, TNG Technology Consulting GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,12 +94,13 @@ void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
-    reader_->open(storage_options, {"", rmw_get_serialization_format()});
-
     auto transport_node = setup_node(play_options.node_prefix);
-
     Player player(reader_, transport_node);
-    player.play(play_options);
+
+    do {
+      reader_->open(storage_options, {"", rmw_get_serialization_format()});
+      player.play(play_options);
+    } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
   }
