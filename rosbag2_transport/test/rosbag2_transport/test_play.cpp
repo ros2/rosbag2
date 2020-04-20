@@ -366,9 +366,9 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
   ASSERT_LT(override_liveliness_offer, liveliness_request);
   const auto request_profile = Rosbag2QoS{}.liveliness_lease_duration(liveliness_request);
   const auto recorded_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
-    recorded_liveliness_offer)};
+      recorded_liveliness_offer)};
   const auto override_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
-    override_liveliness_offer)};
+      override_liveliness_offer)};
   const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
     std::pair<std::string, rclcpp::QoS>{topic_name_, override_offer_profile},
   };
