@@ -60,11 +60,12 @@ rclcpp::QoS publisher_qos_for_topic(
   if (qos_it != topic_qos_profile_overrides.end()) {
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
     return Rosbag2QoS{qos_it->second};
+  } else if (topic.offered_qos_profiles.empty()) {
+    return Rosbag2QoS{};
   }
 
-  const auto & profiles_yaml = YAML::Load(topic.offered_qos_profiles);
-  const auto offered_qos_profiles = profiles_yaml.as<
-    std::vector<Rosbag2QoS>>();
+  const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
+  const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
 }  // namespace

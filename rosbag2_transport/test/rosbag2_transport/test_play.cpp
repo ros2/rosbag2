@@ -245,10 +245,11 @@ public:
     Rosbag2Transport transport(reader_, writer_, info_);
     transport.play(storage_options_, play_options_);
     const auto result = await_received_messages.wait_for(timeout);
+    // Must EXPECT, can't ASSERT because we need to shut down the transport
     if (expect_timeout) {
-      ASSERT_EQ(result, std::future_status::timeout);
+      EXPECT_EQ(result, std::future_status::timeout);
     } else {
-      ASSERT_NE(result, std::future_status::timeout);
+      EXPECT_NE(result, std::future_status::timeout);
     }
     transport.shutdown();
   }
@@ -285,6 +286,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden)
     topic_name_, num_msgs_to_wait_for_, qos_request);
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
+  // Fails if times out
   play_and_wait(timeout);
 }
 
@@ -308,21 +310,16 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden_incompat
     topic_name_, num_msgs_to_wait_for_, qos_request);
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
+  // Fails if it doesn't time out
   play_and_wait(timeout, true /* expect timeout */);
-
-  const auto received_messages =
-    sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name_);
-  EXPECT_EQ(received_messages.size(), 0u);
 }
 
-TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_profiles)
+TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_transient_local_profile)
 {
   // In this test, we subscribe requesting DURABILITY_TRANSIENT_LOCAL.
   // The bag metadata has this recorded for the original Publisher,
   // so playback's offer should be compatible (whereas the default offer would not be)
-  const size_t arbitrary_finite_history{5};
-  const auto transient_local_profile = Rosbag2QoS{
-    rclcpp::QoS{arbitrary_finite_history}.transient_local()};
+  const auto transient_local_profile = Rosbag2QoS{Rosbag2QoS{}.transient_local()};
   // This should normally take less than 1s - just making it shorter than 60s default
   const auto timeout = 5s;
 
@@ -331,5 +328,59 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_profiles)
   sub_->add_subscription<test_msgs::msg::BasicTypes>(
     topic_name_, num_msgs_to_wait_for_, transient_local_profile);
 
+  // Fails if times out
+  play_and_wait(timeout);
+}
+
+TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_deadline)
+{
+  // By default, QoS profiles use "unspecified/infinite" offers for duration-based policies
+  // The subscription in this test requests a finite Deadline, and by receiving messages
+  // we know that the playback has used the recorded finite Deadline duration.
+
+  // The publisher is offering 2Hz. The subscription requests 1Hz, which is less strict of a
+  // requirement, so they are compatible.
+  const rclcpp::Duration request_deadline{1s};
+  const rclcpp::Duration offer_deadline{500ms};
+  const auto request_profile = Rosbag2QoS{}.deadline(request_deadline);
+  const auto offer_profile = Rosbag2QoS{Rosbag2QoS{}.deadline(offer_deadline)};
+  const auto timeout = 5s;
+
+  initialize({offer_profile});
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(
+    topic_name_, num_msgs_to_wait_for_, request_profile);
+  play_and_wait(timeout);
+}
+
+TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
+{
+  // In this test, we show that the playback prefers the user override to the recorded values.
+  // The subscription requests a Liveliness lease_duration that is shorter than the original
+  // recorded publisher offered, so no messages should be passed.
+  // However, the override to the publisher offers a shorter duration than the request, so
+  // it should now be compatible.
+  const rclcpp::Duration liveliness_request{500ms};
+  const rclcpp::Duration recorded_liveliness_offer{1000ms};
+  const rclcpp::Duration override_liveliness_offer{250ms};
+  ASSERT_LT(liveliness_request, recorded_liveliness_offer);
+  ASSERT_LT(override_liveliness_offer, liveliness_request);
+  const auto request_profile = Rosbag2QoS{}.liveliness_lease_duration(liveliness_request);
+  const auto recorded_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
+    recorded_liveliness_offer)};
+  const auto override_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
+    override_liveliness_offer)};
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{topic_name_, override_offer_profile},
+  };
+  // This should normally take less than 1s - just making it shorter than 60s default
+  const auto timeout = 5s;
+
+  initialize({recorded_offer_profile});
+
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(
+    topic_name_, num_msgs_to_wait_for_, request_profile);
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+
+  // Fails if times out
   play_and_wait(timeout);
 }
