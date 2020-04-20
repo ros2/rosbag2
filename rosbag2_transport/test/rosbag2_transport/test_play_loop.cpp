@@ -71,11 +71,11 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   std::thread loop_thread(&rosbag2_transport::Rosbag2Transport::play, rosbag2_transport_ptr,
     storage_options_,
     rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback});
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  await_received_messages.get();
   rclcpp::shutdown();
   loop_thread.join();
 
-  await_received_messages.get();
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/loop_test_topic");
 
