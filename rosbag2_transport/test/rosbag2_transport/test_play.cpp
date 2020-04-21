@@ -242,10 +242,10 @@ public:
   void play_and_wait(Duration timeout, bool expect_timeout = false)
   {
     auto await_received_messages = sub_->spin_subscriptions();
-    Rosbag2Transport transport(reader_, writer_, info_);
+    Rosbag2Transport transport{reader_, writer_, info_};
     transport.play(storage_options_, play_options_);
     const auto result = await_received_messages.wait_for(timeout);
-    // Must EXPECT, can't ASSERT because we need to shut down the transport
+    // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out
     if (expect_timeout) {
       EXPECT_EQ(result, std::future_status::timeout);
     } else {
