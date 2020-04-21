@@ -11,7 +11,7 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: ros-tooling/setup-ros@0.0.13
     - uses: ros-tooling/action-ros-ci@0.0.13
