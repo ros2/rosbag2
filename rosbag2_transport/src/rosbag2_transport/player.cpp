@@ -1,4 +1,5 @@
 // Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2020, TNG Technology Consulting GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +22,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "ament_index_cpp/get_resource.hpp"
 
 #include "rcl/graph.h"
 
@@ -95,6 +98,10 @@ void Player::play(const PlayOptions & options)
 {
   topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
   prepare_publishers(options);
+
+  if (publishers_.size() == 0) {
+    return;
+  }
 
   storage_loading_future_ = std::async(
     std::launch::async,
@@ -188,19 +195,65 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 }
 
+bool is_package_found(rosbag2_storage::TopicMetadata topic)
+{
+  std::string package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic.type));
+  std::string content;
+  std::string prefix_path;
+  return ament_index_cpp::get_resource("packages", package_name, content, &prefix_path);
+}
+
+std::vector<std::string> Player::update_topics_to_filter_to_play_messages_with_unknwon_types(
+  const std::vector<std::string> & topics_to_filter)
+{
+  std::vector<std::string> topics_to_filter_updated;
+  auto topics = reader_->get_all_topics_and_types();
+  for (const auto & topic : topics) {
+    bool topic_should_be_played = topics_to_filter.size() == 0 ||
+      std::find(
+      topics_to_filter.begin(), topics_to_filter.end(),
+      topic.name) != topics_to_filter.end();
+    if (is_package_found(topic) && topic_should_be_played) {
+      topics_to_filter_updated.emplace_back(topic.name);
+    } else if (!is_package_found(topic)) {
+      std::string package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic.type));
+      ROSBAG2_TRANSPORT_LOG_WARN(
+        "All messages on topic '%s' will be ignored because package '%s' is not found.",
+        topic.name.c_str(), package_name.c_str());
+    }
+  }
+  return topics_to_filter_updated;
+}
+
 void Player::prepare_publishers(const PlayOptions & options)
 {
+  auto topics_to_filter = options.topics_to_filter;
+  if (options.ignore_unknown_types) {
+    topics_to_filter = update_topics_to_filter_to_play_messages_with_unknwon_types(
+      options.topics_to_filter);
+    if (topics_to_filter.size() == 0) {
+      ROSBAG2_TRANSPORT_LOG_ERROR("No topic to be sucribed to could be found.");
+      return;
+    }
+  }
   rosbag2_storage::StorageFilter storage_filter;
-  storage_filter.topics = options.topics_to_filter;
+  storage_filter.topics = topics_to_filter;
   reader_->set_filter(storage_filter);
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
-    publishers_.insert(
-      std::make_pair(
-        topic.name, rosbag2_transport_->create_generic_publisher(
-          topic.name, topic.type, topic_qos)));
+    //  We have to create a publisher only for the topics we want to play.
+    bool publisher_should_be_created = topics_to_filter.size() == 0 ||
+      std::find(
+      topics_to_filter.begin(), topics_to_filter.end(),
+      topic.name) != topics_to_filter.end();
+    if (publisher_should_be_created) {
+      auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
+      publishers_.insert(
+        std::make_pair(
+          topic.name, rosbag2_transport_->create_generic_publisher(
+            topic.name, topic.type, topic_qos)));
+    }
   }
 }
 

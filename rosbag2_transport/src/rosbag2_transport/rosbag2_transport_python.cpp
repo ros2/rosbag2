@@ -233,6 +233,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "qos_profile_overrides",
     "loop",
     "topic_remapping",
+    "ignore_unknown_types",
     nullptr
   };
 
@@ -245,8 +246,10 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   PyObject * qos_profile_overrides{nullptr};
   bool loop = false;
   PyObject * topic_remapping = nullptr;
+  bool ignore_unknown_types = false;
+
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOObOb", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
@@ -255,7 +258,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       &topics,
       &qos_profile_overrides,
       &loop,
-      &topic_remapping))
+      &topic_remapping,
+      &ignore_unknown_types))
   {
     return nullptr;
   }
@@ -267,6 +271,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
   play_options.loop = loop;
+  play_options.ignore_unknown_types = ignore_unknown_types;
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);

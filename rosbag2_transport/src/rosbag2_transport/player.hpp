@@ -21,6 +21,7 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "moodycamel/readerwriterqueue.h"
 
@@ -62,6 +63,8 @@ private:
   void prepare_publishers(const PlayOptions & options);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
+  std::vector<std::string> update_topics_to_filter_to_play_messages_with_unknwon_types(
+    const std::vector<std::string> & topics_to_filter);
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;

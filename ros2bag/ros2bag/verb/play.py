@@ -56,6 +56,10 @@ class PlayVerb(VerbExtension):
             '--remap', '-m', default='', nargs='+',
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
+        parser.add_argument(
+            '--ignore-unknown-types', action='store_true',
+            help='enables playing back bag files with unknown messages, skipping the message '
+                 'types that are unknown.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -82,4 +86,5 @@ class PlayVerb(VerbExtension):
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,
-            topic_remapping=args.remap)
+            topic_remapping=args.remap,
+            ignore_unknown_types=args.ignore_unknown_types)

@@ -25,6 +25,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
+#include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
@@ -104,6 +105,172 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
         Field(
           &test_msgs::msg::Arrays::float32_values,
           ElementsAre(40.0f, 2.0f, 0.0f)))));
+}
+
+TEST_F(RosBag2PlayTestFixture, play_messages_with_unknown_types)
+{
+  //  We assert that the bag file has been played correctly
+  //  which implies that the unknown topic has been left out correctly
+  play_options_.ignore_unknown_types = true;
+  //  test constants
+  const int32_t test_value = 42;
+  const size_t expected_number_of_messages = 2;
+
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = test_value;
+
+  auto wrong_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  wrong_message->time_stamp = 750 * 1000000;
+  wrong_message->topic_name = "topic2";
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "wrong_msgs/MyType", "", ""}
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    wrong_message};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (4) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", expected_number_of_messages);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(expected_number_of_messages)));
+  EXPECT_THAT(
+    replayed_test_primitives,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, test_value))));
+}
+
+TEST_F(RosBag2PlayTestFixture, play_messages_with_unknown_types_and_filter_topics)
+{
+  play_options_.ignore_unknown_types = true;
+  play_options_.topics_to_filter.push_back("topic1");
+  //  test constants
+  const int32_t test_value = 42;
+  const size_t expected_number_of_messages_for_topic1 = 2;
+  const size_t expected_number_of_messages_for_topic3 = 0;
+
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = test_value;
+
+  auto complex_message1 = get_messages_arrays()[0];
+
+  auto wrong_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  wrong_message->time_stamp = 750 * 1000000;
+  wrong_message->topic_name = "topic2";
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "wrong_msgs/MyType", "", ""},
+    {"topic3", "test_msgs/Arrays", "", ""}
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    wrong_message,
+    serialize_test_message("topic3", 550, complex_message1), };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (4) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(
+    "/topic1",
+    expected_number_of_messages_for_topic1);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic3", expected_number_of_messages_for_topic3);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(expected_number_of_messages_for_topic1)));
+  EXPECT_THAT(
+    replayed_test_primitives,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, test_value))));
+
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic3");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(expected_number_of_messages_for_topic3));
+}
+
+TEST_F(RosBag2PlayTestFixture, no_message_is_played_when_the_only_filtered_topic_is_unknown)
+{
+  testing::internal::CaptureStderr();
+
+  play_options_.ignore_unknown_types = true;
+  //  we only want to play a topic that doesn't exist and see what happens
+  play_options_.topics_to_filter.push_back("topic2");
+
+  //  test constants
+  const int32_t test_value = 42;
+  const size_t expected_number_of_messages = 0;
+
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = test_value;
+
+  auto wrong_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  wrong_message->time_stamp = 750 * 1000000;
+  wrong_message->topic_name = "topic2";
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "wrong_msgs/MyType", "", ""}
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    wrong_message};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (4) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", expected_number_of_messages);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  auto error_output = testing::internal::GetCapturedStderr();
+  EXPECT_THAT(error_output, HasSubstr("No topic to be sucribed to could be found."));
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(expected_number_of_messages));
 }
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
