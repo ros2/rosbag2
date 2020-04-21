@@ -32,18 +32,25 @@ find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rmw REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
+find_package(std_msgs REQUIRED)
+find_package(test_msgs REQUIRED)
+
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/converter.cpp
+  src/rosbag2_cpp/deserializer.cpp
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
+  src/rosbag2_cpp/serializer.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
+  src/rosbag2_cpp/type_names.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
@@ -55,11 +62,14 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   rcpputils
   rcutils
+  rmw
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
   rosidl_typesupport_introspection_cpp
   rosidl_typesupport_cpp
+  std_msgs
+  test_msgs
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -97,6 +107,7 @@ ament_export_dependencies(pluginlib
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -182,6 +193,13 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_multifile_reader.cpp)
   if(TARGET test_multifile_reader)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_serialization
+    test/rosbag2_cpp/test_serialization.cpp)
+  if(TARGET test_serialization)
+    target_link_libraries(test_serialization ${PROJECT_NAME})
+    ament_target_dependencies(test_serialization std_msgs test_msgs)
   endif()
 endif()
 
