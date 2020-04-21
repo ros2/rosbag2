@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rcl/graph.h"
 
@@ -44,22 +45,28 @@ namespace
  * Determine which QoS to offer for a topic.
  * The priority of the profile selected is:
  *   1. The override specified in play_options (if one exists for the topic).
- *   2. The default RMW QoS profile.
+ *   2. A profile automatically adapted to the recorded QoS profiles of publishers on the topic.
  *
  * \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
  * \param topic_qos_profile_overrides A map of topic to QoS profile overrides.
  * @return The QoS profile to be used for subscribing.
  */
 rclcpp::QoS publisher_qos_for_topic(
-  const std::string & topic_name,
-  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides)
+  const rosbag2_storage::TopicMetadata & topic,
+  const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides)
 {
-  auto qos_it = topic_qos_profile_overrides.find(topic_name);
+  using rosbag2_transport::Rosbag2QoS;
+  auto qos_it = topic_qos_profile_overrides.find(topic.name);
   if (qos_it != topic_qos_profile_overrides.end()) {
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic_name);
-    return rosbag2_transport::Rosbag2QoS{qos_it->second};
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
+    return Rosbag2QoS{qos_it->second};
+  } else if (topic.offered_qos_profiles.empty()) {
+    return Rosbag2QoS{};
   }
-  return rosbag2_transport::Rosbag2QoS{};
+
+  const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
+  const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
+  return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
 }  // namespace
 
@@ -189,7 +196,7 @@ void Player::prepare_publishers(const PlayOptions & options)
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    auto topic_qos = publisher_qos_for_topic(topic.name, topic_qos_profile_overrides_);
+    auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
     publishers_.insert(
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(
