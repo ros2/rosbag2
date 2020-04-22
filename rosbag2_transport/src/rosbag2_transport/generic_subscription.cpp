@@ -101,7 +101,7 @@ GenericSubscription::borrow_serialized_message(size_t capacity)
   *message = rmw_get_zero_initialized_serialized_message();
   auto init_return = rmw_serialized_message_init(message, capacity, &default_allocator_);
   if (init_return != RCL_RET_OK) {
-    rclcpp::exceptions::throw_from_rcl_error(init_return);
+    rclcpp::throw_from_rcl_error(init_return);
   }
 
   auto serialized_msg = std::shared_ptr<rmw_serialized_message_t>(
