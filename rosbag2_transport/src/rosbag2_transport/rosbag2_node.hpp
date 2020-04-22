@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/serialized_message.hpp"
 #include "rcpputils/shared_library.hpp"
 #include "rcutils/types.h"
 
@@ -46,7 +47,7 @@ public:
     const std::string & topic,
     const std::string & type,
     const rclcpp::QoS & qos,
-    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   std::unordered_map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);
