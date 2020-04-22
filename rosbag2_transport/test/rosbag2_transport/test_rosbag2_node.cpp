@@ -162,7 +162,7 @@ TEST_F(RosBag2NodeFixture, generic_subscription_uses_qos)
   auto publisher = node_->create_publisher<test_msgs::msg::Strings>(topic_name, qos);
   auto subscription = node_->create_generic_subscription(
     topic_name, topic_type, qos,
-    [](std::shared_ptr<rclcpp::SerializedMessage> /* message */) {});
+    [](std::shared_ptr<rclcpp::SerializedMessage>/* message */) {});
   auto connected = [publisher, subscription]() -> bool {
       return publisher->get_subscription_count() && subscription->get_publisher_count();
     };

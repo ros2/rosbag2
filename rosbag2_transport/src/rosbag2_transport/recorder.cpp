@@ -167,7 +167,7 @@ Recorder::create_subscription(
     [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data =
-        std::make_shared<rcl_serialized_message_t>(message->get_rcl_serialized_message());
+      std::make_shared<rcl_serialized_message_t>(message->release_rcl_serialized_message());
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
