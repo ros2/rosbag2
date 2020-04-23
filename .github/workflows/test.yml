@@ -11,10 +11,12 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:focal
     steps:
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-ci@0.0.13
+    - uses: ros-tooling/setup-ros@0.0.19
+    - uses: ros-tooling/action-ros-ci@0.0.16
       with:
         package-name: |
           ros2bag
