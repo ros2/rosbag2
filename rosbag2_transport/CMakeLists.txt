@@ -138,6 +138,7 @@ function(create_tests_for_rmw_implementation)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     AMENT_DEPS
+      rclcpp
       rosbag2_test_common
       yaml_cpp_vendor)
 
