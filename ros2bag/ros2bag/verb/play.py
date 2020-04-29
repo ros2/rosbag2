@@ -52,6 +52,10 @@ class PlayVerb(VerbExtension):
             '-l', '--loop', action='store_true',
             help='enables loop playback when playing a bagfile: it starts back at the beginning '
                  'on reaching the end and plays indefinitely.')
+        parser.add_argument(
+            '--remap', '-m', default='', nargs='+',
+            help='list of topics to be remapped: in the form '
+                 '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -77,4 +81,5 @@ class PlayVerb(VerbExtension):
             rate=args.rate,
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
-            loop=args.loop)
+            loop=args.loop,
+            topic_remapping=args.remap)

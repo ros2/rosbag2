@@ -82,10 +82,13 @@ void Rosbag2Transport::record(
   }
 }
 
-std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(std::string node_prefix)
+std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
+  std::string node_prefix,
+  const std::vector<std::string> & topic_remapping_options)
 {
   if (!transport_node_) {
-    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2");
+    auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
+    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2", node_options);
   }
   return transport_node_;
 }
@@ -94,9 +97,9 @@ void Rosbag2Transport::play(
   const StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
-    auto transport_node = setup_node(play_options.node_prefix);
+    auto transport_node =
+      setup_node(play_options.node_prefix, play_options.topic_remapping_options);
     Player player(reader_, transport_node);
-
     do {
       reader_->open(storage_options, {"", rmw_get_serialization_format()});
       player.play(play_options);
