@@ -21,11 +21,7 @@ if(WIN32)
 endif()
 
 option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
-# Only enable sanitizers on x64 architectures
-# https://github.com/google/sanitizers/issues/794
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  set(DISABLE_SANITIZERS ON)
-elseif(NOT DISABLE_SANITIZERS)
+if(NOT DISABLE_SANITIZERS)
   include(CheckCXXSourceCompiles)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
   set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")

@@ -21,11 +21,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(DISABLE_SANITIZERS "Disable the use of gcc sanitizers")
-# Only enable sanitizers on x64 architectures
-# https://github.com/google/sanitizers/issues/794
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  set(DISABLE_SANITIZERS ON)
-elseif(NOT DISABLE_SANITIZERS)
+if(NOT DISABLE_SANITIZERS)
   include(CheckCXXSourceCompiles)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
   set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
@@ -35,7 +31,6 @@ elseif(NOT DISABLE_SANITIZERS)
     set(DISABLE_SANITIZERS ON)
     message(WARNING "Sanitizers aren't supported by the compiler - disabling")
   endif()
-
 endif()
 
 find_package(ament_cmake REQUIRED)
