@@ -8,7 +8,8 @@ on:
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
-    - cron:  '0 * * * *'
+    #- cron:  '0 * * * *'
+    - cron:  '*/5 * * * *'
 
 jobs:
   build_and_test:
