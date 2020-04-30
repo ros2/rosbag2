@@ -119,10 +119,13 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 }
 
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
-  // Play a specific topic
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);
+  const unsigned int num_basic_msgs = 2u;
+  const unsigned int num_array_msgs = 1u;
+
+  // Play a specific topic
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0);
 
   auto subscription_future = sub_->spin_subscriptions();
@@ -138,13 +141,13 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
   EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
 
   // Play a different topic
   sub_ = std::make_unique<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -160,12 +163,12 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(0u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
 
   // Play all topics
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -180,8 +183,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
 
   // Play a non-existent topic
   sub_ = std::make_unique<SubscriptionManager>();
