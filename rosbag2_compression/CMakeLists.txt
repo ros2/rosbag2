@@ -25,6 +25,17 @@ option(DISABLE_SANITIZERS "Disable the use of gcc sanitizers")
 # https://github.com/google/sanitizers/issues/794
 if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
   set(DISABLE_SANITIZERS ON)
+elseif(NOT DISABLE_SANITIZERS)
+  include(CheckCXXSourceCompiles)
+  set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
+  check_cxx_source_compiles("int main() {}" HAVE_SANITIZERS)
+  set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+  if(NOT HAVE_SANITIZERS)
+    set(DISABLE_SANITIZERS ON)
+    message(WARNING "Sanitizers aren't supported by the compiler - disabling")
+  endif()
+
 endif()
 
 find_package(ament_cmake REQUIRED)
