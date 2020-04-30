@@ -120,7 +120,9 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   // Play a specific topic
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);  // 3);
+  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0);
 
   auto subscription_future = sub_->spin_subscriptions();
@@ -136,13 +138,13 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));  // 3u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));
   EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
 
   // Play a different topic
   sub_ = std::make_unique<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);  // 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -158,12 +160,12 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(0u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));  // 2u)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));
 
   // Play all topics
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);  // 3);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);  // 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -178,8 +180,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));  // 3u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));  // 2u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Ge(2u)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(1u)));
 
   // Play a non-existent topic
   sub_ = std::make_unique<SubscriptionManager>();
