@@ -21,7 +21,7 @@ if(WIN32)
 endif()
 
 option(DISABLE_SANITIZERS "disables the use of gcc sanitizers")
-if(NOT DISABLE_SANITIZERS)
+if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
   include(CheckCXXSourceCompiles)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
   set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
