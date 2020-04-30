@@ -3,7 +3,7 @@ on:
   # pull_request:
   push:
     branches:
-      - fix_unstable_play_test
+      - master
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
