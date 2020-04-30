@@ -120,7 +120,7 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   // Play a specific topic
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2); // 3);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0);
 
   auto subscription_future = sub_->spin_subscriptions();
@@ -142,7 +142,7 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   // Play a different topic
   sub_ = std::make_unique<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1); // 2);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -162,8 +162,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   // Play all topics
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 2); // 3);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1); // 2);
 
   subscription_future = sub_->spin_subscriptions();
 
