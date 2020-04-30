@@ -15,7 +15,7 @@ jobs:
     container:
       image: ubuntu:focal
     steps:
-    - uses: ros-tooling/setup-ros@0.0.20
+    - uses: ros-tooling/setup-ros@emersonknapp/try-focal
     - uses: ros-tooling/action-ros-ci@0.0.16
       with:
         package-name: |
