@@ -28,7 +28,7 @@ jobs:
           sqlite3_vendor
           rosbag2_test_common
           rosbag2_tests
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
         path: ros_ws/log
