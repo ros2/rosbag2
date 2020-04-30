@@ -20,11 +20,17 @@ if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
-option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
-# Only enable sanitizers on x64 architectures
-# https://github.com/google/sanitizers/issues/794
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  set(DISABLE_SANITIZERS ON)
+option(DISABLE_SANITIZERS "disables the use of gcc sanitizers")
+if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
+  include(CheckCXXSourceCompiles)
+  set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
+  check_cxx_source_compiles("int main() {}" HAVE_SANITIZERS)
+  set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+  if(NOT HAVE_SANITIZERS)
+    set(DISABLE_SANITIZERS ON)
+    message(WARNING "Sanitizers aren't supported by the compiler - disabling")
+  endif()
 endif()
 
 find_package(ament_cmake REQUIRED)
