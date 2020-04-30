@@ -15,7 +15,7 @@ jobs:
     container:
       image: ubuntu:focal
     steps:
-    - uses: ros-tooling/setup-ros@0.0.19
+    - uses: ros-tooling/setup-ros@0.0.20
     - uses: ros-tooling/action-ros-ci@0.0.16
       with:
         package-name: |
@@ -30,7 +30,7 @@ jobs:
           sqlite3_vendor
           rosbag2_test_common
           rosbag2_tests
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
         path: ros_ws/log
