@@ -2,8 +2,8 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.5 (2020-04-30)
+------------------
 * [Compression - 5] Add Zstd file compression (`#220 <https://github.com/ros2/rosbag2/issues/220>`_)
 * Contributors: Anas Abou Allaban, Zachary Michaels
 

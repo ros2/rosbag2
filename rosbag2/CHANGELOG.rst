@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.5 (2020-04-30)
+------------------
 * Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
 * Contributors: Anas Abou Allaban, Karsten Knese, Prajakta Gokhale
 

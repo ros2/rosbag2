@@ -2,8 +2,8 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.5 (2020-04-30)
+------------------
 * Don't fail build if lsan isn't available. (`#397 <https://github.com/ros2/rosbag2/issues/397>`_)
 * Correctly set all test dependencies. (`#392 <https://github.com/ros2/rosbag2/issues/392>`_)
 * Deduplicate code in SequentialCompressionReader. (`#372 <https://github.com/ros2/rosbag2/issues/372>`_)

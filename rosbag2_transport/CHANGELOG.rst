@@ -3,8 +3,8 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.2.5 (2020-04-30)
+------------------
 * add topic remapping option to rosbag2 play (`#388 <https://github.com/ros2/rosbag2/issues/388>`_)
 * add missing test dependency (`#392 <https://github.com/ros2/rosbag2/issues/392>`_)
 * use serialized message (`#386 <https://github.com/ros2/rosbag2/issues/386>`_)

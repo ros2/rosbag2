@@ -2,8 +2,8 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.5 (2020-04-30)
+------------------
 * use serialized message (`#386 <https://github.com/ros2/rosbag2/issues/386>`_)
 * QoS Profile Overrides - Player (`#353 <https://github.com/ros2/rosbag2/issues/353>`_)
 * Intelligently subscribe to topics according to their QoS profiles (`#355 <https://github.com/ros2/rosbag2/issues/355>`_)
