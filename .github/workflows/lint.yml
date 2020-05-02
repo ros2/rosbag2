@@ -1,4 +1,8 @@
 # Run linters automatically on pull requests.
+#
+# ros-tooling/actino-ros-lint is relying on the latest APT binary packages.
+# As of 2020-05-01, Eloquent is the latest release for which APT binary
+# packages are available, which is why the Docker image is based on Eloquent.
 name: Lint rosbag2
 on:
   pull_request:
@@ -6,11 +10,14 @@ on:
 jobs:
   ament_copyright:
     name: ament_copyright
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: copyright
         package-name: |
@@ -25,11 +32,14 @@ jobs:
 
   ament_xmllint:
     name: ament_xmllint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: xmllint
         package-name: |
@@ -46,15 +56,18 @@ jobs:
 
   ament_lint_cpp: # Linters applicable to C++ packages
     name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
         package-name: |
@@ -68,15 +81,18 @@ jobs:
 
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [flake8, pep257]
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    # TODO(setup-ros-docker#7): calling chown is necessary for now
+    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
         package-name: |
