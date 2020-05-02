@@ -45,7 +45,10 @@ namespace rosbag2_cpp
 // Only used internally.
 struct ConverterTypeSupport
 {
+  std::shared_ptr<rcpputils::SharedLibrary> type_support_library;
   const rosidl_message_type_support_t * rmw_type_support;
+
+  std::shared_ptr<rcpputils::SharedLibrary> introspection_type_support_library;
   const rosidl_message_type_support_t * introspection_type_support;
 };
 
@@ -84,8 +87,6 @@ private:
   std::unique_ptr<converter_interfaces::SerializationFormatDeserializer> input_converter_;
   std::unique_ptr<converter_interfaces::SerializationFormatSerializer> output_converter_;
   std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
-  std::shared_ptr<rcpputils::SharedLibrary> library_rosidl_typesupport_cpp_;
-  std::shared_ptr<rcpputils::SharedLibrary> library_rosidl_typesupport_introspection_cpp_;
 };
 
 }  // namespace rosbag2_cpp

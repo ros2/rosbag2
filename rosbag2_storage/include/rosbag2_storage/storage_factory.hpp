@@ -19,8 +19,6 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -34,6 +32,12 @@
 
 namespace rosbag2_storage
 {
+
+namespace storage_interfaces
+{
+class ReadOnlyInterface;
+class ReadWriteInterface;
+}
 
 class StorageFactoryImpl;
 

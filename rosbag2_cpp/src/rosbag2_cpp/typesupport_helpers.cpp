@@ -116,8 +116,11 @@ get_typesupport(
   auto library_path = get_typesupport_library_path(package_name, typesupport_identifier);
 
   try {
-    library = std::make_shared<rcpputils::SharedLibrary>(library_path);
-
+    // TODO(karsten1987) This logic is pretty fragile.
+    // The library should not be passed in via a reference to a shared pointer.
+    if (!library || (library && library->get_library_path() != library_path)) {
+      library = std::make_shared<rcpputils::SharedLibrary>(library_path);
+    }
     auto symbol_name = typesupport_identifier + "__get_message_type_support_handle__" +
       package_name + "__" + (middle_module.empty() ? "msg" : middle_module) + "__" + type_name;
 
