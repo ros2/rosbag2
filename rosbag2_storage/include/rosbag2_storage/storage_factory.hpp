@@ -37,7 +37,7 @@ namespace storage_interfaces
 {
 class ReadOnlyInterface;
 class ReadWriteInterface;
-}
+}  // namespace storage_interfaces
 
 class StorageFactoryImpl;
 

@@ -30,6 +30,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 

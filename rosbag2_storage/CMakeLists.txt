@@ -21,7 +21,7 @@ if(WIN32)
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(pluginlib 2 REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
@@ -41,7 +41,6 @@ ament_target_dependencies(
   rcutils
   yaml_cpp_vendor)
 
-#set_target_properties(rosbag2_storage PROPERTIES NO_SYSTEM_FROM_IMPORTED 1)
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(rosbag2_storage PRIVATE "ROSBAG2_STORAGE_BUILDING_DLL")

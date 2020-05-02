@@ -24,8 +24,8 @@
 
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
-#include "logging.hpp"
 
+#include "logging.hpp"
 
 namespace rosbag2_compression
 {

@@ -22,11 +22,15 @@
 #include <utility>
 
 #include "rcpputils/filesystem_helper.hpp"
+
 #include "rcutils/filesystem.h"
 
 #include "rosbag2_compression/zstd_compressor.hpp"
+
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
+
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
 
