@@ -70,20 +70,15 @@ install(
   DESTINATION include)
 
 install(
-  TARGETS ${PROJECT_NAME}_zstd
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
-
-install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_zstd
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
 ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME}_zstd)
-ament_export_libraries(${PROJECT_NAME})
+ament_export_libraries(${PROJECT_NAME} ${PROJECT_NAME}_zstd)
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(rosbag2_storage rcutils zstd_vendor)
 
 if(BUILD_TESTING)

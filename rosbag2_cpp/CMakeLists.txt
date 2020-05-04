@@ -87,12 +87,14 @@ install(
 
 install(
   TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(pluginlib
   rosbag2_storage
   rosidl_runtime_c
