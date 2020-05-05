@@ -28,14 +28,17 @@ macro(build_zstd)
 
   include(ExternalProject)
   # The CMakeLists.txt file for zstd is in a subdirectory.
-  # We need to configure the CMake command to build from there instead. 
+  # We need to configure the CMake command to build from there instead.
   ExternalProject_Add(zstd-1.4.4
     URL https://github.com/facebook/zstd/archive/v1.4.4.zip
     URL_MD5 3a5c3a535280b7f4dfdbd739fcc7173f
     TIMEOUT 60
     SOURCE_SUBDIR build/cmake
+    INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install"
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
+      -DZSTD_BUILD_STATIC=ON
+      -DZSTD_BUILD_SHARED=OFF
       ${extra_cmake_args})
 
   install(
@@ -43,13 +46,15 @@ macro(build_zstd)
     DESTINATION .)
 endmacro()
 
-if (NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
+if(NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
   build_zstd()
 else()
   message(STATUS "Found Zstd, skipping build.")
 endif()
 
-ament_export_libraries(zstd)
-ament_export_include_directories(include)
+install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
-ament_package()
+#ament_export_libraries(zstd)
+#ament_export_include_directories(include)
+
+ament_package(CONFIG_EXTRAS zstd_vendor-extras.cmake)

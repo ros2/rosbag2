@@ -26,6 +26,7 @@ find_package(rcutils REQUIRED)
 find_package(rosbag2_cpp)
 find_package(rosbag2_storage REQUIRED)
 find_package(zstd_vendor REQUIRED)
+find_package(zstd REQUIRED)
 
 add_library(${PROJECT_NAME}_zstd
   SHARED
@@ -34,13 +35,12 @@ add_library(${PROJECT_NAME}_zstd
 target_include_directories(${PROJECT_NAME}_zstd
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-  ${zstd_vendor_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_zstd ${zstd_vendor_LIBRARIES})
+  $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(${PROJECT_NAME}_zstd
   rcpputils
   rcutils
-  rosbag2_storage)
+  rosbag2_storage
+  zstd)
 # Causes the visibility macros to use dllexport rather than dllimport.
 # This is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME}_zstd
