@@ -33,7 +33,9 @@ if (NOT SQLite3_FOUND)
     )
 
   # The external project will install to the build folder, but we'll install that on make install.
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sqlite3_install/ DESTINATION ${CMAKE_INSTALL_PREFIX})
+  install(
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sqlite3_install/
+    DESTINATION .)
 else ()
   message(STATUS "Found SQLite3. Using SQLite3 from system.")
 endif ()
