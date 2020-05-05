@@ -44,9 +44,10 @@ Rosbag2Node::Rosbag2Node(const std::string & node_name, const rclcpp::NodeOption
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(
   const std::string & topic, const std::string & type, const rclcpp::QoS & qos)
 {
-  auto type_support = rosbag2_cpp::get_typesupport(
-    type, "rosidl_typesupport_cpp",
-    library_generic_publisher_);
+  library_generic_publisher_ = rosbag2_cpp::get_typesupport_library(
+    type, "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    type, "rosidl_typesupport_cpp", library_generic_publisher_);
   return std::make_shared<GenericPublisher>(
     get_node_base_interface().get(), *type_support, topic, qos);
 }
@@ -57,9 +58,10 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const rclcpp::QoS & qos,
   std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback)
 {
-  auto type_support = rosbag2_cpp::get_typesupport(
-    type, "rosidl_typesupport_cpp",
-    library_generic_subscriptor_);
+  library_generic_subscriptor_ = rosbag2_cpp::get_typesupport_library(
+    type, "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    type, "rosidl_typesupport_cpp", library_generic_subscriptor_);
   auto subscription = std::shared_ptr<GenericSubscription>();
 
   try {

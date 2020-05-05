@@ -83,12 +83,15 @@ void Converter::add_topic(const std::string & topic, const std::string & type)
 {
   ConverterTypeSupport type_support;
 
-  type_support.rmw_type_support = get_typesupport(
+  type_support.type_support_library = get_typesupport_library(
+    type, "rosidl_typesupport_cpp");
+  type_support.rmw_type_support = get_typesupport_handle(
     type, "rosidl_typesupport_cpp",
     type_support.type_support_library);
 
-  type_support.introspection_type_support =
-    get_typesupport(
+  type_support.introspection_type_support_library = get_typesupport_library(
+    type, "rosidl_typesupport_introspection_cpp");
+  type_support.introspection_type_support = get_typesupport_handle(
     type, "rosidl_typesupport_introspection_cpp",
     type_support.introspection_type_support_library);
 

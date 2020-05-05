@@ -98,11 +98,25 @@ extract_type_identifier(const std::string & full_type)
   return std::make_tuple(package_name, middle_module, type_name);
 }
 
-const rosidl_message_type_support_t *
-get_typesupport(
-  const std::string & type, const std::string & typesupport_identifier,
-  std::shared_ptr<rcpputils::SharedLibrary> & library)
+std::shared_ptr<rcpputils::SharedLibrary>
+get_typesupport_library(const std::string & type, const std::string & typesupport_identifier)
 {
+  auto package_name = std::get<0>(extract_type_identifier(type));
+  auto library_path = get_typesupport_library_path(package_name, typesupport_identifier);
+  return std::make_shared<rcpputils::SharedLibrary>(library_path);
+}
+
+const rosidl_message_type_support_t *
+get_typesupport_handle(
+  const std::string & type,
+  const std::string & typesupport_identifier,
+  std::shared_ptr<rcpputils::SharedLibrary> library)
+{
+  if (nullptr == library) {
+    throw std::runtime_error(
+            "rcpputils::SharedLibrary not initialized. Call get_typesupport_library first.");
+  }
+
   std::string package_name;
   std::string middle_module;
   std::string type_name;
@@ -113,14 +127,7 @@ get_typesupport(
     "Something went wrong loading the typesupport library for message type " << package_name <<
     "/" << type_name << ".";
 
-  auto library_path = get_typesupport_library_path(package_name, typesupport_identifier);
-
   try {
-    // TODO(karsten1987) This logic is pretty fragile.
-    // The library should not be passed in via a reference to a shared pointer.
-    if (!library || (library && library->get_library_path() != library_path)) {
-      library = std::make_shared<rcpputils::SharedLibrary>(library_path);
-    }
     auto symbol_name = typesupport_identifier + "__get_message_type_support_handle__" +
       package_name + "__" + (middle_module.empty() ? "msg" : middle_module) + "__" + type_name;
 

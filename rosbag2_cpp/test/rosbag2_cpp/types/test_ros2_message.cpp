@@ -46,12 +46,14 @@ public:
 
   auto get_allocated_message(const std::string & message_type)
   {
-    auto introspection_ts =
-      rosbag2_cpp::get_typesupport(message_type, "rosidl_typesupport_introspection_cpp", library);
+    auto library = rosbag2_cpp::get_typesupport_library(
+      message_type, "rosidl_typesupport_introspection_cpp");
+    auto introspection_ts = rosbag2_cpp::get_typesupport_handle(
+      message_type, "rosidl_typesupport_introspection_cpp", library);
 
     return rosbag2_cpp::allocate_introspection_message(introspection_ts, &allocator_);
   }
-  std::shared_ptr<rcpputils::SharedLibrary> library;
+
   rcutils_allocator_t allocator_;
 };
 
