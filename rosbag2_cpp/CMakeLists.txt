@@ -54,8 +54,8 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
-  src/rosbag2_cpp/writers/sequential_writer.cpp)
-
+  src/rosbag2_cpp/writers/sequential_writer.cpp
+)
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
   pluginlib
@@ -64,8 +64,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
-  rosidl_typesupport_introspection_cpp
   rosidl_typesupport_cpp
+  rosidl_typesupport_introspection_cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -95,10 +95,12 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(pluginlib
+ament_export_dependencies(
+  pluginlib
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
+  rosidl_typesupport_cpp
   rosidl_typesupport_introspection_cpp
 )
 
