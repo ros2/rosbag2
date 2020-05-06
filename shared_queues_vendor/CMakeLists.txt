@@ -39,6 +39,7 @@ target_include_directories(concurrentqueue INTERFACE $<INSTALL_INTERFACE:include
 install(
   TARGETS singleproducerconsumer concurrentqueue
   EXPORT export_${PROJECT_NAME}
+  INCLUDES DESTINATION include
 )
 
 # Install headers
