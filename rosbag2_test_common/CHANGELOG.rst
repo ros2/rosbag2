@@ -2,6 +2,20 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.5 (2020-04-30)
+------------------
+* use serialized message (`#386 <https://github.com/ros2/rosbag2/issues/386>`_)
+* QoS Profile Overrides - Player (`#353 <https://github.com/ros2/rosbag2/issues/353>`_)
+* Intelligently subscribe to topics according to their QoS profiles (`#355 <https://github.com/ros2/rosbag2/issues/355>`_)
+* Override Subscriber QoS - Record (`#346 <https://github.com/ros2/rosbag2/issues/346>`_)
+* fix cyclone tests (`#338 <https://github.com/ros2/rosbag2/issues/338>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Enhance E2E tests in Windows (`#278 <https://github.com/ros2/rosbag2/issues/278>`_)
+* Add splitting e2e tests (`#247 <https://github.com/ros2/rosbag2/issues/247>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Anas Abou Allaban, Dirk Thomas, Emerson Knapp, Karsten Knese, Zachary Michaels
+
 0.2.4 (2019-11-18)
 ------------------
 

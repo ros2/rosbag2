@@ -20,13 +20,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-option(DISABLE_SANITIZERS "Disable the use of gcc sanitizers")
-# Only enable sanitizers on x64 architectures
-# https://github.com/google/sanitizers/issues/794
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  set(DISABLE_SANITIZERS ON)
-endif()
-
 find_package(ament_cmake REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
@@ -96,6 +89,7 @@ ament_export_dependencies(rosbag2_storage rcutils zstd_vendor)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rclcpp REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -136,7 +130,7 @@ if(BUILD_TESTING)
     test/rosbag2_compression/test_zstd_compressor.cpp)
   target_include_directories(test_zstd_compressor PUBLIC include)
   target_link_libraries(test_zstd_compressor ${PROJECT_NAME}_zstd)
-  ament_target_dependencies(test_zstd_compressor rosbag2_test_common rosbag2_storage)
+  ament_target_dependencies(test_zstd_compressor rclcpp rosbag2_test_common rosbag2_storage)
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
