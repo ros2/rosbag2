@@ -120,6 +120,7 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
     error_output, HasSubstr("Requested converter for format 'wrong_format' does not exist"));
 }
 
+#ifndef _WIN32
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
@@ -208,3 +209,4 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   EXPECT_THAT(primitive_messages, SizeIs(Ge(0u)));
   EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
 }
+#endif
