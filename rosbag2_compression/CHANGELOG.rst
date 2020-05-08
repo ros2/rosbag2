@@ -2,8 +2,8 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.6 (2020-05-07)
+------------------
 * Remove relative include paths in rosbag2_compression tests. (`#405 <https://github.com/ros2/rosbag2/issues/405>`_)
 * Contributors: Karsten Knese, Zachary Michaels
 
