@@ -59,6 +59,7 @@ public:
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
+#ifndef _WIN32
 TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
@@ -95,6 +96,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
           &test_msgs::msg::Arrays::string_values,
           ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
+#endif
 
 TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
