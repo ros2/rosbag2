@@ -3,6 +3,9 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.2.5 (2020-04-30)
 ------------------
 * fix CMake warning about using uninitialized variables (`#382 <https://github.com/ros2/rosbag2/issues/382>`_)

@@ -3,6 +3,11 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
 0.2.5 (2020-04-30)
 ------------------
 * Don't fail build if lsan isn't available (`#397 <https://github.com/ros2/rosbag2/issues/397>`_)

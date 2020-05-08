@@ -3,6 +3,9 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.2.5 (2020-04-30)
 ------------------
 * Add filter for reading selective topics (`#302 <https://github.com/ros2/rosbag2/issues/302>`_)

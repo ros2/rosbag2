@@ -3,6 +3,11 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Correct usage of rclcpp::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
 0.2.5 (2020-04-30)
 ------------------
 * Read serialized qos profiles out of the metadata (`#359 <https://github.com/ros2/rosbag2/issues/359>`_)

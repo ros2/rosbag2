@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.2.5 (2020-04-30)
 ------------------
 * use serialized message (`#386 <https://github.com/ros2/rosbag2/issues/386>`_)
