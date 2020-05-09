@@ -45,6 +45,11 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture() = default;
 
+  ~RecordFixture()
+  {
+
+  }
+
   void SetUp() override
   {
     root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / get_test_name();
@@ -60,6 +65,12 @@ public:
   static void SetUpTestCase()
   {
     rclcpp::init(0, nullptr);
+  }
+
+  void TearDown() override
+  {
+    fprintf(stderr, "removing %s\n", root_bag_path_.string().c_str());
+    remove_directory_recursively(root_bag_path_.string());
   }
 
   static void TearDownTestCase()
@@ -90,6 +101,11 @@ public:
   rcpputils::fs::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
+  }
+
+  rcpputils::fs::path get_relative_bag_file_path(int split_index)
+  {
+    return rcpputils::fs::path(get_bag_file_name(split_index) + ".db3");
   }
 
   void wait_for_metadata()

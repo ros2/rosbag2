@@ -258,13 +258,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
-      const auto bag_file_path = get_bag_file_name(i);
-
-      if (rcpputils::fs::path(bag_file_path).exists()) {
-        metadata.relative_file_paths.push_back(bag_file_path);
-      } else {
-        break;
-      }
+      const auto bag_file_path = get_relative_bag_file_path(i);
+      metadata.relative_file_paths.push_back(bag_file_path.string());
     }
 
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
@@ -390,13 +385,13 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
     metadata.storage_identifier = "sqlite3";
 
     for (int i = 0; i < expected_splits; ++i) {
-      const auto bag_file_path = get_bag_file_name(i);
+      const auto rel_bag_file_path = get_relative_bag_file_path(i);
 
       // There is no guarantee that the bagfile split expected_split times
       // due to possible io sync delays. Instead, assert that the bagfile split
       // at least once
-      if (rcpputils::fs::path(bag_file_path).exists()) {
-        metadata.relative_file_paths.push_back(bag_file_path);
+      if (rcpputils::fs::exists(root_bag_path_ / rel_bag_file_path)) {
+        metadata.relative_file_paths.push_back(rel_bag_file_path.string());
       }
     }
 
