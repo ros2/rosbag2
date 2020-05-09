@@ -45,11 +45,6 @@ class RecordFixture : public TemporaryDirectoryFixture
 public:
   RecordFixture() = default;
 
-  ~RecordFixture()
-  {
-
-  }
-
   void SetUp() override
   {
     root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / get_test_name();
