@@ -64,7 +64,6 @@ public:
 
   void TearDown() override
   {
-    fprintf(stderr, "removing %s\n", root_bag_path_.string().c_str());
     remove_directory_recursively(root_bag_path_.string());
   }
 
