@@ -32,7 +32,7 @@ public:
 
   // The maximum duration a bagfile can be, in nanoseconds, before it is split.
   // A value of 0 indicates that bagfile splitting will not be used.
-  std::chrono::nanoseconds max_bagfile_duration = std::chrono::nanoseconds(0);
+  uint64_t max_bagfile_duration = 0;
 
   // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.
