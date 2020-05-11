@@ -259,7 +259,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
     // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
       const auto bag_file_path = get_relative_bag_file_path(i);
-      metadata.relative_file_paths.push_back(bag_file_path.string());
+      if (rcpputils::fs::exists(root_bag_path_ / bag_file_path)) {
+        metadata.relative_file_paths.push_back(bag_file_path.string());
+      }
     }
 
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
