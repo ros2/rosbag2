@@ -61,6 +61,7 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
+  max_bagfile_duration(std::chrono::nanoseconds(0)),
   topics_names_to_info_(),
   metadata_()
 {}
