@@ -86,6 +86,7 @@ void SequentialWriter::open(
 {
   base_folder_ = storage_options.uri;
   max_bagfile_size_ = storage_options.max_bagfile_size;
+  max_bagfile_duration = storage_options.max_bagfile_duration;
   max_cache_size_ = storage_options.max_cache_size;
 
   cache_.reserve(max_cache_size_);
