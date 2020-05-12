@@ -3,6 +3,12 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+* Fix splitting tests on windows (`#407 <https://github.com/ros2/rosbag2/issues/407>`_)
+* Fix `#381 <https://github.com/ros2/rosbag2/issues/381>`_ unstable play_end_to_end test (`#396 <https://github.com/ros2/rosbag2/issues/396>`_)
+* Contributors: Karsten Knese, Mabel Zhang
+
 0.2.6 (2020-05-07)
 ------------------
 * Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
