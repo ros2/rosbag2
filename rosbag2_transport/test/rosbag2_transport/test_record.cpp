@@ -208,7 +208,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   const size_t different_history = 12;
   const rmw_time_t deadline{0, 1000};
   const rmw_time_t lifespan{3, 12};
-  const auto liveliness = RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_NODE;
+  const auto liveliness = RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC;
   const rmw_time_t liveliness_lease_duration{0, 5000000};
 
   auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for");
