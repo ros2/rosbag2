@@ -30,7 +30,7 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_size = 0;
 
-  // The maximum duration a bagfile can be, in nanoseconds, before it is split.
+  // The maximum duration a bagfile can be, in seconds, before it is split.
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
