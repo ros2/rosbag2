@@ -80,7 +80,7 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME} ${PROJECT_NAME}_zstd)
 ament_export_targets(export_${PROJECT_NAME})
 # order matters here, first vendor, then zstd
-ament_export_dependencies(rosbag2_storage rcutils zstd_vendor zstd)
+ament_export_dependencies(rcpputils rcutils rosbag2_cpp rosbag2_storage zstd_vendor zstd)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
