@@ -3,6 +3,28 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rclcpp::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* Read serialized qos profiles out of the metadata (`#359 <https://github.com/ros2/rosbag2/issues/359>`_)
+* Add filter for reading selective topics (`#302 <https://github.com/ros2/rosbag2/issues/302>`_)
+* Transaction based sqlite3 inserts (`#225 <https://github.com/ros2/rosbag2/issues/225>`_)
+* Add QoS profiles field to metadata struct and provide serialization utilities (`#330 <https://github.com/ros2/rosbag2/issues/330>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* remove rosbag2 filesystem helper (`#249 <https://github.com/ros2/rosbag2/issues/249>`_)
+* [Compression - 7] Add compression metadata (`#221 <https://github.com/ros2/rosbag2/issues/221>`_)
+* Sanitize bagfile splitting CLI input (`#226 <https://github.com/ros2/rosbag2/issues/226>`_)
+* Move get_storage_identifier and get_bagfile_size (`#209 <https://github.com/ros2/rosbag2/issues/209>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Anas Abou Allaban, Dirk Thomas, Emerson Knapp, Karsten Knese, Mabel Zhang, Prajakta Gokhale, Sriram Raghunathan, Zachary Michaels
+
 0.2.4 (2019-11-18)
 ------------------
 

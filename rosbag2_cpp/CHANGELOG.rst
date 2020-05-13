@@ -3,6 +3,43 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* Don't fail build if lsan isn't available (`#397 <https://github.com/ros2/rosbag2/issues/397>`_)
+* Expose BaseReaderInterface's BagMetadata  (`#377 <https://github.com/ros2/rosbag2/issues/377>`_)
+* Expose topic filter to command line (addresses `#342 <https://github.com/ros2/rosbag2/issues/342>`_) (`#363 <https://github.com/ros2/rosbag2/issues/363>`_)
+* Deduplicate code in SequentialCompressionReader (`#372 <https://github.com/ros2/rosbag2/issues/372>`_)
+* rename rosidl_generator_c namespace to rosidl_runtime_c (`#368 <https://github.com/ros2/rosbag2/issues/368>`_)
+* rename rosidl_generator_cpp namespace to rosidl_runtime_cpp (`#366 <https://github.com/ros2/rosbag2/issues/366>`_)
+* added rosidl_runtime c and cpp depencencies (`#310 <https://github.com/ros2/rosbag2/issues/310>`_)
+* Replace poco dependency by rcutils (`#322 <https://github.com/ros2/rosbag2/issues/322>`_)
+* resolve relative file paths (`#345 <https://github.com/ros2/rosbag2/issues/345>`_)
+* Add filter for reading selective topics (`#302 <https://github.com/ros2/rosbag2/issues/302>`_)
+* default max bag size to 0 (`#344 <https://github.com/ros2/rosbag2/issues/344>`_)
+* Transaction based sqlite3 inserts (`#225 <https://github.com/ros2/rosbag2/issues/225>`_)
+* Add QoS to metadata (re-do `#330 <https://github.com/ros2/rosbag2/issues/330>`_) (`#335 <https://github.com/ros2/rosbag2/issues/335>`_)
+* Revert "Add QoS profiles field to metadata struct and provide serialization utilities (`#330 <https://github.com/ros2/rosbag2/issues/330>`_)" (`#334 <https://github.com/ros2/rosbag2/issues/334>`_)
+* Add QoS profiles field to metadata struct and provide serialization utilities (`#330 <https://github.com/ros2/rosbag2/issues/330>`_)
+* Replace rcutils_get_file_size with rcpputils::fs::file_size (`#291 <https://github.com/ros2/rosbag2/issues/291>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Fix ros2 bag play on split bags (`#268 <https://github.com/ros2/rosbag2/issues/268>`_)
+* [compression] Add SequentialCompressionWriter (`#260 <https://github.com/ros2/rosbag2/issues/260>`_)
+* Add unit test for SequentialReader when metadata file does not exist (`#254 <https://github.com/ros2/rosbag2/issues/254>`_)
+* Move compression artifacts from rosbag2_cpp to rosbag2_compression (`#257 <https://github.com/ros2/rosbag2/issues/257>`_)
+* Fix uncrustify warnings (`#256 <https://github.com/ros2/rosbag2/issues/256>`_)
+* remove rosbag2 filesystem helper (`#249 <https://github.com/ros2/rosbag2/issues/249>`_)
+* [Compression - 8] Enable reader to read from compressed files/messages (`#246 <https://github.com/ros2/rosbag2/issues/246>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* Contributors: Alejandro Hernández Cordero, Anas Abou Allaban, Dirk Thomas, Emerson Knapp, Karsten Knese, Mabel Zhang, Scott K Logan, Sriram Raghunathan, Zachary Michaels
+
 0.2.4 (2019-11-18)
 ------------------
 * Load metadata from storage if no yaml file is found. (`#210 <https://github.com/ros2/rosbag2/issues/210>`_)

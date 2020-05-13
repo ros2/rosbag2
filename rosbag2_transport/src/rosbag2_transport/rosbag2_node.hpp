@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/node_options.hpp"
 #include "rcpputils/shared_library.hpp"
 #include "rcutils/types.h"
 
@@ -35,6 +37,9 @@ class Rosbag2Node : public rclcpp::Node
 {
 public:
   explicit Rosbag2Node(const std::string & node_name);
+  explicit Rosbag2Node(
+    const std::string & node_name,
+    const rclcpp::NodeOptions & options);
   ~Rosbag2Node() override = default;
 
   std::shared_ptr<GenericPublisher>
@@ -46,7 +51,7 @@ public:
     const std::string & topic,
     const std::string & type,
     const rclcpp::QoS & qos,
-    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   std::unordered_map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);

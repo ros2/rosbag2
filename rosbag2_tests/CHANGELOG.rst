@@ -3,6 +3,37 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+* Fix splitting tests on windows (`#407 <https://github.com/ros2/rosbag2/issues/407>`_)
+* Fix `#381 <https://github.com/ros2/rosbag2/issues/381>`_ unstable play_end_to_end test (`#396 <https://github.com/ros2/rosbag2/issues/396>`_)
+* Contributors: Karsten Knese, Mabel Zhang
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* Expose topic filter to command line (addresses `#342 <https://github.com/ros2/rosbag2/issues/342>`_) (`#363 <https://github.com/ros2/rosbag2/issues/363>`_)
+* Fix rosbag2_tests resource files and play_end_to_end test (`#362 <https://github.com/ros2/rosbag2/issues/362>`_)
+* Replace poco dependency by rcutils (`#322 <https://github.com/ros2/rosbag2/issues/322>`_)
+* resolve relative file paths (`#345 <https://github.com/ros2/rosbag2/issues/345>`_)
+* Transaction based sqlite3 inserts (`#225 <https://github.com/ros2/rosbag2/issues/225>`_)
+* Replace rcutils_get_file_size with rcpputils::fs::file_size (`#291 <https://github.com/ros2/rosbag2/issues/291>`_)
+* [compression] Enable compression through ros2bag cli (`#263 <https://github.com/ros2/rosbag2/issues/263>`_)
+* Wait for metadata to be written to disk (`#283 <https://github.com/ros2/rosbag2/issues/283>`_)
+* Refactor record_fixture to use rcpputils::fs::path (`#286 <https://github.com/ros2/rosbag2/issues/286>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Enhance E2E tests in Windows (`#278 <https://github.com/ros2/rosbag2/issues/278>`_)
+* Add splitting e2e tests (`#247 <https://github.com/ros2/rosbag2/issues/247>`_)
+* remove rosbag2 filesystem helper (`#249 <https://github.com/ros2/rosbag2/issues/249>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* [Compression - 7] Add compression metadata (`#221 <https://github.com/ros2/rosbag2/issues/221>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Alejandro Hernández Cordero, Anas Abou Allaban, Dirk Thomas, Karsten Knese, Mabel Zhang, Sriram Raghunathan, Zachary Michaels
+
 0.2.4 (2019-11-18)
 ------------------
 

@@ -74,10 +74,11 @@ public:
     size_t counter = 0;
     auto subscription = node_->create_generic_subscription(
       topic_name, type, rosbag2_transport::Rosbag2QoS{},
-      [this, &counter, &messages](std::shared_ptr<rmw_serialized_message_t> message) {
-        auto string_message =
-        memory_management_.deserialize_message<test_msgs::msg::Strings>(message);
-        messages.push_back(string_message->string_value);
+      [&counter, &messages](std::shared_ptr<rclcpp::SerializedMessage> message) {
+        test_msgs::msg::Strings string_message;
+        rclcpp::Serialization<test_msgs::msg::Strings> serializer;
+        serializer.deserialize_message(message.get(), &string_message);
+        messages.push_back(string_message.string_value);
         counter++;
       });
 
@@ -161,7 +162,7 @@ TEST_F(RosBag2NodeFixture, generic_subscription_uses_qos)
   auto publisher = node_->create_publisher<test_msgs::msg::Strings>(topic_name, qos);
   auto subscription = node_->create_generic_subscription(
     topic_name, topic_type, qos,
-    [](std::shared_ptr<rmw_serialized_message_t>/* message */) {});
+    [](std::shared_ptr<rclcpp::SerializedMessage>/* message */) {});
   auto connected = [publisher, subscription]() -> bool {
       return publisher->get_subscription_count() && subscription->get_publisher_count();
     };

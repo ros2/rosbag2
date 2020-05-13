@@ -20,6 +20,7 @@
 
 #include "rclcpp/any_subscription_callback.hpp"
 #include "rclcpp/macros.hpp"
+#include "rclcpp/serialization.hpp"
 #include "rclcpp/subscription.hpp"
 
 namespace rosbag2_transport
@@ -50,12 +51,12 @@ public:
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
     const rclcpp::QoS & qos,
-    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
 
-  std::shared_ptr<rmw_serialized_message_t> create_serialized_message() override;
+  std::shared_ptr<rclcpp::SerializedMessage> create_serialized_message() override;
 
   void handle_message(
     std::shared_ptr<void> & message, const rclcpp::MessageInfo & message_info) override;
@@ -66,7 +67,7 @@ public:
   // Same as return_serialized_message() as the subscription is to serialized_messages only
   void return_message(std::shared_ptr<void> & message) override;
 
-  void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
+  void return_serialized_message(std::shared_ptr<rclcpp::SerializedMessage> & message) override;
 
   // Provide a const reference to the QoS Profile used to create this subscription.
   const rclcpp::QoS & qos_profile() const;
@@ -74,9 +75,9 @@ public:
 private:
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
-  std::shared_ptr<rmw_serialized_message_t> borrow_serialized_message(size_t capacity);
+  std::shared_ptr<rclcpp::SerializedMessage> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
-  std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback_;
+  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback_;
   const rclcpp::QoS qos_;
 };
 

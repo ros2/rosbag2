@@ -3,6 +3,54 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+* Remove MANUAL_BY_NODE liveliness usage (`#406 <https://github.com/ros2/rosbag2/issues/406>`_)
+* Contributors: Ivan Santiago Paunovic
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* add topic remapping option to rosbag2 play (`#388 <https://github.com/ros2/rosbag2/issues/388>`_)
+* add missing test dependency (`#392 <https://github.com/ros2/rosbag2/issues/392>`_)
+* use serialized message (`#386 <https://github.com/ros2/rosbag2/issues/386>`_)
+* Adaptive playback qos based on recorded metadata (`#364 <https://github.com/ros2/rosbag2/issues/364>`_)
+* Add loop option to rosbag play (`#361 <https://github.com/ros2/rosbag2/issues/361>`_)
+* Move qos utilities to their own compilation unit (`#379 <https://github.com/ros2/rosbag2/issues/379>`_)
+* Expose BaseReaderInterface's BagMetadata  (`#377 <https://github.com/ros2/rosbag2/issues/377>`_)
+* Expose topic filter to command line (addresses `#342 <https://github.com/ros2/rosbag2/issues/342>`_) (`#363 <https://github.com/ros2/rosbag2/issues/363>`_)
+* Fix Action CI tests to pass reliably (`#376 <https://github.com/ros2/rosbag2/issues/376>`_)
+* Update GenericSubscription's handle_message signature (`#373 <https://github.com/ros2/rosbag2/issues/373>`_)
+* Bridge CLI with transport (`#370 <https://github.com/ros2/rosbag2/issues/370>`_)
+* Override QoS Profiles in CLI - Playback (`#356 <https://github.com/ros2/rosbag2/issues/356>`_)
+* QoS Profile Overrides - Player (`#353 <https://github.com/ros2/rosbag2/issues/353>`_)
+* Fix rosbag2_tests resource files and play_end_to_end test (`#362 <https://github.com/ros2/rosbag2/issues/362>`_)
+* use ament_export_targets() (`#360 <https://github.com/ros2/rosbag2/issues/360>`_)
+* Intelligently subscribe to topics according to their QoS profiles (`#355 <https://github.com/ros2/rosbag2/issues/355>`_)
+* Add QoS Profile override to CLI (`#347 <https://github.com/ros2/rosbag2/issues/347>`_)
+* Override Subscriber QoS - Record (`#346 <https://github.com/ros2/rosbag2/issues/346>`_)
+* Replace poco dependency by rcutils (`#322 <https://github.com/ros2/rosbag2/issues/322>`_)
+* Test all RMW implementations for rosbag2_transport (`#349 <https://github.com/ros2/rosbag2/issues/349>`_)
+* Add filter for reading selective topics (`#302 <https://github.com/ros2/rosbag2/issues/302>`_)
+* Disable adaptive qos subscription for now  (`#348 <https://github.com/ros2/rosbag2/issues/348>`_)
+* Subscribe to topics using the common offered QoS (`#343 <https://github.com/ros2/rosbag2/issues/343>`_)
+* Transaction based sqlite3 inserts (`#225 <https://github.com/ros2/rosbag2/issues/225>`_)
+* Allow GenericPublisher / GenericSubscription to take a QoS profile (`#337 <https://github.com/ros2/rosbag2/issues/337>`_)
+* Query offered QoS profiles for a topic and store in metadata (`#333 <https://github.com/ros2/rosbag2/issues/333>`_)
+* Add QoS profiles field to metadata struct and provide serialization utilities (`#330 <https://github.com/ros2/rosbag2/issues/330>`_)
+* include hidden topics (`#332 <https://github.com/ros2/rosbag2/issues/332>`_)
+* Add playback rate command line arg (`#304 <https://github.com/ros2/rosbag2/issues/304>`_)
+* Removed rosidl_generator_cpp in rosbag2_transport because it's not used (`#321 <https://github.com/ros2/rosbag2/issues/321>`_)
+* Fix race condition in transport recorder (`#303 <https://github.com/ros2/rosbag2/issues/303>`_)
+* [compression] Enable compression through ros2bag cli (`#263 <https://github.com/ros2/rosbag2/issues/263>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Alejandro Hernández Cordero, Anas Abou Allaban, Dirk Thomas, Emerson Knapp, Karsten Knese, Mabel Zhang, Sriram Raghunathan, Zachary Michaels, carlossvg, ketatam
 
 0.2.4 (2019-11-18)
 ------------------

@@ -3,6 +3,25 @@ Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* Fixed string related with poco (`#374 <https://github.com/ros2/rosbag2/issues/374>`_)
+* rename rosidl_generator_cpp namespace to rosidl_runtime_cpp (`#366 <https://github.com/ros2/rosbag2/issues/366>`_)
+* added rosidl_runtime c and cpp depencencies (`#310 <https://github.com/ros2/rosbag2/issues/310>`_)
+* Replace poco dependency by rcutils (`#322 <https://github.com/ros2/rosbag2/issues/322>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Alejandro Hernández Cordero, Dirk Thomas, Karsten Knese
+
 0.2.4 (2019-11-18)
 ------------------
 
