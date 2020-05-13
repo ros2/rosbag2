@@ -80,7 +80,7 @@ else()
         set(SQLite3_INCLUDE_DIRS ${SQLite3_INCLUDE_DIR})
         set(SQLite3_LIBRARIES ${SQLite3_LIBRARY})
 
-        add_library(SQLite::SQLite3 STATIC IMPORTED)
+        add_library(SQLite::SQLite3 UNKNOWN IMPORTED)
         set_property(TARGET SQLite::SQLite3 PROPERTY IMPORTED_LOCATION ${SQLite3_LIBRARY})
         set_property(TARGET SQLite::SQLite3 PROPERTY INCLUDE_DIRECTORIES ${SQLite3_INCLUDE_DIR})
         list(APPEND SQLite3_TARGETS SQLite::SQLite3)
