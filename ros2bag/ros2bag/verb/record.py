@@ -60,7 +60,7 @@ class RecordVerb(VerbExtension):
                   'Default it is zero, recording written in single bagfile and splitting '
                   'is disabled.'
         )
-        parser.add_argment(
+        parser.add_argument(
             '-d', '--max-bag-duration', type=int, default=0,
             help='maximum duration in nanosecnds before the bagfile will be split. '
                   'Default is zero, recording written in single bagfile and splitting '
