@@ -116,7 +116,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool no_discovery = false;
   uint64_t polling_interval_ms = 100;
   unsigned long long max_bagfile_size = 0;  // NOLINT
-  unsigned long long max_bagfile_duration = 0;
+  unsigned long long max_bagfile_duration = 0;  // NOLINT
   uint64_t max_cache_size = 0u;
   PyObject * topics = nullptr;
   bool include_hidden_topics = false;
