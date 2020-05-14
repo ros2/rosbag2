@@ -49,7 +49,7 @@ install(
   "${CMAKE_CURRENT_BINARY_DIR}/singleproducerconsumer/src/ext-singleproducerconsumer/readerwriterqueue.h"
   "${CMAKE_CURRENT_BINARY_DIR}/concurrentqueue/src/ext-concurrentqueue/concurrentqueue.h"
   "${CMAKE_CURRENT_BINARY_DIR}/concurrentqueue/src/ext-concurrentqueue/blockingconcurrentqueue.h"
-  DESTINATION include/moodycamel
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/moodycamel
 )
 
 ament_export_include_directories(include)

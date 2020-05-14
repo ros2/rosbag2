@@ -44,7 +44,7 @@ macro(build_zstd)
 
   install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install/
-    DESTINATION .)
+    DESTINATION ${CMAKE_INSTALL_PREFIX})
 endmacro()
 
 if(NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
