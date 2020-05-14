@@ -64,7 +64,8 @@ class RecordVerb(VerbExtension):
             '-d', '--max-bag-duration', type=int, default=0,
             help='maximum duration in seconds before the bagfile will be split. '
                   'Default is zero, recording written in single bagfile and splitting '
-                  'is disabled.'
+                  'is disabled. If both splitting by size and duration are enabled, '
+                  'the bag will split at whichever threshold is reached first.'
         )
         parser.add_argument(
             '--max-cache-size', type=int, default=0,
