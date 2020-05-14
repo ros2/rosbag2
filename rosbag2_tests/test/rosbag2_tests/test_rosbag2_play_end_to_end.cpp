@@ -121,6 +121,7 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 }
 
 /*
+todo(tfoote) Disabling failing test. Ticketed to follow up at: https://github.com/ros2/rosbag2/issues/408
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
   // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
