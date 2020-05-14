@@ -61,7 +61,7 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
-  max_bagfile_duration(std::chrono::nanoseconds(0)),
+  max_bagfile_duration(std::chrono::seconds(0)),
   topics_names_to_info_(),
   metadata_()
 {}
@@ -86,7 +86,7 @@ void SequentialWriter::open(
 {
   base_folder_ = storage_options.uri;
   max_bagfile_size_ = storage_options.max_bagfile_size;
-  max_bagfile_duration = std::chrono::nanoseconds(storage_options.max_bagfile_duration);
+  max_bagfile_duration = std::chrono::seconds(storage_options.max_bagfile_duration);
   max_cache_size_ = storage_options.max_cache_size;
 
   cache_.reserve(max_cache_size_);
@@ -239,7 +239,9 @@ bool SequentialWriter::should_split_bagfile() const
   } else if (max_bagfile_duration != std::chrono::seconds(
       rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)) {
     // Splitting by time
-    return (std::chrono::system_clock::now() - metadata_.starting_time) > max_bagfile_duration;
+    auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      max_bagfile_duration);
+    return (std::chrono::system_clock::now() - metadata_.starting_time) > max_duration_ns;
   } else {
     // Not splitting by time or size
     return false;
