@@ -208,6 +208,9 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   if (should_split_bagfile()) {
     split_bagfile();
+
+    // Update bagfile starting time
+    metadata_.starting_time = std::chrono::high_resolution_clock::now();
   }
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
