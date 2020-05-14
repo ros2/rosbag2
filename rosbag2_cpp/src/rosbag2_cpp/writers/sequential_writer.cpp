@@ -233,19 +233,24 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
 bool SequentialWriter::should_split_bagfile() const
 {
+  // Assume we aren't splitting
+  bool should_split = false;
+
+  // Splitting by size
   if (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
-    // Splitting by size
-    return storage_->get_bagfile_size() > max_bagfile_size_;
-  } else if (max_bagfile_duration != std::chrono::seconds(
+    should_split = should_split || (storage_->get_bagfile_size() > max_bagfile_size_);
+  } 
+  
+  // Splitting by time
+  if (max_bagfile_duration != std::chrono::seconds(
       rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)) {
-    // Splitting by time
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       max_bagfile_duration);
-    return (std::chrono::system_clock::now() - metadata_.starting_time) > max_duration_ns;
-  } else {
-    // Not splitting by time or size
-    return false;
-  }
+    should_split = should split || 
+      ((std::chrono::system_clock::now() - metadata_.starting_time) > max_duration_ns);
+  } 
+
+  return should_split;
 }
 
 void SequentialWriter::finalize_metadata()
