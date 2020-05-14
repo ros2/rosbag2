@@ -246,7 +246,7 @@ bool SequentialWriter::should_split_bagfile() const
       rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)) {
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       max_bagfile_duration);
-    should_split = should split || 
+    should_split = should_split || 
       ((std::chrono::system_clock::now() - metadata_.starting_time) > max_duration_ns);
   } 
 
