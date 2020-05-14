@@ -15,7 +15,7 @@ ExternalProject_Add(ext-singleproducerconsumer
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
-)
+  )
 
 # Concurrent and blocking concurrent queue by moodycamel - header only, don't build, install
 ExternalProject_Add(ext-concurrentqueue
@@ -28,7 +28,7 @@ ExternalProject_Add(ext-concurrentqueue
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
-)
+  )
 
 add_library(singleproducerconsumer INTERFACE)
 target_include_directories(singleproducerconsumer INTERFACE $<INSTALL_INTERFACE:include/moodycamel>)
