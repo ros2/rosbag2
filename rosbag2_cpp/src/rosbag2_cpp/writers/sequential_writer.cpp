@@ -242,16 +242,16 @@ bool SequentialWriter::should_split_bagfile() const
   // Splitting by size
   if (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
     should_split = should_split || (storage_->get_bagfile_size() > max_bagfile_size_);
-  } 
-  
+  }
+
   // Splitting by time
   if (max_bagfile_duration != std::chrono::seconds(
       rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)) {
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       max_bagfile_duration);
-    should_split = should_split || 
+    should_split = should_split ||
       ((std::chrono::system_clock::now() - metadata_.starting_time) > max_duration_ns);
-  } 
+  }
 
   return should_split;
 }
