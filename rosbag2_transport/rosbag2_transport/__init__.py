@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import importlib
+import os
 
 from rpyutils import add_dll_directories_from_env
 
@@ -32,5 +33,6 @@ def _import(name):
                 (e.path, 'https://index.ros.org/doc/ros2/Troubleshooting/'
                          '#import-failing-even-with-library-present-on-the-system')
         raise
+
 
 rosbag2_transport_py = _import('._rosbag2_transport_py')
