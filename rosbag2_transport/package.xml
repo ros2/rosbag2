@@ -15,6 +15,7 @@
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rmw</depend>
+  <depend>rpyutils</depend>
   <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
 
