@@ -3,6 +3,11 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.8 (2020-05-18)
+------------------
+* Explicitly add DLL directories for Windows before importing (`#411 <https://github.com/ros2/rosbag2/issues/411>`_)
+* Contributors: Jacob Perron
+
 0.2.7 (2020-05-12)
 ------------------
 * Remove MANUAL_BY_NODE liveliness usage (`#406 <https://github.com/ros2/rosbag2/issues/406>`_)

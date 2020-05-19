@@ -3,6 +3,11 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.8 (2020-05-18)
+------------------
+* Disable play_filters_by_topic test (`#410 <https://github.com/ros2/rosbag2/issues/410>`_)
+* Contributors: Mabel Zhang
+
 0.2.7 (2020-05-12)
 ------------------
 * Fix splitting tests on windows (`#407 <https://github.com/ros2/rosbag2/issues/407>`_)
