@@ -28,8 +28,11 @@ add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME} INTERFACE rclcpp rcutils)
+ament_target_dependencies(${PROJECT_NAME} INTERFACE rclcpp rcutils)
 
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME})
 install(
   DIRECTORY include/
   DESTINATION include)
@@ -42,4 +45,5 @@ endif()
 ament_export_dependencies(rclcpp rcutils)
 
 ament_export_include_directories(include)
+ament_export_targets(export_${PROJECT_NAME})
 ament_package()
