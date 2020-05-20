@@ -90,6 +90,7 @@ void SequentialCompressionReader::open(
     ROSBAG2_COMPRESSION_LOG_WARN("No topics were listed in metadata.");
     return;
   }
+  fill_topics_metadata();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   check_topics_serialization_formats(topics);
