@@ -40,7 +40,7 @@ class RecordVerb(VerbExtension):
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used, defaults to "sqlite3"')
+            help="storage identifier to be used, defaults to 'sqlite3'")
         parser.add_argument(
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
@@ -68,7 +68,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--compression-mode', type=str, default='none',
             choices=['none', 'file', 'message'],
-            help='Determine whether to compress by file or message. Default is "none".'
+            help="Determine whether to compress by file or message. Default is 'none'."
         )
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
