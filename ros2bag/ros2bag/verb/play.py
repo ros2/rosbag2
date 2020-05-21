@@ -32,7 +32,7 @@ class PlayVerb(VerbExtension):
             'bag_file', type=check_path_exists, help='bag file to replay')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used, defaults to "sqlite3"')
+            help="storage identifier to be used, defaults to 'sqlite3'")
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '

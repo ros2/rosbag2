@@ -36,6 +36,9 @@ macro(build_zstd)
     SOURCE_SUBDIR build/cmake
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
+      -DZSTD_BUILD_STATIC=OFF
+      -DZSTD_BUILD_SHARED=ON
+      -DZSTD_BUILD_PROGRAMS=OFF
       ${extra_cmake_args})
 
   install(
@@ -49,7 +52,6 @@ else()
   message(STATUS "Found Zstd, skipping build.")
 endif()
 
-ament_export_libraries(zstd)
-ament_export_include_directories(include)
+install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
-ament_package()
+ament_package(CONFIG_EXTRAS zstd_vendor-extras.cmake)
