@@ -176,6 +176,36 @@ void throw_on_zstd_error(const ZstdDecompressReturnType compression_result)
 }
 
 /**
+ * Checks rcutils array resizing and throws a runtime_error if there was an error resizing.
+ * \param rcutils_ret_t Result of calling rcutils
+ */
+void throw_on_rcutils_resize_error(const rcutils_ret_t resize_result)
+{
+  if (resize_result == RCUTILS_RET_OK) {
+    return;
+  }
+
+  std::stringstream error;
+  error << "rcutils_uint8_array_resize error: ";
+  switch (resize_result)
+  {
+    case RCUTILS_RET_INVALID_ARGUMENT:
+      error << "Invalid Argument";
+      break;
+    case RCUTILS_RET_BAD_ALLOC:
+      error << "Bad Alloc";
+      break;
+    case RCUTILS_RET_ERROR:
+      error << "Ret Error";
+      break;
+    default:
+      error << "Unexpected Result";
+      break;
+  }
+  throw std::runtime_error(error.str());
+}
+
+/**
  * Checks frame_content and throws a runtime_error if there was a ZSTD error
  * or frame_content is invalid.
  * \param frame_content is the return value of ZSTD_getFrameContentSize.
@@ -257,9 +287,35 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 }
 
 void ZstdDecompressor::decompress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage *)
+  rosbag2_storage::SerializedBagMessage * message)
 {
-  throw std::logic_error{"Not implemented"};
+  const auto start = std::chrono::high_resolution_clock::now();
+  const auto compressed_buffer_length = message->serialized_data->buffer_length;
+
+  const auto decompressed_buffer_length =
+    ZSTD_getFrameContentSize(message->serialized_data->buffer, compressed_buffer_length);
+
+  throw_on_invalid_frame_content(decompressed_buffer_length);
+
+  // Initializes decompressed_buffer with size = decompressed_buffer_length.
+  // Uniform initialization cannot be used here since it will choose
+  // the initializer list constructor instead.
+  std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
+
+  const auto decompression_result = ZSTD_decompress(
+    decompressed_buffer.data(), decompressed_buffer_length,
+    message->serialized_data->buffer, compressed_buffer_length);
+
+  throw_on_zstd_error(decompression_result);
+
+  const auto resize_result = rcutils_uint8_array_resize(message->serialized_data.get(), decompression_result);
+  throw_on_rcutils_resize_error(resize_result);
+
+  message->serialized_data->buffer_length = decompression_result;
+  std::copy(decompressed_buffer.begin(), decompressed_buffer.end(), message->serialized_data->buffer);
+
+  const auto end = std::chrono::high_resolution_clock::now();
+  print_decompression_statistics(start, end, decompression_result, compressed_buffer_length);
 }
 
 std::string ZstdDecompressor::get_decompression_identifier() const

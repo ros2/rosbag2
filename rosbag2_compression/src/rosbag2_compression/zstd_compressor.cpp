@@ -150,6 +150,36 @@ void write_output_buffer(
 }
 
 /**
+ * Checks rcutils array resizing and throws a runtime_error if there was an error resizing.
+ * \param rcutils_ret_t Result of calling rcutils
+ */
+void throw_on_rcutils_resize_error(const rcutils_ret_t resize_result)
+{
+  if (resize_result == RCUTILS_RET_OK) {
+    return;
+  }
+
+  std::stringstream error;
+  error << "rcutils_uint8_array_resize error: ";
+  switch (resize_result)
+  {
+    case RCUTILS_RET_INVALID_ARGUMENT:
+      error << "Invalid Argument";
+      break;
+    case RCUTILS_RET_BAD_ALLOC:
+      error << "Bad Alloc";
+      break;
+    case RCUTILS_RET_ERROR:
+      error << "Ret Error";
+      break;
+    default:
+      error << "Unexpected Result";
+      break;
+  }
+  throw std::runtime_error(error.str());
+}
+
+/**
  * Checks compression_result and throws a runtime_error if there was a ZSTD error.
  * \param compression_result is the return value of ZSTD_compress.
  */
@@ -218,9 +248,33 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 }
 
 void ZstdCompressor::compress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage *)
+  rosbag2_storage::SerializedBagMessage * message)
 {
-  throw std::logic_error{"Not implemented"};
+  const auto start = std::chrono::high_resolution_clock::now();
+  // Allocate based on compression bound and compress
+  const auto uncompressed_buffer_length = ZSTD_compressBound(message->serialized_data->buffer_length);
+  std::vector<uint8_t> compressed_buffer(uncompressed_buffer_length);
+
+  // Perform compression and check.
+  // compression_result is either the actual compressed size or an error code.
+  const auto compression_result = ZSTD_compress(
+    compressed_buffer.data(), compressed_buffer.size(),
+    message->serialized_data->buffer, message->serialized_data->buffer_length, kDefaultZstdCompressionLevel);
+  throw_on_zstd_error(compression_result);
+
+  // Compression_buffer_length might be larger than the actual compression size
+  // Resize compressed_buffer so its size is the actual compression size.
+  compressed_buffer.resize(compression_result);
+
+  //std::swap(compressed_buffer, *(message->serialized_data));
+  const auto resize_result = rcutils_uint8_array_resize(message->serialized_data.get(), compression_result);
+  throw_on_rcutils_resize_error(resize_result);
+
+  message->serialized_data->buffer_length = compression_result;
+  std::copy(compressed_buffer.begin(), compressed_buffer.end(), message->serialized_data->buffer);
+
+  const auto end = std::chrono::high_resolution_clock::now();
+  print_compression_statistics(start, end, uncompressed_buffer_length, compression_result);
 }
 
 std::string ZstdCompressor::get_compression_identifier() const

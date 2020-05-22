@@ -34,6 +34,21 @@ constexpr const char kGarbageStatement[] = "garbage";
 constexpr const int kDefaultGarbageFileSize = 10;  // MiB
 
 /**
+ * Writes 1M * size garbage data to a stream.
+ * @param out
+ * @param size
+ */
+void write_garbage_stream(std::ostream& out, int size = kDefaultGarbageFileSize)
+{
+  const auto output_size = size * 1024 * 1024;
+  const auto num_iterations = output_size / static_cast<int>(strlen(kGarbageStatement));
+
+  for (int i = 0; i < num_iterations; i++) {
+    out << kGarbageStatement;
+  }
+}
+
+/**
  * Creates a text file of a certain size.
  * \param uri File path to write file.
  * \param size Size of file in MiB.
@@ -43,12 +58,14 @@ void create_garbage_file(const std::string & uri, int size = kDefaultGarbageFile
   auto out = std::ofstream{uri};
   out.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-  const auto file_size = size * 1024 * 1024;
-  const auto num_iterations = file_size / static_cast<int>(strlen(kGarbageStatement));
+  write_garbage_stream(out, size);
+}
 
-  for (int i = 0; i < num_iterations; i++) {
-    out << kGarbageStatement;
-  }
+std::string create_garbage_string(int size = kDefaultGarbageFileSize)
+{
+  std::stringstream output;
+  write_garbage_stream(output, size);
+  return output.str();
 }
 
 std::vector<char> read_file(const std::string & uri)
@@ -76,6 +93,9 @@ protected:
 
   void SetUp() override
   {
+    allocator_ = rcutils_get_default_allocator();
+    message_ = create_garbage_string();
+
     rclcpp::init(0, nullptr);
   }
 
@@ -83,6 +103,72 @@ protected:
   {
     rclcpp::shutdown();
   }
+
+  int write_data_to_serialized_string_message(
+    uint8_t * buffer, size_t buffer_capacity, const std::string & message)
+  {
+    // This function also writes the final null charachter, which is absent in the CDR format.
+    // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
+    return rcutils_snprintf(
+      reinterpret_cast<char *>(buffer),
+      buffer_capacity,
+      "%c%c%c%c%c%c%c%c%s",
+      0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
+      message.c_str());
+  }
+
+  int get_buffer_capacity(const std::string & message)
+  {
+    return write_data_to_serialized_string_message(nullptr, 0, message);
+  }
+
+  std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(std::string message)
+  {
+    int message_size = get_buffer_capacity(message);
+    message_size++;  // need to account for terminating null character
+    assert(message_size > 0);
+
+    auto msg = new rcutils_uint8_array_t;
+    *msg = rcutils_get_zero_initialized_uint8_array();
+    auto ret = rcutils_uint8_array_init(msg, message_size, &allocator_);
+    if (ret != RCUTILS_RET_OK) {
+      throw std::runtime_error("Error allocating resources " + std::to_string(ret));
+    }
+
+    auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+      msg,
+      [](rcutils_uint8_array_t * msg) {
+        int error = rcutils_uint8_array_fini(msg);
+        delete msg;
+        if (error != RCUTILS_RET_OK) {
+          RCUTILS_LOG_ERROR_NAMED(
+            "rosbag2_compression", "Leaking memory %i", error);
+        }
+      });
+
+    serialized_data->buffer_length = message_size;
+    int written_size = write_data_to_serialized_string_message(
+      serialized_data->buffer, serialized_data->buffer_capacity, message);
+
+    assert(written_size == message_size - 1);  // terminated null character not counted
+    (void) written_size;
+    return serialized_data;
+  }
+
+  std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
+  {
+    uint8_t * copied = new uint8_t[serialized_message->buffer_length];
+    auto string_length = serialized_message->buffer_length - 8;
+    memcpy(copied, &serialized_message->buffer[8], string_length);
+    std::string message_content(reinterpret_cast<char *>(copied));
+    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
+    delete[] copied;
+    return message_content;
+  }
+
+  rcutils_allocator_t allocator_;
+  std::string message_;
+  size_t compressed_length_{991}; // manually calculated, could change if compression params change
 };
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
@@ -217,4 +303,34 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_uri)
 
   EXPECT_THROW(decompressor.decompress_uri(bad_uri), std::runtime_error) <<
     "Expected decompress_uri(\"" << bad_uri << "\") to fail!";
+}
+
+TEST_F(CompressionHelperFixture, zstd_compress_serialized_bag_message)
+{
+  auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
+  msg->serialized_data.reset(new rcutils_uint8_array_t);
+  msg->serialized_data = make_serialized_message(message_);
+
+  rosbag2_compression::ZstdCompressor compressor;
+  compressor.compress_serialized_bag_message(msg.get());
+
+  ASSERT_EQ(compressed_length_, msg->serialized_data->buffer_length);
+}
+
+TEST_F(CompressionHelperFixture, zstd_decompress_serialized_bag_message)
+{
+  auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
+  msg->serialized_data.reset(new rcutils_uint8_array_t);
+  msg->serialized_data = make_serialized_message(message_);
+
+  rosbag2_compression::ZstdCompressor compressor;
+  compressor.compress_serialized_bag_message(msg.get());
+
+  const auto compressed_length = msg->serialized_data->buffer_length;
+  EXPECT_EQ(compressed_length_, compressed_length);
+
+  rosbag2_compression::ZstdDecompressor decompressor;
+  EXPECT_NO_THROW(decompressor.decompress_serialized_bag_message(msg.get()));
+  std::string new_msg = deserialize_message(msg->serialized_data);
+  EXPECT_EQ(new_msg, message_);
 }
