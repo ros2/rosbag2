@@ -14,6 +14,7 @@
 
 #include <cstdio>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,7 @@ constexpr const int kDefaultGarbageFileSize = 10;  // MiB
  * @param out
  * @param size
  */
-void write_garbage_stream(std::ostream& out, int size = kDefaultGarbageFileSize)
+void write_garbage_stream(std::ostream & out, int size = kDefaultGarbageFileSize)
 {
   const auto output_size = size * 1024 * 1024;
   const auto num_iterations = output_size / static_cast<int>(strlen(kGarbageStatement));
@@ -168,7 +169,7 @@ protected:
 
   rcutils_allocator_t allocator_;
   std::string message_;
-  size_t compressed_length_{991}; // manually calculated, could change if compression params change
+  size_t compressed_length_{991};  // manually calculated, could change if compression params change
 };
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)

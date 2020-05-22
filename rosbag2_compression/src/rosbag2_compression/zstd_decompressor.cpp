@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <sstream>
@@ -187,8 +188,7 @@ void throw_on_rcutils_resize_error(const rcutils_ret_t resize_result)
 
   std::stringstream error;
   error << "rcutils_uint8_array_resize error: ";
-  switch (resize_result)
-  {
+  switch (resize_result) {
     case RCUTILS_RET_INVALID_ARGUMENT:
       error << "Invalid Argument";
       break;
@@ -308,11 +308,14 @@ void ZstdDecompressor::decompress_serialized_bag_message(
 
   throw_on_zstd_error(decompression_result);
 
-  const auto resize_result = rcutils_uint8_array_resize(message->serialized_data.get(), decompression_result);
+  const auto resize_result =
+    rcutils_uint8_array_resize(message->serialized_data.get(), decompression_result);
   throw_on_rcutils_resize_error(resize_result);
 
   message->serialized_data->buffer_length = decompression_result;
-  std::copy(decompressed_buffer.begin(), decompressed_buffer.end(), message->serialized_data->buffer);
+  std::copy(
+    decompressed_buffer.begin(), decompressed_buffer.end(),
+    message->serialized_data->buffer);
 
   const auto end = std::chrono::high_resolution_clock::now();
   print_decompression_statistics(start, end, decompression_result, compressed_buffer_length);

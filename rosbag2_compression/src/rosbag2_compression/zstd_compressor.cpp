@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <memory>
@@ -161,8 +162,7 @@ void throw_on_rcutils_resize_error(const rcutils_ret_t resize_result)
 
   std::stringstream error;
   error << "rcutils_uint8_array_resize error: ";
-  switch (resize_result)
-  {
+  switch (resize_result) {
     case RCUTILS_RET_INVALID_ARGUMENT:
       error << "Invalid Argument";
       break;
@@ -252,22 +252,24 @@ void ZstdCompressor::compress_serialized_bag_message(
 {
   const auto start = std::chrono::high_resolution_clock::now();
   // Allocate based on compression bound and compress
-  const auto uncompressed_buffer_length = ZSTD_compressBound(message->serialized_data->buffer_length);
+  const auto uncompressed_buffer_length =
+    ZSTD_compressBound(message->serialized_data->buffer_length);
   std::vector<uint8_t> compressed_buffer(uncompressed_buffer_length);
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
   const auto compression_result = ZSTD_compress(
     compressed_buffer.data(), compressed_buffer.size(),
-    message->serialized_data->buffer, message->serialized_data->buffer_length, kDefaultZstdCompressionLevel);
+    message->serialized_data->buffer, message->serialized_data->buffer_length,
+    kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
 
   // Compression_buffer_length might be larger than the actual compression size
   // Resize compressed_buffer so its size is the actual compression size.
   compressed_buffer.resize(compression_result);
 
-  //std::swap(compressed_buffer, *(message->serialized_data));
-  const auto resize_result = rcutils_uint8_array_resize(message->serialized_data.get(), compression_result);
+  const auto resize_result =
+    rcutils_uint8_array_resize(message->serialized_data.get(), compression_result);
   throw_on_rcutils_resize_error(resize_result);
 
   message->serialized_data->buffer_length = compression_result;
