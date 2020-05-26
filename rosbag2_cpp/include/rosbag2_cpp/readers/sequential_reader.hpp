@@ -127,6 +127,11 @@ protected:
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
 
+  /**
+    * Fill topics_metadata_ cache vector with information from metadata_
+    */
+  virtual void fill_topics_metadata();
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
