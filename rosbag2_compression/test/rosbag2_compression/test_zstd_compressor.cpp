@@ -25,6 +25,8 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
+#include <rosbag2_storage/ros_helper.hpp>
+
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "gmock/gmock.h"
@@ -105,71 +107,20 @@ protected:
     rclcpp::shutdown();
   }
 
-  int write_data_to_serialized_string_message(
-    uint8_t * buffer, size_t buffer_capacity, const std::string & message)
-  {
-    // This function also writes the final null charachter, which is absent in the CDR format.
-    // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
-    return rcutils_snprintf(
-      reinterpret_cast<char *>(buffer),
-      buffer_capacity,
-      "%c%c%c%c%c%c%c%c%s",
-      0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
-      message.c_str());
-  }
-
-  int get_buffer_capacity(const std::string & message)
-  {
-    return write_data_to_serialized_string_message(nullptr, 0, message);
-  }
-
-  std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(std::string message)
-  {
-    int message_size = get_buffer_capacity(message);
-    message_size++;  // need to account for terminating null character
-    assert(message_size > 0);
-
-    auto msg = new rcutils_uint8_array_t;
-    *msg = rcutils_get_zero_initialized_uint8_array();
-    auto ret = rcutils_uint8_array_init(msg, message_size, &allocator_);
-    if (ret != RCUTILS_RET_OK) {
-      throw std::runtime_error("Error allocating resources " + std::to_string(ret));
-    }
-
-    auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-      msg,
-      [](rcutils_uint8_array_t * msg) {
-        int error = rcutils_uint8_array_fini(msg);
-        delete msg;
-        if (error != RCUTILS_RET_OK) {
-          RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_compression", "Leaking memory %i", error);
-        }
-      });
-
-    serialized_data->buffer_length = message_size;
-    int written_size = write_data_to_serialized_string_message(
-      serialized_data->buffer, serialized_data->buffer_capacity, message);
-
-    assert(written_size == message_size - 1);  // terminated null character not counted
-    (void) written_size;
-    return serialized_data;
-  }
-
   std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
-    uint8_t * copied = new uint8_t[serialized_message->buffer_length];
-    auto string_length = serialized_message->buffer_length - 8;
-    memcpy(copied, &serialized_message->buffer[8], string_length);
-    std::string message_content(reinterpret_cast<char *>(copied));
-    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
-    delete[] copied;
+    std::unique_ptr<uint8_t[]> copied(new uint8_t[serialized_message->buffer_length+1]);
+    std::copy(serialized_message->buffer,
+      serialized_message->buffer + serialized_message->buffer_length,
+      copied.get());
+    copied.get()[serialized_message->buffer_length] = '\0';
+    std::string message_content(reinterpret_cast<char *>(copied.get()));
     return message_content;
   }
 
   rcutils_allocator_t allocator_;
   std::string message_;
-  size_t compressed_length_{991};  // manually calculated, could change if compression params change
+  size_t compressed_length_{976};  // manually calculated, could change if compression params change
 };
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
@@ -310,7 +261,8 @@ TEST_F(CompressionHelperFixture, zstd_compress_serialized_bag_message)
 {
   auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
   msg->serialized_data.reset(new rcutils_uint8_array_t);
-  msg->serialized_data = make_serialized_message(message_);
+  msg->serialized_data = rosbag2_storage::make_serialized_message(
+    message_.data(), message_.length());
 
   rosbag2_compression::ZstdCompressor compressor;
   compressor.compress_serialized_bag_message(msg.get());
@@ -322,7 +274,8 @@ TEST_F(CompressionHelperFixture, zstd_decompress_serialized_bag_message)
 {
   auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
   msg->serialized_data.reset(new rcutils_uint8_array_t);
-  msg->serialized_data = make_serialized_message(message_);
+  msg->serialized_data = rosbag2_storage::make_serialized_message(
+    message_.data(), message_.length());
 
   rosbag2_compression::ZstdCompressor compressor;
   compressor.compress_serialized_bag_message(msg.get());
