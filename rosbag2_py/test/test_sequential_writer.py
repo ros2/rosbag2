@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import glob
-import pytest
+import os
 import time
-
-from rosidl_runtime_py.utilities import get_message
 
 from rclpy.serialization import serialize_message
 
-from std_msgs.msg import String
-
 import rosbag2_py._rosbag2_py as rosbag2_py
+
+from std_msgs.msg import String
 
 
 def test_sequential_writer():
+    """
+    Test for sequential writer.
+
+    :return:
+    """
     bag_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'wtalker')
 
-    for f in glob.glob(f"{bag_path}/*"):
+    for f in glob.glob(f'{bag_path}/*'):
         os.remove(f)
 
     storage_options = rosbag2_py.StorageOptions()
@@ -47,18 +49,18 @@ def test_sequential_writer():
 
     # create topic
     topic = rosbag2_py.TopicMetadata()
-    topic.name = "chatter"
+    topic.name = 'chatter'
     topic.serialization_format = serialization_format
-    topic.type = "std_msgs/String"
+    topic.type = 'std_msgs/String'
 
     writer.create_topic(topic)
 
     for i in range(10):
         msg = String()
-        msg.data = f"Hello {str(i)}"
+        msg.data = f'Hello {str(i)}'
         serialized_data = serialize_message(msg)
         bag_msg = rosbag2_py.SerializedBagMessage()
-        bag_msg.topic_name = "chatter"
+        bag_msg.topic_name = 'chatter'
         bag_msg.serialized_data = serialized_data
         bag_msg.time_stamp = int(round(time.time() * 1000))
         writer.write(bag_msg)
