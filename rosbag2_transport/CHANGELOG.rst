@@ -3,6 +3,9 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.0 (2020-05-26)
+------------------
+
 0.2.8 (2020-05-18)
 ------------------
 * Explicitly add DLL directories for Windows before importing (`#411 <https://github.com/ros2/rosbag2/issues/411>`_)

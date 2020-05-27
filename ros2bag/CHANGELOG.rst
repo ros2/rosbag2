@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.0 (2020-05-26)
+------------------
+* Don't allow user to specify unimplemented compression mode 'message' (`#415 <https://github.com/ros2/rosbag2/issues/415>`_)
+* Use consistent quotes in help messages (`#416 <https://github.com/ros2/rosbag2/issues/416>`_)
+* Contributors: Dirk Thomas, Emerson Knapp
+
 0.2.8 (2020-05-18)
 ------------------
 
