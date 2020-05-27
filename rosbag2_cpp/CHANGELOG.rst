@@ -3,6 +3,12 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.0 (2020-05-26)
+------------------
+* Fix playback of compressed bagfiles (`#417 <https://github.com/ros2/rosbag2/issues/417>`_)
+* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
+* Contributors: Emerson Knapp, Karsten Knese
+
 0.2.8 (2020-05-18)
 ------------------
 
