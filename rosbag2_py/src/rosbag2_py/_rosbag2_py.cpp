@@ -32,6 +32,8 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
+
 
 namespace rosbag2_py {
 
@@ -81,38 +83,6 @@ private:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
 
-class SerializedBagMessage : public rosbag2_storage::SerializedBagMessage {
-public:
-  SerializedBagMessage() {}
-
-  void set_serialized_data(pybind11::bytes &data) {
-    std::string tmp_serialized_data(data);
-    size_t buffer_length = tmp_serialized_data.length();
-
-    auto uint8_array = rcutils_get_zero_initialized_uint8_array();
-    auto allocator = rcutils_get_default_allocator();
-    (void) rcutils_uint8_array_init(&uint8_array, buffer_length, &allocator);
-
-    for (size_t i = 0; i < buffer_length; ++i) {
-      uint8_t c = (uint8_t)tmp_serialized_data[i];
-      memcpy(uint8_array.buffer + i, &c, 1);
-    }
-    uint8_array.buffer_length = buffer_length;
-
-    serialized_data = uint8_array;
-  }
-
-  pybind11::bytes get_serialized_data() {
-    std::string tmp_serialized_data(serialized_data.buffer,
-                                    serialized_data.buffer +
-                                        serialized_data.buffer_length);
-    return pybind11::bytes(tmp_serialized_data);
-  }
-
-private:
-  rcutils_uint8_array_t serialized_data;
-};
-
 class Writer {
 public:
   Writer(const std::string &writer_class) {
@@ -146,8 +116,16 @@ public:
   }
 
   /// Write a serialized message to a bag file
-  void write(std::shared_ptr<rosbag2_py::SerializedBagMessage> message) {
-    writer_->write(message);
+  void write(pybind11::tuple & message) {
+    auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+
+    std::string data = std::string(pybind11::str(*message[1]));
+
+    bag_message->topic_name = std::string(pybind11::str(*message[0]));
+    bag_message->serialized_data = rosbag2_storage::make_serialized_message(&data, data.length());
+    bag_message->time_stamp = pybind11::cast<long>(*message[2]);
+
+    writer_->write(bag_message);
   }
 
 private:
@@ -196,15 +174,4 @@ PYBIND11_MODULE(_rosbag2_py, m) {
                      &rosbag2_storage::TopicMetadata::serialization_format)
       .def("equals", &rosbag2_storage::TopicMetadata::operator==);
 
-  pybind11::class_<rosbag2_py::SerializedBagMessage,
-                   std::shared_ptr<rosbag2_py::SerializedBagMessage>>(
-      m, "SerializedBagMessage")
-      .def(pybind11::init())
-      .def_readwrite("topic_name",
-                     &rosbag2_py::SerializedBagMessage::topic_name)
-      .def_property("serialized_data",
-                    &rosbag2_py::SerializedBagMessage::get_serialized_data,
-                    &rosbag2_py::SerializedBagMessage::set_serialized_data)
-      .def_readwrite("time_stamp",
-                     &rosbag2_py::SerializedBagMessage::time_stamp);
 }

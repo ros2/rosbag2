@@ -48,19 +48,17 @@ def test_sequential_writer():
     writer.open(storage_options, converter_options)
 
     # create topic
+    topic_name = '/chatter'
     topic = rosbag2_py.TopicMetadata()
-    topic.name = 'chatter'
+    topic.name = topic_name
     topic.serialization_format = serialization_format
-    topic.type = 'std_msgs/String'
+    topic.type = 'std_msgs/msg/String'
 
     writer.create_topic(topic)
 
     for i in range(10):
         msg = String()
         msg.data = f'Hello {str(i)}'
-        serialized_data = serialize_message(msg)
-        bag_msg = rosbag2_py.SerializedBagMessage()
-        bag_msg.topic_name = 'chatter'
-        bag_msg.serialized_data = serialized_data
-        bag_msg.time_stamp = int(round(time.time() * 1000))
-        writer.write(bag_msg)
+        time_stamp = int(round(time.time() * 1000))
+
+        writer.write((topic_name, serialize_message(msg), time_stamp))
