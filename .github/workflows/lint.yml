@@ -12,7 +12,7 @@ jobs:
     name: ament_copyright
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -20,6 +20,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: copyright
+        distribution: foxy
         package-name: |
             ros2bag
             rosbag2_compression
@@ -34,7 +35,7 @@ jobs:
     name: ament_xmllint
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -42,6 +43,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: xmllint
+        distribution: foxy
         package-name: |
             ros2bag
             rosbag2
@@ -58,7 +60,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -70,6 +72,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
+        distribution: foxy
         package-name: |
             rosbag2_compression
             rosbag2_converter_default_plugins
@@ -83,7 +86,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -95,5 +98,6 @@ jobs:
     - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
+        distribution: foxy
         package-name: |
             ros2bag
