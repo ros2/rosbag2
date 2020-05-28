@@ -413,7 +413,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
 TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) {
   constexpr const char topic_name[] = "/test_topic";
-  constexpr const int bagfile_split_duration = 1;   // 1 second
+  constexpr const int bagfile_split_duration = 1000;   // 1 second
 
   std::stringstream command;
   command << "ros2 bag record" <<
@@ -430,7 +430,7 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
     constexpr const int message_time = 500;  // 500ms
     // string message from test_msgs
     const auto message = create_string_message(message_str, message_size);
-    constexpr const int message_count = bagfile_split_duration * expected_splits / message_time;
+    constexpr const int message_count = (bagfile_split_duration * expected_splits) / message_time;
 
     pub_man_.run_scoped_publisher(
       topic_name,
