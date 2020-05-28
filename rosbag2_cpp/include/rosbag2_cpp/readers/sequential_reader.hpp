@@ -43,6 +43,9 @@ namespace rosbag2_cpp
 {
 namespace readers
 {
+void fill_topics_and_types(
+  const rosbag2_storage::BagMetadata & metadata,
+  std::vector<rosbag2_storage::TopicMetadata> & topics_and_types);
 
 class ROSBAG2_CPP_PUBLIC SequentialReader
   : public ::rosbag2_cpp::reader_interfaces::BaseReaderInterface

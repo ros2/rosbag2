@@ -38,8 +38,8 @@ constexpr const int kDefaultGarbageFileSize = 10;  // MiB
 
 /**
  * Writes 1M * size garbage data to a stream.
- * @param out
- * @param size
+ * \param out The stream to write to.
+ * \param size The number of times to write.
  */
 void write_garbage_stream(std::ostream & out, int size = kDefaultGarbageFileSize)
 {
@@ -64,6 +64,11 @@ void create_garbage_file(const std::string & uri, int size = kDefaultGarbageFile
   write_garbage_stream(out, size);
 }
 
+/**
+ * Creates a string of a certain size.
+ * \param size Size of the string in MiB.
+ * \return The string.
+ */
 std::string create_garbage_string(int size = kDefaultGarbageFileSize)
 {
   std::stringstream output;
