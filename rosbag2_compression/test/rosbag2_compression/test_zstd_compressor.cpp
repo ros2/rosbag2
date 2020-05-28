@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
 #include <memory>
@@ -25,7 +26,7 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
-#include <rosbag2_storage/ros_helper.hpp>
+#include "rosbag2_storage/ros_helper.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
@@ -114,7 +115,7 @@ protected:
 
   std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
-    std::unique_ptr<uint8_t[]> copied(new uint8_t[serialized_message->buffer_length+1]);
+    std::unique_ptr<uint8_t[]> copied(new uint8_t[serialized_message->buffer_length + 1]);
     std::copy(serialized_message->buffer,
       serialized_message->buffer + serialized_message->buffer_length,
       copied.get());
