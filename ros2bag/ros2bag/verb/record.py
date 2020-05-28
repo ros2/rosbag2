@@ -67,8 +67,8 @@ class RecordVerb(VerbExtension):
         )
         parser.add_argument(
             '--compression-mode', type=str, default='none',
-            choices=['none', 'file'],
-            help='Determine whether to compress bag files. Default is "none".'
+            choices=['none', 'file', 'message'],
+            help="Determine whether to compress by file or message. Default is 'none'."
         )
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
