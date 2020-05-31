@@ -31,9 +31,8 @@
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
-#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
-
+#include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_py {
 
@@ -116,14 +115,20 @@ public:
   }
 
   /// Write a serialized message to a bag file
-  void write(pybind11::tuple & message) {
-    auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  void write(pybind11::tuple &message) {
+    if (message.size() != 3) {
+        throw  std::runtime_error("Invalid tuple size. Tuple of three values is required.");
+    }
 
-    std::string data = std::string(pybind11::str(*message[1]));
+    auto bag_message =
+        std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
-    bag_message->topic_name = std::string(pybind11::str(*message[0]));
-    bag_message->serialized_data = rosbag2_storage::make_serialized_message(&data, data.length());
-    bag_message->time_stamp = pybind11::cast<long>(*message[2]);
+    std::string data = message[1].cast<std::string>();
+
+    bag_message->topic_name = message[0].cast<std::string>();
+    bag_message->serialized_data =
+        rosbag2_storage::make_serialized_message(data.c_str(), data.length());
+    bag_message->time_stamp = message[2].cast<rcutils_time_point_value_t>();
 
     writer_->write(bag_message);
   }
@@ -173,5 +178,4 @@ PYBIND11_MODULE(_rosbag2_py, m) {
       .def_readwrite("serialization_format",
                      &rosbag2_storage::TopicMetadata::serialization_format)
       .def("equals", &rosbag2_storage::TopicMetadata::operator==);
-
 }
