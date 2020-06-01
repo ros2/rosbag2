@@ -3,6 +3,12 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.1 (2020-06-01)
+------------------
+* Find rosbag2_cpp (tinyxml2) before rcl (`#423 <https://github.com/ros2/rosbag2/issues/423>`_)
+* Shared publisher handle (`#420 <https://github.com/ros2/rosbag2/issues/420>`_)
+* Contributors: Chris Lalancette, Karsten Knese
+
 0.3.0 (2020-05-26)
 ------------------
 

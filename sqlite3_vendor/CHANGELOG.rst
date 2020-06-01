@@ -3,6 +3,9 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.1 (2020-06-01)
+------------------
+
 0.3.0 (2020-05-26)
 ------------------
 * Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
