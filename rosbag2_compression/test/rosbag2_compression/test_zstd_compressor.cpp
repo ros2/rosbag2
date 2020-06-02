@@ -116,7 +116,8 @@ protected:
   std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
     std::unique_ptr<uint8_t[]> copied(new uint8_t[serialized_message->buffer_length + 1]);
-    std::copy(serialized_message->buffer,
+    std::copy(
+      serialized_message->buffer,
       serialized_message->buffer + serialized_message->buffer_length,
       copied.get());
     copied.get()[serialized_message->buffer_length] = '\0';
