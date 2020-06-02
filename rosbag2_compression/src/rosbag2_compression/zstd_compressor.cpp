@@ -272,6 +272,8 @@ void ZstdCompressor::compress_serialized_bag_message(
     rcutils_uint8_array_resize(message->serialized_data.get(), compression_result);
   throw_on_rcutils_resize_error(resize_result);
 
+  // Note that rcutils_uint8_array_resize changes buffer_capacity but not buffer_length, we
+  // have to do that manually.
   message->serialized_data->buffer_length = compression_result;
   std::copy(compressed_buffer.begin(), compressed_buffer.end(), message->serialized_data->buffer);
 
