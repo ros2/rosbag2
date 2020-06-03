@@ -26,7 +26,7 @@ import yaml
 
 
 class RecordVerb(VerbExtension):
-    """ros2 bag record."""
+    """Record ROS data to a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(

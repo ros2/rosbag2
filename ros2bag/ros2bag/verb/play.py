@@ -25,7 +25,7 @@ import yaml
 
 
 class PlayVerb(VerbExtension):
-    """ros2 bag play."""
+    """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
