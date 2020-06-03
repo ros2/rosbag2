@@ -3,6 +3,15 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Add user provided split size to error (`#430 <https://github.com/ros2/rosbag2/issues/430>`_)
+  * Add user provided split size to error
+  Signed-off-by: Anas Abou Allaban <aabouallaban@pm.me>
+* Make split size error clearer (`#428 <https://github.com/ros2/rosbag2/issues/428>`_)
+  Signed-off-by: Anas Abou Allaban <aabouallaban@pm.me>
+* Contributors: Anas Abou Allaban
+
 0.3.1 (2020-06-01)
 ------------------
 
