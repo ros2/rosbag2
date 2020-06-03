@@ -77,6 +77,29 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
     std::invalid_argument);
 }
 
+TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
+{
+  rosbag2_compression::CompressionOptions compression_options{
+    "zstd", rosbag2_compression::CompressionMode::FILE};
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
+  auto storage_options = rosbag2_cpp::StorageOptions{}
+  // 0 indicates that bagfile splitting will not be used so use 1 byte which is the
+  // smallest invalid size possible.
+  storage_options.max_bagfile_size = 1;  
+
+  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+    compression_options,
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  EXPECT_THROW(
+    writer_->open(storage_options, {serialization_format_, serialization_format_}),
+    std::runtime_error);
+}
+
 TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_format)
 {
   rosbag2_compression::CompressionOptions compression_options{
