@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add user provided split size to error message (`#430 <https://github.com/ros2/rosbag2/issues/430>`_)
+* Contributors: Anas Abou Allaban
+
 0.3.1 (2020-06-01)
 ------------------
 

@@ -3,6 +3,9 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.3.1 (2020-06-01)
 ------------------
 * Find rosbag2_cpp (tinyxml2) before rcl (`#423 <https://github.com/ros2/rosbag2/issues/423>`_)

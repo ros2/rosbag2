@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Improve help message for CLI verbs (`#427 <https://github.com/ros2/rosbag2/issues/427>`_)
+* Contributors: Jacob Perron
+
 0.3.1 (2020-06-01)
 ------------------
 

@@ -2,6 +2,9 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.3.1 (2020-06-01)
 ------------------
 * Shared publisher handle (`#420 <https://github.com/ros2/rosbag2/issues/420>`_)
