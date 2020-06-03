@@ -18,7 +18,7 @@ from ros2bag.verb import VerbExtension
 
 
 class InfoVerb(VerbExtension):
-    """ros2 bag info."""
+    """Print information about a bag to the screen."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
