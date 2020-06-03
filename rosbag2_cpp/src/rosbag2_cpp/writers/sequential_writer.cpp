@@ -105,8 +105,10 @@ void SequentialWriter::open(
   if (max_bagfile_size_ != 0 &&
     max_bagfile_size_ < storage_->get_minimum_split_file_size())
   {
-    throw std::runtime_error(
-            "Invalid bag splitting size given. Please provide a different value.");
+    std::stringstream error;
+    error << "Invalid bag splitting size given. Please provide a value greater than " <<
+      storage_->get_minimum_split_file_size();
+    throw std::runtime_error{error.str()};
   }
 
   init_metadata();
