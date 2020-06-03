@@ -158,7 +158,7 @@ TEST_F(SequentialWriterTest, open_throws_error_on_invalid_splitting_size) {
 
   std::string rmw_format = "rmw_format";
 
-  EXPECT_ANY_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}));
+  EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
 }
 
 TEST_F(SequentialWriterTest, bagfile_size_is_checked_on_every_write) {
