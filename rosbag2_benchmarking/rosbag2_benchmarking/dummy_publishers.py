@@ -21,7 +21,6 @@ class DummyPublisherUtility(Node):
         for i in range(0,len(topics)):
             self.warm_up_topic(topics[i], types[i])
 
-
     def warm_up_topic(self, topic, type_):
         if type_ == "sensor_msgs/msg/Image":
             from sensor_msgs.msg import Image
@@ -34,7 +33,8 @@ def main():
     rclpy.init()
     node = DummyPublisherUtility()
     while rclpy.ok():
-        rclpy.spin_once(node)
+        rclpy.spin_once(node, timeout_sec=0.1)
+        rclpy.shutdown()
     node.destroy_node()
 
 if __name__ == '__main__':

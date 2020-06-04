@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dummy_publishers = rosbag2_benchmarking.dummy_publishers:main',
+            'raport_gen = rosbag2_benchmarking.raport_gen:main',
         ],
     },
 )
