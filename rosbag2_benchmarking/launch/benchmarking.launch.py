@@ -66,6 +66,8 @@ def generate_launch_description():
             ))
     raport_generator = get_raport_generator()
     ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessExit(target_action=raport_generator, on_exit=raport_finished)))
+
+    # (piotr.jaroszek) TODO: launch something to track system usage here
     
     worker_hooks = {}
     worker_topics = []
