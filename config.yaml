@@ -1,0 +1,21 @@
+raport_dir: "~/.ros/raports"
+benchmark:
+    id: 0
+    tag: "cameras"
+    name: "Camera tests #1"
+    overwrite_existing: true
+workers:
+    - image:
+        name: "camera1"
+        topic: "camera1"
+        delay: 1000
+        max_count: 100
+        dimensions: 1024
+        dt: 100
+    - image:
+        name: "camera2"
+        topic: "camera2"
+        delay: 2000
+        max_count: 10
+        dimensions: 1024
+        dt: 200
