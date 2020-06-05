@@ -30,8 +30,7 @@ struct Point
       : x(x), y(y), z(z) {}
 };
 
-sensor_msgs::msg::PointCloud2::SharedPtr createPointCloud2WithRandomPoints(
-    size_t num_points)
+sensor_msgs::msg::PointCloud2::SharedPtr createRandomPointcloud2(size_t num_points)
 {
   std::vector<Point> points;
   points.reserve(num_points);
@@ -81,21 +80,63 @@ namespace nodes
 
 class PointCloud2Publisher : public rclcpp::Node {
 public:
-  PointCloud2Publisher(const std::string & node_name, const std::string & topic_name)
-      : Node(node_name)
+  PointCloud2Publisher(const std::string & name, const std::string & topic)
+      : Node(name)
   {
-    publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(topic_name, 10);
-    timer = this->create_wall_timer(100ms, std::bind(&PointCloud2Publisher::timer_callback, this));
-    random_pointcloud2_ = createPointCloud2WithRandomPoints(100000);
+    this->declare_parameter("dt");
+    this->declare_parameter("max_count");
+    this->declare_parameter("size");
+    this->declare_parameter("delay");
+    this->declare_parameter("benchmark_path");
+
+    auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
+    while (!parameters_client->wait_for_service(1s)) {
+      if (!rclcpp::ok()) {
+        RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+        rclcpp::shutdown();
+      }
+      RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
+    }
+
+    dt = parameters_client->get_parameter<uint32_t>("dt", 10);
+    max_count = parameters_client->get_parameter<uint32_t>("max_count", 100);
+    size = parameters_client->get_parameter<uint32_t>("size", 100000);
+    delay = parameters_client->get_parameter<uint32_t>("delay", 0);
+    benchmark_path = parameters_client->get_parameter<std::string>("benchmark_path", "");
+
+    publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(topic, 10);
+    delay_timer = this->create_wall_timer(std::chrono::milliseconds(delay), std::bind(&PointCloud2Publisher::delay_callback, this));
+    random_pointcloud2 = createRandomPointcloud2(size);
   }
 
 private:
-  void timer_callback()
+  void delay_callback()
   {
-    publisher->publish(*random_pointcloud2_);
+    std::cout << this->get_name() <<  ": Delay finished" << std::endl;
+    timer = this->create_wall_timer(std::chrono::milliseconds(dt), std::bind(&PointCloud2Publisher::timer_callback, this));
+    delay_timer->cancel();
   }
 
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> random_pointcloud2_;
+  void timer_callback()
+  {
+    uint32_t static current_msg_count = 0;
+
+    publisher->publish(*random_pointcloud2);
+
+    std::cout << this->get_name() << ": " << current_msg_count << std::endl;
+    if(++current_msg_count == max_count) {
+      timer->cancel();
+      rclcpp::shutdown();
+    }
+  }
+
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> random_pointcloud2;
+  std::string benchmark_path;
+  uint32_t dt;
+  uint32_t max_count;
+  uint32_t size;
+  uint32_t delay;
+  rclcpp::TimerBase::SharedPtr delay_timer;
   rclcpp::TimerBase::SharedPtr timer;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
 };

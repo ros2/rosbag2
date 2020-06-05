@@ -39,15 +39,14 @@ namespace nodes {
 
 class ImagePublisher : public rclcpp::Node {
 public:
-  ImagePublisher(const std::string & node_name, 
-    const std::string & topic_name)
-  : Node(node_name)
+  ImagePublisher(const std::string & name, const std::string & topic)
+  : Node(name)
   {
     this->declare_parameter("dt");
     this->declare_parameter("max_count");
     this->declare_parameter("dimensions");
     this->declare_parameter("delay");
-    this->declare_parameter("raport_dir");
+    this->declare_parameter("benchmark_path");
 
     auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
     while (!parameters_client->wait_for_service(1s)) {
@@ -62,23 +61,24 @@ public:
     max_count = parameters_client->get_parameter<uint32_t>("max_count", 100);
     dimensions = parameters_client->get_parameter<uint32_t>("dimensions", 1024);
     delay = parameters_client->get_parameter<uint32_t>("delay", 0);
-    raport_dir = parameters_client->get_parameter<std::string>("raport_dir", "");
+    benchmark_path = parameters_client->get_parameter<std::string>("benchmark_path", "");
 
-    publisher = this->create_publisher<sensor_msgs::msg::Image>(topic_name, 10);
+    publisher = this->create_publisher<sensor_msgs::msg::Image>(topic, 10);
     delay_timer = this->create_wall_timer(std::chrono::milliseconds(delay), std::bind(&ImagePublisher::delay_callback, this));
-    random_image_data_ = randomImageData(dimensions * 4 * dimensions);  // image step * height
+    random_image_data = randomImageData(dimensions * 4 * dimensions);  // image step * height
   }
 
 private:
   void delay_callback()
   {
-    std::cout << "Delay finished" << this->get_name() << std::endl;
+    std::cout << this->get_name() <<  ": Delay finished" << std::endl;
     timer = this->create_wall_timer(std::chrono::milliseconds(dt), std::bind(&ImagePublisher::timer_callback, this));
     delay_timer->cancel();
   }
   void timer_callback()
   {
     uint32_t static current_msg_count = 0;
+
     auto message = sensor_msgs::msg::Image();
     message.header = std_msgs::msg::Header();
     message.header.frame_id = "image_frame";
@@ -88,7 +88,7 @@ private:
     message.height = static_cast<sensor_msgs::msg::Image::_height_type>(dimensions);
     message.width = static_cast<sensor_msgs::msg::Image::_width_type>(dimensions);
     message.step = static_cast<sensor_msgs::msg::Image::_step_type>(dimensions * 4);
-    message.data = random_image_data_;
+    message.data = random_image_data;
 
     publisher->publish(message);
 
@@ -98,12 +98,11 @@ private:
       rclcpp::shutdown();
     }
 
-    //(piotr.jaroszek) TODO: raport data here and save to raport_dir
+    //(piotr.jaroszek) TODO: raport data here and save to benchmark_path
   }
 
-  std::vector<uint8_t> random_image_data_;
-  bool is_running = false;
-  std::string raport_dir;
+  std::vector<uint8_t> random_image_data;
+  std::string benchmark_path;
   uint32_t dt;
   uint32_t max_count;
   uint32_t dimensions;

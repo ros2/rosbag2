@@ -1,8 +1,10 @@
 raport_dir: "~/.ros/raports"
+rosbag:
+    polling_interval: 10
 benchmark:
     id: 0
-    tag: "cameras"
-    name: "Camera tests #1"
+    tag: "bench1"
+    name: "Bench test"
     overwrite_existing: true
 workers:
     - image:
@@ -15,7 +17,14 @@ workers:
     - image:
         name: "camera2"
         topic: "camera2"
-        delay: 2000
+        delay: 1000
         max_count: 10
         dimensions: 1024
         dt: 200
+    - pointcloud2:
+        name: "lidar1"
+        topic: "lidar1"
+        delay: 10
+        max_count: 10
+        size: 100000
+        dt: 10

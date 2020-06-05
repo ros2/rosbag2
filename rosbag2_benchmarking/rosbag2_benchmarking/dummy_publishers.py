@@ -11,9 +11,7 @@ class DummyPublisherUtility(Node):
         self.declare_parameter("types")
 
         topics = self.get_parameter("topics").get_parameter_value().string_array_value
-        print(topics)
         types = self.get_parameter("types").get_parameter_value().string_array_value
-        print(types)
 
         if len(topics) != len(types):
             raise RuntimeError("Topics and types length mismatch.")
@@ -25,6 +23,9 @@ class DummyPublisherUtility(Node):
         if type_ == "sensor_msgs/msg/Image":
             from sensor_msgs.msg import Image
             self.__publishers.append(self.create_publisher(Image, topic, 1))
+        elif type_ == "sensor_msgs/msg/PointCloud2":
+            from sensor_msgs.msg import PointCloud2
+            self.__publishers.append(self.create_publisher(PointCloud2, topic, 1))
         else:
             # (piotr.jaroszek) TODO: fill out rest or make a dynamic import
             pass
