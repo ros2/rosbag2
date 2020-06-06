@@ -25,6 +25,7 @@
 #include "rcl/graph.h"
 
 #include "rclcpp/rclcpp.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 
 #include "rcutils/time.h"
 
@@ -102,6 +103,14 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
+  rosbag2_transport_->configure();
+  // If playback should not be paused in the beginning, activate lifecycle node right away.
+  // If playback should be paused, move on.
+  // Playback will detect when node is activated, either from here or externally.
+  if (!options.paused) {
+    rosbag2_transport_->activate();
+  }
+
   play_messages_from_queue(options);
 }
 
@@ -157,9 +166,29 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
+  if (rosbag2_transport_->get_current_state().id() !=
+    lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+  {
+    ROSBAG2_TRANSPORT_LOG_INFO("Paused");
+    getc(stdin);
+    rosbag2_transport_->activate();
+  }
+
   start_time_ = std::chrono::system_clock::now();
+  paused_duration_ = std::chrono::nanoseconds(0);
   do {
+    // This block is not reached yet, because cannot pause during play yet
+    if (rosbag2_transport_->get_current_state().id() !=
+      lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+    {
+      std::chrono::time_point<std::chrono::system_clock> pause_start =
+        std::chrono::system_clock::now();
+      getc(stdin);
+      paused_duration_ += std::chrono::system_clock::now() - pause_start;
+      rosbag2_transport_->activate();
+    }
     play_messages_until_queue_empty(options);
+
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -182,7 +211,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     std::this_thread::sleep_until(
       start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / rate * message.time_since_start));
+        1.0 / rate * message.time_since_start + paused_duration_));
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
       // TODO(mabelzhang) TEMPORARY, remove when done debugging. And counter above.
@@ -206,5 +235,4 @@ void Player::prepare_publishers(const PlayOptions & options)
           topic.name, topic.type, topic_qos)));
   }
 }
-
 }  // namespace rosbag2_transport

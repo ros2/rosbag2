@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "lifecycle_msgs/msg/state.hpp"
+
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_transport/logging.hpp"
@@ -184,7 +186,9 @@ Recorder::create_subscription(
 
 void Recorder::record_messages() const
 {
-  spin(node_);
+  rclcpp::executors::MultiThreadedExecutor exe;
+  exe.add_node(node_->get_node_base_interface());
+  exe.spin();
 }
 
 std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)

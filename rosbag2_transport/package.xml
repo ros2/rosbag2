@@ -12,6 +12,7 @@
 
   <depend>python_cmake_module</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rmw</depend>

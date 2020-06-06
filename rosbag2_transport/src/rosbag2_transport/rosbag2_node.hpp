@@ -21,9 +21,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rclcpp/node.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/node_options.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "rcpputils/shared_library.hpp"
 #include "rcutils/types.h"
 
@@ -33,7 +34,7 @@
 namespace rosbag2_transport
 {
 
-class Rosbag2Node : public rclcpp::Node
+class Rosbag2Node : public rclcpp_lifecycle::LifecycleNode
 {
 public:
   explicit Rosbag2Node(const std::string & node_name);

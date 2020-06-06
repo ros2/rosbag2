@@ -34,11 +34,11 @@ namespace rosbag2_transport
 {
 
 Rosbag2Node::Rosbag2Node(const std::string & node_name)
-: rclcpp::Node(node_name)
+: rclcpp_lifecycle::LifecycleNode(node_name)
 {}
 
 Rosbag2Node::Rosbag2Node(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options)
+: rclcpp_lifecycle::LifecycleNode(node_name, options)
 {}
 
 std::shared_ptr<GenericPublisher> Rosbag2Node::create_generic_publisher(

@@ -24,6 +24,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
@@ -46,8 +47,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(${PROJECT_NAME}
+  lifecycle_msgs
   rcl
   rclcpp
+  rclcpp_lifecycle
   rcutils
   rmw
   rosbag2_compression
@@ -120,7 +123,9 @@ function(create_tests_for_rmw_implementation)
       $<INSTALL_INTERFACE:include>
     AMENT_DEPS
       ament_index_cpp
+      lifecycle_msgs
       rclcpp
+      rclcpp_lifecycle
       rosbag2_cpp
       rosbag2_test_common
       test_msgs
