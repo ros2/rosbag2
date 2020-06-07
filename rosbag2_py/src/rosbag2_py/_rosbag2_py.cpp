@@ -115,20 +115,16 @@ public:
   }
 
   /// Write a serialized message to a bag file
-  void write(pybind11::tuple &message) {
-    if (message.size() != 3) {
-        throw  std::runtime_error("Invalid tuple size. Tuple of three values is required.");
-    }
-
+  void write(pybind11::str &topic_name, pybind11::bytes &message, pybind11::int_ &time_stamp) {
     auto bag_message =
         std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
-    std::string data = message[1].cast<std::string>();
+    std::string data = message.cast<std::string>();
 
-    bag_message->topic_name = message[0].cast<std::string>();
+    bag_message->topic_name = topic_name.cast<std::string>();
     bag_message->serialized_data =
         rosbag2_storage::make_serialized_message(data.c_str(), data.length());
-    bag_message->time_stamp = message[2].cast<rcutils_time_point_value_t>();
+    bag_message->time_stamp = time_stamp.cast<rcutils_time_point_value_t>();
 
     writer_->write(bag_message);
   }

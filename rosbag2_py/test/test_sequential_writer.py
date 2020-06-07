@@ -69,7 +69,7 @@ def test_sequential_writer():
         msg.data = f'Hello, world! {str(i)}'
         time_stamp = int(round(time.time() * 1000))
 
-        writer.write((topic_name, serialize_message(msg), time_stamp))
+        writer.write(topic_name, serialize_message(msg), time_stamp)
 
     del writer
     # close bag and create new storage instance
