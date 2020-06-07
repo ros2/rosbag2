@@ -16,11 +16,31 @@ import glob
 import os
 import time
 
-from rclpy.serialization import serialize_message
-
+from rclpy.serialization import deserialize_message, serialize_message
 import rosbag2_py._rosbag2_py as rosbag2_py
-
+from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
+
+from .common import get_rosbag_options
+
+
+def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
+    """
+    Create a new topic.
+
+    :param writer: writer instance
+    :param topic_name:
+    :param topic_type:
+    :param serialization_format:
+    :return:
+    """
+    topic_name = topic_name
+    topic = rosbag2_py.TopicMetadata()
+    topic.name = topic_name
+    topic.serialization_format = serialization_format
+    topic.type = topic_type
+
+    writer.create_topic(topic)
 
 
 def test_sequential_writer():
@@ -35,30 +55,40 @@ def test_sequential_writer():
     for f in glob.glob(f'{bag_path}/*'):
         os.remove(f)
 
-    storage_options = rosbag2_py.StorageOptions()
-    storage_options.uri = bag_path
-    storage_options.storage_id = 'sqlite3'
-
-    serialization_format = 'cdr'
-    converter_options = rosbag2_py.ConverterOptions()
-    converter_options.input_serialization_format = serialization_format
-    converter_options.output_serialization_format = serialization_format
+    storage_options, converter_options = get_rosbag_options(bag_path)
 
     writer = rosbag2_py.Writer('SequentialWriter')
     writer.open(storage_options, converter_options)
 
     # create topic
     topic_name = '/chatter'
-    topic = rosbag2_py.TopicMetadata()
-    topic.name = topic_name
-    topic.serialization_format = serialization_format
-    topic.type = 'std_msgs/msg/String'
-
-    writer.create_topic(topic)
+    create_topic(writer, topic_name, 'std_msgs/msg/String')
 
     for i in range(10):
         msg = String()
-        msg.data = f'Hello {str(i)}'
+        msg.data = f'Hello, world! {str(i)}'
         time_stamp = int(round(time.time() * 1000))
 
         writer.write((topic_name, serialize_message(msg), time_stamp))
+
+    del writer
+    # close bag and create new storage instance
+    storage_options, converter_options = get_rosbag_options(bag_path)
+
+    reader = rosbag2_py.Reader('SequentialReader')
+    reader.open(storage_options, converter_options)
+
+    topic_types = reader.get_all_topics_and_types()
+
+    # Create a map for quicker lookup
+    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+
+    while reader.has_next():
+        topic, data, t = reader.read_next()
+        msg_type = get_message(type_map[topic])
+        msg = deserialize_message(data, msg_type)
+
+        assert msg_type == type(String())
+
+        if msg_type == type(String()):
+            assert msg.data[:14] == 'Hello, world! '

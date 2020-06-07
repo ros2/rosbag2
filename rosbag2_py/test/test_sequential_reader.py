@@ -14,28 +14,25 @@
 
 import os
 
-import pytest
-
-from rosidl_runtime_py.utilities import get_message
-
-from rclpy.serialization import deserialize_message
-
-from std_msgs.msg import String
 from rcl_interfaces.msg import Log
-
+from rclpy.serialization import deserialize_message
 import rosbag2_py._rosbag2_py as rosbag2_py
+from rosidl_runtime_py.utilities import get_message
+from std_msgs.msg import String
+
+from .common import get_rosbag_options
 
 
 def test_sequential_reader():
-    storage_options = rosbag2_py.StorageOptions()
-    storage_options.uri = os.path.join(
+    """
+    Test for sequential reader.
+
+    :return:
+    """
+    bag_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'talker')
-    storage_options.storage_id = 'sqlite3'
 
-    converter_options = rosbag2_py.ConverterOptions()
-    converter_options.input_serialization_format = 'cdr'
-    converter_options.output_serialization_format = 'cdr'
-
+    storage_options, converter_options = get_rosbag_options(bag_path)
     reader = rosbag2_py.Reader('SequentialReader')
     reader.open(storage_options, converter_options)
 
@@ -58,6 +55,6 @@ def test_sequential_reader():
         assert msg_type == type(Log()) or msg_type == type(String())
 
         if msg_type == type(String()):
-            assert msg.data[:14] == "Hello, world! "
+            assert msg.data[:14] == 'Hello, world! '
 
     # reader.reset_filter(storage_filter)
