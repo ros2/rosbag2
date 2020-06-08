@@ -2,7 +2,13 @@
 
 Tools for performance tests of ros2 bags.
 
-Workers part is based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
+Workers random image and pc2 generation part is based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
+
+## Dependencies
+
+*  ROS2 Foxy
+*  psutil: `python3 -m pip install psutil`
+
 
 ## Building
 
