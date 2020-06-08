@@ -11,7 +11,19 @@
 
 ## Usage
 
-Temporarily there are only some bash scripts (in `rosbag2_benchmarking` dir) for testing how much images `rosbag2` is capable of writing depends on `--max-cache-size` parameter.
+Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provided example file `bench1.yaml`). Currently only two workers are available: `image` and `pointcloud2` which are producing `sensor_msgs/msg/Image` and `sensor_msgs/msg/PointCloud2` messages respectively.
+
+Run benchmark with:
+
+```bash
+ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH]
+```
+
+Each benchmark produces `rosbag2` resources along with workers and system monitor raports.
+
+## Scripts
+
+There are some bash scripts (in `rosbag2_benchmarking/scripts` dir) for testing how much images `rosbag2` is capable of writing depends on `--max-cache-size` parameter.
 
 **Scripts:**
 
@@ -24,7 +36,6 @@ Temporarily there are only some bash scripts (in `rosbag2_benchmarking` dir) for
 1. Run `rosbag_image_cache.sh X` to set up `rosbag2`,
 2. Run `gen_images.sh X Y Z` to feed images to `rosbag2`,
 3. After image generation, kill `rosbag_image_cache.sh` and see raport with `dummy_raport.sh`.
-
 
 ## I/O benchmarking
 
