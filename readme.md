@@ -1,5 +1,9 @@
 # Rosbag2 performance
 
+Tools for performance tests of ros2 bags.
+
+Workers part is based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
+
 ## Building
 
 1. Source ROS foxy
