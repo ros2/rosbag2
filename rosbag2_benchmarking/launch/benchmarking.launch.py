@@ -223,7 +223,7 @@ def generate_launch_description():
     else:
         raise RuntimeError("Missing 'description' parameter! Use 'description:=config.yaml' parameter.")
     benchmark_path = pathlib.Path.joinpath(pathlib.Path(config["raport_dir"]).expanduser(), pathlib.Path(str(config["benchmark"]["id"]) + "-" + config["benchmark"]["tag"]))
-    benchmark_path.mkdir(exist_ok=True)
+    benchmark_path.mkdir(parents=True, exist_ok=True)
 
     # Setup system usage monitor
     system_monitor = get_system_monitor(benchmark_path)
