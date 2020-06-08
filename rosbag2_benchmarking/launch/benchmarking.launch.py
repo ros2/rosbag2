@@ -116,6 +116,17 @@ def get_raport_generator(benchmark_path=None):
             parameters=[{'benchmark_path': str(benchmark_path)}]
         )
 
+def get_system_monitor(benchmark_path=None):
+    if not pathlib.Path(benchmark_path).is_dir():
+        raise RuntimeError("Invalid raport dir.")
+
+    return Node(
+            package='rosbag2_benchmarking',
+            executable='system_monitor',
+            name="system_monitor",
+            parameters=[{'benchmark_path': str(benchmark_path)}]
+        )
+
 def parse_workers(config, benchmark_path):
     worker_topics = []
     worker_types = []
@@ -170,8 +181,10 @@ def generate_launch_description():
         worker_hooks.update({event.pid:True})
         logger.info("Worker exited, pid: {}".format(event.pid))
         if sum(worker_hooks.values()) == len(workers_to_run):
-            logger.info("All workers done, launching raport generator")
-            return raport_generator
+            logger.info("Benchmark done, shutting down.")
+            return launch.actions.EmitEvent(event=launch.events.Shutdown(
+                reason="Benchmark done"
+                ))
 
     # Run dummy publishers to warm up topics when rosbag is ready and listening for new topics
     def bag_warm_check(event):
@@ -192,13 +205,6 @@ def generate_launch_description():
         for line in event.text.decode().splitlines():
             print('[{}] {}'.format(
                 cast(launch.events.process.ProcessIO, event).process_name, line))
-    
-    # Shutdown launch
-    def raport_finished(event, context):
-        logger.info("Benchmark done, shutting down.")
-        return launch.actions.EmitEvent(event=launch.events.Shutdown(
-            reason="Benchmark done"
-            ))
 
     ld = LaunchDescription()
     ld.add_action(
@@ -219,12 +225,15 @@ def generate_launch_description():
     benchmark_path = pathlib.Path.joinpath(pathlib.Path(config["raport_dir"]).expanduser(), pathlib.Path(str(config["benchmark"]["id"]) + "-" + config["benchmark"]["tag"]))
     benchmark_path.mkdir(exist_ok=True)
 
-    # Setup raport generator
-    raport_generator = get_raport_generator(benchmark_path)
-    ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessExit(target_action=raport_generator, on_exit=raport_finished)))
-    
     # Setup system usage monitor
-    # (piotr.jaroszek) TODO: launch something to track system usage here
+    system_monitor = get_system_monitor(benchmark_path)
+    ld.add_action(system_monitor)
+    if VERBOSE:
+        ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
+            target_action=system_monitor,
+            on_stdout=on_output,
+            on_stderr=on_output,
+        )))
 
     # Setup workers
     worker_hooks = {}

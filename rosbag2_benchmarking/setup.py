@@ -14,7 +14,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name), glob('launch/*.launch.py'))
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'psutil>=5.7.0'],
     zip_safe=True,
     maintainer='pjaroszek',
     maintainer_email='jaroszekpiotr@gmail.com',
@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'dummy_publishers = rosbag2_benchmarking.dummy_publishers:main',
             'raport_gen = rosbag2_benchmarking.raport_gen:main',
+            'system_monitor = rosbag2_benchmarking.system_monitor:main',
         ],
     },
 )
