@@ -12,7 +12,7 @@ jobs:
     name: ament_copyright
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -35,7 +35,7 @@ jobs:
     name: ament_xmllint
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -60,7 +60,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +86,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     strategy:
       fail-fast: false
       matrix:
