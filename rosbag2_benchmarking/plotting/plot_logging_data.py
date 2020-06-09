@@ -25,8 +25,8 @@ insert_end_times = []
 
 with open(str(raport_path), "r") as raport1:
     first_line = raport1.readline()
-    start_time = int(float(re.search('([0-9]*\.[0-9]*).*', first_line).group(1)))
-    # print(start_time)
+    start_time = float(re.search('([0-9]*\.[0-9]*).*', first_line).group(1))
+    print(start_time)
     
     lines = raport1.readlines()
     for line in [first_line] + lines:
@@ -43,11 +43,11 @@ with open(str(raport_path), "r") as raport1:
         if commit_trans_match:
             commit_trans_times.append(float(commit_trans_match.group(1))-start_time)
 
-        insert_start_match = re.search('([0-9]*\.[0-9]*).*\[Executing insert start\]', line)
+        insert_start_match = re.search('([0-9]*\.[0-9]*).*Executing insert start', line)
         if insert_start_match:
             insert_start_times.append(float(insert_start_match.group(1))-start_time)
 
-        insert_end_match = re.search('([0-9]*\.[0-9]*).*\[Executing insert end\]', line)
+        insert_end_match = re.search('([0-9]*\.[0-9]*).*Executing insert end', line)
         if insert_end_match:
             insert_end_times.append(float(insert_end_match.group(1))-start_time)
 
@@ -68,7 +68,7 @@ insert_start_times_v = [2] * len(insert_start_times)
 insert_end_times_v = [2] * len(insert_end_times)
 
 fig, ax = plt.subplots(figsize=(15, 6))
-fig.suptitle(filename, fontsize=16)
+fig.suptitle(filename + " msg_count=" + str(len(callback_times)), fontsize=16)
 if (len(begin_trans_times_v)>0):
     ax.stem(begin_trans_times, begin_trans_times_v, label='begin_transaction', markerfmt=' ', linefmt='r-', basefmt='k')
 if (len(commit_trans_times_v)>0):
@@ -76,7 +76,7 @@ if (len(commit_trans_times_v)>0):
 if (len(insert_start_times)>0):
     ax.stem(insert_start_times, insert_start_times_v, label='insert_start', markerfmt=' ', linefmt='y-', basefmt='k')
 if (len(insert_end_times)>0):
-    ax.stem(insert_end_times, insert_end_times_v, label='insert_end', markerfmt=' ', linefmt='r-', basefmt='k')
+    ax.stem(insert_end_times, insert_end_times_v, label='insert_end', markerfmt=' ', linefmt='m-', basefmt='k')
 if (len(callback_times)>0):
     ax.stem(callback_times, callback_times_v, label='callback', markerfmt=' ', linefmt='b-', basefmt='k')
 plt.yticks([])
