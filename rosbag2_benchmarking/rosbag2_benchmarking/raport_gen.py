@@ -72,7 +72,8 @@ class Result:
     def get_workers_str(self):
         message = ""
         for topic, val in self.workers.items():
-            message += "{name}: '{topic}' at {frequency}Hz\n".format(
+            message += "{name}: {instances} intances on '{topic}' at {frequency}Hz\n".format(
+                instances=val["instances"],
                 name = val["name"],
                 topic=topic,
                 frequency=val["frequency"]
@@ -152,7 +153,7 @@ class RaportGen(Node):
                     worker_info = worker.get(key)
                     workers_result.update(
                         {
-                            "/"+worker_info["topic"]:{"name":worker_info["name"], "frequency":1000/worker_info["dt"]}
+                            "/"+worker_info["topic"]:{"name":worker_info["name"], "frequency":1000/worker_info["dt"], "instances":worker_info["instances"]}
                         })
                     # Currently accumulated number of messages for given topic
                     current_topic_msg_count = topic_msgs_accumulated.get("/"+worker_info["topic"], 0)
@@ -190,8 +191,8 @@ class RaportGen(Node):
             for row in reader:
                 self.result.disk_utilization.update({int(row[0]):[float(x) for x in row[1:]]})
                 self.result.disk_utilization_t.append(int(row[0]))
-                self.result.disk_utilization_r.append(float(row[1]))
-                self.result.disk_utilization_w.append(float(row[2]))
+                self.result.disk_utilization_r.append(float(row[1])/1000)
+                self.result.disk_utilization_w.append(float(row[2])/1000)
 
         # Memory utilization
         with open(self.benchmark_path.joinpath("system_mem.csv"), newline='') as csvfile:
