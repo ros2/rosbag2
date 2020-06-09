@@ -52,7 +52,7 @@ class Result:
         ax[1, 1].set_title("Disk write [MB/s]")
         ax[1, 1].plot(x, y)
 
-        x = [(v - self.base_time)/1000000 for v in self.mem_utilization_t]
+        x = [(v - self.base_time)/10000000 for v in self.mem_utilization_t]
         y = self.mem_utilization_v
         ax[0, 2].set_title("Memory used [MB]")
         ax[0, 2].plot(x, y)
