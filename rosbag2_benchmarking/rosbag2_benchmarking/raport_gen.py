@@ -41,7 +41,7 @@ class Result:
             ax[0, 0].plot(x, y)
 
         y = self.cpu_utilization_avg
-        ax[1, 0].set_title("CPU utilization avarage [%]")
+        ax[1, 0].set_title("CPU utilization average [%]")
         ax[1, 0].plot(x, y)
 
         x = [(v - self.base_time)/10000000 for v in self.disk_utilization_t]
