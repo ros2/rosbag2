@@ -28,7 +28,8 @@ from launch_ros.actions import Node
 VERBOSE = True
 logger = launch.logging.get_logger("BENCHMARK")
 
-def get_image_worker(name=None, topic=None, max_count=100, dt=10, delay=1000, dimensions=32, benchmark_path=None):
+def get_image_worker(name=None, topic=None, max_count=100, dt=10, delay=1000, dimensions=32, benchmark_path=None, instance=0):
+    name += "_{}".format(instance)
     if not name:
         raise RuntimeError("You must set an unique worker name.")
     if not topic:
@@ -61,7 +62,8 @@ def get_image_worker(name=None, topic=None, max_count=100, dt=10, delay=1000, di
             ]
         )
 
-def get_pointcloud_worker(name=None, topic=None, max_count=100, dt=10, delay=1000, size=10000, benchmark_path=None):
+def get_pointcloud_worker(name=None, topic=None, max_count=100, dt=10, delay=1000, size=10000, benchmark_path=None, instance=0):
+    name += "_{}".format(instance)
     if not name:
         raise RuntimeError("You must set an unique worker name.")
     if not topic:
@@ -116,7 +118,7 @@ def get_raport_generator(benchmark_path=None):
             parameters=[{'benchmark_path': str(benchmark_path)}]
         )
 
-def get_system_monitor(benchmark_path=None):
+def get_system_monitor(benchmark_path=None, frequency=10):
     if not pathlib.Path(benchmark_path).is_dir():
         raise RuntimeError("Invalid raport dir.")
 
@@ -124,7 +126,7 @@ def get_system_monitor(benchmark_path=None):
             package='rosbag2_benchmarking',
             executable='system_monitor',
             name="system_monitor",
-            parameters=[{'benchmark_path': str(benchmark_path)}]
+            parameters=[{'benchmark_path': str(benchmark_path), 'frequency':frequency}]
         )
 
 def parse_workers(config, benchmark_path):
@@ -145,10 +147,11 @@ def parse_workers(config, benchmark_path):
                 kwargs.update({"dimensions":worker["image"]["dimensions"]})
             if worker["image"].get("dt"):
                 kwargs.update({"dt":worker["image"]["dt"]})
-            topic, type_, node = get_image_worker(**kwargs)
-            workers_to_run.append(node)
-            worker_topics.append(topic)
-            worker_types.append(type_)
+            for instance in range(0, worker["image"].get("instances", 1)):
+                topic, type_, node = get_image_worker(**kwargs, instance=instance)
+                workers_to_run.append(node)
+                worker_topics.append(topic)
+                worker_types.append(type_)
         elif list(worker)[0] == "pointcloud2":
             kwargs = {"benchmark_path": str(benchmark_path)}
             if worker["pointcloud2"].get("name"):
@@ -161,10 +164,11 @@ def parse_workers(config, benchmark_path):
                 kwargs.update({"size":worker["pointcloud2"]["size"]})
             if worker["pointcloud2"].get("dt"):
                 kwargs.update({"dt":worker["pointcloud2"]["dt"]})
-            topic, type_, node = get_pointcloud_worker(**kwargs)
-            workers_to_run.append(node)
-            worker_topics.append(topic)
-            worker_types.append(type_)
+            for instance in range(0, worker["pointcloud2"].get("instances", 1)):
+                topic, type_, node = get_pointcloud_worker(**kwargs, instance=instance)
+                workers_to_run.append(node)
+                worker_topics.append(topic)
+                worker_types.append(type_)
         else:
             pass
     
@@ -172,9 +176,16 @@ def parse_workers(config, benchmark_path):
 
 
 def generate_launch_description():
+    print(sys.argv)
+    
     # Register workers in a dict, False mean worker is not finished
     def worker_started(event, context):
         worker_hooks.update({event.pid:False})
+
+    def monitor_exited(event, context):
+        return launch.actions.EmitEvent(event=launch.events.Shutdown(
+            reason="Monitor exited"
+            ))
 
     # Exits benchmark when all workers are finished
     def worker_exited(event, context):
@@ -206,6 +217,12 @@ def generate_launch_description():
             print('[{}] {}'.format(
                 cast(launch.events.process.ProcessIO, event).process_name, line))
 
+    def monitor_check(event):
+        target_str = 'Monitor ready.'
+        # Monitor ready, start rosbag2
+        if target_str in event.text.decode():
+            return bag_worker
+
     ld = LaunchDescription()
     ld.add_action(
         launch.actions.LogInfo(msg='Launching benchmark!'),
@@ -225,9 +242,15 @@ def generate_launch_description():
     benchmark_path = pathlib.Path.joinpath(pathlib.Path(config["raport_dir"]).expanduser(), pathlib.Path(str(config["benchmark"]["id"]) + "-" + config["benchmark"]["tag"]))
     benchmark_path.mkdir(parents=True, exist_ok=True)
 
-    # Setup system usage monitor
-    system_monitor = get_system_monitor(benchmark_path)
+    # Prepare system usage monitor
+    system_monitor = get_system_monitor(benchmark_path, config["benchmark"].get("monitor_frequency",10))
     ld.add_action(system_monitor)
+    ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessExit(target_action=system_monitor, on_exit=monitor_exited)))
+    ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
+        target_action=system_monitor,
+        on_stdout=monitor_check,
+        on_stderr=monitor_check
+    )))
     if VERBOSE:
         ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
             target_action=system_monitor,
@@ -240,15 +263,7 @@ def generate_launch_description():
     worker_topics, worker_types, workers_to_run = parse_workers(config, benchmark_path)
     logger.info(worker_topics)
     
-    # Run rosbag
-    raports_bag_location = pathlib.Path.joinpath(benchmark_path, pathlib.Path("bag"))
-    if config["benchmark"].get("overwrite_existing"):
-        import shutil
-        shutil.rmtree(raports_bag_location, ignore_errors=True)
-    bag_worker = launch.actions.ExecuteProcess(cmd=["ros2", 'bag', 'record'] + worker_topics + ["-o", str(raports_bag_location)] + ["-p", str(config["rosbag"]["polling_interval"])])
-
-    # Run workers
-    index = 0
+    # Prepare workers
     for worker in workers_to_run:
         ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessStart(target_action=worker, on_start=worker_started)))
         ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessExit(target_action=worker, on_exit=worker_exited)))
@@ -258,7 +273,14 @@ def generate_launch_description():
                 on_stdout=on_output,
                 on_stderr=on_output,
             )))
-
+            
+    # Prepare rosbag
+    raports_bag_location = pathlib.Path.joinpath(benchmark_path, pathlib.Path("bag"))
+    if config["benchmark"].get("overwrite_existing"):
+        import shutil
+        shutil.rmtree(raports_bag_location, ignore_errors=True)  
+    bag_worker = launch.actions.ExecuteProcess(cmd=["ros2", 'bag', 'record'] + list(set(worker_topics)) + ["-o", str(raports_bag_location)] + ["-p", str(config["rosbag"]["polling_interval"])])
+    
     # Hook rosbag with readiness checks
     ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
         target_action=bag_worker,
@@ -270,7 +292,6 @@ def generate_launch_description():
         on_stdout=bag_warm_check,
         on_stderr=bag_warm_check,
     )))
-    ld.add_action(bag_worker)
 
     return ld
 

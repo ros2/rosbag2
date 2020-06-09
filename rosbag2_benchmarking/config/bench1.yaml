@@ -6,25 +6,29 @@ benchmark:
     tag: "bench1"
     name: "Bench test"
     overwrite_existing: true
+    monitor_frequency: 10
 workers:
     - image:
-        name: "camera1"
-        topic: "camera1"
+        name: "camera_low"
+        topic: "camera_low"
+        instances: 4
         delay: 1000
         max_count: 100
         dimensions: 1024
         dt: 100
     - image:
-        name: "camera2"
-        topic: "camera2"
+        name: "camera_high"
+        topic: "camera_high"
+        instances: 1
         delay: 1000
-        max_count: 10
+        max_count: 100
         dimensions: 1024
-        dt: 200
+        dt: 100
     - pointcloud2:
-        name: "lidar1"
-        topic: "lidar1"
-        delay: 10
-        max_count: 10
+        name: "lidar"
+        topic: "lidar"
+        instances: 1
+        delay: 1000
+        max_count: 100
         size: 100000
-        dt: 10
+        dt: 100

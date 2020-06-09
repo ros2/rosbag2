@@ -29,6 +29,12 @@ Run benchmark with:
 ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH]
 ```
 
+Then run raport generator:
+
+```bash
+ros2 run rosbag2_benchmarking raport_gen --ros-args -p description:=[CONFIG_PATH]
+```
+
 Each benchmark produces `rosbag2` resources along with workers and system monitor raports.
 
 ## Scripts
