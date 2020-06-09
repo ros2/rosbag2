@@ -34,7 +34,7 @@ class Result:
         fig, ax = plt.subplots(2, 3, figsize=(15, 6))
         fig.suptitle("Benchmark", fontsize=16)
 
-        x = [(v - self.base_time)/10000000 for v in self.cpu_utilization_t]
+        x = [(v - self.base_time)/1000000 for v in self.cpu_utilization_t]
         for cpu_timings in self.cpu_utilization_v:
             y = cpu_timings
             ax[0, 0].set_title("CPU utilization per core [%]")
@@ -44,7 +44,7 @@ class Result:
         ax[1, 0].set_title("CPU utilization average [%]")
         ax[1, 0].plot(x, y)
 
-        x = [(v - self.base_time)/10000000 for v in self.disk_utilization_t]
+        x = [(v - self.base_time)/1000000 for v in self.disk_utilization_t]
         y = self.disk_utilization_r
         ax[0, 1].set_title("Disk read [MB/s]")
         ax[0, 1].plot(x, y)
@@ -52,7 +52,7 @@ class Result:
         ax[1, 1].set_title("Disk write [MB/s]")
         ax[1, 1].plot(x, y)
 
-        x = [(v - self.base_time)/10000000 for v in self.mem_utilization_t]
+        x = [(v - self.base_time)/1000000 for v in self.mem_utilization_t]
         y = self.mem_utilization_v
         ax[0, 2].set_title("Memory used [MB]")
         ax[0, 2].plot(x, y)
