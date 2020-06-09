@@ -1,0 +1,567 @@
+[INFO] [1591718795.455934828] [rosbag2_storage]: Reading journal_mode=MEMORY
+[INFO] [1591718795.455988687] [rosbag2_storage]: Reading synchronous=OFF
+[INFO] [1591718795.456003423] [rosbag2_storage]: Reading index=AFTER
+[INFO] [1591718795.880002280] [rosbag2_storage]: Opened database '/home/adam/robotec/rosbag2_perf_ws/src/rosbag2_performance/rosbag2_benchmarking/scripts/tmp/tmp_0.db3' for READ_WRITE.
+[INFO] [1591718795.880109593] [rosbag2_storage]: Setting PRAGMA journal_mode = MEMORY;
+[INFO] [1591718795.942754274] [rosbag2_storage]: Setting PRAGMA synchronous = OFF;
+[INFO] [1591718795.973961641] [rosbag2_transport]: Listening for topics...
+[INFO] [1591718797.681291189] [rosbag2_transport]: Subscribed to topic '/image'
+[INFO] [1591718797.681323656] [rosbag2_transport]: All requested topics are subscribed. Stopping discovery...
+[WARN] [1591718797.844182585] [rosbag2_transport]: [Callback]
+[WARN] [1591718797.844565736] [rosbag2_storage]: Executing insert start
+[WARN] [1591718797.854836483] [rosbag2_storage]: Executing insert end
+[WARN] [1591718797.913765676] [rosbag2_transport]: [Callback]
+[WARN] [1591718797.913976743] [rosbag2_storage]: Executing insert start
+[WARN] [1591718797.924889527] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.016138712] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.016316268] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.115961581] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.123377987] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.123531775] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.134193331] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.216879383] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.217034423] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.228194424] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.308799727] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.308972552] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.322724851] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.407785828] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.407984413] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.420595718] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.507566863] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.507739759] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.520970183] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.607786475] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.608000061] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.620550590] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.707067472] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.707135634] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.710666784] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.807855157] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.808066840] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.822168745] [rosbag2_storage]: Executing insert end
+[WARN] [1591718798.906600457] [rosbag2_transport]: [Callback]
+[WARN] [1591718798.906671108] [rosbag2_storage]: Executing insert start
+[WARN] [1591718798.909920451] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.006338349] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.006405894] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.009696636] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.109763259] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.109992640] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.118633567] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.217154215] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.217325296] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.229858594] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.316061505] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.316233240] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.328280773] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.408000901] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.408191238] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.420927770] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.507427442] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.507598455] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.520149575] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.608032075] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.608242012] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.620424258] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.707477610] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.707669834] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.720772085] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.817299162] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.817471815] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.829892929] [rosbag2_storage]: Executing insert end
+[WARN] [1591718799.907685698] [rosbag2_transport]: [Callback]
+[WARN] [1591718799.907859768] [rosbag2_storage]: Executing insert start
+[WARN] [1591718799.921095637] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.009764630] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.009967376] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.022093339] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.107773037] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.107947632] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.120126083] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.207727221] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.207906045] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.220180386] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.307991489] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.308161508] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.320420474] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.408396026] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.408565927] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.420608478] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.507549537] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.507723898] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.519641449] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.608141258] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.608319822] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.620588530] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.708738835] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.708826999] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.713155924] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.809044714] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.809216502] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.822130978] [rosbag2_storage]: Executing insert end
+[WARN] [1591718800.898168069] [rosbag2_transport]: [Callback]
+[WARN] [1591718800.898248590] [rosbag2_storage]: Executing insert start
+[WARN] [1591718800.902512619] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.019186253] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.019370741] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.032382518] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.109145721] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.109324079] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.120681457] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.208983320] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.209159801] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.221630125] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.307899550] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.308072695] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.320915735] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.415895271] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.416107213] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.428142493] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.508010547] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.508182578] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.520359990] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.608448994] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.608641034] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.622124570] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.707885573] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.708056246] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.721642163] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.808396652] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.808570276] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.821431554] [rosbag2_storage]: Executing insert end
+[WARN] [1591718801.915352715] [rosbag2_transport]: [Callback]
+[WARN] [1591718801.915522327] [rosbag2_storage]: Executing insert start
+[WARN] [1591718801.928346222] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.016323952] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.016497579] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.028583277] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.101233445] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.101340233] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.108126613] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.208093412] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.208287331] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.220239758] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.308081923] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.308279838] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.321117829] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.407513665] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.407687542] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.420200940] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.507770759] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.507954732] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.521081238] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.617125502] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.617322724] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.629363417] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.715238428] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.715405271] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.728847024] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.827641962] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.827715217] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.831374603] [rosbag2_storage]: Executing insert end
+[WARN] [1591718802.915695309] [rosbag2_transport]: [Callback]
+[WARN] [1591718802.915863347] [rosbag2_storage]: Executing insert start
+[WARN] [1591718802.929228312] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.008607231] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.008783452] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.021610179] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.102738605] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.102853682] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.110871137] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.198055544] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.198130863] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.202321565] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.316878848] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.316948521] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.320175050] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.396941778] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.397019633] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.400173400] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.514835791] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.515000669] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.526942407] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.608386043] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.608550712] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.620816136] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.717055988] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.717221547] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.728694487] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.816860037] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.817029034] [rosbag2_storage]: Executing insert start
+[WARN] [1591718803.986471041] [rosbag2_storage]: Executing insert end
+[WARN] [1591718803.993894986] [rosbag2_transport]: [Callback]
+[WARN] [1591718803.994065080] [rosbag2_storage]: Executing insert start
+[WARN] [1591718804.006433010] [rosbag2_storage]: Executing insert end
+[WARN] [1591718804.121653969] [rosbag2_transport]: [Callback]
+[WARN] [1591718804.121861351] [rosbag2_storage]: Executing insert start
+[WARN] [1591718804.222158265] [rosbag2_storage]: Executing insert end
+[WARN] [1591718804.230236552] [rosbag2_transport]: [Callback]
+[WARN] [1591718804.230392012] [rosbag2_storage]: Executing insert start
+[WARN] [1591718804.241205292] [rosbag2_storage]: Executing insert end
+[WARN] [1591718805.204213548] [rosbag2_transport]: [Callback]
+[WARN] [1591718805.204387185] [rosbag2_storage]: Executing insert start
+[WARN] [1591718805.216596933] [rosbag2_storage]: Executing insert end
+[WARN] [1591718805.478309742] [rosbag2_transport]: [Callback]
+[WARN] [1591718805.478410209] [rosbag2_storage]: Executing insert start
+[WARN] [1591718805.485588480] [rosbag2_storage]: Executing insert end
+[WARN] [1591718805.604270900] [rosbag2_transport]: [Callback]
+[WARN] [1591718805.604436992] [rosbag2_storage]: Executing insert start
+[WARN] [1591718805.616550028] [rosbag2_storage]: Executing insert end
+[WARN] [1591718805.803921506] [rosbag2_transport]: [Callback]
+[WARN] [1591718805.804087543] [rosbag2_storage]: Executing insert start
+[WARN] [1591718805.818260988] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.203803435] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.204000248] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.216413850] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.222950248] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.223067411] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.230309284] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.233675301] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.233750025] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.238655778] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.603025583] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.603191574] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.617505254] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.803129112] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.803301865] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.816140233] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.822660403] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.822774591] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.829967787] [rosbag2_storage]: Executing insert end
+[WARN] [1591718806.833422884] [rosbag2_transport]: [Callback]
+[WARN] [1591718806.833501497] [rosbag2_storage]: Executing insert start
+[WARN] [1591718806.838437745] [rosbag2_storage]: Executing insert end
+[WARN] [1591718807.305526642] [rosbag2_transport]: [Callback]
+[WARN] [1591718807.305697721] [rosbag2_storage]: Executing insert start
+[WARN] [1591718807.317902756] [rosbag2_storage]: Executing insert end
+[WARN] [1591718807.605325426] [rosbag2_transport]: [Callback]
+[WARN] [1591718807.605538444] [rosbag2_storage]: Executing insert start
+[WARN] [1591718807.617588625] [rosbag2_storage]: Executing insert end
+[WARN] [1591718807.805219948] [rosbag2_transport]: [Callback]
+[WARN] [1591718807.805385428] [rosbag2_storage]: Executing insert start
+[WARN] [1591718807.817357448] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.105360113] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.105530702] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.117717926] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.305313164] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.305482345] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.317404797] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.323675967] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.323796246] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.330896673] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.484760886] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.484983843] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.502479477] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.507540052] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.507650870] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.513535341] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.516389820] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.516455771] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.520374896] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.522622807] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.522680639] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.526162968] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.528133089] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.528184349] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.531264291] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.533140117] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.533195330] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.536279312] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.538229873] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.538288480] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.541268693] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.543187103] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.543238880] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.546214351] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.548172986] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.548228840] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.551371865] [rosbag2_storage]: Executing insert end
+[WARN] [1591718808.553260326] [rosbag2_transport]: [Callback]
+[WARN] [1591718808.553308725] [rosbag2_storage]: Executing insert start
+[WARN] [1591718808.556286816] [rosbag2_storage]: Executing insert end
+[WARN] [1591718809.605089824] [rosbag2_transport]: [Callback]
+[WARN] [1591718809.605277805] [rosbag2_storage]: Executing insert start
+[WARN] [1591718809.617442212] [rosbag2_storage]: Executing insert end
+[WARN] [1591718809.623755102] [rosbag2_transport]: [Callback]
+[WARN] [1591718809.623879926] [rosbag2_storage]: Executing insert start
+[WARN] [1591718809.631085995] [rosbag2_storage]: Executing insert end
+[WARN] [1591718809.634360696] [rosbag2_transport]: [Callback]
+[WARN] [1591718809.634441609] [rosbag2_storage]: Executing insert start
+[WARN] [1591718809.639380370] [rosbag2_storage]: Executing insert end
+[WARN] [1591718809.642100263] [rosbag2_transport]: [Callback]
+[WARN] [1591718809.642167519] [rosbag2_storage]: Executing insert start
+[WARN] [1591718809.645965789] [rosbag2_storage]: Executing insert end
+[WARN] [1591718809.648221576] [rosbag2_transport]: [Callback]
+[WARN] [1591718809.648281511] [rosbag2_storage]: Executing insert start
+[WARN] [1591718809.651684321] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.205361721] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.205574209] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.217885292] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.225156486] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.225305102] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.233423944] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.237168194] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.237251206] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.242291780] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.705323903] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.705490728] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.718169163] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.725390227] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.725541028] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.733238473] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.737136923] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.737219915] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.742280091] [rosbag2_storage]: Executing insert end
+[WARN] [1591718810.745031855] [rosbag2_transport]: [Callback]
+[WARN] [1591718810.745094731] [rosbag2_storage]: Executing insert start
+[WARN] [1591718810.749241832] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.205302864] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.205475503] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.213626487] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.217478724] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.217565923] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.222829255] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.225683455] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.225756317] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.229991102] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.232346926] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.232405760] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.236273321] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.482024788] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.482224347] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.496219862] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.501462987] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.501557950] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.508072208] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.511326685] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.511399378] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.515928264] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.518468145] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.518533966] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.522281718] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.524445076] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.524497767] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.527769185] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.529745073] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.529796842] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.532872504] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.534834843] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.534892991] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.538085198] [rosbag2_storage]: Executing insert end
+[WARN] [1591718811.540086085] [rosbag2_transport]: [Callback]
+[WARN] [1591718811.540148182] [rosbag2_storage]: Executing insert start
+[WARN] [1591718811.543279685] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.503125586] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.503295891] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.515892426] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.522741172] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.522862057] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.530054103] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.533523024] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.533602484] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.538679687] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.541413504] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.541471335] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.545225867] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.547464207] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.547524246] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.551142879] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.553143779] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.553193396] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.556246104] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.924911421] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.925079832] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.938313060] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.944695312] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.944817781] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.951650155] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.954935780] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.955016573] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.959621007] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.962215635] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.962276870] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.966203553] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.968497496] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.968560199] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.972309725] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.974364195] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.974422625] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.977573049] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.979563876] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.979624280] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.982901106] [rosbag2_storage]: Executing insert end
+[WARN] [1591718812.985158583] [rosbag2_transport]: [Callback]
+[WARN] [1591718812.985222715] [rosbag2_storage]: Executing insert start
+[WARN] [1591718812.988808676] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.016954052] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.017019988] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.020647105] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.106617035] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.106682825] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.109683510] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.207592327] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.207759667] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.219805163] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.318821291] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.319020398] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.331242390] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.408737201] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.408919101] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.421426346] [rosbag2_storage]: Executing insert end
+[WARN] [1591718813.499689618] [rosbag2_transport]: [Callback]
+[WARN] [1591718813.499794478] [rosbag2_storage]: Executing insert start
+[WARN] [1591718813.504289970] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.483326796] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.483520810] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.496539936] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.503439287] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.503562827] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.512049298] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.515536128] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.515620057] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.520432936] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.522612722] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.522666648] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.526474021] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.528583026] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.528639916] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.531739119] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.533700403] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.533757509] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.537001418] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.539063547] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.539124874] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.542219150] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.544135887] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.544185746] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.547209339] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.549184284] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.549239550] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.552309129] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.554305725] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.554360388] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.557404613] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.607479266] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.607558196] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.612017578] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.707578639] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.707756387] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.720295222] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.807668032] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.807839867] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.820448122] [rosbag2_storage]: Executing insert end
+[WARN] [1591718814.907690154] [rosbag2_transport]: [Callback]
+[WARN] [1591718814.907861557] [rosbag2_storage]: Executing insert start
+[WARN] [1591718814.919851884] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.007782721] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.007970648] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.020271133] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.107519257] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.107714777] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.120120276] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.208783133] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.208972267] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.221566404] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.299673488] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.299766222] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.306050345] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.416619382] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.416791955] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.430495086] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.527813432] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.527908121] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.531394059] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.617466946] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.617642526] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.629608068] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.707801343] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.707975894] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.720225376] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.807875743] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.808049264] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.820743503] [rosbag2_storage]: Executing insert end
+[WARN] [1591718815.916319277] [rosbag2_transport]: [Callback]
+[WARN] [1591718815.916489834] [rosbag2_storage]: Executing insert start
+[WARN] [1591718815.928738694] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.008010068] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.008190081] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.020451241] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.107375822] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.107565995] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.120095306] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.207797937] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.207977523] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.221638852] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.307577045] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.307748369] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.321135189] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.415822119] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.415989110] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.428910959] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.516984786] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.517151263] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.530627207] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.609080493] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.609285955] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.622117767] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.708233307] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.708408423] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.721326874] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.808453295] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.808649132] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.822633604] [rosbag2_storage]: Executing insert end
+[WARN] [1591718816.909197029] [rosbag2_transport]: [Callback]
+[WARN] [1591718816.909411146] [rosbag2_storage]: Executing insert start
+[WARN] [1591718816.923138941] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.008019114] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.008195457] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.020697295] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.108393526] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.108562038] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.122647580] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.207907625] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.208077055] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.220512665] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.316434581] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.316604001] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.329101593] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.407911852] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.408081228] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.420358176] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.512765063] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.512870938] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.518954590] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.606617424] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.606683692] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.609805674] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.716438849] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.716606219] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.729112058] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.808359903] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.808532602] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.821240896] [rosbag2_storage]: Executing insert end
+[WARN] [1591718817.907579451] [rosbag2_transport]: [Callback]
+[WARN] [1591718817.907772986] [rosbag2_storage]: Executing insert start
+[WARN] [1591718817.920429233] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.008934281] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.009109231] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.021748223] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.108324118] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.108523515] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.122268938] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.208450017] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.208646622] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.222114964] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.307760766] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.307929557] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.321418302] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.426488777] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.426660171] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.439665475] [rosbag2_storage]: Executing insert end
+[WARN] [1591718818.507989517] [rosbag2_transport]: [Callback]
+[WARN] [1591718818.508161965] [rosbag2_storage]: Executing insert start
+[WARN] [1591718818.517787698] [rosbag2_storage]: Executing insert end
+[INFO] [1591718819.142851504] [rclcpp]: signal_handler(signal_value=2)
+[WARN] [1591718819.156693408] [rosbag2_storage]: Creating index, do not interrupt!
+[INFO] [1591718819.158074936] [rosbag2_storage]: Index created
