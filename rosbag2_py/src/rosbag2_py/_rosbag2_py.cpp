@@ -115,7 +115,7 @@ public:
   }
 
   /// Write a serialized message to a bag file
-  void write(std::string &topic_name, std::string &message, long &time_stamp) {
+  void write(const std::string &topic_name, const std::string &message, const long &time_stamp) {
     auto bag_message =
         std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
