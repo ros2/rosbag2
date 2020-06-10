@@ -115,16 +115,14 @@ public:
   }
 
   /// Write a serialized message to a bag file
-  void write(pybind11::str &topic_name, pybind11::bytes &message, pybind11::int_ &time_stamp) {
+  void write(std::string &topic_name, std::string &message, long &time_stamp) {
     auto bag_message =
         std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
-    std::string data = message.cast<std::string>();
-
-    bag_message->topic_name = topic_name.cast<std::string>();
+    bag_message->topic_name = topic_name;
     bag_message->serialized_data =
-        rosbag2_storage::make_serialized_message(data.c_str(), data.length());
-    bag_message->time_stamp = time_stamp.cast<rcutils_time_point_value_t>();
+        rosbag2_storage::make_serialized_message(message.c_str(), message.length());
+    bag_message->time_stamp = (rcutils_time_point_value_t)time_stamp;
 
     writer_->write(bag_message);
   }
