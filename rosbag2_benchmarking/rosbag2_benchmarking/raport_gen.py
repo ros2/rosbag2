@@ -1,10 +1,13 @@
 import pathlib, yaml, csv
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
 
-class Result:
+class Raport:
     base_time = 0
+    title = "Benchmark"
+    benchmark_path = ""
 
     bag_message_captured_percents = {}
     bag_message_captured_num = {}
@@ -27,12 +30,69 @@ class Result:
     def __init__(self, logger):
         self.logger = logger
 
+    def dump_raport_yaml(self):
+        # messages
+        total_captured = 0
+        total_expected = 0
+        for topic, val in self.bag_message_captured_percents.items():
+            total_captured += self.bag_message_captured_num[topic]
+            total_expected += self.bag_message_captured_expected[topic]
+
+        # disk
+        disk_std_w = float(np.std(self.disk_utilization_w))
+        disk_mean_w = float(np.mean(self.disk_utilization_w))
+        disk_std_r = float(np.std(self.disk_utilization_r))
+        disk_mean_r = float(np.mean(self.disk_utilization_r))
+
+        # cpu
+        cpu_std = float(np.std(self.cpu_utilization_v))
+        cpu_mean = float(np.mean(self.cpu_utilization_v))
+
+        # mem
+        mem_std = float(np.std(self.mem_utilization_v))
+        mem_mean = float(np.mean(self.mem_utilization_v))
+        mem_min = float(np.min(self.mem_utilization_v))
+        mem_max = float(np.max(self.mem_utilization_v))
+
+        data = {
+            "bechmark": {
+                "title": self.title,
+            },
+            "messages": {
+                "captured": total_captured,
+                "expected": total_expected,
+                "percent": total_captured/total_expected * 100
+            },
+            "disk": {
+                "write": {
+                    "mean": disk_mean_w,
+                    "std": disk_std_w,
+                },
+                "read": {
+                    "mean": disk_mean_r,
+                    "std": disk_std_r,
+                },
+            },
+            "cpu": {
+                "mean": cpu_mean,
+                "std": cpu_std,
+            },
+            "memory": {
+                "mean": mem_mean,
+                "std": mem_std,
+                "min": mem_min,
+                "max": mem_max,
+            }
+        }
+        with open(str(pathlib.Path(self.benchmark_path).joinpath("raport.yaml")), 'w') as outfile:
+            yaml.dump(data, outfile, default_flow_style=False)
+
     def generate_plots(self):
         # base_time = min(self.cpu_utilization.keys(0))
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots(2, 3, figsize=(15, 6))
-        fig.suptitle("Benchmark", fontsize=16)
+        fig.suptitle(self.title, fontsize=16)
 
         x = [(v - self.base_time)/1000000 for v in self.cpu_utilization_t]
         for cpu_timings in self.cpu_utilization_v:
@@ -56,7 +116,9 @@ class Result:
         y = self.mem_utilization_v
         ax[0, 2].set_title("Memory used [MB]")
         ax[0, 2].plot(x, y)
-        plt.show()
+
+        plt.savefig(str(pathlib.Path(self.benchmark_path).joinpath("plots.jpg")))
+        # plt.show()
 
     def get_messages_captured_str(self):
         message = ""
@@ -117,7 +179,7 @@ class RaportGen(Node):
     def __init__(self):
         super().__init__('raport_gen')
         self.logger = rclpy.logging.get_logger("RAPORT")
-        self.result = Result(self.logger)
+        self.result = Raport(self.logger)
 
         self.declare_parameter("description", "")
         config_path = self.get_parameter("description").get_parameter_value().string_value
@@ -230,8 +292,11 @@ class RaportGen(Node):
 
         # Print raport
         self.result.base_time = self.bag_record_start_time
-        self.logger.info(str(self.result))
+        self.result.benchmark_path = self.benchmark_path
+        self.result.title = self.config["benchmark"]["name"]
         self.result.generate_plots()
+        self.result.dump_raport_yaml()
+        self.logger.info(str(self.result))
 
 def main():
     rclpy.init()

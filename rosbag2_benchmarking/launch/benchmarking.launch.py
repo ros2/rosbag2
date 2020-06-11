@@ -98,8 +98,8 @@ def get_pointcloud_worker(name=None, topic=None, max_count=100, frequency=100, d
             ]
         ), name
 
-def get_bytearray_worker(name=None, topic=None, max_count=100, frequency=100, delay=1000, size=10000, benchmark_path=None, instance=0, same_topic=True):
-    name += "_{}".format(instance)
+def get_bytearray_worker(name=None, topic=None, max_count=100, frequency=100, delay=1000, size=10000, benchmark_path=None, instances=0, same_topic=True):
+    # name += "_{}".format(instance)
     if not name:
         raise RuntimeError("You must set an unique worker name.")
     if not topic:
@@ -114,9 +114,10 @@ def get_bytearray_worker(name=None, topic=None, max_count=100, frequency=100, de
     with open(pathlib.Path(benchmark_path).joinpath("{}-bytearray-worker.yaml".format(name)), 'w') as f:
         yaml.dump(worker_launch_info, f, default_flow_style=False)
 
-    worker_topic = topic if same_topic else topic + str(instance)
-    logger.info("Creating bytearray worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, worker_topic, max_count, frequency, size))
-    return worker_topic, "sensor_msgs/msg/ByteMultiArray", Node(
+    all_topics = [topic + str(i) for i in range(0, instances)]
+    all_types = ["sensor_msgs/msg/ByteMultiArray"] * instances
+    logger.info("Creating bytearray worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, all_topics, max_count, frequency, size))
+    return all_topics, all_types, Node(
             package='rosbag2_performance_workers',
             executable='bytearray_worker',
             name=name,
@@ -127,10 +128,56 @@ def get_bytearray_worker(name=None, topic=None, max_count=100, frequency=100, de
                     'size': size, 
                     'delay': delay,
                     'benchmark_path': str(benchmark_path),
+                    'instances': instances,
+                    'topic': topic,
+                    'same_topic': same_topic
                 }],
-            remappings=[
-                ('bytearray', worker_topic)
-            ]
+        ), name
+
+def get_worker(
+    worker_executable,
+    benchmark_path=None,
+    name=None,
+    topic=None,
+    max_count=100,
+    frequency=100,
+    delay=1000,
+    size=10000,
+    instances=0,
+    same_topic=True
+):
+    if not name:
+        raise RuntimeError("You must set an unique worker name.")
+    if not topic:
+        raise RuntimeError("You must set an unique worker topic.")
+    if not pathlib.Path(benchmark_path).is_dir():
+        raise RuntimeError("Invalid raport dir.")
+
+    if not isinstance(max_count, int) or not isinstance(frequency, int) or not isinstance(delay, int) or not isinstance(size, int):
+        raise RuntimeError("Invalid worker parameters.")
+
+    worker_launch_info = {"name": name, "topic": topic, "max_count": max_count, "frequency": frequency, "delay": delay, "size": size, "same_topic": same_topic}
+    with open(pathlib.Path(benchmark_path).joinpath("{}-bytearray-worker.yaml".format(name)), 'w') as f:
+        yaml.dump(worker_launch_info, f, default_flow_style=False)
+
+    all_topics = [topic + str(i) for i in range(0, instances)]
+    all_types = ["sensor_msgs/msg/ByteMultiArray"] * instances
+    logger.info("Creating bytearray worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, all_topics, max_count, frequency, size))
+    return all_topics, all_types, Node(
+            package='rosbag2_performance_workers',
+            executable=worker_executable,
+            name=name,
+            parameters=[
+                {
+                    'max_count': max_count, 
+                    'frequency': frequency, 
+                    'size': size, 
+                    'delay': delay,
+                    'benchmark_path': str(benchmark_path),
+                    'instances': instances,
+                    'topic': topic,
+                    'same_topic': same_topic
+                }],
         ), name
 
 def get_dummy_publisher(topics, types):
@@ -245,16 +292,17 @@ def parse_workers(config, benchmark_path):
             if worker["bytearray"].get("same_topic") is not None:
                 kwargs.update({"same_topic":worker["bytearray"]["same_topic"]})
             workers_in_boundle = [worker["bytearray"].get("name")+"_{}".format(i) for i in range(0,worker["bytearray"].get("instances", 1))]
-            for instance in range(0, worker["bytearray"].get("instances", 1)):
-                topic, type_, node, name = get_bytearray_worker(**kwargs, instance=instance)
+            # for instance in range(0, worker["bytearray"].get("instances", 1)):
+            topics, type_, node, name = get_worker(**kwargs, worker_executable="bytearray_worker", instances=worker["bytearray"].get("instances", 1))
+            for topic in topics:
                 if worker_topic_check.get(topic):
                     if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic, []):
                         logger.error("Multiple workers on same topic {}. Exiting.".format(topic))
                         sys.exit(0)
-                worker_topic_check.update({topic: workers_in_boundle})
-                workers_to_run.append(node)
-                worker_topics.append(topic)
-                worker_types.append(type_)
+            worker_topic_check.update({topic: workers_in_boundle})
+            workers_to_run.append(node)
+            worker_topics += (topics)
+            worker_types += (type_)
             pass
 
     return worker_topics, worker_types, workers_to_run
@@ -351,7 +399,7 @@ def generate_launch_description():
     # Setup workers
     worker_hooks = {}
     worker_topics, worker_types, workers_to_run = parse_workers(config, benchmark_path)
-    logger.info("Worker all topics: {}".format(worker_topics))
+    # logger.info("Worker all topics: {}".format(worker_topics))
     
     # Prepare workers
     for worker in workers_to_run:

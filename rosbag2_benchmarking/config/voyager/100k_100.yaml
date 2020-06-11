@@ -1,0 +1,20 @@
+raport_dir: "~/.ros/raports"
+rosbag:
+    args:
+        - "--max-cache-size 1"
+benchmark:
+    id: 0
+    tag: "voyager_100_100"
+    name: "100KB with 100 topics"
+    overwrite_existing: true
+    monitor_frequency: 10
+workers:
+    - bytearray:
+        name: "voy"
+        topic: "voy"
+        instances: 100
+        same_topic: false
+        delay: 1000
+        max_count: 1000
+        size: 100000
+        frequency: 100

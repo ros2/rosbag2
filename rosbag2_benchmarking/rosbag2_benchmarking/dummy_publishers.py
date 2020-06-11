@@ -1,4 +1,4 @@
-import rclpy
+import rclpy, time
 from rclpy.node import Node
 
 class DummyPublisherUtility(Node):
@@ -18,6 +18,7 @@ class DummyPublisherUtility(Node):
 
         for i in range(0,len(topics)):
             self.warm_up_topic(topics[i], types[i])
+            time.sleep(0.01)
 
     def warm_up_topic(self, topic, type_):
         if type_ == "sensor_msgs/msg/Image":
