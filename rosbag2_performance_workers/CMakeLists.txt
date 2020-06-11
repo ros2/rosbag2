@@ -28,7 +28,10 @@ ament_target_dependencies(image_worker rclcpp sensor_msgs std_msgs)
 add_executable(pointcloud2_worker src/pointcloud2_worker.cpp)
 ament_target_dependencies(pointcloud2_worker rclcpp sensor_msgs std_msgs)
 
-install(TARGETS image_worker pointcloud2_worker
+add_executable(bytearray_worker src/bytearray_worker.cpp)
+ament_target_dependencies(bytearray_worker rclcpp sensor_msgs std_msgs)
+
+install(TARGETS image_worker pointcloud2_worker bytearray_worker
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 

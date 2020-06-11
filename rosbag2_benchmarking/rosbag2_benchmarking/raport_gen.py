@@ -72,7 +72,8 @@ class Result:
     def get_workers_str(self):
         message = ""
         for topic, val in self.workers.items():
-            message += "{name}: {instances} intances on '{topic}' at {frequency}Hz\n".format(
+            message += "{type}:{name} - {instances} instance(s) on '{topic}' at {frequency}Hz\n".format(
+                type=val["type"],
                 instances=val["instances"],
                 name = val["name"],
                 topic=topic,
@@ -93,7 +94,7 @@ Workers:
 Messages captured:
 {bag_message_captured}
 ==================================
-        """.format(
+""".format(
             bag_message_captured=self.get_messages_captured_str(),
             workers=self.get_workers_str())
         return result_log
@@ -147,19 +148,34 @@ class RaportGen(Node):
 
         # Workers info
         for worker in workers:
-            for key in ["image", "pointcloud2"]:
+            for key in ["image", "pointcloud2", "bytearray"]:
                 if worker.get(key):
-                    # Get worker info from config file
                     worker_info = worker.get(key)
-                    workers_result.update(
-                        {
-                            "/"+worker_info["topic"]:{"name":worker_info["name"], "frequency":1000/worker_info["dt"], "instances":worker_info["instances"]}
-                        })
-                    # Currently accumulated number of messages for given topic
-                    current_topic_msg_count = topic_msgs_accumulated.get("/"+worker_info["topic"], 0)
-                    # Update msg count for topic
-                    current_topic_msg_count += worker_info["max_count"] * worker_info["instances"]
-                    topic_msgs_accumulated.update({"/"+worker_info["topic"]:current_topic_msg_count})
+                    for i in range(0,  worker_info["instances"]):
+                        # Get worker info from config file
+                        if worker_info.get("same_topic",True):
+                            worker_topic = worker_info["topic"]
+                            workers_result.update(
+                                {
+                                    "/"+worker_topic:{"name":worker_info["name"], "frequency":worker_info["frequency"], "instances":worker_info["instances"], "type": key}
+                                })
+                            # Currently accumulated number of messages for given topic
+                            current_topic_msg_count = topic_msgs_accumulated.get("/"+worker_topic, 0)
+                            # Update msg count for topic
+                            current_topic_msg_count += worker_info["max_count"] * worker_info["instances"]
+                            topic_msgs_accumulated.update({"/"+worker_topic:current_topic_msg_count})
+                            break
+                        else:
+                            worker_topic = worker_info["topic"] + str(i)
+                            workers_result.update(
+                                {
+                                    "/"+worker_topic:{"name":worker_info["name"], "frequency":worker_info["frequency"], "instances":1, "type": key}
+                                })
+                            # Currently accumulated number of messages for given topic
+                            current_topic_msg_count = topic_msgs_accumulated.get("/"+worker_topic, 0)
+                            # Update msg count for topic
+                            current_topic_msg_count += worker_info["max_count"]
+                            topic_msgs_accumulated.update({"/"+worker_topic:current_topic_msg_count})
         self.result.workers = workers_result
 
         # Calculate percent of msgs saved in bag

@@ -1,6 +1,8 @@
 raport_dir: "~/.ros/raports"
 rosbag:
-    polling_interval: 10
+    args: 
+        - "--max-cache-size 0"
+        - "-b 0"
 benchmark:
     id: 0
     tag: "bench1"
@@ -9,26 +11,28 @@ benchmark:
     monitor_frequency: 10
 workers:
     - image:
-        name: "camera_low"
-        topic: "camera_low"
+        name: "camera"
+        topic: "camera"
         instances: 4
         delay: 1000
         max_count: 100
         dimensions: 1024
-        dt: 100
-    - image:
-        name: "camera_high"
-        topic: "camera_high"
-        instances: 1
-        delay: 1000
-        max_count: 100
-        dimensions: 1024
-        dt: 100
+        frequency: 100
     - pointcloud2:
         name: "lidar"
         topic: "lidar"
         instances: 1
+        same_topic: true
+        delay: 1000
+        max_count: 500
+        size: 100000
+        frequency: 100
+    - bytearray:
+        name: "ba"
+        topic: "ba"
+        instances: 2
+        same_topic: false
         delay: 1000
         max_count: 100
-        size: 100000
-        dt: 100
+        size: 1000
+        frequency: 100

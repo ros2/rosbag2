@@ -26,6 +26,9 @@ class DummyPublisherUtility(Node):
         elif type_ == "sensor_msgs/msg/PointCloud2":
             from sensor_msgs.msg import PointCloud2
             self.__publishers.append(self.create_publisher(PointCloud2, topic, 1))
+        elif type_ == "sensor_msgs/msg/ByteMultiArray":
+            from std_msgs.msg import ByteMultiArray
+            self.__publishers.append(self.create_publisher(ByteMultiArray, topic, 1))
         else:
             # (piotr.jaroszek) TODO: fill out rest or make a dynamic import
             pass

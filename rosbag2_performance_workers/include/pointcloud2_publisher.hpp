@@ -69,7 +69,7 @@ public:
   PointCloud2Publisher(const std::string & name, const std::string & topic)
       : Node(name)
   {
-    this->declare_parameter("dt");
+    this->declare_parameter("frequency");
     this->declare_parameter("max_count");
     this->declare_parameter("size");
     this->declare_parameter("delay");
@@ -84,7 +84,11 @@ public:
       RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
     }
 
-    dt = parameters_client->get_parameter<uint32_t>("dt", 10);
+    frequency = parameters_client->get_parameter<uint32_t>("frequency", 100);
+    if(frequency == 0) {
+      RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
+      rclcpp::shutdown(nullptr, "frequency error");
+    }
     max_count = parameters_client->get_parameter<uint32_t>("max_count", 100);
     size = parameters_client->get_parameter<uint32_t>("size", 100000);
     delay = parameters_client->get_parameter<uint32_t>("delay", 0);
@@ -99,7 +103,7 @@ private:
   void delay_callback()
   {
     std::cout << this->get_name() <<  ": Delay finished" << std::endl;
-    timer = this->create_wall_timer(std::chrono::milliseconds(dt), std::bind(&PointCloud2Publisher::timer_callback, this));
+    timer = this->create_wall_timer(std::chrono::milliseconds(1000/frequency), std::bind(&PointCloud2Publisher::timer_callback, this));
     delay_timer->cancel();
   }
 
@@ -118,7 +122,7 @@ private:
 
   std::shared_ptr<sensor_msgs::msg::PointCloud2> random_pointcloud2;
   std::string benchmark_path;
-  uint32_t dt;
+  uint32_t frequency;
   uint32_t max_count;
   uint32_t size;
   uint32_t delay;
