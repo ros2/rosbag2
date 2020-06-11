@@ -60,13 +60,23 @@ class Result:
 
     def get_messages_captured_str(self):
         message = ""
+        total_captured = 0
+        total_expected = 0
         for topic, val in self.bag_message_captured_percents.items():
+            total_captured += self.bag_message_captured_num[topic]
+            total_expected += self.bag_message_captured_expected[topic]
             message += "'{topic}': {captured}/{expected} ({percent:.4f}%)\n".format(
                 topic=topic,
                 captured=self.bag_message_captured_num[topic],
                 expected=self.bag_message_captured_expected[topic],
                 percent=val
             )
+        message += "\n Total: \n {captured}/{expected} ({percent:.4f}%)".format(
+            topic=topic,
+            captured=total_captured,
+            expected=total_expected,
+            percent=total_captured/total_expected * 100
+        )
         return message
 
     def get_workers_str(self):
