@@ -23,116 +23,11 @@ import launch.actions
 import launch.events
 import launch.substitutions
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 VERBOSE = True
 logger = launch.logging.get_logger("BENCHMARK")
-
-def get_image_worker(name=None, topic=None, max_count=100, frequency=100, delay=1000, dimensions=32, benchmark_path=None, instance=0, same_topic=True):
-    name += "_{}".format(instance)
-    if not name:
-        raise RuntimeError("You must set an unique worker name.")
-    if not topic:
-        raise RuntimeError("You must set an unique worker topic.")
-    if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError("Invalid raport dir.")
-
-    if not isinstance(max_count, int) or not isinstance(frequency, int) or not isinstance(delay, int) or not isinstance(dimensions, int):
-        raise RuntimeError("Invalid worker parameters.")
-
-    worker_launch_info = {"name": name, "topic": topic, "max_count": max_count, "frequency": frequency, "delay": delay, "dimensions": dimensions}
-    with open(pathlib.Path(benchmark_path).joinpath("{}-image-worker.yaml".format(name)), 'w') as f:
-        yaml.dump(worker_launch_info, f, default_flow_style=False)
-    
-    worker_topic = topic if same_topic else topic + str(instance)
-    logger.info("Creating image worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, worker_topic, max_count, frequency, dimensions))
-    return worker_topic, "sensor_msgs/msg/Image", Node(
-            package='rosbag2_performance_workers',
-            executable='image_worker',
-            name=name,
-            parameters=[
-                {
-                    'max_count':max_count, 
-                    'frequency':frequency, 
-                    'dimensions':dimensions, 
-                    'delay':delay,
-                    'benchmark_path': benchmark_path
-                }],
-            remappings=[
-                ('image', worker_topic)
-            ]
-        ), name
-
-def get_pointcloud_worker(name=None, topic=None, max_count=100, frequency=100, delay=1000, size=10000, benchmark_path=None, instance=0, same_topic=True):
-    name += "_{}".format(instance)
-    if not name:
-        raise RuntimeError("You must set an unique worker name.")
-    if not topic:
-        raise RuntimeError("You must set an unique worker topic.")
-    if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError("Invalid raport dir.")
-
-    if not isinstance(max_count, int) or not isinstance(frequency, int) or not isinstance(delay, int) or not isinstance(size, int):
-        raise RuntimeError("Invalid worker parameters.")
-
-    worker_launch_info = {"name": name, "topic": topic, "max_count": max_count, "frequency": frequency, "delay": delay, "size": size}
-    with open(pathlib.Path(benchmark_path).joinpath("{}-pointcloud2-worker.yaml".format(name)), 'w') as f:
-        yaml.dump(worker_launch_info, f, default_flow_style=False)
-
-    worker_topic = topic if same_topic else topic + str(instance)
-    logger.info("Creating pointcloud worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, worker_topic, max_count, frequency, size))
-    return worker_topic, "sensor_msgs/msg/PointCloud2", Node(
-            package='rosbag2_performance_workers',
-            executable='pointcloud2_worker',
-            name=name,
-            parameters=[
-                {
-                    'max_count': max_count, 
-                    'frequency': frequency, 
-                    'size': size, 
-                    'delay': delay,
-                    'benchmark_path': str(benchmark_path)
-                }],
-            remappings=[
-                ('pointcloud2', worker_topic)
-            ]
-        ), name
-
-def get_bytearray_worker(name=None, topic=None, max_count=100, frequency=100, delay=1000, size=10000, benchmark_path=None, instances=0, same_topic=True):
-    # name += "_{}".format(instance)
-    if not name:
-        raise RuntimeError("You must set an unique worker name.")
-    if not topic:
-        raise RuntimeError("You must set an unique worker topic.")
-    if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError("Invalid raport dir.")
-
-    if not isinstance(max_count, int) or not isinstance(frequency, int) or not isinstance(delay, int) or not isinstance(size, int):
-        raise RuntimeError("Invalid worker parameters.")
-
-    worker_launch_info = {"name": name, "topic": topic, "max_count": max_count, "frequency": frequency, "delay": delay, "size": size, "same_topic": same_topic}
-    with open(pathlib.Path(benchmark_path).joinpath("{}-bytearray-worker.yaml".format(name)), 'w') as f:
-        yaml.dump(worker_launch_info, f, default_flow_style=False)
-
-    all_topics = [topic + str(i) for i in range(0, instances)]
-    all_types = ["sensor_msgs/msg/ByteMultiArray"] * instances
-    logger.info("Creating bytearray worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, all_topics, max_count, frequency, size))
-    return all_topics, all_types, Node(
-            package='rosbag2_performance_workers',
-            executable='bytearray_worker',
-            name=name,
-            parameters=[
-                {
-                    'max_count': max_count, 
-                    'frequency': frequency, 
-                    'size': size, 
-                    'delay': delay,
-                    'benchmark_path': str(benchmark_path),
-                    'instances': instances,
-                    'topic': topic,
-                    'same_topic': same_topic
-                }],
-        ), name
 
 def get_worker(
     worker_executable,
@@ -142,10 +37,13 @@ def get_worker(
     max_count=100,
     frequency=100,
     delay=1000,
-    size=10000,
-    instances=0,
+    size=1000,
+    instances=1,
     same_topic=True
 ):
+    available_workers = ["image_worker", "pointcloud2_worker", "bytearray_worker"]
+    if worker_executable not in available_workers:
+        raise RuntimeError("Worker '{}' is not supported. Available: {}".format(available_workers))
     if not name:
         raise RuntimeError("You must set an unique worker name.")
     if not topic:
@@ -160,8 +58,22 @@ def get_worker(
     with open(pathlib.Path(benchmark_path).joinpath("{}-bytearray-worker.yaml".format(name)), 'w') as f:
         yaml.dump(worker_launch_info, f, default_flow_style=False)
 
-    all_topics = [topic + str(i) for i in range(0, instances)]
-    all_types = ["sensor_msgs/msg/ByteMultiArray"] * instances
+    all_topics = []
+    if same_topic:
+        all_topics = [topic for i in range(0, instances)]
+    else: 
+        all_topics = [topic + str(i) for i in range(0, instances)]
+
+    message_type = ""
+    logger.info("Worker executable: " + worker_executable)
+    if worker_executable == "image_worker":
+        message_type = "sensor_msgs/msg/Image"
+    elif worker_executable == "pointcloud2_worker":
+        message_type = "sensor_msgs/msg/PointCloud2"
+    else:
+        message_type = "std_msgs/msg/ByteMultiArray"
+
+    all_types = [message_type] * instances
     logger.info("Creating bytearray worker - name: {},  topic: {}, max_count: {}, frequency: {}, size: {}".format(name, all_topics, max_count, frequency, size))
     return all_topics, all_types, Node(
             package='rosbag2_performance_workers',
@@ -219,92 +131,46 @@ def parse_workers(config, benchmark_path):
     workers_to_run = []
 
     worker_topic_check = {}
+    names_check = []
 
     for worker in config["workers"]:
-        if list(worker)[0] == "image":
-            kwargs = {"benchmark_path": str(benchmark_path)}
-            if worker["image"].get("name") is not None:
-                kwargs.update({"name":worker["image"]["name"]})
-            if worker["image"].get("topic") is not None:
-                kwargs.update({"topic":worker["image"]["topic"]})
-            if worker["image"].get("delay") is not None:
-                kwargs.update({"delay":worker["image"]["delay"]})
-            if worker["image"].get("max_count") is not None:
-                kwargs.update({"max_count":worker["image"]["max_count"]})
-            if worker["image"].get("dimensions") is not None:
-                kwargs.update({"dimensions":worker["image"]["dimensions"]})
-            if worker["image"].get("frequency") is not None:
-                kwargs.update({"frequency":worker["image"]["frequency"]})
-            if worker["image"].get("same_topic") is not None:
-                kwargs.update({"same_topic":worker["image"]["same_topic"]})
-            workers_in_boundle = [worker["image"].get("name")+"_{}".format(i) for i in range(0,worker["image"].get("instances", 1))]
-            for instance in range(0, worker["image"].get("instances", 1)):
-                topic, type_, node, name = get_image_worker(**kwargs, instance=instance)
-                if worker_topic_check.get(topic):
-                    if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic):
-                        logger.error("Multiple workers on same topic {}. Exiting.".format(topic))
-                        sys.exit(0)
-                worker_topic_check.update({topic: workers_in_boundle})
-                workers_to_run.append(node)
-                worker_topics.append(topic)
-                worker_types.append(type_)
-        elif list(worker)[0] == "pointcloud2":
-            kwargs = {"benchmark_path": str(benchmark_path)}
-            if worker["pointcloud2"].get("name") is not None:
-                kwargs.update({"name":worker["pointcloud2"]["name"]})
-            if worker["pointcloud2"].get("topic") is not None:
-                kwargs.update({"topic":worker["pointcloud2"]["topic"]})
-            if worker["pointcloud2"].get("delay") is not None:
-                kwargs.update({"delay":worker["pointcloud2"]["delay"]})
-            if worker["pointcloud2"].get("max_count") is not None:
-                kwargs.update({"max_count":worker["pointcloud2"]["max_count"]})
-            if worker["pointcloud2"].get("size") is not None:
-                kwargs.update({"size":worker["pointcloud2"]["size"]})
-            if worker["pointcloud2"].get("frequency") is not None:
-                kwargs.update({"frequency":worker["pointcloud2"]["frequency"]})
-            if worker["pointcloud2"].get("same_topic") is not None:
-                kwargs.update({"same_topic":worker["pointcloud2"]["same_topic"]})
-            workers_in_boundle = [worker["pointcloud2"].get("name")+"_{}".format(i) for i in range(0,worker["pointcloud2"].get("instances", 1))]
-            for instance in range(0, worker["pointcloud2"].get("instances", 1)):
-                topic, type_, node, name = get_pointcloud_worker(**kwargs, instance=instance)
-                if worker_topic_check.get(topic):
-                    if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic):
-                        logger.error("Multiple workers on same topic {}. Exiting.".format(topic))
-                        sys.exit(0)
-                worker_topic_check.update({topic: workers_in_boundle})
-                workers_to_run.append(node)
-                worker_topics.append(topic)
-                worker_types.append(type_)
-        elif list(worker)[0] == "bytearray":
-            kwargs = {"benchmark_path": str(benchmark_path)}
-            if worker["bytearray"].get("name") is not None:
-                kwargs.update({"name":worker["bytearray"]["name"]})
-            if worker["bytearray"].get("topic") is not None:
-                kwargs.update({"topic":worker["bytearray"]["topic"]})
-            if worker["bytearray"].get("delay") is not None:
-                kwargs.update({"delay":worker["bytearray"]["delay"]})
-            if worker["bytearray"].get("max_count") is not None:
-                kwargs.update({"max_count":worker["bytearray"]["max_count"]})
-            if worker["bytearray"].get("size") is not None:
-                kwargs.update({"size":worker["bytearray"]["size"]})
-            if worker["bytearray"].get("frequency") is not None:
-                kwargs.update({"frequency":worker["bytearray"]["frequency"]})
-            if worker["bytearray"].get("same_topic") is not None:
-                kwargs.update({"same_topic":worker["bytearray"]["same_topic"]})
-            workers_in_boundle = [worker["bytearray"].get("name")+"_{}".format(i) for i in range(0,worker["bytearray"].get("instances", 1))]
-            # for instance in range(0, worker["bytearray"].get("instances", 1)):
-            topics, type_, node, name = get_worker(**kwargs, worker_executable="bytearray_worker", instances=worker["bytearray"].get("instances", 1))
-            for topic in topics:
-                if worker_topic_check.get(topic):
-                    if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic, []):
-                        logger.error("Multiple workers on same topic {}. Exiting.".format(topic))
-                        sys.exit(0)
-            worker_topic_check.update({topic: workers_in_boundle})
-            workers_to_run.append(node)
-            worker_topics += (topics)
-            worker_types += (type_)
-            pass
-
+        worker_type = list(worker)[0]
+        kwargs = {"benchmark_path": str(benchmark_path)}
+        if worker[worker_type].get("name") is not None:
+            kwargs.update({"name":worker[worker_type]["name"]})
+        if worker[worker_type].get("topic") is not None:
+            kwargs.update({"topic":worker[worker_type]["topic"]})
+        if worker[worker_type].get("delay") is not None:
+            kwargs.update({"delay":worker[worker_type]["delay"]})
+        if worker[worker_type].get("max_count") is not None:
+            kwargs.update({"max_count":worker[worker_type]["max_count"]})
+        if worker[worker_type].get("size") is not None:
+            kwargs.update({"size":worker[worker_type]["size"]})
+        if worker[worker_type].get("frequency") is not None:
+            kwargs.update({"frequency":worker[worker_type]["frequency"]})
+        if worker[worker_type].get("same_topic") is not None:
+            kwargs.update({"same_topic":worker[worker_type]["same_topic"]})
+        if worker[worker_type].get("instances") is not None:
+            kwargs.update({"instances":worker[worker_type]["instances"]})
+        # workers_in_boundle = [worker[worker_type].get("name")+"_{}".format(i) for i in range(0,worker[worker_type].get("instances", 1))]
+        # for instance in range(0, worker[worker_type].get("instances", 1)):
+        topics, type_, node, name = get_worker(**kwargs, worker_executable=worker_type+"_worker")
+        if name in names_check:
+            logger.error("Multiple workers with same name '{}'. Exiting.".format(name))
+            sys.exit(0)
+        names_check.append(name)
+        for topic in topics:
+            # logger.info("NAME: " + str(name))
+            # logger.info("WIB: " + str(workers_in_boundle))
+            # logger.info("TOPIC CHECK: " + str(worker_topic_check))
+            if worker_topic_check.get(topic):
+                if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic, []):
+                    logger.error("Multiple workers on same topic `{}`. Exiting.".format(topic))
+                    sys.exit(0)
+            worker_topic_check.update({topic: name})
+        workers_to_run.append(node)
+        worker_topics += (topics)
+        worker_types += (type_)
     return worker_topics, worker_types, workers_to_run
 
 
@@ -318,6 +184,11 @@ def generate_launch_description():
     def monitor_exited(event, context):
         return launch.actions.EmitEvent(event=launch.events.Shutdown(
             reason="Monitor exited"
+            ))
+
+    def bag_exited(event, context):
+        return launch.actions.EmitEvent(event=launch.events.Shutdown(
+            reason="Bag exited"
             ))
 
     # Exits benchmark when all workers are finished
@@ -421,10 +292,14 @@ def generate_launch_description():
     args_list = [arg.split(" ") for arg in config["rosbag"]["args"]]
     parsed_args_list = [item for sublist in args_list for item in sublist]
 
-    bag_worker = launch.actions.ExecuteProcess(cmd= ["ros2", 'bag', 'record'] + \
-        list(set(worker_topics)) + \
-        ["-o", str(raports_bag_location)] + \
-        parsed_args_list)
+    bag_worker = launch.actions.ExecuteProcess(sigkill_timeout=LaunchConfiguration(
+            'sigkill_timeout', default=15), 
+        sigterm_timeout=LaunchConfiguration(
+            'sigterm_timeout', default=15), 
+        cmd=["ros2", 'bag', 'record'] + \
+            list(set(worker_topics)) + \
+            ["-o", str(raports_bag_location)] + \
+            parsed_args_list)
     
     # Hook rosbag with readiness checks
     ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
@@ -437,6 +312,7 @@ def generate_launch_description():
         on_stdout=bag_warm_check,
         on_stderr=bag_warm_check,
     )))
+    ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessExit(target_action=bag_worker, on_exit=bag_exited)))
 
     return ld
 
