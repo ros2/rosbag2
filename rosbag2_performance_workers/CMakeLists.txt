@@ -22,14 +22,14 @@ find_package(std_msgs REQUIRED)
 
 include_directories(include)
 
-add_executable(image_worker src/image_worker.cpp)
+add_executable(image_worker src/image.cpp)
 ament_target_dependencies(image_worker rclcpp sensor_msgs std_msgs)
 
-add_executable(pointcloud2_worker src/pointcloud2_worker.cpp)
+add_executable(pointcloud2_worker src/pointcloud2.cpp)
 ament_target_dependencies(pointcloud2_worker rclcpp sensor_msgs std_msgs)
 
-add_executable(bytearray_worker src/bytearray_worker.cpp)
-ament_target_dependencies(bytearray_worker rclcpp sensor_msgs std_msgs)
+add_executable(bytearray_worker src/bytearray.cpp)
+ament_target_dependencies(bytearray_worker rclcpp std_msgs)
 
 install(TARGETS image_worker pointcloud2_worker bytearray_worker
   EXPORT export_${PROJECT_NAME}
