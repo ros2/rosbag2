@@ -87,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          linter: [flake8, pep257]
+          linter: [pep257] # TODO re-enable flake8 when it is fixed
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
