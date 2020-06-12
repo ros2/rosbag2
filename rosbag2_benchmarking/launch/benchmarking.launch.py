@@ -160,9 +160,6 @@ def parse_workers(config, benchmark_path):
             sys.exit(0)
         names_check.append(name)
         for topic in topics:
-            # logger.info("NAME: " + str(name))
-            # logger.info("WIB: " + str(workers_in_boundle))
-            # logger.info("TOPIC CHECK: " + str(worker_topic_check))
             if worker_topic_check.get(topic):
                 if len(worker_topic_check.get(topic)) > 0 and name not in worker_topic_check.get(topic, []):
                     logger.error("Multiple workers on same topic `{}`. Exiting.".format(topic))
@@ -276,7 +273,6 @@ def generate_launch_description():
     # Setup workers
     worker_hooks = {}
     worker_topics, worker_types, workers_to_run = parse_workers(config, benchmark_path)
-    # logger.info("Worker all topics: {}".format(worker_topics))
     
     # Prepare workers
     for worker in workers_to_run:
@@ -323,7 +319,6 @@ def generate_launch_description():
     return ld
 
 if __name__ == '__main__':
-    # ls = LaunchService(argv=argv, debug=True)  # Use this instead to get more debug messages.
     ls = launch.LaunchService(argv=sys.argv[1:])
     ls.include_launch_description(generate_launch_description())
     sys.exit(ls.run())
