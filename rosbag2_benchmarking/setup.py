@@ -17,7 +17,7 @@ setup(
     install_requires=['setuptools', 'psutil>=5.4.2'],
     zip_safe=True,
     maintainer='pjaroszek',
-    maintainer_email='jaroszekpiotr@gmail.com',
+    maintainer_email='piotrjaroszek@robotec.ai',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],

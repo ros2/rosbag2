@@ -8,7 +8,11 @@ Workers random image and pc2 generation part is based on Martin Idel [code](http
 
 *  ROS2 Foxy
 *  psutil: `python3 -m pip install psutil`
+*  iotop: `sudo apt install iotop`
 
+> **NOTICE** 
+> 
+> `iotop` requires sudo privileges to run. There is prepared `pkexec` `iotop` policy which will mute the password prompt before each benchmark. This script is located in `scripts/install_pkexec_iotop.sh`.
 
 ## Building
 
@@ -21,25 +25,42 @@ Workers random image and pc2 generation part is based on Martin Idel [code](http
 
 ## Usage
 
-Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provided example file `bench1.yaml`). Currently only two workers are available: `image` and `pointcloud2` which are producing `sensor_msgs/msg/Image` and `sensor_msgs/msg/PointCloud2` messages respectively.
+Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provided example file `bench1.yaml`). Currently three workers are available: `image`, `bytearray` and `pointcloud2` which are producing `sensor_msgs/msg/Image`, `std_msgs/msg/ByteMultiArray` and `sensor_msgs/msg/PointCloud2` messages respectively.
 
 Run benchmark with:
 
 ```bash
-ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH]
+ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH] raport_dir:=[RAPORT_DIR]
 ```
 
 Then run raport generator:
 
 ```bash
-ros2 run rosbag2_benchmarking raport_gen --ros-args -p description:=[CONFIG_PATH]
+ros2 run rosbag2_benchmarking raport_gen --ros-args -p description:=[CONFIG_PATH] -p raport_dir:=[RAPORT_DIR]
 ```
 
 Each benchmark produces `rosbag2` resources along with workers and system monitor raports.
 
-## Scripts
+## Voyager bundle test case
 
-There are some bash scripts (in `rosbag2_benchmarking/scripts` dir) for testing how much images `rosbag2` is capable of writing depends on `--max-cache-size` parameter.
+> **WARNING**
+>
+> Last step of this test case requires a lot of RAM (it sends 1MB data on 1000 topics with frequency of 100Hz). This may fill up your working memory pretty quick. If it strugles too much, you can edit `voyager.sh` file and comment out last benchmark described as `1000k_1000.yaml`.
+
+To run voyager test case:
+
+```bash
+./rosbag2_benchmarking/bundles/voyager.sh [RAPORT_DIR]
+```
+
+`voyager.sh` contains multiple benchmarks as well as various raport generator nodes.
+
+It will generate `html` raport inside `[RAPORT_DIR]`.
+
+
+## Scripts for manual benchmarking
+
+There are some bash scripts (in `rosbag2_benchmarking/scripts/manual` dir) for testing how much images `rosbag2` is capable of writing depends on `--max-cache-size` parameter.
 
 **Scripts:**
 

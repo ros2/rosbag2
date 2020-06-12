@@ -239,16 +239,22 @@ def generate_launch_description():
     
     # Manage config file
     config = None
-    if "description" in sys.argv[4]:
-        path = pathlib.Path(sys.argv[4][len("description:="):])
-        if path.is_file():
-            with open(path) as config_file:
-                config = yaml.load(config_file)
-        else:
-            raise RuntimeError("{} is not correct yaml config file.".format(path))
-    else:
+    raport_dir = pathlib.Path.cwd()
+    for arg in sys.argv[4:]:
+        if "description:=" in arg:
+            path = pathlib.Path(arg[len("description:="):])
+            if path.is_file():
+                with open(path) as config_file:
+                    config = yaml.load(config_file)
+            else:
+                raise RuntimeError("{} is not correct yaml config file.".format(path))
+        if "raport_dir:=" in arg:
+            raport_dir = pathlib.Path(arg[len("raport_dir:="):]).expanduser()
+    
+    if config is None:
         raise RuntimeError("Missing 'description' parameter! Use 'description:=config.yaml' parameter.")
-    benchmark_path = pathlib.Path.joinpath(pathlib.Path(config["raport_dir"]).expanduser(), pathlib.Path(str(config["benchmark"]["id"]) + "-" + config["benchmark"]["tag"]))
+
+    benchmark_path = pathlib.Path.joinpath(pathlib.Path(raport_dir).expanduser(), pathlib.Path(str(config["benchmark"]["id"]) + "-" + config["benchmark"]["tag"]))
     benchmark_path.mkdir(parents=True, exist_ok=True)
 
     # Prepare system usage monitor

@@ -1,4 +1,3 @@
-raport_dir: "~/.ros/raports"
 rosbag:
     args:
         - "--max-cache-size 1"

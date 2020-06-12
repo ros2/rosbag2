@@ -181,6 +181,9 @@ class RaportGen(Node):
         self.logger = rclpy.logging.get_logger("RAPORT")
         self.result = Raport(self.logger)
 
+        self.declare_parameter("raport_dir", str(pathlib.Path.cwd()))
+        self.raport_dir = pathlib.Path(self.get_parameter("raport_dir").get_parameter_value().string_value).expanduser()
+
         self.declare_parameter("description", "")
         config_path = self.get_parameter("description").get_parameter_value().string_value
         if config_path == "":
@@ -195,13 +198,17 @@ class RaportGen(Node):
         else:
             raise RuntimeError("{} is not correct yaml config file.".format(path))
         
-        self.benchmark_path = pathlib.Path.joinpath(pathlib.Path(self.config["raport_dir"]).expanduser(), pathlib.Path(str(self.config["benchmark"]["id"]) + "-" + self.config["benchmark"]["tag"]))
-        self.parse_bag_metadata()
-        self.generate_raport()
+        self.benchmark_path = pathlib.Path.joinpath(pathlib.Path(self.raport_dir), pathlib.Path(str(self.config["benchmark"]["id"]) + "-" + self.config["benchmark"]["tag"]))
+        if self.parse_bag_metadata():
+            self.generate_raport()
 
     def parse_bag_metadata(self):
         bag_dir = self.benchmark_path.joinpath("bag")
-        with open(bag_dir.joinpath("metadata.yaml")) as bag_metadata_file:
+        metadata_file = bag_dir.joinpath("metadata.yaml")
+        if not metadata_file.exists():
+            self.logger.error("{} does not exits. Skipping.".format(str(metadata_file)))
+            return False
+        with open(metadata_file) as bag_metadata_file:
             bag_metadata = yaml.load(bag_metadata_file)
         self.bag_record_start_time = bag_metadata["rosbag2_bagfile_information"]["starting_time"]["nanoseconds_since_epoch"]
         for topic_metadata in bag_metadata["rosbag2_bagfile_information"]["topics_with_message_count"]:
@@ -211,6 +218,7 @@ class RaportGen(Node):
                     "message_count":topic_metadata["message_count"], 
                     "serialization_format":topic_metadata["topic_metadata"]["serialization_format"]
                     }})
+        return True
 
     def generate_raport(self):
         workers = self.config["workers"]

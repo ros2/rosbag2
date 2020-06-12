@@ -1,11 +1,10 @@
-raport_dir: "~/.ros/raports"
 rosbag:
     args: 
         - "--max-cache-size 1"
 benchmark:
     id: 0
-    tag: "voyager_1_1"
-    name: "1KB with 1 topic"
+    tag: "voyager_100_1"
+    name: "100KB with 1 topic"
     overwrite_existing: true
     monitor_frequency: 10
 workers:
@@ -16,5 +15,5 @@ workers:
         same_topic: false
         delay: 1000
         max_count: 1000
-        size: 1000
+        size: 100000
         frequency: 100
