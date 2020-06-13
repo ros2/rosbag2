@@ -178,7 +178,6 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
 
   // Start unpaused normally
-  std::cerr << "Test 11111111111111111111111111111 Test\n";
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topics_and_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
@@ -192,8 +191,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 
-  // Start paused
-  std::cerr << "Test 22222222222222222222222222222 Test\n";
+  // Start paused, unpause after some time
   prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topics_and_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
@@ -203,12 +201,14 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
   start = std::chrono::steady_clock::now();
   rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
 
+  auto pause_time = std::chrono::seconds(1);
+
   // Activate lifecycle node after pausing for some time
   // Pass node by reference so that it is initialized by play() in the test
   // before activate() call in the thread
-  std::future<void> play_future = std::async(
-    std::launch::async, [&rosbag2_transport]() mutable {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::future<void> future_handle = std::async(
+    std::launch::async, [&rosbag2_transport, pause_time]() mutable {
+      std::this_thread::sleep_for(pause_time);
       std::cerr << "Test script test_play_timing calling activate_lifecycle()\n";
       rosbag2_transport.activate_lifecycle();
   });
@@ -218,7 +218,46 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
   // Time the play after full execution of play()
   replay_time = std::chrono::steady_clock::now() - start;
 
-  ASSERT_THAT(replay_time, Gt(std::chrono::seconds(2)));
+  ASSERT_THAT(replay_time, Gt(message_time_difference + pause_time));
+
+  // Start unpaused, pause, unpause again
+  auto primitive_message3 = get_messages_strings()[0];
+  primitive_message3->string_value = "Hello World 3";
+  messages.push_back(serialize_test_message("topic1", 0, primitive_message3));
+  messages[2]->time_stamp =
+    messages[1]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
+
+  prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topics_and_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  play_options_.paused = false;
+
+  start = std::chrono::steady_clock::now();
+  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+
+  // Pass node by reference so that it is initialized by play().
+  future_handle = std::async(
+    std::launch::async, [&rosbag2_transport, message_time_difference]() mutable {
+      // Wait for node to initialize, deactivate to pause
+      std::this_thread::sleep_for(message_time_difference);
+      std::cerr << "Test script test_play_timing calling deactivate_lifecycle()\n";
+      rosbag2_transport.deactivate_lifecycle();
+
+      // Wait, re-activate to unpause
+      std::this_thread::sleep_for(message_time_difference);
+      std::cerr << "Test script test_play_timing calling activate_lifecycle()\n";
+      rosbag2_transport.activate_lifecycle();
+  });
+
+  rosbag2_transport.play(storage_options_, play_options_);
+  replay_time = std::chrono::steady_clock::now() - start;
+
+  std::cerr << replay_time.count() << std::endl;
+  std::cerr << (3 * message_time_difference).count() << std::endl;
+  // 1 second for message 0 and 1 in parallel to initialization wait,
+  // 1 second for pause, and 1 second for message 2.
+  ASSERT_THAT(replay_time, Gt(3 * message_time_difference));
 
   rclcpp::shutdown();
 }
