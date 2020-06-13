@@ -211,7 +211,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
       std::this_thread::sleep_for(pause_time);
       std::cerr << "Test script test_play_timing calling activate_lifecycle()\n";
       rosbag2_transport.activate_lifecycle();
-  });
+    });
 
   // Call play() to initialize the node and wait for activation
   rosbag2_transport.play(storage_options_, play_options_);
@@ -248,7 +248,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
       std::this_thread::sleep_for(message_time_difference);
       std::cerr << "Test script test_play_timing calling activate_lifecycle()\n";
       rosbag2_transport.activate_lifecycle();
-  });
+    });
 
   rosbag2_transport.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;

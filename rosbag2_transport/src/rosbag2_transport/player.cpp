@@ -193,7 +193,6 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
   static size_t counter = 0;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-
     std::this_thread::sleep_until(
       start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
         1.0 / rate * message.time_since_start + paused_duration_));
@@ -220,8 +219,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
       // rosbag2_transport_->activate();
     }
 
-    if (rclcpp::ok())
-    {
+    if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
       // TODO(mabelzhang) TEMPORARY, remove when done debugging. And counter above.
       fprintf(stderr, "publishing message %zu\n", (++counter));
