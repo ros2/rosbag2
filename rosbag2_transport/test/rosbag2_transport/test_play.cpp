@@ -202,6 +202,79 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
   EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
 }
 
+TEST_F(RosBag2PlayTestFixture, starting_paused_receives_all_messages)
+{
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
+
+  auto complex_message1 = get_messages_arrays()[0];
+  complex_message1->float32_values = {{40.0f, 2.0f, 0.0f}};
+  complex_message1->bool_values = {{true, false, true}};
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "test_msgs/Arrays", "", ""},
+  };
+
+  // 3 messages of each type to be played
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic2", 550, complex_message1),
+    serialize_test_message("topic2", 750, complex_message1),
+    serialize_test_message("topic2", 950, complex_message1)};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Expect to receive 3 messages of each type, as many messages as published,
+  // as opposed to fewer. Pause feature should allow publishers to start after
+  // subscribers are ready.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 3);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 3);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  // Start playback paused
+  play_options_.paused = true;
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  // Activate lifecycle node after pausing
+  std::cerr << "Test script test_play calling activate_lifecycle()\n";
+  rosbag2_transport.activate_lifecycle();
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(3u)));
+  EXPECT_THAT(
+    replayed_test_primitives,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 42))));
+
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(3u)));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::bool_values,
+          ElementsAre(true, false, true)))));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::float32_values,
+          ElementsAre(40.0f, 2.0f, 0.0f)))));
+}
+
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
 {
 public:

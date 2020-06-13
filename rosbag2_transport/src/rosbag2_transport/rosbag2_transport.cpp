@@ -126,4 +126,26 @@ void Rosbag2Transport::print_bag_info(const std::string & uri, const std::string
   Formatter::format_bag_meta_data(metadata);
 }
 
+void Rosbag2Transport::activate_lifecycle()
+{
+  std::cerr << "Rosbag2Transport::activate_lifecycle()\n";
+  if (transport_node_) {
+    transport_node_->activate();
+  } else {
+    ROSBAG2_TRANSPORT_LOG_ERROR(
+      "transport_node_ not initialized. Call play() before activating lifecycle node.");
+  }
+}
+
+void Rosbag2Transport::deactivate_lifecycle()
+{
+  std::cerr << "Rosbag2Transport::deactivate_lifecycle()\n";
+  if (transport_node_) {
+    transport_node_->deactivate();
+  } else {
+    ROSBAG2_TRANSPORT_LOG_ERROR(
+      "transport_node_ not initialized. Call play() before deactivating lifecycle node.");
+  }
+}
+
 }  // namespace rosbag2_transport

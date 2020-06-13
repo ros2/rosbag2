@@ -84,6 +84,18 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void print_bag_info(const std::string & uri, const std::string & storage_id);
 
+  /**
+   * Activate underlying lifecycle node.
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void activate_lifecycle();
+
+  /**
+   * Deactivate underlying lifecycle node.
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void deactivate_lifecycle();
+
 private:
   std::shared_ptr<Rosbag2Node> setup_node(
     std::string node_prefix = "",
