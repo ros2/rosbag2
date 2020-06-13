@@ -229,9 +229,9 @@ TEST_F(RosBag2PlayTestFixture, starting_paused_receives_all_messages)
   prepared_mock_reader->prepare(messages, topic_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  // Expect to receive 3 messages of each type, as many messages as published,
-  // as opposed to fewer. Pause feature should allow publishers to start after
-  // subscribers are ready.
+  // Expect to receive all 3 messages of each type, as many as published.
+  // Pause feature should allow time for subscribers to start up and catch all
+  // published messages.
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 3);
   sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 3);
 
@@ -241,11 +241,15 @@ TEST_F(RosBag2PlayTestFixture, starting_paused_receives_all_messages)
   play_options_.paused = true;
 
   Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
-  rosbag2_transport.play(storage_options_, play_options_);
 
-  // Activate lifecycle node after pausing
-  std::cerr << "Test script test_play calling activate_lifecycle()\n";
-  rosbag2_transport.activate_lifecycle();
+  std::future<void> future_handle = std::async(
+    std::launch::async, [&rosbag2_transport]() mutable {
+      // Wait for node initialization and subscribers to get ready, then unpause
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      rosbag2_transport.activate_lifecycle();
+  });
+
+  rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
