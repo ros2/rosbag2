@@ -79,8 +79,14 @@ Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
-: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
+: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport),
+  terminal_modified_(false)
 {}
+
+Player::~Player()
+{
+  restore_terminal();
+}
 
 bool Player::is_storage_completely_loaded() const
 {
@@ -113,6 +119,7 @@ void Player::play(const PlayOptions & options)
     rosbag2_transport_->activate();
   }
 
+  setup_terminal();
   play_messages_from_queue(options);
 }
 
@@ -206,17 +213,27 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
       // Sleep until activated externally
       while (rosbag2_transport_->get_current_state().id() !=
-        lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+        lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE && rclcpp::ok())
       {
-        std::cerr << rosbag2_transport_->get_current_state().id() << std::endl;
+        // std::cerr << rosbag2_transport_->get_current_state().id() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      }
-      ROSBAG2_TRANSPORT_LOG_INFO("Resumed");
 
-      // TODO(mabelzhang) Find a way to get keyboard input without blocking
-      // getc(stdin);
+        // TODO(mabelzhang) get keyboard input without blocking
+        int input = read_char_from_stdin();
+        switch (input) {
+          case ' ':
+            rosbag2_transport_->activate();
+            break;
+          // default:
+            // std::cerr << input << std::endl;
+        }
+      }
+
       paused_duration_ += std::chrono::system_clock::now() - pause_start;
-      // rosbag2_transport_->activate();
+
+      if (rclcpp::ok()) {
+        ROSBAG2_TRANSPORT_LOG_INFO("Resumed");
+      }
     }
 
     if (rclcpp::ok()) {
@@ -242,4 +259,96 @@ void Player::prepare_publishers(const PlayOptions & options)
           topic.name, topic.type, topic_qos)));
   }
 }
+
+void Player::setup_terminal()
+{
+  if (terminal_modified_)
+    return;
+
+#if defined(_MSC_VER)
+  input_handle = GetStdHandle(STD_INPUT_HANDLE);
+  if (input_handle == INVALID_HANDLE_VALUE) {
+    std::cout << "Failed to set up standard input handle." << std::endl;
+    return;
+  }
+  if (!GetConsoleMode(input_handle, &stdin_set)) {
+    std::cout << "Failed to save the console mode." << std::endl;
+    return;
+  }
+  // don't actually need anything but the default, alternatively try this
+  //DWORD event_mode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+  //if (!SetConsoleMode(input_handle, event_mode)) {
+  //  std::cout << "Failed to set the console mode." << std::endl;
+  //  return;
+  //}
+  terminal_modified_ = true;
+#else
+  const int fd = fileno(stdin);
+  termios flags;
+  tcgetattr(fd, &orig_flags_);
+  flags = orig_flags_;
+  flags.c_lflag &= ~ICANON;      // set raw (unset canonical modes)
+  flags.c_cc[VMIN]  = 0;         // i.e. min 1 char for blocking, 0 chars for non-blocking
+  flags.c_cc[VTIME] = 0;         // block if waiting for char
+  tcsetattr(fd, TCSANOW, &flags);
+
+  FD_ZERO(&stdin_fdset_);
+  FD_SET(fd, &stdin_fdset_);
+  maxfd_ = fd + 1;
+  terminal_modified_ = true;
+#endif
+}
+
+void Player::restore_terminal()
+{
+	if (!terminal_modified_)
+		return;
+
+#if defined(_MSC_VER)
+  SetConsoleMode(input_handle, stdin_set);
+#else
+  const int fd = fileno(stdin);
+  tcsetattr(fd, TCSANOW, &orig_flags_);
+#endif
+  terminal_modified_ = false;
+}
+
+int Player::read_char_from_stdin()
+{
+#ifdef __APPLE__
+  fd_set testfd;
+  FD_COPY(&stdin_fdset_, &testfd);
+#elif !defined(_MSC_VER)
+  fd_set testfd = stdin_fdset_;
+#endif
+
+#if defined(_MSC_VER)
+  DWORD events = 0;
+  INPUT_RECORD input_record[1];
+  DWORD input_size = 1;
+  BOOL b = GetNumberOfConsoleInputEvents(input_handle, &events);
+  if (b && events > 0) {
+    b = ReadConsoleInput(input_handle, input_record, input_size, &events);
+    if (b) {
+      for (unsigned int i = 0; i < events; ++i) {
+        if (input_record[i].EventType & KEY_EVENT & input_record[i].Event.KeyEvent.bKeyDown)
+        {
+          CHAR ch = input_record[i].Event.KeyEvent.uChar.AsciiChar;
+          return ch;
+        }
+      }
+    }
+  }
+  return EOF;
+#else
+  timeval tv;
+  tv.tv_sec  = 0;
+  tv.tv_usec = 0;
+  if (select(maxfd_, &testfd, NULL, NULL, &tv) <= 0) {
+    return EOF;
+  }
+  return getc(stdin);
+#endif
+}
+
 }  // namespace rosbag2_transport

@@ -22,6 +22,14 @@
 #include <string>
 #include <unordered_map>
 
+// Terminal
+#if !defined(_MSC_VER)
+  #include <termios.h>
+  #include <unistd.h>
+#else
+  #include <windows.h>
+#endif
+
 #include "moodycamel/readerwriterqueue.h"
 
 #include "rclcpp/qos.hpp"
@@ -50,6 +58,8 @@ public:
     std::shared_ptr<rosbag2_cpp::Reader> reader,
     std::shared_ptr<Rosbag2Node> rosbag2_transport);
 
+  ~Player();
+
   void play(const PlayOptions & options);
 
 private:
@@ -60,6 +70,9 @@ private:
   void play_messages_from_queue(const PlayOptions & options);
   void play_messages_until_queue_empty(const PlayOptions & options);
   void prepare_publishers(const PlayOptions & options);
+  int read_char_from_stdin();
+  void setup_terminal();
+  void restore_terminal();
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
@@ -71,6 +84,17 @@ private:
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
+
+  // Terminal
+  bool terminal_modified_;
+#if defined(_MSC_VER)
+  HANDLE input_handle;
+  DWORD stdin_set;
+#else
+  termios orig_flags_;
+  fd_set stdin_fdset_;
+#endif
+  int maxfd_;
 };
 
 }  // namespace rosbag2_transport
