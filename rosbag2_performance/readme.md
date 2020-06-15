@@ -14,16 +14,9 @@ Workers random image and pc2 generation part was based on Martin Idel [code](htt
 > 
 > `iotop` requires sudo privileges to run. There is a `pkexec` `iotop` policy which will mute the password prompt before each benchmark. This script deploying this policy is located in `scripts/install_pkexec_iotop.sh`.
 
-## Building
+#
 
-1. Source ROS foxy
-2. Build like standard ROS2 package:
-
-    ```bash
-    colcon build --symlink-install
-    ```
-
-## Usage
+## How it works
 
 Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provided example file `bench1.yaml`). Currently three workers are available: `image`, `bytearray` and `pointcloud2` which are producing `sensor_msgs/msg/Image`, `std_msgs/msg/ByteMultiArray` and `sensor_msgs/msg/PointCloud2` messages respectively.
 
