@@ -27,14 +27,9 @@ import rosbag2_py._rosbag2_py as rosbag2_py
 
 def test_sequential_reader():
 
-  storage_options = rosbag2_py.StorageOptions()
-  storage_options.uri = os.path.join(
+  bag_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'talker')
-  storage_options.storage_id = 'sqlite3'
-
-  converter_options = rosbag2_py.ConverterOptions()
-  converter_options.input_serialization_format = 'cdr'
-  converter_options.output_serialization_format = 'cdr'
+  storage_options, converter_options = get_rosbag_options(bag_path)
 
   reader = rosbag2_py.Reader('SequentialReader')
   reader.open(storage_options, converter_options)
