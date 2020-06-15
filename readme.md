@@ -2,7 +2,7 @@
 
 Tools for performance tests of ros2 bags.
 
-Workers random image and pc2 generation part is based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
+Workers random image and pc2 generation part was based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
 
 ## Dependencies
 
@@ -10,9 +10,9 @@ Workers random image and pc2 generation part is based on Martin Idel [code](http
 *  psutil: `python3 -m pip install psutil`
 *  iotop: `sudo apt install iotop`
 
-> **NOTICE** 
+> **NOTE** 
 > 
-> `iotop` requires sudo privileges to run. There is prepared `pkexec` `iotop` policy which will mute the password prompt before each benchmark. This script is located in `scripts/install_pkexec_iotop.sh`.
+> `iotop` requires sudo privileges to run. There is a `pkexec` `iotop` policy which will mute the password prompt before each benchmark. This script deploying this policy is located in `scripts/install_pkexec_iotop.sh`.
 
 ## Building
 
@@ -27,19 +27,19 @@ Workers random image and pc2 generation part is based on Martin Idel [code](http
 
 Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provided example file `bench1.yaml`). Currently three workers are available: `image`, `bytearray` and `pointcloud2` which are producing `sensor_msgs/msg/Image`, `std_msgs/msg/ByteMultiArray` and `sensor_msgs/msg/PointCloud2` messages respectively.
 
-Run benchmark with:
+Run benchmarks with:
 
 ```bash
 ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH] raport_dir:=[RAPORT_DIR]
 ```
 
-Then run raport generator:
+Once a benchmark finishes, you can run the report generator:
 
 ```bash
 ros2 run rosbag2_benchmarking raport_gen --ros-args -p description:=[CONFIG_PATH] -p raport_dir:=[RAPORT_DIR]
 ```
 
-Each benchmark produces `rosbag2` resources along with workers and system monitor raports.
+Each benchmark produces `rosbag2` resources along with reports from workers and system monitor.
 
 ## Voyager bundle test case
 
@@ -57,10 +57,9 @@ To run voyager test case:
 
 It will generate `html` raport inside `[RAPORT_DIR]`.
 
+## Scripts for step-by-step benchmarking
 
-## Scripts for manual benchmarking
-
-There are some bash scripts (in `rosbag2_benchmarking/scripts/manual` dir) for testing how much images `rosbag2` is capable of writing depends on `--max-cache-size` parameter.
+There are some bash scripts (in `rosbag2_benchmarking/scripts/manual` dir) for testing how many images `rosbag2` is capable of writing depending on `--max-cache-size` parameter.
 
 **Scripts:**
 
