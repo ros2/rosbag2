@@ -15,6 +15,7 @@
 import glob
 import os
 import time
+import shutil
 
 from rclpy.serialization import deserialize_message, serialize_message
 import rosbag2_py._rosbag2_py as rosbag2_py
@@ -50,10 +51,13 @@ def test_sequential_writer():
   """
 
   bag_path = os.path.join(
-      os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'wtalker')
+      os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'resources', 'tmp_write_test')
 
-  for f in glob.glob(f'{bag_path}/*'):
-    os.remove(f)
+  if os.path.exists(bag_path):
+    print('%s exists. It will be overwritten by new rosbag2_py test_sequential_writer run.' % (
+      bag_path))
+    shutil.rmtree(bag_path)
+  os.mkdir(bag_path)
 
   storage_options, converter_options = get_rosbag_options(bag_path)
 
@@ -67,7 +71,7 @@ def test_sequential_writer():
   for i in range(10):
     msg = String()
     msg.data = f'Hello, world! {str(i)}'
-    time_stamp = int(round(time.time() * 1000))
+    time_stamp = i * 100
 
     writer.write(topic_name, serialize_message(msg), time_stamp)
 
@@ -83,12 +87,17 @@ def test_sequential_writer():
   # Create a map for quicker lookup
   type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
 
+  msg_counter = 0
   while reader.has_next():
     topic, data, t = reader.read_next()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
 
     assert msg_type == type(String())
+    assert msg.data == 'Hello, world! %d' % msg_counter
+    assert t == msg_counter * 100
 
-    if msg_type == type(String()):
-      assert msg.data[:14] == 'Hello, world! '
+    msg_counter += 1
+
+  # Cleanup
+  shutil.rmtree(bag_path)
