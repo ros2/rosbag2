@@ -21,7 +21,7 @@ import rosbag2_py._rosbag2_py as rosbag2_py
 from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
 
-from .common import get_rosbag_options
+from common import get_rosbag_options
 
 
 def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):

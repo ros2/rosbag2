@@ -23,6 +23,8 @@ from rclpy.serialization import deserialize_message
 from std_msgs.msg import String
 from rcl_interfaces.msg import Log
 
+from common import get_rosbag_options
+
 import rosbag2_py._rosbag2_py as rosbag2_py
 
 def test_sequential_reader():

@@ -62,6 +62,12 @@ if(BUILD_TESTING)
     APPEND_LIBRARY_DIRS "${_append_library_dirs}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
   )
+  ament_add_pytest_test(test_sequential_writer_py "test/test_sequential_writer.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV "PYTHONPATH=${pythonpath}"
+    APPEND_LIBRARY_DIRS "${_append_library_dirs}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+  )
 endif()
 
 ament_package()
