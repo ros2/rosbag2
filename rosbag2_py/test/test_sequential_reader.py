@@ -41,11 +41,30 @@ def test_sequential_reader():
   # Create a map for quicker lookup
   type_map = {topic_types[i].name : topic_types[i].type for i in range(len(topic_types))}
 
-  # TODO(mabelzhang) Depends on ros2/rosbag2#302
-  # Set a filter for topic name
-  # storage_filter = rosbag2_py.StorageFilter()
-  # storage_filter.topics = ['/topic']
-  # reader.set_filter(storage_filter)
+  # Set filter for topic of string type
+  storage_filter = rosbag2_py.StorageFilter()
+  storage_filter.topics = ['/topic']
+  reader.set_filter(storage_filter)
+
+  msg_counter = 0
+
+  while reader.has_next():
+    (topic, data, t) = reader.read_next()
+    msg_type = get_message(type_map[topic])
+    msg = deserialize_message(data, msg_type)
+
+    assert msg_type == type(String())
+    assert msg.data == "Hello, world! %d" % msg_counter
+
+    msg_counter += 1
+
+  # No filter
+  reader.reset_filter()
+
+  reader = rosbag2_py.Reader('SequentialReader')
+  reader.open(storage_options, converter_options)
+
+  msg_counter = 0
 
   while reader.has_next():
     (topic, data, t) = reader.read_next()
@@ -55,6 +74,5 @@ def test_sequential_reader():
     assert msg_type == type(Log()) or msg_type == type(String())
 
     if msg_type == type(String()):
-      assert msg.data[:14] == "Hello, world! "
-
-  # reader.reset_filter(storage_filter)
+      assert msg.data == "Hello, world! %d" % msg_counter
+      msg_counter += 1

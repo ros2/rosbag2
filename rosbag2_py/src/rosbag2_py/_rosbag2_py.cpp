@@ -31,6 +31,7 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_py
@@ -82,6 +83,16 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types()
   {
     return reader_->get_all_topics_and_types();
+  }
+
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter)
+  {
+    return reader_->set_filter(storage_filter);
+  }
+
+  void reset_filter()
+  {
+    reader_->reset_filter();
   }
 
 private:
@@ -153,7 +164,9 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   .def("open", &rosbag2_py::Reader::open)
   .def("read_next", &rosbag2_py::Reader::read_next)
   .def("has_next", &rosbag2_py::Reader::has_next)
-  .def("get_all_topics_and_types", &rosbag2_py::Reader::get_all_topics_and_types);
+  .def("get_all_topics_and_types", &rosbag2_py::Reader::get_all_topics_and_types)
+  .def("set_filter", &rosbag2_py::Reader::set_filter)
+  .def("reset_filter", &rosbag2_py::Reader::reset_filter);
 
   pybind11::class_<rosbag2_py::Writer>(m, "Writer")
   .def(pybind11::init<const std::string &>())
@@ -162,6 +175,13 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   .def("remove_topic", &rosbag2_py::Writer::remove_topic)
   .def("create_topic", &rosbag2_py::Writer::create_topic);
 
+  pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
+  .def(pybind11::init())
+  .def_readwrite("input_serialization_format",
+    &rosbag2_cpp::ConverterOptions::input_serialization_format)
+  .def_readwrite("output_serialization_format",
+    &rosbag2_cpp::ConverterOptions::output_serialization_format);
+
   pybind11::class_<rosbag2_cpp::StorageOptions>(m, "StorageOptions")
   .def(pybind11::init())
   .def_readwrite("uri", &rosbag2_cpp::StorageOptions::uri)
@@ -169,12 +189,9 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   .def_readwrite("max_bagfile_size",
     &rosbag2_cpp::StorageOptions::max_bagfile_size);
 
-  pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
+  pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(pybind11::init())
-  .def_readwrite("input_serialization_format",
-    &rosbag2_cpp::ConverterOptions::input_serialization_format)
-  .def_readwrite("output_serialization_format",
-    &rosbag2_cpp::ConverterOptions::output_serialization_format);
+  .def_readwrite("topics", &rosbag2_storage::StorageFilter::topics);
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(pybind11::init())
