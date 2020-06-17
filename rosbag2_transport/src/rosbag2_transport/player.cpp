@@ -115,6 +115,8 @@ void Player::play(const PlayOptions & options)
   // Playback will detect when node is activated, either from here or externally.
   if (!options.paused) {
     rosbag2_transport_->activate();
+  } else {
+    paused_ = true;
   }
 
   setup_terminal();
@@ -231,8 +233,6 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
-      // TODO(mabelzhang) TEMPORARY, remove when done debugging. And counter above.
-      fprintf(stderr, "publishing message %zu\n", (++counter));
     }
   }
 }
