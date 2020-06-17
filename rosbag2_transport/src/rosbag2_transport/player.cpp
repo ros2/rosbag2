@@ -79,8 +79,8 @@ Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
-: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport),
-  terminal_modified_(false)
+: reader_(std::move(reader)), paused_(false), played_all_(false),
+  rosbag2_transport_(rosbag2_transport), terminal_modified_(false)
 {}
 
 Player::~Player()
@@ -109,8 +109,6 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
-  std::cerr << "1111111111111111111111111\n";
-
   rosbag2_transport_->configure();
   // If playback should not be paused in the beginning, activate lifecycle node right away.
   // If playback should be paused, move on.
@@ -120,6 +118,10 @@ void Player::play(const PlayOptions & options)
   }
 
   setup_terminal();
+  std::future<void> keypress_future = std::async(
+    std::launch::async,
+    [this]() {handle_keypress();});
+
   play_messages_from_queue(options);
 }
 
@@ -186,6 +188,8 @@ void Player::play_messages_from_queue(const PlayOptions & options)
         "increasing the --read-ahead-queue-size option.");
     }
   } while (!is_storage_completely_loaded() && rclcpp::ok());
+
+  played_all_ = true;
 }
 
 void Player::play_messages_until_queue_empty(const PlayOptions & options)
@@ -215,18 +219,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
       while (rosbag2_transport_->get_current_state().id() !=
         lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE && rclcpp::ok())
       {
-        // std::cerr << rosbag2_transport_->get_current_state().id() << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-        // TODO(mabelzhang) get keyboard input without blocking
-        int input = read_char_from_stdin();
-        switch (input) {
-          case ' ':
-            rosbag2_transport_->activate();
-            break;
-          // default:
-            // std::cerr << input << std::endl;
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
       }
 
       paused_duration_ += std::chrono::system_clock::now() - pause_start;
@@ -260,10 +253,31 @@ void Player::prepare_publishers(const PlayOptions & options)
   }
 }
 
+void Player::handle_keypress()
+{
+  // Spin keyboard thread until all messages have been played
+  while (rclcpp::ok() && !played_all_) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    int input = read_char_from_stdin();
+    switch (input) {
+      case ' ':
+        if (paused_) {
+          rosbag2_transport_->activate();
+        } else {
+          rosbag2_transport_->deactivate();
+        }
+        paused_ = !paused_;
+        break;
+    }
+  }
+}
+
 void Player::setup_terminal()
 {
-  if (terminal_modified_)
+  if (terminal_modified_) {
     return;
+  }
 
 #if defined(_MSC_VER)
   input_handle = GetStdHandle(STD_INPUT_HANDLE);
@@ -275,12 +289,6 @@ void Player::setup_terminal()
     std::cout << "Failed to save the console mode." << std::endl;
     return;
   }
-  // don't actually need anything but the default, alternatively try this
-  //DWORD event_mode = ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-  //if (!SetConsoleMode(input_handle, event_mode)) {
-  //  std::cout << "Failed to set the console mode." << std::endl;
-  //  return;
-  //}
   terminal_modified_ = true;
 #else
   const int fd = fileno(stdin);
@@ -288,7 +296,7 @@ void Player::setup_terminal()
   tcgetattr(fd, &orig_flags_);
   flags = orig_flags_;
   flags.c_lflag &= ~ICANON;      // set raw (unset canonical modes)
-  flags.c_cc[VMIN]  = 0;         // i.e. min 1 char for blocking, 0 chars for non-blocking
+  flags.c_cc[VMIN] = 0;         // i.e. min 1 char for blocking, 0 chars for non-blocking
   flags.c_cc[VTIME] = 0;         // block if waiting for char
   tcsetattr(fd, TCSANOW, &flags);
 
@@ -301,8 +309,9 @@ void Player::setup_terminal()
 
 void Player::restore_terminal()
 {
-	if (!terminal_modified_)
-		return;
+  if (!terminal_modified_) {
+    return;
+  }
 
 #if defined(_MSC_VER)
   SetConsoleMode(input_handle, stdin_set);
@@ -331,8 +340,7 @@ int Player::read_char_from_stdin()
     b = ReadConsoleInput(input_handle, input_record, input_size, &events);
     if (b) {
       for (unsigned int i = 0; i < events; ++i) {
-        if (input_record[i].EventType & KEY_EVENT & input_record[i].Event.KeyEvent.bKeyDown)
-        {
+        if (input_record[i].EventType & KEY_EVENT & input_record[i].Event.KeyEvent.bKeyDown) {
           CHAR ch = input_record[i].Event.KeyEvent.uChar.AsciiChar;
           return ch;
         }
@@ -342,7 +350,7 @@ int Player::read_char_from_stdin()
   return EOF;
 #else
   timeval tv;
-  tv.tv_sec  = 0;
+  tv.tv_sec = 0;
   tv.tv_usec = 0;
   if (select(maxfd_, &testfd, NULL, NULL, &tv) <= 0) {
     return EOF;

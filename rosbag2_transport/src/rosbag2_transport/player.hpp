@@ -71,6 +71,7 @@ private:
   void play_messages_until_queue_empty(const PlayOptions & options);
   void prepare_publishers(const PlayOptions & options);
   int read_char_from_stdin();
+  void handle_keypress();
   void setup_terminal();
   void restore_terminal();
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
@@ -79,7 +80,9 @@ private:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
   std::chrono::time_point<std::chrono::system_clock> start_time_;
+  bool paused_;
   std::chrono::nanoseconds paused_duration_;
+  bool played_all_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
