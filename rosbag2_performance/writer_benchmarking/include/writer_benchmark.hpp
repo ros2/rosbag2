@@ -145,6 +145,7 @@ public:
     this->declare_parameter("size");
     this->declare_parameter("instances");
     this->declare_parameter("max_cache_size");
+    this->declare_parameter("db_folder");
 
     auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
     while (!parameters_client->wait_for_service(1s))
@@ -165,6 +166,7 @@ public:
     }
 
     mMaxCacheSize = parameters_client->get_parameter("max_cache_size", 1);
+    mDbFolder = parameters_client->get_parameter("db_folder", std::string("/tmp/rosbag2_test"));
     mConfig.max_count = parameters_client->get_parameter("max_count", 1000);
     mConfig.message_size = parameters_client->get_parameter("size", 1000000);
 
@@ -241,7 +243,7 @@ private:
   void createProducers(const ProducerConfig &config, unsigned int instances)
   {
     RCLCPP_INFO_STREAM(get_logger(), "/nWriterBenchmark: creating " << instances << " message producers with frequency "
-      << config.frequency << " and message size " << config.message_size << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count << " messages before terminating");
+      << config.frequency << " and message size in bytes" << config.message_size << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count << " messages before terminating");
     const unsigned int queueMaxSize = 10;
     for (unsigned int i = 0; i < instances; ++i)
     {
@@ -257,7 +259,7 @@ private:
   {
     mWriter = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
     rosbag2_transport::StorageOptions storage_options{};
-    storage_options.uri = "/tmp/rosbag2";//"rosbag2_" + std::to_string(now().seconds());
+    storage_options.uri = mDbFolder;
     storage_options.storage_id = "sqlite3";
     storage_options.max_bagfile_size = 0;
     storage_options.max_cache_size = mMaxCacheSize;
@@ -298,6 +300,7 @@ private:
 
   ProducerConfig mConfig;
   unsigned int mMaxCacheSize;
+  std::string mDbFolder;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> mWriter;
   std::vector<std::thread> mProducerThreads;
   std::vector<std::shared_ptr<ByteProducer>> mProducers;
