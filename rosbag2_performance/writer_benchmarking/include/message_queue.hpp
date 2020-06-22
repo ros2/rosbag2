@@ -12,32 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE__MESSAGE_QUEUE_HPP
-#define ROSBAG2_PERFORMANCE__MESSAGE_QUEUE_HPP
+#ifndef MESSAGE_QUEUE_HPP_
+#define MESSAGE_QUEUE_HPP_
 
 #include <string>
 #include <queue>
+#include <utility>
 #include <mutex>
 #include <iostream>
 
 #include "std_msgs/msg/byte_multi_array.hpp"
 
-template <typename T>
+template<typename T>
 class MessageQueue
 {
 public:
-  MessageQueue(int maxSize, std::string topicName) : mMaxSize(maxSize), mTopicName(topicName) {}
+  MessageQueue(int maxSize, std::string topicName)
+    : mMaxSize(maxSize), mTopicName(topicName) {}
 
   void push(T elem)
   {
     std::lock_guard<std::mutex> lock(mMutex);
     if (mQueue.size() > mMaxSize)
-    {
+    {   // We skip the element and consider it "lost"
       mUnsuccessfulInsertCount++;
       std::cerr << "X";
-      return; //We skip the element and consider it "lost"
+      return;
     }
-    //std::cerr << "+";
+    // std::cerr << "+";
     mQueue.push(elem);
   }
 
@@ -61,10 +63,12 @@ public:
   {
     std::lock_guard<std::mutex> lock(mMutex);
     if (mQueue.empty())
+    {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
+    }
     T elem = std::move(mQueue.front());
-    //std::cerr << "-";
-    mQueue.pop(); //safe with move
+    // std::cerr << "-";
+    mQueue.pop();   // safe with move
     return elem;
   }
 
@@ -90,4 +94,4 @@ private:
 
 typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
 
-#endif //ROSBAG2_PERFORMANCE__MESSAGE_QUEUE_HPP
+#endif  // MESSAGE_QUEUE_HPP_

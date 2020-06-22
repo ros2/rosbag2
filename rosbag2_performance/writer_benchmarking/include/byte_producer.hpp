@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE__BYTE_PRODUCER_HPP
-#define ROSBAG2_PERFORMANCE__BYTE_PRODUCER_HPP
+#ifndef BYTE_PRODUCER_HPP_
+#define BYTE_PRODUCER_HPP_
 
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <vector>
 #include "message_queue.hpp"
-#include "rclcpp/rclcpp.hpp" //ok()
+#include "rclcpp/rclcpp.hpp"
 
 struct ProducerConfig
 {
@@ -31,10 +32,11 @@ struct ProducerConfig
 class ByteProducer
 {
 public:
-  ByteProducer(const ProducerConfig &config, std::shared_ptr<ByteMessageQueue> queue) : mConfiguration(config), mQueue(queue)
+  ByteProducer(const ProducerConfig &config, std::shared_ptr<ByteMessageQueue> queue)
+    : mConfiguration(config), mQueue(queue)
   {
     generateRandomMessage();
-    mMsSleepTime = mConfiguration.frequency == 0 ? 1 : 1000/mConfiguration.frequency;
+    mMsSleepTime = mConfiguration.frequency == 0 ? 1 : 1000 / mConfiguration.frequency;
   }
 
   void run()
@@ -42,7 +44,9 @@ public:
     for (unsigned int i = 0; i < mConfiguration.max_count; ++i)
     {
       if (!rclcpp::ok())
+      {
         break;
+      }
       mQueue->push(mMessage);
       std::this_thread::sleep_for(std::chrono::milliseconds(mMsSleepTime));
     }
@@ -59,9 +63,8 @@ private:
     return byte;
   }
 
-  //Reuses the same random message to remove generation time from benchmarks
   void generateRandomMessage()
-  {
+  {   // Reuses the same random message to remove generation time from benchmarks
     mMessage.data = randomByteArrayData(mConfiguration.message_size);
   }
 
@@ -74,4 +77,4 @@ private:
   unsigned int mMsSleepTime;
 };
 
-#endif //ROSBAG2_PERFORMANCE__BYTE_PRODUCER_HPP
+#endif  // BYTE_PRODUCER_HPP_

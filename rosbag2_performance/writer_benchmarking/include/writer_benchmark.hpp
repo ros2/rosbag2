@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE__WRITER_BENCHMARK_HPP
-#define ROSBAG2_PERFORMANCE__WRITER_BENCHMARK_HPP
+#ifndef WRITER_BENCHMARK_HPP_
+#define WRITER_BENCHMARK_HPP_
 
 #include <string>
 #include <vector>
@@ -33,7 +33,7 @@ public:
   void startBenchmark();
 
 private:
-  void createProducers(const ProducerConfig &config, unsigned int instances);
+  void createProducers(const ProducerConfig & config, unsigned int instances);
   void createWriter();
   void startProducers();
 
@@ -46,4 +46,4 @@ private:
   std::vector<std::shared_ptr<MessageQueue<std_msgs::msg::ByteMultiArray>>> mQueues;
 };
 
-#endif //ROSBAG2_PERFORMANCE__WRITER_BENCHMARK_HPP
+#endif  // WRITER_BENCHMARK_HPP_

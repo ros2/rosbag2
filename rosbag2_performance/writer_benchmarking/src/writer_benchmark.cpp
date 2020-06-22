@@ -1,4 +1,20 @@
+// Copyright 2020, Robotec.ai sp. z o.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <chrono>
+#include <memory>
+#include <string>
 
 #include "rmw/rmw.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -9,7 +25,8 @@
 
 using namespace std::chrono_literals;
 
-WriterBenchmark::WriterBenchmark() : rclcpp::Node("writer_benchmark")
+WriterBenchmark::WriterBenchmark()
+  : rclcpp::Node("writer_benchmark")
 {
   this->declare_parameter("frequency");
   this->declare_parameter("max_count");
@@ -48,27 +65,27 @@ WriterBenchmark::WriterBenchmark() : rclcpp::Node("writer_benchmark")
 
 void WriterBenchmark::startBenchmark()
 {
-  RCLCPP_INFO(get_logger(), "WriterBenchmark starting. A dot is successful write, an X is a missed message");
+  RCLCPP_INFO(get_logger(), "Starting. A dot is a write, an X is a miss");
   startProducers();
   while (rclcpp::ok())
   {
     int count = 0;
     unsigned int completeCount = 0;
     for (size_t i = 0; i < mQueues.size(); ++i)
-    { //TODO use conditional variables to avoid locks
+    {   // TODO(adamdbrw) use conditional variables to avoid locks
       if (mQueues.at(i)->isComplete() && mQueues.at(i)->isEmpty())
         completeCount++;
 
       if (!mQueues.at(i)->isEmpty())
-      { //behave as if we received the message.
+      {   // behave as if we received the message.
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
-        //TODO: Bad in general case
-        //Data only valid for message lifetime!
+        // TODO(adamdbrw): Bad in general case
+        // Data only valid for message lifetime!
         auto byte_ma_message = mQueues[i]->pop_and_return();
 
-        serialized_data->buffer = (uint8_t *)byte_ma_message.data.data();
+        serialized_data->buffer = reinterpret_cast<uint8_t *>(byte_ma_message.data.data());
         serialized_data->buffer_length = byte_ma_message.data.size();
         serialized_data->buffer_capacity = byte_ma_message.data.size();
 
@@ -78,7 +95,8 @@ void WriterBenchmark::startBenchmark()
         int error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK)
         {
-          RCLCPP_ERROR_STREAM(get_logger(), "Error getting current time. Error:" << rcutils_get_error_string().str);
+          RCLCPP_ERROR_STREAM(get_logger(), "Error getting current time. Error:"
+            << rcutils_get_error_string().str);
         }
         message->time_stamp = time_stamp;
         message->topic_name = mQueues[i]->topicName();
@@ -87,7 +105,7 @@ void WriterBenchmark::startBenchmark()
         count++;
       }
     }
-    //RCLCPP_INFO_STREAM(get_logger(), "Wrote " << count << " messages");
+    // RCLCPP_INFO_STREAM(get_logger(), "Wrote " << count << " messages");
     if (completeCount == mQueues.size())
       break;
 
@@ -107,18 +125,22 @@ void WriterBenchmark::startBenchmark()
 
   RCLCPP_INFO(get_logger(), "/nWriterBenchmark terminating");
   RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissedMessages);
-  RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: " << 100.0 - (float)totalMissedMessages*100.0/(mConfig.max_count*mProducers.size()));
+  RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
+    << 100.0 - (float)totalMissedMessages*100.0/(mConfig.max_count*mProducers.size()));
 }
 
 void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int instances)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "/nWriterBenchmark: creating " << instances << " message producers with frequency "
-    << config.frequency << " and message size in bytes" << config.message_size << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count << " messages before terminating");
+  RCLCPP_INFO_STREAM(get_logger(), "/nWriterBenchmark: creating " << instances
+    << " message producers with frequency " << config.frequency
+    << " and message size in bytes" << config.message_size
+    << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count
+    << " messages before terminating");
   const unsigned int queueMaxSize = 10;
   for (unsigned int i = 0; i < instances; ++i)
   {
-    std::string topic_name = "/writer_benchmark/producer " + std::to_string(i);
-    auto queue = std::make_shared<MessageQueue<std_msgs::msg::ByteMultiArray>>(queueMaxSize, topic_name);
+    std::string topic = "/writer_benchmark/producer " + std::to_string(i);
+    auto queue = std::make_shared<MessageQueue<std_msgs::msg::ByteMultiArray>>(queueMaxSize, topic);
     auto producer = std::make_shared<ByteProducer>(config, queue);
     mQueues.push_back(queue);
     mProducers.push_back(producer);
@@ -141,7 +163,7 @@ void WriterBenchmark::createWriter()
   {
     rosbag2_storage::TopicMetadata topic;
     topic.name = mQueues[i]->topicName();
-    //TODO
+    // TODO(adamdbrw) - replace with something correct and more general if needed
     topic.type = "std_msgs::msgs::ByteMultiArray";
     topic.serialization_format = serialization_format;
     mWriter->create_topic(topic);
@@ -152,7 +174,7 @@ void WriterBenchmark::startProducers()
 {
   for (auto producer : mProducers)
   {
-    //RCLCPP_INFO(get_logger(), "starting a producer ");
+    // RCLCPP_INFO(get_logger(), "starting a producer ");
     mProducerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
   }
 }
