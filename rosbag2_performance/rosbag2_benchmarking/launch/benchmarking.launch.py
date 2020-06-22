@@ -1,4 +1,4 @@
-# Copyright 2020 Open Source Robotics Foundation, Inc.
+# Copyright 2020, Robotec.ai sp. z o.o.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ def get_worker(
     all_topics = []
     if same_topic:
         all_topics = [topic for i in range(0, instances)]
-    else: 
+    else:
         all_topics = [topic + str(i) for i in range(0, instances)]
 
     message_type = ""
@@ -81,9 +81,9 @@ def get_worker(
             name=name,
             parameters=[
                 {
-                    'max_count': max_count, 
-                    'frequency': frequency, 
-                    'size': size, 
+                    'max_count': max_count,
+                    'frequency': frequency,
+                    'size': size,
                     'delay': delay,
                     'benchmark_path': str(benchmark_path),
                     'instances': instances,
@@ -95,7 +95,7 @@ def get_worker(
 def get_dummy_publisher(topics, types):
     if len(topics) != len(types):
         raise RuntimeError("Number of topics must match number od types")
-    
+
     return Node(
             package='rosbag2_benchmarking',
             executable='dummy_publishers',
@@ -173,7 +173,7 @@ def parse_workers(config, benchmark_path):
 
 def generate_launch_description():
     print(sys.argv)
-    
+
     # Register workers in a dict, False mean worker is not finished
     def worker_started(event, context):
         worker_hooks.update({event.pid:False})
@@ -233,7 +233,7 @@ def generate_launch_description():
     ld.add_action(
         launch.actions.LogInfo(msg='Launching benchmark!'),
     )
-    
+
     # Manage config file
     config = None
     raport_dir = pathlib.Path.cwd()
@@ -247,7 +247,7 @@ def generate_launch_description():
                 raise RuntimeError("{} is not correct yaml config file.".format(path))
         if "raport_dir:=" in arg:
             raport_dir = pathlib.Path(arg[len("raport_dir:="):]).expanduser()
-    
+
     if config is None:
         raise RuntimeError("Missing 'description' parameter! Use 'description:=config.yaml' parameter.")
 
@@ -273,7 +273,7 @@ def generate_launch_description():
     # Setup workers
     worker_hooks = {}
     worker_topics, worker_types, workers_to_run = parse_workers(config, benchmark_path)
-    
+
     # Prepare workers
     for worker in workers_to_run:
         ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessStart(target_action=worker, on_start=worker_started)))
@@ -284,7 +284,7 @@ def generate_launch_description():
                 on_stdout=on_output,
                 on_stderr=on_output,
             )))
-            
+
     # Prepare rosbag
     raports_bag_location = pathlib.Path.joinpath(benchmark_path, pathlib.Path("bag"))
     if config["benchmark"].get("overwrite_existing"):
@@ -295,14 +295,14 @@ def generate_launch_description():
     parsed_args_list = [item for sublist in args_list for item in sublist]
 
     bag_worker = launch.actions.ExecuteProcess(sigkill_timeout=LaunchConfiguration(
-            'sigkill_timeout', default=15), 
+            'sigkill_timeout', default=15),
         sigterm_timeout=LaunchConfiguration(
-            'sigterm_timeout', default=15), 
+            'sigterm_timeout', default=15),
         cmd=["ros2", 'bag', 'record'] + \
             list(set(worker_topics)) + \
             ["-o", str(raports_bag_location)] + \
             parsed_args_list)
-    
+
     # Hook rosbag with readiness checks
     ld.add_action(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessIO(
         target_action=bag_worker,

@@ -1,3 +1,17 @@
+# Copyright 2020, Robotec.ai sp. z o.o.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import psutil, pathlib, signal, subprocess, threading, re
 
 import rclpy
@@ -20,7 +34,7 @@ class SystemMonitor(Node):
         if self.__frequency == 0:
             self.logger.warn("Monitor frequency is set to 0. Invalid value. Rolling back to 10Hz.")
             self.__frequency = 10
-        
+
         self.create_timer(1/self.__frequency, self.gather_data)
         self.iotop_thread = threading.Thread(None, self.launch_dstat)
         self.iotop_thread.start()
@@ -32,7 +46,7 @@ class SystemMonitor(Node):
     def launch_dstat(self):
         self.dstat_proc = subprocess.Popen(["pkexec", "iotop", "-b", "-o", "-d", str(1/self.__frequency), "--kilobytes"], stdout=subprocess.PIPE, universal_newlines=True)
         from datetime import datetime
-        
+
         while rclpy.ok():
             line = self.dstat_proc.stdout.readline()
             if "Total" in line:

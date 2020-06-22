@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>Code to benchmark the part of rosbag2 which starts after the callback is received</description>
   <maintainer email="adam.dabrowski@robotec.ai">Adam Dabrowski</maintainer>
-  <license>MIT</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

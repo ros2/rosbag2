@@ -1,3 +1,17 @@
+# Copyright 2020, Robotec.ai sp. z o.o.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import pathlib, yaml, csv
 import numpy as np
 
@@ -26,7 +40,7 @@ class Raport:
     mem_utilization = {}
     mem_utilization_t = []
     mem_utilization_v = []
-    
+
     def __init__(self, logger):
         self.logger = logger
 
@@ -152,7 +166,7 @@ class Raport:
                 frequency=val["frequency"]
             )
         return message
-        
+
 
     def __str__(self):
         result_log = """
@@ -197,7 +211,7 @@ class RaportGen(Node):
                 self.config = yaml.load(config_file)
         else:
             raise RuntimeError("{} is not correct yaml config file.".format(path))
-        
+
         self.benchmark_path = pathlib.Path.joinpath(pathlib.Path(self.raport_dir), pathlib.Path(str(self.config["benchmark"]["id"]) + "-" + self.config["benchmark"]["tag"]))
         if self.parse_bag_metadata():
             self.generate_raport()
@@ -214,8 +228,8 @@ class RaportGen(Node):
         for topic_metadata in bag_metadata["rosbag2_bagfile_information"]["topics_with_message_count"]:
             self.bag_metadata.update({
                 topic_metadata["topic_metadata"]["name"]:{
-                    "type":topic_metadata["topic_metadata"]["type"], 
-                    "message_count":topic_metadata["message_count"], 
+                    "type":topic_metadata["topic_metadata"]["type"],
+                    "message_count":topic_metadata["message_count"],
                     "serialization_format":topic_metadata["topic_metadata"]["serialization_format"]
                     }})
         return True
@@ -264,7 +278,7 @@ class RaportGen(Node):
             self.result.bag_message_captured_percents.update({topic:val*100})
             self.result.bag_message_captured_num.update({topic:self.bag_metadata[topic]["message_count"]})
             self.result.bag_message_captured_expected.update({topic:expected_msg_count})
-        
+
         # CPU utilization
         with open(self.benchmark_path.joinpath("system_cpu.csv"), newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=';')
@@ -276,7 +290,7 @@ class RaportGen(Node):
                     for i in range(2, cpus_number):
                         self.result.cpu_utilization_v.append([])
                     first_record = False
-                
+
                 self.result.cpu_utilization_avg.append(float(row[1]))
                 for i in range(2,len(row)-1):
                     self.result.cpu_utilization_v[i-2].append(float(row[i]))

@@ -21,7 +21,7 @@ find_package(rosbag2_transport REQUIRED)
 
 include_directories(include)
 
-add_executable(writer_benchmark src/writer_benchmark.cpp)
+add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
 ament_target_dependencies(writer_benchmark rclcpp std_msgs rosbag2_cpp rosbag2_storage rosbag2_transport)
 
 install(TARGETS writer_benchmark

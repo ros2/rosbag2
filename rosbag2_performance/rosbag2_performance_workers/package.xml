@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>Workers for rosbag2 performance benchmarks.</description>
   <maintainer email="piotr.jaroszek@robotec.ai">Piotr Jaroszek</maintainer>
-  <license>MIT</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
