@@ -199,7 +199,7 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]
-      .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
+      .as<std::chrono::time_point<std::chrono::system_clock>>();
     metadata.message_count = node["message_count"].as<uint64_t>();
     metadata.topics_with_message_count =
       decode_for_version<std::vector<rosbag2_storage::TopicInformation>>(
