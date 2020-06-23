@@ -3,6 +3,11 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* use interface_include_directories in find_sqlite3 (`#426 <https://github.com/ros2/rosbag2/issues/426>`_) (`#444 <https://github.com/ros2/rosbag2/issues/444>`_)
+* Contributors: Karsten Knese
+
 0.3.2 (2020-06-03)
 ------------------
 
