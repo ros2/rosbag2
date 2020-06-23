@@ -252,7 +252,7 @@ bool SequentialWriter::should_split_bagfile() const
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       max_bagfile_duration);
     should_split = should_split ||
-      ((std::chrono::steady_clock::now() - metadata_.starting_time) > max_duration_ns);
+      ((std::chrono::high_resolution_clock::now() - metadata_.starting_time) > max_duration_ns);
   }
 
   return should_split;
