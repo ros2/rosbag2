@@ -65,10 +65,11 @@ private:
 
   void generateRandomMessage()
   {   // Reuses the same random message to remove generation time from benchmarks
-    mMessage.data = randomByteArrayData(mConfiguration.message_size);
+    mMessage = std::make_shared<std_msgs::msg::ByteMultiArray>();
+    mMessage->data = randomByteArrayData(mConfiguration.message_size);
   }
 
-  std_msgs::msg::ByteMultiArray mMessage;
+  std::shared_ptr<std_msgs::msg::ByteMultiArray> mMessage; // for simplification, this pointer will be reused
   std::mutex mMutex;
 
   ProducerConfig mConfiguration;

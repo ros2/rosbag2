@@ -71,6 +71,7 @@ void WriterBenchmark::startBenchmark()
   {
     int count = 0;
     unsigned int completeCount = 0;
+
     for (size_t i = 0; i < mQueues.size(); ++i)
     {   // TODO(adamdbrw) use conditional variables to avoid locks
       if (mQueues.at(i)->isComplete() && mQueues.at(i)->isEmpty())
@@ -81,13 +82,13 @@ void WriterBenchmark::startBenchmark()
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
-        // TODO(adamdbrw): Bad in general case
-        // Data only valid for message lifetime!
+        // The pointer remains owned by the producer until past the termination of the while loop
+        // note that this ownership model should be changed if we want to generate messages on the fly
         auto byte_ma_message = mQueues[i]->pop_and_return();
 
-        serialized_data->buffer = reinterpret_cast<uint8_t *>(byte_ma_message.data.data());
-        serialized_data->buffer_length = byte_ma_message.data.size();
-        serialized_data->buffer_capacity = byte_ma_message.data.size();
+        serialized_data->buffer = reinterpret_cast<uint8_t *>(byte_ma_message->data.data());
+        serialized_data->buffer_length = byte_ma_message->data.size();
+        serialized_data->buffer_capacity = byte_ma_message->data.size();
 
         message->serialized_data = serialized_data;
 
@@ -100,7 +101,14 @@ void WriterBenchmark::startBenchmark()
         }
         message->time_stamp = time_stamp;
         message->topic_name = mQueues[i]->topicName();
-        mWriter->write(message);
+        std::cerr << "_";
+        try
+        {
+          mWriter->write(message);
+        } catch (std::runtime_error & e)
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
+        }
         std::cerr << ".";
         count++;
       }
@@ -140,7 +148,7 @@ void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int
   for (unsigned int i = 0; i < instances; ++i)
   {
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
-    auto queue = std::make_shared<MessageQueue<std_msgs::msg::ByteMultiArray>>(queueMaxSize, topic);
+    auto queue = std::make_shared<ByteMessageQueue>(queueMaxSize, topic);
     auto producer = std::make_shared<ByteProducer>(config, queue);
     mQueues.push_back(queue);
     mProducers.push_back(producer);

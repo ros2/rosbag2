@@ -66,9 +66,9 @@ public:
     {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
-    T elem = std::move(mQueue.front());
+    T elem = mQueue.front();
     // std::cerr << "-";
-    mQueue.pop();   // safe with move
+    mQueue.pop();
     return elem;
   }
 
@@ -92,6 +92,6 @@ private:
   mutable std::mutex mMutex;
 };
 
-typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
+typedef MessageQueue<std::shared_ptr<std_msgs::msg::ByteMultiArray>> ByteMessageQueue;
 
 #endif  // MESSAGE_QUEUE_HPP_

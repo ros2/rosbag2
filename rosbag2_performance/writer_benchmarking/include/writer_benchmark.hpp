@@ -43,7 +43,7 @@ private:
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> mWriter;
   std::vector<std::thread> mProducerThreads;
   std::vector<std::shared_ptr<ByteProducer>> mProducers;
-  std::vector<std::shared_ptr<MessageQueue<std_msgs::msg::ByteMultiArray>>> mQueues;
+  std::vector<std::shared_ptr<ByteMessageQueue>> mQueues;
 };
 
 #endif  // WRITER_BENCHMARK_HPP_
