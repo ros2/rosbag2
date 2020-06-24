@@ -443,27 +443,20 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
 
   rosbag2_storage::MetadataIo metadata_io;
 
-// TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
-// This is required since stop_execution hard kills the proces on Windows,
-// which prevents the metadata from being written.
 #ifdef _WIN32
   {
     rosbag2_storage::BagMetadata metadata;
     metadata.version = 4;
     metadata.storage_identifier = "sqlite3";
 
+    // Loop until expected_splits in case it split or the bagfile doesn't exist.
     for (int i = 0; i < expected_splits; ++i) {
-      const auto bag_file_path = get_bag_file_name(i);
-
-      // There is no guarantee that the bagfile split expected_split times
-      // due to possible io sync delays. Instead, assert that the bagfile split
-      // at least once
-      if (rcpputils::fs::path(bag_file_path).exists()) {
-        metadata.relative_file_paths.push_back(bag_file_path);
+      const auto bag_file_path = get_relative_bag_file_path(i);
+      if (rcpputils::fs::exists(root_bag_path_ / bag_file_path)) {
+        metadata.relative_file_paths.push_back(bag_file_path.string());
       }
     }
 
-    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
 #endif
