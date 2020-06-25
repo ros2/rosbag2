@@ -80,7 +80,6 @@ private:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
   std::chrono::time_point<std::chrono::system_clock> start_time_;
-  bool paused_;
   std::chrono::nanoseconds paused_duration_;
   bool played_all_;
   mutable std::future<void> storage_loading_future_;

@@ -79,7 +79,7 @@ Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
-: reader_(std::move(reader)), paused_(false), played_all_(false),
+: reader_(std::move(reader)), played_all_(false),
   rosbag2_transport_(rosbag2_transport), terminal_modified_(false)
 {}
 
@@ -115,8 +115,6 @@ void Player::play(const PlayOptions & options)
   // Playback will detect when node is activated, either from here or externally.
   if (!options.paused) {
     rosbag2_transport_->activate();
-  } else {
-    paused_ = true;
   }
 
   setup_terminal();
@@ -261,12 +259,13 @@ void Player::handle_keypress()
     int input = read_char_from_stdin();
     switch (input) {
       case ' ':
-        if (paused_) {
+        if (rosbag2_transport_->get_current_state().id() !=
+          lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+        {
           rosbag2_transport_->activate();
         } else {
           rosbag2_transport_->deactivate();
         }
-        paused_ = !paused_;
         break;
     }
   }
