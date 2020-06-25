@@ -28,13 +28,12 @@ class MessageQueue
 {
 public:
   MessageQueue(int maxSize, std::string topicName)
-    : mMaxSize(maxSize), mTopicName(topicName) {}
+  : mMaxSize(maxSize), mTopicName(topicName) {}
 
   void push(T elem)
   {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mQueue.size() > mMaxSize)
-    {   // We skip the element and consider it "lost"
+    if (mQueue.size() > mMaxSize) { // We skip the element and consider it "lost"
       mUnsuccessfulInsertCount++;
       std::cerr << "X";
       return;
@@ -62,8 +61,7 @@ public:
   T pop_and_return()
   {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mQueue.empty())
-    {
+    if (mQueue.empty()) {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
     T elem = mQueue.front();

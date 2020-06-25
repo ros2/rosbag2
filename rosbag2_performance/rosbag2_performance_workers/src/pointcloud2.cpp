@@ -11,13 +11,14 @@
 class PointCloud2Publisher : public Worker<sensor_msgs::msg::PointCloud2>
 {
 public:
-  PointCloud2Publisher(const std::string &name)
-      : Worker<sensor_msgs::msg::PointCloud2>(name)
+  PointCloud2Publisher(const std::string & name)
+  : Worker<sensor_msgs::msg::PointCloud2>(name)
   {
     message = createRandomPointcloud2(size);
   }
 
-  sensor_msgs::msg::PointCloud2 getMessage(const uint32_t &size) final {
+  sensor_msgs::msg::PointCloud2 getMessage(const uint32_t & size) final
+  {
     (void)size; // supress unused
     return message;
   }
@@ -27,15 +28,14 @@ private:
   {
     float x, y, z;
     Point(float x, float y, float z)
-        : x(x), y(y), z(z) {}
+    : x(x), y(y), z(z) {}
   };
 
   sensor_msgs::msg::PointCloud2 createRandomPointcloud2(size_t num_points)
   {
     std::vector<Point> points;
     points.reserve(num_points);
-    for (size_t i = 0; i < num_points; ++i)
-    {
+    for (size_t i = 0; i < num_points; ++i) {
       points.emplace_back(std::rand() % 255, std::rand() % 255, std::rand() % 255);
     }
 
@@ -56,8 +56,7 @@ private:
     pc2c.fields[2].name = "z";
 
     sensor_msgs::msg::PointField::_offset_type offset = 0;
-    for (uint32_t i = 0; i < pc2c.fields.size(); ++i, offset += sizeof(float))
-    {
+    for (uint32_t i = 0; i < pc2c.fields.size(); ++i, offset += sizeof(float)) {
       pc2c.fields[i].count = 1;
       pc2c.fields[i].offset = offset;
       pc2c.fields[i].datatype = sensor_msgs::msg::PointField::FLOAT32;
@@ -68,8 +67,7 @@ private:
     pc2c.data.resize(pc2c.row_step * pc2c.height);
 
     auto floatData = reinterpret_cast<float *>(pc2c.data.data());
-    for (uint32_t i = 0; i < pc2c.width; ++i)
-    {
+    for (uint32_t i = 0; i < pc2c.width; ++i) {
       floatData[i * (pc2c.point_step / sizeof(float)) + 0] = points[i].x;
       floatData[i * (pc2c.point_step / sizeof(float)) + 1] = points[i].y;
       floatData[i * (pc2c.point_step / sizeof(float)) + 2] = points[i].z;
@@ -81,15 +79,16 @@ private:
   sensor_msgs::msg::PointCloud2 message;
 };
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::Context ctx;
   auto node = std::make_shared<PointCloud2Publisher>("pointcloud2_publisher");
-  if (rclcpp::ok())
-  {
+  if (rclcpp::ok()) {
     rclcpp::spin(node);
     rclcpp::shutdown();
   }
-  return (rclcpp::contexts::get_global_default_context()->shutdown_reason().compare("frequency error") == 0);
+  return rclcpp::contexts::get_global_default_context()->shutdown_reason().compare("frequency error")
+         ==
+         0;
 }

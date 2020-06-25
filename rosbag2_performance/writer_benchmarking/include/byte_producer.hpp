@@ -32,8 +32,8 @@ struct ProducerConfig
 class ByteProducer
 {
 public:
-  ByteProducer(const ProducerConfig &config, std::shared_ptr<ByteMessageQueue> queue)
-    : mConfiguration(config), mQueue(queue)
+  ByteProducer(const ProducerConfig & config, std::shared_ptr<ByteMessageQueue> queue)
+  : mConfiguration(config), mQueue(queue)
   {
     generateRandomMessage();
     mMsSleepTime = mConfiguration.frequency == 0 ? 1 : 1000 / mConfiguration.frequency;
@@ -41,10 +41,8 @@ public:
 
   void run()
   {
-    for (unsigned int i = 0; i < mConfiguration.max_count; ++i)
-    {
-      if (!rclcpp::ok())
-      {
+    for (unsigned int i = 0; i < mConfiguration.max_count; ++i) {
+      if (!rclcpp::ok()) {
         break;
       }
       mQueue->push(mMessage);
