@@ -1,7 +1,7 @@
 # Rosbag2 performance
 
 Tools for performance testing of ros2 bags. Packages are:
-- **writer_benchmarking**: the primary package to test transport-less performance of the rosbag2 writer and storage. Enables parametrized batch execution of benchmarks and tries to replicate the flow to capture message loss in queues. This package is the primary one to use when storage optimizations are implemented - to check how much of an effect the changes had.
+- **writer_benchmarking**: the primary package to test transport-less performance of the rosbag2 writer and storage. Enables parametrized batch execution of benchmarks and tries to replicate the flow to capture message loss in queues. This package is the primary one to use when storage optimizations are implemented.
 - **rosbag2_benchmarking**: a python package using launch file and scripting to launch performance workers and a suite of monitor tools (recording cpu, memory and i/o use). Benchmarks the entire pipeline from publish to writing on disk (including the transport layer).   
 - **rosbag2_performance workers**: publishers of random images, point clouds and byte messages, including scaling up and parametrization. Workers random image and pc2 generation part was based on Martin Idel [code](https://github.com/Martin-Idel/rosbag2/tree/performance_testing).
 see raport with `dummy_raport.sh`.
