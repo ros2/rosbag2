@@ -8,6 +8,12 @@ see raport with `dummy_raport.sh`.
 
 See README files inside packages for more information.
 
+## Building
+
+To build the package in the rosbag2 build process, make sure to turn `BUILD_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_BENCHMARKS=1`)
+
+If you already built rosbag2, you can use `packages-select` option to build benchmarks. Example: `colcon build --packages-select writer_benchmarking rosbag2_performance_workers rosbag2_benchmarking --cmake-args -DBUILD_BENCHMARKS=1`.
+
 ## I/O benchmarking
 
 #### Background: benchmarking disk writes on your system
