@@ -67,7 +67,8 @@ private:
     mMessage->data = randomByteArrayData(mConfiguration.message_size);
   }
 
-  std::shared_ptr<std_msgs::msg::ByteMultiArray> mMessage; // for simplification, this pointer will be reused
+  // for simplification, this pointer will be reused
+  std::shared_ptr<std_msgs::msg::ByteMultiArray> mMessage;
   std::mutex mMutex;
 
   ProducerConfig mConfiguration;

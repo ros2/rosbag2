@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE_WORKERS_HPP
-#define ROSBAG2_PERFORMANCE_WORKERS_HPP
+#ifndef WORKER_HPP_
+#define WORKER_HPP_
 
 #include <chrono>
 #include <string>
@@ -24,7 +24,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 template<typename T>
 class Worker : public rclcpp::Node
@@ -32,7 +31,7 @@ class Worker : public rclcpp::Node
   typedef typename rclcpp::Publisher<T>::SharedPtr publisherPtr;
 
 public:
-  Worker(const std::string & name)
+  explicit Worker(const std::string & name)
   : Node(name)
   {
     this->declare_parameter("frequency");
@@ -45,6 +44,7 @@ public:
     this->declare_parameter("same_topic");
 
     auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
+    using namespace std::chrono_literals;
     while (!parameters_client->wait_for_service(1s)) {
       if (!rclcpp::ok()) {
         RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
@@ -116,7 +116,7 @@ private:
       rclcpp::shutdown();
     }
 
-    //(piotr.jaroszek) TODO: raport data here and save to benchmark_path
+    // (piotr.jaroszek) TODO: raport data here and save to benchmark_path
   }
 
   rclcpp::TimerBase::SharedPtr timer;
@@ -124,4 +124,4 @@ private:
   std::vector<publisherPtr> publishers;
 };
 
-#endif //ROSBAG2_PERFORMANCE_WORKERS_HPP
+#endif  // WORKER_HPP_

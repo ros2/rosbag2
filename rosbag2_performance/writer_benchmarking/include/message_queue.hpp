@@ -20,6 +20,7 @@
 #include <utility>
 #include <mutex>
 #include <iostream>
+#include <memory>
 
 #include "std_msgs/msg/byte_multi_array.hpp"
 
@@ -33,7 +34,7 @@ public:
   void push(T elem)
   {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mQueue.size() > mMaxSize) { // We skip the element and consider it "lost"
+    if (mQueue.size() > mMaxSize) {  // We skip the element and consider it "lost"
       mUnsuccessfulInsertCount++;
       std::cerr << "X";
       return;
