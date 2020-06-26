@@ -40,17 +40,15 @@ namespace rosbag2_py
 class Reader
 {
 public:
-  Reader(const std::string & reader_class)
+  explicit Reader(const std::string & reader_class)
   {
     if (!reader_class.compare("SequentialReader")) {
       auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>();
       reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-    }
-    else if (!reader_class.compare("SequentialCompressionReader")) {
+    } else if (!reader_class.compare("SequentialCompressionReader")) {
       auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>();
       reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-    }
-    else {
+    } else {
       throw std::runtime_error{"Reader class type " + reader_class + " not supported."};
     }
   }
@@ -75,8 +73,8 @@ public:
     rcutils_uint8_array_t rcutils_data = *next->serialized_data.get();
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
-    return pybind11::make_tuple(next->topic_name, pybind11::bytes(serialized_data),
-             next->time_stamp);
+    return pybind11::make_tuple(
+      next->topic_name, pybind11::bytes(serialized_data), next->time_stamp);
   }
 
   /// Return a mapping from topic name to topic type.
@@ -102,51 +100,54 @@ private:
 class Writer
 {
 public:
-  Writer(const std::string &writer_class)
+  explicit Writer(const std::string & writer_class)
   {
     if (!writer_class.compare("SequentialWriter")) {
       auto sequential_writer =
-          std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
+        std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
       writer_ =
-          std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+        std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
     } else if (!writer_class.compare("SequentialCompressionWriter")) {
       auto sequential_writer =
-          std::make_unique<rosbag2_compression::SequentialCompressionWriter>();
+        std::make_unique<rosbag2_compression::SequentialCompressionWriter>();
       writer_ =
-          std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+        std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
     } else {
       throw std::runtime_error{"Writer class type " + writer_class +
-                               " not supported."};
+              " not supported."};
     }
   }
 
   void open(
-    rosbag2_cpp::StorageOptions &storage_options,
-    rosbag2_cpp::ConverterOptions &converter_options)
+    rosbag2_cpp::StorageOptions & storage_options,
+    rosbag2_cpp::ConverterOptions & converter_options)
   {
     writer_->open(storage_options, converter_options);
   }
 
-  void create_topic(const rosbag2_storage::TopicMetadata &topic_with_type)
+  void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
   {
     writer_->create_topic(topic_with_type);
   }
 
-  void remove_topic(const rosbag2_storage::TopicMetadata &topic_with_type)
+  void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
   {
     writer_->remove_topic(topic_with_type);
   }
 
   /// Write a serialized message to a bag file
-  void write(const std::string &topic_name, const std::string &message, const long &time_stamp)
+  void write(
+    const std::string & topic_name, const std::string & message,
+    const rcutils_time_point_value_t & time_stamp)
   {
     auto bag_message =
-        std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
     bag_message->topic_name = topic_name;
     bag_message->serialized_data =
-        rosbag2_storage::make_serialized_message(message.c_str(), message.length());
-    bag_message->time_stamp = (rcutils_time_point_value_t)time_stamp;
+      rosbag2_storage::make_serialized_message(message.c_str(), message.length());
+    // bag_message->time_stamp = (rcutils_time_point_value_t)time_stamp;
+    bag_message->time_stamp = time_stamp;
 
     writer_->write(bag_message);
   }
@@ -154,7 +155,7 @@ public:
 private:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
-} // namespace rosbag2_py
+}  // namespace rosbag2_py
 
 PYBIND11_MODULE(_rosbag2_py, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp API";
@@ -177,16 +178,19 @@ PYBIND11_MODULE(_rosbag2_py, m) {
 
   pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
   .def(pybind11::init())
-  .def_readwrite("input_serialization_format",
+  .def_readwrite(
+    "input_serialization_format",
     &rosbag2_cpp::ConverterOptions::input_serialization_format)
-  .def_readwrite("output_serialization_format",
+  .def_readwrite(
+    "output_serialization_format",
     &rosbag2_cpp::ConverterOptions::output_serialization_format);
 
   pybind11::class_<rosbag2_cpp::StorageOptions>(m, "StorageOptions")
   .def(pybind11::init())
   .def_readwrite("uri", &rosbag2_cpp::StorageOptions::uri)
   .def_readwrite("storage_id", &rosbag2_cpp::StorageOptions::storage_id)
-  .def_readwrite("max_bagfile_size",
+  .def_readwrite(
+    "max_bagfile_size",
     &rosbag2_cpp::StorageOptions::max_bagfile_size);
 
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
@@ -197,7 +201,8 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   .def(pybind11::init())
   .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
   .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
-  .def_readwrite("serialization_format",
+  .def_readwrite(
+    "serialization_format",
     &rosbag2_storage::TopicMetadata::serialization_format)
   .def("equals", &rosbag2_storage::TopicMetadata::operator==);
 }
