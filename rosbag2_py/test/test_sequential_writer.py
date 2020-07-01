@@ -18,7 +18,7 @@ import shutil
 
 from common import get_rosbag_options
 from rclpy.serialization import deserialize_message, serialize_message
-import rosbag2_py._rosbag2_py as rosbag2_py
+import rosbag2_py
 from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
 

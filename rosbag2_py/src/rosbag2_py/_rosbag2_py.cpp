@@ -146,7 +146,6 @@ public:
     bag_message->topic_name = topic_name;
     bag_message->serialized_data =
       rosbag2_storage::make_serialized_message(message.c_str(), message.length());
-    // bag_message->time_stamp = (rcutils_time_point_value_t)time_stamp;
     bag_message->time_stamp = time_stamp;
 
     writer_->write(bag_message);

@@ -17,7 +17,7 @@ from pathlib import Path
 from common import get_rosbag_options
 from rcl_interfaces.msg import Log
 from rclpy.serialization import deserialize_message
-import rosbag2_py._rosbag2_py as rosbag2_py
+import rosbag2_py
 from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
 
