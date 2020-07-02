@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -50,7 +51,9 @@ class BaseReaderInterface;
 class ROSBAG2_CPP_PUBLIC Reader final
 {
 public:
-  explicit Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl);
+  explicit Reader(
+    std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl =
+    std::make_unique<readers::SequentialReader>());
 
   ~Reader();
 
@@ -67,7 +70,9 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options Options for specifying the output data format
    */
-  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
+  void open(
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options = ConverterOptions());
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

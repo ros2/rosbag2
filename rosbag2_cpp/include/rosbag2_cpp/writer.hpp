@@ -23,6 +23,7 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -49,7 +50,9 @@ class BaseWriterInterface;
 class ROSBAG2_CPP_PUBLIC Writer final
 {
 public:
-  explicit Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl);
+  explicit Writer(
+    std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl =
+    std::make_unique<writers::SequentialWriter>());
 
   ~Writer();
 
@@ -60,7 +63,9 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
-  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
+  void open(
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options = ConverterOptions());
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within

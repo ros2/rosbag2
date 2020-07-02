@@ -49,13 +49,10 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   storage_options.storage_id = "sqlite3";
   storage_options.max_bagfile_size = 0;  // default
   storage_options.max_cache_size = 0;  // default
-  rosbag2_cpp::ConverterOptions converter_options;
-  converter_options.input_serialization_format = "cdr";
-  converter_options.output_serialization_format = "cdr";
 
   {
-    rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
-    writer.open(storage_options, converter_options);
+    rosbag2_cpp::Writer writer;
+    writer.open(storage_options);
 
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     auto ret = rcutils_system_time_now(&bag_message->time_stamp);
@@ -78,8 +75,8 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   }
 
   {
-    rosbag2_cpp::Reader reader(std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-    reader.open(storage_options, converter_options);
+    rosbag2_cpp::Reader reader;
+    reader.open(storage_options);
     while (reader.has_next()) {
       auto bag_message = reader.read_next();
 
