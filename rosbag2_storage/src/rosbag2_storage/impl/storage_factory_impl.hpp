@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "pluginlib/class_loader.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -107,14 +106,6 @@ public:
   std::shared_ptr<ReadWriteInterface> open_read_write(
     const std::string & uri, const std::string & storage_id)
   {
-    rcpputils::fs::path db_path(uri);
-    if (!db_path.parent_path().is_directory()) {
-      bool ret = rcpputils::fs::create_directories(db_path.parent_path());
-      if (!ret) {
-        ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-          "Failed to create database direcotory (" << db_path.parent_path().string() << ").");
-      }
-    }
     auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
 
     if (instance == nullptr) {
