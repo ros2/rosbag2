@@ -14,6 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
+#include <string>
+
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 
@@ -85,7 +88,7 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
       TestMsgT extracted_test_msg;
       rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
       serialization.deserialize_message(
-          &extracted_serialized_msg, &extracted_test_msg);
+        &extracted_serialized_msg, &extracted_test_msg);
 
       EXPECT_EQ(test_msg, extracted_test_msg);
     }
