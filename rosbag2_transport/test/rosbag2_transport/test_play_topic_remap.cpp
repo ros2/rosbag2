@@ -37,10 +37,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   const std::string remapped_topic = "/topic_after_remap";
   const int32_t test_value = 42;
   const int64_t dt_in_milliseconds = 100;
-  // With ROS2 communication being undeterministic, we can only verify that topics arrive
-  // We can't verify how many though; The 60% below seem to be reliable.
   const size_t expected_number_of_outgoing_messages = 5;
-  const size_t expected_number_of_incoming_messages = 3;
   play_options_.topic_remapping_options =
   {"--ros-args", "--remap", "topic_before_remap:=topic_after_remap"};
 
@@ -60,8 +57,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   prepared_mock_reader->prepare(messages, topic_types);
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
+  // We can't reliably test for an exact number of messages to arrive.
+  // Therefore, we test that at least one message is being received over the remapped topic.
   sub_->add_subscription<test_msgs::msg::BasicTypes>(
-    remapped_topic, expected_number_of_incoming_messages);
+    remapped_topic, 1u);
   auto await_received_messages = sub_->spin_subscriptions();
 
   rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
@@ -72,7 +71,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     remapped_topic);
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(expected_number_of_incoming_messages)));
+  EXPECT_FALSE(replayed_test_primitives.empty());
   EXPECT_THAT(
     replayed_test_primitives,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, test_value))));
