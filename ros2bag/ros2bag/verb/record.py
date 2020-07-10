@@ -61,6 +61,13 @@ class RecordVerb(VerbExtension):
                   'is disabled.'
         )
         parser.add_argument(
+            '-d', '--max-bag-duration', type=int, default=0,
+            help='maximum duration in seconds before the bagfile will be split. '
+                  'Default is zero, recording written in single bagfile and splitting '
+                  'is disabled. If both splitting by size and duration are enabled, '
+                  'the bag will split at whichever threshold is reached first.'
+        )
+        parser.add_argument(
             '--max-cache-size', type=int, default=0,
             help='maximum amount of messages to hold in cache before writing to disk. '
                  'Default it is zero, writing every message directly to disk.'
@@ -129,6 +136,7 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
+                max_bagfile_duration=args.max_bag_duration,
                 max_cache_size=args.max_cache_size,
                 include_hidden_topics=args.include_hidden_topics,
                 qos_profile_overrides=qos_profile_overrides)
@@ -150,6 +158,7 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
+                max_bagfile_duration=args.max_bag_duration,
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,
