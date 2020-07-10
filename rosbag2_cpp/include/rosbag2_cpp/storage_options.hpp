@@ -30,6 +30,10 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_size = 0;
 
+  // The maximum duration a bagfile can be, in seconds, before it is split.
+  // A value of 0 indicates that bagfile splitting will not be used.
+  uint64_t max_bagfile_duration = 0;
+
   // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.
   // Defaults to 0, and effectively disables the caching.
