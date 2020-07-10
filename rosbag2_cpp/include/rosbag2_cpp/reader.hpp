@@ -58,6 +58,22 @@ public:
   ~Reader();
 
   /**
+   * Opens an existing bagfile and prepare it for reading messages.
+   * The bagfile must exist.
+   * This must be called before any other function is used.
+   *
+   * \note This will open URI with the default storage options
+   * * using sqlite3 storage backend
+   * * using no converter options, storing messages with the incoming serialization format
+   * \sa rmw_get_serialization_format.
+   * For specifications, please see \sa open, which let's you specify
+   * more storage and converter options.
+   *
+   * \param storage_uri URI of the storage to open.
+   **/
+  void open(const std::string & uri);
+
+  /**
    * Throws if file could not be opened.
    * This must be called before any other function is used.
    * The rosbag is automatically closed on destruction.

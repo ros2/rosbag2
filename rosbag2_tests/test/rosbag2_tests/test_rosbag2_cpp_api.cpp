@@ -44,15 +44,9 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   // in case the bag was previously not cleaned up
   rcpputils::fs::remove_all(rosbag_directory);
 
-  rosbag2_cpp::StorageOptions storage_options;
-  storage_options.uri = rosbag_directory.string();
-  storage_options.storage_id = "sqlite3";
-  storage_options.max_bagfile_size = 0;  // default
-  storage_options.max_cache_size = 0;  // default
-
   {
     rosbag2_cpp::Writer writer;
-    writer.open(storage_options);
+    writer.open(rosbag_directory.string());
 
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     auto ret = rcutils_system_time_now(&bag_message->time_stamp);
@@ -76,7 +70,7 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
   {
     rosbag2_cpp::Reader reader;
-    reader.open(storage_options);
+    reader.open(rosbag_directory.string());
     while (reader.has_next()) {
       auto bag_message = reader.read_next();
 

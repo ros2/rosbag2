@@ -60,6 +60,21 @@ public:
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
    * This must be called before any other function is used.
    *
+   * \note This will open URI with the default storage options
+   * * using sqlite3 storage backend
+   * * using no converter options, storing messages with the incoming serialization format
+   * \sa rmw_get_serialization_format.
+   * For specifications, please see \sa open, which let's you specify
+   * more storage and converter options.
+   *
+   * \param storage_uri URI of the storage to open.
+   **/
+  void open(const std::string & uri);
+
+  /**
+   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * This must be called before any other function is used.
+   *
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
