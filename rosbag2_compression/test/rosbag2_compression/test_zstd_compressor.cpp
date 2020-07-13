@@ -36,6 +36,8 @@ namespace
 {
 constexpr const char kGarbageStatement[] = "garbage";
 constexpr const int kDefaultGarbageFileSize = 10;  // MiB
+constexpr const size_t kExpectedCompressedDataSize = 976; // manually calculated, could change
+                                                          // if compression params change
 
 /**
  * Writes 1M * size garbage data to a stream.
@@ -127,7 +129,7 @@ protected:
 
   rcutils_allocator_t allocator_;
   std::string message_;
-  size_t compressed_length_{976};  // manually calculated, could change if compression params change
+  size_t compressed_length_{kExpectedCompressedDataSize};
 };
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
