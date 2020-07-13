@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -24,6 +26,8 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 
+#include "rosbag2_storage/ros_helper.hpp"
+
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "gmock/gmock.h"
@@ -32,6 +36,23 @@ namespace
 {
 constexpr const char kGarbageStatement[] = "garbage";
 constexpr const int kDefaultGarbageFileSize = 10;  // MiB
+constexpr const size_t kExpectedCompressedDataSize = 976;  // manually calculated, could change
+                                                           // if compression params change
+
+/**
+ * Writes 1M * size garbage data to a stream.
+ * \param out The stream to write to.
+ * \param size The number of times to write.
+ */
+void write_garbage_stream(std::ostream & out, int size = kDefaultGarbageFileSize)
+{
+  const auto output_size = size * 1024 * 1024;
+  const auto num_iterations = output_size / static_cast<int>(strlen(kGarbageStatement));
+
+  for (int i = 0; i < num_iterations; i++) {
+    out << kGarbageStatement;
+  }
+}
 
 /**
  * Creates a text file of a certain size.
@@ -43,12 +64,19 @@ void create_garbage_file(const std::string & uri, int size = kDefaultGarbageFile
   auto out = std::ofstream{uri};
   out.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
-  const auto file_size = size * 1024 * 1024;
-  const auto num_iterations = file_size / static_cast<int>(strlen(kGarbageStatement));
+  write_garbage_stream(out, size);
+}
 
-  for (int i = 0; i < num_iterations; i++) {
-    out << kGarbageStatement;
-  }
+/**
+ * Creates a string of a certain size.
+ * \param size Size of the string in MiB.
+ * \return The string.
+ */
+std::string create_garbage_string(int size = kDefaultGarbageFileSize)
+{
+  std::stringstream output;
+  write_garbage_stream(output, size);
+  return output.str();
 }
 
 std::vector<char> read_file(const std::string & uri)
@@ -76,6 +104,9 @@ protected:
 
   void SetUp() override
   {
+    allocator_ = rcutils_get_default_allocator();
+    message_ = create_garbage_string();
+
     rclcpp::init(0, nullptr);
   }
 
@@ -83,6 +114,22 @@ protected:
   {
     rclcpp::shutdown();
   }
+
+  std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
+  {
+    std::unique_ptr<uint8_t[]> copied(new uint8_t[serialized_message->buffer_length + 1]);
+    std::copy(
+      serialized_message->buffer,
+      serialized_message->buffer + serialized_message->buffer_length,
+      copied.get());
+    copied.get()[serialized_message->buffer_length] = '\0';
+    std::string message_content(reinterpret_cast<char *>(copied.get()));
+    return message_content;
+  }
+
+  rcutils_allocator_t allocator_;
+  std::string message_;
+  size_t compressed_length_{kExpectedCompressedDataSize};
 };
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
@@ -217,4 +264,36 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_uri)
 
   EXPECT_THROW(decompressor.decompress_uri(bad_uri), std::runtime_error) <<
     "Expected decompress_uri(\"" << bad_uri << "\") to fail!";
+}
+
+TEST_F(CompressionHelperFixture, zstd_compress_serialized_bag_message)
+{
+  auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
+  msg->serialized_data.reset(new rcutils_uint8_array_t);
+  msg->serialized_data = rosbag2_storage::make_serialized_message(
+    message_.data(), message_.length());
+
+  rosbag2_compression::ZstdCompressor compressor;
+  compressor.compress_serialized_bag_message(msg.get());
+
+  ASSERT_EQ(compressed_length_, msg->serialized_data->buffer_length);
+}
+
+TEST_F(CompressionHelperFixture, zstd_decompress_serialized_bag_message)
+{
+  auto msg = std::make_unique<rosbag2_storage::SerializedBagMessage>();
+  msg->serialized_data.reset(new rcutils_uint8_array_t);
+  msg->serialized_data = rosbag2_storage::make_serialized_message(
+    message_.data(), message_.length());
+
+  rosbag2_compression::ZstdCompressor compressor;
+  compressor.compress_serialized_bag_message(msg.get());
+
+  const auto compressed_length = msg->serialized_data->buffer_length;
+  EXPECT_EQ(compressed_length_, compressed_length);
+
+  rosbag2_compression::ZstdDecompressor decompressor;
+  EXPECT_NO_THROW(decompressor.decompress_serialized_bag_message(msg.get()));
+  std::string new_msg = deserialize_message(msg->serialized_data);
+  EXPECT_EQ(new_msg, message_);
 }
