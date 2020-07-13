@@ -37,7 +37,7 @@ namespace
 constexpr const char kGarbageStatement[] = "garbage";
 constexpr const int kDefaultGarbageFileSize = 10;  // MiB
 constexpr const size_t kExpectedCompressedDataSize = 976;  // manually calculated, could change
-                                                          // if compression params change
+                                                           // if compression params change
 
 /**
  * Writes 1M * size garbage data to a stream.
