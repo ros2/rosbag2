@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Voyager case bundle handler and raport generator."""
+"""Voyager case bundle handler and report generator."""
 
 import pathlib
 import shutil
@@ -31,17 +31,17 @@ class DefaultMapper(dict):
 
 
 class VoyagerCase(Node):
-    """Raport generator for voyager case bundle."""
+    """Report generator for voyager case bundle."""
 
     def __init__(self):
         """Init voyager case bundle."""
         super().__init__('voyager_case')
         self.logger = rclpy.logging.get_logger('VOY')
 
-        self.declare_parameter('raport_dir', str(pathlib.Path.cwd()))
-        self.raport_dir = pathlib.Path(
+        self.declare_parameter('report_dir', str(pathlib.Path.cwd()))
+        self.report_dir = pathlib.Path(
             self.get_parameter(
-                'raport_dir'
+                'report_dir'
             ).get_parameter_value().string_value
         ).expanduser()
 
@@ -57,20 +57,20 @@ class VoyagerCase(Node):
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
         self.declare_parameter(
-            'raport_template_dir',
+            'report_template_dir',
             str(pathlib.Path(__file__).parent.absolute().joinpath(
                 '..',
                 'bundles',
                 'voyager',
                 'template.html'))
         )
-        raport_template_dir = pathlib.Path(
+        report_template_dir = pathlib.Path(
             self.get_parameter(
-                'raport_template_dir'
+                'report_template_dir'
             ).get_parameter_value().string_value).expanduser()
 
-        with open(pathlib.Path(raport_template_dir), 'r') as raport_template:
-            self.raport_template = raport_template.read()
+        with open(pathlib.Path(report_template_dir), 'r') as report_template:
+            self.report_template = report_template.read()
 
         self.declare_parameter('description', '')
         config_path = self.get_parameter(
@@ -104,22 +104,22 @@ class VoyagerCase(Node):
                 data = yaml.load(dscf)
                 benchmark_name = str(data['benchmark']['id']) + '-' \
                     + str(data['benchmark']['tag'])
-                raport_file = \
-                    pathlib.Path(self.raport_dir) \
+                report_file = \
+                    pathlib.Path(self.report_dir) \
                     .expanduser() \
                     .joinpath(benchmark_name) \
-                    .joinpath('raport.yaml')
-                if raport_file.exists():
-                    with open(str(raport_file), 'r') as data_file:
-                        raport_data = yaml.load(data_file)
+                    .joinpath('report.yaml')
+                if report_file.exists():
+                    with open(str(report_file), 'r') as data_file:
+                        report_data = yaml.load(data_file)
                         table.append(
                             '{:-6.2F}'
-                            .format(raport_data['messages']['percent'])
+                            .format(report_data['messages']['percent'])
                         )
                         images_dir = self.output_dir.joinpath('images')
                         images_dir.mkdir(exist_ok=True, parents=True)
                         shutil.copy(
-                            str(raport_file.parents[0].joinpath('plots.jpg')),
+                            str(report_file.parents[0].joinpath('plots.jpg')),
                             str(images_dir.joinpath(benchmark_name+'.jpg')))
                         html_kwargs['su'] += \
                             (
@@ -144,9 +144,9 @@ class VoyagerCase(Node):
                 val = 'n/a' if row*4+col >= len(table) else table[row*4+col]
                 html_kwargs.update({'t{}{}'.format(row, col): val})
         out_html = \
-            self.raport_template.format_map(DefaultMapper(**html_kwargs))
-        voyager_raport_path = self.output_dir.joinpath('voyager_raport.html')
-        with open(str(voyager_raport_path), 'w') as outfile:
+            self.report_template.format_map(DefaultMapper(**html_kwargs))
+        voyager_report_path = self.output_dir.joinpath('voyager_report.html')
+        with open(str(voyager_report_path), 'w') as outfile:
             outfile.write(out_html)
 
 

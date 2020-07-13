@@ -29,7 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dummy_publishers = rosbag2_benchmarking.dummy_publishers:main',
-            'raport_gen = rosbag2_benchmarking.raport_gen:main',
+            'report_gen = rosbag2_benchmarking.report_gen:main',
             'system_monitor = rosbag2_benchmarking.system_monitor:main',
             'voyager = rosbag2_benchmarking.voyager:main',
         ],

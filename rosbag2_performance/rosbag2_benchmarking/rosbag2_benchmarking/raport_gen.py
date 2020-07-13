@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for raport generation based on benchmark results."""
+"""Module for report generation based on benchmark results."""
 
 import csv
 import pathlib
@@ -24,8 +24,8 @@ from rclpy.node import Node
 import yaml
 
 
-class Raport:
-    """Class for keeping all benchmark results and generating raport."""
+class Report:
+    """Class for keeping all benchmark results and generating report."""
 
     base_time = 0
     title = 'Benchmark'
@@ -50,11 +50,11 @@ class Raport:
     mem_utilization_v = []
 
     def __init__(self, logger):
-        """Initialize raport."""
+        """Initialize report."""
         self.logger = logger
 
-    def dump_raport_yaml(self):
-        """Dump raport into yaml file."""
+    def dump_report_yaml(self):
+        """Dump report into yaml file."""
         # messages
         total_captured = 0
         total_expected = 0
@@ -110,7 +110,7 @@ class Raport:
         }
         with open(str(pathlib.Path(
                     self.benchmark_path
-                    ).joinpath('raport.yaml')), 'w') as outfile:
+                    ).joinpath('report.yaml')), 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
     def generate_plots(self):
@@ -147,7 +147,7 @@ class Raport:
             self.benchmark_path).joinpath('plots.jpg')))
 
     def get_messages_captured_str(self):
-        """Generate capture raport result in a string."""
+        """Generate capture report result in a string."""
         message = ''
         total_captured = 0
         total_expected = 0
@@ -171,7 +171,7 @@ class Raport:
         return message
 
     def get_workers_str(self):
-        """Get workers raport in a string."""
+        """Get workers report in a string."""
         message = ''
         for topic, val in self.workers.items():
             message += \
@@ -186,10 +186,10 @@ class Raport:
         return message
 
     def __str__(self):
-        """Get full raport in a string."""
+        """Get full report in a string."""
         result_log = """
 ----------------------------------
-Raport
+Report
 
 ==================================
 Workers:
@@ -204,21 +204,21 @@ Messages captured:
         return result_log
 
 
-class RaportGen(Node):
-    """Raport generator."""
+class ReportGen(Node):
+    """Report generator."""
 
     bag_metadata = {}
     bag_record_start_time = None
 
     def __init__(self):
-        """Raport generator."""
-        super().__init__('raport_gen')
-        self.logger = rclpy.logging.get_logger('RAPORT')
-        self.result = Raport(self.logger)
+        """Report generator."""
+        super().__init__('report_gen')
+        self.logger = rclpy.logging.get_logger('REPORT')
+        self.result = Report(self.logger)
 
-        self.declare_parameter('raport_dir', str(pathlib.Path.cwd()))
-        self.raport_dir = pathlib.Path(
-            self.get_parameter('raport_dir').get_parameter_value().string_value
+        self.declare_parameter('report_dir', str(pathlib.Path.cwd()))
+        self.report_dir = pathlib.Path(
+            self.get_parameter('report_dir').get_parameter_value().string_value
         ).expanduser()
 
         self.declare_parameter('description', '')
@@ -241,13 +241,13 @@ class RaportGen(Node):
                 '{} is not correct yaml config file.'.format(path))
 
         self.benchmark_path = pathlib.Path.joinpath(
-            pathlib.Path(self.raport_dir),
+            pathlib.Path(self.report_dir),
             pathlib.Path(
                 str(self.config['benchmark']['id']) +
                 '-' + self.config['benchmark']['tag']
             ))
         if self.__parse_bag_metadata():
-            self.__generate_raport()
+            self.__generate_report()
 
     def __parse_bag_metadata(self):
         bag_dir = self.benchmark_path.joinpath('bag')
@@ -275,7 +275,7 @@ class RaportGen(Node):
                     }})
         return True
 
-    def __generate_raport(self):
+    def __generate_report(self):
         workers = self.config['workers']
         topic_msgs_accumulated = {}
         workers_result = {}
@@ -390,19 +390,19 @@ class RaportGen(Node):
                 self.result.mem_utilization_t.append(float(row[0]))
                 self.result.mem_utilization_v.append(float(row[1])/1000000)
 
-        # Print raport
+        # Print report
         self.result.base_time = self.bag_record_start_time
         self.result.benchmark_path = self.benchmark_path
         self.result.title = self.config['benchmark']['name']
         self.result.generate_plots()
-        self.result.dump_raport_yaml()
+        self.result.dump_report_yaml()
         self.logger.info(str(self.result))
 
 
 def main():
     """Ros2 once-spin run."""
     rclpy.init()
-    node = RaportGen()
+    node = ReportGen()
     while rclpy.ok():
         rclpy.spin_once(node, timeout_sec=0.1)
         rclpy.shutdown()

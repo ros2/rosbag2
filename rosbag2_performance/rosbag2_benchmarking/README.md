@@ -19,13 +19,13 @@ Use `rosbag2_benchmarking/config/*.yaml` to set up benchmarks recipes (see provi
 Run benchmarks with:
 
 ```bash
-ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH] raport_dir:=[RAPORT_DIR]
+ros2 launch rosbag2_benchmarking benchmarking.launch.py description:=[CONFIG_PATH] report_dir:=[REPORT_DIR]
 ```
 
 Once a benchmark finishes, you can run the report generator:
 
 ```bash
-ros2 run rosbag2_benchmarking raport_gen --ros-args -p description:=[CONFIG_PATH] -p raport_dir:=[RAPORT_DIR]
+ros2 run rosbag2_benchmarking report_gen --ros-args -p description:=[CONFIG_PATH] -p report_dir:=[REPORT_DIR]
 ```
 
 Each benchmark produces `rosbag2` resources along with reports from workers and system monitor.
@@ -39,12 +39,12 @@ Each benchmark produces `rosbag2` resources along with reports from workers and 
 To run voyager test case:
 
 ```bash
-./rosbag2_benchmarking/bundles/voyager.sh [RAPORT_DIR]
+./rosbag2_benchmarking/bundles/voyager.sh [REPORT_DIR]
 ```
 
-`voyager.sh` contains multiple benchmarks as well as various raport generator nodes.
+`voyager.sh` contains multiple benchmarks as well as various report generator nodes.
 
-It will generate `html` raport inside `[RAPORT_DIR]`.
+It will generate `html` report inside `[REPORT_DIR]`.
 
 ## Scripts for step-by-step benchmarking
 
@@ -54,10 +54,10 @@ There are some bash scripts (in `rosbag2_benchmarking/scripts/manual` dir) for t
 
 * `rosbag_image_cache.sh X` - run rosbag record on only `/image` topic with `--max-cache-size` set to `X`,
 * `gen_images.sh X Y Z` - generate and publish `X` random images every `Y` ms of size `ZxZ`,
-* `dummy_raport.sh` - shows how many images have been generated and how many `rosbag2` succeeded to write.
+* `dummy_report.sh` - shows how many images have been generated and how many `rosbag2` succeeded to write.
 
 **Procedure:**
 
 1. Run `rosbag_image_cache.sh X` to set up `rosbag2`,
 2. Run `gen_images.sh X Y Z` to feed images to `rosbag2`,
-3. After image generation, kill `rosbag_image_cache.sh` and see raport with `dummy_raport.sh`.
+3. After image generation, kill `rosbag_image_cache.sh` and see report with `dummy_report.sh`.

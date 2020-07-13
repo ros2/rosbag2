@@ -63,7 +63,7 @@ def get_worker(
     if not topic:
         raise RuntimeError('You must set an unique worker topic.')
     if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError('Invalid raport dir.')
+        raise RuntimeError('Invalid report dir.')
 
     if not isinstance(max_count, int) or not isinstance(frequency, int) or \
        not isinstance(delay, int) or not isinstance(size, int):
@@ -135,15 +135,15 @@ def get_dummy_publisher(topics, types):
         )
 
 
-def get_raport_generator(benchmark_path=None):
+def get_report_generator(benchmark_path=None):
     """Instantiate generator node action."""
     if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError('Invalid raport dir.')
+        raise RuntimeError('Invalid report dir.')
 
     return Node(
             package='rosbag2_benchmarking',
-            executable='raport_gen',
-            name='raport_generator',
+            executable='report_gen',
+            name='report_generator',
             parameters=[{'benchmark_path': str(benchmark_path)}]
         )
 
@@ -151,7 +151,7 @@ def get_raport_generator(benchmark_path=None):
 def get_system_monitor(benchmark_path=None, frequency=10):
     """Instantiate system monitor action."""
     if not pathlib.Path(benchmark_path).is_dir():
-        raise RuntimeError('Invalid raport dir.')
+        raise RuntimeError('Invalid report dir.')
 
     return Node(
             package='rosbag2_benchmarking',
@@ -289,7 +289,7 @@ def generate_launch_description():
 
     # Manage config file
     config = None
-    raport_dir = pathlib.Path.cwd()
+    report_dir = pathlib.Path.cwd()
     for arg in sys.argv[4:]:
         if 'description:=' in arg:
             path = pathlib.Path(arg[len('description:='):])
@@ -300,15 +300,15 @@ def generate_launch_description():
                 raise RuntimeError(
                     '{} is not correct yaml config file.'.format(path)
                 )
-        if 'raport_dir:=' in arg:
-            raport_dir = pathlib.Path(arg[len('raport_dir:='):]).expanduser()
+        if 'report_dir:=' in arg:
+            report_dir = pathlib.Path(arg[len('report_dir:='):]).expanduser()
 
     if config is None:
         raise RuntimeError("Missing 'description' parameter! \
             Use 'description:=config.yaml' parameter.")
 
     benchmark_path = pathlib.Path.joinpath(
-        pathlib.Path(raport_dir).expanduser(),
+        pathlib.Path(report_dir).expanduser(),
         pathlib.Path(
             str(config['benchmark']['id']) + '-' + config['benchmark']['tag'])
         )
@@ -374,13 +374,13 @@ def generate_launch_description():
             ))
 
     # Prepare rosbag
-    raports_bag_location = pathlib.Path.joinpath(
+    reports_bag_location = pathlib.Path.joinpath(
         benchmark_path,
         pathlib.Path('bag')
     )
     if config['benchmark'].get('overwrite_existing'):
         import shutil
-        shutil.rmtree(raports_bag_location, ignore_errors=True)
+        shutil.rmtree(reports_bag_location, ignore_errors=True)
 
     args_list = [arg.split(' ') for arg in config['rosbag']['args']]
     parsed_args_list = [item for sublist in args_list for item in sublist]
@@ -391,7 +391,7 @@ def generate_launch_description():
         sigterm_timeout=LaunchConfiguration(
             'sigterm_timeout', default=15),
         cmd=['ros2', 'bag', 'record'] + list(set(worker_topics)) +
-            ['-o', str(raports_bag_location)] + parsed_args_list
+            ['-o', str(reports_bag_location)] + parsed_args_list
     )
 
     # Hook rosbag with readiness checks

@@ -30,7 +30,7 @@ filename = args.input
 
 print('processing file ' + filename)
 
-raport_path = pathlib.Path(path).joinpath(filename)
+report_path = pathlib.Path(path).joinpath(filename)
 
 callback_times = []
 begin_trans_times = []
@@ -38,12 +38,12 @@ commit_trans_times = []
 insert_start_times = []
 insert_end_times = []
 
-with open(str(raport_path), 'r') as raport1:
-    first_line = raport1.readline()
+with open(str(report_path), 'r') as report1:
+    first_line = report1.readline()
     start_time = float(re.search(r'([0-9]*\.[0-9]*).*', first_line).group(1))
     print(start_time)
 
-    lines = raport1.readlines()
+    lines = report1.readlines()
     for line in [first_line] + lines:
 
         callback_match = \

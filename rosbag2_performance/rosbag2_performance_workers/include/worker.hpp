@@ -116,7 +116,7 @@ private:
       rclcpp::shutdown();
     }
 
-    // (piotr.jaroszek) TODO: raport data here and save to benchmark_path
+    // (piotr.jaroszek) TODO: report data here and save to benchmark_path
   }
 
   rclcpp::TimerBase::SharedPtr timer;
