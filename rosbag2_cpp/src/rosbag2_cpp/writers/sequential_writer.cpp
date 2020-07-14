@@ -100,14 +100,19 @@ void SequentialWriter::open(
 
   const auto storage_uri = format_storage_uri(base_folder_, 0);
 
-  rcpputils::fs::path db_path(storage_uri);
-  if (!db_path.parent_path().is_directory()) {
-    bool ret = rcpputils::fs::create_directories(db_path.parent_path());
+  rcpputils::fs::path db_path(base_folder_);
+  if (!db_path.is_directory()) {
+    bool ret = rcpputils::fs::create_directories(db_path);
     if (!ret) {
       std::stringstream error;
-      error << "Failed to create database direcotory (" << db_path.parent_path().string() << ").";
+      error << "Failed to create database direcotory (" << db_path.string() << ").";
       throw std::runtime_error{error.str()};
     }
+  } else {
+    std::stringstream error;
+    error << "Database direcotory already exists (" << db_path.string() <<
+      "), can't overwrite existing database";
+    throw std::runtime_error{error.str()};
   }
 
   storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
