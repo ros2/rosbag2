@@ -207,7 +207,7 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   // Update the message count for the Topic.
   try {
     ++topics_names_to_info_.at(message->topic_name).message_count;
-  } catch (const std::out_of_range & oor) {
+  } catch (const std::out_of_range & /* oor */) {
     std::stringstream errmsg;
     errmsg << "Failed to write on topic '" << message->topic_name <<
       "'. Call create_topic() before first write.";
