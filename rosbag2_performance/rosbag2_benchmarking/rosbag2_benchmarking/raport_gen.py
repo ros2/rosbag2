@@ -62,21 +62,42 @@ class Report:
             total_captured += self.bag_message_captured_num[topic]
             total_expected += self.bag_message_captured_expected[topic]
 
+        disk_start_index = 0
+        for t in self.disk_utilization_t:
+            if t > self.base_time:
+                break
+            else:
+                disk_start_index += 1
+
+        mem_start_index = 0
+        for t in self.mem_utilization_t:
+            if t > self.base_time:
+                break
+            else:
+                mem_start_index += 1
+
+        cpu_start_index = 0
+        for t in self.cpu_utilization_t:
+            if t > self.base_time:
+                break
+            else:
+                cpu_start_index += 1
+
         # disk
-        disk_std_w = float(np.std(self.disk_utilization_w))
-        disk_mean_w = float(np.mean(self.disk_utilization_w))
-        disk_std_r = float(np.std(self.disk_utilization_r))
-        disk_mean_r = float(np.mean(self.disk_utilization_r))
+        disk_std_w = float(np.std(self.disk_utilization_w[disk_start_index:]))
+        disk_mean_w = float(np.mean(self.disk_utilization_w[disk_start_index:]))
+        disk_std_r = float(np.std(self.disk_utilization_r[disk_start_index:]))
+        disk_mean_r = float(np.mean(self.disk_utilization_r[disk_start_index:]))
 
         # cpu
-        cpu_std = float(np.std(self.cpu_utilization_v))
-        cpu_mean = float(np.mean(self.cpu_utilization_v))
+        cpu_std = float(np.std(self.cpu_utilization_avg[cpu_start_index:]))
+        cpu_mean = float(np.mean(self.cpu_utilization_avg[cpu_start_index:]))
 
         # mem
-        mem_std = float(np.std(self.mem_utilization_v))
-        mem_mean = float(np.mean(self.mem_utilization_v))
-        mem_min = float(np.min(self.mem_utilization_v))
-        mem_max = float(np.max(self.mem_utilization_v))
+        mem_std = float(np.std(self.mem_utilization_v[mem_start_index:]))
+        mem_mean = float(np.mean(self.mem_utilization_v[mem_start_index:]))
+        mem_min = float(np.min(self.mem_utilization_v[mem_start_index:]))
+        mem_max = float(np.max(self.mem_utilization_v[mem_start_index:]))
 
         data = {
             'bechmark': {
