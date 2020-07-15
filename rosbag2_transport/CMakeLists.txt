@@ -183,8 +183,8 @@ if(BUILD_TESTING)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
   include(cmake/rosbag2_transport_add_gmock.cmake)
-  # explicitly disable cppcheck
-  set(ament_cmake_cppcheck_FOUND TRUE)
+  get_target_property(ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS
+    rclcpp::rclcpp INTERFACE_INCLUDE_DIRECTORIES)
   ament_lint_auto_find_test_dependencies()
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
 endif()
