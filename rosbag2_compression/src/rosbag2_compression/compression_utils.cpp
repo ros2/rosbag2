@@ -35,7 +35,7 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
 #endif
   return fp;
 }
-}
+}  // namespace
 
 namespace rosbag2_compression
 {
