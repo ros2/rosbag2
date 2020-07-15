@@ -17,8 +17,14 @@
 #include <string>
 #include <vector>
 
-namespace rosbag2_compression
+namespace
 {
+/**
+ * Open a file using the OS-specific C API.
+ * \param uri is the path to the file.
+ * \param read_mode is the read mode accepted by OS-specific fopen.
+ * \return the FILE pointer or nullptr if the file was not opened.
+ */
 FILE * open_file(const std::string & uri, const std::string & read_mode)
 {
   FILE * fp{nullptr};
@@ -29,11 +35,14 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
 #endif
   return fp;
 }
+}
 
+namespace rosbag2_compression
+{
 std::vector<uint8_t> get_input_buffer(const std::string & uri)
 {
   // Read in buffer, handling accordingly
-  const auto file_pointer = rosbag2_compression::open_file(uri.c_str(), "rb");
+  const auto file_pointer = open_file(uri, "rb");
   if (file_pointer == nullptr) {
     std::stringstream errmsg;
     errmsg << "Failed to open file: \"" << uri <<
@@ -94,7 +103,7 @@ void write_output_buffer(
     throw std::runtime_error{errmsg.str()};
   }
 
-  const auto file_pointer = open_file(uri.c_str(), "wb");
+  const auto file_pointer = open_file(uri, "wb");
   if (file_pointer == nullptr) {
     std::stringstream errmsg;
     errmsg << "Failed to open file: \"" << uri <<

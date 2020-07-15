@@ -49,14 +49,6 @@ using ZstdDecompressReturnType = decltype(ZSTD_decompress(
 using ZstdGetFrameContentSizeReturnType = decltype(ZSTD_getFrameContentSize(nullptr, 0));
 
 /**
- * Open a file using the OS-specific C API.
- * \param uri is the path to the file.
- * \param read_mode is the read mode accepted by OS-specific fopen.
- * \return the FILE pointer or nullptr if the file was not opened.
- */
-FILE * open_file(const std::string & uri, const std::string & read_mode);
-
-/**
  * Read a file from the supplied uri into a vector.
  *
  * \param uri is the path to the file.
