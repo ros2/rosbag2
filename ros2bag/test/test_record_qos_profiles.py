@@ -61,54 +61,55 @@ class TestRos2BagRecord(unittest.TestCase):
             ) as pkg_command:
                 yield pkg_command
         cls.launch_bag_command = launch_bag_command
+        cls.tmpdir = tempfile.TemporaryDirectory()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmpdir.cleanup()
 
     def test_qos_simple(self):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_path = Path(tmpdirname) / 'ros2bag_test_basic'
-            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
-                         '--output', output_path.as_posix()]
-            with self.launch_bag_command(arguments=arguments) as bag_command:
-                bag_command.wait_for_shutdown(timeout=5)
-            expected_string_regex = re.compile(ERROR_STRING)
-            matches = expected_string_regex.search(bag_command.output)
-            assert not matches, print('ros2bag CLI did not produce the expected output')
+        output_path = Path(self.tmpdir.name) / 'ros2bag_test_basic'
+        arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
+                     '--output', output_path.as_posix()]
+        with self.launch_bag_command(arguments=arguments) as bag_command:
+            bag_command.wait_for_shutdown(timeout=5)
+        expected_string_regex = re.compile(ERROR_STRING)
+        matches = expected_string_regex.search(bag_command.output)
+        assert not matches, print('ros2bag CLI did not produce the expected output')
 
     def test_incomplete_qos_profile(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
-            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
-                         '--output', output_path.as_posix()]
-            with self.launch_bag_command(arguments=arguments) as bag_command:
-                bag_command.wait_for_shutdown(timeout=5)
-            expected_string_regex = re.compile(ERROR_STRING)
-            matches = expected_string_regex.search(bag_command.output)
-            assert not matches, print('ros2bag CLI did not produce the expected output')
+        output_path = Path(self.tmpdir.name) / 'ros2bag_test_incomplete'
+        arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
+                     '--output', output_path.as_posix()]
+        with self.launch_bag_command(arguments=arguments) as bag_command:
+            bag_command.wait_for_shutdown(timeout=5)
+        expected_string_regex = re.compile(ERROR_STRING)
+        matches = expected_string_regex.search(bag_command.output)
+        assert not matches, print('ros2bag CLI did not produce the expected output')
 
     def test_incomplete_qos_duration(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_duration.yaml'
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete_duration'
-            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
-                         '--output', output_path.as_posix()]
-            with self.launch_bag_command(arguments=arguments) as bag_command:
-                bag_command.wait_for_shutdown(timeout=5)
-            assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
-            expected_string_regex = re.compile(ERROR_STRING)
-            matches = expected_string_regex.search(bag_command.output)
-            assert matches, print('ros2bag CLI did not produce the expected output')
+        output_path = Path(self.tmpdir.name) / 'ros2bag_test_incomplete_duration'
+        arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
+                     '--output', output_path.as_posix()]
+        with self.launch_bag_command(arguments=arguments) as bag_command:
+            bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
+        expected_string_regex = re.compile(ERROR_STRING)
+        matches = expected_string_regex.search(bag_command.output)
+        assert matches, print('ros2bag CLI did not produce the expected output')
 
     def test_nonexistent_qos_profile(self):
         profile_path = PROFILE_PATH / 'foobar.yaml'
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
-            arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
-                         '--output', output_path.as_posix()]
-            with self.launch_bag_command(arguments=arguments) as bag_command:
-                bag_command.wait_for_shutdown(timeout=5)
-            assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
-            expected_string_regex = re.compile(
-                r"ros2 bag record: error: argument --qos-profile-overrides-path: can't open")
-            matches = expected_string_regex.search(bag_command.output)
-            assert matches, print('ros2bag CLI did not produce the expected output')
+        output_path = Path(self.tmpdir.name) / 'ros2bag_test_nonexistent'
+        arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
+                     '--output', output_path.as_posix()]
+        with self.launch_bag_command(arguments=arguments) as bag_command:
+            bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
+        expected_string_regex = re.compile(
+            r"ros2 bag record: error: argument --qos-profile-overrides-path: can't open")
+        matches = expected_string_regex.search(bag_command.output)
+        assert matches, print('ros2bag CLI did not produce the expected output')
