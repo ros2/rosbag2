@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <Python.h>
 #include <chrono>
 #include <string>
 #include <vector>
+
+#include <Python.h>
 
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
