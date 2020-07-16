@@ -47,6 +47,9 @@ public:
     storage_options_ = rosbag2_cpp::StorageOptions{};
     storage_options_.uri = "uri";
 
+    rcpputils::fs::path dir(storage_options_.uri);
+    rcpputils::fs::remove(dir);
+
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(
       DoAll(
         Invoke(
@@ -57,6 +60,12 @@ public:
         Return(storage_)));
     EXPECT_CALL(
       *storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
+  }
+
+  ~SequentialWriterTest()
+  {
+    rcpputils::fs::path dir(storage_options_.uri);
+    rcpputils::fs::remove(dir);
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;

@@ -43,8 +43,6 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   auto rosbag_directory = rcpputils::fs::path("test_rosbag2_writer_api_bag");
   // in case the bag was previously not cleaned up
   rcpputils::fs::remove_all(rosbag_directory);
-  // See https://github.com/ros2/rosbag2/issues/448
-  rcpputils::fs::create_directories(rosbag_directory);
 
   rosbag2_cpp::StorageOptions storage_options;
   storage_options.uri = rosbag_directory.string();
