@@ -23,7 +23,6 @@ from std_msgs.msg import String
 
 
 def test_sequential_reader():
-
     bag_path = str(Path(__file__).parent.parent / 'resources' / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path)
 

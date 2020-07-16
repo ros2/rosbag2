@@ -15,5 +15,11 @@
 from rosbag2_py._rosbag2_py import ConverterOptions, Reader, \
   StorageFilter, StorageOptions, TopicMetadata, Writer
 
-__all__ = ['ConverterOptions', 'Reader', 'StorageFilter', 'StorageOptions',
-           'TopicMetadata', 'Writer']
+__all__ = [
+    'ConverterOptions',
+    'Reader',
+    'StorageFilter',
+    'StorageOptions',
+    'TopicMetadata',
+    'Writer'
+]
