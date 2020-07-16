@@ -1,8 +1,4 @@
 # Run linters automatically on pull requests.
-#
-# ros-tooling/actino-ros-lint is relying on the latest APT binary packages.
-# As of 2020-05-01, Eloquent is the latest release for which APT binary
-# packages are available, which is why the Docker image is based on Eloquent.
 name: Lint rosbag2
 on:
   pull_request:
@@ -12,7 +8,7 @@ jobs:
     name: ament_copyright
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-foxy-ros-base-testing-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -34,7 +30,7 @@ jobs:
     name: ament_xmllint
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-foxy-ros-base-testing-latest
     steps:
     # TODO(setup-ros-docker#7): calling chown is necessary for now
     - run: sudo chown -R rosbuild:rosbuild "$HOME" .
@@ -58,7 +54,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-foxy-ros-base-testing-latest
     strategy:
       fail-fast: false
       matrix:
@@ -83,7 +79,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-eloquent-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-bionic-ros-foxy-ros-base-testing-latest
     strategy:
       fail-fast: false
       matrix:
