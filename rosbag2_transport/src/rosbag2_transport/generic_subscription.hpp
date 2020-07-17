@@ -35,6 +35,7 @@ namespace rosbag2_transport
 class GenericSubscription : public rclcpp::SubscriptionBase
 {
 public:
+  // cppcheck-suppress unknownMacro
   RCLCPP_SMART_PTR_DEFINITIONS(GenericSubscription)
 
   /**
@@ -73,6 +74,7 @@ public:
   const rclcpp::QoS & qos_profile() const;
 
 private:
+  // cppcheck-suppress unknownMacro
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
   std::shared_ptr<rclcpp::SerializedMessage> borrow_serialized_message(size_t capacity);
