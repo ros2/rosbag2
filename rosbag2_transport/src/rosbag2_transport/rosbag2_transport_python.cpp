@@ -1,4 +1,5 @@
 // Copyright 2018 Open Source Robotics Foundation, Inc.
+// Copyright 2020, TNG Technology Consulting GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rclcpp/qos.hpp"
 
@@ -196,6 +198,25 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   Py_RETURN_NONE;
 }
 
+std::vector<std::string> get_topic_remapping_options(PyObject * topic_remapping)
+{
+  std::vector<std::string> topic_remapping_options = {"--ros-args"};
+  if (topic_remapping) {
+    PyObject * topic_remapping_iterator = PyObject_GetIter(topic_remapping);
+    if (topic_remapping_iterator) {
+      PyObject * topic;
+      while ((topic = PyIter_Next(topic_remapping_iterator))) {
+        topic_remapping_options.emplace_back("--remap");
+        topic_remapping_options.emplace_back(PyUnicode_AsUTF8(topic));
+
+        Py_DECREF(topic);
+      }
+      Py_DECREF(topic_remapping_iterator);
+    }
+  }
+  return topic_remapping_options;
+}
+
 static PyObject *
 rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
@@ -210,6 +231,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "rate",
     "topics",
     "qos_profile_overrides",
+    "loop",
+    "topic_remapping",
     nullptr
   };
 
@@ -220,15 +243,19 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   float rate;
   PyObject * topics = nullptr;
   PyObject * qos_profile_overrides{nullptr};
+  bool loop = false;
+  PyObject * topic_remapping = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOObO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
       &read_ahead_queue_size,
       &rate,
       &topics,
-      &qos_profile_overrides))
+      &qos_profile_overrides,
+      &loop,
+      &topic_remapping))
   {
     return nullptr;
   }
@@ -239,6 +266,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
+  play_options.loop = loop;
 
   if (topics) {
     PyObject * topic_iterator = PyObject_GetIter(topics);
@@ -255,6 +283,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
   play_options.topic_qos_profile_overrides = topic_qos_overrides;
+
+  play_options.topic_remapping_options = get_topic_remapping_options(topic_remapping);
 
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};

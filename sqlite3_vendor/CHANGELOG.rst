@@ -3,6 +3,23 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.2.8 (2020-05-18)
+------------------
+
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+
+0.2.5 (2020-04-30)
+------------------
+* fix CMake warning about using uninitialized variables (`#382 <https://github.com/ros2/rosbag2/issues/382>`_)
+* Add project() to sqlite3_cmakelists.txt (`#324 <https://github.com/ros2/rosbag2/issues/324>`_)
+* make sqlite3_vendor an ament package (`#252 <https://github.com/ros2/rosbag2/issues/252>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Dirk Thomas, Karsten Knese, Mikael Arguedas, brawner
+
 0.2.4 (2019-11-18)
 ------------------
 

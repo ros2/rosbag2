@@ -28,21 +28,21 @@ find_package(ament_index_cpp REQUIRED)
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  find_package(rclcpp REQUIRED)
-  find_package(rcpputils REQUIRED)
-  find_package(rmw_fastrtps_cpp QUIET)
-  find_package(rosbag2_compression REQUIRED)
-  find_package(rosbag2_cpp REQUIRED)
-  find_package(rosbag2_storage REQUIRED)
-  find_package(rosbag2_storage_default_plugins REQUIRED)
-  find_package(rosbag2_test_common REQUIRED)
-  find_package(std_msgs REQUIRED)
-  find_package(test_msgs REQUIRED)
-
   ament_lint_auto_find_test_dependencies()
 
+  find_package(rmw_fastrtps_cpp QUIET)
   # disable tests that depends on rosbag2_converter_default_plugins at runtime
   if(rmw_fastrtps_cpp_FOUND)
+    find_package(rclcpp REQUIRED)
+    find_package(rcpputils REQUIRED)
+    find_package(rosbag2_compression REQUIRED)
+    find_package(rosbag2_cpp REQUIRED)
+    find_package(rosbag2_storage REQUIRED)
+    find_package(rosbag2_storage_default_plugins REQUIRED)
+    find_package(rosbag2_test_common REQUIRED)
+    find_package(std_msgs REQUIRED)
+    find_package(test_msgs REQUIRED)
+
     ament_add_gmock(test_rosbag2_record_end_to_end
       test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

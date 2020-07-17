@@ -164,9 +164,10 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name](std::shared_ptr<rmw_serialized_message_t> message) {
+    [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      bag_message->serialized_data = message;
+      bag_message->serialized_data =
+      std::make_shared<rcl_serialized_message_t>(message->release_rcl_serialized_message());
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
@@ -201,77 +202,9 @@ rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
   if (topic_qos_profile_overrides_.count(topic_name)) {
     ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
-  } else {
-    return adapt_qos_to_publishers(topic_name);
   }
-  return adapt_qos_to_publishers(topic_name);
-}
-
-rclcpp::QoS Recorder::adapt_qos_to_publishers(const std::string & topic_name) const
-{
-  auto endpoints = node_->get_publishers_info_by_topic(topic_name);
-  size_t num_endpoints = endpoints.size();
-  size_t reliability_reliable_endpoints_count = 0;
-  size_t durability_transient_local_endpoints_count = 0;
-  for (const auto & endpoint : endpoints) {
-    const auto & profile = endpoint.qos_profile().get_rmw_qos_profile();
-    if (profile.reliability == RMW_QOS_POLICY_RELIABILITY_RELIABLE) {
-      reliability_reliable_endpoints_count++;
-    }
-    if (profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
-      durability_transient_local_endpoints_count++;
-    }
-  }
-
-  // We set policies in order as defined in rmw_qos_profile_t
-  Rosbag2QoS request_qos;
-  // Policy: history, depth
-  // History does not affect compatibility
-  request_qos.default_history();
-
-  // Policy: reliability
-  if (reliability_reliable_endpoints_count == num_endpoints) {
-    request_qos.reliable();
-  } else {
-    if (reliability_reliable_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "Some, but not all, publishers on topic \"" << topic_name << "\" "
-          "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
-          "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
-          "as it will connect to all publishers. "
-          "Some messages from Reliable publishers could be dropped.");
-    }
-    request_qos.best_effort();
-  }
-
-  // Policy: durability
-  // If all publishers offer transient_local, we can request it and receive latched messages
-  if (durability_transient_local_endpoints_count == num_endpoints) {
-    request_qos.transient_local();
-  } else {
-    if (durability_transient_local_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "Some, but not all, publishers on topic \"" << topic_name << "\" "
-          "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
-          "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
-          "as it will connect to all publishers. "
-          "Previously-published latched messages will not be retrieved.");
-    }
-    request_qos.durability_volatile();
-  }
-  // Policy: deadline
-  // Deadline does not affect delivery of messages,
-  // and we do not record Deadline"Missed events.
-  // We can always use unspecified deadline, which will be compatible with all publishers.
-
-  // Policy: lifespan
-  // Lifespan does not affect compatibiliy
-
-  // Policy: liveliness, liveliness_lease_duration
-  // Liveliness does not affect delivery of messages,
-  // and we do not record LivelinessChanged events.
-  // We can always use unspecified liveliness, which will be compatible with all publishers.
-  return request_qos;
+  return Rosbag2QoS::adapt_request_to_offers(
+    topic_name, node_->get_publishers_info_by_topic(topic_name));
 }
 
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)

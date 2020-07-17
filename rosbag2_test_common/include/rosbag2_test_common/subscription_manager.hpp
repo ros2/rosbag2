@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+#include "rclcpp/serialization.hpp"
 
 #include "memory_management.hpp"
 
@@ -54,7 +55,7 @@ public:
       subscriber_node_->create_subscription<MessageT>(
         topic_name,
         qos,
-        [this, topic_name](std::shared_ptr<rmw_serialized_message_t> msg) {
+        [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> msg) {
           subscribed_messages_[topic_name].push_back(msg);
         },
         options));
@@ -63,10 +64,13 @@ public:
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> get_received_messages(const std::string & topic_name)
   {
+    static rclcpp::Serialization<MessageT> serializer;
     auto messages = subscribed_messages_[topic_name];
     auto received_messages_on_topic = std::vector<std::shared_ptr<MessageT>>();
-    for (const auto & msg : messages) {
-      received_messages_on_topic.push_back(memory_management_.deserialize_message<MessageT>(msg));
+    for (const auto & serialized_msg : messages) {
+      auto msg = std::make_shared<MessageT>();
+      serializer.deserialize_message(serialized_msg.get(), msg.get());
+      received_messages_on_topic.push_back(msg);
     }
     return received_messages_on_topic;
   }
@@ -94,7 +98,7 @@ private:
 
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
   std::unordered_map<std::string,
-    std::vector<std::shared_ptr<rmw_serialized_message_t>>> subscribed_messages_;
+    std::vector<std::shared_ptr<rclcpp::SerializedMessage>>> subscribed_messages_;
   std::unordered_map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
   MemoryManagement memory_management_;

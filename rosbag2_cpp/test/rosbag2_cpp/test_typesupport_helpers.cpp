@@ -61,30 +61,45 @@ TEST(TypesupportHelpersTest, separates_into_package_and_name_for_multiple_slashe
   EXPECT_THAT(name, StrEq("name"));
 }
 
-TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
+TEST(TypesupportHelpersTest, throws_exception_if_library_is_not_initialized) {
   std::shared_ptr<rcpputils::SharedLibrary> library;
   EXPECT_THROW(
-    rosbag2_cpp::get_typesupport(
-      "invalid/message", "rosidl_typesupport_cpp",
-      library), std::runtime_error);
+    rosbag2_cpp::get_typesupport_library("invalid/message", "rosidl_typesupport_cpp"),
+    std::runtime_error);
+}
+
+TEST(TypesupportHelpersTest, throws_exception_if_library_cannot_be_found) {
+  EXPECT_THROW(
+    rosbag2_cpp::get_typesupport_library("invalid/message", "rosidl_typesupport_cpp"),
+    std::runtime_error);
 }
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_legacy_library) {
-  std::shared_ptr<rcpputils::SharedLibrary> library;
-  auto string_typesupport =
-    rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp", library);
+  try {
+    auto library = rosbag2_cpp::get_typesupport_library(
+      "test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+    auto string_typesupport = rosbag2_cpp::get_typesupport_handle(
+      "test_msgs/BasicTypes", "rosidl_typesupport_cpp", library);
 
-  EXPECT_THAT(
-    std::string(string_typesupport->typesupport_identifier),
-    ContainsRegex("rosidl_typesupport"));
+    EXPECT_THAT(
+      std::string(string_typesupport->typesupport_identifier),
+      ContainsRegex("rosidl_typesupport"));
+  } catch (const std::exception & e) {
+    FAIL() << e.what();
+  }
 }
 
 TEST(TypesupportHelpersTest, returns_c_type_info_for_valid_library) {
-  std::shared_ptr<rcpputils::SharedLibrary> library;
-  auto string_typesupport =
-    rosbag2_cpp::get_typesupport("test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp", library);
+  try {
+    auto library = rosbag2_cpp::get_typesupport_library(
+      "test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp");
+    auto string_typesupport = rosbag2_cpp::get_typesupport_handle(
+      "test_msgs/msg/BasicTypes", "rosidl_typesupport_cpp", library);
 
-  EXPECT_THAT(
-    std::string(string_typesupport->typesupport_identifier),
-    ContainsRegex("rosidl_typesupport"));
+    EXPECT_THAT(
+      std::string(string_typesupport->typesupport_identifier),
+      ContainsRegex("rosidl_typesupport"));
+  } catch (const std::runtime_error & e) {
+    FAIL() << e.what();
+  }
 }

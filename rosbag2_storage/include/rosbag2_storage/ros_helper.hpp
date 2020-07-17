@@ -32,7 +32,6 @@ ROSBAG2_STORAGE_PUBLIC
 std::shared_ptr<rcutils_uint8_array_t>
 make_empty_serialized_message(size_t size);
 
-
 }  // namespace rosbag2_storage
 
 #endif  // ROSBAG2_STORAGE__ROS_HELPER_HPP_

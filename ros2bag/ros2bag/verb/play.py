@@ -32,7 +32,7 @@ class PlayVerb(VerbExtension):
             'bag_file', type=check_path_exists, help='bag file to replay')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used, defaults to "sqlite3"')
+            help="storage identifier to be used, defaults to 'sqlite3'")
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -48,6 +48,14 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
+        parser.add_argument(
+            '-l', '--loop', action='store_true',
+            help='enables loop playback when playing a bagfile: it starts back at the beginning '
+                 'on reaching the end and plays indefinitely.')
+        parser.add_argument(
+            '--remap', '-m', default='', nargs='+',
+            help='list of topics to be remapped: in the form '
+                 '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -72,4 +80,6 @@ class PlayVerb(VerbExtension):
             read_ahead_queue_size=args.read_ahead_queue_size,
             rate=args.rate,
             topics=args.topics,
-            qos_profile_overrides=qos_profile_overrides)
+            qos_profile_overrides=qos_profile_overrides,
+            loop=args.loop,
+            topic_remapping=args.remap)

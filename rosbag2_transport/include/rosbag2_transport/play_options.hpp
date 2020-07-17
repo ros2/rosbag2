@@ -38,6 +38,8 @@ public:
   std::vector<std::string> topics_to_filter = {};
 
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
+  bool loop = false;
+  std::vector<std::string> topic_remapping_options = {};
 };
 
 }  // namespace rosbag2_transport

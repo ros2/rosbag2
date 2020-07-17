@@ -30,10 +30,15 @@ namespace rosbag2_cpp
 {
 
 ROSBAG2_CPP_PUBLIC
+std::shared_ptr<rcpputils::SharedLibrary>
+get_typesupport_library(const std::string & type, const std::string & typesupport_identifier);
+
+ROSBAG2_CPP_PUBLIC
 const rosidl_message_type_support_t *
-get_typesupport(
-  const std::string & type, const std::string & typesupport_identifier,
-  std::shared_ptr<rcpputils::SharedLibrary> & library);
+get_typesupport_handle(
+  const std::string & type,
+  const std::string & typesupport_identifier,
+  std::shared_ptr<rcpputils::SharedLibrary> library);
 
 ROSBAG2_CPP_PUBLIC
 const std::tuple<std::string, std::string, std::string>

@@ -27,15 +27,19 @@ find_package(rcutils REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(
-  rosbag2_storage
+  ${PROJECT_NAME}
   SHARED
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
   src/rosbag2_storage/storage_factory.cpp
   src/rosbag2_storage/base_io_interface.cpp)
-target_include_directories(rosbag2_storage PUBLIC include)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 ament_target_dependencies(
-  rosbag2_storage
+  ${PROJECT_NAME}
   pluginlib
   rcpputils
   rcutils
@@ -43,17 +47,18 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(rosbag2_storage PRIVATE "ROSBAG2_STORAGE_BUILDING_DLL")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_STORAGE_BUILDING_DLL")
 
 # prevent pluginlib from using boost
-target_compile_definitions(rosbag2_storage PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 install(
   DIRECTORY include/
   DESTINATION include)
 
 install(
-  TARGETS rosbag2_storage
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
@@ -64,6 +69,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(pluginlib yaml_cpp_vendor)
 
 if(BUILD_TESTING)
@@ -78,7 +84,7 @@ if(BUILD_TESTING)
     SHARED
     test/rosbag2_storage/test_plugin.cpp
     test/rosbag2_storage/test_read_only_plugin.cpp)
-  target_link_libraries(test_plugin rosbag2_storage)
+  target_link_libraries(test_plugin ${PROJECT_NAME})
   install(
     TARGETS test_plugin
     ARCHIVE DESTINATION lib
@@ -90,21 +96,21 @@ if(BUILD_TESTING)
     test/rosbag2_storage/test_storage_factory.cpp)
   if(TARGET test_storage_factory)
     target_include_directories(test_storage_factory PRIVATE include)
-    target_link_libraries(test_storage_factory rosbag2_storage)
+    target_link_libraries(test_storage_factory ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_ros_helper
     test/rosbag2_storage/test_ros_helper.cpp)
   if(TARGET test_ros_helper)
     target_include_directories(test_ros_helper PRIVATE include)
-    target_link_libraries(test_ros_helper rosbag2_storage)
+    target_link_libraries(test_ros_helper ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_metadata_serialization
     test/rosbag2_storage/test_metadata_serialization.cpp)
   if(TARGET test_metadata_serialization)
     target_include_directories(test_metadata_serialization PRIVATE include)
-    target_link_libraries(test_metadata_serialization rosbag2_storage)
+    target_link_libraries(test_metadata_serialization ${PROJECT_NAME})
     ament_target_dependencies(test_metadata_serialization rosbag2_test_common)
   endif()
 endif()

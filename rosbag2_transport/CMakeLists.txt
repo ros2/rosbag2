@@ -138,6 +138,7 @@ function(create_tests_for_rmw_implementation)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     AMENT_DEPS
+      rclcpp
       rosbag2_test_common
       yaml_cpp_vendor)
 
@@ -156,7 +157,21 @@ function(create_tests_for_rmw_implementation)
     ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_play
+    src/rosbag2_transport/qos.cpp
     test/rosbag2_transport/test_play.cpp
+    INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common
+    ${SKIP_TEST})
+
+  rosbag2_transport_add_gmock(test_play_loop
+    test/rosbag2_transport/test_play_loop.cpp
+    ${SKIP_TEST}
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_play_topic_remap
+    test/rosbag2_transport/test_play_topic_remap.cpp
     ${SKIP_TEST}
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)

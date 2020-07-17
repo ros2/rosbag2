@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <vector>
+
+#include "rosbag2_transport/logging.hpp"
+
 #include "qos.hpp"
 
 namespace YAML
@@ -68,3 +73,128 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   return true;
 }
 }  // namespace YAML
+
+namespace rosbag2_transport
+{
+Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
+  const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
+{
+  if (endpoints.empty()) {
+    return Rosbag2QoS{};
+  }
+  size_t num_endpoints = endpoints.size();
+  size_t reliability_reliable_endpoints_count = 0;
+  size_t durability_transient_local_endpoints_count = 0;
+  for (const auto & endpoint : endpoints) {
+    const auto & profile = endpoint.qos_profile().get_rmw_qos_profile();
+    if (profile.reliability == RMW_QOS_POLICY_RELIABILITY_RELIABLE) {
+      reliability_reliable_endpoints_count++;
+    }
+    if (profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
+      durability_transient_local_endpoints_count++;
+    }
+  }
+
+  // We set policies in order as defined in rmw_qos_profile_t
+  Rosbag2QoS request_qos{};
+  // Policy: history, depth
+  // History does not affect compatibility
+
+  // Policy: reliability
+  if (reliability_reliable_endpoints_count == num_endpoints) {
+    request_qos.reliable();
+  } else {
+    if (reliability_reliable_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
+          "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
+          "as it will connect to all publishers. "
+          "Some messages from Reliable publishers could be dropped.");
+    }
+    request_qos.best_effort();
+  }
+
+  // Policy: durability
+  // If all publishers offer transient_local, we can request it and receive latched messages
+  if (durability_transient_local_endpoints_count == num_endpoints) {
+    request_qos.transient_local();
+  } else {
+    if (durability_transient_local_endpoints_count > 0) {
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Some, but not all, publishers on topic \"" << topic_name << "\" "
+          "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
+          "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
+          "as it will connect to all publishers. "
+          "Previously-published latched messages will not be retrieved.");
+    }
+    request_qos.durability_volatile();
+  }
+  // Policy: deadline
+  // Deadline does not affect delivery of messages,
+  // and we do not record Deadline"Missed events.
+  // We can always use unspecified deadline, which will be compatible with all publishers.
+
+  // Policy: lifespan
+  // Lifespan does not affect compatibiliy
+
+  // Policy: liveliness, liveliness_lease_duration
+  // Liveliness does not affect delivery of messages,
+  // and we do not record LivelinessChanged events.
+  // We can always use unspecified liveliness, which will be compatible with all publishers.
+  return request_qos;
+}
+
+namespace
+{
+bool operator==(const rmw_time_t & lhs, const rmw_time_t & rhs)
+{
+  return lhs.sec == rhs.sec && lhs.nsec == rhs.nsec;
+}
+
+/** Check if all QoS profiles in the vector are identical when only looking at
+  * policies that affect compatibility.
+  * This means it excludes history and lifespan from the equality check.
+  */
+bool all_profiles_effectively_same(const std::vector<Rosbag2QoS> & profiles)
+{
+  auto iterator = profiles.begin();
+  const auto p_ref = iterator->get_rmw_qos_profile();
+  iterator++;
+  for (; iterator != profiles.end(); iterator++) {
+    const auto p_next = iterator->get_rmw_qos_profile();
+    bool compatibility_equals_previous = (
+      // excluding history
+      p_ref.reliability == p_next.reliability &&
+      p_ref.durability == p_next.durability &&
+      p_ref.deadline == p_next.deadline &&
+      // excluding lifespan
+      p_ref.liveliness == p_next.liveliness &&
+      p_ref.liveliness_lease_duration == p_next.liveliness_lease_duration
+    );
+    if (!compatibility_equals_previous) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // unnamed namespace
+
+Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
+  const std::string & topic_name, const std::vector<Rosbag2QoS> & profiles)
+{
+  if (profiles.empty()) {
+    return Rosbag2QoS{};
+  }
+  if (all_profiles_effectively_same(profiles)) {
+    auto result = profiles[0];
+    return result.default_history();
+  }
+
+  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+    "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
+      "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
+      "Falling back to the rosbag2_transport default publisher offer.");
+  return Rosbag2QoS{};
+}
+}  // namespace rosbag2_transport

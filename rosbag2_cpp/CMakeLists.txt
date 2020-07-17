@@ -20,11 +20,17 @@ if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
-option(DISABLE_SANITIZERS "disables the use of gcc saniztizers")
-# Only enable sanitizers on x64 architectures
-# https://github.com/google/sanitizers/issues/794
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  set(DISABLE_SANITIZERS ON)
+option(DISABLE_SANITIZERS "disables the use of gcc sanitizers")
+if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
+  include(CheckCXXSourceCompiles)
+  set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
+  check_cxx_source_compiles("int main() {}" HAVE_SANITIZERS)
+  set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+  if(NOT HAVE_SANITIZERS)
+    set(DISABLE_SANITIZERS ON)
+    message(WARNING "Sanitizers aren't supported by the compiler - disabling")
+  endif()
 endif()
 
 find_package(ament_cmake REQUIRED)
@@ -58,8 +64,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
-  rosidl_typesupport_introspection_cpp
   rosidl_typesupport_cpp
+  rosidl_typesupport_introspection_cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -81,16 +87,19 @@ install(
 
 install(
   TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(pluginlib
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
+  rosidl_typesupport_cpp
   rosidl_typesupport_introspection_cpp
 )
 

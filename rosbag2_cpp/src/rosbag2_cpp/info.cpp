@@ -19,6 +19,7 @@
 #include <string>
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2_cpp

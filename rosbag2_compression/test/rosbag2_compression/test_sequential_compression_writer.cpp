@@ -24,10 +24,10 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
-#include "../../rosbag2_cpp/test/rosbag2_cpp/mock_converter_factory.hpp"
-#include "../../rosbag2_cpp/test/rosbag2_cpp/mock_metadata_io.hpp"
-#include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage.hpp"
-#include "../../rosbag2_cpp/test/rosbag2_cpp/mock_storage_factory.hpp"
+#include "mock_converter_factory.hpp"
+#include "mock_metadata_io.hpp"
+#include "mock_storage.hpp"
+#include "mock_storage_factory.hpp"
 
 #include "mock_compression_factory.hpp"
 
