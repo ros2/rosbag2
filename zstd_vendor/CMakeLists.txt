@@ -28,7 +28,7 @@ macro(build_zstd)
 
   include(ExternalProject)
   # The CMakeLists.txt file for zstd is in a subdirectory.
-  # We need to configure the CMake command to build from there instead. 
+  # We need to configure the CMake command to build from there instead.
   ExternalProject_Add(zstd-1.4.4
     URL https://github.com/facebook/zstd/archive/v1.4.4.zip
     URL_MD5 3a5c3a535280b7f4dfdbd739fcc7173f

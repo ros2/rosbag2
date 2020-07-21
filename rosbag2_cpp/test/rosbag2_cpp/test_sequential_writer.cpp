@@ -154,11 +154,11 @@ TEST_F(SequentialWriterTest, open_throws_error_on_invalid_splitting_size) {
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
   storage_options_.max_bagfile_size = max_bagfile_size;
 
-  EXPECT_CALL(*storage_, get_minimum_split_file_size).Times(1);
+  EXPECT_CALL(*storage_, get_minimum_split_file_size).Times(2);
 
   std::string rmw_format = "rmw_format";
 
-  EXPECT_ANY_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}));
+  EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
 }
 
 TEST_F(SequentialWriterTest, bagfile_size_is_checked_on_every_write) {

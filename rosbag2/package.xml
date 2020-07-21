@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2</name>
-  <version>0.2.8</version>
+  <version>0.3.2</version>
   <description>Meta package for rosbag2 related packages</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>

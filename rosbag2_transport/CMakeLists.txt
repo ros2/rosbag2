@@ -44,7 +44,6 @@ add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-
 ament_target_dependencies(${PROJECT_NAME}
   rcl
   rclcpp
@@ -83,7 +82,7 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(rosbag2_cpp rosbag2_compression yaml_cpp_vendor)
+ament_export_dependencies(rosbag2_cpp rosbag2_compression shared_queues_vendor yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_info
@@ -184,8 +183,6 @@ if(BUILD_TESTING)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
   include(cmake/rosbag2_transport_add_gmock.cmake)
-  # explicitly disable cppcheck
-  set(ament_cmake_cppcheck_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
 endif()
