@@ -48,7 +48,7 @@ public:
     storage_options_.uri = "uri";
 
     rcpputils::fs::path dir(storage_options_.uri);
-    rcpputils::fs::remove(dir);
+    rcpputils::fs::remove_all(dir);
 
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(
       DoAll(
@@ -65,7 +65,7 @@ public:
   ~SequentialWriterTest()
   {
     rcpputils::fs::path dir(storage_options_.uri);
-    rcpputils::fs::remove(dir);
+    rcpputils::fs::remove_all(dir);
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
