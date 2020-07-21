@@ -26,7 +26,7 @@ def test_sequential_reader():
     bag_path = str(Path(__file__).parent.parent / 'resources' / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path)
 
-    reader = rosbag2_py.Reader('SequentialReader')
+    reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
 
     topic_types = reader.get_all_topics_and_types()
@@ -54,7 +54,7 @@ def test_sequential_reader():
     # No filter
     reader.reset_filter()
 
-    reader = rosbag2_py.Reader('SequentialReader')
+    reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
 
     msg_counter = 0

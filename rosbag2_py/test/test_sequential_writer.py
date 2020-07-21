@@ -58,7 +58,7 @@ def test_sequential_writer():
 
     storage_options, converter_options = get_rosbag_options(bag_path)
 
-    writer = rosbag2_py.Writer('SequentialWriter')
+    writer = rosbag2_py.SequentialWriter()
     writer.open(storage_options, converter_options)
 
     # create topic
@@ -76,7 +76,7 @@ def test_sequential_writer():
     del writer
     storage_options, converter_options = get_rosbag_options(bag_path)
 
-    reader = rosbag2_py.Reader('SequentialReader')
+    reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
 
     topic_types = reader.get_all_topics_and_types()

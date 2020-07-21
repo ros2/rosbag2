@@ -40,17 +40,9 @@ namespace rosbag2_py
 class Reader
 {
 public:
-  explicit Reader(const std::string & reader_class)
+  Reader()
   {
-    if (!reader_class.compare("SequentialReader")) {
-      auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>();
-      reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-    } else if (!reader_class.compare("SequentialCompressionReader")) {
-      auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>();
-      reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-    } else {
-      throw std::runtime_error{"Reader class type " + reader_class + " not supported."};
-    }
+    initialized_ = false;
   }
 
   void open(
@@ -93,29 +85,41 @@ public:
     reader_->reset_filter();
   }
 
-private:
+protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
+  bool initialized_;
+};
+
+class SequentialReader : public Reader
+{
+public:
+  SequentialReader()
+  : Reader()
+  {
+    auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>();
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
+    initialized_ = true;
+  }
+};
+
+class SequentialCompressionReader : public Reader
+{
+public:
+  SequentialCompressionReader()
+  : Reader()
+  {
+    auto sc_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>();
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sc_reader));
+    initialized_ = true;
+  }
 };
 
 class Writer
 {
 public:
-  explicit Writer(const std::string & writer_class)
+  Writer()
   {
-    if (!writer_class.compare("SequentialWriter")) {
-      auto sequential_writer =
-        std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
-      writer_ =
-        std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-    } else if (!writer_class.compare("SequentialCompressionWriter")) {
-      auto sequential_writer =
-        std::make_unique<rosbag2_compression::SequentialCompressionWriter>();
-      writer_ =
-        std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-    } else {
-      throw std::runtime_error{"Writer class type " + writer_class +
-              " not supported."};
-    }
+    initialized_ = false;
   }
 
   void open(
@@ -151,8 +155,37 @@ public:
     writer_->write(bag_message);
   }
 
-private:
+protected:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
+  bool initialized_;
+};
+
+class SequentialWriter : public Writer
+{
+public:
+  SequentialWriter()
+  : Writer()
+  {
+    auto sequential_writer =
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
+    writer_ =
+      std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+    initialized_ = true;
+  }
+};
+
+class SequentialCompressionWriter : public Writer
+{
+public:
+  SequentialCompressionWriter()
+  : Writer()
+  {
+    auto sc_writer =
+      std::make_unique<rosbag2_compression::SequentialCompressionWriter>();
+    writer_ =
+      std::make_unique<rosbag2_cpp::Writer>(std::move(sc_writer));
+    initialized_ = true;
+  }
 };
 }  // namespace rosbag2_py
 
@@ -160,7 +193,7 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp API";
 
   pybind11::class_<rosbag2_py::Reader>(m, "Reader")
-  .def(pybind11::init<const std::string &>())
+  .def(pybind11::init())
   .def("open", &rosbag2_py::Reader::open)
   .def("read_next", &rosbag2_py::Reader::read_next)
   .def("has_next", &rosbag2_py::Reader::has_next)
@@ -168,12 +201,28 @@ PYBIND11_MODULE(_rosbag2_py, m) {
   .def("set_filter", &rosbag2_py::Reader::set_filter)
   .def("reset_filter", &rosbag2_py::Reader::reset_filter);
 
+  pybind11::class_<rosbag2_py::SequentialReader, rosbag2_py::Reader>(
+    m, "SequentialReader")
+  .def(pybind11::init());
+
+  pybind11::class_<rosbag2_py::SequentialCompressionReader, rosbag2_py::Reader>(
+    m, "SequentialCompressionReader")
+  .def(pybind11::init());
+
   pybind11::class_<rosbag2_py::Writer>(m, "Writer")
-  .def(pybind11::init<const std::string &>())
+  .def(pybind11::init())
   .def("open", &rosbag2_py::Writer::open)
   .def("write", &rosbag2_py::Writer::write)
   .def("remove_topic", &rosbag2_py::Writer::remove_topic)
   .def("create_topic", &rosbag2_py::Writer::create_topic);
+
+  pybind11::class_<rosbag2_py::SequentialWriter, rosbag2_py::Writer>(
+    m, "SequentialWriter")
+  .def(pybind11::init());
+
+  pybind11::class_<rosbag2_py::SequentialCompressionWriter, rosbag2_py::Writer>(
+    m, "SequentialCompressionWriter")
+  .def(pybind11::init());
 
   pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
   .def(pybind11::init())
