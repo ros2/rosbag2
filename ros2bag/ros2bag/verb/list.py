@@ -1,4 +1,4 @@
-# Copyright 2018 Open Source Robotics Foundation, Inc.
+# Copyright 2020 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ from ros2bag.verb import VerbExtension
 
 
 class ListVerb(VerbExtension):
-    """Print information about a bag to the screen."""
+    """Print information about available plugins to the screen."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
