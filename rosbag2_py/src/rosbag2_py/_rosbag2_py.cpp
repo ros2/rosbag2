@@ -43,8 +43,7 @@ class Reader
 public:
   Reader()
   {
-    auto reader = std::make_unique<T>();
-    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(reader));
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::make_unique<T>());
     initialized_ = true;
   }
 
@@ -99,8 +98,7 @@ class Writer
 public:
   Writer()
   {
-    auto writer = std::make_unique<T>();
-    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(writer));
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::make_unique<T>());
     initialized_ = true;
   }
 
