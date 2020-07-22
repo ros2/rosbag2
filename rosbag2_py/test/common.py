@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import rosbag2_py._rosbag2_py as rosbag2_py
+import rosbag2_py
 
 
 def get_rosbag_options(path, serialization_format='cdr'):

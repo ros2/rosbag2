@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py._rosbag2_py import \
-  ConverterOptions, \
+from rosbag2_py._reader import \
   SequentialCompressionReader, \
-  SequentialCompressionWriter, \
-  SequentialReader, \
-  SequentialWriter, \
+  SequentialReader
+from rosbag2_py._storage import \
+  ConverterOptions, \
   StorageFilter, \
   StorageOptions, \
   TopicMetadata
+from rosbag2_py._writer import \
+  SequentialCompressionWriter, \
+  SequentialWriter
 
 __all__ = [
     'ConverterOptions',

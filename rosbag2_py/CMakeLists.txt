@@ -21,21 +21,40 @@ find_package(pybind11 REQUIRED)
 find_package(python_cmake_module REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_storage REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
-pybind11_add_module(_rosbag2_py SHARED
-  src/rosbag2_py/_rosbag2_py.cpp
+pybind11_add_module(_reader SHARED
+  src/rosbag2_py/_reader.cpp
+)
+ament_target_dependencies(_reader PUBLIC
+  "rosbag2_compression"
+  "rosbag2_cpp"
 )
 
-ament_target_dependencies(_rosbag2_py PUBLIC
+pybind11_add_module(_storage SHARED
+  src/rosbag2_py/_storage.cpp
+)
+ament_target_dependencies(_storage PUBLIC
+  "rosbag2_cpp"
+  "rosbag2_storage"
+)
+
+pybind11_add_module(_writer SHARED
+  src/rosbag2_py/_writer.cpp
+)
+ament_target_dependencies(_writer PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
 )
 
 # Install cython modules as sub-modules of the project
 install(
-  TARGETS _rosbag2_py
+  TARGETS
+    _reader
+    _storage
+    _writer
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
