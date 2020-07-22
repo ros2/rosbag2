@@ -37,12 +37,15 @@
 namespace rosbag2_py
 {
 
+template<typename T>
 class Reader
 {
 public:
   Reader()
   {
-    initialized_ = false;
+    auto reader = std::make_unique<T>();
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(reader));
+    initialized_ = true;
   }
 
   void open(
@@ -90,36 +93,15 @@ protected:
   bool initialized_;
 };
 
-class SequentialReader : public Reader
-{
-public:
-  SequentialReader()
-  : Reader()
-  {
-    auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>();
-    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-    initialized_ = true;
-  }
-};
-
-class SequentialCompressionReader : public Reader
-{
-public:
-  SequentialCompressionReader()
-  : Reader()
-  {
-    auto sc_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>();
-    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sc_reader));
-    initialized_ = true;
-  }
-};
-
+template<typename T>
 class Writer
 {
 public:
   Writer()
   {
-    initialized_ = false;
+    auto writer = std::make_unique<T>();
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(writer));
+    initialized_ = true;
   }
 
   void open(
@@ -160,69 +142,61 @@ protected:
   bool initialized_;
 };
 
-class SequentialWriter : public Writer
-{
-public:
-  SequentialWriter()
-  : Writer()
-  {
-    auto sequential_writer =
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
-    writer_ =
-      std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-    initialized_ = true;
-  }
-};
-
-class SequentialCompressionWriter : public Writer
-{
-public:
-  SequentialCompressionWriter()
-  : Writer()
-  {
-    auto sc_writer =
-      std::make_unique<rosbag2_compression::SequentialCompressionWriter>();
-    writer_ =
-      std::make_unique<rosbag2_cpp::Writer>(std::move(sc_writer));
-    initialized_ = true;
-  }
-};
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_rosbag2_py, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp API";
 
-  pybind11::class_<rosbag2_py::Reader>(m, "Reader")
-  .def(pybind11::init())
-  .def("open", &rosbag2_py::Reader::open)
-  .def("read_next", &rosbag2_py::Reader::read_next)
-  .def("has_next", &rosbag2_py::Reader::has_next)
-  .def("get_all_topics_and_types", &rosbag2_py::Reader::get_all_topics_and_types)
-  .def("set_filter", &rosbag2_py::Reader::set_filter)
-  .def("reset_filter", &rosbag2_py::Reader::reset_filter);
-
-  pybind11::class_<rosbag2_py::SequentialReader, rosbag2_py::Reader>(
+  pybind11::class_<rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>>(
     m, "SequentialReader")
-  .def(pybind11::init());
-
-  pybind11::class_<rosbag2_py::SequentialCompressionReader, rosbag2_py::Reader>(
-    m, "SequentialCompressionReader")
-  .def(pybind11::init());
-
-  pybind11::class_<rosbag2_py::Writer>(m, "Writer")
   .def(pybind11::init())
-  .def("open", &rosbag2_py::Writer::open)
-  .def("write", &rosbag2_py::Writer::write)
-  .def("remove_topic", &rosbag2_py::Writer::remove_topic)
-  .def("create_topic", &rosbag2_py::Writer::create_topic);
+  .def("open", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::open)
+  .def("read_next", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::read_next)
+  .def("has_next", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::has_next)
+  .def(
+    "get_all_topics_and_types",
+    &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::get_all_topics_and_types)
+  .def("set_filter", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::set_filter)
+  .def("reset_filter", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::reset_filter);
 
-  pybind11::class_<rosbag2_py::SequentialWriter, rosbag2_py::Writer>(
+  pybind11::class_<rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>>(
+    m, "SequentialCompressionReader")
+  .def(pybind11::init())
+  .def("open", &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::open)
+  .def(
+    "read_next", &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::read_next)
+  .def("has_next", &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::has_next)
+  .def(
+    "get_all_topics_and_types",
+    &rosbag2_py::Reader<
+      rosbag2_compression::SequentialCompressionReader
+    >::get_all_topics_and_types)
+  .def(
+    "set_filter",
+    &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::set_filter)
+  .def(
+    "reset_filter",
+    &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::reset_filter);
+
+  pybind11::class_<rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>>(
     m, "SequentialWriter")
-  .def(pybind11::init());
+  .def(pybind11::init())
+  .def("open", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::open)
+  .def("write", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::write)
+  .def("remove_topic", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::remove_topic)
+  .def("create_topic", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::create_topic);
 
-  pybind11::class_<rosbag2_py::SequentialCompressionWriter, rosbag2_py::Writer>(
+  pybind11::class_<rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>>(
     m, "SequentialCompressionWriter")
-  .def(pybind11::init());
+  .def(pybind11::init())
+  .def("open", &rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>::open)
+  .def("write", &rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>::write)
+  .def(
+    "remove_topic",
+    &rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>::remove_topic)
+  .def(
+    "create_topic",
+    &rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>::create_topic);
 
   pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
   .def(pybind11::init())
