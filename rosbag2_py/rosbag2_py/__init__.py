@@ -14,19 +14,16 @@
 
 from rosbag2_py._rosbag2_py import \
   ConverterOptions, \
-  Reader, \
   SequentialCompressionReader, \
   SequentialCompressionWriter, \
   SequentialReader, \
   SequentialWriter, \
   StorageFilter, \
   StorageOptions, \
-  TopicMetadata, \
-  Writer
+  TopicMetadata
 
 __all__ = [
     'ConverterOptions',
-    'Reader',
     'SequentialCompressionReader',
     'SequentialCompressionWriter',
     'SequentialReader',
@@ -34,5 +31,4 @@ __all__ = [
     'StorageFilter',
     'StorageOptions',
     'TopicMetadata',
-    'Writer'
 ]
