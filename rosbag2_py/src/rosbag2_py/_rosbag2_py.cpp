@@ -42,8 +42,8 @@ class Reader
 {
 public:
   Reader()
+  : reader_(std::make_unique<rosbag2_cpp::Reader>(std::make_unique<T>()))
   {
-    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::make_unique<T>());
   }
 
   void open(
@@ -95,8 +95,8 @@ class Writer
 {
 public:
   Writer()
+  : writer_(std::make_unique<rosbag2_cpp::Writer>(std::make_unique<T>()))
   {
-    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::make_unique<T>());
   }
 
   void open(
