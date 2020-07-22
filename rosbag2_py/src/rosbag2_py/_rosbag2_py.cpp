@@ -44,7 +44,6 @@ public:
   Reader()
   {
     reader_ = std::make_unique<rosbag2_cpp::Reader>(std::make_unique<T>());
-    initialized_ = true;
   }
 
   void open(
@@ -89,7 +88,6 @@ public:
 
 protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
-  bool initialized_;
 };
 
 template<typename T>
@@ -99,7 +97,6 @@ public:
   Writer()
   {
     writer_ = std::make_unique<rosbag2_cpp::Writer>(std::make_unique<T>());
-    initialized_ = true;
   }
 
   void open(
@@ -137,7 +134,6 @@ public:
 
 protected:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
-  bool initialized_;
 };
 
 }  // namespace rosbag2_py
