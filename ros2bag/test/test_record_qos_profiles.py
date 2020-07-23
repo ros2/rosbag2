@@ -16,6 +16,7 @@ import contextlib
 from pathlib import Path
 import re
 import tempfile
+import time
 
 import unittest
 
@@ -73,7 +74,9 @@ class TestRos2BagRecord(unittest.TestCase):
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+            time.sleep(3)
+        bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.terminated
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
         assert not matches, print('ros2bag CLI did not produce the expected output')
@@ -84,7 +87,9 @@ class TestRos2BagRecord(unittest.TestCase):
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+            time.sleep(3)
+        bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.terminated
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
         assert not matches, print('ros2bag CLI did not produce the expected output')
@@ -95,7 +100,9 @@ class TestRos2BagRecord(unittest.TestCase):
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+            time.sleep(3)
+        bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.terminated
         assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
@@ -107,7 +114,9 @@ class TestRos2BagRecord(unittest.TestCase):
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+            time.sleep(3)
+        bag_command.wait_for_shutdown(timeout=5)
+        assert bag_command.terminated
         assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
         expected_string_regex = re.compile(
             r"ros2 bag record: error: argument --qos-profile-overrides-path: can't open")
