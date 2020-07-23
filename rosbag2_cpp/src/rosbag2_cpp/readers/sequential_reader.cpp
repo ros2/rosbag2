@@ -230,6 +230,8 @@ void SequentialReader::check_converter_serialization_format(
   const std::string & converter_serialization_format,
   const std::string & storage_serialization_format)
 {
+  if (converter_serialization_format.empty()) {return;}
+
   if (converter_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
