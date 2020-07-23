@@ -15,6 +15,7 @@
 import contextlib
 from pathlib import Path
 import re
+import sys
 import tempfile
 import time
 
@@ -66,7 +67,14 @@ class TestRos2BagRecord(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.tmpdir.cleanup()
+        try:
+            cls.tmpdir.cleanup()
+        except PermissionError:
+            if sys.platform != 'win32':
+                raise
+            # HACK to allow Windows to close pending file handles
+            time.sleep(3)
+            cls.tmpdir.cleanup()
 
     def test_qos_simple(self):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
