@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -50,9 +51,27 @@ class BaseReaderInterface;
 class ROSBAG2_CPP_PUBLIC Reader final
 {
 public:
-  explicit Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl);
+  explicit Reader(
+    std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl =
+    std::make_unique<readers::SequentialReader>());
 
   ~Reader();
+
+  /**
+   * Opens an existing bagfile and prepare it for reading messages.
+   * The bagfile must exist.
+   * This must be called before any other function is used.
+   *
+   * \note This will open URI with the default storage options
+   * * using sqlite3 storage backend
+   * * using no converter options, storing messages with the incoming serialization format
+   * \sa rmw_get_serialization_format.
+   * For specifications, please see \sa open, which let's you specify
+   * more storage and converter options.
+   *
+   * \param storage_uri URI of the storage to open.
+   **/
+  void open(const std::string & uri);
 
   /**
    * Throws if file could not be opened.
@@ -67,7 +86,9 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options Options for specifying the output data format
    */
-  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
+  void open(
+    const StorageOptions & storage_options,
+    const ConverterOptions & converter_options = ConverterOptions());
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

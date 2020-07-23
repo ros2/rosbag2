@@ -31,6 +31,8 @@
 namespace rosbag2_cpp
 {
 
+static constexpr char const * kDefaultStorageID = "sqlite3";
+
 Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl)
 : writer_impl_(std::move(writer_impl))
 {}
@@ -38,6 +40,16 @@ Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterfa
 Writer::~Writer()
 {
   writer_impl_.reset();
+}
+
+void Writer::open(const std::string & uri)
+{
+  rosbag2_cpp::StorageOptions storage_options;
+  storage_options.uri = uri;
+  storage_options.storage_id = kDefaultStorageID;
+
+  rosbag2_cpp::ConverterOptions converter_options{};
+  return open(storage_options, converter_options);
 }
 
 void Writer::open(
