@@ -15,12 +15,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <chrono>
-#include <map>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"

@@ -15,13 +15,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <chrono>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
