@@ -85,16 +85,16 @@ public:
   void print_bag_info(const std::string & uri, const std::string & storage_id);
 
   /**
-   * Activate underlying lifecycle node.
+   * Resume playback.
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void activate_lifecycle();
+  void resume();
 
   /**
-   * Deactivate underlying lifecycle node.
+   * Pause playback.
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void deactivate_lifecycle();
+  void pause();
 
 private:
   std::shared_ptr<Rosbag2Node> setup_node(

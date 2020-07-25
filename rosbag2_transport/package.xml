@@ -10,6 +10,7 @@
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
+  <depend>lifecycle_msgs</depend>
   <depend>python_cmake_module</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>

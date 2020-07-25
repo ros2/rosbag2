@@ -126,9 +126,8 @@ void Rosbag2Transport::print_bag_info(const std::string & uri, const std::string
   Formatter::format_bag_meta_data(metadata);
 }
 
-void Rosbag2Transport::activate_lifecycle()
+void Rosbag2Transport::resume()
 {
-  std::cerr << "Rosbag2Transport::activate_lifecycle()\n";
   if (transport_node_) {
     transport_node_->activate();
   } else {
@@ -137,9 +136,8 @@ void Rosbag2Transport::activate_lifecycle()
   }
 }
 
-void Rosbag2Transport::deactivate_lifecycle()
+void Rosbag2Transport::pause()
 {
-  std::cerr << "Rosbag2Transport::deactivate_lifecycle()\n";
   if (transport_node_) {
     transport_node_->deactivate();
   } else {

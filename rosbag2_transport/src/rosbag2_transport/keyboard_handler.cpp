@@ -80,7 +80,7 @@ void KeyboardHandler::restore_terminal()
 
 int KeyboardHandler::read_char_from_stdin()
 {
-#ifdef __APPLE__
+#if defined(__APPLE__)
   fd_set testfd;
   FD_COPY(&stdin_fdset_, &testfd);
 #elif !defined(_MSC_VER)

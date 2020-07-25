@@ -243,9 +243,9 @@ TEST_F(RosBag2PlayTestFixture, starting_paused_can_resume)
 
   std::future<void> future_handle = std::async(
     std::launch::async, [&rosbag2_transport]() mutable {
-      // Wait for node initialization, then unpause
+      // Wait for node initialization, then resume
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      rosbag2_transport.activate_lifecycle();
+      rosbag2_transport.resume();
     });
 
   rosbag2_transport.play(storage_options_, play_options_);

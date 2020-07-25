@@ -22,10 +22,11 @@
 #include <utility>
 #include <vector>
 
+#include "lifecycle_msgs/msg/state.hpp"
+
 #include "rcl/graph.h"
 
 #include "rclcpp/rclcpp.hpp"
-#include "lifecycle_msgs/msg/state.hpp"
 
 #include "rcutils/time.h"
 
@@ -76,6 +77,8 @@ namespace rosbag2_transport
 
 const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
+const std::chrono::milliseconds
+Player::pause_sleep_period_ = std::chrono::milliseconds(30);
 
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
@@ -176,7 +179,6 @@ void Player::play_messages_from_queue(const PlayOptions & options)
   paused_duration_ = std::chrono::nanoseconds(0);
   do {
     play_messages_until_queue_empty(options);
-
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -213,7 +215,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
       while (rosbag2_transport_->get_current_state().id() !=
         lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE && rclcpp::ok())
       {
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        std::this_thread::sleep_for(pause_sleep_period_);
       }
 
       paused_duration_ += std::chrono::system_clock::now() - pause_start;
