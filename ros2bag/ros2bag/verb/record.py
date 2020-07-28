@@ -18,7 +18,6 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import convert_yaml_to_qos_profile
-from ros2bag.api import create_bag_directory
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
@@ -114,8 +113,6 @@ class RecordVerb(VerbExtension):
                     qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
-
-        create_bag_directory(uri)
 
         if args.all:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
