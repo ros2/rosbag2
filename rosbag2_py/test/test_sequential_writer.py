@@ -56,6 +56,7 @@ def test_sequential_writer():
         shutil.rmtree(bag_path)
     os.mkdir(bag_path)
 
+    print('TEMP DEBUG bag_path: %s' % bag_path)
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     writer = rosbag2_py.SequentialWriter()
