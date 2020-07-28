@@ -101,7 +101,7 @@ void SequentialWriter::open(
   rcpputils::fs::path db_path(base_folder_);
   if (db_path.is_directory()) {
     std::stringstream error;
-    error << "Database direcotory already exists (" << db_path.string() <<
+    error << "Database directory already exists (" << db_path.string() <<
       "), can't overwrite existing database";
     throw std::runtime_error{error.str()};
   }
@@ -109,7 +109,7 @@ void SequentialWriter::open(
   bool dir_created = rcpputils::fs::create_directories(db_path);
   if (!dir_created) {
     std::stringstream error;
-    error << "Failed to create database direcotory (" << db_path.string() << ").";
+    error << "Failed to create database directory (" << db_path.string() << ").";
     throw std::runtime_error{error.str()};
   }
 
