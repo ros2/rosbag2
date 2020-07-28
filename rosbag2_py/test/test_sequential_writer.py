@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
-import shutil
+import tempfile
 
 from common import get_rosbag_options
 from rclpy.serialization import deserialize_message, serialize_message
@@ -48,13 +47,9 @@ def test_sequential_writer():
 
     :return:
     """
-    bag_path = str(Path(__file__).parent.parent / 'resources' / 'tmp_write_test')
-
-    if os.path.exists(bag_path):
-        print('%s exists. It will be overwritten by new rosbag2_py test_sequential_writer run.' % (
-            bag_path))
-        shutil.rmtree(bag_path)
-    os.mkdir(bag_path)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        bag_path = os.path.join(tmpdir, 'tmp_write_test')
+    os.makedirs(bag_path)
 
     print('TEMP DEBUG bag_path: %s' % bag_path)
     storage_options, converter_options = get_rosbag_options(bag_path)
@@ -96,6 +91,3 @@ def test_sequential_writer():
         assert t == msg_counter * 100
 
         msg_counter += 1
-
-    # Cleanup
-    shutil.rmtree(bag_path)
