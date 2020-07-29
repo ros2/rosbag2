@@ -13,6 +13,7 @@
   <exec_depend>rosbag2_compression</exec_depend>
   <exec_depend>rosbag2_converter_default_plugins</exec_depend>
   <exec_depend>rosbag2_cpp</exec_depend>
+  <exec_depend>rosbag2_py</exec_depend>
   <exec_depend>rosbag2_storage</exec_depend>
   <exec_depend>rosbag2_storage_default_plugins</exec_depend>
   <exec_depend>rosbag2_transport</exec_depend>
