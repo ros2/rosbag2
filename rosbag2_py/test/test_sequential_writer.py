@@ -47,7 +47,7 @@ def test_sequential_writer(tmp_path):
     :return:
     """
     bag_path = str(tmp_path / 'tmp_write_test')
-    # os.makedirs(bag_path)
+    os.makedirs(bag_path)
 
     print('TEMP DEBUG bag_path: %s' % bag_path)
     storage_options, converter_options = get_rosbag_options(bag_path)
