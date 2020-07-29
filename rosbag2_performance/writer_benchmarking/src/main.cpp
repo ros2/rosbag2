@@ -15,6 +15,8 @@
 #include <memory>
 #include "writer_benchmark.hpp"
 
+// TODO(adamdbrw) the benchmkark being ROS node is not necessary, only used for logging
+// and parameters. Otherwise ROS dependencies are calls to rcl and rmw.
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);

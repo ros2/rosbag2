@@ -1,3 +1,6 @@
+# A very rough script to run batches of experiments. Missing checks and command line parametrization
+# Results are saved in ${test_dir}/size${sz}_inst${inst}_cache${cache} directories with ${try}.log name
+
 trap ctrlc SIGINT
 ctrlc_sent=0
 
@@ -26,10 +29,6 @@ do
         continue
       fi
       echo "processing case of ${inst} instances and size ${sz} with cache ${cache}"
-      #if [[ ${inst} -eq 1000 && ${s} -eq 1000000 ]]; then
-      #  echo "skipping the case of ${inst} instances and size ${s}"
-      #  continue
-      #fi
       for try in 1 2 3 4 5
       do
         outdir=${test_dir}/size${sz}_inst${inst}_cache${cache}

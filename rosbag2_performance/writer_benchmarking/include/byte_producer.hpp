@@ -62,7 +62,7 @@ private:
   }
 
   void generateRandomMessage()
-  {   // Reuses the same random message to remove generation time from benchmarks
+  {   // Reuses the same random message
     mMessage = std::make_shared<std_msgs::msg::ByteMultiArray>();
     mMessage->data = randomByteArrayData(mConfiguration.message_size);
   }

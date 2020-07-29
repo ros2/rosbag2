@@ -73,7 +73,7 @@ void WriterBenchmark::startBenchmark()
     unsigned int completeCount = 0;
 
     for (size_t i = 0; i < mQueues.size(); ++i)
-    {   // TODO(adamdbrw) use conditional variables to avoid locks
+    {   // TODO(adamdbrw). Performance can be improved. Use conditional variables
       if (mQueues.at(i)->isComplete() && mQueues.at(i)->isEmpty())
         completeCount++;
 
@@ -82,7 +82,7 @@ void WriterBenchmark::startBenchmark()
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
-        // The pointer remains owned by the producer until past the termination of the while loop
+        // The pointer memory is owned by the producer until past the termination of the while loop
         // note that this ownership model should be changed if we want to generate messages on the fly
         auto byte_ma_message = mQueues[i]->pop_and_return();
 
@@ -113,7 +113,6 @@ void WriterBenchmark::startBenchmark()
         count++;
       }
     }
-    // RCLCPP_INFO_STREAM(get_logger(), "Wrote " << count << " messages");
     if (completeCount == mQueues.size())
       break;
 
@@ -155,6 +154,8 @@ void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int
   }
 }
 
+// TODO(adamdbrw) extend to other writers - based on parametrization
+// Also, add an option to configure compression
 void WriterBenchmark::createWriter()
 {
   mWriter = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
@@ -164,6 +165,7 @@ void WriterBenchmark::createWriter()
   storage_options.max_bagfile_size = 0;
   storage_options.max_cache_size = mMaxCacheSize;
 
+  // TODO(adamdbrw) generalize if converters are to be included in benchmarks
   std::string serialization_format = rmw_get_serialization_format();
   mWriter->open(storage_options, {serialization_format, serialization_format});
 
@@ -171,7 +173,7 @@ void WriterBenchmark::createWriter()
   {
     rosbag2_storage::TopicMetadata topic;
     topic.name = mQueues[i]->topicName();
-    // TODO(adamdbrw) - replace with something correct and more general if needed
+    // TODO(adamdbrw) - replace with something more general if needed
     topic.type = "std_msgs::msgs::ByteMultiArray";
     topic.serialization_format = serialization_format;
     mWriter->create_topic(topic);
@@ -182,7 +184,6 @@ void WriterBenchmark::startProducers()
 {
   for (auto producer : mProducers)
   {
-    // RCLCPP_INFO(get_logger(), "starting a producer ");
     mProducerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
   }
 }
