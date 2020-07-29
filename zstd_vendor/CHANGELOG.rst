@@ -2,6 +2,19 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.2 (2020-06-03)
+------------------
+
+0.3.1 (2020-06-01)
+------------------
+* Shared publisher handle (`#420 <https://github.com/ros2/rosbag2/issues/420>`_)
+* Contributors: Chris Lalancette
+
+0.3.0 (2020-05-26)
+------------------
+* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
+* Contributors: Karsten Knese
+
 0.2.8 (2020-05-18)
 ------------------
 

@@ -19,5 +19,6 @@ namespace rosbag2_storage
 namespace storage_interfaces
 {
 const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT = 0;
+const uint64_t MAX_BAGFILE_DURATION_NO_SPLIT = 0;
 }
 }

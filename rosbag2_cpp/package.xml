@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_cpp</name>
-  <version>0.2.8</version>
+  <version>0.3.2</version>
   <description>C++ ROSBag2 client library</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
@@ -19,6 +19,8 @@
   <depend>rosidl_typesupport_cpp</depend>
   <depend>rosidl_typesupport_introspection_cpp</depend>
   <depend>shared_queues_vendor</depend>
+
+  <exec_depend>rosbag2_storage_default_plugins</exec_depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>

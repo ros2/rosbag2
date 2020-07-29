@@ -3,6 +3,24 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.2 (2020-06-03)
+------------------
+* Add user provided split size to error (`#430 <https://github.com/ros2/rosbag2/issues/430>`_)
+  * Add user provided split size to error
+  Signed-off-by: Anas Abou Allaban <aabouallaban@pm.me>
+* Make split size error clearer (`#428 <https://github.com/ros2/rosbag2/issues/428>`_)
+  Signed-off-by: Anas Abou Allaban <aabouallaban@pm.me>
+* Contributors: Anas Abou Allaban
+
+0.3.1 (2020-06-01)
+------------------
+
+0.3.0 (2020-05-26)
+------------------
+* Fix playback of compressed bagfiles (`#417 <https://github.com/ros2/rosbag2/issues/417>`_)
+* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
+* Contributors: Emerson Knapp, Karsten Knese
+
 0.2.8 (2020-05-18)
 ------------------
 

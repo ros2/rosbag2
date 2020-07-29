@@ -41,7 +41,7 @@ GenericPublisher::GenericPublisher(
 void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message)
 {
   auto return_code = rcl_publish_serialized_message(
-    get_publisher_handle(), message.get(), NULL);
+    get_publisher_handle().get(), message.get(), NULL);
 
   if (return_code != RCL_RET_OK) {
     rclcpp::exceptions::throw_from_rcl_error(return_code, "failed to publish serialized message");

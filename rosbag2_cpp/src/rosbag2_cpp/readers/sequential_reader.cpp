@@ -24,19 +24,6 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 
-namespace
-{
-void fill_topics_and_types(
-  const rosbag2_storage::BagMetadata & metadata,
-  std::vector<rosbag2_storage::TopicMetadata> & topics_and_types)
-{
-  topics_and_types.clear();
-  topics_and_types.reserve(metadata.topics_with_message_count.size());
-  for (const auto & topic_information : metadata.topics_with_message_count) {
-    topics_and_types.push_back(topic_information.topic_metadata);
-  }
-}
-}  // unnamed namespace
 
 namespace rosbag2_cpp
 {
@@ -133,7 +120,7 @@ void SequentialReader::open(
     ROSBAG2_CPP_LOG_WARN("No topics were listed in metadata.");
     return;
   }
-  fill_topics_and_types(metadata_, topics_metadata_);
+  fill_topics_metadata();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   check_topics_serialization_formats(topics);
@@ -240,6 +227,8 @@ void SequentialReader::check_converter_serialization_format(
   const std::string & converter_serialization_format,
   const std::string & storage_serialization_format)
 {
+  if (converter_serialization_format.empty()) {return;}
+
   if (converter_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
@@ -251,5 +240,16 @@ void SequentialReader::check_converter_serialization_format(
     }
   }
 }
+
+void SequentialReader::fill_topics_metadata()
+{
+  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  topics_metadata_.clear();
+  topics_metadata_.reserve(metadata_.topics_with_message_count.size());
+  for (const auto & topic_information : metadata_.topics_with_message_count) {
+    topics_metadata_.push_back(topic_information.topic_metadata);
+  }
+}
+
 }  // namespace readers
 }  // namespace rosbag2_cpp
