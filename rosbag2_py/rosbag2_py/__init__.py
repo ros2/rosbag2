@@ -12,25 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py._reader import \
-  SequentialCompressionReader, \
-  SequentialReader
-from rosbag2_py._storage import \
-  ConverterOptions, \
-  StorageFilter, \
-  StorageOptions, \
-  TopicMetadata
-from rosbag2_py._writer import \
-  SequentialCompressionWriter, \
-  SequentialWriter
+from rpyutils import add_dll_directories_from_env
 
-__all__ = [
-    'ConverterOptions',
-    'SequentialCompressionReader',
-    'SequentialCompressionWriter',
-    'SequentialReader',
-    'SequentialWriter',
-    'StorageFilter',
-    'StorageOptions',
-    'TopicMetadata',
-]
+# Since Python 3.8, on Windows we should ensure DLL directories are explicitly added
+# to the search path.
+# See https://docs.python.org/3/whatsnew/3.8.html#bpo-36085-whatsnew
+with add_dll_directories_from_env('PATH'):
+    from rosbag2_py._reader import \
+        SequentialCompressionReader, \
+        SequentialReader
+    from rosbag2_py._storage import \
+        ConverterOptions, \
+        StorageFilter, \
+        StorageOptions, \
+        TopicMetadata
+    from rosbag2_py._writer import \
+        SequentialCompressionWriter, \
+        SequentialWriter
+
+    __all__ = [
+        'ConverterOptions',
+        'SequentialCompressionReader',
+        'SequentialCompressionWriter',
+        'SequentialReader',
+        'SequentialWriter',
+        'StorageFilter',
+        'StorageOptions',
+        'TopicMetadata',
+    ]
