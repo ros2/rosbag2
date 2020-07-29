@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from common import get_rosbag_options
 from rclpy.serialization import deserialize_message, serialize_message
 import rosbag2_py
@@ -47,9 +45,7 @@ def test_sequential_writer(tmp_path):
     :return:
     """
     bag_path = str(tmp_path / 'tmp_write_test')
-    os.makedirs(bag_path)
 
-    print('TEMP DEBUG bag_path: %s' % bag_path)
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     writer = rosbag2_py.SequentialWriter()
