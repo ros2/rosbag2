@@ -1,32 +1,39 @@
 # Rosbag2 writer benchmarking
 
-The primary package to test transport-less performance of the rosbag2 writer and storage. Enables parametrized batch execution of benchmarks and tries to replicate the flow to capture message loss in queues.
+The primary package to test transport-less performance of the rosbag2 writer and storage.
+Enables parametrized batch execution of benchmarks and tries to replicate the flow to capture message loss in queues.
 
 ## How it works
 
-Use `scripts/benchmark.sh` to run an entire set of benchmarks. These are currently aimed at several 100Mb/s scenarios. Parameters are easy to change
-inside the script.
+Use `scripts/benchmark.sh` to run an entire set of benchmarks.
+These are currently aimed at several 100Mb/s scenarios.
+Parameters are easy to change inside the script.
 
-By default, result log files will be written to `/tmp/rosbag2_test/`. Database (bag) files are removed after recording to avoid filling up the disk. To modify this behavior, modify the benchmark.sh script.
+By default, result log files will be written to `/tmp/rosbag2_test/`.
+Database (bag) files are removed after recording to avoid filling up the disk.
+To modify this behavior, modify the benchmark.sh script.
 
 ## Building
 
-To build the package in the rosbag2 build process, make sure to turn `BUILD_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_BENCHMARKS=1`)
+To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)
 
-If you already built rosbag2, you can use `packages-select` option to build benchmarks. Example: `colcon build --packages-select writer_benchmarking rosbag2_performance_workers rosbag2_benchmarking --cmake-args -DBUILD_BENCHMARKS=1`.
+If you already built rosbag2, you can use `packages-select` option to build benchmarks.
+Example: `colcon build --packages-select rosbag2_performance_writer_benchmarking --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`.
 
 ## General knowledge: I/O benchmarking
 
 #### Background: benchmarking disk writes on your system
 
-It might be useful to first understand what limitation your disk poses to the throughput of data recording. Performance of bag write can't be higher over extended period of time (you can only use as much memory).
+It might be useful to first understand what limitation your disk poses to the throughput of data recording.
+Performance of bag write can't be higher over extended period of time (you can only use as much memory).
 
 **Using dd command**
 
 `dd if=/dev/zero of=/tmp/output conv=fdatasync bs=384k count=1k; rm -f /tmp/output`
 
 This method is not great for benchmarking the disk but an easy way to start since it requires no dependencies.
-This will write zeros to the /tmp/output file with block size 384k, 1000 blocks, ends when write finishes. Make sure to benchmark the disk which your bags will be written to (check your mount points and change “/tmp/output” to another path if needed).
+This will write zeros to the /tmp/output file with block size 384k, 1000 blocks, ends when write finishes.
+Make sure to benchmark the disk which your bags will be written to (check your mount points and change “/tmp/output” to another path if needed).
 Note: this depends on parameters used and whatever else is running on your system but can give you a ballpark figure when ran several times.
 
 **Using fio**

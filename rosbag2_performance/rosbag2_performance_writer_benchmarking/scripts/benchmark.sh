@@ -35,7 +35,7 @@ do
         mkdir -p ${outdir}
         outfile=${outdir}/${try}.log
         echo "Results will be written to file: ${outfile}"
-        ros2 run writer_benchmarking writer_benchmark --ros-args -p frequency:=${freq} -p size:=${sz} -p instances:=${inst} -p max_cache_size:=${cache} -p db_folder:=${db_path} 2> ${outfile}
+        ros2 run rosbag2_performance_writer_benchmarking writer_benchmark --ros-args -p frequency:=${freq} -p size:=${sz} -p instances:=${inst} -p max_cache_size:=${cache} -p db_folder:=${db_path} 2> ${outfile}
         rm -fr ${db_path}/bag*
         if [[ $ctrlc_sent -eq 1 ]]; then
           echo -e "\e[31mQuitting prematurely due to Ctrl-C - some results aren't saved and some won't be reliable\e[0m]"

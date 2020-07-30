@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WRITER_BENCHMARK_HPP_
-#define WRITER_BENCHMARK_HPP_
+#ifndef ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#define ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
 
 #include <string>
 #include <vector>
@@ -42,8 +42,8 @@ private:
   std::string mDbFolder;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> mWriter;
   std::vector<std::thread> mProducerThreads;
-  std::vector<std::shared_ptr<ByteProducer>> mProducers;
+  std::vector<std::unique_ptr<ByteProducer>> mProducers;
   std::vector<std::shared_ptr<ByteMessageQueue>> mQueues;
 };
 
-#endif  // WRITER_BENCHMARK_HPP_
+#endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_

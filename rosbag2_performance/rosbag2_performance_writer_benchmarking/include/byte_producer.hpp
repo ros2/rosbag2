@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BYTE_PRODUCER_HPP_
-#define BYTE_PRODUCER_HPP_
+#ifndef ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_
+#define ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_
 
 #include <chrono>
 #include <memory>
 #include <thread>
 #include <vector>
 #include "message_queue.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/utilities.hpp"
 
 struct ProducerConfig
 {
@@ -69,7 +69,6 @@ private:
 
   // for simplification, this pointer will be reused
   std::shared_ptr<std_msgs::msg::ByteMultiArray> mMessage;
-  std::mutex mMutex;
 
   ProducerConfig mConfiguration;
   std::shared_ptr<ByteMessageQueue> mQueue;
@@ -77,4 +76,4 @@ private:
   unsigned int mMsSleepTime;
 };
 
-#endif  // BYTE_PRODUCER_HPP_
+#endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_

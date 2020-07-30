@@ -28,24 +28,14 @@ using namespace std::chrono_literals;
 WriterBenchmark::WriterBenchmark()
   : rclcpp::Node("writer_benchmark")
 {
-  this->declare_parameter("frequency");
-  this->declare_parameter("max_count");
-  this->declare_parameter("size");
-  this->declare_parameter("instances");
-  this->declare_parameter("max_cache_size");
-  this->declare_parameter("db_folder");
+  this->declare_parameter("frequency", 100);
+  this->declare_parameter("max_count", 1000);
+  this->declare_parameter("size", 1000000);
+  this->declare_parameter("instances", 1);
+  this->declare_parameter("max_cache_size", 1);
+  this->declare_parameter("db_folder", std::string("/tmp/rosbag2_test"));
 
-  auto parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
-  while (!parameters_client->wait_for_service(1s))
-  {
-      if (!rclcpp::ok())
-      {
-          RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
-          rclcpp::shutdown();
-      }
-      RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
-  }
-  mConfig.frequency = parameters_client->get_parameter("frequency", 100);
+  this->get_parameter("frequency", mConfig.frequency);
   if (mConfig.frequency == 0)
   {
       RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
@@ -53,12 +43,14 @@ WriterBenchmark::WriterBenchmark()
       return;
   }
 
-  mMaxCacheSize = parameters_client->get_parameter("max_cache_size", 1);
-  mDbFolder = parameters_client->get_parameter("db_folder", std::string("/tmp/rosbag2_test"));
-  mConfig.max_count = parameters_client->get_parameter("max_count", 1000);
-  mConfig.message_size = parameters_client->get_parameter("size", 1000000);
+  this->get_parameter("max_cache_size", mMaxCacheSize);
+  this->get_parameter("db_folder", mDbFolder);
+  this->get_parameter("max_count", mConfig.max_count);
+  this->get_parameter("size", mConfig.message_size);
 
-  unsigned int instances = parameters_client->get_parameter("instances", 1);
+  unsigned int instances = 1;
+  this->get_parameter("instances", instances);
+
   createProducers(mConfig, instances);
   createWriter();
 }
@@ -72,19 +64,20 @@ void WriterBenchmark::startBenchmark()
     int count = 0;
     unsigned int completeCount = 0;
 
-    for (size_t i = 0; i < mQueues.size(); ++i)
-    {   // TODO(adamdbrw). Performance can be improved. Use conditional variables
-      if (mQueues.at(i)->isComplete() && mQueues.at(i)->isEmpty())
-        completeCount++;
+    for (auto &queue : mQueues)
+    {   // TODO(adamdbrw) Performance can be improved. Use conditional variables
+      if (queue->isComplete() && queue->isEmpty()) {
+        ++completeCount;
+      }
 
-      if (!mQueues.at(i)->isEmpty())
+      if (!queue->isEmpty())
       {   // behave as if we received the message.
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
-        // The pointer memory is owned by the producer until past the termination of the while loop
-        // note that this ownership model should be changed if we want to generate messages on the fly
-        auto byte_ma_message = mQueues[i]->pop_and_return();
+        // The pointer memory is owned by the producer until past the termination of the while loop.
+        // Note this ownership model should be changed if we want to generate messages on the fly
+        auto byte_ma_message = queue->pop_and_return();
 
         serialized_data->buffer = reinterpret_cast<uint8_t *>(byte_ma_message->data.data());
         serialized_data->buffer_length = byte_ma_message->data.size();
@@ -100,7 +93,7 @@ void WriterBenchmark::startBenchmark()
             << rcutils_get_error_string().str);
         }
         message->time_stamp = time_stamp;
-        message->topic_name = mQueues[i]->topicName();
+        message->topic_name = queue->topicName();
 
         try
         {
@@ -110,7 +103,7 @@ void WriterBenchmark::startBenchmark()
             RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
         }
         std::cerr << ".";
-        count++;
+        ++count;
       }
     }
     if (completeCount == mQueues.size())
@@ -130,7 +123,7 @@ void WriterBenchmark::startBenchmark()
     totalMissedMessages += queue->getMissedElementsCount();
   }
 
-  RCLCPP_INFO(get_logger(), "/nWriterBenchmark terminating");
+  RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
   RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissedMessages);
   RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
     << 100.0 - (float)totalMissedMessages*100.0/(mConfig.max_count*mProducers.size()));
@@ -138,9 +131,9 @@ void WriterBenchmark::startBenchmark()
 
 void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int instances)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "/nWriterBenchmark: creating " << instances
+  RCLCPP_INFO_STREAM(get_logger(), "\nWriterBenchmark: creating " << instances
     << " message producers with frequency " << config.frequency
-    << " and message size in bytes" << config.message_size
+    << " and message size in bytes " << config.message_size
     << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count
     << " messages before terminating");
   const unsigned int queueMaxSize = 10;
@@ -148,9 +141,8 @@ void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int
   {
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
     auto queue = std::make_shared<ByteMessageQueue>(queueMaxSize, topic);
-    auto producer = std::make_shared<ByteProducer>(config, queue);
     mQueues.push_back(queue);
-    mProducers.push_back(producer);
+    mProducers.push_back(std::make_unique<ByteProducer>(config, queue));
   }
 }
 
@@ -182,7 +174,7 @@ void WriterBenchmark::createWriter()
 
 void WriterBenchmark::startProducers()
 {
-  for (auto producer : mProducers)
+  for (auto &producer : mProducers)
   {
     mProducerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
   }

@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MESSAGE_QUEUE_HPP_
-#define MESSAGE_QUEUE_HPP_
+#ifndef ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
+#define ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
 
 #include <string>
 #include <queue>
 #include <utility>
 #include <mutex>
+#include <atomic>
 #include <iostream>
 #include <memory>
 
@@ -29,17 +30,16 @@ class MessageQueue
 {
 public:
   MessageQueue(int maxSize, std::string topicName)
-  : mMaxSize(maxSize), mTopicName(topicName) {}
+  : mMaxSize(maxSize), mTopicName(topicName), mUnsuccessfulInsertCount(0) {}
 
   void push(T elem)
   {
     std::lock_guard<std::mutex> lock(mMutex);
     if (mQueue.size() > mMaxSize) {  // We skip the element and consider it "lost"
-      mUnsuccessfulInsertCount++;
-      std::cerr << "X";
+      ++mUnsuccessfulInsertCount;
+      std::cerr << "X" << std::flush;
       return;
     }
-    // std::cerr << "+";
     mQueue.push(elem);
   }
 
@@ -66,14 +66,12 @@ public:
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
     T elem = mQueue.front();
-    // std::cerr << "-";
     mQueue.pop();
     return elem;
   }
 
   unsigned int getMissedElementsCount() const
   {
-    std::lock_guard<std::mutex> lock(mMutex);
     return mUnsuccessfulInsertCount;
   }
 
@@ -86,11 +84,11 @@ private:
   bool mComplete = false;
   unsigned int mMaxSize;
   std::string mTopicName;
-  unsigned int mUnsuccessfulInsertCount = 0;
+  std::atomic<unsigned int> mUnsuccessfulInsertCount;
   std::queue<T> mQueue;
   mutable std::mutex mMutex;
 };
 
 typedef MessageQueue<std::shared_ptr<std_msgs::msg::ByteMultiArray>> ByteMessageQueue;
 
-#endif  // MESSAGE_QUEUE_HPP_
+#endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
