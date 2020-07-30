@@ -81,7 +81,7 @@ def test_sequential_writer(tmp_path):
         msg_deserialized = deserialize_message(data, msg_type)
 
         assert isinstance(msg_deserialized, String)
-        assert msg_deserialized.data == 'Hello, world! %d' % msg_counter
+        assert msg_deserialized.data == f'Hello, world! {msg_counter}'
         assert t == msg_counter * 100
 
         msg_counter += 1

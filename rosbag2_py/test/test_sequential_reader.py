@@ -24,7 +24,6 @@ from std_msgs.msg import String
 
 def test_sequential_reader():
     bag_path = str(Path(__file__).parent.parent / 'resources' / 'talker')
-    print('TEMP DEBUG bag_path: %s' % bag_path)
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     reader = rosbag2_py.SequentialReader()
@@ -48,7 +47,7 @@ def test_sequential_reader():
         msg = deserialize_message(data, msg_type)
 
         assert isinstance(msg, String)
-        assert msg.data == 'Hello, world! %d' % msg_counter
+        assert msg.data == f'Hello, world! {msg_counter}'
 
         msg_counter += 1
 
@@ -68,5 +67,5 @@ def test_sequential_reader():
         assert isinstance(msg, Log) or isinstance(msg, String)
 
         if isinstance(msg, String):
-            assert msg.data == 'Hello, world! %d' % msg_counter
+            assert msg.data == f'Hello, world! {msg_counter}'
             msg_counter += 1

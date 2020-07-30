@@ -30,13 +30,13 @@ with add_dll_directories_from_env('PATH'):
         SequentialCompressionWriter, \
         SequentialWriter
 
-    __all__ = [
-        'ConverterOptions',
-        'SequentialCompressionReader',
-        'SequentialCompressionWriter',
-        'SequentialReader',
-        'SequentialWriter',
-        'StorageFilter',
-        'StorageOptions',
-        'TopicMetadata',
-    ]
+__all__ = [
+    'ConverterOptions',
+    'SequentialCompressionReader',
+    'SequentialCompressionWriter',
+    'SequentialReader',
+    'SequentialWriter',
+    'StorageFilter',
+    'StorageOptions',
+    'TopicMetadata',
+]
