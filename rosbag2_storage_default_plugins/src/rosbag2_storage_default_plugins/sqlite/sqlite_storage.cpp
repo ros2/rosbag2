@@ -237,7 +237,17 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
     insert_topic->bind(
       topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
-    topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
+
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("new topic %s", topic.name.c_str());
+    auto statement = database_->prepare_statement(
+      "SELECT id FROM topics WHERE topics.name IN (?);");
+    statement->bind(topic.name);
+    auto query_results = statement->execute_query<int>(); // not sure int is the right type
+    auto result = std::begin(query_results);
+    assert(result != std::end(query_results));
+    topics_.emplace(topic.name, static_cast<int>(std::get<0>(*result)));
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("id from query %d", static_cast<int>(std::get<0>(*result)));
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO("last insert id %d", static_cast<int>(database_->get_last_insert_id()));
   }
 }
 
