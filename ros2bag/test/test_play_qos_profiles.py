@@ -82,3 +82,15 @@ class TestRos2BagPlay(unittest.TestCase):
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
         assert not matches, print('ros2bag CLI did not produce the expected output')
+        
+    def test_qos_negative(self):
+        """Test a QoS profile with negative integer values for a single topic."""
+        profile_path = RESOURCES_PATH / 'negative_qos_profile.yaml'
+        bag_path = RESOURCES_PATH / 'empty_bag'
+        arguments = ['play', '--qos-profile-overrides-path', profile_path.as_posix(),
+                     bag_path.as_posix()]
+        with self.launch_bag_command(arguments=arguments) as bag_command:
+            bag_command.wait_for_shutdown(timeout=5)
+        expected_string_regex = re.compile(ERROR_STRING)
+        matches = expected_string_regex.search(bag_command.output)
+        assert not matches, print('ros2bag CLI did not produce the expected output')
