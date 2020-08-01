@@ -61,6 +61,8 @@ def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> QoSProfile:
         elif policy_key in _QOS_POLICY_FROM_SHORT_NAME:
             new_profile_dict[policy_key] = _QOS_POLICY_FROM_SHORT_NAME[policy_key](policy_value)
         elif policy_key in _VALUE_KEYS:
+            if policy_value < 0:
+                raise ValueError('`{}` may not be a negative value.'.format(policy_key))
             new_profile_dict[policy_key] = policy_value
         else:
             raise ValueError('Unexpected key `{}` for QoS profile.'.format(policy_key))
