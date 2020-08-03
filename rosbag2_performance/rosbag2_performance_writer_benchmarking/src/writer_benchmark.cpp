@@ -126,7 +126,7 @@ void WriterBenchmark::startBenchmark()
   RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
   RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissedMessages);
   RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
-    << 100.0 - (float)totalMissedMessages*100.0/(mConfig.max_count*mProducers.size()));
+    << 100.0 - (float)totalMissedMessages * 100.0 / (mConfig.max_count * mProducers.size()));
 }
 
 void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int instances)

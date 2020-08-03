@@ -32,7 +32,7 @@ public:
   MessageQueue(int maxSize, std::string topicName)
   : mMaxSize(maxSize), mTopicName(topicName), mUnsuccessfulInsertCount(0) {}
 
-  void push(T elem)
+  void push(std::shared_ptr<T> elem)
   {
     std::lock_guard<std::mutex> lock(mMutex);
     if (mQueue.size() > mMaxSize) {  // We skip the element and consider it "lost"
@@ -59,13 +59,13 @@ public:
     return mQueue.empty();
   }
 
-  T pop_and_return()
+  std::shared_ptr<T> pop_and_return()
   {
     std::lock_guard<std::mutex> lock(mMutex);
     if (mQueue.empty()) {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
-    T elem = mQueue.front();
+    auto elem = mQueue.front();
     mQueue.pop();
     return elem;
   }
@@ -85,10 +85,10 @@ private:
   unsigned int mMaxSize;
   std::string mTopicName;
   std::atomic<unsigned int> mUnsuccessfulInsertCount;
-  std::queue<T> mQueue;
+  std::queue<std::shared_ptr<T>> mQueue;
   mutable std::mutex mMutex;
 };
 
-typedef MessageQueue<std::shared_ptr<std_msgs::msg::ByteMultiArray>> ByteMessageQueue;
+typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
 
 #endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
