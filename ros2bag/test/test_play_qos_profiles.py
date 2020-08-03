@@ -82,4 +82,3 @@ class TestRos2BagPlay(unittest.TestCase):
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
         assert not matches, print('ros2bag CLI did not produce the expected output')
-        
