@@ -35,42 +35,42 @@ WriterBenchmark::WriterBenchmark()
   this->declare_parameter("max_cache_size", 1);
   this->declare_parameter("db_folder", std::string("/tmp/rosbag2_test"));
 
-  this->get_parameter("frequency", mConfig.frequency);
-  if (mConfig.frequency == 0)
+  this->get_parameter("frequency", _config.frequency);
+  if (_config.frequency == 0)
   {
       RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
       rclcpp::shutdown(nullptr, "frequency error");
       return;
   }
 
-  this->get_parameter("max_cache_size", mMaxCacheSize);
-  this->get_parameter("db_folder", mDbFolder);
-  this->get_parameter("max_count", mConfig.max_count);
-  this->get_parameter("size", mConfig.message_size);
+  this->get_parameter("max_cache_size", _maxCacheSize);
+  this->get_parameter("db_folder", _dbFolder);
+  this->get_parameter("max_count", _config.max_count);
+  this->get_parameter("size", _config.message_size);
 
   unsigned int instances = 1;
   this->get_parameter("instances", instances);
 
-  createProducers(mConfig, instances);
-  createWriter();
+  create_producers(_config, instances);
+  create_writer();
 }
 
-void WriterBenchmark::startBenchmark()
+void WriterBenchmark::start_benchmark()
 {
   RCLCPP_INFO(get_logger(), "Starting. A dot is a write, an X is a miss");
-  startProducers();
+  start_producers();
   while (rclcpp::ok())
   {
     int count = 0;
     unsigned int completeCount = 0;
 
-    for (auto &queue : mQueues)
+    for (auto &queue : _queues)
     {   // TODO(adamdbrw) Performance can be improved. Use conditional variables
-      if (queue->isComplete() && queue->isEmpty()) {
+      if (queue->is_complete() && queue->is_empty()) {
         ++completeCount;
       }
 
-      if (!queue->isEmpty())
+      if (!queue->is_empty())
       {   // behave as if we received the message.
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
@@ -93,11 +93,11 @@ void WriterBenchmark::startBenchmark()
             << rcutils_get_error_string().str);
         }
         message->time_stamp = time_stamp;
-        message->topic_name = queue->topicName();
+        message->topic_name = queue->topic_name();
 
         try
         {
-          mWriter->write(message);
+          _writer->write(message);
         } catch (std::runtime_error & e)
         {
             RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
@@ -106,76 +106,76 @@ void WriterBenchmark::startBenchmark()
         ++count;
       }
     }
-    if (completeCount == mQueues.size())
+    if (completeCount == _queues.size())
       break;
 
     std::this_thread::sleep_for(1ms);
   }
 
-  for (auto &prodThread : mProducerThreads)
+  for (auto &prodThread : _producerThreads)
   {
     prodThread.join();
   }
 
   unsigned int totalMissedMessages = 0;
-  for (const auto &queue : mQueues)
+  for (const auto &queue : _queues)
   {
-    totalMissedMessages += queue->getMissedElementsCount();
+    totalMissedMessages += queue->get_missed_elements_count();
   }
 
   RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
   RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissedMessages);
   RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
-    << 100.0 - (float)totalMissedMessages * 100.0 / (mConfig.max_count * mProducers.size()));
+    << 100.0 - (float)totalMissedMessages * 100.0 / (_config.max_count * _producers.size()));
 }
 
-void WriterBenchmark::createProducers(const ProducerConfig &config, unsigned int instances)
+void WriterBenchmark::create_producers(const ProducerConfig &config, unsigned int instances)
 {
   RCLCPP_INFO_STREAM(get_logger(), "\nWriterBenchmark: creating " << instances
     << " message producers with frequency " << config.frequency
     << " and message size in bytes " << config.message_size
-    << ". Cache is " << mMaxCacheSize << ". Each will send " << config.max_count
+    << ". Cache is " << _maxCacheSize << ". Each will send " << config.max_count
     << " messages before terminating");
   const unsigned int queueMaxSize = 10;
   for (unsigned int i = 0; i < instances; ++i)
   {
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
     auto queue = std::make_shared<ByteMessageQueue>(queueMaxSize, topic);
-    mQueues.push_back(queue);
-    mProducers.push_back(std::make_unique<ByteProducer>(config, queue));
+    _queues.push_back(queue);
+    _producers.push_back(std::make_unique<ByteProducer>(config, queue));
   }
 }
 
 // TODO(adamdbrw) extend to other writers - based on parametrization
 // Also, add an option to configure compression
-void WriterBenchmark::createWriter()
+void WriterBenchmark::create_writer()
 {
-  mWriter = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
+  _writer = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
   rosbag2_transport::StorageOptions storage_options{};
-  storage_options.uri = mDbFolder;
+  storage_options.uri = _dbFolder;
   storage_options.storage_id = "sqlite3";
   storage_options.max_bagfile_size = 0;
-  storage_options.max_cache_size = mMaxCacheSize;
+  storage_options.max_cache_size = _maxCacheSize;
 
   // TODO(adamdbrw) generalize if converters are to be included in benchmarks
   std::string serialization_format = rmw_get_serialization_format();
-  mWriter->open(storage_options, {serialization_format, serialization_format});
+  _writer->open(storage_options, {serialization_format, serialization_format});
 
-  for (size_t i = 0; i < mQueues.size(); ++i)
+  for (size_t i = 0; i < _queues.size(); ++i)
   {
     rosbag2_storage::TopicMetadata topic;
-    topic.name = mQueues[i]->topicName();
+    topic.name = _queues[i]->topic_name();
     // TODO(adamdbrw) - replace with something more general if needed
     topic.type = "std_msgs::msgs::ByteMultiArray";
     topic.serialization_format = serialization_format;
-    mWriter->create_topic(topic);
+    _writer->create_topic(topic);
   }
 }
 
-void WriterBenchmark::startProducers()
+void WriterBenchmark::start_producers()
 {
-  for (auto &producer : mProducers)
+  for (auto &producer : _producers)
   {
-    mProducerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
+    _producerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
   }
 }

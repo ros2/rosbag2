@@ -21,7 +21,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto bench = std::make_shared<WriterBenchmark>();
-  bench->startBenchmark();
+  bench->start_benchmark();
   RCLCPP_INFO(bench->get_logger(), "Benchmark terminated");
   return 0;
 }

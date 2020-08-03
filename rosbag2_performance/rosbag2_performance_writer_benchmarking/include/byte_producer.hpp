@@ -33,26 +33,26 @@ class ByteProducer
 {
 public:
   ByteProducer(const ProducerConfig & config, std::shared_ptr<ByteMessageQueue> queue)
-  : mConfiguration(config), mQueue(queue)
+  : _configuration(config), _queue(queue)
   {
-    generateRandomMessage();
-    mMsSleepTime = mConfiguration.frequency == 0 ? 1 : 1000 / mConfiguration.frequency;
+    generate_random_message();
+    _msSleepTime = _configuration.frequency == 0 ? 1 : 1000 / _configuration.frequency;
   }
 
   void run()
   {
-    for (unsigned int i = 0; i < mConfiguration.max_count; ++i) {
+    for (unsigned int i = 0; i < _configuration.max_count; ++i) {
       if (!rclcpp::ok()) {
         break;
       }
-      mQueue->push(mMessage);
-      std::this_thread::sleep_for(std::chrono::milliseconds(mMsSleepTime));
+      _queue->push(_message);
+      std::this_thread::sleep_for(std::chrono::milliseconds(_msSleepTime));
     }
-    mQueue->setComplete();
+    _queue->set_complete();
   }
 
 private:
-  std::vector<uint8_t> randomByteArrayData(size_t size)
+  std::vector<uint8_t> random_bytearray_data(size_t size)
   {
     std::vector<uint8_t> byte(size, 0);
     for (size_t i = 0; i < size; ++i) {
@@ -61,19 +61,17 @@ private:
     return byte;
   }
 
-  void generateRandomMessage()
+  void generate_random_message()
   {   // Reuses the same random message
-    mMessage = std::make_shared<std_msgs::msg::ByteMultiArray>();
-    mMessage->data = randomByteArrayData(mConfiguration.message_size);
+    _message = std::make_shared<std_msgs::msg::ByteMultiArray>();
+    _message->data = random_bytearray_data(_configuration.message_size);
   }
 
   // for simplification, this pointer will be reused
-  std::shared_ptr<std_msgs::msg::ByteMultiArray> mMessage;
-
-  ProducerConfig mConfiguration;
-  std::shared_ptr<ByteMessageQueue> mQueue;
-
-  unsigned int mMsSleepTime;
+  std::shared_ptr<std_msgs::msg::ByteMultiArray> _message;
+  ProducerConfig _configuration;
+  std::shared_ptr<ByteMessageQueue> _queue;
+  unsigned int _msSleepTime;
 };
 
 #endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_

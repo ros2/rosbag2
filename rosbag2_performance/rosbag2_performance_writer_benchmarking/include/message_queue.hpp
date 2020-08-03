@@ -30,63 +30,63 @@ class MessageQueue
 {
 public:
   MessageQueue(int maxSize, std::string topicName)
-  : mMaxSize(maxSize), mTopicName(topicName), mUnsuccessfulInsertCount(0) {}
+  : _maxSize(maxSize), _topicName(topicName), _unsuccessfulInsertCount(0) {}
 
   void push(std::shared_ptr<T> elem)
   {
-    std::lock_guard<std::mutex> lock(mMutex);
-    if (mQueue.size() > mMaxSize) {  // We skip the element and consider it "lost"
-      ++mUnsuccessfulInsertCount;
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_queue.size() > _maxSize) {  // We skip the element and consider it "lost"
+      ++_unsuccessfulInsertCount;
       std::cerr << "X" << std::flush;
       return;
     }
-    mQueue.push(elem);
+    _queue.push(elem);
   }
 
-  bool isComplete() const
+  bool is_complete() const
   {
-    return mComplete;
+    return _complete;
   }
 
-  void setComplete()
+  void set_complete()
   {
-    mComplete = true;
+    _complete = true;
   }
 
-  bool isEmpty()
+  bool is_empty()
   {
-    std::lock_guard<std::mutex> lock(mMutex);
-    return mQueue.empty();
+    std::lock_guard<std::mutex> lock(_mutex);
+    return _queue.empty();
   }
 
   std::shared_ptr<T> pop_and_return()
   {
-    std::lock_guard<std::mutex> lock(mMutex);
-    if (mQueue.empty()) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_queue.empty()) {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
-    auto elem = mQueue.front();
-    mQueue.pop();
+    auto elem = _queue.front();
+    _queue.pop();
     return elem;
   }
 
-  unsigned int getMissedElementsCount() const
+  unsigned int get_missed_elements_count() const
   {
-    return mUnsuccessfulInsertCount;
+    return _unsuccessfulInsertCount;
   }
 
-  std::string topicName() const
+  std::string topic_name() const
   {
-    return mTopicName;
+    return _topicName;
   }
 
 private:
-  bool mComplete = false;
-  unsigned int mMaxSize;
-  std::string mTopicName;
-  std::atomic<unsigned int> mUnsuccessfulInsertCount;
-  std::queue<std::shared_ptr<T>> mQueue;
-  mutable std::mutex mMutex;
+  bool _complete = false;
+  unsigned int _maxSize;
+  std::string _topicName;
+  std::atomic<unsigned int> _unsuccessfulInsertCount;
+  std::queue<std::shared_ptr<T>> _queue;
+  mutable std::mutex _mutex;
 };
 
 typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;

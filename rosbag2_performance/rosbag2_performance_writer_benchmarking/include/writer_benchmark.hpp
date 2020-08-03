@@ -30,20 +30,20 @@ class WriterBenchmark : public rclcpp::Node
 {
 public:
   WriterBenchmark();
-  void startBenchmark();
+  void start_benchmark();
 
 private:
-  void createProducers(const ProducerConfig & config, unsigned int instances);
-  void createWriter();
-  void startProducers();
+  void create_producers(const ProducerConfig & config, unsigned int instances);
+  void create_writer();
+  void start_producers();
 
-  ProducerConfig mConfig;
-  unsigned int mMaxCacheSize;
-  std::string mDbFolder;
-  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> mWriter;
-  std::vector<std::thread> mProducerThreads;
-  std::vector<std::unique_ptr<ByteProducer>> mProducers;
-  std::vector<std::shared_ptr<ByteMessageQueue>> mQueues;
+  ProducerConfig _config;
+  unsigned int _maxCacheSize;
+  std::string _dbFolder;
+  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> _writer;
+  std::vector<std::thread> _producerThreads;
+  std::vector<std::unique_ptr<ByteProducer>> _producers;
+  std::vector<std::shared_ptr<ByteMessageQueue>> _queues;
 };
 
 #endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
