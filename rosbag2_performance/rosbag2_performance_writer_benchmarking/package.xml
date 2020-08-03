@@ -11,8 +11,6 @@
 
   <depend>rclcpp</depend>
   <depend>rosbag2_cpp</depend>
-  <depend>rosbag2_storage</depend>
-  <depend>rosbag2_transport</depend>
   <depend>rmw</depend>
   <depend>std_msgs</depend>
 

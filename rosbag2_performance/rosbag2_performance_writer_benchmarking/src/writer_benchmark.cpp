@@ -18,42 +18,41 @@
 #include <string>
 
 #include "rmw/rmw.h"
+#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 
-#include "writer_benchmark.hpp"
+#include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
 
 using namespace std::chrono_literals;
 
 WriterBenchmark::WriterBenchmark()
-  : rclcpp::Node("writer_benchmark")
+: rclcpp::Node("writer_benchmark")
 {
-  const std::string defaultBagFolder("/tmp/rosbag2_test");
+  const std::string default_bag_folder("/tmp/rosbag2_test");
   this->declare_parameter("frequency", 100);
   this->declare_parameter("max_count", 1000);
   this->declare_parameter("size", 1000000);
   this->declare_parameter("instances", 1);
   this->declare_parameter("max_cache_size", 1);
-  this->declare_parameter("db_folder", defaultBagFolder);
-  this->declare_parameter("results_file", defaultBagFolder + "/results.csv");
+  this->declare_parameter("db_folder", default_bag_folder);
+  this->declare_parameter("results_file", default_bag_folder + "/results.csv");
 
-  this->get_parameter("frequency", _config.frequency);
-  if (_config.frequency == 0)
-  {
+  this->get_parameter("frequency", config_.frequency);
+  if (config_.frequency == 0) {
     RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
     rclcpp::shutdown(nullptr, "frequency error");
     return;
   }
 
-  this->get_parameter("max_cache_size", _maxCacheSize);
-  this->get_parameter("db_folder", _dbFolder);
-  this->get_parameter("results_file", _resultsFile);
-  this->get_parameter("max_count", _config.max_count);
-  this->get_parameter("size", _config.message_size);
-  this->get_parameter("instances", _instances);
+  this->get_parameter("max_cache_size", max_cache_size_);
+  this->get_parameter("db_folder", db_folder_);
+  this->get_parameter("results_file", results_file_);
+  this->get_parameter("max_count", config_.max_count);
+  this->get_parameter("size", config_.message_size);
+  this->get_parameter("instances", instances_);
 
-  create_producers(_config);
+  create_producers(config_);
   create_writer();
 }
 
@@ -61,19 +60,17 @@ void WriterBenchmark::start_benchmark()
 {
   RCLCPP_INFO(get_logger(), "Starting. A dot is a write, an X is a miss");
   start_producers();
-  while (rclcpp::ok())
-  {
+  while (rclcpp::ok()) {
     int count = 0;
-    unsigned int completeCount = 0;
+    unsigned int complete_count = 0;
 
-    for (auto &queue : _queues)
-    {   // TODO(adamdbrw) Performance can be improved. Use conditional variables
+    // TODO(adamdbrw) Performance can be improved. Use conditional variables
+    for (auto & queue : queues_) {
       if (queue->is_complete() && queue->is_empty()) {
-        ++completeCount;
+        ++complete_count;
       }
 
-      if (!queue->is_empty())
-      {   // behave as if we received the message.
+      if (!queue->is_empty()) {  // behave as if we received the message.
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
@@ -89,104 +86,100 @@ void WriterBenchmark::start_benchmark()
 
         rcutils_time_point_value_t time_stamp;
         int error = rcutils_system_time_now(&time_stamp);
-        if (error != RCUTILS_RET_OK)
-        {
-          RCLCPP_ERROR_STREAM(get_logger(), "Error getting current time. Error:"
-            << rcutils_get_error_string().str);
+        if (error != RCUTILS_RET_OK) {
+          RCLCPP_ERROR_STREAM(
+            get_logger(), "Error getting current time. Error:" <<
+              rcutils_get_error_string().str);
         }
         message->time_stamp = time_stamp;
         message->topic_name = queue->topic_name();
 
-        try
-        {
-          _writer->write(message);
-        } catch (std::runtime_error & e)
-        {
-            RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
+        try {
+          writer_->write(message);
+        } catch (const std::runtime_error & e) {
+          RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
         }
-        std::cerr << ".";
+        std::cerr << "." << std::flush;
         ++count;
       }
     }
-    if (completeCount == _queues.size())
+    if (complete_count == queues_.size()) {
       break;
+    }
 
     std::this_thread::sleep_for(1ms);
   }
 
-  for (auto &prodThread : _producerThreads)
-  {
-    prodThread.join();
+  for (auto & prod_thread : producer_threads_) {
+    prod_thread.join();
   }
 
-  unsigned int totalMissedMessages = 0;
-  for (const auto &queue : _queues)
-  {
-    totalMissedMessages += queue->get_missed_elements_count();
+  unsigned int total_missed_messages = 0;
+  for (const auto & queue : queues_) {
+    total_missed_messages += queue->get_missed_elements_count();
   }
-  write_results(totalMissedMessages);
+  write_results(total_missed_messages);
 }
 
-void WriterBenchmark::write_results(const unsigned int &totalMissed) const
+void WriterBenchmark::write_results(const unsigned int & total_missed) const
 {
-  unsigned int totalMessagesSent = _config.max_count * _producers.size();
-  float percentageRecorded = 100.0 - static_cast<float>(totalMissed * 100.0) / totalMessagesSent;
+  unsigned int total_messages_sent = config_.max_count * producers_.size();
+  float percentage_recorded = 100.0f - static_cast<float>(total_missed * 100.0f) /
+    total_messages_sent;
 
   RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
-  RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissed);
-  RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
-    << percentageRecorded);
+  RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << total_missed);
+  RCLCPP_INFO_STREAM(
+    get_logger(), "Percentage of all message that was successfully recorded: " <<
+      percentage_recorded);
 
-  bool newFile = false;
+  bool new_file = false;
   { // test if file exists - we want to write a csv header after creation if not
     // use std::filesystem when switching to C++17
-    std::ifstream testExistence(_resultsFile);
-    if (!testExistence)
-    {
-      newFile = true;
+    std::ifstream test_existence(results_file_);
+    if (!test_existence) {
+      new_file = true;
     }
   }
 
   // append, we want to accumulate results from multiple runs
-  std::ofstream outputFile(_resultsFile, std::ios_base::app);
-  if (!outputFile.is_open())
-  {
-    RCLCPP_ERROR_STREAM(get_logger(), "Could not open file " << _resultsFile);
+  std::ofstream output_file(results_file_, std::ios_base::app);
+  if (!output_file.is_open()) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Could not open file " << results_file_);
     return;
   }
 
-  if (newFile)
-  {
-    outputFile << "instances frequency message_size cache_size total_messages_sent ";
-    outputFile << "total_messages_missed percentage_recorded\n";
+  if (new_file) {
+    output_file << "instances frequency message_size cache_size total_messages_sent ";
+    output_file << "total_messages_missed percentage_recorded\n";
   }
 
   // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
-  outputFile << _instances << " ";
-  outputFile << _config.frequency << " ";
-  outputFile << _config.message_size << " ";
-  outputFile << _maxCacheSize << " ";
-  outputFile << totalMessagesSent << " ";
+  output_file << instances_ << " ";
+  output_file << config_.frequency << " ";
+  output_file << config_.message_size << " ";
+  output_file << max_cache_size_ << " ";
+  output_file << total_messages_sent << " ";
 
   // results of the test. Use std::setprecision if preferred
-  outputFile << totalMissed << " ";
-  outputFile << percentageRecorded << "\n";
+  output_file << total_missed << " ";
+  output_file << percentage_recorded << std::endl;
 }
 
-void WriterBenchmark::create_producers(const ProducerConfig &config)
+void WriterBenchmark::create_producers(const ProducerConfig & config)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "\nWriterBenchmark: creating " << _instances
-    << " message producers with frequency " << config.frequency
-    << " and message size in bytes " << config.message_size
-    << ". Cache is " << _maxCacheSize << ". Each will send " << config.max_count
-    << " messages before terminating");
-  const unsigned int queueMaxSize = 10;
-  for (unsigned int i = 0; i < _instances; ++i)
-  {
+  RCLCPP_INFO_STREAM(
+    get_logger(), "\nWriterBenchmark: creating " << instances_ <<
+      " message producers with frequency " << config.frequency <<
+      " and message size in bytes " << config.message_size <<
+      ". Cache is " << max_cache_size_ << ". Each will send " << config.max_count <<
+      " messages before terminating");
+  const unsigned int queue_max_size = 10;
+  for (unsigned int i = 0; i < instances_; ++i) {
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
-    auto queue = std::make_shared<ByteMessageQueue>(queueMaxSize, topic);
-    _queues.push_back(queue);
-    _producers.push_back(std::make_unique<ByteProducer>(config, queue));
+    auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
+    queues_.push_back(queue);
+    producers_.push_back(std::make_unique<ByteProducer>(config, queue));
   }
 }
 
@@ -194,32 +187,30 @@ void WriterBenchmark::create_producers(const ProducerConfig &config)
 // Also, add an option to configure compression
 void WriterBenchmark::create_writer()
 {
-  _writer = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
-  rosbag2_transport::StorageOptions storage_options{};
-  storage_options.uri = _dbFolder;
+  writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
+  rosbag2_cpp::StorageOptions storage_options{};
+  storage_options.uri = db_folder_;
   storage_options.storage_id = "sqlite3";
   storage_options.max_bagfile_size = 0;
-  storage_options.max_cache_size = _maxCacheSize;
+  storage_options.max_cache_size = max_cache_size_;
 
   // TODO(adamdbrw) generalize if converters are to be included in benchmarks
   std::string serialization_format = rmw_get_serialization_format();
-  _writer->open(storage_options, {serialization_format, serialization_format});
+  writer_->open(storage_options, {serialization_format, serialization_format});
 
-  for (size_t i = 0; i < _queues.size(); ++i)
-  {
+  for (const auto & queue : queues_) {
     rosbag2_storage::TopicMetadata topic;
-    topic.name = _queues[i]->topic_name();
+    topic.name = queue->topic_name();
     // TODO(adamdbrw) - replace with something more general if needed
     topic.type = "std_msgs::msgs::ByteMultiArray";
     topic.serialization_format = serialization_format;
-    _writer->create_topic(topic);
+    writer_->create_topic(topic);
   }
 }
 
 void WriterBenchmark::start_producers()
 {
-  for (auto &producer : _producers)
-  {
-    _producerThreads.push_back(std::thread(&ByteProducer::run, producer.get()));
+  for (auto & producer : producers_) {
+    producer_threads_.push_back(std::thread(&ByteProducer::run, producer.get()));
   }
 }

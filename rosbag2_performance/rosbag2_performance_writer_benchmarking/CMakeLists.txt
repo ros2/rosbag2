@@ -22,11 +22,18 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(std_msgs REQUIRED)
 
   add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
-  target_include_directories(writer_benchmark PRIVATE include)
-  ament_target_dependencies(writer_benchmark rclcpp std_msgs rosbag2_cpp rosbag2_storage rosbag2_transport)
+  target_include_directories(writer_benchmark
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  ament_target_dependencies(writer_benchmark
+    rclcpp
+    std_msgs
+    rosbag2_cpp
+  )
 
   install(TARGETS writer_benchmark
-    EXPORT export_${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME})
 
   if(BUILD_TESTING)

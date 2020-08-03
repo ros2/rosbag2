@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
-#define ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#ifndef ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#define ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
 
-#include <string>
-#include <vector>
 #include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-#include "message_queue.hpp"
-#include "byte_producer.hpp"
+#include "rosbag2_performance_writer_benchmarking/message_queue.hpp"
+#include "rosbag2_performance_writer_benchmarking/byte_producer.hpp"
 
 class WriterBenchmark : public rclcpp::Node
 {
@@ -36,17 +36,17 @@ private:
   void create_producers(const ProducerConfig & config);
   void create_writer();
   void start_producers();
-  void write_results(const unsigned int &totalMissed) const;
+  void write_results(const unsigned int & total_missed) const;
 
-  ProducerConfig _config;
-  unsigned int _maxCacheSize;
-  unsigned int _instances;
-  std::string _dbFolder;
-  std::string _resultsFile;
-  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> _writer;
-  std::vector<std::thread> _producerThreads;
-  std::vector<std::unique_ptr<ByteProducer>> _producers;
-  std::vector<std::shared_ptr<ByteMessageQueue>> _queues;
+  ProducerConfig config_;
+  unsigned int max_cache_size_;
+  unsigned int instances_;
+  std::string db_folder_;
+  std::string results_file_;
+  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
+  std::vector<std::thread> producer_threads_;
+  std::vector<std::unique_ptr<ByteProducer>> producers_;
+  std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
 };
 
-#endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#endif  // ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_

@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
-#define ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
+#ifndef ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
+#define ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
 
-#include <string>
-#include <queue>
-#include <utility>
-#include <mutex>
 #include <atomic>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <utility>
 
 #include "std_msgs/msg/byte_multi_array.hpp"
 
@@ -29,66 +29,69 @@ template<typename T>
 class MessageQueue
 {
 public:
-  MessageQueue(int maxSize, std::string topicName)
-  : _maxSize(maxSize), _topicName(topicName), _unsuccessfulInsertCount(0) {}
+  MessageQueue(int max_size, std::string topic_name)
+  : max_size_(max_size),
+    topic_name_(std::move(topic_name)),
+    unsuccessful_insert_count_(0)
+  {}
 
   void push(std::shared_ptr<T> elem)
   {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (_queue.size() > _maxSize) {  // We skip the element and consider it "lost"
-      ++_unsuccessfulInsertCount;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (queue_.size() > max_size_) {  // We skip the element and consider it "lost"
+      ++unsuccessful_insert_count_;
       std::cerr << "X" << std::flush;
       return;
     }
-    _queue.push(elem);
+    queue_.push(elem);
   }
 
   bool is_complete() const
   {
-    return _complete;
+    return complete_;
   }
 
   void set_complete()
   {
-    _complete = true;
+    complete_ = true;
   }
 
   bool is_empty()
   {
-    std::lock_guard<std::mutex> lock(_mutex);
-    return _queue.empty();
+    std::lock_guard<std::mutex> lock(mutex_);
+    return queue_.empty();
   }
 
   std::shared_ptr<T> pop_and_return()
   {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (_queue.empty()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (queue_.empty()) {
       throw std::out_of_range("Queue is empty, cannot pop. Check if empty first");
     }
-    auto elem = _queue.front();
-    _queue.pop();
+    auto elem = queue_.front();
+    queue_.pop();
     return elem;
   }
 
   unsigned int get_missed_elements_count() const
   {
-    return _unsuccessfulInsertCount;
+    return unsuccessful_insert_count_;
   }
 
   std::string topic_name() const
   {
-    return _topicName;
+    return topic_name_;
   }
 
 private:
-  bool _complete = false;
-  unsigned int _maxSize;
-  std::string _topicName;
-  std::atomic<unsigned int> _unsuccessfulInsertCount;
-  std::queue<std::shared_ptr<T>> _queue;
-  mutable std::mutex _mutex;
+  bool complete_ = false;
+  unsigned int max_size_;
+  std::string topic_name_;
+  std::atomic<unsigned int> unsuccessful_insert_count_;
+  std::queue<std::shared_ptr<T>> queue_;
+  mutable std::mutex mutex_;
 };
 
 typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
 
-#endif  // ROSBAG2_PERFORMAMCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
+#endif  // ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__MESSAGE_QUEUE_HPP_
