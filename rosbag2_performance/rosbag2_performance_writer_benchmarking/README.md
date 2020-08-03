@@ -9,7 +9,10 @@ Use `scripts/benchmark.sh` to run an entire set of benchmarks.
 These are currently aimed at several 100Mb/s scenarios.
 Parameters are easy to change inside the script.
 
-By default, result log files will be written to `/tmp/rosbag2_test/`.
+By default, results will be written to `/tmp/rosbag2_test/[current_date]`.
+The summary of benchmarks goes into `results.csv` file, which includes rows of execution parameters and results.
+Benchmarks also produce execution logs in a series of sub-directories in `size[size]_inst[inst]_cache[cache]/` format.
+
 Database (bag) files are removed after recording to avoid filling up the disk.
 To modify this behavior, modify the benchmark.sh script.
 

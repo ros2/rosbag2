@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <chrono>
+#include <fstream>
 #include <memory>
 #include <string>
 
@@ -28,30 +29,31 @@ using namespace std::chrono_literals;
 WriterBenchmark::WriterBenchmark()
   : rclcpp::Node("writer_benchmark")
 {
+  const std::string defaultBagFolder("/tmp/rosbag2_test");
   this->declare_parameter("frequency", 100);
   this->declare_parameter("max_count", 1000);
   this->declare_parameter("size", 1000000);
   this->declare_parameter("instances", 1);
   this->declare_parameter("max_cache_size", 1);
-  this->declare_parameter("db_folder", std::string("/tmp/rosbag2_test"));
+  this->declare_parameter("db_folder", defaultBagFolder);
+  this->declare_parameter("results_file", defaultBagFolder + "/results.csv");
 
   this->get_parameter("frequency", _config.frequency);
   if (_config.frequency == 0)
   {
-      RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
-      rclcpp::shutdown(nullptr, "frequency error");
-      return;
+    RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
+    rclcpp::shutdown(nullptr, "frequency error");
+    return;
   }
 
   this->get_parameter("max_cache_size", _maxCacheSize);
   this->get_parameter("db_folder", _dbFolder);
+  this->get_parameter("results_file", _resultsFile);
   this->get_parameter("max_count", _config.max_count);
   this->get_parameter("size", _config.message_size);
+  this->get_parameter("instances", _instances);
 
-  unsigned int instances = 1;
-  this->get_parameter("instances", instances);
-
-  create_producers(_config, instances);
+  create_producers(_config);
   create_writer();
 }
 
@@ -122,22 +124,64 @@ void WriterBenchmark::start_benchmark()
   {
     totalMissedMessages += queue->get_missed_elements_count();
   }
-
-  RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
-  RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissedMessages);
-  RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
-    << 100.0 - (float)totalMissedMessages * 100.0 / (_config.max_count * _producers.size()));
+  write_results(totalMissedMessages);
 }
 
-void WriterBenchmark::create_producers(const ProducerConfig &config, unsigned int instances)
+void WriterBenchmark::write_results(const unsigned int &totalMissed) const
 {
-  RCLCPP_INFO_STREAM(get_logger(), "\nWriterBenchmark: creating " << instances
+  unsigned int totalMessagesSent = _config.max_count * _producers.size();
+  float percentageRecorded = 100.0 - static_cast<float>(totalMissed * 100.0) / totalMessagesSent;
+
+  RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
+  RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << totalMissed);
+  RCLCPP_INFO_STREAM(get_logger(), "Percentage of all message that was successfully recorded: "
+    << percentageRecorded);
+
+  bool newFile = false;
+  { // test if file exists - we want to write a csv header after creation if not
+    // use std::filesystem when switching to C++17
+    std::ifstream testExistence(_resultsFile);
+    if (!testExistence)
+    {
+      newFile = true;
+    }
+  }
+
+  // append, we want to accumulate results from multiple runs
+  std::ofstream outputFile(_resultsFile, std::ios_base::app);
+  if (!outputFile.is_open())
+  {
+    RCLCPP_ERROR_STREAM(get_logger(), "Could not open file " << _resultsFile);
+    return;
+  }
+
+  if (newFile)
+  {
+    outputFile << "instances frequency message_size cache_size total_messages_sent ";
+    outputFile << "total_messages_missed percentage_recorded\n";
+  }
+
+  // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
+  outputFile << _instances << " ";
+  outputFile << _config.frequency << " ";
+  outputFile << _config.message_size << " ";
+  outputFile << _maxCacheSize << " ";
+  outputFile << totalMessagesSent << " ";
+
+  // results of the test. Use std::setprecision if preferred
+  outputFile << totalMissed << " ";
+  outputFile << percentageRecorded << "\n";
+}
+
+void WriterBenchmark::create_producers(const ProducerConfig &config)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "\nWriterBenchmark: creating " << _instances
     << " message producers with frequency " << config.frequency
     << " and message size in bytes " << config.message_size
     << ". Cache is " << _maxCacheSize << ". Each will send " << config.max_count
     << " messages before terminating");
   const unsigned int queueMaxSize = 10;
-  for (unsigned int i = 0; i < instances; ++i)
+  for (unsigned int i = 0; i < _instances; ++i)
   {
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
     auto queue = std::make_shared<ByteMessageQueue>(queueMaxSize, topic);

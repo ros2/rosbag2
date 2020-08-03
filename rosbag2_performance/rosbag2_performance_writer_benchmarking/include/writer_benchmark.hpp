@@ -33,13 +33,16 @@ public:
   void start_benchmark();
 
 private:
-  void create_producers(const ProducerConfig & config, unsigned int instances);
+  void create_producers(const ProducerConfig & config);
   void create_writer();
   void start_producers();
+  void write_results(const unsigned int &totalMissed) const;
 
   ProducerConfig _config;
   unsigned int _maxCacheSize;
+  unsigned int _instances;
   std::string _dbFolder;
+  std::string _resultsFile;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> _writer;
   std::vector<std::thread> _producerThreads;
   std::vector<std::unique_ptr<ByteProducer>> _producers;
