@@ -76,7 +76,7 @@ class TestRos2BagRecord(unittest.TestCase):
             QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL
 
     def test_interpret_dict_as_qos_profile_negative(self):
-        qos_dict = {'depth': '-1'}
+        qos_dict = {'depth': -1}
         with self.assertRaises(ValueError):
             interpret_dict_as_qos_profile(qos_dict)
         qos_dict = {'deadline': {'sec': -1, 'nsec': -1}}
