@@ -57,6 +57,8 @@ def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> QoSProfile:
     new_profile_dict = {}
     for policy_key, policy_value in qos_profile_dict.items():
         if policy_key in _DURATION_KEYS:
+            if policy_value < 0:
+                raise ValueError('`{}` may not be a negative value.'.format(policy_key))
             new_profile_dict[policy_key] = dict_to_duration(policy_value)
         elif policy_key in _QOS_POLICY_FROM_SHORT_NAME:
             new_profile_dict[policy_key] = _QOS_POLICY_FROM_SHORT_NAME[policy_key](policy_value)
