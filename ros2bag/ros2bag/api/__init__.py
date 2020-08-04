@@ -44,10 +44,8 @@ def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     """Convert a QoS duration profile from YAML into an rclpy Duration."""
     if time_dict:
         try:
-            if time_dict['sec'] < 0:
+            if Duration(seconds=time_dict['sec'], nanoseconds=time_dict['nsec'] < 0:
                 raise ValueError('`sec` may not be a negative value.')
-            if time_dict['nsec'] < 0:
-                raise ValueError('`nsec` may not be a negative value.')
             return Duration(seconds=time_dict['sec'], nanoseconds=time_dict['nsec'])
         except KeyError:
             raise ValueError(
