@@ -133,8 +133,8 @@ void SequentialCompressionWriter::open(
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
 
-  if (storage_options.max_bagfile_size != 0 &&
-    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+  if (max_bagfile_size_ != 0 &&
+    max_bagfile_size_ < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
@@ -151,7 +151,8 @@ void SequentialCompressionWriter::reset()
 {
   if (!base_folder_.empty()) {
     if (!compressor_) {
-      throw std::runtime_error{"Compressor was not opened!"};
+      // don't throw an exception in the dtor
+      return;
     }
 
     // Reset may be called before initializing the compressor (ex. bad options).
@@ -223,7 +224,7 @@ void SequentialCompressionWriter::remove_topic(
 void SequentialCompressionWriter::compress_last_file()
 {
   if (!compressor_) {
-    throw std::runtime_error{"Compressor was not opened!"};
+    throw std::runtime_error{"compress_last_file: Compressor was not opened!"};
   }
 
   const auto to_compress = rcpputils::fs::path{metadata_.relative_file_paths.back()};
