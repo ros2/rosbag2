@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <memory>
-
+#include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
 
 // TODO(adamdbrw) the benchmkark being ROS node is not necessary, only used for logging
@@ -22,7 +22,14 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto bench = std::make_shared<WriterBenchmark>();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(bench);
+
+  // The benchmark has its own control loop but uses spinning for parameters
+  std::thread spin_thread([&executor]() {executor.spin();});
   bench->start_benchmark();
   RCLCPP_INFO(bench->get_logger(), "Benchmark terminated");
+  rclcpp::shutdown();
+  spin_thread.join();
   return 0;
 }
