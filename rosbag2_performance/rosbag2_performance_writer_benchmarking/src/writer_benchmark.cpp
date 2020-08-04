@@ -26,8 +26,8 @@
 
 using namespace std::chrono_literals;
 
-WriterBenchmark::WriterBenchmark()
-: rclcpp::Node("writer_benchmark")
+WriterBenchmark::WriterBenchmark(const std::string & name)
+: rclcpp::Node(name)
 {
   const std::string default_bag_folder("/tmp/rosbag2_test");
   this->declare_parameter("frequency", 100);

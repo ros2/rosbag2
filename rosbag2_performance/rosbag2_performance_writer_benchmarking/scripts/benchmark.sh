@@ -1,5 +1,4 @@
 # A very rough script to run batches of experiments. Missing checks and command line parametrization
-# Results are saved in ${test_dir}/size${sz}_inst${inst}_cache${cache} directories with ${try}.log name
 
 trap ctrlc SIGINT
 ctrlc_sent=0
@@ -10,9 +9,10 @@ function ctrlc()
 }
 
 test_dir=/tmp/rosbag2_test/$(date +%Y%m%d_%H%M%S)
-db_path=${test_dir}/bag
-mkdir -p ${db_path}
+mkdir -p ${test_dir}
 echo "${test_dir} created"
+db_path=${test_dir}/bag
+rm -fr ${db_path}
 summary_file=${test_dir}/results.csv
 
 freq=100; #Hz
@@ -42,8 +42,9 @@ do
           -p max_cache_size:=${cache} \
           -p db_folder:=${db_path} \
           -p results_file:=${summary_file} \
+          --ros-args -r __node:=rosbag2_performance_writer_benchmarking_node_batch \
           2> ${outfile}
-        rm -fr ${db_path}/bag*
+        rm -fr ${db_path}
         if [[ $ctrlc_sent -eq 1 ]]; then
           echo -e "\e[31mQuitting prematurely due to Ctrl-C - some results aren't saved and some won't be reliable\e[0m]"
           exit

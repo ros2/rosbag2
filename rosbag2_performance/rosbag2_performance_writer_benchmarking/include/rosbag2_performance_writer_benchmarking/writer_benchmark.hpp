@@ -29,7 +29,7 @@
 class WriterBenchmark : public rclcpp::Node
 {
 public:
-  WriterBenchmark();
+  explicit WriterBenchmark(const std::string & name);
   void start_benchmark();
 
 private:

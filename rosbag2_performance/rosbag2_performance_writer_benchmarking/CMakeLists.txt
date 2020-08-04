@@ -17,7 +17,6 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(rcutils REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
-  find_package(rosbag2_transport REQUIRED)
   find_package(rmw REQUIRED)
   find_package(std_msgs REQUIRED)
 

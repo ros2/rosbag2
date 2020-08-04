@@ -21,7 +21,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto bench = std::make_shared<WriterBenchmark>();
+  auto bench = std::make_shared<WriterBenchmark>("rosbag2_performance_writer_benchmarking_node");
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(bench);
 
