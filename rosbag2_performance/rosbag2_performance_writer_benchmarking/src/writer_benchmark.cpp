@@ -123,7 +123,7 @@ void WriterBenchmark::start_benchmark()
 
 void WriterBenchmark::write_results(const unsigned int & total_missed) const
 {
-  unsigned int total_messages_sent = config_.max_count * producers_.size();
+  auto total_messages_sent = config_.max_count * producers_.size();
   float percentage_recorded = 100.0f - static_cast<float>(total_missed * 100.0f) /
     total_messages_sent;
 
