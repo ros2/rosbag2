@@ -74,3 +74,17 @@ class TestRos2BagRecord(unittest.TestCase):
         assert qos_profiles[topic_name_2].avoid_ros_namespace_conventions == expected_convention
         assert qos_profiles[topic_name_2].history == \
             QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL
+
+    def test_interpret_dict_as_qos_profile_negative(self):
+        qos_dict = {'history': 'keep_all', 'depth': -1}
+        with self.assertRaises(ValueError):
+            interpret_dict_as_qos_profile(qos_dict)
+        qos_dict = {'history': 'keep_all', 'deadline': {'sec': -1, 'nsec': -1}}
+        with self.assertRaises(ValueError):
+            interpret_dict_as_qos_profile(qos_dict)
+        qos_dict = {'history': 'keep_all', 'lifespan': {'sec': -1, 'nsec': -1}}
+        with self.assertRaises(ValueError):
+            interpret_dict_as_qos_profile(qos_dict)
+        qos_dict = {'history': 'keep_all', 'liveliness_lease_duration': {'sec': -1, 'nsec': -1}}
+        with self.assertRaises(ValueError):
+            interpret_dict_as_qos_profile(qos_dict)
