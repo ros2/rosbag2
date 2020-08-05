@@ -44,6 +44,9 @@ def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
     """Convert a QoS duration profile from YAML into an rclpy Duration."""
     if time_dict:
         try:
+            if (Duration(seconds=time_dict['sec'], nanoseconds=time_dict['nsec']) <
+                    Duration(seconds=0)):
+                raise ValueError('Time duration may not be a negative value.')
             return Duration(seconds=time_dict['sec'], nanoseconds=time_dict['nsec'])
         except KeyError:
             raise ValueError(
@@ -61,6 +64,8 @@ def interpret_dict_as_qos_profile(qos_profile_dict: Dict) -> QoSProfile:
         elif policy_key in _QOS_POLICY_FROM_SHORT_NAME:
             new_profile_dict[policy_key] = _QOS_POLICY_FROM_SHORT_NAME[policy_key](policy_value)
         elif policy_key in _VALUE_KEYS:
+            if policy_value < 0:
+                raise ValueError('`{}` may not be a negative value.'.format(policy_key))
             new_profile_dict[policy_key] = policy_value
         else:
             raise ValueError('Unexpected key `{}` for QoS profile.'.format(policy_key))
