@@ -3,6 +3,12 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_) (`#481 <https://github.com/ros2/rosbag2/issues/481>`_)
+  Co-authored-by: Dirk Thomas <dirk-thomas@users.noreply.github.com>
+* Contributors: Karsten Knese
+
 0.3.3 (2020-06-23)
 ------------------
 * export shared_queues_vendor for modern cmake support (`#434 <https://github.com/ros2/rosbag2/issues/434>`_) (`#438 <https://github.com/ros2/rosbag2/issues/438>`_)

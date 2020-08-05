@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix exception thrown given invalid arguments with compression enabled (`#488 <https://github.com/ros2/rosbag2/issues/488>`_) (`#489 <https://github.com/ros2/rosbag2/issues/489>`_)
+* Contributors: Devin Bonnie
+
 0.3.3 (2020-06-23)
 ------------------
 
