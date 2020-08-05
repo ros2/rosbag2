@@ -3,8 +3,8 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.3.4 (2020-08-05)
+------------------
 * fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_) (`#481 <https://github.com/ros2/rosbag2/issues/481>`_)
   Co-authored-by: Dirk Thomas <dirk-thomas@users.noreply.github.com>
 * Contributors: Karsten Knese

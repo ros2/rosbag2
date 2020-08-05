@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.4 (2020-08-05)
+------------------
 * Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_) (`#490 <https://github.com/ros2/rosbag2/issues/490>`_)
   Co-authored-by: Jesse Ikawa <64169356+jikawa-az@users.noreply.github.com>
 * Contributors: Devin Bonnie
