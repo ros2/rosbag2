@@ -149,11 +149,7 @@ void SequentialCompressionWriter::open(
 
 void SequentialCompressionWriter::reset()
 {
-  if (!base_folder_.empty()) {
-    if (!compressor_) {
-      // don't throw an exception in the dtor
-      return;
-    }
+  if (!base_folder_.empty() && compressor_) {
 
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
