@@ -8,6 +8,8 @@
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
+  <author email="mabel@openrobotics.org">Mabel Zhang</author>
+
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
   <depend>pybind11_vendor</depend>

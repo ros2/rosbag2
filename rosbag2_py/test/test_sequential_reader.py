@@ -35,8 +35,7 @@ def test_sequential_reader():
     type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
 
     # Set filter for topic of string type
-    storage_filter = rosbag2_py.StorageFilter()
-    storage_filter.topics = ['/topic']
+    storage_filter = rosbag2_py.StorageFilter(topics=['/topic'])
     reader.set_filter(storage_filter)
 
     msg_counter = 0
