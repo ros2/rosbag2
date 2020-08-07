@@ -33,6 +33,19 @@
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
+
 #include "../logging.hpp"
 
 namespace
@@ -75,9 +88,29 @@ void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  std::vector<std::string> pragmas;
   if (!storage_options.storage_config_uri.empty()) {
-    fprintf(stderr, "going to open config file: %s\n", storage_options.storage_config_uri.c_str());
-    throw std::runtime_error("storage specific config file is not yet implemented.");
+    try {
+      auto key =
+        io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY ? "read" : "write";
+      YAML::Node yaml_file = YAML::LoadFile(storage_options.storage_config_uri);
+      pragmas = yaml_file[key]["pragmas"].as<std::vector<std::string>>();
+    } catch (const YAML::Exception & ex) {
+      throw std::runtime_error(std::string("Exception on parsing info file: ") + ex.what());
+    }
+    // poor developer's sqlinjection prevention ;-)
+    std::string invalid_characters = {"';\""};
+    auto throw_on_invalid_character = [](const auto & pragmas, const auto & invalid_characters) {
+        for (const auto & pragma_string : pragmas) {
+          auto pos = pragma_string.find_first_of(invalid_characters);
+          if (pos != std::string::npos) {
+            throw std::runtime_error(
+                    std::string("Invalid characters in sqlite3 config file: ") +
+                    pragma_string[pos]);
+          }
+        }
+      };
+    throw_on_invalid_character(pragmas, invalid_characters);
   }
 
   if (is_read_write(io_flag)) {
@@ -99,7 +132,7 @@ void SqliteStorage::open(
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag);
+    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag, std::move(pragmas));
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }

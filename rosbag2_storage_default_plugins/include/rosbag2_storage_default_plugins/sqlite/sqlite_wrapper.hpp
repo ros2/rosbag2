@@ -35,7 +35,10 @@ using DBPtr = sqlite3 *;
 class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteWrapper
 {
 public:
-  SqliteWrapper(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag);
+  SqliteWrapper(
+    const std::string & uri,
+    rosbag2_storage::storage_interfaces::IOFlag io_flag,
+    std::vector<std::string> && pragmas = {});
   SqliteWrapper();
   ~SqliteWrapper();
 
