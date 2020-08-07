@@ -25,7 +25,8 @@ def _import(name):
                 "\nThe C extension '%s' failed to be imported while being present on the system." \
                 " Please refer to '%s' for possible solutions" % \
                 (e.path, 'https://index.ros.org/doc/ros2/Troubleshooting/'
-                         '#import-failing-even-with-library-present-on-the-system')
+                         'Installation-Troubleshooting/'
+                         '#import-failing-without-library-present-on-the-system')
         raise
 
 
