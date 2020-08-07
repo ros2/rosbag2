@@ -72,8 +72,15 @@ SqliteStorage::~SqliteStorage()
 }
 
 void SqliteStorage::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
+  const std::string & uri,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag,
+  const std::string & config_file_uri)
 {
+  if (!config_file_uri.empty()) {
+    fprintf(stderr, "going to open config file: %s\n", config_file_uri.c_str());
+    throw std::runtime_error("storage specific config file is not yet implemented.");
+  }
+
   if (is_read_write(io_flag)) {
     relative_path_ = uri + FILE_EXTENSION;
 

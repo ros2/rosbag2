@@ -103,6 +103,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "topics",
     "include_hidden_topics",
     "qos_profile_overrides",
+    "storage_config_file",
     nullptr};
 
   char * uri = nullptr;
@@ -120,9 +121,10 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   uint64_t max_cache_size = 0u;
   PyObject * topics = nullptr;
   bool include_hidden_topics = false;
+  char * storage_config_file = nullptr;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKKObO", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKKKObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
@@ -137,7 +139,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_cache_size,
       &topics,
       &include_hidden_topics,
-      &qos_profile_overrides
+      &qos_profile_overrides,
+      &storage_config_file
   ))
   {
     return nullptr;
@@ -145,6 +148,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
   storage_options.max_bagfile_size = (uint64_t) max_bagfile_size;
   storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration);
   storage_options.max_cache_size = max_cache_size;

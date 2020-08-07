@@ -85,6 +85,10 @@ void SequentialWriter::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  // TODO(karsten1987): Check if we can just storage the complete options struct
+  // Should these configs be serialized in the metadata somehow?
+  storage_config_uri_ = storage_options.storage_config_uri;
+
   base_folder_ = storage_options.uri;
   max_bagfile_size_ = storage_options.max_bagfile_size;
   max_bagfile_duration = std::chrono::seconds(storage_options.max_bagfile_duration);
@@ -115,7 +119,8 @@ void SequentialWriter::open(
 
   const auto storage_uri = format_storage_uri(base_folder_, 0);
 
-  storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
+  storage_ = storage_factory_->open_read_write(
+    storage_uri, storage_options.storage_id, storage_options.storage_config_uri);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
@@ -196,7 +201,8 @@ void SequentialWriter::split_bagfile()
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+  storage_ = storage_factory_->open_read_write(
+    storage_uri, metadata_.storage_identifier, storage_config_uri_);
 
   if (!storage_) {
     std::stringstream errmsg;

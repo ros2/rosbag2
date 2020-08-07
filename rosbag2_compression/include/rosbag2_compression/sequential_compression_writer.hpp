@@ -151,6 +151,8 @@ private:
 
   rosbag2_compression::CompressionOptions compression_options_{};
 
+  std::string storage_config_uri_{};
+
   bool should_compress_last_file_{true};
 
   // Closes the current backed storage and opens the next bagfile.

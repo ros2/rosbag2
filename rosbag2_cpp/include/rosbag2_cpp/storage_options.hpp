@@ -38,6 +38,10 @@ public:
   // before these being written to disk.
   // Defaults to 0, and effectively disables the caching.
   uint64_t max_cache_size = 0;
+
+  // Storage specific configuration file.
+  // Defaults to empty string.
+  std::string storage_config_uri = "";
 };
 
 }  // namespace rosbag2_cpp

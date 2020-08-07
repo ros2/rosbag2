@@ -48,12 +48,17 @@ public:
    * Opens the storage plugin.
    * \param uri is the path to the bagfile. Exact behavior depends on the io_flag passed.
    * \param io_flag is a hint for the type of storage plugin to open depending on the io operations requested.
+   * \param config_file_uri is a path to a storage specific file path.
    * If IOFlag::READ_ONLY is passed, then only read operations are guaranteed.
    * The uri passed should be the exact relative path to the bagfile.
    * If IOFlag::READ_WRITE is passed, then a new bagfile is created with guaranteed read and write operations.
    * The storage plugin will append the uri in the case of creating a new bagfile backing.
+   * The storage can load specific configurations by accessing a config file given in the `config_file_uri` parameter.
    */
-  virtual void open(const std::string & uri, IOFlag io_flag) = 0;
+  virtual void open(
+      const std::string & uri,
+      IOFlag io_flag,
+      const std::string & config_file_uri) = 0;
 };
 
 }  // namespace storage_interfaces

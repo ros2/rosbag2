@@ -31,10 +31,16 @@ public:
   virtual ~StorageFactoryInterface() = default;
 
   virtual std::shared_ptr<storage_interfaces::ReadOnlyInterface>
-  open_read_only(const std::string & uri, const std::string & storage_id) = 0;
+  open_read_only(
+    const std::string & uri,
+    const std::string & storage_id,
+    const std::string & storage_config_uri) = 0;
 
   virtual std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(const std::string & uri, const std::string & storage_id) = 0;
+  open_read_write(
+    const std::string & uri,
+    const std::string & storage_id,
+    const std::string & storage_config_uri) = 0;
 };
 
 }  // namespace rosbag2_storage

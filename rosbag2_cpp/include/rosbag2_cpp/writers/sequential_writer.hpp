@@ -127,6 +127,8 @@ private:
 
   rosbag2_storage::BagMetadata metadata_;
 
+  std::string storage_config_uri_;
+
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();
 

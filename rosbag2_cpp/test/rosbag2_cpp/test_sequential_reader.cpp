@@ -70,9 +70,9 @@ public:
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
 
-    EXPECT_CALL(*storage_factory, open_read_only(_, _));
+    EXPECT_CALL(*storage_factory, open_read_only(_, _, _));
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
-      [this, relative_file_path](const std::string & path, const std::string & /* storage_id */) {
+      [this, relative_file_path](const std::string & path, const std::string & /* storage_id */, const std::string & /* storage_config_uri */) {
         EXPECT_STREQ(relative_file_path.c_str(), path.c_str());
         return storage_;
       });

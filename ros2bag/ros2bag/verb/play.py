@@ -56,6 +56,9 @@ class PlayVerb(VerbExtension):
             '--remap', '-m', default='', nargs='+',
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
+        parser.add_argument(
+            '--storage-config-file', default='', type=FileType('r'),
+            help='Path to a yaml file defining storage specific configurations.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -82,4 +85,5 @@ class PlayVerb(VerbExtension):
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,
-            topic_remapping=args.remap)
+            topic_remapping=args.remap,
+            storage_config_file=args.storage_config_file.name)

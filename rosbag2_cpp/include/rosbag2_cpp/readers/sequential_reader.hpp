@@ -143,6 +143,7 @@ protected:
 
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
+  std::string storage_config_uri_{};  // this should go
 };
 
 }  // namespace readers

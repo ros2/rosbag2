@@ -88,6 +88,9 @@ class RecordVerb(VerbExtension):
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
+        parser.add_argument(
+            '--storage-config-file', default='', type=FileType('r'),
+            help='Path to a yaml file defining storage specific configurations.')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -136,7 +139,8 @@ class RecordVerb(VerbExtension):
                 max_bagfile_duration=args.max_bag_duration,
                 max_cache_size=args.max_cache_size,
                 include_hidden_topics=args.include_hidden_topics,
-                qos_profile_overrides=qos_profile_overrides)
+                qos_profile_overrides=qos_profile_overrides,
+                storage_config_file=args.storage_config_file.name)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -159,7 +163,8 @@ class RecordVerb(VerbExtension):
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,
-                qos_profile_overrides=qos_profile_overrides)
+                qos_profile_overrides=qos_profile_overrides,
+                storage_config_fiel=args.storage_config_file.name)
         else:
             self._subparser.print_help()
 

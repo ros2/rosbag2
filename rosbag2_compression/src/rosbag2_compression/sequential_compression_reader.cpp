@@ -73,7 +73,7 @@ void SequentialCompressionReader::open(
     setup_decompression();
 
     storage_ = storage_factory_->open_read_only(
-      *current_file_iterator_, metadata_.storage_identifier);
+      *current_file_iterator_, metadata_.storage_identifier, storage_options.storage_config_uri);
     if (!storage_) {
       std::stringstream errmsg;
       errmsg << "No storage could be initialized for: \"" <<

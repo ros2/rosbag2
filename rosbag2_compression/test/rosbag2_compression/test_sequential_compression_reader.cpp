@@ -51,7 +51,7 @@ public:
 
     ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
-    ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
+    ON_CALL(*storage_factory_, open_read_only(_, _, _)).WillByDefault(Return(storage_));
   }
 
   rosbag2_storage::BagMetadata construct_default_bag_metadata() const
@@ -106,7 +106,7 @@ TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)
   ON_CALL(*compression_factory, create_decompressor(_))
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(1);
+  EXPECT_CALL(*storage_factory_, open_read_only(_, _, _)).Times(1);
 
   auto compression_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
     std::move(compression_factory),
@@ -155,7 +155,7 @@ TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
   ON_CALL(*compression_factory, create_decompressor(_))
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(1);
+  EXPECT_CALL(*storage_factory_, open_read_only(_, _, _)).Times(1);
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
     std::move(compression_factory),
@@ -194,7 +194,7 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
   // open_read_only should be called twice when opening 2 split bags
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(2);
+  EXPECT_CALL(*storage_factory_, open_read_only(_, _, _)).Times(2);
   // storage::has_next() is called twice when reader::has_next() is called
   EXPECT_CALL(*storage_, has_next()).Times(2)
   .WillOnce(Return(false))  // Load the next file

@@ -82,6 +82,10 @@ void SequentialReader::reset()
 void SequentialReader::open(
   const StorageOptions & storage_options, const ConverterOptions & converter_options)
 {
+  // TODO(karsten1987): Check if we can just storage the complete options struct
+  // Should these configs be serialized in the metadata somehow?
+  storage_config_uri_ = storage_options.storage_config_uri;
+
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
@@ -97,13 +101,13 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
 
     storage_ = storage_factory_->open_read_only(
-      get_current_file(), storage_options.storage_id);
+      get_current_file(), storage_options.storage_id, storage_options.storage_config_uri);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
   } else {
     storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
+      storage_options.uri, storage_options.storage_id, storage_options.storage_config_uri);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
@@ -137,7 +141,7 @@ bool SequentialReader::has_next()
     if (!storage_->has_next() && has_next_file()) {
       load_next_file();
       storage_ = storage_factory_->open_read_only(
-        get_current_file(), metadata_.storage_identifier);
+        get_current_file(), metadata_.storage_identifier, storage_config_uri_);
     }
 
     return storage_->has_next();

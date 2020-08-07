@@ -52,7 +52,8 @@ std::shared_ptr<InterfaceT>
 get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & storage_id,
-  const std::string & uri)
+  const std::string & uri,
+  const std::string & storage_config_uri)
 {
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(registered_classes.begin(), registered_classes.end(), storage_id);
@@ -72,7 +73,7 @@ get_interface_instance(
   }
 
   try {
-    instance->open(uri, flag);
+    instance->open(uri, flag, storage_config_uri);
     return instance;
   } catch (const std::runtime_error & ex) {
     ROSBAG2_STORAGE_LOG_ERROR_STREAM(
@@ -104,9 +105,10 @@ public:
   virtual ~StorageFactoryImpl() = default;
 
   std::shared_ptr<ReadWriteInterface> open_read_write(
-    const std::string & uri, const std::string & storage_id)
+    const std::string & uri, const std::string & storage_id, const std::string & storage_config_uri)
   {
-    auto instance = get_interface_instance(read_write_class_loader_, storage_id, uri);
+    auto instance =
+      get_interface_instance(read_write_class_loader_, storage_id, uri, storage_config_uri);
 
     if (instance == nullptr) {
       ROSBAG2_STORAGE_LOG_ERROR_STREAM(
@@ -117,14 +119,15 @@ public:
   }
 
   std::shared_ptr<ReadOnlyInterface> open_read_only(
-    const std::string & uri, const std::string & storage_id)
+    const std::string & uri, const std::string & storage_id, const std::string & storage_config_uri)
   {
     // try to load the instance as read_only interface
-    auto instance = get_interface_instance(read_only_class_loader_, storage_id, uri);
+    auto instance = get_interface_instance(
+      read_only_class_loader_, storage_id, uri, storage_config_uri);
     // try to load as read_write if not successful
     if (instance == nullptr) {
       instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
-        read_write_class_loader_, storage_id, uri);
+        read_write_class_loader_, storage_id, uri, storage_config_uri);
     }
 
     if (instance == nullptr) {

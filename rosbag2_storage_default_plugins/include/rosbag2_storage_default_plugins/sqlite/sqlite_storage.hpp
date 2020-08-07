@@ -51,7 +51,8 @@ public:
   void open(
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
-    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
+    const std::string & config_file_uri = "") override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 

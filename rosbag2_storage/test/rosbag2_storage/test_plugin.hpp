@@ -29,7 +29,10 @@ class TestPlugin : public rosbag2_storage::storage_interfaces::ReadWriteInterfac
 public:
   ~TestPlugin() override;
 
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
+  void open(
+    const std::string & uri,
+    rosbag2_storage::storage_interfaces::IOFlag flag,
+    const std::string & config_file_uri) override;
 
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
