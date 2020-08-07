@@ -251,7 +251,9 @@ void SequentialCompressionWriter::split_bagfile()
     base_folder_,
     metadata_.relative_file_paths.size());
 
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier, storage_config_uri_);
+  storage_ = storage_factory_->open_read_write(
+    storage_uri, metadata_.storage_identifier,
+    storage_config_uri_);
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();

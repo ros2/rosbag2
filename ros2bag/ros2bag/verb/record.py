@@ -89,7 +89,7 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         parser.add_argument(
-            '--storage-config-file', default='', type=FileType('r'),
+            '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations.')
         self._subparser = parser
 
@@ -117,6 +117,10 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        storage_config_file = ''
+        if args.storage_config_file:
+            storage_config_file = args.storage_config_file.name
+
         if args.all:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -140,7 +144,7 @@ class RecordVerb(VerbExtension):
                 max_cache_size=args.max_cache_size,
                 include_hidden_topics=args.include_hidden_topics,
                 qos_profile_overrides=qos_profile_overrides,
-                storage_config_file=args.storage_config_file.name)
+                storage_config_file=storage_config_file)
         elif args.topics and len(args.topics) > 0:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -164,7 +168,7 @@ class RecordVerb(VerbExtension):
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,
                 qos_profile_overrides=qos_profile_overrides,
-                storage_config_fiel=args.storage_config_file.name)
+                storage_config_file=storage_config_file)
         else:
             self._subparser.print_help()
 

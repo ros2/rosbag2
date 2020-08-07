@@ -72,7 +72,9 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
   }
 
   auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
-  EXPECT_CALL(*storage_factory, open_read_only(_, kStorageId, _)).Times(1).WillOnce(Return(storage_));
+  EXPECT_CALL(
+    *storage_factory,
+    open_read_only(_, kStorageId, _)).Times(1).WillOnce(Return(storage_));
 
   auto metadata_io = std::make_unique<StrictMock<MockMetadataIo>>();
   EXPECT_CALL(*metadata_io, metadata_file_exists).Times(1).WillOnce(Return(false));

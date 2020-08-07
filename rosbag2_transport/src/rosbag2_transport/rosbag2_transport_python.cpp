@@ -241,6 +241,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "qos_profile_overrides",
     "loop",
     "topic_remapping",
+    "storage_config_file",
     nullptr
   };
 
@@ -253,8 +254,9 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   PyObject * qos_profile_overrides{nullptr};
   bool loop = false;
   PyObject * topic_remapping = nullptr;
+  char * storage_config_file = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
@@ -263,13 +265,15 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       &topics,
       &qos_profile_overrides,
       &loop,
-      &topic_remapping))
+      &topic_remapping,
+      &storage_config_file))
   {
     return nullptr;
   }
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;

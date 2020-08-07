@@ -56,9 +56,9 @@ public:
    * The storage can load specific configurations by accessing a config file given in the `config_file_uri` parameter.
    */
   virtual void open(
-      const std::string & uri,
-      IOFlag io_flag,
-      const std::string & config_file_uri) = 0;
+    const std::string & uri,
+    IOFlag io_flag,
+    const std::string & config_file_uri) = 0;
 };
 
 }  // namespace storage_interfaces
