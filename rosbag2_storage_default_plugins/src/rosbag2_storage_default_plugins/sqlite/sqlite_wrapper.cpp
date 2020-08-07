@@ -31,7 +31,9 @@ namespace rosbag2_storage_plugins
 {
 
 SqliteWrapper::SqliteWrapper(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
+  const std::string & uri,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag,
+  std::vector<std::string> && pragmas)
 : db_ptr(nullptr)
 {
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
@@ -45,7 +47,7 @@ SqliteWrapper::SqliteWrapper(
       throw SqliteException{errmsg.str()};
     }
     // throws an exception if the database is not valid.
-    prepare_statement("PRAGMA schema_version;")->execute_and_reset();
+    pragmas.push_back("schema_version;");
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
@@ -56,8 +58,33 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    prepare_statement("PRAGMA journal_mode = WAL;")->execute_and_reset();
-    prepare_statement("PRAGMA synchronous = NORMAL;")->execute_and_reset();
+
+    auto journal_mode_set = std::find_if(
+      pragmas.begin(), pragmas.end(),
+      [](const auto & pragma) {
+        if (pragma.rfind("journal_mode", 0) == 0) {
+          return true;
+        }
+        return false;
+      });
+    if (journal_mode_set == pragmas.end()) {
+      pragmas.push_back("journal_mode = WAL");
+    }
+    auto synchronous_set = std::find_if(
+      pragmas.begin(), pragmas.end(),
+      [](const auto & pragma) {
+        if (pragma.rfind("synchronous", 0) == 0) {
+          return true;
+        }
+        return false;
+      });
+    if (synchronous_set == pragmas.end()) {
+      pragmas.push_back("synchronous = NORMAL");
+    }
+  }
+
+  for (const auto & pragma : pragmas) {
+    prepare_statement(std::string("PRAGMA ") + pragma + ";")->execute_and_reset();
   }
 
   sqlite3_extended_result_codes(db_ptr, 1);
