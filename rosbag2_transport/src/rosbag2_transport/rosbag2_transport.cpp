@@ -88,7 +88,12 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
 {
   if (!transport_node_) {
     auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
-    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2", node_options);
+
+    unsigned int seed = time(NULL);
+    std::string random_suffix = std::to_string(rand_r(&seed) % 1000000);
+    transport_node_ = std::make_shared<Rosbag2Node>(
+      node_prefix + "_rosbag2_" +
+      random_suffix, node_options);
   }
   return transport_node_;
 }
