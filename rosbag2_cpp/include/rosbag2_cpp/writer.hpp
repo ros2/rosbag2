@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
@@ -115,6 +116,7 @@ public:
   }
 
 private:
+  std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 
