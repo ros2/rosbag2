@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <mutex>
 
 #include "rclcpp/qos.hpp"
 
@@ -102,7 +101,6 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
-  std::mutex writer_mutex_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
   std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;

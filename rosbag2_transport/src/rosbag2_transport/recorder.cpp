@@ -140,7 +140,6 @@ void Recorder::subscribe_topics(
 
 void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
@@ -178,7 +177,6 @@ Recorder::create_subscription(
       }
       bag_message->time_stamp = time_stamp;
 
-      std::lock_guard<std::mutex> writer_lock(writer_mutex_);
       writer_->write(bag_message);
     });
   return subscription;
