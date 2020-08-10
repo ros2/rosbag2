@@ -136,6 +136,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
 }
+
 TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
 {
   // Ensure rosbag2 can receive Transient Local Durability "latched messages"
