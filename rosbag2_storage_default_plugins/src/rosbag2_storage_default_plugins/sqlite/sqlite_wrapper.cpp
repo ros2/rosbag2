@@ -40,12 +40,27 @@ SqliteWrapper::SqliteWrapper(
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX, nullptr);
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
+      errmsg << "Could not read-write open database. SQLite error (" <<
+        rc << "): " << sqlite3_errstr(rc);
+      throw SqliteException{errmsg.str()};
+    }
+    // disable WAL journal mode for reading
+    prepare_statement("PRAGMA journal_mode = DELETE;")->execute_and_reset();
+    rc = sqlite3_close(db_ptr);
+    if (rc != SQLITE_OK) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+        "Could not close open database. Error code: " << rc <<
+          " Error message: " << sqlite3_errstr(rc));
+    }
+    rc = sqlite3_open_v2(
+      uri.c_str(), &db_ptr,
+      SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nullptr);
+    if (rc != SQLITE_OK) {
+      std::stringstream errmsg;
       errmsg << "Could not read-only open database. SQLite error (" <<
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    // throws an exception if the database is not valid.
-    prepare_statement("PRAGMA schema_version;")->execute_and_reset();
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
