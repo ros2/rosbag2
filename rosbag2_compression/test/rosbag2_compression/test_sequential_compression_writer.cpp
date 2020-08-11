@@ -89,6 +89,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
   auto storage_options = rosbag2_cpp::StorageOptions{};
   storage_options.max_bagfile_size = max_bagfile_size;
+  storage_options.uri = "foo.bar";
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
     compression_options,
