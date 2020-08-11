@@ -166,8 +166,22 @@ Recorder::create_subscription(
     qos,
     [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      bag_message->serialized_data =
-      std::make_shared<rcl_serialized_message_t>(message->release_rcl_serialized_message());
+
+      auto msg = new rcutils_uint8_array_t;
+      *msg = rcutils_get_zero_initialized_uint8_array();
+      bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+        msg,
+        [](rcutils_uint8_array_t * msg) {
+          int error = rcutils_uint8_array_fini(msg);
+          delete msg;
+          if (error != RCUTILS_RET_OK) {
+            RCUTILS_LOG_ERROR_NAMED(
+              "rosbag2_transport",
+              "Recorder::create_subscription leaking memory %i", error);
+          }
+        });
+      *bag_message->serialized_data = message->release_rcl_serialized_message();
+
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
