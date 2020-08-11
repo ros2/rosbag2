@@ -53,9 +53,6 @@ class PlayVerb(VerbExtension):
             help='enables loop playback when playing a bagfile: it starts back at the beginning '
                  'on reaching the end and plays indefinitely.')
         parser.add_argument(
-            '-p', '--paused', action='store_true',
-            help='start rosbag2 in paused mode. No messages are played at startup.')
-        parser.add_argument(
             '--remap', '-m', default='', nargs='+',
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
@@ -85,5 +82,4 @@ class PlayVerb(VerbExtension):
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,
-            paused=args.paused,
             topic_remapping=args.remap)
