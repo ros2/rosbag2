@@ -18,7 +18,6 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import convert_yaml_to_qos_profile
-from ros2bag.api import create_bag_directory
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
@@ -61,14 +60,21 @@ class RecordVerb(VerbExtension):
                   'is disabled.'
         )
         parser.add_argument(
+            '-d', '--max-bag-duration', type=int, default=0,
+            help='maximum duration in seconds before the bagfile will be split. '
+                  'Default is zero, recording written in single bagfile and splitting '
+                  'is disabled. If both splitting by size and duration are enabled, '
+                  'the bag will split at whichever threshold is reached first.'
+        )
+        parser.add_argument(
             '--max-cache-size', type=int, default=0,
             help='maximum amount of messages to hold in cache before writing to disk. '
                  'Default it is zero, writing every message directly to disk.'
         )
         parser.add_argument(
             '--compression-mode', type=str, default='none',
-            choices=['none', 'file'],
-            help='Determine whether to compress bag files. Default is "none".'
+            choices=['none', 'file', 'message'],
+            help="Determine whether to compress by file or message. Default is 'none'."
         )
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
@@ -108,8 +114,6 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
-        create_bag_directory(uri)
-
         if args.all:
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
@@ -129,6 +133,7 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
+                max_bagfile_duration=args.max_bag_duration,
                 max_cache_size=args.max_cache_size,
                 include_hidden_topics=args.include_hidden_topics,
                 qos_profile_overrides=qos_profile_overrides)
@@ -150,6 +155,7 @@ class RecordVerb(VerbExtension):
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
+                max_bagfile_duration=args.max_bag_duration,
                 max_cache_size=args.max_cache_size,
                 topics=args.topics,
                 include_hidden_topics=args.include_hidden_topics,

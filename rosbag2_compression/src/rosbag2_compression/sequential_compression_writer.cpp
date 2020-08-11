@@ -112,14 +112,29 @@ void SequentialCompressionWriter::open(
     converter_ = std::make_unique<rosbag2_cpp::Converter>(converter_options, converter_factory_);
   }
 
+  rcpputils::fs::path db_path(base_folder_);
+  if (db_path.is_directory()) {
+    std::stringstream error;
+    error << "Database directory already exists (" << db_path.string() <<
+      "), can't overwrite existing database";
+    throw std::runtime_error{error.str()};
+  }
+
+  bool dir_created = rcpputils::fs::create_directories(db_path);
+  if (!dir_created) {
+    std::stringstream error;
+    error << "Failed to create database directory (" << db_path.string() << ").";
+    throw std::runtime_error{error.str()};
+  }
+
   const auto storage_uri = format_storage_uri(base_folder_, 0);
   storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
 
-  if (storage_options.max_bagfile_size != 0 &&
-    storage_options.max_bagfile_size < storage_->get_minimum_split_file_size())
+  if (max_bagfile_size_ != 0 &&
+    max_bagfile_size_ < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
@@ -134,11 +149,7 @@ void SequentialCompressionWriter::open(
 
 void SequentialCompressionWriter::reset()
 {
-  if (!base_folder_.empty()) {
-    if (!compressor_) {
-      throw std::runtime_error{"Compressor was not opened!"};
-    }
-
+  if (!base_folder_.empty() && compressor_) {
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
     if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
@@ -208,7 +219,7 @@ void SequentialCompressionWriter::remove_topic(
 void SequentialCompressionWriter::compress_last_file()
 {
   if (!compressor_) {
-    throw std::runtime_error{"Compressor was not opened!"};
+    throw std::runtime_error{"compress_last_file: Compressor was not opened!"};
   }
 
   const auto to_compress = rcpputils::fs::path{metadata_.relative_file_paths.back()};
