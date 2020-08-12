@@ -115,11 +115,6 @@ void Player::play(const PlayOptions & options)
     rosbag2_transport_->activate();
   }
 
-  kb_handler_.setup_terminal();
-  std::future<void> keypress_future = std::async(
-    std::launch::async,
-    [this]() {handle_keypress();});
-
   play_messages_from_queue(options);
 }
 
@@ -247,27 +242,6 @@ void Player::prepare_publishers(const PlayOptions & options)
       std::make_pair(
         topic.name, rosbag2_transport_->create_generic_publisher(
           topic.name, topic.type, topic_qos)));
-  }
-}
-
-void Player::handle_keypress()
-{
-  // Spin keyboard thread until all messages have been played
-  while (rclcpp::ok() && !played_all_) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
-
-    int input = kb_handler_.read_char_from_stdin();
-    switch (input) {
-      case ' ':
-        if (rosbag2_transport_->get_current_state().id() !=
-          lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
-        {
-          rosbag2_transport_->activate();
-        } else {
-          rosbag2_transport_->deactivate();
-        }
-        break;
-    }
   }
 }
 

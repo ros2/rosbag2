@@ -28,7 +28,6 @@
 
 #include "rosbag2_transport/play_options.hpp"
 
-#include "keyboard_handler.hpp"
 #include "replayable_message.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -61,7 +60,6 @@ private:
   void play_messages_from_queue(const PlayOptions & options);
   void play_messages_until_queue_empty(const PlayOptions & options);
   void prepare_publishers(const PlayOptions & options);
-  void handle_keypress();
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
@@ -71,7 +69,6 @@ private:
   std::chrono::time_point<std::chrono::system_clock> start_time_;
   std::chrono::nanoseconds paused_duration_;
   bool played_all_;
-  KeyboardHandler kb_handler_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
