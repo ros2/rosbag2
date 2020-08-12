@@ -15,8 +15,12 @@
 #ifndef ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 #define ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -110,19 +114,24 @@ public:
 
 protected:
   /**
-   * Compress the most recent file and update the metadata file path.
+   * Compress a file and update the metadata file path.
+   *
+   * \param compressor An initialized compression context.
+   * \param message The URI of the file to compress.
    */
-  virtual void compress_last_file();
+  virtual void compress_file(BaseCompressorInterface & compressor, const std::string & file);
 
   /**
    * Checks if the compression by message option is specified and a compressor exists.
    *
    * If the above conditions are satisfied, compresses the serialized bag message.
    *
+   * \param compressor An initialized compression context.
    * \param message The message to compress.
-   * \return True if compression occurred, false otherwise.
    */
-  virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+  virtual void compress_message(
+    BaseCompressorInterface & compressor,
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 
   /**
    * Initializes the compressor if a compression mode is specified.
@@ -131,15 +140,32 @@ protected:
    */
   virtual void setup_compression();
 
+  /**
+   * Initializes a number of threads to do file or message compression equal to the
+   * value of the compression_threads parameter.
+   */
+  virtual void setup_compressor_threads();
+
+  /**
+   * Signals all compressor threads to stop working and then waits for them to exit.
+   */
+  virtual void stop_compressor_threads();
+
 private:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_{};
+  std::recursive_mutex storage_mutex_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   std::unique_ptr<rosbag2_cpp::Converter> converter_{};
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::condition_variable compressor_condition_;
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+  std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> compressor_message_queue_;
+  std::queue<std::string> compressor_file_queue_;
+  std::mutex compressor_mutex_;
+  std::vector<std::thread> compression_threads_;
+  bool compression_is_running_{false};
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
@@ -157,7 +183,7 @@ private:
   void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile() const;
+  bool should_split_bagfile();
 
   // Prepares the metadata by setting initial values.
   void init_metadata();

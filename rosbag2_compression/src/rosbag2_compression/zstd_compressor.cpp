@@ -26,6 +26,15 @@
 
 namespace rosbag2_compression
 {
+ZstdCompressor::ZstdCompressor()
+{
+  zstd_context_ = ZSTD_createCCtx();
+}
+
+ZstdCompressor::~ZstdCompressor()
+{
+  ZSTD_freeCCtx(zstd_context_);
+}
 
 std::string ZstdCompressor::compress_uri(const std::string & uri)
 {
@@ -39,7 +48,8 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
-  const auto compression_result = ZSTD_compress(
+  const auto compression_result = ZSTD_compressCCtx(
+    zstd_context_,
     compressed_buffer.data(), compressed_buffer.size(),
     decompressed_buffer.data(), decompressed_buffer.size(), kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
@@ -65,7 +75,8 @@ void ZstdCompressor::compress_serialized_bag_message(
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
-  const auto compression_result = ZSTD_compress(
+  const auto compression_result = ZSTD_compressCCtx(
+    zstd_context_,
     compressed_buffer.data(), compressed_buffer.size(),
     message->serialized_data->buffer, message->serialized_data->buffer_length,
     kDefaultZstdCompressionLevel);

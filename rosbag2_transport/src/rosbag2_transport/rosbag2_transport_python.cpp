@@ -17,6 +17,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -94,6 +95,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "node_prefix",
     "compression_mode",
     "compression_format",
+    "compression_queue_size",
+    "compression_threads",
     "all",
     "no_discovery",
     "polling_interval",
@@ -111,6 +114,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * node_prefix = nullptr;
   char * compression_mode = nullptr;
   char * compression_format = nullptr;
+  uint64_t compression_queue_size = 1;
+  uint64_t compression_threads = 0;
   PyObject * qos_profile_overrides = nullptr;
   bool all = false;
   bool no_discovery = false;
@@ -122,13 +127,15 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   bool include_hidden_topics = false;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKKObO", const_cast<char **>(kwlist),
+      args, kwargs, "ssssssKK|bbKKKKObO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
       &node_prefix,
       &compression_mode,
       &compression_format,
+      &compression_queue_size,
+      &compression_threads,
       &all,
       &no_discovery,
       &polling_interval_ms,
@@ -154,11 +161,18 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   record_options.node_prefix = std::string(node_prefix);
   record_options.compression_mode = std::string(compression_mode);
   record_options.compression_format = compression_format;
+  record_options.compression_queue_size = compression_queue_size;
+  if (compression_threads < 1) {
+    compression_threads = std::thread::hardware_concurrency();
+  }
+  record_options.compression_threads = compression_threads;
   record_options.include_hidden_topics = include_hidden_topics;
 
   rosbag2_compression::CompressionOptions compression_options{
     record_options.compression_format,
-    rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
+    rosbag2_compression::compression_mode_from_string(record_options.compression_mode),
+    record_options.compression_queue_size,
+    record_options.compression_threads
   };
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);

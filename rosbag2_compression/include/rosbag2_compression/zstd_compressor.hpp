@@ -37,9 +37,9 @@ namespace rosbag2_compression
 class ROSBAG2_COMPRESSION_PUBLIC ZstdCompressor : public BaseCompressorInterface
 {
 public:
-  ZstdCompressor() = default;
+  ZstdCompressor();
 
-  ~ZstdCompressor() = default;
+  ~ZstdCompressor();
 
   std::string compress_uri(const std::string & uri) override;
 
@@ -47,6 +47,9 @@ public:
     rosbag2_storage::SerializedBagMessage * bag_message) override;
 
   std::string get_compression_identifier() const override;
+
+private:
+  ZSTD_CCtx * zstd_context_;
 };
 
 }  // namespace rosbag2_compression
