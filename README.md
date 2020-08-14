@@ -125,6 +125,31 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
+### Overriding QoS Profiles
+
+When starting a recording or playback workflow, you can pass a YAML file that contains QoS profile settings for a specific topic.
+The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy:
+
+```yaml
+topic_name: str
+  qos_policy_name: str
+  ...
+  qos_duration: object
+    sec: int
+    nsec: int
+```
+
+You can then use the override by specifying the `--qos-profile-overrides-path` argument in the CLI:
+
+```sh
+# Record
+ros2 bag record --qos-profile-overrides-path override.yaml -a -o my_bag
+# Playback
+ros2 bag play --qos-profile-overrides-path override.yaml my_bag
+```
+
+See [the official tutorial][qos-override-tutorial] for more detail.
+
 ### Using in launch
 
 We can invoke the command line tool from a ROS launch script as an *executable* (not a *node* action).
@@ -189,3 +214,5 @@ When specified, rosbag2 looks for a suitable converter to transform the native m
 This also allows to record data in a native format to optimize for speed, but to convert or transform the recorded data into a middleware agnostic serialization format.
 
 By default, rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
+
+[qos-override-tutorial]: https://index.ros.org/doc/ros2/Tutorials/Ros2bag/Overriding-QoS-Policies-For-Recording-And-Playback/
