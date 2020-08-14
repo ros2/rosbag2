@@ -31,7 +31,7 @@ namespace rosbag2_py
 {
 
 template<typename T>
-class Reader
+class PYBIND11_EXPORT Reader
 {
 public:
   Reader()

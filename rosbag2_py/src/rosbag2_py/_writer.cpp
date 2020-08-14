@@ -31,7 +31,7 @@ namespace rosbag2_py
 {
 
 template<typename T>
-class Writer
+class PYBIND11_EXPORT Writer
 {
 public:
   Writer()
