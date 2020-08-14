@@ -14,7 +14,6 @@
 
 from argparse import FileType
 import datetime
-import multiprocessing
 import os
 
 from rclpy.qos import InvalidQoSProfileException
