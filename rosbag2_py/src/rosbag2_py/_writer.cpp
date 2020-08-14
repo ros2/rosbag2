@@ -12,7 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Ignore -Wunused-value for clang.
+// Based on https://github.com/pybind/pybind11/issues/2225
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-value"
+#endif
 #include <pybind11/pybind11.h>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #include <pybind11/stl.h>
 
 #include <memory>
@@ -31,7 +40,7 @@ namespace rosbag2_py
 {
 
 template<typename T>
-class PYBIND11_EXPORT Writer
+class Writer
 {
 public:
   Writer()
