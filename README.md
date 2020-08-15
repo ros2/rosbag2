@@ -128,15 +128,26 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
 ### Overriding QoS Profiles
 
 When starting a recording or playback workflow, you can pass a YAML file that contains QoS profile settings for a specific topic.
-The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy:
+The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy.
+Below is an example profile set to the default ROS2 QoS settings.
 
 ```yaml
-topic_name: str
-  qos_policy_name: str
-  ...
-  qos_duration: object
-    sec: int
-    nsec: int
+/topic_name:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+  deadline:
+    sec: 2147483647   # LONG_MAX
+    nsec: 4294967295  # ULONG_MAX
+  lifespan:
+    sec: 2147483647
+    nsec: 4294967295
+  liveliness: system_default
+  liveliness_lease_duration:
+    sec: 2147483647
+    nsec: 4294967295
+  avoid_ros_namespace_conventions: false
 ```
 
 You can then use the override by specifying the `--qos-profile-overrides-path` argument in the CLI:
@@ -148,7 +159,7 @@ ros2 bag record --qos-profile-overrides-path override.yaml -a -o my_bag
 ros2 bag play --qos-profile-overrides-path override.yaml my_bag
 ```
 
-See [the official tutorial][qos-override-tutorial] for more detail.
+See [the official QoS override tutorial][qos-override-tutorial] and ["About QoS Settings"][about-qos-settings] for more detail.
 
 ### Using in launch
 
@@ -216,3 +227,4 @@ This also allows to record data in a native format to optimize for speed, but to
 By default, rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
 
 [qos-override-tutorial]: https://index.ros.org/doc/ros2/Tutorials/Ros2bag/Overriding-QoS-Policies-For-Recording-And-Playback/
+[about-qos-settings]: https://index.ros.org/doc/ros2/Concepts/About-Quality-of-Service-Settings/
