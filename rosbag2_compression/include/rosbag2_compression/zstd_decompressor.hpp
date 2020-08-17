@@ -39,7 +39,7 @@ class ROSBAG2_COMPRESSION_PUBLIC ZstdDecompressor : public BaseDecompressorInter
 public:
   ZstdDecompressor();
 
-  ~ZstdDecompressor();
+  ~ZstdDecompressor() override;
 
   std::string decompress_uri(const std::string & uri) override;
 

@@ -28,6 +28,12 @@ namespace rosbag2_compression
 {
 ZstdDecompressor::ZstdDecompressor()
 {
+  // From the zstd manual: https://facebook.github.io/zstd/zstd_manual.html#Chapter4
+  // When decompressing many times,
+  // it is recommended to allocate a context only once,
+  // and re-use it for each successive compression operation.
+  // This will make workload friendlier for system's memory.
+  // Use one context per thread for parallel execution.
   zstd_context_ = ZSTD_createDCtx();
 }
 
