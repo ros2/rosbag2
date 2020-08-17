@@ -95,11 +95,13 @@ A user defined name can be given with `-o, --output`.
 
 #### Splitting recorded bag files
 
-rosbag2 offers the capability to split bag files when they reach a maximum size, denoted as the batch size. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
+rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
 
-For example, `ros2 bag record -a -b 100000` will split the bag files when they become greater than 100 kilobytes.
+_Splitting by size_: `ros2 bag record -a -b 100000` will split the bag files when they become greater than 100 kilobytes. Note: the batch size's units are in bytes and must be greater than `86016`. This option defaults to `0`, which means data is written to a single file.
 
-Note: the batch size's units are in bytes and must be greater than `86016`. This option defaults to `0`, which means data is written to a single file.
+_Splitting by time_: `ros2 bag record -a -d 9000` will split the bag files after a duration of `9000` seconds. This option defaults to `0`, which means data is written to a single file.
+
+If both splitting by size and duration are enabled, the bag will split at whichever threshold is reached first.
 
 #### Recording with compression
 
@@ -107,7 +109,9 @@ By default rosbag2 does not record with compression enabled. However, compressio
 
 For example, `ros2 bag record -a --compression-mode file --compression-format zstd` will record all topics and compress each file using the [zstd](https://github.com/facebook/zstd) compressor.
 
-Currently, the only `compression-mode` available is `file` and only `compression-format` available is `zstd`. Both of these options default to `none`. To use a compression format, a compression mode must be specified. It is recommended to use this feature with the batch size option.
+Currently, the only `compression-format` available is `zstd`. Both the mode and format options default to `none`. To use a compression format, a compression mode must be specified, where the currently supported modes are compress by `file` or compress by `message`.
+
+It is recommended to use this feature with the splitting options.
 
 ### Replaying data
 
