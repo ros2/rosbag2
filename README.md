@@ -38,7 +38,7 @@ Clone this repository into the source folder:
 ```
 $ git clone https://github.com/ros2/rosbag2.git
 ```
-**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution. 
+**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution.
 
 Then build all the packages with this command:
 
@@ -92,6 +92,26 @@ In the same fashion, this auto discovery can be disabled with `--no-discovery`.
 
 If not further specified, `ros2 bag record` will create a new folder named to the current time stamp and stores all data within this folder.
 A user defined name can be given with `-o, --output`.
+
+#### Splitting recorded bag files
+
+rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
+
+_Splitting by size_: `ros2 bag record -a -b 100000` will split the bag files when they become greater than 100 kilobytes. Note: the batch size's units are in bytes and must be greater than `86016`. This option defaults to `0`, which means data is written to a single file.
+
+_Splitting by time_: `ros2 bag record -a -d 9000` will split the bag files after a duration of `9000` seconds. This option defaults to `0`, which means data is written to a single file.
+
+If both splitting by size and duration are enabled, the bag will split at whichever threshold is reached first.
+
+#### Recording with compression
+
+By default rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.
+
+For example, `ros2 bag record -a --compression-mode file --compression-format zstd` will record all topics and compress each file using the [zstd](https://github.com/facebook/zstd) compressor.
+
+Currently, the only `compression-format` available is `zstd`. Both the mode and format options default to `none`. To use a compression format, a compression mode must be specified, where the currently supported modes are compress by `file` or compress by `message`.
+
+It is recommended to use this feature with the splitting options.
 
 ### Replaying data
 
