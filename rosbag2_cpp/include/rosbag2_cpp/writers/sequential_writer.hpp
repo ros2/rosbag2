@@ -61,7 +61,7 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
-  ~SequentialWriter() override;
+  virtual ~SequentialWriter();
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
@@ -109,13 +109,16 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+  rosbag2_compression::CompressionOptions compression_options_{};
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
 
   // Used in bagfile splitting;
   // specifies the best-effort maximum duration of a bagfile in seconds.
-  std::chrono::seconds max_bagfile_duration;
+  uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
 
   // Intermediate cache to write multiple messages into the storage.
   // `max_cache_size` is the amount of messages to hold in storage before writing to disk.
@@ -132,6 +135,8 @@ private:
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
+
+  void compress_last_bagfile();
 
   // Prepares the metadata by setting initial values.
   void init_metadata();

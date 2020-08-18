@@ -1,0 +1,16 @@
+<library path="rosbag2_compression_default_plugins">
+<class
+        name="zstd_compressor"
+        type="rosbag2_compression_default_plugins::ZstdCompressor"
+        base_class_type="rosbag2_compression::BaseCompressorInterface"
+>
+  <description>This is a compressor plugin for Zstd.</description>
+</class>
+<class
+        name="zstd_decompressor"
+        type="rosbag2_compression_default_plugins::ZstdDecompressor"
+        base_class_type="rosbag2_compression::BaseDecompressorInterface"
+>
+  <description>This is a decompressor plugin for Zstd.</description>
+</class>
+</library>

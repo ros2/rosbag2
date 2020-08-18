@@ -1,23 +1,22 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-  <name>rosbag2_compression</name>
+  <name>rosbag2_compression_default_plugins</name>
   <version>0.3.2</version>
-  <description>Compression implementations for rosbag2 bags and messages.</description>
+  <description>Package containing default plugins for compressors</description>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rcpputils</depend>
-  <depend>rcutils</depend>
-  <depend>rosbag2_storage</depend>
+  <depend>pluginlib</depend>
+  <depend>rosbag2_compression</depend>
+  <depend>zstd_vendor</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>rclcpp</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
+  <test_depend>test_msgs</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

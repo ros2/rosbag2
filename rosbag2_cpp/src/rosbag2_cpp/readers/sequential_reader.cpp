@@ -60,11 +60,13 @@ std::vector<std::string> resolve_relative_paths(
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
   converter_(nullptr),
   metadata_io_(std::move(metadata_io)),
-  converter_factory_(std::move(converter_factory))
+  converter_factory_(std::move(converter_factory)),
+  compression_factory_{std::move(compression_factory)}
 {}
 
 SequentialReader::~SequentialReader()
@@ -80,7 +82,7 @@ void SequentialReader::reset()
 }
 
 void SequentialReader::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const StorageOptions & storage_options, const ConverterOptions & converter_options, const CompressionOptions & compression_options)
 {
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.
@@ -95,6 +97,7 @@ void SequentialReader::open(
     file_paths_ = details::resolve_relative_paths(
       storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
+    setup_decompression();
 
     storage_ = storage_factory_->open_read_only(
       get_current_file(), storage_options.storage_id);
@@ -102,6 +105,12 @@ void SequentialReader::open(
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
   } else {
+    if (compression_options.mode != CompressionMode::NONE) {
+      std::stringstream errmsg;
+      errmsg << "Could not find metadata for bag: \"" << storage_options.uri <<
+        "\" while specifying decompression. Cannot continue. rosbag2 decompression does not support legacy ROS 1 bag files - this may be one.";
+      throw std::runtime_error{errmsg.str()};
+    }
     storage_ = storage_factory_->open_read_only(
       storage_options.uri, storage_options.storage_id);
     if (!storage_) {
@@ -149,6 +158,9 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_ne
 {
   if (storage_) {
     auto message = storage_->read_next();
+    if (decompressor_ && compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
+      decompressor_->decompress_serialized_bag_message(message.get());
+    }
     return converter_ ? converter_->convert(message) : message;
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
@@ -196,6 +208,31 @@ void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  if (compression_mode_ == rosbag2_compression::CompressionMode::FILE) {
+    if (decompressor_ == nullptr) {
+      throw std::runtime_error{
+              "The bag file was not properly opened. "
+              "Somehow the compression mode was set without opening a decompressor."
+      };
+    }
+
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
+    *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
+  }
+}
+
+void SequentialReader::setup_decompression()
+{
+  compression_mode_ = rosbag2_compression::compression_mode_from_string(metadata_.compression_mode);
+  if (compression_mode_ != rosbag2_compression::CompressionMode::NONE) {
+    decompressor_ = compression_factory_->create_decompressor(metadata_.compression_format);
+    // Decompress the first file so that it is readable; don't need to do anything for
+    // per-message encryption.
+    if (compression_mode_ == CompressionMode::FILE) {
+      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Decompressing " << get_current_file().c_str());
+      *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());
+    }
+  } 
 }
 
 std::string SequentialReader::get_current_file() const

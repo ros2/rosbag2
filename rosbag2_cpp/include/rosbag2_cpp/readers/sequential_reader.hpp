@@ -53,6 +53,8 @@ public:
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<SerializationFormatConverterFactory>(),
+    std::unique_ptr<rosbag2_compression::CompressionFactory> =
+    std::make_unique<rosbag2_compression::CompressionFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
@@ -93,7 +95,7 @@ public:
   */
   virtual std::string get_current_uri() const;
 
-protected:
+private:
   /**
   * Increment the current file iterator to point to the next file in the list of relative file
   * paths.
@@ -141,8 +143,11 @@ protected:
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
-private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
+  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
+  rosbag2_compression::CompressionMode compression_mode_{
+    rosbag2_compression::CompressionMode::NONE};
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
 };
 
 }  // namespace readers
