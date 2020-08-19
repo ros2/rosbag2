@@ -166,6 +166,8 @@ Recorder::create_subscription(
     qos,
     [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      // the serialized bag message takes ownership of the incoming rclcpp serialized message
+      // we therefore have to make sure to cleanup that memory in a custom deleter.
       bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
         new rcutils_uint8_array_t,
         [](rcutils_uint8_array_t * msg) {
