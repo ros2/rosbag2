@@ -12,27 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib
-import os
+from rpyutils import import_c_library
 
-from rpyutils import add_dll_directories_from_env
-
-
-def _import(name):
-    try:
-        # Since Python 3.8, on Windows we should ensure DLL directories are explicitly added
-        # to the search path.
-        # See https://docs.python.org/3/whatsnew/3.8.html#bpo-36085-whatsnew
-        with add_dll_directories_from_env('PATH'):
-            return importlib.import_module(name, package='rosbag2_transport')
-    except ImportError as e:
-        if e.path is not None and os.path.isfile(e.path):
-            e.msg += \
-                "\nThe C extension '%s' failed to be imported while being present on the system." \
-                " Please refer to '%s' for possible solutions" % \
-                (e.path, 'https://index.ros.org/doc/ros2/Troubleshooting/'
-                         '#import-failing-even-with-library-present-on-the-system')
-        raise
-
-
-rosbag2_transport_py = _import('._rosbag2_transport_py')
+rosbag2_transport_py = import_c_library('._rosbag2_transport_py', package='rosbag2_transport')
