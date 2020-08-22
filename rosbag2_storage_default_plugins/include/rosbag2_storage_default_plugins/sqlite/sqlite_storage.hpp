@@ -67,6 +67,10 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_timestamp(rcutils_time_point_value_t timestamp) override;
+
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_index(int index) override; // TODO: CHANGE TYPE
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;

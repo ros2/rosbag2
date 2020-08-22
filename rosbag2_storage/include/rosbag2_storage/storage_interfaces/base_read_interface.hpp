@@ -37,6 +37,10 @@ public:
 
   virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
 
+  virtual std::shared_ptr<SerializedBagMessage> read_at_timestamp(rcutils_time_point_value_t timestamp) { timestamp++; return nullptr;}
+
+  virtual std::shared_ptr<SerializedBagMessage> read_at_index(int index) { index++; return nullptr;} // TODO: CHANGE TYPE
+
   virtual std::vector<TopicMetadata> get_all_topics_and_types() = 0;
 };
 

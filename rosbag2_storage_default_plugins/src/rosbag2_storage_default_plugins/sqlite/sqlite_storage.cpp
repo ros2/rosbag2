@@ -192,6 +192,64 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   return bag_message;
 }
 
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_timestamp(rcutils_time_point_value_t timestamp)
+{
+  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+
+  auto read_statement = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "WHERE messages.timestamp = " + std::to_string(timestamp) + " "
+    "ORDER BY messages.timestamp;");
+    
+  auto message_result = read_statement->execute_query<
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
+
+  
+  if(message_result.begin() == message_result.end()) {
+    throw std::runtime_error("No messages found for timestamp " + std::to_string(timestamp));
+  }
+  
+  ReadQueryResult::Iterator current_message_row = message_result.begin();
+  bag_message->serialized_data = std::get<0>(*current_message_row);
+  bag_message->time_stamp = std::get<1>(*current_message_row);
+  bag_message->topic_name = std::get<2>(*current_message_row);
+
+  if(++current_message_row != message_result.end()) {
+    throw std::runtime_error("More than one message at the same timestamp!");
+  }
+
+  return bag_message;
+}
+
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_index(int index) {
+  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+
+  auto read_statement = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "WHERE messages.id = " + std::to_string(index) + " "
+    "ORDER BY messages.timestamp;");
+    
+  auto message_result = read_statement->execute_query<
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
+  
+  if(message_result.begin() == message_result.end()) {
+    throw std::runtime_error("No messages found for id " + std::to_string(index));
+  }
+  
+  ReadQueryResult::Iterator current_message_row = message_result.begin();
+  bag_message->serialized_data = std::get<0>(*current_message_row);
+  bag_message->time_stamp = std::get<1>(*current_message_row);
+  bag_message->topic_name = std::get<2>(*current_message_row);
+
+  if(++current_message_row != message_result.end()) {
+    throw std::runtime_error("More than one message at the same id!");
+  }
+
+  return bag_message;
+}
+
 std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_types()
 {
   if (all_topics_and_types_.empty()) {
