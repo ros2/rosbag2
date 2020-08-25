@@ -20,7 +20,7 @@ if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
-option(DISABLE_SANITIZERS "disables the use of gcc sanitizers")
+option(DISABLE_SANITIZERS "disables the use of gcc sanitizers" ON)
 if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
   include(CheckCXXSourceCompiles)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
