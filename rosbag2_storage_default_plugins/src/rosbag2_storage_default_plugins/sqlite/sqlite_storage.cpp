@@ -250,6 +250,53 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_in
   return bag_message;
 }
 
+std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> SqliteStorage::read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end) {
+
+  auto read_statement = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "WHERE messages.timestamp BETWEEN " + std::to_string(timestamp_begin) + " AND " + std::to_string(timestamp_end) + " "
+    "ORDER BY messages.timestamp;");
+    
+  auto message_result = read_statement->execute_query<
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
+  
+  auto bag_message_vector = std::make_shared<std::vector<rosbag2_storage::SerializedBagMessage>>();
+
+  // ReadQueryResult::Iterator current_message_row;
+  for (auto current_message_row = message_result.begin(); current_message_row != message_result.end(); ++current_message_row) {
+    bag_message_vector->push_back(rosbag2_storage::SerializedBagMessage());
+    bag_message_vector->back().serialized_data = std::get<0>(*current_message_row);
+    bag_message_vector->back().time_stamp = std::get<1>(*current_message_row);
+    bag_message_vector->back().topic_name = std::get<2>(*current_message_row);
+  }
+
+  return bag_message_vector;
+}
+
+std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> SqliteStorage::read_at_index_range(int index_begin, int index_end) {
+
+  auto read_statement = database_->prepare_statement(
+    "SELECT data, timestamp, topics.name "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id "
+    "WHERE messages.id BETWEEN " + std::to_string(index_begin) + " AND " + std::to_string(index_end) + " "
+    "ORDER BY messages.timestamp;");
+    
+  auto message_result = read_statement->execute_query<
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
+  
+  auto bag_message_vector = std::make_shared<std::vector<rosbag2_storage::SerializedBagMessage>>();
+
+  // ReadQueryResult::Iterator current_message_row;
+  for (auto current_message_row = message_result.begin(); current_message_row != message_result.end(); ++current_message_row) {
+    bag_message_vector->push_back(rosbag2_storage::SerializedBagMessage());
+    bag_message_vector->back().serialized_data = std::get<0>(*current_message_row);
+    bag_message_vector->back().time_stamp = std::get<1>(*current_message_row);
+    bag_message_vector->back().topic_name = std::get<2>(*current_message_row);
+  }
+  return bag_message_vector;
+}
+
 std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_types()
 {
   if (all_topics_and_types_.empty()) {

@@ -41,6 +41,20 @@ public:
 
   virtual std::shared_ptr<SerializedBagMessage> read_at_index(int index) { index++; return nullptr;} // TODO: CHANGE TYPE
 
+  virtual std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end) {
+    // dummy code
+    timestamp_begin++;
+    timestamp_end++;
+    return nullptr;
+  }
+
+  virtual std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_index_range(int index_begin, int index_end) {
+    // dummy code
+    index_begin++;
+    index_end++;
+    return nullptr;
+  }
+
   virtual std::vector<TopicMetadata> get_all_topics_and_types() = 0;
 };
 
