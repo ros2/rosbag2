@@ -234,18 +234,18 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_in
   auto message_result = read_statement->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   
-  if(message_result.begin() == message_result.end()) {
-    throw std::runtime_error("No messages found for id " + std::to_string(index));
-  }
+  // if(message_result.begin() == message_result.end()) {
+  //   throw std::runtime_error("No messages found for id " + std::to_string(index));
+  // }
   
   ReadQueryResult::Iterator current_message_row = message_result.begin();
   bag_message->serialized_data = std::get<0>(*current_message_row);
   bag_message->time_stamp = std::get<1>(*current_message_row);
   bag_message->topic_name = std::get<2>(*current_message_row);
 
-  if(++current_message_row != message_result.end()) {
-    throw std::runtime_error("More than one message at the same id!");
-  }
+  // if(++current_message_row != message_result.end()) {
+  //   throw std::runtime_error("More than one message at the same id!");
+  // }
 
   return bag_message;
 }
