@@ -41,14 +41,14 @@ public:
 
   virtual std::shared_ptr<SerializedBagMessage> read_at_index(uint32_t index) { index++; return nullptr;}
 
-  virtual std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end) {
+  virtual std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end) {
     // dummy code
     timestamp_begin++;
     timestamp_end++;
     return nullptr;
   }
 
-  virtual std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_index_range(uint32_t index_begin, uint32_t index_end) {
+  virtual std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(uint32_t index_begin, uint32_t index_end) {
     // dummy code
     index_begin++;
     index_end++;

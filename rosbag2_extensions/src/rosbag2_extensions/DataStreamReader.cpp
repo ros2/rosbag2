@@ -44,32 +44,32 @@ std::shared_ptr<TestMsgT> DataStreamReader::readAtTimestamp(rcutils_time_point_v
     return extracted_test_msg;
 }
 
-std::shared_ptr<std::vector<TestMsgT>> DataStreamReader::readAtIndexRange(uint32_t index_begin, uint32_t index_end) {
+std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> DataStreamReader::readAtIndexRange(uint32_t index_begin, uint32_t index_end) {
     openAndGetMessageType();
     auto bag_message_vector = reader_.read_at_index_range(index_begin, index_end);
     // std::cout << "Number of messages: " << bag_message_vector->size() << std::endl;
 
-    auto deserialized_bag_message_vector = std::make_shared<std::vector<TestMsgT>>();
+    auto deserialized_bag_message_vector = std::make_shared<std::vector<std::shared_ptr<TestMsgT>>>();
     for (auto bag_message : *bag_message_vector) {
-        TestMsgT extracted_test_msg;
-        rclcpp::SerializedMessage extracted_serialized_msg(*(bag_message.serialized_data));
-        serialization_.deserialize_message(&extracted_serialized_msg, &extracted_test_msg);
+        auto extracted_test_msg = std::make_shared<TestMsgT>();
+        rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+        serialization_.deserialize_message(&extracted_serialized_msg, extracted_test_msg.get());
 
         deserialized_bag_message_vector->push_back(extracted_test_msg); // ToDo: reserve the vector instead of pushing back
     }
     return deserialized_bag_message_vector;
 }
 
-std::shared_ptr<std::vector<TestMsgT>> DataStreamReader::readAtTimestampRange(rcutils_time_point_value_t time_begin, rcutils_time_point_value_t time_end) {
+std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> DataStreamReader::readAtTimestampRange(rcutils_time_point_value_t time_begin, rcutils_time_point_value_t time_end) {
     openAndGetMessageType();
     auto bag_message_vector = reader_.read_at_timestamp_range(time_begin, time_end);
     // std::cout << "Number of messages: " << bag_message_vector->size() << std::endl;
 
-    auto deserialized_bag_message_vector = std::make_shared<std::vector<TestMsgT>>();
+    auto deserialized_bag_message_vector = std::make_shared<std::vector<std::shared_ptr<TestMsgT>>>();
     for (auto bag_message : *bag_message_vector) {
-        TestMsgT extracted_test_msg;
-        rclcpp::SerializedMessage extracted_serialized_msg(*(bag_message.serialized_data));
-        serialization_.deserialize_message(&extracted_serialized_msg, &extracted_test_msg);
+        auto extracted_test_msg = std::make_shared<TestMsgT>();
+        rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+        serialization_.deserialize_message(&extracted_serialized_msg, extracted_test_msg.get());
 
         deserialized_bag_message_vector->push_back(extracted_test_msg); // ToDo: reserve the vector instead of pushing back
     }

@@ -44,13 +44,13 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> RandomAccessReader::read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end)
+std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> RandomAccessReader::read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end)
 {
   if (storage_) {
     auto message_vector = storage_->read_at_timestamp_range(timestamp_begin, timestamp_end);
     if (converter_) {
       for (auto &message : *message_vector) {
-        message = *(converter_->convert(std::make_shared<rosbag2_storage::SerializedBagMessage>(message)));
+        message = converter_->convert(message);
       }
     }
     return message_vector;
@@ -58,13 +58,13 @@ std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> RandomAccess
     throw std::runtime_error("Bag is not open. Call open() before reading.");
   }
 }
-std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> RandomAccessReader::read_at_index_range(uint32_t index_begin, uint32_t index_end)
+std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> RandomAccessReader::read_at_index_range(uint32_t index_begin, uint32_t index_end)
 {
   if (storage_) {
     auto message_vector = storage_->read_at_index_range(index_begin, index_end);
     if (converter_) {
       for (auto &message : *message_vector) {
-        message = *(converter_->convert(std::make_shared<rosbag2_storage::SerializedBagMessage>(message)));
+        message = converter_->convert(message);
       }
     }
     return message_vector;

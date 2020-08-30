@@ -53,9 +53,9 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_index(uint32_t index);
 
-  std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end);
+  std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end);
 
-  std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> read_at_index_range(uint32_t index_begin, uint32_t index_end);
+  std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(uint32_t index_begin, uint32_t index_end);
 
 };
 
