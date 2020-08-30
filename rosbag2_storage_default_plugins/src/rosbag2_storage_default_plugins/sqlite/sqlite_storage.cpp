@@ -222,7 +222,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_ti
   return bag_message;
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_index(int index) {
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_at_index(uint32_t index) {
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
 
   auto read_statement = database_->prepare_statement(
@@ -274,7 +274,7 @@ std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> SqliteStorag
   return bag_message_vector;
 }
 
-std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> SqliteStorage::read_at_index_range(int index_begin, int index_end) {
+std::shared_ptr<std::vector<rosbag2_storage::SerializedBagMessage>> SqliteStorage::read_at_index_range(uint32_t index_begin, uint32_t index_end) {
 
   auto read_statement = database_->prepare_statement(
     "SELECT data, timestamp, topics.name "

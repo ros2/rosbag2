@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosbag2_extensions</name>
+  <version>0.3.2</version>
+  <description>C++ ROSBag2 client library</description>
+  <maintainer email="daniel.guo@robotics.utias.utoronto.ca">Daniel Guo</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>ament_index_cpp</depend>
+  <depend>pluginlib</depend>
+  <depend>rcutils</depend>
+  <depend>rcpputils</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>rosbag2_cpp</depend>
+  <depend>rosidl_runtime_c</depend>
+  <depend>rosidl_runtime_cpp</depend>
+  <depend>rosidl_typesupport_cpp</depend>
+  <depend>rosidl_typesupport_introspection_cpp</depend>
+  <depend>shared_queues_vendor</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
