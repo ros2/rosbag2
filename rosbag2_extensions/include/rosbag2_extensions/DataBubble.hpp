@@ -3,7 +3,7 @@
 /// @author Michael Paton, ASRL
 
 #ifndef ROSBAG2_EXTENSIONS__DATABUBBLE_HPP_
-#define ROSBAG2_EXTENSIONS__DATABUBBLE_HPP
+#define ROSBAG2_EXTENSIONS__DATABUBBLE_HPP_
 
 #include <map>
 
