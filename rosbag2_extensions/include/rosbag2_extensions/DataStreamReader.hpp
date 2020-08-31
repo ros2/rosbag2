@@ -16,9 +16,9 @@ public:
     void openAndGetMessageType();
     void close();
 
-    std::shared_ptr<TestMsgT> readAtIndex(uint32_t index);
+    std::shared_ptr<TestMsgT> readAtIndex(int32_t index);
     std::shared_ptr<TestMsgT> readAtTimestamp(rcutils_time_point_value_t time);
-    std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> readAtIndexRange(uint32_t index_begin,uint32_t index_end);
+    std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> readAtIndexRange(int32_t index_begin,int32_t index_end);
     std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> readAtTimestampRange(rcutils_time_point_value_t time_begin, rcutils_time_point_value_t time_end);
 
     // next() isn't needed for now due to ranged random access. Can add in if necessary

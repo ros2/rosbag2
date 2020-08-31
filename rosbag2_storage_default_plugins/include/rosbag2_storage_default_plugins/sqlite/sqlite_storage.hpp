@@ -69,11 +69,11 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_timestamp(rcutils_time_point_value_t timestamp) override;
 
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_index(uint32_t index) override;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_index(int32_t index) override;
 
   std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end) override;
 
-  std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(uint32_t index_begin, uint32_t index_end) override;
+  std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(int32_t index_begin, int32_t index_end) override;
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 

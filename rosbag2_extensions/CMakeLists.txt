@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic) #-Werror)
 endif()
 
 # Windows supplies macros for min and max by default. We should only use min and max from stl
@@ -51,7 +51,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_extensions/DataStreamBase.cpp
   src/rosbag2_extensions/DataStreamReader.cpp
   src/rosbag2_extensions/DataStreamWriter.cpp
-  # src/rosbag2_extensions/DataBubble.cpp
+  src/rosbag2_extensions/DataBubble.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}

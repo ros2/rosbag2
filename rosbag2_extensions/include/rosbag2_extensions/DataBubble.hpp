@@ -2,18 +2,17 @@
 /// @brief header file for the robochunk data bubble class.
 /// @author Michael Paton, ASRL
 
-#pragma once
+#ifndef ROSBAG2_EXTENSIONS__DATABUBBLE_HPP_
+#define ROSBAG2_EXTENSIONS__DATABUBBLE_HPP
 
-#include <unordered_map>
+#include <map>
 
 #include "rosbag2_extensions/DataStreamReader.hpp"
-
-#include <robochunk_msgs/TimeStamp.pb.h>
 
 namespace rosbag2_extensions {
 
 typedef TestMsgT Message;
-typedef rcutils_time_point_value_t Timestamp;
+typedef rcutils_time_point_value_t TimeStamp;
 
 /// @brief Bubble indices into a robochunk stream.
 struct ChunkIndices {
@@ -25,19 +24,19 @@ struct ChunkIndices {
     }
     
     /// @brief Start index into the stream.
-    uint32_t start_index;
+    int32_t start_index;
 
     /// @brief Stop index into the stream.
-    uint32_t stop_index;
+    int32_t stop_index;
 
     /// @brief Start time into the stream.
-    std_msgs::TimeStamp start_time;
+    TimeStamp start_time;
 
     /// @brief Stop time into the stream.
-    std_msgs::TimeStamp stop_time;
+    TimeStamp stop_time;
 };
 
-typedef std::map<uint32_t,Message> DataMap;
+typedef std::map<int32_t, Message> DataMap;
 
 /// @brief DataBubble class. Container class for a specified range of messages in a robochunk stream.
 ///        Allows for access and storage of messages in memory.
@@ -70,57 +69,57 @@ public:
     /// @brief loads the specified message based on local index 
     /// @details This is a local index (i.e. If the bubble wraps 20 messages then the local index is in the range (0-19))
     /// @param The local index.
-    void load(uint32_t idx);
+    void load(int32_t local_idx);
 
     /// @brief loads the specified messages into memory based on an index range.
     /// @details This is a local index (i.e. If the bubble wraps 20 messages then the local index is in the range (0-19))
     /// @param The start index.
     /// @param The end index.
-    void load(uint32_t idx0,uint32_t idx1);
+    void load(int32_t global_idx0,int32_t global_idx1);
 
     /// @brief loads a specific message based on a time tag into memory.
     /// @param time The time stamp of the message to be loaded.
-    void load(std_msgs::TimeStamp time);
+    void load(TimeStamp time);
 
     /// @brief loads a range of messages based on time tags into memory.
     /// @param time Begining time stamp of the message to be loaded.
     /// @param time End time stamp of the message to be loaded.
-    void load(std_msgs::TimeStamp time0,std_msgs::TimeStamp time1);
+    void load(TimeStamp time0, TimeStamp time1);
 
     /// @brief unloads all data associated with the vertex.
     void unload();
 
     /// @brief unloads A specific message.
     /// @param The index of the message to unload.
-    void unload(uint32_t idx);
+    void unload(int32_t local_idx);
 
     /// @brief unloads A range of messages
     /// @param The first index.
     /// @param The last index.
-    void unload(uint32_t idx0,uint32_t idx1);
+    void unload(int32_t local_idx0, int32_t local_idx1);
 
     /// @brief Inserts a message into the bubble.
     void insert(Message &message);
 
     /// @brief Gets the size of the bubble (number of messages)
     /// @return the size of the bubble.
-    uint32_t size();
+    int32_t size();
 
     /// @brief Checks to see if a message is loaded based on index.
     /// @return true if the message is loaded, false otherwise.
-    bool isLoaded(uint32_t idx);
+    bool isLoaded(int32_t idx);
 
     /// @brief Checks to see if a message is loaded based on time.
     /// @return true if the message is loaded, false otherwise.
-    bool isLoaded(const robochunk::std_msgs::TimeStamp &time);
+    bool isLoaded(TimeStamp time);
 
     /// @brief Retrieves a reference to the message.
     /// @param the index of the message.
-    Message& retrieve(uint32_t idx);
+    Message& retrieve(int32_t local_idx);
 
     /// @brief Retrieves a reference to the message.
     /// @param The timestamp of the message.
-    Message& retrieve(const robochunk::std_msgs::TimeStamp &time);
+    Message& retrieve(TimeStamp time);
 
     /// @brief returns the number of bytes being used by this bubble.
     /// @param the number of bytes being used by this bubble.
@@ -137,7 +136,7 @@ public:
 private:
 
     /// @brief the current end index of the bubble.
-    uint32_t endIdx;
+    int32_t endIdx;
 
     /// @brief The indices associated with this bubble.
     ChunkIndices indices_;
@@ -155,7 +154,7 @@ private:
     DataMap data_map_;
 
     /// @brief maps timestamps to indices in the data map.
-    std::map<uint64_t,uint32_t> time_map_;
+    std::map<uint64_t,int32_t> time_map_;
     
     /// @brief The number of bytes being used by the bubble.
     uint64_t memoryUsageBytes_;
@@ -164,4 +163,6 @@ private:
     bool is_loaded_;
 };
 
-}}
+}
+
+#endif

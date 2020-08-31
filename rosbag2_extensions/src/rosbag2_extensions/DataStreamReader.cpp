@@ -24,7 +24,7 @@ void DataStreamReader::openAndGetMessageType() {
     // ToDo: get message type, specialize serialization_ based on message type?
 }
 
-std::shared_ptr<TestMsgT> DataStreamReader::readAtIndex(uint32_t index) {
+std::shared_ptr<TestMsgT> DataStreamReader::readAtIndex(int32_t index) {
     openAndGetMessageType();
     auto bag_message = reader_.read_at_index(index);
     auto extracted_test_msg = std::make_shared<TestMsgT>();
@@ -44,7 +44,7 @@ std::shared_ptr<TestMsgT> DataStreamReader::readAtTimestamp(rcutils_time_point_v
     return extracted_test_msg;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> DataStreamReader::readAtIndexRange(uint32_t index_begin, uint32_t index_end) {
+std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> DataStreamReader::readAtIndexRange(int32_t index_begin, int32_t index_end) {
     openAndGetMessageType();
     auto bag_message_vector = reader_.read_at_index_range(index_begin, index_end);
     // std::cout << "Number of messages: " << bag_message_vector->size() << std::endl;
