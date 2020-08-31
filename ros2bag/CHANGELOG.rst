@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add pytest.ini so local tests don't display warning. (`#446 <https://github.com/ros2/rosbag2/issues/446>`_) (`#514 <https://github.com/ros2/rosbag2/issues/514>`_)
+* Contributors: Emerson Knapp
+
 0.3.4 (2020-08-05)
 ------------------
 * Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_) (`#490 <https://github.com/ros2/rosbag2/issues/490>`_)
