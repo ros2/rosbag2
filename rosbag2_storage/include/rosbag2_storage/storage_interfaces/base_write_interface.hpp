@@ -41,6 +41,8 @@ public:
   virtual void create_topic(const TopicMetadata & topic) = 0;
 
   virtual void remove_topic(const TopicMetadata & topic) = 0;
+
+  virtual int32_t get_last_inserted_id() {return 0;}
 };
 
 }  // namespace storage_interfaces

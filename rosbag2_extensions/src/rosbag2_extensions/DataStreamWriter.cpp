@@ -36,7 +36,7 @@ rosbag2_storage::TopicMetadata DataStreamWriter::createTopicMetadata() {
     return tm;
 }
 
-void DataStreamWriter::write(const TestMsgT &message) {
+int32_t DataStreamWriter::write(const TestMsgT &message) {
     if(!opened_) open();
 
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -45,13 +45,14 @@ void DataStreamWriter::write(const TestMsgT &message) {
         throw std::runtime_error("couldn't assign time rosbag message");
     }
     rclcpp::SerializedMessage serialized_msg;
-    bag_message->topic_name = tm_.name;
     serialization_.serialize_message(&message, &serialized_msg);
 
+    bag_message->topic_name = tm_.name;
     bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
         &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
 
     writer_.write(bag_message);
+    return writer_.get_last_inserted_id();
 }
 
 

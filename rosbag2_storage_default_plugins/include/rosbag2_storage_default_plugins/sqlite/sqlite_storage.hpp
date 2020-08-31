@@ -75,6 +75,8 @@ public:
 
   std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(int32_t index_begin, int32_t index_end) override;
 
+  int32_t get_last_inserted_id() override;
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;

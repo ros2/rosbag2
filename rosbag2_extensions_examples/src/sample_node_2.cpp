@@ -22,7 +22,8 @@ int main()
   writer.open();
   for (int i = 1; i <= 10; i++) {
     test_msg.float64_value = i*10;
-    writer.write(test_msg);
+    int32_t index_return = writer.write(test_msg);
+    std::cout << index_return << std::endl;
   }
   writer.close();
 

@@ -16,7 +16,8 @@ public:
     void open();
     void close();
 
-    void write(const TestMsgT &message);
+    // returns the id of the inserted message
+    int32_t write(const TestMsgT &message);
 
 protected:
     rosbag2_storage::TopicMetadata createTopicMetadata();

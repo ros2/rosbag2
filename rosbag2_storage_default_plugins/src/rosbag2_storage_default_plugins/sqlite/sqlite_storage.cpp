@@ -136,6 +136,10 @@ void SqliteStorage::commit_transaction()
   active_transaction_ = false;
 }
 
+int32_t SqliteStorage::get_last_inserted_id() {
+  return database_->get_last_insert_id();
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
