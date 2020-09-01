@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/time.h"
@@ -26,6 +28,7 @@ int main()
     std::cout << index_return << std::endl;
   }
   writer.close();
+  // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   rosbag2_extensions::DataStreamReader reader("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
   

@@ -41,7 +41,7 @@ SqliteWrapper::SqliteWrapper(
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
       errmsg << "Could not read-only open database. SQLite error (" <<
-        rc << "): " << sqlite3_errstr(rc);
+        rc << "): " << sqlite3_errstr(rc) << ". Extended error code: " << sqlite3_extended_errcode(db_ptr);
       throw SqliteException{errmsg.str()};
     }
     // throws an exception if the database is not valid.
@@ -53,7 +53,7 @@ SqliteWrapper::SqliteWrapper(
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
       errmsg << "Could not read-write open database. SQLite error (" <<
-        rc << "): " << sqlite3_errstr(rc);
+        rc << "): " << sqlite3_errstr(rc) << ". Extended error code: " << sqlite3_extended_errcode(db_ptr);
       throw SqliteException{errmsg.str()};
     }
     prepare_statement("PRAGMA journal_mode = WAL;")->execute_and_reset();

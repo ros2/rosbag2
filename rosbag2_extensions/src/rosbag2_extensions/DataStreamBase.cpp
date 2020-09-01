@@ -5,7 +5,7 @@ namespace rosbag2_extensions
 {
 
 DataStreamBase::DataStreamBase(const std::string &data_directory,const std::string &stream_name) :
-data_directory_(rcpputils::fs::path(data_directory)),
+data_directory_(rcpputils::fs::path(data_directory) / stream_name),
 stream_name_(stream_name),
 opened_(false) {
     storage_options_.uri = data_directory_.string();
