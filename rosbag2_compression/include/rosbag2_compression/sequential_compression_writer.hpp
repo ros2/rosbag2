@@ -141,17 +141,14 @@ private:
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
 
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
-
   // Used to track topic -> message count
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_{};
 
   rosbag2_storage::BagMetadata metadata_{};
 
-  rosbag2_compression::CompressionOptions compression_options_{};
+  rosbag2_storage::StorageOptions storage_options_{};
 
-  std::string storage_config_uri_{};
+  rosbag2_compression::CompressionOptions compression_options_{};
 
   bool should_compress_last_file_{true};
 

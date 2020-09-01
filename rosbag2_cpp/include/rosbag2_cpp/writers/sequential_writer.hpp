@@ -111,24 +111,14 @@ private:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
 
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_;
+  rosbag2_storage::StorageOptions storage_options_;
 
-  // Used in bagfile splitting;
-  // specifies the best-effort maximum duration of a bagfile in seconds.
-  std::chrono::seconds max_bagfile_duration;
-
-  // Intermediate cache to write multiple messages into the storage.
-  // `max_cache_size` is the amount of messages to hold in storage before writing to disk.
-  uint64_t max_cache_size_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used to track topic -> message count
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
 
   rosbag2_storage::BagMetadata metadata_;
-
-  std::string storage_config_uri_;
 
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile();

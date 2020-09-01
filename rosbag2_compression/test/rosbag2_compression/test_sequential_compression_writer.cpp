@@ -44,8 +44,8 @@ public:
     storage_options_{},
     serialization_format_{"rmw_format"}
   {
-    ON_CALL(*storage_factory_, open_read_write(_, _, _)).WillByDefault(Return(storage_));
-    EXPECT_CALL(*storage_factory_, open_read_write(_, _, _)).Times(AtLeast(0));
+    ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
+    EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;

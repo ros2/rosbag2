@@ -61,9 +61,6 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
-  max_bagfile_duration(
-    std::chrono::seconds(rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)),
   topics_names_to_info_(),
   metadata_()
 {}
@@ -86,16 +83,10 @@ void SequentialWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
-  // TODO(karsten1987): Check if we can just storage the complete options struct
-  // Should these configs be serialized in the metadata somehow?
-  storage_config_uri_ = storage_options.storage_config_uri;
-
   base_folder_ = storage_options.uri;
-  max_bagfile_size_ = storage_options.max_bagfile_size;
-  max_bagfile_duration = std::chrono::seconds(storage_options.max_bagfile_duration);
-  max_cache_size_ = storage_options.max_cache_size;
+  storage_options_ = storage_options;
 
-  cache_.reserve(max_cache_size_);
+  cache_.reserve(storage_options.max_cache_size);
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -103,7 +94,7 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  rcpputils::fs::path db_path(base_folder_);
+  rcpputils::fs::path db_path(storage_options.uri);
   if (db_path.is_directory()) {
     std::stringstream error;
     error << "Database directory already exists (" << db_path.string() <<
@@ -118,16 +109,14 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  const auto storage_uri = format_storage_uri(base_folder_, 0);
-
-  storage_ = storage_factory_->open_read_write(
-    storage_uri, storage_options.storage_id, storage_options.storage_config_uri);
+  storage_options_.uri = format_storage_uri(base_folder_, 0);
+  storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  if (max_bagfile_size_ != 0 &&
-    max_bagfile_size_ < storage_->get_minimum_split_file_size())
+  if (storage_options_.max_bagfile_size != 0 &&
+    storage_options_.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
@@ -199,15 +188,14 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 
 void SequentialWriter::split_bagfile()
 {
-  const auto storage_uri = format_storage_uri(
+  storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
-  storage_ = storage_factory_->open_read_write(
-    storage_uri, metadata_.storage_identifier, storage_config_uri_);
+  storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (!storage_) {
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
@@ -251,15 +239,15 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   metadata_.duration = std::max(metadata_.duration, duration);
 
   // if cache size is set to zero, we directly call write
-  if (max_cache_size_ == 0u) {
+  if (storage_options_.max_cache_size == 0u) {
     storage_->write(converter_ ? converter_->convert(message) : message);
   } else {
     cache_.push_back(converter_ ? converter_->convert(message) : message);
-    if (cache_.size() >= max_cache_size_) {
+    if (cache_.size() >= storage_options_.max_cache_size) {
       storage_->write(cache_);
       // reset cache
       cache_.clear();
-      cache_.reserve(max_cache_size_);
+      cache_.reserve(storage_options_.max_cache_size);
     }
   }
 }
@@ -270,16 +258,19 @@ bool SequentialWriter::should_split_bagfile() const
   bool should_split = false;
 
   // Splitting by size
-  if (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
-    should_split = should_split || (storage_->get_bagfile_size() > max_bagfile_size_);
+  if (storage_options_.max_bagfile_size !=
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
+  {
+    should_split = should_split ||
+      (storage_->get_bagfile_size() > storage_options_.max_bagfile_size);
   }
 
   // Splitting by time
-  if (max_bagfile_duration != std::chrono::seconds(
-      rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT))
+  if (storage_options_.max_bagfile_duration !=
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)
   {
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      max_bagfile_duration);
+      std::chrono::seconds(storage_options_.max_bagfile_duration));
     should_split = should_split ||
       ((std::chrono::high_resolution_clock::now() - metadata_.starting_time) > max_duration_ns);
   }

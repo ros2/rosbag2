@@ -35,9 +35,8 @@ public:
   virtual ~ReadOnlyInterface() = default;
 
   void open(
-    const std::string & uri,
-    IOFlag io_flag = IOFlag::READ_ONLY,
-    const std::string & config_file_uri = "") override = 0;
+    const StorageOptions & storage_options,
+    IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 
   uint64_t get_bagfile_size() const override = 0;
 

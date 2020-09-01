@@ -103,10 +103,8 @@ void SequentialCompressionWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
-  storage_config_uri_ = storage_options.storage_config_uri;
-
-  max_bagfile_size_ = storage_options.max_bagfile_size;
   base_folder_ = storage_options.uri;
+  storage_options_ = storage_options;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -129,20 +127,19 @@ void SequentialCompressionWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  const auto storage_uri = format_storage_uri(base_folder_, 0);
-  storage_ = storage_factory_->open_read_write(
-    storage_uri, storage_options.storage_id, storage_options.storage_config_uri);
+  storage_options_.uri = format_storage_uri(base_folder_, 0);
+  storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
 
-  if (max_bagfile_size_ != 0 &&
-    max_bagfile_size_ < storage_->get_minimum_split_file_size())
+  if (storage_options_.max_bagfile_size != 0 &&
+    storage_options_.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
       storage_->get_minimum_split_file_size() << ". Specified value of " <<
-      storage_options.max_bagfile_size;
+      storage_options_.max_bagfile_size;
     throw std::runtime_error{error.str()};
   }
 
@@ -247,13 +244,11 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  const auto storage_uri = format_storage_uri(
+  storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
-  storage_ = storage_factory_->open_read_write(
-    storage_uri, metadata_.storage_identifier,
-    storage_config_uri_);
+  storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();
@@ -265,7 +260,7 @@ void SequentialCompressionWriter::split_bagfile()
     should_compress_last_file_ = false;
 
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
     throw std::runtime_error{errmsg.str()};
   }
 
@@ -318,10 +313,12 @@ void SequentialCompressionWriter::write(
 
 bool SequentialCompressionWriter::should_split_bagfile() const
 {
-  if (max_bagfile_size_ == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
+  if (storage_options_.max_bagfile_size ==
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
+  {
     return false;
   } else {
-    return storage_->get_bagfile_size() > max_bagfile_size_;
+    return storage_->get_bagfile_size() > storage_options_.max_bagfile_size;
   }
 }
 

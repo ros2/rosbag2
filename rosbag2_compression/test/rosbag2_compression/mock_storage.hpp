@@ -30,9 +30,9 @@
 class MockStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
-  MOCK_METHOD3(
+  MOCK_METHOD2(
     open,
-    void(const std::string &, rosbag2_storage::storage_interfaces::IOFlag, const std::string &));
+    void(const rosbag2_storage::StorageOptions &, rosbag2_storage::storage_interfaces::IOFlag));
   MOCK_METHOD1(create_topic, void(const rosbag2_storage::TopicMetadata &));
   MOCK_METHOD1(remove_topic, void(const rosbag2_storage::TopicMetadata &));
   MOCK_METHOD0(has_next, bool());

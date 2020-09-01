@@ -68,7 +68,7 @@ public:
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
-    EXPECT_CALL(*storage_factory, open_read_only(_, _, _)).WillRepeatedly(Return(storage_));
+    EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
 
     auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
       std::move(storage_factory), converter_factory_, std::move(metadata_io));

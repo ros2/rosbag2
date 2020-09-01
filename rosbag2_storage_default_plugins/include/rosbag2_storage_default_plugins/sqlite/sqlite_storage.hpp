@@ -49,10 +49,9 @@ public:
   ~SqliteStorage() override;
 
   void open(
-    const std::string & uri,
+    const rosbag2_storage::StorageOptions & storage_options,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
-    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
-    const std::string & config_file_uri = "") override;
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 

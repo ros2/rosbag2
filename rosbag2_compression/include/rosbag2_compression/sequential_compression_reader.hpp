@@ -90,6 +90,8 @@ private:
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+
+  rosbag2_storage::StorageOptions storage_options_;
 };
 
 }  // namespace rosbag2_compression

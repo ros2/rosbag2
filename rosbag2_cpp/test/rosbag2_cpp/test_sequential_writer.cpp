@@ -50,16 +50,16 @@ public:
     rcpputils::fs::path dir(storage_options_.uri);
     rcpputils::fs::remove_all(dir);
 
-    ON_CALL(*storage_factory_, open_read_write(_, _, _)).WillByDefault(
+    ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
         Invoke(
-          [this](const std::string & uri, const std::string &, const std::string &) {
+          [this](const rosbag2_storage::StorageOptions & storage_options) {
             fake_storage_size_ = 0;
-            fake_storage_uri_ = uri;
+            fake_storage_uri_ = storage_options.uri;
           }),
         Return(storage_)));
     EXPECT_CALL(
-      *storage_factory_, open_read_write(_, _, _)).Times(AtLeast(0));
+      *storage_factory_, open_read_write(_)).Times(AtLeast(0));
   }
 
   ~SequentialWriterTest()

@@ -143,8 +143,8 @@ protected:
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
 private:
+  rosbag2_storage::StorageOptions storage_options_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::string storage_config_uri_{};  // this should go
 };
 
 }  // namespace readers

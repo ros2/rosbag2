@@ -62,6 +62,8 @@ void SequentialCompressionReader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
+  storage_options_ = storage_options;
+
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
     if (metadata_.relative_file_paths.empty()) {
@@ -72,8 +74,8 @@ void SequentialCompressionReader::open(
     current_file_iterator_ = file_paths_.begin();
     setup_decompression();
 
-    storage_ = storage_factory_->open_read_only(
-      *current_file_iterator_, metadata_.storage_identifier, storage_options.storage_config_uri);
+    storage_options_.uri = *current_file_iterator_;
+    storage_ = storage_factory_->open_read_only(storage_options);
     if (!storage_) {
       std::stringstream errmsg;
       errmsg << "No storage could be initialized for: \"" <<

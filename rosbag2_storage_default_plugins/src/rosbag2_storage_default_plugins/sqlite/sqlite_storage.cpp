@@ -72,17 +72,16 @@ SqliteStorage::~SqliteStorage()
 }
 
 void SqliteStorage::open(
-  const std::string & uri,
-  rosbag2_storage::storage_interfaces::IOFlag io_flag,
-  const std::string & config_file_uri)
+  const rosbag2_storage::StorageOptions & storage_options,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  if (!config_file_uri.empty()) {
-    fprintf(stderr, "going to open config file: %s\n", config_file_uri.c_str());
+  if (!storage_options.storage_config_uri.empty()) {
+    fprintf(stderr, "going to open config file: %s\n", storage_options.storage_config_uri.c_str());
     throw std::runtime_error("storage specific config file is not yet implemented.");
   }
 
   if (is_read_write(io_flag)) {
-    relative_path_ = uri + FILE_EXTENSION;
+    relative_path_ = storage_options.uri + FILE_EXTENSION;
 
     // READ_WRITE requires the DB to not exist.
     if (rcpputils::fs::path(relative_path_).exists()) {
@@ -90,7 +89,7 @@ void SqliteStorage::open(
               "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
   } else {  // APPEND and READ_ONLY
-    relative_path_ = uri;
+    relative_path_ = storage_options.uri;
 
     // APPEND and READ_ONLY require the DB to exist
     if (!rcpputils::fs::path(relative_path_).exists()) {
