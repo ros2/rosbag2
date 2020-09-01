@@ -1,7 +1,7 @@
 // description
 
-#ifndef ROSBAG2_EXTENSIONS__DATASTREAMBASE_HPP_
-#define ROSBAG2_EXTENSIONS__DATASTREAMBASE_HPP_
+#ifndef VTR_STORAGE__DATASTREAMBASE_HPP_
+#define VTR_STORAGE__DATASTREAMBASE_HPP_
 #include <iostream>
 #include <cstdio>
 #include <memory>
@@ -20,13 +20,13 @@
 
 using TestMsgT = test_msgs::msg::BasicTypes;
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
 class DataStreamBase
 {
 public:
-    DataStreamBase(const std::string &data_directory,const std::string &stream_name);
+    DataStreamBase(const std::string &data_directory_string,const std::string &stream_name);
     ~DataStreamBase();
 
 protected:
@@ -44,4 +44,4 @@ protected:
 
 
 }
-#endif // ROSBAG2_EXTENSIONS__DATASTREAMBASE_HPP_
+#endif // VTR_STORAGE__DATASTREAMBASE_HPP_

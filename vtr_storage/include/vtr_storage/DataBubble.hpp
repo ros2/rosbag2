@@ -2,14 +2,14 @@
 /// @brief header file for the robochunk data bubble class.
 /// @author Michael Paton, ASRL
 
-#ifndef ROSBAG2_EXTENSIONS__DATABUBBLE_HPP_
-#define ROSBAG2_EXTENSIONS__DATABUBBLE_HPP_
+#ifndef VTR_STORAGE__DATABUBBLE_HPP_
+#define VTR_STORAGE__DATABUBBLE_HPP_
 
 #include <map>
 
-#include "rosbag2_extensions/DataStreamReader.hpp"
+#include "vtr_storage/DataStreamReader.hpp"
 
-namespace rosbag2_extensions {
+namespace vtr_storage {
 
 typedef TestMsgT Message;
 typedef rcutils_time_point_value_t TimeStamp;
@@ -51,7 +51,7 @@ public:
 
     /// @brief Initializes a data bubble with a data stream.
     /// @param A pointer to the associated data stream.
-    void initialize(std::shared_ptr<rosbag2_extensions::DataStreamReader> data_stream);
+    void initialize(std::shared_ptr<DataStreamReader> data_stream);
 
     /// @brief Sets the indicies for this bubble.
     /// @param The start index of this bubble.
@@ -148,7 +148,7 @@ private:
     bool loadFromTime_;
 
     /// @brief A pointer to the Robochunk stream.
-    std::shared_ptr<rosbag2_extensions::DataStreamReader> data_stream_;
+    std::shared_ptr<DataStreamReader> data_stream_;
 
     /// @brief The map of currently loaded data.
     DataMap data_map_;
@@ -165,4 +165,4 @@ private:
 
 }
 
-#endif
+#endif // VTR_STORAGE__DATABUBBLE_HPP_

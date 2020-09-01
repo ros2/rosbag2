@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rosbag2_extensions_examples)
+project(vtr_storage_examples)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -18,7 +18,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(rosbag2_extensions REQUIRED)
+find_package(vtr_storage REQUIRED)
+find_package(test_msgs REQUIRED)
 # find_package(std_msgs REQUIRED)
 
   
@@ -33,11 +34,11 @@ target_include_directories(sample_node_3 PUBLIC
   $<INSTALL_INTERFACE:include>)
   
 ament_target_dependencies(sample_node_2
-      rosbag2_extensions
+      vtr_storage
       test_msgs)
       
 ament_target_dependencies(sample_node_3
-      rosbag2_extensions
+      vtr_storage
       test_msgs)
 
 install(TARGETS sample_node_2

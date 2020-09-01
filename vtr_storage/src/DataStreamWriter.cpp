@@ -1,11 +1,11 @@
 // description
-#include "rosbag2_extensions/DataStreamWriter.hpp"
+#include "vtr_storage/DataStreamWriter.hpp"
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
-DataStreamWriter::DataStreamWriter(const std::string &data_directory,const std::string &stream_name) :
-DataStreamBase(data_directory, stream_name) {
+DataStreamWriter::DataStreamWriter(const std::string &data_directory_string ,const std::string &stream_name) :
+DataStreamBase(data_directory_string, stream_name) {
   tm_ = createTopicMetadata();
 }
 
@@ -15,7 +15,7 @@ DataStreamWriter::~DataStreamWriter() {
 
 void DataStreamWriter::open() {
     if(!opened_) {
-        rcpputils::fs::create_directories(data_directory_);
+        // rcpputils::fs::create_directories(data_directory_);
         writer_.open(storage_options_, converter_options_);
         writer_.create_topic(tm_);
         opened_ = true;

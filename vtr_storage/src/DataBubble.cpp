@@ -1,6 +1,6 @@
-#include <rosbag2_extensions/DataBubble.hpp>
+#include <vtr_storage/DataBubble.hpp>
 
-namespace rosbag2_extensions {
+namespace vtr_storage {
 
 DataBubble::DataBubble() :
 memoryUsageBytes_(0),
@@ -16,7 +16,7 @@ DataBubble::~DataBubble() {
     data_stream_->close();
 }
 
-void DataBubble::initialize(std::shared_ptr<rosbag2_extensions::DataStreamReader> data_stream) {
+void DataBubble::initialize(std::shared_ptr<vtr_storage::DataStreamReader> data_stream) {
     data_stream_ = data_stream;
 }
 

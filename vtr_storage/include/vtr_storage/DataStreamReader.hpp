@@ -1,10 +1,10 @@
 // description
-#ifndef ROSBAG2_EXTENSIONS__DATASTREAMREADER_HPP_
-#define ROSBAG2_EXTENSIONS__DATASTREAMREADER_HPP_
+#ifndef VTR_STORAGE__DATASTREAMREADER_HPP_
+#define VTR_STORAGE__DATASTREAMREADER_HPP_
 
-#include "rosbag2_extensions/DataStreamBase.hpp"
+#include "vtr_storage/DataStreamBase.hpp"
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
 class DataStreamReader : public DataStreamBase
@@ -29,4 +29,4 @@ protected:
 
 
 }
-#endif
+#endif // VTR_STORAGE__DATASTREAMREADER_HPP_

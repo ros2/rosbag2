@@ -1,16 +1,16 @@
 // description
-#ifndef ROSBAG2_EXTENSIONS__DATASTREAMWRITER_HPP_
-#define ROSBAG2_EXTENSIONS__DATASTREAMWRITER_HPP_
+#ifndef VTR_STORAGE__DATASTREAMWRITER_HPP_
+#define VTR_STORAGE__DATASTREAMWRITER_HPP_
 
-#include "rosbag2_extensions/DataStreamBase.hpp"
+#include "vtr_storage/DataStreamBase.hpp"
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
 class DataStreamWriter : public DataStreamBase
 {
 public:
-    DataStreamWriter(const std::string &data_directory,const std::string &stream_name);
+    DataStreamWriter(const std::string &data_directory_string,const std::string &stream_name);
     ~DataStreamWriter();
 
     void open();
@@ -28,4 +28,4 @@ protected:
 
 
 }
-#endif
+#endif // VTR_STORAGE__DATASTREAMWRITER_HPP_

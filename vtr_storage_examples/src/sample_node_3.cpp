@@ -6,9 +6,9 @@
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/time.h"
 
-#include "rosbag2_extensions/DataStreamReader.hpp"
-#include "rosbag2_extensions/DataStreamWriter.hpp"
-#include "rosbag2_extensions/DataBubble.hpp"
+#include "vtr_storage/DataStreamReader.hpp"
+#include "vtr_storage/DataStreamWriter.hpp"
+#include "vtr_storage/DataBubble.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 
@@ -18,7 +18,7 @@ int main()
   using TestMsgT = test_msgs::msg::BasicTypes;
   TestMsgT test_msg;
 
-  rosbag2_extensions::DataStreamWriter writer("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
+  vtr_storage::DataStreamWriter writer("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
   
   writer.open();
   for (int i = 1; i <= 10; i++) {
@@ -27,8 +27,8 @@ int main()
   }
   writer.close();
 
-  auto reader = std::make_shared<rosbag2_extensions::DataStreamReader>("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
-  rosbag2_extensions::DataBubble bubble;
+  auto reader = std::make_shared<vtr_storage::DataStreamReader>("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
+  vtr_storage::DataBubble bubble;
   bubble.initialize(reader);
   bubble.setIndices(2, 8);
   bubble.load();

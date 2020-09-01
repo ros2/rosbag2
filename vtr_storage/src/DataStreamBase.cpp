@@ -1,11 +1,11 @@
 // description
-#include "rosbag2_extensions/DataStreamBase.hpp"
+#include "vtr_storage/DataStreamBase.hpp"
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
-DataStreamBase::DataStreamBase(const std::string &data_directory,const std::string &stream_name) :
-data_directory_(rcpputils::fs::path(data_directory) / stream_name),
+DataStreamBase::DataStreamBase(const std::string &data_directory_string,const std::string &stream_name) :
+data_directory_(rcpputils::fs::path(data_directory_string) / stream_name),
 stream_name_(stream_name),
 opened_(false) {
     storage_options_.uri = data_directory_.string();

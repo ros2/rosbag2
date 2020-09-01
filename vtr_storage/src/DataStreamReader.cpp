@@ -1,7 +1,7 @@
 // description
-#include "rosbag2_extensions/DataStreamReader.hpp"
+#include "vtr_storage/DataStreamReader.hpp"
 
-namespace rosbag2_extensions
+namespace vtr_storage
 {
 
 DataStreamReader::DataStreamReader(const std::string &data_directory,const std::string &stream_name) :

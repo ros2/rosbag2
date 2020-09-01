@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>rosbag2_extensions</name>
+  <name>vtr_storage</name>
   <version>0.3.2</version>
   <description>C++ ROSBag2 client library</description>
   <maintainer email="daniel.guo@robotics.utias.utoronto.ca">Daniel Guo</maintainer>

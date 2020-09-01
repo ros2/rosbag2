@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rosbag2_extensions)
+project(vtr_storage)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -48,10 +48,10 @@ find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
-  src/rosbag2_extensions/DataStreamBase.cpp
-  src/rosbag2_extensions/DataStreamReader.cpp
-  src/rosbag2_extensions/DataStreamWriter.cpp
-  src/rosbag2_extensions/DataBubble.cpp
+  src/DataStreamBase.cpp
+  src/DataStreamReader.cpp
+  src/DataStreamWriter.cpp
+  src/DataBubble.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -77,7 +77,7 @@ target_include_directories(${PROJECT_NAME}
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_EXTENSIONS_BUILDING_DLL")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "VTR_STORAGE_BUILDING_DLL")
 
 # prevent pluginlib from using boost
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
