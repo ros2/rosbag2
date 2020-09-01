@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 PYBIND11_MODULE(_storage, m) {
@@ -38,7 +38,7 @@ PYBIND11_MODULE(_storage, m) {
     "output_serialization_format",
     &rosbag2_cpp::ConverterOptions::output_serialization_format);
 
-  pybind11::class_<rosbag2_cpp::StorageOptions>(m, "StorageOptions")
+  pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
   .def(
     pybind11::init<std::string, std::string, uint64_t, uint64_t, uint64_t>(),
     pybind11::arg("uri"),
@@ -46,17 +46,17 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
     pybind11::arg("max_cache_size") = 0)
-  .def_readwrite("uri", &rosbag2_cpp::StorageOptions::uri)
-  .def_readwrite("storage_id", &rosbag2_cpp::StorageOptions::storage_id)
+  .def_readwrite("uri", &rosbag2_storage::StorageOptions::uri)
+  .def_readwrite("storage_id", &rosbag2_storage::StorageOptions::storage_id)
   .def_readwrite(
     "max_bagfile_size",
-    &rosbag2_cpp::StorageOptions::max_bagfile_size)
+    &rosbag2_storage::StorageOptions::max_bagfile_size)
   .def_readwrite(
     "max_bagfile_duration",
-    &rosbag2_cpp::StorageOptions::max_bagfile_duration)
+    &rosbag2_storage::StorageOptions::max_bagfile_duration)
   .def_readwrite(
     "max_cache_size",
-    &rosbag2_cpp::StorageOptions::max_cache_size);
+    &rosbag2_storage::StorageOptions::max_cache_size);
 
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(

@@ -90,7 +90,7 @@ TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   EXPECT_THROW(
-    reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
+    reader_->open(rosbag2_storage::StorageOptions(), {"", storage_serialization_format_}),
     std::invalid_argument);
 }
 
@@ -115,7 +115,7 @@ TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)
     std::move(metadata_io_));
 
   compression_reader->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
 
   auto topics_and_types = compression_reader->get_all_topics_and_types();
   EXPECT_FALSE(topics_and_types.empty());
@@ -137,7 +137,7 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   // Throws runtime_error b/c compressor can't read
   EXPECT_THROW(
-    reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
+    reader_->open(rosbag2_storage::StorageOptions(), {"", storage_serialization_format_}),
     std::runtime_error);
 }
 
@@ -165,7 +165,7 @@ TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   reader_->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
 }
 
 TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfile)
@@ -207,7 +207,7 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
     std::move(metadata_io_));
 
   compression_reader->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
   EXPECT_EQ(compression_reader->has_next_file(), true);
   EXPECT_EQ(compression_reader->has_next(), true);
   compression_reader->read_next();

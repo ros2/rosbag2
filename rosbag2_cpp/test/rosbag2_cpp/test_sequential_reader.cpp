@@ -88,7 +88,7 @@ public:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::string storage_serialization_format_;
   std::string storage_uri_;
-  rosbag2_cpp::StorageOptions default_storage_options_;
+  rosbag2_storage::StorageOptions default_storage_options_;
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {

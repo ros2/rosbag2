@@ -24,7 +24,8 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
+
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
@@ -82,7 +83,7 @@ void SequentialWriter::init_metadata()
 }
 
 void SequentialWriter::open(
-  const StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
   // TODO(karsten1987): Check if we can just storage the complete options struct

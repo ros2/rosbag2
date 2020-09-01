@@ -44,7 +44,7 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
-    storage_options_ = rosbag2_cpp::StorageOptions{};
+    storage_options_ = rosbag2_storage::StorageOptions{};
     storage_options_.uri = "uri";
 
     rcpputils::fs::path dir(storage_options_.uri);
@@ -73,7 +73,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_cpp::StorageOptions storage_options_;
+  rosbag2_storage::StorageOptions storage_options_;
   uint64_t fake_storage_size_;
   rosbag2_storage::BagMetadata fake_metadata_;
   std::string fake_storage_uri_;

@@ -20,11 +20,11 @@
 
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_py
@@ -40,7 +40,7 @@ public:
   }
 
   void open(
-    rosbag2_cpp::StorageOptions & storage_options,
+    rosbag2_storage::StorageOptions & storage_options,
     rosbag2_cpp::ConverterOptions & converter_options)
   {
     writer_->open(storage_options, converter_options);

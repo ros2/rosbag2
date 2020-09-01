@@ -22,10 +22,10 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {

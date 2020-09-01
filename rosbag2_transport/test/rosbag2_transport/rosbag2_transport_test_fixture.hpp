@@ -33,8 +33,9 @@
 # include <Windows.h>
 #endif
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
 
@@ -80,7 +81,7 @@ public:
 
   MemoryManagement memory_management_;
 
-  rosbag2_transport::StorageOptions storage_options_;
+  rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;

@@ -53,7 +53,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_cpp::StorageOptions storage_options_;
+  rosbag2_storage::StorageOptions storage_options_;
   std::string serialization_format_;
 };
 
@@ -73,7 +73,8 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   EXPECT_THROW(
-    writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_}),
+    writer_->open(
+      rosbag2_storage::StorageOptions(), {serialization_format_, serialization_format_}),
     std::invalid_argument);
 }
 
@@ -87,7 +88,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
   const uint64_t min_split_file_size = 10;
   const uint64_t max_bagfile_size = 5;
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
-  auto storage_options = rosbag2_cpp::StorageOptions{};
+  auto storage_options = rosbag2_storage::StorageOptions{};
   storage_options.max_bagfile_size = max_bagfile_size;
   storage_options.uri = "foo.bar";
 
@@ -119,7 +120,9 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   EXPECT_NO_THROW(
-    writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_}));
+    writer_->open(
+      rosbag2_storage::StorageOptions(),
+      {serialization_format_, serialization_format_}));
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
@@ -136,5 +139,5 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
     converter_factory_,
     std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-  writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_});
+  writer_->open(rosbag2_storage::StorageOptions(), {serialization_format_, serialization_format_});
 }

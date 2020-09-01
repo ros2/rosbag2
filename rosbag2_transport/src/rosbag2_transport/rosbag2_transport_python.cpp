@@ -32,9 +32,9 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
 
 namespace
@@ -84,7 +84,7 @@ std::unordered_map<std::string, rclcpp::QoS> PyObject_AsTopicQoSMap(PyObject * o
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
 
   static const char * kwlist[] = {
@@ -229,7 +229,7 @@ static PyObject *
 rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
   rosbag2_transport::PlayOptions play_options{};
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
 
   static const char * kwlist[] = {
     "uri",

@@ -28,8 +28,8 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
@@ -100,7 +100,7 @@ void SequentialCompressionWriter::setup_compression()
 }
 
 void SequentialCompressionWriter::open(
-  const rosbag2_cpp::StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   storage_config_uri_ = storage_options.storage_config_uri;

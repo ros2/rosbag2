@@ -95,7 +95,7 @@ public:
   std::string relative_path_1_;
   std::string relative_path_2_;
   std::string absolute_path_1_;
-  rosbag2_cpp::StorageOptions default_storage_options_;
+  rosbag2_storage::StorageOptions default_storage_options_;
 };
 
 class MultifileReaderTestVersion3 : public MultifileReaderTest

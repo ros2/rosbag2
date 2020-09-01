@@ -59,7 +59,8 @@ public:
   virtual ~SequentialReader();
 
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) override;
 
   void reset() override;
 

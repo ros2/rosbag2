@@ -59,7 +59,7 @@ void SequentialCompressionReader::setup_decompression()
 }
 
 void SequentialCompressionReader::open(
-  const rosbag2_cpp::StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {

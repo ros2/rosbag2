@@ -23,8 +23,8 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_py
@@ -40,7 +40,7 @@ public:
   }
 
   void open(
-    rosbag2_cpp::StorageOptions & storage_options,
+    rosbag2_storage::StorageOptions & storage_options,
     rosbag2_cpp::ConverterOptions & converter_options)
   {
     reader_->open(storage_options, converter_options);

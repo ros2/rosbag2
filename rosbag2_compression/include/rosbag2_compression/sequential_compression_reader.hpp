@@ -63,7 +63,7 @@ public:
   virtual ~SequentialCompressionReader();
 
   void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;

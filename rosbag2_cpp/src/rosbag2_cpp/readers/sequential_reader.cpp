@@ -80,7 +80,8 @@ void SequentialReader::reset()
 }
 
 void SequentialReader::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const rosbag2_storage::StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
   // TODO(karsten1987): Check if we can just storage the complete options struct
   // Should these configs be serialized in the metadata somehow?

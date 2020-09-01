@@ -22,10 +22,10 @@
 #include <utility>
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_cpp
@@ -44,7 +44,7 @@ Writer::~Writer()
 
 void Writer::open(const std::string & uri)
 {
-  rosbag2_cpp::StorageOptions storage_options;
+  rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
   storage_options.storage_id = kDefaultStorageID;
 
@@ -53,7 +53,8 @@ void Writer::open(const std::string & uri)
 }
 
 void Writer::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const rosbag2_storage::StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
   writer_impl_->open(storage_options, converter_options);
 }
