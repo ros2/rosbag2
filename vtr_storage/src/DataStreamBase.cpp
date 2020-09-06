@@ -1,7 +1,7 @@
 // description
 #include "vtr_storage/DataStreamBase.hpp"
 
-namespace vtr_storage
+namespace vtr::storage
 {
 
 DataStreamBase::DataStreamBase(const std::string &data_directory_string,const std::string &stream_name) :
@@ -21,4 +21,4 @@ DataStreamBase::~DataStreamBase() {
 
 }
 
-}
+} // namespace vtr::storage

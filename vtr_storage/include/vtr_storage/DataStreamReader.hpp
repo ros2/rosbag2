@@ -3,8 +3,9 @@
 #define VTR_STORAGE__DATASTREAMREADER_HPP_
 
 #include "vtr_storage/DataStreamBase.hpp"
+#include "vtr_storage/RandomAccessReader.hpp"
 
-namespace vtr_storage
+namespace vtr::storage
 {
 
 class DataStreamReader : public DataStreamBase
@@ -24,9 +25,9 @@ public:
     // next() isn't needed for now due to ranged random access. Can add in if necessary
 
 protected:
-    rosbag2_cpp::readers::RandomAccessReader reader_;
+    std::shared_ptr<RandomAccessReader> reader_;
 };
 
 
-}
+} // namespace vtr::storage
 #endif // VTR_STORAGE__DATASTREAMREADER_HPP_

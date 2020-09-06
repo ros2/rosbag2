@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <iostream>
 
 #include "rcpputils/filesystem_helper.hpp"
 

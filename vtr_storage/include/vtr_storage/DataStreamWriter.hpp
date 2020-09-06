@@ -3,14 +3,15 @@
 #define VTR_STORAGE__DATASTREAMWRITER_HPP_
 
 #include "vtr_storage/DataStreamBase.hpp"
+#include "vtr_storage/SequentialAppendWriter.hpp"
 
-namespace vtr_storage
+namespace vtr::storage
 {
 
 class DataStreamWriter : public DataStreamBase
 {
 public:
-    DataStreamWriter(const std::string &data_directory_string,const std::string &stream_name);
+    DataStreamWriter(const std::string &data_directory_string,const std::string &stream_name, bool append=false);
     ~DataStreamWriter();
 
     void open();
@@ -23,9 +24,10 @@ protected:
     rosbag2_storage::TopicMetadata createTopicMetadata();
 
     rosbag2_storage::TopicMetadata tm_;
-    rosbag2_cpp::writers::SequentialWriter writer_;
+    std::shared_ptr<SequentialAppendWriter> writer_;
+    bool append_;
 };
 
 
-}
+} // namespace vtr::storage
 #endif // VTR_STORAGE__DATASTREAMWRITER_HPP_

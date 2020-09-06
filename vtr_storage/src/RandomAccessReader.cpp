@@ -18,12 +18,10 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_cpp/readers/random_access_reader.hpp"
+#include "vtr_storage/RandomAccessReader.hpp"
 
 
-namespace rosbag2_cpp
-{
-namespace readers
+namespace vtr::storage
 {
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_at_timestamp(rcutils_time_point_value_t timestamp)
@@ -73,5 +71,4 @@ std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessag
   }
 }
 
-}  // namespace readers
-}  // namespace rosbag2_cpp
+}  // namespace vtr::storage

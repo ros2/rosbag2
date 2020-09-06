@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__READERS__RANDOM_ACCESS_READER_HPP_
-#define ROSBAG2_CPP__READERS__RANDOM_ACCESS_READER_HPP_
+#ifndef VTR_STORAGE__RANDOMACCESSREADER_HPP_
+#define VTR_STORAGE__RANDOMACCESSREADER_HPP_
 
 #include <memory>
 #include <string>
@@ -29,20 +29,18 @@
 # pragma warning(disable:4251)
 #endif
 
-namespace rosbag2_cpp
-{
-namespace readers
+namespace vtr::storage
 {
 
-class ROSBAG2_CPP_PUBLIC RandomAccessReader
-  : public ::rosbag2_cpp::readers::SequentialReader
+class RandomAccessReader
+  : public rosbag2_cpp::readers::SequentialReader
 {
 public:
   RandomAccessReader(
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>(),
+    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>())
     : SequentialReader(std::move(storage_factory), std::move(converter_factory), std::move(metadata_io)) {}
@@ -59,11 +57,10 @@ public:
 
 };
 
-}  // namespace readers
-}  // namespace rosbag2_cpp
+} // namespace vtr::storage
 
 #ifdef _WIN32
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__READERS__RANDOM_ACCESS_READER_HPP_
+#endif  // VTR_STORAGE__RANDOMACCESSREADER_HPP_

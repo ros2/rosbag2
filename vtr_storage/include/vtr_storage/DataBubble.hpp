@@ -9,7 +9,7 @@
 
 #include "vtr_storage/DataStreamReader.hpp"
 
-namespace vtr_storage {
+namespace vtr::storage {
 
 typedef TestMsgT Message;
 typedef rcutils_time_point_value_t TimeStamp;
@@ -163,6 +163,6 @@ private:
     bool is_loaded_;
 };
 
-}
+} // namespace vtr::storage
 
 #endif // VTR_STORAGE__DATABUBBLE_HPP_

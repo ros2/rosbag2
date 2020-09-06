@@ -48,6 +48,8 @@ find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/SequentialAppendWriter.cpp
+  src/RandomAccessReader.cpp
   src/DataStreamBase.cpp
   src/DataStreamReader.cpp
   src/DataStreamWriter.cpp

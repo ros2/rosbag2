@@ -56,6 +56,11 @@ bool is_read_write(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
   return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE;
 }
 
+bool is_read_only(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY;
+}
+
 constexpr const auto FILE_EXTENSION = ".db3";
 
 // Minimum size of a sqlite3 database file in bytes (84 kiB).
@@ -79,13 +84,13 @@ void SqliteStorage::open(
 
     // READ_WRITE requires the DB to not exist.
     if (rcpputils::fs::path(relative_path_).exists()) {
-      throw std::runtime_error(
-              "Failed to create bag: File '" + relative_path_ + "' already exists!");
+      io_flag = rosbag2_storage::storage_interfaces::IOFlag::APPEND;
+      std::cout << "Warning: " << relative_path_ << "' already exists! Switching to append mode." << std::endl;
     }
-  } else {  // APPEND and READ_ONLY
+  } else if (is_read_only(io_flag)) {  // READ_ONLY
     relative_path_ = uri;
 
-    // APPEND and READ_ONLY require the DB to exist
+    // READ_ONLY require the DB to exist
     if (!rcpputils::fs::path(relative_path_).exists()) {
       throw std::runtime_error(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
@@ -404,6 +409,7 @@ void SqliteStorage::fill_topics_and_types()
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
       {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+    topics_.insert(std::make_pair(std::get<0>(result), 1));
   }
 }
 
@@ -424,6 +430,9 @@ uint64_t SqliteStorage::get_minimum_split_file_size() const
 
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
+  auto test_statement = database_->prepare_statement("SELECT count(*) FROM sqlite_master WHERE type = 'table'");
+  auto test_query = test_statement->execute_query<int>();
+  std::cout << std::get<0>(*(test_query.begin())) << std::endl;
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = get_storage_identifier();
   metadata.relative_file_paths = {get_relative_file_path()};

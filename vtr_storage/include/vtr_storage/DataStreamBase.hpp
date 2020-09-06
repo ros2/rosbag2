@@ -11,16 +11,14 @@
 #include "rcpputils/filesystem_helper.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/serialization.hpp"
-
-
-#include "rosbag2_cpp/readers/random_access_reader.hpp"
-#include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_cpp/storage_options.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 
 using TestMsgT = test_msgs::msg::BasicTypes;
 
-namespace vtr_storage
+namespace vtr::storage
 {
 
 class DataStreamBase
@@ -43,5 +41,5 @@ protected:
 };
 
 
-}
+} // namespace vtr::storage
 #endif // VTR_STORAGE__DATASTREAMBASE_HPP_

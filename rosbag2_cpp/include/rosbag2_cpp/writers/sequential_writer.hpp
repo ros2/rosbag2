@@ -70,7 +70,7 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
-  void open(
+  virtual void open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
 
   void reset() override;
@@ -104,7 +104,7 @@ public:
 
   int32_t get_last_inserted_id();
 
-private:
+protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;

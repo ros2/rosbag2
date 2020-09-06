@@ -18,7 +18,7 @@ int main()
   using TestMsgT = test_msgs::msg::BasicTypes;
   TestMsgT test_msg;
 
-  vtr_storage::DataStreamWriter writer("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
+  vtr::storage::DataStreamWriter writer("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
   
   writer.open();
   for (int i = 1; i <= 10; i++) {
@@ -27,8 +27,8 @@ int main()
   }
   writer.close();
 
-  auto reader = std::make_shared<vtr_storage::DataStreamReader>("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
-  vtr_storage::DataBubble bubble;
+  auto reader = std::make_shared<vtr::storage::DataStreamReader>("/home/daniel/test/ROS2BagFileParsing/dev_ws/test_rosbag2_writer_api_bag", "test_stream");
+  vtr::storage::DataBubble bubble;
   bubble.initialize(reader);
   bubble.setIndices(2, 8);
   bubble.load();

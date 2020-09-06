@@ -49,7 +49,6 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
-  src/rosbag2_cpp/readers/random_access_reader.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/typesupport_helpers.cpp

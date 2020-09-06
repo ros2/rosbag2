@@ -1,11 +1,11 @@
 // description
 #include "vtr_storage/DataStreamWriter.hpp"
 
-namespace vtr_storage
+namespace vtr::storage
 {
 
-DataStreamWriter::DataStreamWriter(const std::string &data_directory_string ,const std::string &stream_name) :
-DataStreamBase(data_directory_string, stream_name) {
+DataStreamWriter::DataStreamWriter(const std::string &data_directory_string, const std::string &stream_name, bool append) :
+DataStreamBase(data_directory_string, stream_name), append_(append) {
   tm_ = createTopicMetadata();
 }
 
@@ -15,9 +15,10 @@ DataStreamWriter::~DataStreamWriter() {
 
 void DataStreamWriter::open() {
     if(!opened_) {
-        // rcpputils::fs::create_directories(data_directory_);
-        writer_.open(storage_options_, converter_options_);
-        writer_.create_topic(tm_);
+        writer_ = std::make_shared<SequentialAppendWriter>();
+        writer_->open(storage_options_, converter_options_);
+        if(!append_)
+            writer_->create_topic(tm_);
         opened_ = true;
     }
 }
@@ -51,9 +52,9 @@ int32_t DataStreamWriter::write(const TestMsgT &message) {
     bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
         &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
 
-    writer_.write(bag_message);
-    return writer_.get_last_inserted_id();
+    writer_->write(bag_message);
+    return writer_->get_last_inserted_id();
 }
 
 
-}
+} // namespace vtr::storage

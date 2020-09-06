@@ -1,6 +1,6 @@
 #include <vtr_storage/DataBubble.hpp>
 
-namespace vtr_storage {
+namespace vtr::storage {
 
 DataBubble::DataBubble() :
 memoryUsageBytes_(0),
@@ -16,7 +16,7 @@ DataBubble::~DataBubble() {
     data_stream_->close();
 }
 
-void DataBubble::initialize(std::shared_ptr<vtr_storage::DataStreamReader> data_stream) {
+void DataBubble::initialize(std::shared_ptr<DataStreamReader> data_stream) {
     data_stream_ = data_stream;
 }
 
@@ -231,4 +231,4 @@ Message& DataBubble::retrieve(TimeStamp time) {
     // throw std::out_of_range("DataBubble has no data at this time stamp.");
 }
 
-}
+} // namespace vtr::storage
