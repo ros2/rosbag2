@@ -18,7 +18,7 @@ void DataStreamReader::close() {
 
 void DataStreamReader::openAndGetMessageType() {
     if(opened_ == false) {
-        reader_ = std::make_shared<RandomAccessReader>();
+        reader_ = std::make_shared<RandomAccessReader>(stream_name_);
         reader_->open(storage_options_, converter_options_);
         opened_ = true;
     }

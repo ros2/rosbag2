@@ -37,15 +37,18 @@ class RandomAccessReader
 {
 public:
   RandomAccessReader(
+    const std::string &stream_name,
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory =
     std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
-    std::make_unique<rosbag2_storage::MetadataIo>())
-    : SequentialReader(std::move(storage_factory), std::move(converter_factory), std::move(metadata_io)) {}
+    std::make_unique<rosbag2_storage::MetadataIo>());
 
   virtual ~RandomAccessReader() {}
+
+  void open(
+    const rosbag2_cpp::StorageOptions & storage_options, const rosbag2_cpp::ConverterOptions & converter_options) override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_at_timestamp(rcutils_time_point_value_t timestamp);
 
@@ -55,6 +58,8 @@ public:
 
   std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> read_at_index_range(uint32_t index_begin, uint32_t index_end);
 
+protected:
+  std::string stream_name_;
 };
 
 } // namespace vtr::storage

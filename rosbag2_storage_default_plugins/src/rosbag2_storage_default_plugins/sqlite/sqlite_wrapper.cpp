@@ -34,6 +34,7 @@ SqliteWrapper::SqliteWrapper(
   const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
 : db_ptr(nullptr)
 {
+  std::cout << "URI: " << uri << std::endl;
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,

@@ -91,7 +91,8 @@ void SqliteStorage::open(
     relative_path_ = uri;
 
     // READ_ONLY require the DB to exist
-    if (!rcpputils::fs::path(relative_path_).exists()) {
+    // MY EDIT: also requires the file to end in .db3
+    if (!(rcpputils::fs::path(relative_path_).exists() && relative_path_.substr(relative_path_.length()-4) == ".db3")) {
       throw std::runtime_error(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
     }
