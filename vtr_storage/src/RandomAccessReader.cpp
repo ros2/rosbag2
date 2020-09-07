@@ -24,28 +24,27 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "vtr_storage/RandomAccessReader.hpp"
 
-
-namespace vtr::storage
-{
+namespace vtr {
+namespace storage {
 
 // copied from sequential_reader.cpp
-namespace details
-{
+namespace details {
 std::vector<std::string> resolve_relative_paths(
-  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
-{
+    const std::string &base_folder, std::vector<std::string> relative_files,
+    const int version = 4) {
   auto base_path = rcpputils::fs::path(base_folder);
   if (version < 4) {
-    // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
+    // In older rosbags (version <=3) relative files are prefixed with the
+    // rosbag folder name
     base_path = rcpputils::fs::path(base_folder).parent_path();
   }
 
-  rcpputils::require_true(
-    base_path.exists(), "base folder does not exist: " + base_folder);
-  rcpputils::require_true(
-    base_path.is_directory(), "base folder has to be a directory: " + base_folder);
+  rcpputils::require_true(base_path.exists(),
+                          "base folder does not exist: " + base_folder);
+  rcpputils::require_true(base_path.is_directory(),
+                          "base folder has to be a directory: " + base_folder);
 
-  for (auto & file : relative_files) {
+  for (auto &file : relative_files) {
     auto path = rcpputils::fs::path(file);
     if (path.is_absolute()) {
       continue;
@@ -60,20 +59,24 @@ std::vector<std::string> resolve_relative_paths(
 RandomAccessReader::RandomAccessReader(
     const std::string &stream_name,
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
+    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface>
+        converter_factory,
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-  : SequentialReader(std::move(storage_factory), std::move(converter_factory), std::move(metadata_io)),
-  stream_name_(stream_name) {}
+    : SequentialReader(std::move(storage_factory), std::move(converter_factory),
+                       std::move(metadata_io)),
+      stream_name_(stream_name) {}
 
 void RandomAccessReader::open(
-  const rosbag2_cpp::StorageOptions & storage_options, const rosbag2_cpp::ConverterOptions & converter_options)
-{
+    const rosbag2_cpp::StorageOptions &storage_options,
+    const rosbag2_cpp::ConverterOptions &converter_options) {
   // If there is a metadata.yaml file present, load it.
   // If not, ----ASSUME A FILE STRUCTURE FOR SQLITE: ----
-  // This could happen if the bag has just been created and no metadata has been written yet.
+  // This could happen if the bag has just been created and no metadata has been
+  // written yet.
   std::vector<std::string> relative_file_paths;
   int metadata_version;
-  bool metadata_file_exists = metadata_io_->metadata_file_exists(storage_options.uri);
+  bool metadata_file_exists =
+      metadata_io_->metadata_file_exists(storage_options.uri);
   if (metadata_file_exists) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
     if (metadata_.relative_file_paths.empty()) {
@@ -83,19 +86,20 @@ void RandomAccessReader::open(
     relative_file_paths = metadata_.relative_file_paths;
     metadata_version = metadata_.version;
   } else {
-    relative_file_paths.push_back(storage_options.uri + ("/" + stream_name_ + "_0.db3"));
+    relative_file_paths.push_back(storage_options.uri +
+                                  ("/" + stream_name_ + "_0.db3"));
     metadata_version = 4;
   }
   file_paths_ = details::resolve_relative_paths(
-    storage_options.uri, relative_file_paths, metadata_version);
+      storage_options.uri, relative_file_paths, metadata_version);
   current_file_iterator_ = file_paths_.begin();
 
-  storage_ = storage_factory_->open_read_only(
-    get_current_file(), storage_options.storage_id);
+  storage_ = storage_factory_->open_read_only(get_current_file(),
+                                              storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
-  
+
   if (!metadata_file_exists) {
     metadata_ = storage_->get_metadata();
   }
@@ -107,15 +111,16 @@ void RandomAccessReader::open(
   }
   fill_topics_metadata();
 
-  // Currently a bag file can only be played if all topics have the same serialization format.
+  // Currently a bag file can only be played if all topics have the same
+  // serialization format.
   check_topics_serialization_formats(topics);
   check_converter_serialization_format(
-    converter_options.output_serialization_format,
-    topics[0].topic_metadata.serialization_format);
+      converter_options.output_serialization_format,
+      topics[0].topic_metadata.serialization_format);
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_at_timestamp(rcutils_time_point_value_t timestamp)
-{
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+RandomAccessReader::read_at_timestamp(rcutils_time_point_value_t timestamp) {
   if (storage_) {
     auto message = storage_->read_at_timestamp(timestamp);
     return converter_ ? converter_->convert(message) : message;
@@ -123,8 +128,8 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_at_index(uint32_t index)
-{
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+RandomAccessReader::read_at_index(uint32_t index) {
   if (storage_) {
     auto message = storage_->read_at_index(index);
     return converter_ ? converter_->convert(message) : message;
@@ -132,10 +137,14 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> RandomAccessReader::read_
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> RandomAccessReader::read_at_timestamp_range(rcutils_time_point_value_t timestamp_begin, rcutils_time_point_value_t timestamp_end)
-{
+std::shared_ptr<
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>>
+RandomAccessReader::read_at_timestamp_range(
+    rcutils_time_point_value_t timestamp_begin,
+    rcutils_time_point_value_t timestamp_end) {
   if (storage_) {
-    auto message_vector = storage_->read_at_timestamp_range(timestamp_begin, timestamp_end);
+    auto message_vector =
+        storage_->read_at_timestamp_range(timestamp_begin, timestamp_end);
     if (converter_) {
       for (auto &message : *message_vector) {
         message = converter_->convert(message);
@@ -146,8 +155,10 @@ std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessag
     throw std::runtime_error("Bag is not open. Call open() before reading.");
   }
 }
-std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> RandomAccessReader::read_at_index_range(uint32_t index_begin, uint32_t index_end)
-{
+std::shared_ptr<
+    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>>
+RandomAccessReader::read_at_index_range(uint32_t index_begin,
+                                        uint32_t index_end) {
   if (storage_) {
     auto message_vector = storage_->read_at_index_range(index_begin, index_end);
     if (converter_) {
@@ -161,4 +172,5 @@ std::shared_ptr<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessag
   }
 }
 
-}  // namespace vtr::storage
+}  // namespace storage
+}  // namespace vtr
