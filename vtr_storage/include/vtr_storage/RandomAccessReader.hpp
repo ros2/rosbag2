@@ -28,7 +28,8 @@
 #pragma warning(disable : 4251)
 #endif
 
-namespace vtr::storage {
+namespace vtr {
+namespace storage {
 
 class RandomAccessReader : public rosbag2_cpp::readers::SequentialReader {
  public:
@@ -66,8 +67,8 @@ class RandomAccessReader : public rosbag2_cpp::readers::SequentialReader {
   std::string stream_name_;
 };
 
-}  // namespace vtr::storage
-
+}  // namespace storage
+}  // namespace vtr
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
