@@ -26,7 +26,6 @@ import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
 from launch_testing.asserts import EXIT_OK
-import launch_testing.markers
 
 import pytest
 
