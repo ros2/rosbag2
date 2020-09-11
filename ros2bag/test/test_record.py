@@ -48,19 +48,19 @@ def generate_test_description():
 
 class TestRecord(unittest.TestCase):
 
-     def test_output(self, record_all_process, proc_output):
-         proc_output.assertWaitFor(
-             'Listening for topics...',
-             process=record_all_process
-         )
-         proc_output.assertWaitFor(
-             "Subscribed to topic '/rosout'",
-             process=record_all_process
-         )
-         proc_output.assertWaitFor(
-             "Subscribed to topic '/parameter_events'",
-             process=record_all_process
-         )
+    def test_output(self, record_all_process, proc_output):
+        proc_output.assertWaitFor(
+            'Listening for topics...',
+            process=record_all_process
+        )
+        proc_output.assertWaitFor(
+            "Subscribed to topic '/rosout'",
+            process=record_all_process
+        )
+        proc_output.assertWaitFor(
+            "Subscribed to topic '/parameter_events'",
+            process=record_all_process
+        )
 
 
 @launch_testing.post_shutdown_test()
