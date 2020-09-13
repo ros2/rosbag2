@@ -45,22 +45,28 @@ rosbag2_storage::TopicMetadata DataStreamWriter<MessageType>::createTopicMetadat
 template<typename MessageType>
 int32_t DataStreamWriter<MessageType>::write(const std::any &anytype_message) {
   if (!this->opened_) open();
-  auto message = std::any_cast<MessageType>(anytype_message);
-  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  auto ret = rcutils_system_time_now(&bag_message->time_stamp);
-  if (ret != RCL_RET_OK) {
-    throw std::runtime_error("couldn't assign time rosbag message");
+  try {
+    auto message = std::any_cast<MessageType>(anytype_message);
+    auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    auto ret = rcutils_system_time_now(&bag_message->time_stamp);
+    if (ret != RCL_RET_OK) {
+      throw std::runtime_error("couldn't assign time rosbag message");
+    }
+    rclcpp::SerializedMessage serialized_msg;
+    this->serialization_.serialize_message(&message, &serialized_msg);
+
+    bag_message->topic_name = tm_.name;
+    bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+        &serialized_msg.get_rcl_serialized_message(),
+        [](rcutils_uint8_array_t * /* data */) {});
+
+    writer_->write(bag_message);
+    return writer_->get_last_inserted_id();
+  } catch (const std::bad_any_cast& e) {
+      std::stringstream ss;
+      ss << "Any cast failed in writing data in DataStreamWriter. Error: " << e.what();
+      throw std::runtime_error(ss.str());
   }
-  rclcpp::SerializedMessage serialized_msg;
-  this->serialization_.serialize_message(&message, &serialized_msg);
-
-  bag_message->topic_name = tm_.name;
-  bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-      &serialized_msg.get_rcl_serialized_message(),
-      [](rcutils_uint8_array_t * /* data */) {});
-
-  writer_->write(bag_message);
-  return writer_->get_last_inserted_id();
 }
 
 }  // namespace storage
