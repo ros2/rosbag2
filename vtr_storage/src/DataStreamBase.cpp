@@ -3,6 +3,7 @@
 
 namespace vtr {
 namespace storage {
+
 DataStreamBase::DataStreamBase(const std::string &data_directory_string,
                                const std::string &stream_name)
     : data_directory_(rcpputils::fs::path(data_directory_string) / stream_name),

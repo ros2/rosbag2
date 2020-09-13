@@ -1,35 +1,60 @@
 // description
 #pragma once
 
+#include <utility>
+#include <any>
 #include "vtr_storage/DataStreamBase.hpp"
 #include "vtr_storage/RandomAccessReader.hpp"
 
 namespace vtr {
 namespace storage {
 
-class DataStreamReader : public DataStreamBase {
- public:
+class DataStreamReaderBase : public DataStreamBase {
+public:
+  DataStreamReaderBase(const std::string &data_directory,
+                   const std::string &stream_name)
+                   : DataStreamBase(data_directory, stream_name) {}
+  ~DataStreamReaderBase() {}
+
+  virtual void openAndGetMessageType() = 0;
+  virtual void close() = 0;
+
+  virtual std::shared_ptr<std::any> readAtIndex(int32_t index) = 0;
+  virtual std::shared_ptr<std::any> readAtTimestamp(rcutils_time_point_value_t time) = 0;
+  virtual std::shared_ptr<std::vector<std::shared_ptr<std::any>>> readAtIndexRange(
+      int32_t index_begin, int32_t index_end) = 0;
+  virtual std::shared_ptr<std::vector<std::shared_ptr<std::any>>> readAtTimestampRange(
+      rcutils_time_point_value_t time_begin,
+      rcutils_time_point_value_t time_end) = 0;
+};
+
+template<typename MessageType>
+class DataStreamReader : public DataStreamReaderBase {
+public:
   DataStreamReader(const std::string &data_directory,
                    const std::string &stream_name);
   ~DataStreamReader();
 
-  void openAndGetMessageType();
-  void close();
+  void openAndGetMessageType() override;
+  void close() override;
 
-  std::shared_ptr<TestMsgT> readAtIndex(int32_t index);
-  std::shared_ptr<TestMsgT> readAtTimestamp(rcutils_time_point_value_t time);
-  std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> readAtIndexRange(
-      int32_t index_begin, int32_t index_end);
-  std::shared_ptr<std::vector<std::shared_ptr<TestMsgT>>> readAtTimestampRange(
+  std::shared_ptr<std::any> readAtIndex(int32_t index) override;
+  std::shared_ptr<std::any> readAtTimestamp(rcutils_time_point_value_t time) override;
+  std::shared_ptr<std::vector<std::shared_ptr<std::any>>> readAtIndexRange(
+      int32_t index_begin, int32_t index_end) override;
+  std::shared_ptr<std::vector<std::shared_ptr<std::any>>> readAtTimestampRange(
       rcutils_time_point_value_t time_begin,
-      rcutils_time_point_value_t time_end);
+      rcutils_time_point_value_t time_end) override;
 
   // next() isn't needed for now due to ranged random access. Can add in if
   // necessary
 
- protected:
+protected:
+  rclcpp::Serialization<MessageType> serialization_;
   std::shared_ptr<RandomAccessReader> reader_;
 };
 
 }  // namespace storage
 }  // namespace vtr
+
+#include "vtr_storage/DataStreamReader_impl.hpp"

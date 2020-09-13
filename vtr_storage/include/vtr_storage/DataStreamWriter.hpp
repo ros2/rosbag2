@@ -1,30 +1,52 @@
 // description
 #pragma once
 
+#include <utility>
+#include <any>
 #include "vtr_storage/DataStreamBase.hpp"
 #include "vtr_storage/SequentialAppendWriter.hpp"
 
 namespace vtr {
 namespace storage {
 
-class DataStreamWriter : public DataStreamBase {
+class DataStreamWriterBase : public DataStreamBase {
+public:
+  DataStreamWriterBase(const std::string &data_directory_string,
+                   const std::string &stream_name, bool append = false)
+  : DataStreamBase(data_directory_string, stream_name), append_(append) {}
+  ~DataStreamWriterBase() {};
+
+  virtual void open() = 0;
+  virtual void close() = 0;
+  virtual int32_t write(const std::any &anytype_message) = 0;
+
+protected:
+  virtual rosbag2_storage::TopicMetadata createTopicMetadata() = 0;
+
+  bool append_;
+};
+
+template<typename MessageType>
+class DataStreamWriter : public DataStreamWriterBase {
  public:
   DataStreamWriter(const std::string &data_directory_string,
                    const std::string &stream_name, bool append = false);
   ~DataStreamWriter();
 
-  void open();
-  void close();
+  void open() override;
+  void close() override;
 
   // returns the id of the inserted message
-  int32_t write(const TestMsgT &message);
+  int32_t write(const std::any &anytype_message) override;
 
- protected:
-  rosbag2_storage::TopicMetadata createTopicMetadata();
+protected:
+  rosbag2_storage::TopicMetadata createTopicMetadata() override;
 
+  rclcpp::Serialization<MessageType> serialization_;
   rosbag2_storage::TopicMetadata tm_;
   std::shared_ptr<SequentialAppendWriter> writer_;
-  bool append_;
 };
 }  // namespace storage
 }  // namespace vtr
+
+#include "vtr_storage/DataStreamWriter_impl.hpp"

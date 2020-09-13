@@ -4,44 +4,20 @@
 
 #pragma once
 
-#include <map>
+#include <any>
 
+#include "vtr_storage/DataBubbleBase.hpp"
 #include "vtr_storage/DataStreamReader.hpp"
 
 namespace vtr {
 namespace storage {
 
-typedef TestMsgT Message;
-typedef rcutils_time_point_value_t TimeStamp;
-
-/// @brief Bubble indices into a robochunk stream.
-struct ChunkIndices {
-  /// @brief constructor
-  ChunkIndices() {
-    start_index = 0;
-    stop_index = 0;
-  }
-
-  /// @brief Start index into the stream.
-  int32_t start_index;
-
-  /// @brief Stop index into the stream.
-  int32_t stop_index;
-
-  /// @brief Start time into the stream.
-  TimeStamp start_time;
-
-  /// @brief Stop time into the stream.
-  TimeStamp stop_time;
-};
-
-typedef std::map<int32_t, Message> DataMap;
-
 /// @brief DataBubble class. Container class for a specified range of messages
 /// in a robochunk stream.
 ///        Allows for access and storage of messages in memory.
-class DataBubble {
- public:
+template<typename MessageType>
+class DataBubble : public DataBubbleBase {
+public:
   /// @brief Constructor
   DataBubble();
 
@@ -50,17 +26,8 @@ class DataBubble {
 
   /// @brief Initializes a data bubble with a data stream.
   /// @param A pointer to the associated data stream.
-  void initialize(std::shared_ptr<DataStreamReader> data_stream);
-
-  /// @brief Sets the indicies for this bubble.
-  /// @param The start index of this bubble.
-  /// @param The end index of this bubble.
-  bool setIndices(uint64_t index_begin, uint64_t index_end);
-
-  /// @brief Sets the Time indices for this bubble.
-  /// @param The start time of this bubble.
-  /// @param The end time of this bubble.
-  bool setTimeIndices(TimeStamp time_begin, TimeStamp time_end);
+  
+  void initialize(std::shared_ptr<DataStreamReaderBase> data_stream);
 
   /// @brief loads all of the messages associated with this bubble into memory.
   void load();
@@ -100,7 +67,7 @@ class DataBubble {
   void unload(int32_t local_idx0, int32_t local_idx1);
 
   /// @brief Inserts a message into the bubble.
-  void insert(Message& message);
+  void insert(const std::any& message);
 
   /// @brief Gets the size of the bubble (number of messages)
   /// @return the size of the bubble.
@@ -116,51 +83,18 @@ class DataBubble {
 
   /// @brief Retrieves a reference to the message.
   /// @param the index of the message.
-  Message& retrieve(int32_t local_idx);
+  std::any& retrieve(int32_t local_idx);
 
   /// @brief Retrieves a reference to the message.
   /// @param The timestamp of the message.
-  Message& retrieve(TimeStamp time);
+  std::any& retrieve(TimeStamp time);
 
-  /// @brief returns the number of bytes being used by this bubble.
-  /// @param the number of bytes being used by this bubble.
-  const uint64_t& memoryUsageBytes() { return memoryUsageBytes_; };
-
-  /// @brief provides an iterator to the begining of the bubble.
-  /// @return Begin iterator into the bubble's data.
-  DataMap::iterator begin() { return data_map_.begin(); }
-
-  /// @brief provides an iterator to the end of the bubble.
-  /// @brief Begin iterator into the bubble's data.
-  DataMap::iterator end() { return data_map_.end(); }
-
- private:
-  /// @brief the current end index of the bubble.
-  int32_t endIdx;
-
-  /// @brief The indices associated with this bubble.
-  ChunkIndices indices_;
-
-  /// @brief flag to determine if this bubble can be loaded by index.
-  bool loadFromIndex_;
-
-  /// @brief flag to determine if this bubble can be loaded by time.
-  bool loadFromTime_;
-
+private:
   /// @brief A pointer to the Robochunk stream.
-  std::shared_ptr<DataStreamReader> data_stream_;
+  std::shared_ptr<DataStreamReader<MessageType>> data_stream_;
 
-  /// @brief The map of currently loaded data.
-  DataMap data_map_;
-
-  /// @brief maps timestamps to indices in the data map.
-  std::map<uint64_t, int32_t> time_map_;
-
-  /// @brief The number of bytes being used by the bubble.
-  uint64_t memoryUsageBytes_;
-
-  /// @brief If the bubble has been loaded from disk. Defaults to false
-  bool is_loaded_;
 };
 }  // namespace storage
 }  // namespace vtr
+
+#include "vtr_storage/DataBubble_impl.hpp"

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(vtr_storage)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../vtr_common/vtr_include.cmake.in")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -8,7 +10,7 @@ endif()
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -50,10 +52,8 @@ find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/SequentialAppendWriter.cpp
   src/RandomAccessReader.cpp
+  src/DataBubbleBase.cpp
   src/DataStreamBase.cpp
-  src/DataStreamReader.cpp
-  src/DataStreamWriter.cpp
-  src/DataBubble.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}

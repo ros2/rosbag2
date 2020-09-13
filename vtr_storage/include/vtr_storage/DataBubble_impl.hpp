@@ -1,75 +1,49 @@
+#pragma once
+
 #include <vtr_storage/DataBubble.hpp>
 
 namespace vtr {
 namespace storage {
 
-DataBubble::DataBubble()
-    : memoryUsageBytes_(0),
-      loadFromIndex_(false),
-      loadFromTime_(false),
-      endIdx(0),
-      is_loaded_(false) {}
+template<typename MessageType>
+DataBubble<MessageType>::DataBubble()
+    : DataBubbleBase() {}
 
-DataBubble::~DataBubble() {
-  data_map_.clear();
+template<typename MessageType>
+DataBubble<MessageType>::~DataBubble() {
+  this->data_map_.clear();
   data_stream_->close();
 }
 
-void DataBubble::initialize(std::shared_ptr<DataStreamReader> data_stream) {
-  data_stream_ = data_stream;
+template<typename MessageType>
+void DataBubble<MessageType>::initialize(std::shared_ptr<DataStreamReaderBase> data_stream) {
+  data_stream_ = std::dynamic_pointer_cast<DataStreamReader<MessageType>>(data_stream);
 }
 
-int32_t DataBubble::size() { return data_map_.size(); }
+template<typename MessageType>
+int32_t DataBubble<MessageType>::size() { return this->data_map_.size(); }
 
-bool DataBubble::isLoaded(int32_t idx) { return data_map_.count(idx); }
+template<typename MessageType>
+bool DataBubble<MessageType>::isLoaded(int32_t idx) { return this->data_map_.count(idx); }
 
-bool DataBubble::isLoaded(TimeStamp time) {
+template<typename MessageType>
+bool DataBubble<MessageType>::isLoaded(TimeStamp time) {
   // auto time_it = time_map_.find(time.nanoseconds_since_epoch()); // get the
   // index from the time map return time_it != time_map_.end() &&
   // isLoaded(time_it->second);
   return false;
 }
 
-void DataBubble::insert(Message &message) {
-  data_map_.insert({endIdx, message});
-  // time_map_.insert({message.header().sensor_time_stamp().nanoseconds_since_epoch(),endIdx});
-  endIdx++;
+template<typename MessageType>
+void DataBubble<MessageType>::insert(const std::any &message) {
+  this->data_map_.insert({endIdx_, message});
+  // time_map_.insert({message.header().sensor_time_stamp().nanoseconds_since_epoch(),endIdx_});
+  endIdx_++;
   // memoryUsageBytes_+=message.ByteSize();
 }
 
-bool DataBubble::setIndices(uint64_t index_begin, uint64_t index_end) {
-  if (index_end < index_begin) {
-    // ToDo: include easylogging++
-    // LOG(ERROR) << "ERROR: Invalid inex range (" << index_begin <<  ","  <<
-    // index_end << ")";
-    return false;
-  }
-
-  indices_.start_index = index_begin;
-  indices_.stop_index = index_end;
-  loadFromIndex_ = true;
-  endIdx = (indices_.stop_index - indices_.start_index);
-  if (endIdx == 0) {
-    endIdx = -1;
-  }
-  return true;
-}
-
-bool DataBubble::setTimeIndices(TimeStamp time_begin, TimeStamp time_end) {
-  // if(time_end.nanoseconds_since_epoch() <
-  // time_begin.nanoseconds_since_epoch()) {
-  //     LOG(ERROR) << "ERROR: Invalid index range (" <<
-  //     time_begin.nanoseconds_since_epoch() << "," <<
-  //     time_end.nanoseconds_since_epoch() << ")"; return false;
-  // }
-
-  indices_.start_time = time_begin;
-  indices_.stop_time = time_end;
-  loadFromTime_ = true;
-  return true;
-}
-
-void DataBubble::load() {
+template<typename MessageType>
+void DataBubble<MessageType>::load() {
   if (is_loaded_ == true) {
     return;
   }
@@ -87,10 +61,11 @@ void DataBubble::load() {
   }
 }
 
-void DataBubble::load(int32_t local_idx) {
-  auto message = data_stream_->readAtIndex(indices_.start_index + local_idx);
-  if (message) {
-    data_map_.insert({local_idx, *message});
+template<typename MessageType>
+void DataBubble<MessageType>::load(int32_t local_idx) {
+  auto anytype_message = data_stream_->readAtIndex(indices_.start_index + local_idx);
+  if (anytype_message) {
+    this->data_map_.insert({local_idx, *anytype_message});
     // if(data_stream_->next(data_map_[idx]) == false) {
     //     data_map_.erase(idx);
     //     return;
@@ -103,15 +78,16 @@ void DataBubble::load(int32_t local_idx) {
   }
 }
 
-void DataBubble::load(int32_t global_idx0, int32_t global_idx1) {
-  auto message_vector =
+template<typename MessageType>
+void DataBubble<MessageType>::load(int32_t global_idx0, int32_t global_idx1) {
+  auto anytype_message_vector =
       data_stream_->readAtIndexRange(global_idx0, global_idx1);
-  if (message_vector->size() > 0) {
+  if (anytype_message_vector->size() > 0) {
     for (int32_t local_idx = 0; local_idx <= global_idx1 - global_idx0;
          ++local_idx) {
       DataMap::value_type map_insert(local_idx,
-                                     *(message_vector->at(local_idx)));
-      data_map_.insert(map_insert);
+                                     *(anytype_message_vector->at(local_idx)));
+      this->data_map_.insert(map_insert);
       // if(data_stream_->next(data_map_[idx]) == false) {
       //     data_map_.erase(idx);
       //     return;
@@ -126,7 +102,8 @@ void DataBubble::load(int32_t global_idx0, int32_t global_idx1) {
   }
 }
 
-void DataBubble::load(TimeStamp time) {
+template<typename MessageType>
+void DataBubble<MessageType>::load(TimeStamp time) {
   /// Seek in the stream to this time.
   // if(data_stream_->readAtTimestamp(time)) {
   //   Message message;
@@ -175,26 +152,27 @@ void DataBubble::load(TimeStamp time) {
   // }
 }
 
-void DataBubble::load(TimeStamp time0, TimeStamp time1) {
+template<typename MessageType>
+void DataBubble<MessageType>::load(TimeStamp time0, TimeStamp time1) {
   // bool continue_load = true;
   // if(data_stream_->seek(time0)) {
   //     while(continue_load) {
-  //         endIdx++;
-  //         data_map_[endIdx] = msgs::RobochunkMessage();
-  //         if(data_stream_->next(data_map_[endIdx]) == false ||
-  //         data_map_[endIdx].header().sensor_time_stamp().nanoseconds_since_epoch()
+  //         endIdx_++;
+  //         data_map_[endIdx_] = msgs::RobochunkMessage();
+  //         if(data_stream_->next(data_map_[endIdx_]) == false ||
+  //         data_map_[endIdx_].header().sensor_time_stamp().nanoseconds_since_epoch()
   //         > time1.nanoseconds_since_epoch()) {
-  //             data_map_.erase(endIdx);
-  //             endIdx--;
+  //             data_map_.erase(endIdx_);
+  //             endIdx_--;
   //             indices_.stop_index = size()-1;
   //             return;
   //         }
   //         auto stamp =
-  //         data_map_[endIdx].baseMessage().header().sensor_time_stamp();
-  //         time_map_.insert({stamp.nanoseconds_since_epoch(),endIdx});
+  //         data_map_[endIdx_].baseMessage().header().sensor_time_stamp();
+  //         time_map_.insert({stamp.nanoseconds_since_epoch(),endIdx_});
   //         if(indices_.start_index == 0) {
   //             indices_.start_index =
-  //             data_map_[endIdx].baseMessage().header().sequence_id();
+  //             data_map_[endIdx_].baseMessage().header().sequence_id();
   //         }
   //     }
   // }
@@ -203,25 +181,29 @@ void DataBubble::load(TimeStamp time0, TimeStamp time1) {
   // }
 }
 
-void DataBubble::unload() {
+template<typename MessageType>
+void DataBubble<MessageType>::unload() {
   is_loaded_ = false;
   memoryUsageBytes_ = 0;
-  data_map_.clear();
+  this->data_map_.clear();
 }
 
-void DataBubble::unload(int32_t local_idx) {
+template<typename MessageType>
+void DataBubble<MessageType>::unload(int32_t local_idx) {
   // memoryUsageBytes_ -= data_map_[local_idx].ByteSize();
-  data_map_.erase(local_idx);
+  this->data_map_.erase(local_idx);
 }
 
-void DataBubble::unload(int32_t local_idx0, int32_t local_idx1) {
+template<typename MessageType>
+void DataBubble<MessageType>::unload(int32_t local_idx0, int32_t local_idx1) {
   for (int32_t local_index = local_idx0; local_index < local_idx1;
        ++local_index) {
     unload(local_index);
   }
 }
 
-Message &DataBubble::retrieve(int32_t local_idx) {
+template<typename MessageType>
+std::any &DataBubble<MessageType>::retrieve(int32_t local_idx) {
   // if(isLoaded(local_idx) == false) {
   //     load(local_idx);
   // }
@@ -229,10 +211,11 @@ Message &DataBubble::retrieve(int32_t local_idx) {
     throw std::out_of_range("DataBubble has not data at this index.");
   }
 
-  return data_map_[local_idx];
+  return this->data_map_[local_idx];
 }
 
-Message &DataBubble::retrieve(TimeStamp time) {
+template<typename MessageType>
+std::any &DataBubble<MessageType>::retrieve(TimeStamp time) {
   // // check to see if its in the time map
   // auto stamp_nanoseconds = time.nanoseconds_since_epoch();
   // if(time_map_.find(stamp_nanoseconds) != std::end(time_map_)) {
