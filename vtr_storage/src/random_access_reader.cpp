@@ -20,9 +20,9 @@
 
 #include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
-
 #include "rosbag2_cpp/logging.hpp"
-#include "vtr_storage/RandomAccessReader.hpp"
+
+#include "vtr_storage/random_access_reader.hpp"
 
 namespace vtr {
 namespace storage {

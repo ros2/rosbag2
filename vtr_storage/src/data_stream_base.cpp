@@ -1,5 +1,5 @@
 // description
-#include "vtr_storage/DataStreamBase.hpp"
+#include "vtr_storage/data_stream_base.hpp"
 
 namespace vtr {
 namespace storage {

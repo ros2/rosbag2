@@ -1,5 +1,3 @@
-// description
-
 #pragma once
 
 #include <cstdio>
@@ -18,12 +16,12 @@ namespace vtr {
 namespace storage {
 
 class DataStreamBase {
-public:
+ public:
   DataStreamBase(const std::string &data_directory_string,
                  const std::string &stream_name);
   ~DataStreamBase();
 
-protected:
+ protected:
   rosbag2_cpp::StorageOptions storage_options_;
   rosbag2_cpp::ConverterOptions converter_options_;
 

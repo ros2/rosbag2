@@ -1,5 +1,3 @@
-#include "vtr_storage/SequentialAppendWriter.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -12,6 +10,8 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
+
+#include "vtr_storage/sequential_append_writer.hpp"
 
 namespace vtr {
 namespace storage {

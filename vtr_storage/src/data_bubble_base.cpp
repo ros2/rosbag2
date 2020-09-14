@@ -1,8 +1,4 @@
-/// @file DataBubble.hpp
-/// @brief header file for the robochunk data bubble class.
-/// @author Michael Paton, ASRL
-
-#include "vtr_storage/DataBubbleBase.hpp"
+#include "vtr_storage/data_bubble_base.hpp"
 
 namespace vtr {
 namespace storage {
