@@ -40,14 +40,6 @@ bool DataBubble<MessageType>::isLoaded(TimeStamp time) {
 }
 
 template <typename MessageType>
-void DataBubble<MessageType>::insert(const std::any &message) {
-  this->data_map_.insert({endIdx_, message});
-  // time_map_.insert({message.header().sensor_time_stamp().nanoseconds_since_epoch(),endIdx_});
-  endIdx_++;
-  // memoryUsageBytes_+=message.ByteSize();
-}
-
-template <typename MessageType>
 void DataBubble<MessageType>::load() {
   if (is_loaded_ == true) {
     return;
@@ -209,7 +201,15 @@ void DataBubble<MessageType>::unload(int32_t local_idx0, int32_t local_idx1) {
 }
 
 template <typename MessageType>
-std::any &DataBubble<MessageType>::retrieve(int32_t local_idx) {
+void DataBubble<MessageType>::insert(const VTRMessage& message) {
+  this->data_map_.insert({endIdx_, message});
+  // time_map_.insert({message.header().sensor_time_stamp().nanoseconds_since_epoch(),endIdx_});
+  endIdx_++;
+  // memoryUsageBytes_+=message.ByteSize();
+}
+
+template <typename MessageType>
+VTRMessage DataBubble<MessageType>::retrieve(int32_t local_idx) {
   // if(isLoaded(local_idx) == false) {
   //     load(local_idx);
   // }
@@ -221,7 +221,7 @@ std::any &DataBubble<MessageType>::retrieve(int32_t local_idx) {
 }
 
 template <typename MessageType>
-std::any &DataBubble<MessageType>::retrieve(TimeStamp time) {
+VTRMessage DataBubble<MessageType>::retrieve(TimeStamp time) {
   // // check to see if its in the time map
   // auto stamp_nanoseconds = time.nanoseconds_since_epoch();
   // if(time_map_.find(stamp_nanoseconds) != std::end(time_map_)) {

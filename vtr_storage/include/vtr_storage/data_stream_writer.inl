@@ -46,10 +46,10 @@ DataStreamWriter<MessageType>::createTopicMetadata() {
 }
 
 template <typename MessageType>
-int32_t DataStreamWriter<MessageType>::write(const std::any &anytype_message) {
+int32_t DataStreamWriter<MessageType>::write(const VTRMessage &vtr_message) {
   if (!this->opened_) open();
   try {
-    auto message = std::any_cast<MessageType>(anytype_message);
+    auto message = vtr_message.template get<MessageType>();
     auto bag_message =
         std::make_shared<rosbag2_storage::SerializedBagMessage>();
     auto ret = rcutils_system_time_now(&bag_message->time_stamp);

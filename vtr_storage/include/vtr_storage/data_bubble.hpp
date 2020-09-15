@@ -59,9 +59,6 @@ class DataBubble : public DataBubbleBase {
   /// \param The last index.
   void unload(int32_t local_idx0, int32_t local_idx1);
 
-  /// \brief Inserts a message into the bubble.
-  void insert(const std::any& message);
-
   /// \brief Gets the size of the bubble (number of messages)
   /// \return the size of the bubble.
   int32_t size();
@@ -74,13 +71,16 @@ class DataBubble : public DataBubbleBase {
   /// \return true if the message is loaded, false otherwise.
   bool isLoaded(TimeStamp time);
 
+  /// \brief Inserts a message into the bubble.
+  void insert(const VTRMessage& message);
+
   /// \brief Retrieves a reference to the message.
   /// \param the index of the message.
-  std::any& retrieve(int32_t local_idx);
+  VTRMessage retrieve(int32_t local_idx);
 
   /// \brief Retrieves a reference to the message.
   /// \param The timestamp of the message.
-  std::any& retrieve(TimeStamp time);
+  VTRMessage retrieve(TimeStamp time);
 
  private:
   /// \brief A pointer to the Robochunk stream.

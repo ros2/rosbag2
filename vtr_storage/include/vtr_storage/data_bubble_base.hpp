@@ -6,12 +6,12 @@
 #include "rcutils/types.h"
 
 #include "vtr_storage/data_stream_reader.hpp"
+#include "vtr_storage/message.hpp"
 
 namespace vtr {
 namespace storage {
 
 using TimeStamp = rcutils_time_point_value_t;
-using DataMap = std::map<int32_t, std::any>;
 
 /// \brief Bubble indices into a robochunk stream.
 struct ChunkIndices {
@@ -36,9 +36,11 @@ struct ChunkIndices {
 ///        Allows for access and storage of messages in memory.
 class DataBubbleBase {
  public:
+  using DataMap = std::map<int32_t, VTRMessage>;
+
   DataBubbleBase();
 
-  ~DataBubbleBase();
+  virtual ~DataBubbleBase();
 
   /// \brief Sets the indicies for this bubble.
   /// \param The start index of this bubble.
@@ -96,9 +98,6 @@ class DataBubbleBase {
   /// \param The last index.
   virtual void unload(int32_t local_idx0, int32_t local_idx1) = 0;
 
-  /// \brief Inserts a message into the bubble.
-  virtual void insert(const std::any& message) = 0;
-
   /// \brief Gets the size of the bubble (number of messages)
   /// @return the size of the bubble.
   virtual int32_t size() = 0;
@@ -111,14 +110,6 @@ class DataBubbleBase {
   /// @return true if the message is loaded, false otherwise.
   virtual bool isLoaded(TimeStamp time) = 0;
 
-  /// \brief Retrieves a reference to the message.
-  /// \param the index of the message.
-  virtual std::any& retrieve(int32_t local_idx) = 0;
-
-  /// \brief Retrieves a reference to the message.
-  /// \param The timestamp of the message.
-  virtual std::any& retrieve(TimeStamp time) = 0;
-
   /// \brief provides an iterator to the begining of the bubble.
   /// @return Begin iterator into the bubble's data.
   DataMap::iterator begin() { return data_map_.begin(); }
@@ -126,6 +117,17 @@ class DataBubbleBase {
   /// \brief provides an iterator to the end of the bubble.
   /// \brief Begin iterator into the bubble's data.
   DataMap::iterator end() { return data_map_.end(); }
+
+  /// \brief Inserts a message into the bubble.
+  virtual void insert(const VTRMessage& message) = 0;
+
+  /// \brief Retrieves a reference to the message.
+  /// \param the index of the message.
+  virtual VTRMessage retrieve(int32_t local_idx) = 0;
+
+  /// \brief Retrieves a reference to the message.
+  /// \param The timestamp of the message.
+  virtual VTRMessage retrieve(TimeStamp time) = 0;
 
  protected:
   /// \brief the current end index of the bubble.
