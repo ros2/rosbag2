@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -73,6 +74,7 @@ class TestRecordAfterShutdown(unittest.TestCase):
         launch_testing.asserts.assertExitCodes(
             proc_info,
             # SIGINT (2) is the typical exit code we see coming from rclcpp
-            allowable_exit_codes=[EXIT_OK, 2],
+            # On Windows, we get value '1'
+            allowable_exit_codes=[EXIT_OK, 2] if os.name != 'nt' else [EXIT_OK, 1, 2],
             process=record_all_process
         )
