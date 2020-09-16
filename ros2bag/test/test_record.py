@@ -73,7 +73,7 @@ class TestRecordAfterShutdown(unittest.TestCase):
         # Check that the process exited with code 0
         launch_testing.asserts.assertExitCodes(
             proc_info,
-            # Not sure why the record process returns error code '2'
-            allowable_exit_codes=[EXIT_OK, 2] if os.name != 'nt' else [EXIT_OK, 1, 2],
+            # SIGINT (2) is the typical exit code we see coming from rclcpp
+            allowable_exit_codes=[EXIT_OK, 2],
             process=record_all_process
         )
