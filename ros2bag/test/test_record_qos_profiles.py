@@ -36,7 +36,11 @@ import pytest
 PROFILE_PATH = Path(__file__).parent / 'resources'
 TEST_NODE = 'ros2bag_record_qos_profile_test_node'
 TEST_NAMESPACE = 'ros2bag_record_qos_profile'
+ERROR_STRING_MSG = 'ros2bag CLI did not produce the expected output'\
+        '\n Expected output pattern: {}\n Actual output: {}'
 
+OUTPUT_WAIT_TIMEOUT = 10
+SHUTDOWN_TIMEOUT = 5
 
 @pytest.mark.rostest
 @launch_testing.markers.keep_alive
@@ -85,11 +89,12 @@ class TestRos2BagRecord(unittest.TestCase):
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
-                timeout=5)
-        bag_command.wait_for_shutdown(timeout=5)
+                timeout=OUTPUT_WAIT_TIMEOUT)
+        bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
         matches = expected_string_regex.search(bag_command.output)
-        assert matches, print('ros2bag CLI did not produce the expected output')
+        assert matches, print(
+                ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output))
 
     def test_incomplete_qos_profile(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
@@ -101,11 +106,12 @@ class TestRos2BagRecord(unittest.TestCase):
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
-                timeout=5)
-        bag_command.wait_for_shutdown(timeout=5)
+                timeout=OUTPUT_WAIT_TIMEOUT)
+        bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
         matches = expected_string_regex.search(bag_command.output)
-        assert matches, print('ros2bag CLI did not produce the expected output')
+        assert matches, print(
+                ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output))
 
     def test_incomplete_qos_duration(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_duration.yaml'
@@ -117,12 +123,13 @@ class TestRos2BagRecord(unittest.TestCase):
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
-                timeout=5)
-        bag_command.wait_for_shutdown(timeout=5)
+                timeout=OUTPUT_WAIT_TIMEOUT)
+        bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
         assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
         matches = expected_string_regex.search(bag_command.output)
-        assert matches, print('ros2bag CLI did not produce the expected output')
+        assert matches, print(
+                ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output))
 
     def test_nonexistent_qos_profile(self):
         profile_path = PROFILE_PATH / 'foobar.yaml'
@@ -134,9 +141,11 @@ class TestRos2BagRecord(unittest.TestCase):
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
-                timeout=5)
-        bag_command.wait_for_shutdown(timeout=5)
+                timeout=OUTPUT_WAIT_TIMEOUT)
+        bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
         assert bag_command.exit_code != launch_testing.asserts.EXIT_OK
         matches = expected_string_regex.search(bag_command.output)
-        assert matches, print('ros2bag CLI did not produce the expected output')
+        assert matches, print(
+                ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output))
+
