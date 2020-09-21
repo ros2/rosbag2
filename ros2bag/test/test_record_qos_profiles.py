@@ -38,9 +38,9 @@ TEST_NODE = 'ros2bag_record_qos_profile_test_node'
 TEST_NAMESPACE = 'ros2bag_record_qos_profile'
 ERROR_STRING_MSG = 'ros2bag CLI did not produce the expected output'\
         '\n Expected output pattern: {}\n Actual output: {}'
-
 OUTPUT_WAIT_TIMEOUT = 10
 SHUTDOWN_TIMEOUT = 5
+
 
 @pytest.mark.rostest
 @launch_testing.markers.keep_alive
@@ -148,4 +148,3 @@ class TestRos2BagRecord(unittest.TestCase):
         matches = expected_string_regex.search(bag_command.output)
         assert matches, print(
                 ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output))
-
