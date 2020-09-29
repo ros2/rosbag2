@@ -102,7 +102,7 @@ public:
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
-private:
+protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
@@ -128,16 +128,20 @@ private:
   rosbag2_storage::BagMetadata metadata_;
 
   // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile();
+  virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
   // Prepares the metadata by setting initial values.
-  void init_metadata();
+  virtual void init_metadata();
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  // Helper function used by open
+  void prepare_to_open(
+    const StorageOptions & storage_options, const ConverterOptions & converter_options);
 };
 
 }  // namespace writers
