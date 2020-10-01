@@ -140,7 +140,7 @@ protected:
   void finalize_metadata();
 
   // Helper function used by open
-  void prepare_to_open(
+  virtual void prepare_to_open(
     const StorageOptions & storage_options, const ConverterOptions & converter_options);
 
   // Helper method used by write to get the message in a format that is ready to be written.
