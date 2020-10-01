@@ -65,6 +65,17 @@ public:
   ~SequentialCompressionWriter() override;
 
   /**
+   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * This must be called before any other function is used.
+   *
+   * \param storage_options Options to configure the storage
+   * \param converter_options options to define in which format incoming messages are stored
+   **/
+  void open(
+    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_cpp::ConverterOptions & converter_options) override;
+
+  /**
    * Attempt to compress the last open file and reset the storage and storage factory.
    * This method must be exception safe because it is called by the destructor.
    */
@@ -92,10 +103,6 @@ protected:
    * \throws std::invalid_argument if compression_options isn't supported.
    */
   virtual void setup_compression();
-
-  void prepare_to_open(
-    const rosbag2_cpp::StorageOptions & storage_options,
-    const rosbag2_cpp::ConverterOptions & converter_options) override;
 
 private:
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};

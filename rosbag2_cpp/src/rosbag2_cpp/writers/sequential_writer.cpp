@@ -81,7 +81,7 @@ void SequentialWriter::init_metadata()
   metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
 }
 
-void SequentialWriter::prepare_to_open(
+void SequentialWriter::open(
   const StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
@@ -129,13 +129,7 @@ void SequentialWriter::prepare_to_open(
       storage_options.max_bagfile_size;
     throw std::runtime_error{error.str()};
   }
-}
 
-void SequentialWriter::open(
-  const StorageOptions & storage_options,
-  const ConverterOptions & converter_options)
-{
-  prepare_to_open(storage_options, converter_options);
   init_metadata();
 }
 

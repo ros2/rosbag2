@@ -95,13 +95,14 @@ void SequentialCompressionWriter::setup_compression()
   compressor_ = compression_factory_->create_compressor(compression_options_.compression_format);
 }
 
-void SequentialCompressionWriter::prepare_to_open(
+void SequentialCompressionWriter::open(
   const rosbag2_cpp::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
-  SequentialWriter::prepare_to_open(storage_options, converter_options);
+  SequentialWriter::open(storage_options, converter_options);
   setup_compression();
 }
+
 
 void SequentialCompressionWriter::reset()
 {

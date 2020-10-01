@@ -139,10 +139,6 @@ protected:
   // Record TopicInformation into metadata
   void finalize_metadata();
 
-  // Helper function used by open
-  virtual void prepare_to_open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options);
-
   // Helper method used by write to get the message in a format that is ready to be written.
   // Common use cases include converting the message using the converter or
   // performing other operations like compression on it
