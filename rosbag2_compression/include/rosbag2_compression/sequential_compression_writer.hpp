@@ -81,14 +81,6 @@ public:
    */
   void reset() override;
 
-  /**
-   * Write a message to a bagfile. The topic needs to have been created before writing is possible.
-   *
-   * \param message to be written to the bagfile
-   * \throws runtime_error if the Writer is not open.
-   */
-  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
-
 protected:
   /**
    * Compress the most recent file and update the metadata file path.
@@ -125,6 +117,13 @@ private:
 
   // Prepares the metadata by setting initial values.
   void init_metadata() override;
+
+  // Helper method used by write to get the message in a format that is ready to be written.
+  // Common use cases include converting the message using the converter or
+  // performing other operations like compression on it
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  get_writeable_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 };
 
 }  // namespace rosbag2_compression

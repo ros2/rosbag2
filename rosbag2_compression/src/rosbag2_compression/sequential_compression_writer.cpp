@@ -193,33 +193,15 @@ void SequentialCompressionWriter::compress_message(
   compressor_->compress_serialized_bag_message(message.get());
 }
 
-void SequentialCompressionWriter::write(
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+SequentialCompressionWriter::get_writeable_message(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-  if (!storage_) {
-    throw std::runtime_error{"Bag is not open. Call open() before writing."};
-  }
-
-  // Update the message count for the Topic.
-  ++topics_names_to_info_.at(message->topic_name).message_count;
-
-  if (should_split_bagfile()) {
-    split_bagfile();
-  }
-
-  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>{
-    std::chrono::nanoseconds(message->time_stamp)};
-  metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
-
-  const auto duration = message_timestamp - metadata_.starting_time;
-  metadata_.duration = std::max(metadata_.duration, duration);
-
-  auto converted_message = converter_ ? converter_->convert(message) : message;
+  auto writeable_msg = SequentialWriter::get_writeable_message(message);
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::MESSAGE) {
-    compress_message(converted_message);
+    compress_message(writeable_msg);
   }
-
-  storage_->write(converted_message);
+  return writeable_msg;
 }
 
 }  // namespace rosbag2_compression
