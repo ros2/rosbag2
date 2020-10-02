@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef ROSBAG2_PY__PYBIND11_HPP_
+#define ROSBAG2_PY__PYBIND11_HPP_
+
 // Ignore -Wunused-value for clang.
 // Based on https://github.com/pybind/pybind11/issues/2225
 #if defined(__clang__)
@@ -23,3 +26,5 @@
 #pragma clang diagnostic pop
 #endif
 #include <pybind11/stl.h>
+
+#endif  // ROSBAG2_PY__PYBIND11_HPP_
