@@ -32,7 +32,7 @@ class ROSBAG2_STORAGE_PUBLIC ReadOnlyInterface
   : public BaseInfoInterface, public BaseIOInterface, public BaseReadInterface
 {
 public:
-  virtual ~ReadOnlyInterface() = default;
+  ~ReadOnlyInterface() override = default;
 
   void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 

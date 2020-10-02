@@ -58,7 +58,7 @@ install(
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
-if(BUILD_TESTING AND NOT (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_pytest REQUIRED)
@@ -67,21 +67,17 @@ if(BUILD_TESTING AND NOT (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATC
   if(WIN32 AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
   endif()
-  set(pythonpath "${CMAKE_CURRENT_BINARY_DIR}/rosbag2_py;${CMAKE_CURRENT_SOURCE_DIR}")
-  if(NOT WIN32)
-    string(REPLACE ";" ":" pythonpath "${pythonpath}")
+  set(other_environment_vars)
+  if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(other_environment_vars "ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
   endif()
   ament_add_pytest_test(test_sequential_reader_py "test/test_sequential_reader.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "PYTHONPATH=${pythonpath}"
-    APPEND_LIBRARY_DIRS "${_append_library_dirs}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}" ${other_environment_vars}
   )
   ament_add_pytest_test(test_sequential_writer_py "test/test_sequential_writer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
     APPEND_ENV "PYTHONPATH=${pythonpath}"
-    APPEND_LIBRARY_DIRS "${_append_library_dirs}"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
   )
 endif()
 
