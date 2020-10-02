@@ -68,7 +68,6 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
   max_bagfile_duration(
     std::chrono::seconds(rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)),
   topics_names_to_info_(),
@@ -109,8 +108,8 @@ void SequentialWriter::open(
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  if (max_bagfile_size_ != 0 &&
-    max_bagfile_size_ < storage_->get_minimum_split_file_size())
+  if (storage_options_.max_bagfile_size != 0 &&
+    storage_options_.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
@@ -231,11 +230,11 @@ void SequentialWriter::switch_to_next_storage()
   storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+  storage_ = storage_factory_->open_read_write(storage_options_.uri, metadata_.storage_identifier);
 
   if (!storage_) {
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
@@ -318,8 +317,8 @@ bool SequentialWriter::should_split_bagfile() const
   bool should_split = false;
 
   // Splitting by size
-  if (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
-    should_split = should_split || (storage_->get_bagfile_size() > max_bagfile_size_);
+  if (storage_options_.max_bagfile_size != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
+    should_split = should_split || (storage_->get_bagfile_size() > storage_options_.max_bagfile_size);
   }
 
   // Splitting by time
