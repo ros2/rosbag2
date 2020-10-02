@@ -70,7 +70,8 @@ class RecordVerb(VerbExtension):
             '--max-cache-size', type=int, default=1024*1024,
             help='maximum size (in bytes) of messages to hold in cache before writing to disk. '
                  'Default is 1 mebibyte, everytime the cache size equals or exceeds 1MB, '
-                 'it will be written to disk'
+                 'it will be written to disk. If the value specified is 0, then every message is'
+                 'directly written to disk.'
         )
         parser.add_argument(
             '--compression-mode', type=str, default='none',
