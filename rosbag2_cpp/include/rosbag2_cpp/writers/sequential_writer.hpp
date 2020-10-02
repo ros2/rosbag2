@@ -118,8 +118,10 @@ protected:
   std::chrono::seconds max_bagfile_duration;
 
   // Intermediate cache to write multiple messages into the storage.
-  // `max_cache_size` is the amount of messages to hold in storage before writing to disk.
+  // `max_cache_size` is the number of bytes of messages to hold in storage
+  // before writing to disk.
   uint64_t max_cache_size_;
+  uint64_t current_cache_size;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used to track topic -> message count

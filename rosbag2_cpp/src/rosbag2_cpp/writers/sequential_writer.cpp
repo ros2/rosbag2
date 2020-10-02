@@ -89,8 +89,8 @@ void SequentialWriter::open(
   max_bagfile_size_ = storage_options.max_bagfile_size;
   max_bagfile_duration = std::chrono::seconds(storage_options.max_bagfile_duration);
   max_cache_size_ = storage_options.max_cache_size;
-
   cache_.reserve(max_cache_size_);
+  current_cache_size = 0u;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -249,11 +249,13 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     storage_->write(converted_msg);
   } else {
     cache_.push_back(converted_msg);
-    if (cache_.size() >= max_cache_size_) {
+    current_cache_size += converted_msg->serialized_data->buffer_length;
+    if (current_cache_size >= max_cache_size_) {
       storage_->write(cache_);
       // reset cache
       cache_.clear();
       cache_.reserve(max_cache_size_);
+      current_cache_size = 0u;
     }
   }
 }
