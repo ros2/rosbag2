@@ -68,16 +68,20 @@ if(BUILD_TESTING)
     set(_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
   endif()
   set(other_environment_vars)
-  if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Work around a rtti bug when using class_loader from a
+    # python extension built with libc++.
     set(other_environment_vars "ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
   endif()
   ament_add_pytest_test(test_sequential_reader_py "test/test_sequential_reader.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}" ${other_environment_vars}
+    APPEND_ENV
+      PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+      ${other_environment_vars}
   )
   ament_add_pytest_test(test_sequential_writer_py "test/test_sequential_writer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "PYTHONPATH=${pythonpath}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}" ${other_environment_vars}
   )
 endif()
 
