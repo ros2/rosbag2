@@ -22,7 +22,7 @@ from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
 
 if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
-    # This is needed on Linux when compilying with clang/libc++.
+    # This is needed on Linux when compiling with clang/libc++.
     # TL;DR This makes class_loader work when using a python extension compiled with libc++.
     #
     # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
