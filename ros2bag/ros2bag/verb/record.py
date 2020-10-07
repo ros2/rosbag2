@@ -32,7 +32,7 @@ class RecordVerb(VerbExtension):
             '-a', '--all', action='store_true',
             help='recording all topics, required if no topics are listed explicitly.')
         parser.add_argument(
-            'topics', nargs='*', help='topics to be recorded')
+            'topics', nargs='*', default=None, help='topics to be recorded')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
@@ -116,7 +116,7 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
-        if args.all:
+        if args.all or (args.topics and len(args.topics) > 0):
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
             #               may result in DLL loading failures when attempting to import a C
@@ -131,29 +131,7 @@ class RecordVerb(VerbExtension):
                 node_prefix=NODE_NAME_PREFIX,
                 compression_mode=args.compression_mode,
                 compression_format=args.compression_format,
-                all=True,
-                no_discovery=args.no_discovery,
-                polling_interval=args.polling_interval,
-                max_bagfile_size=args.max_bag_size,
-                max_bagfile_duration=args.max_bag_duration,
-                max_cache_size=args.max_cache_size,
-                include_hidden_topics=args.include_hidden_topics,
-                qos_profile_overrides=qos_profile_overrides)
-        elif args.topics and len(args.topics) > 0:
-            # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-            #               combined with constrained environments (as imposed by colcon test)
-            #               may result in DLL loading failures when attempting to import a C
-            #               extension. Therefore, do not import rosbag2_transport at the module
-            #               level but on demand, right before first use.
-            from rosbag2_transport import rosbag2_transport_py
-
-            rosbag2_transport_py.record(
-                uri=uri,
-                storage_id=args.storage,
-                serialization_format=args.serialization_format,
-                node_prefix=NODE_NAME_PREFIX,
-                compression_mode=args.compression_mode,
-                compression_format=args.compression_format,
+                all=args.all,
                 no_discovery=args.no_discovery,
                 polling_interval=args.polling_interval,
                 max_bagfile_size=args.max_bag_size,
