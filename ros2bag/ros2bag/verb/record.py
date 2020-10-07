@@ -116,6 +116,7 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        # Assumes that args.all and args.topics are not both set at the same time.
         if args.all or (args.topics and len(args.topics) > 0):
             # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
             #               combined with constrained environments (as imposed by colcon test)
