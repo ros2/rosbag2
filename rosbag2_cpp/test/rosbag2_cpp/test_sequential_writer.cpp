@@ -288,7 +288,7 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
   message->serialized_data = rosbag2_storage::make_serialized_message(
-		  msg_content.c_str(), msg_length);
+    msg_content.c_str(), msg_length);
 
   storage_options_.max_bagfile_size = 0;
   storage_options_.max_cache_size = max_cache_size;
@@ -324,7 +324,7 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
   message->serialized_data = rosbag2_storage::make_serialized_message(
-		  msg_content.c_str(), msg_length);
+    msg_content.c_str(), msg_length);
 
 
   storage_options_.max_bagfile_size = 0;
