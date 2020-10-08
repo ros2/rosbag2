@@ -98,7 +98,7 @@ class RecordVerb(VerbExtension):
             return print_error('Invalid choice: Can not specify topics and -a at the same time.')
         # both all and topics cannot be false
         if not(args.all or (args.topics and len(args.topics) > 0)):
-            return self._subparser.print_help()
+            return print_error('Invalid choice: Must specify topic(s) or -a')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
