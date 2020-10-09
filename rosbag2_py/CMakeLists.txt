@@ -40,7 +40,7 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(PYTHON_LIBRARIES "${PYTHON_DEBUG_LIBRARIES}")
 endif()
 
-function(clean_windows_link_flags target)
+function(clean_windows_flags target)
   # More hacks to avoid pybind11 issues, similar to (but not the same)
   # https://github.com/pybind/pybind11/issues/77.
   # They are enabling /LTCG on Windows to reduce binary size,
@@ -73,7 +73,7 @@ ament_target_dependencies(_reader PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
 )
-clean_windows_link_flags(_reader)
+clean_windows_flags(_reader)
 
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
@@ -82,7 +82,7 @@ ament_target_dependencies(_storage PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_link_flags(_storage)
+clean_windows_flags(_storage)
 
 pybind11_add_module(_writer SHARED
   src/rosbag2_py/_writer.cpp
@@ -91,7 +91,7 @@ ament_target_dependencies(_writer PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
 )
-clean_windows_link_flags(_writer)
+clean_windows_flags(_writer)
 
 # Install cython modules as sub-modules of the project
 install(
