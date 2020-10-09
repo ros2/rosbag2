@@ -55,11 +55,11 @@ function(clean_windows_flags target)
 
   if(MSVC AND "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     get_target_property(target_link_libraries ${target} LINK_LIBRARIES)
-    list(REMOVE_ITEM target_link_libraries "-LTCG")
+    list(REMOVE_ITEM target_link_libraries "$<$<NOT:$<CONFIG:Debug>>:-LTCG>")
     set_target_properties(${target} PROPERTIES LINK_LIBRARIES "${target_link_libraries}")
 
     get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
-    list(REMOVE_ITEM target_compile_options "/GL")
+    list(REMOVE_ITEM target_compile_options "$<$<NOT:$<CONFIG:Debug>>:/GL>")
     set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
   endif()
 endfunction()
