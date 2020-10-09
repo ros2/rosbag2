@@ -68,6 +68,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   cmd << "ros2 bag record" <<
     " --compression-mode file" <<
     " --compression-format zstd" <<
+    " --max-cache-size 0" <<
     " --output " << root_bag_path_.string() <<
     " " << topic_name;
 
@@ -118,7 +119,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   wrong_message->string_value = "wrong_content";
 
   auto process_handle = start_execution(
-    "ros2 bag record --output " + root_bag_path_.string() + " /test_topic");
+    "ros2 bag record --max-cache-size 0 --output " + root_bag_path_.string() + " /test_topic");
   wait_for_db();
 
   pub_man_.add_publisher("/test_topic", message, expected_test_messages);
