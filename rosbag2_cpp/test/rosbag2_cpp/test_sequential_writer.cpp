@@ -266,15 +266,14 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 }
 
 TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
-  const size_t counter = 1000;
+  const uint64_t counter = 1000;
   const uint64_t max_cache_size = 100;
   std::string msg_content = "Hello";
-  auto msg_length = msg_content.length();
-
+  const auto msg_length = msg_content.length();
   EXPECT_CALL(
     *storage_,
     write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  Times(counter * msg_length / max_cache_size);
+  Times(static_cast<int>(counter * msg_length / max_cache_size));
   EXPECT_CALL(
     *storage_,
     write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
