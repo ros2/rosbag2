@@ -44,9 +44,9 @@ function(clean_windows_flags target)
   # More hacks to avoid pybind11 issues, similar to (but not the same)
   # https://github.com/pybind/pybind11/issues/77.
   # They are enabling /LTCG on Windows to reduce binary size,
-  # but that doesn't play well with incremental builds (default for Debug/RelWithDebInfo).
+  # but that doesn't play well with MSVC incremental linking (default for Debug/RelWithDebInfo).
   #
-  # Line of the bug (flags shouldn't be set when CONFIG is RELWITHDEBINFO).
+  # Line of the bug (those options shouldn't be set when CONFIG is RELWITHDEBINFO).
   # https://github.com/pybind/pybind11/blob/3b1dbebabc801c9cf6f0953a4c20b904d444f879/tools/pybind11Tools.cmake#L103-L108
   #
   # See:
