@@ -54,12 +54,13 @@ function(clean_windows_link_flags target)
   # - https://docs.microsoft.com/en-us/cpp/build/reference/ltcg-link-time-code-generation?view=vs-2019
 
   if(MSVC AND "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    get_target_property(target_link_flags ${target_name} LINK_FLAGS)
-    get_target_property(target_compile_flags ${target_name} COMPILE_FLAGS)
-    string(REPLACE "/GL" "" target_compile_flags ${target_compile_flags})
+    get_target_property(target_link_flags ${target} LINK_FLAGS)
     string(REPLACE "-LTCG" "" target_link_flags ${target_link_flags})
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${target_compile_flags})
     set_target_properties(${target} PROPERTIES LINK_FLAGS ${target_link_flags})
+
+    get_target_property(target_compile_flags ${target} COMPILE_FLAGS)
+    string(REPLACE "/GL" "" target_compile_flags ${target_compile_flags})
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${target_compile_flags})
   endif()
 endfunction()
 
