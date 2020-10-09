@@ -53,7 +53,7 @@ function(clean_windows_link_flags target)
   # - https://docs.microsoft.com/en-us/cpp/build/reference/incremental-link-incrementally?view=vs-2019
   # - https://docs.microsoft.com/en-us/cpp/build/reference/ltcg-link-time-code-generation?view=vs-2019
 
-  if(MSVC AND ${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
+  if(MSVC AND "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     get_target_property(target_link_flags ${target_name} LINK_FLAGS)
     get_target_property(target_compile_flags ${target_name} COMPILE_FLAGS)
     string(REPLACE "/GL" "" target_compile_flags ${target_compile_flags})
