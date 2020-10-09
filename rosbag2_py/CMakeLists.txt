@@ -40,6 +40,29 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(PYTHON_LIBRARIES "${PYTHON_DEBUG_LIBRARIES}")
 endif()
 
+function(clean_windows_link_flags target)
+  # More hacks to avoid pybind11 issues, similar to (but not the same)
+  # https://github.com/pybind/pybind11/issues/77.
+  # They are enabling /LTCG on Windows to reduce binary size,
+  # but that doesn't play well with incremental builds (default for Debug/RelWithDebInfo).
+  #
+  # Line of the bug (flags shouldn't be set when CONFIG is RELWITHDEBINFO).
+  # https://github.com/pybind/pybind11/blob/3b1dbebabc801c9cf6f0953a4c20b904d444f879/tools/pybind11Tools.cmake#L103-L108
+  #
+  # See:
+  # - https://docs.microsoft.com/en-us/cpp/build/reference/incremental-link-incrementally?view=vs-2019
+  # - https://docs.microsoft.com/en-us/cpp/build/reference/ltcg-link-time-code-generation?view=vs-2019
+
+  if(MSVC AND ${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
+    get_target_property(target_link_flags ${target_name} LINK_FLAGS)
+    get_target_property(target_compile_flags ${target_name} COMPILE_FLAGS)
+    string(REPLACE "/GL" "" target_compile_flags ${target_compile_flags})
+    string(REPLACE "-LTCG" "" target_link_flags ${target_link_flags})
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${target_compile_flags})
+    set_target_properties(${target} PROPERTIES LINK_FLAGS ${target_link_flags})
+  endif()
+endfunction()
+
 ament_python_install_package(${PROJECT_NAME})
 
 pybind11_add_module(_reader SHARED
@@ -49,6 +72,7 @@ ament_target_dependencies(_reader PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
 )
+clean_windows_link_flags(_reader)
 
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
@@ -57,6 +81,7 @@ ament_target_dependencies(_storage PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
+clean_windows_link_flags(_reader)
 
 pybind11_add_module(_writer SHARED
   src/rosbag2_py/_writer.cpp
@@ -65,6 +90,7 @@ ament_target_dependencies(_writer PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
 )
+clean_windows_link_flags(_reader)
 
 # Install cython modules as sub-modules of the project
 install(
