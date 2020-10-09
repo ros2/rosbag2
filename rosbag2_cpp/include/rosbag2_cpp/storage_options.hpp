@@ -36,7 +36,7 @@ public:
 
   // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.
-  // Defaults to 0, and effectively disables the caching.
+  // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
 };
 
