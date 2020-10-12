@@ -20,6 +20,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <queue>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -90,9 +93,12 @@ private:
   void fill_topics_and_types();
   void activate_transaction();
   void commit_transaction();
+  void consume_queue();
+  void swap_buffers();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
+  using BufferQueue = std::queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   std::shared_ptr<SqliteWrapper> database_;
   SqliteStatement write_statement_ {};
@@ -105,6 +111,16 @@ private:
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
+
+  std::unique_ptr<BufferQueue> primary_message_queue_;
+  std::unique_ptr<BufferQueue> secondary_message_queue_;
+  BufferQueue* current_queue_;
+  BufferQueue* writing_queue_;
+  std::mutex queuee_mutex_;
+
+  std::atomic_bool is_stop_issued_ {false};
+  std::mutex stop_mutex_;
+  std::thread consumer_thread_;
 };
 
 }  // namespace rosbag2_storage_plugins

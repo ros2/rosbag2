@@ -66,9 +66,18 @@ namespace rosbag2_storage_plugins
 {
 SqliteStorage::~SqliteStorage()
 {
-  if (active_transaction_) {
-    commit_transaction();
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Waiting for database writing...");
+  {
+    std::lock_guard<std::mutex> writer_lock(stop_mutex_);
+    is_stop_issued_ = true;
   }
+  if(consumer_thread_.joinable())
+  {
+    consumer_thread_.join();
+  }
+  
+  std::cout << std::endl;
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("\n Done writing!");
 }
 
 void SqliteStorage::open(
@@ -108,6 +117,13 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
+  // Set current queuee
+  primary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue());
+  secondary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue());
+  current_queue_ = primary_message_queue_.get();
+  // Run consumer thread
+  consumer_thread_ = std::thread(&SqliteStorage::consume_queue, this);
+
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
@@ -136,36 +152,74 @@ void SqliteStorage::commit_transaction()
   active_transaction_ = false;
 }
 
+void SqliteStorage::swap_buffers() {
+  {
+    std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
+    if(current_queue_ == primary_message_queue_.get()) {
+      current_queue_ = secondary_message_queue_.get();
+      writing_queue_ = primary_message_queue_.get();
+    } else {
+      current_queue_ = primary_message_queue_.get();
+      writing_queue_ = secondary_message_queue_.get();
+    }
+  }
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Swapping buffers. Primary size: " << primary_message_queue_->size() << "; Secondary size: " << secondary_message_queue_->size());
+}
+
+void SqliteStorage::consume_queue() {
+  bool exit_flag = false;
+  while (true)
+  {
+    swap_buffers();
+
+    if(writing_queue_->size() == 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      continue;
+    }
+
+    auto queuee_size = writing_queue_->size();
+    for(unsigned int i = 0; i < queuee_size; ++i) {
+      auto message = writing_queue_->front();
+      writing_queue_->pop();
+      if (!write_statement_) {
+        prepare_for_writing();
+      }
+      auto topic_entry = topics_.find(message->topic_name);
+      if (topic_entry == end(topics_)) {
+        throw SqliteException(
+                "Topic '" + message->topic_name +
+                "' has not been created yet! Call 'create_topic' first.");
+      }
+      write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+      write_statement_->execute_and_reset();
+      if(is_stop_issued_) {
+        std::cout << '\r' << "Remaining entries: " << writing_queue_->size() + current_queue_->size() << std::flush;
+      }
+    }
+
+    commit_transaction();
+
+    {
+      std::lock_guard<std::mutex> writer_lock(stop_mutex_);
+      if(exit_flag) break;
+      if(is_stop_issued_) exit_flag = true;
+    }
+  }
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  if (!write_statement_) {
-    prepare_for_writing();
-  }
-  auto topic_entry = topics_.find(message->topic_name);
-  if (topic_entry == end(topics_)) {
-    throw SqliteException(
-            "Topic '" + message->topic_name +
-            "' has not been created yet! Call 'create_topic' first.");
-  }
-
-  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-  write_statement_->execute_and_reset();
+  std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
+  current_queue_->push(message);
 }
 
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  if (!write_statement_) {
-    prepare_for_writing();
-  }
-
-  activate_transaction();
-
+  std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
   for (auto & message : messages) {
-    write(message);
+    current_queue_->push(message);
   }
-
-  commit_transaction();
 }
 
 bool SqliteStorage::has_next()
