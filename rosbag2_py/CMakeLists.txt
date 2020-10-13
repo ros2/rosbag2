@@ -16,12 +16,29 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
-find_package(pybind11 REQUIRED)
-find_package(python_cmake_module REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+
+# Find python before pybind11
+find_package(python_cmake_module REQUIRED)
+find_package(PythonExtra REQUIRED)
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # Set the python debug interpreter.
+  # pybind11 will setup the build for debug now.
+  set(PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
+endif()
+
+find_package(pybind11 REQUIRED)
+
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # pybind11 logic for setting up a debug build when both a debug and release
+  # python interpreter are present in the system seems to be pretty much broken.
+  # This works around the issue.
+  set(PYTHON_LIBRARIES "${PYTHON_DEBUG_LIBRARIES}")
+endif()
 
 ament_python_install_package(${PROJECT_NAME})
 
@@ -79,9 +96,10 @@ if(BUILD_TESTING)
       PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
       ${other_environment_vars}
   )
-  ament_add_pytest_test(test_sequential_writer_py "test/test_sequential_writer.py"
+  ament_add_pytest_test(test_sequential_writer_py
+    "test/test_sequential_writer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}" ${other_environment_vars}
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
 endif()
 

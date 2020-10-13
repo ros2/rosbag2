@@ -67,6 +67,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   cmd << "ros2 bag record" <<
     " --compression-mode file" <<
     " --compression-format zstd" <<
+    " --max-cache-size 0" <<
     " --output " << root_bag_path_.string() <<
     " " << topic_name;
 
@@ -117,7 +118,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   wrong_message->string_value = "wrong_content";
 
   auto process_handle = start_execution(
-    "ros2 bag record --output " + root_bag_path_.string() + " /test_topic");
+    "ros2 bag record --max-cache-size 0 --output " + root_bag_path_.string() + " /test_topic");
   wait_for_db();
 
   pub_man_.add_publisher("/test_topic", message, expected_test_messages);
@@ -564,6 +565,16 @@ TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
   EXPECT_THAT(error_output, HasSubstr("Can not specify topics and -a at the same time."));
+}
+
+TEST_F(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag record", temporary_dir_path_);
+  auto output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
+  EXPECT_THAT(output, HasSubstr("Invalid choice: Must specify topic(s) or -a"));
 }
 
 TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
