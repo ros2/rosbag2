@@ -142,9 +142,11 @@ void SequentialCompressionWriter::setup_compressor_threads()
           compress_message(*compressor, message);
 
           {
+            // Now that the message is compressed, it can be written to file using the
+            // normal method.
             std::lock_guard<std::recursive_mutex> storage_lock(
               storage_mutex_);
-            storage_->write(message);
+            SequentialWriter::write(message);
           }
         } else if (!file.empty()) {
           compress_file(*compressor, file);
@@ -312,47 +314,22 @@ void SequentialCompressionWriter::compress_message(
   compressor.compress_serialized_bag_message(message.get());
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-SequentialCompressionWriter::get_writeable_message(
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage>/* message */)
-{
-  throw std::runtime_error{"get_writeable_message should not be called when doing zstd "
-          "compression."};
-  // No return because this function will never return, only throw
-}
-
 void SequentialCompressionWriter::write(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-  if (!storage_) {
-    throw std::runtime_error{"Bag is not open. Call open() before writing."};
-  }
-
-  // Update the message count for the Topic.
-  ++topics_names_to_info_.at(message->topic_name).message_count;
-
-  if (should_split_bagfile()) {
-    split_bagfile();
-  }
-
-  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>{
-    std::chrono::nanoseconds(message->time_stamp)};
-  metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
-
-  const auto duration = message_timestamp - metadata_.starting_time;
-  metadata_.duration = std::max(metadata_.duration, duration);
-
-  auto converted_message = converter_ ? converter_->convert(message) : message;
-  if (compression_options_.compression_mode == CompressionMode::MESSAGE) {
+  // If the compression mode is FILE, write as normal here.  Compressing files doesn't
+  // occur until after the bag file is split.
+  // If the compression mode is MESSAGE, push the message into a queue that will be handled
+  // by the compression threads.
+  if (compression_options_.compression_mode == CompressionMode::FILE) {
+    SequentialWriter::write(message);
+  } else {
     std::lock_guard<std::mutex> lock(compressor_mutex_);
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
       compressor_message_queue_.pop();
     }
-    compressor_message_queue_.push(converted_message);
+    compressor_message_queue_.push(message);
     compressor_condition_.notify_one();
-  } else {
-    std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-    storage_->write(converted_message);
   }
 }
 

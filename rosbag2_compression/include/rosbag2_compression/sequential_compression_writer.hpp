@@ -88,7 +88,11 @@ public:
   void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
 
   /**
-   * Write a message to a bagfile. The topic needs to have been created before writing is possible.
+   * If the compression mode is FILE, write a message to a bagfile.
+   * If the compression mode is MESSAGE, pushes the message into a queue that will be processed
+   * by the compression threads.
+   *
+   * The topic needs to have been created before writing is possible.
    *
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
@@ -174,12 +178,6 @@ private:
 
   // Prepares the metadata by setting initial values.
   void init_metadata() override;
-
-  // This function is unused by this class, so we override it just to throw an exception to
-  // ensure it is never used.
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  get_writeable_message(
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 };
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
