@@ -162,7 +162,7 @@ void SequentialCompressionWriter::setup_compressor_threads()
     compression_options_.compression_format);
   if (!compressor) {
     throw std::runtime_error{
-      "Cannot compress message; Writer is not open!"};
+            "Cannot compress message; Writer is not open!"};
   }
 
   for (uint64_t i = 0; i < compression_options_.compression_threads; i++) {
