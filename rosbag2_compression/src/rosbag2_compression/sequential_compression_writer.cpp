@@ -203,9 +203,12 @@ void SequentialCompressionWriter::reset()
     {
       try {
         storage_.reset();  // Storage must be closed before it can be compressed.
-        std::string file = metadata_.relative_file_paths.back();
-        compressor_file_queue_.push(file);
-        compressor_condition_.notify_one();
+        if (!metadata_.relative_file_paths.empty())
+        {
+          std::string file = metadata_.relative_file_paths.back();
+          compressor_file_queue_.push(file);
+          compressor_condition_.notify_one();
+        }
       } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
       }
