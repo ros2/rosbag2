@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
 #include <string>
 #include <vector>
 
@@ -22,6 +19,8 @@
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+
+#include "./pybind11.hpp"
 
 PYBIND11_MODULE(_storage, m) {
   m.doc() = "Python wrapper of the rosbag2 utilities API";

@@ -166,8 +166,19 @@ Recorder::create_subscription(
     qos,
     [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      bag_message->serialized_data =
-      std::make_shared<rcl_serialized_message_t>(message->release_rcl_serialized_message());
+      // the serialized bag message takes ownership of the incoming rclcpp serialized message
+      // we therefore have to make sure to cleanup that memory in a custom deleter.
+      bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+        new rcutils_uint8_array_t,
+        [](rcutils_uint8_array_t * msg) {
+          auto fini_return = rcutils_uint8_array_fini(msg);
+          delete msg;
+          if (fini_return != RCUTILS_RET_OK) {
+            ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+              "Failed to destroy serialized message: " << rcutils_get_error_string().str);
+          }
+        });
+      *bag_message->serialized_data = message->release_rcl_serialized_message();
       bag_message->topic_name = topic_name;
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);

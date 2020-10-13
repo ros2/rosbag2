@@ -53,9 +53,7 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
-: storage_factory_{std::make_unique<rosbag2_storage::StorageFactory>()},
-  converter_factory_{std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()},
-  metadata_io_{std::make_unique<rosbag2_storage::MetadataIo>()},
+: SequentialWriter(),
   compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
   compression_options_{compression_options}
 {}
@@ -66,9 +64,7 @@ SequentialCompressionWriter::SequentialCompressionWriter(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-: storage_factory_{std::move(storage_factory)},
-  converter_factory_{std::move(converter_factory)},
-  metadata_io_{std::move(metadata_io)},
+: SequentialWriter(std::move(storage_factory), converter_factory, std::move(metadata_io)),
   compression_factory_{std::move(compression_factory)},
   compression_options_{compression_options}
 {}
@@ -177,52 +173,9 @@ void SequentialCompressionWriter::open(
   const rosbag2_cpp::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
-  max_bagfile_size_ = storage_options.max_bagfile_size;
-  base_folder_ = storage_options.uri;
-
-  if (converter_options.output_serialization_format !=
-    converter_options.input_serialization_format)
-  {
-    converter_ = std::make_unique<rosbag2_cpp::Converter>(converter_options, converter_factory_);
-  }
-
-  rcpputils::fs::path db_path(base_folder_);
-  if (db_path.is_directory()) {
-    std::stringstream error;
-    error << "Database directory already exists (" << db_path.string() <<
-      "), can't overwrite existing database";
-    throw std::runtime_error{error.str()};
-  }
-
-  bool dir_created = rcpputils::fs::create_directories(db_path);
-  if (!dir_created) {
-    std::stringstream error;
-    error << "Failed to create database directory (" << db_path.string() << ").";
-    throw std::runtime_error{error.str()};
-  }
-
-  const auto storage_uri = format_storage_uri(base_folder_, 0);
-  storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
-  if (!storage_) {
-    throw std::runtime_error{"No storage could be initialized. Abort"};
-  }
-
+  std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+  SequentialWriter::open(storage_options, converter_options);
   setup_compression();
-
-  {
-    std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-    if (max_bagfile_size_ != 0 &&
-      max_bagfile_size_ < storage_->get_minimum_split_file_size())
-    {
-      std::stringstream error;
-      error << "Invalid bag splitting size given. Please provide a value greater than " <<
-        storage_->get_minimum_split_file_size() << ". Specified value of " <<
-        storage_options.max_bagfile_size;
-      throw std::runtime_error{error.str()};
-    }
-
-    init_metadata();
-  }
 }
 
 void SequentialCompressionWriter::reset()
@@ -231,7 +184,6 @@ void SequentialCompressionWriter::reset()
   if (!base_folder_.empty()) {
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
-
     if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
       should_compress_last_file_)
     {
@@ -259,48 +211,14 @@ void SequentialCompressionWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  if (!storage_) {
-    throw std::runtime_error{"Bag is not open. Call open() before writing."};
-  }
-
-  if (converter_) {
-    converter_->add_topic(topic_with_type.name, topic_with_type.type);
-  }
-
-  if (topics_names_to_info_.find(topic_with_type.name) ==
-    topics_names_to_info_.end())
-  {
-    rosbag2_storage::TopicInformation info{};
-    info.topic_metadata = topic_with_type;
-
-    const auto insert_res = topics_names_to_info_.insert(
-      std::make_pair(topic_with_type.name, info));
-
-    if (!insert_res.second) {
-      std::stringstream errmsg;
-      errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
-      throw std::runtime_error{errmsg.str()};
-    }
-
-    storage_->create_topic(topic_with_type);
-  }
+  SequentialWriter::create_topic(topic_with_type);
 }
 
 void SequentialCompressionWriter::remove_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  if (!storage_) {
-    throw std::runtime_error{"Bag is not open. Call open() before removing."};
-  }
-
-  if (topics_names_to_info_.erase(topic_with_type.name) > 0) {
-    storage_->remove_topic(topic_with_type);
-  } else {
-    std::stringstream errmsg;
-    errmsg << "Failed to remove the non-existing topic \"" << topic_with_type.name << "\"!";
-    throw std::runtime_error{errmsg.str()};
-  }
+  SequentialWriter::remove_topic(topic_with_type);
 }
 
 void SequentialCompressionWriter::compress_file(
@@ -335,7 +253,7 @@ void SequentialCompressionWriter::compress_file(
       } else {
         ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
           "Failed to find path to uncompressed bag: \"" << file <<
-            "\"; this shouldn't happen.");
+                                                        "\"; this shouldn't happen.");
       }
     }
 
@@ -346,7 +264,7 @@ void SequentialCompressionWriter::compress_file(
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
       "Removing last file: \"" << to_compress.string() <<
-        "\" because it either is empty or does not exist.");
+                               "\" because it either is empty or does not exist.");
   }
 }
 
@@ -391,7 +309,16 @@ void SequentialCompressionWriter::compress_message(
   BaseCompressorInterface & compressor,
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
+
   compressor.compress_serialized_bag_message(message.get());
+}
+
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+SequentialCompressionWriter::get_writeable_message(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> /* message */)
+{
+  throw std::runtime_error{"get_writeable_message should not be called when doing zstd compression."};
+  //return writeable_msg;
 }
 
 void SequentialCompressionWriter::write(
@@ -436,28 +363,6 @@ bool SequentialCompressionWriter::should_split_bagfile()
   } else {
     std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
     return storage_->get_bagfile_size() > max_bagfile_size_;
-  }
-}
-
-void SequentialCompressionWriter::finalize_metadata()
-{
-  metadata_.bag_size = 0;
-
-  for (const auto & path : metadata_.relative_file_paths) {
-    const auto bag_path = rcpputils::fs::path{path};
-
-    if (bag_path.exists()) {
-      metadata_.bag_size += bag_path.file_size();
-    }
-  }
-
-  metadata_.topics_with_message_count.clear();
-  metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
-  metadata_.message_count = 0;
-
-  for (const auto & topic : topics_names_to_info_) {
-    metadata_.topics_with_message_count.push_back(topic.second);
-    metadata_.message_count += topic.second.message_count;
   }
 }
 
