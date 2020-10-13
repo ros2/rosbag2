@@ -203,8 +203,7 @@ void SequentialCompressionWriter::reset()
     {
       try {
         storage_.reset();  // Storage must be closed before it can be compressed.
-        if (!metadata_.relative_file_paths.empty())
-        {
+        if (!metadata_.relative_file_paths.empty()) {
           std::string file = metadata_.relative_file_paths.back();
           compressor_file_queue_.push(file);
           compressor_condition_.notify_one();
