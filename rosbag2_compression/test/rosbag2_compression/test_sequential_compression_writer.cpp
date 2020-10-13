@@ -176,7 +176,11 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
     std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
-  writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_});
+  // This will throw an exception because the MockCompressionFactory does not actually create
+  // a compressor.
+  EXPECT_THROW(
+    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
+    std::runtime_error);
 
   EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
 }

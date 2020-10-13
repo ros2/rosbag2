@@ -153,6 +153,18 @@ void SequentialCompressionWriter::setup_compressor_threads()
         }
       }
     };
+
+  // This function needs to throw an exception if the compression format is invalid, but because
+  // each thread creates its own compressor, we can't actually catch it here if one of the threads
+  // fails.  Instead, we'll create a compressor that we don't actually use just so that it will
+  // throw an exception if the format is invalid.
+  auto compressor = compression_factory_->create_compressor(
+    compression_options_.compression_format);
+  if (!compressor) {
+    throw std::runtime_error{
+      "Cannot compress message; Writer is not open!"};
+  }
+
   for (uint64_t i = 0; i < compression_options_.compression_threads; i++) {
     compression_threads_.emplace_back(compress_fn);
   }
