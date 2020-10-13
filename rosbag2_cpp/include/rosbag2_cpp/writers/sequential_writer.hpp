@@ -100,7 +100,7 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  void  write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
+  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
 protected:
   std::string base_folder_;

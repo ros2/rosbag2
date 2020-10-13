@@ -253,7 +253,7 @@ void SequentialCompressionWriter::compress_file(
       } else {
         ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
           "Failed to find path to uncompressed bag: \"" << file <<
-                                                        "\"; this shouldn't happen.");
+            "\"; this shouldn't happen.");
       }
     }
 
@@ -264,7 +264,7 @@ void SequentialCompressionWriter::compress_file(
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
       "Removing last file: \"" << to_compress.string() <<
-                               "\" because it either is empty or does not exist.");
+        "\" because it either is empty or does not exist.");
   }
 }
 
@@ -309,16 +309,16 @@ void SequentialCompressionWriter::compress_message(
   BaseCompressorInterface & compressor,
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
-
   compressor.compress_serialized_bag_message(message.get());
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
 SequentialCompressionWriter::get_writeable_message(
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> /* message */)
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>/* message */)
 {
-  throw std::runtime_error{"get_writeable_message should not be called when doing zstd compression."};
-  //return writeable_msg;
+  throw std::runtime_error{"get_writeable_message should not be called when doing zstd "
+          "compression."};
+  // No return because this function will never return, only throw
 }
 
 void SequentialCompressionWriter::write(
