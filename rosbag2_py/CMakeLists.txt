@@ -41,13 +41,14 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 function(clean_windows_flags target)
-  # More hacks to avoid pybind11 issues, similar to (but not the same)
-  # https://github.com/pybind/pybind11/issues/77.
+  # Hack to avoid pybind11 issue.
+  #
+  # TODO(ivanpauno):
+  # This can be deleted when we update `pybind11_vendor` to a version including
+  # https://github.com/pybind/pybind11/pull/2590.
+  #
   # They are enabling /LTCG on Windows to reduce binary size,
   # but that doesn't play well with MSVC incremental linking (default for Debug/RelWithDebInfo).
-  #
-  # Line of the bug (those options shouldn't be set when CONFIG is RELWITHDEBINFO).
-  # https://github.com/pybind/pybind11/blob/3b1dbebabc801c9cf6f0953a4c20b904d444f879/tools/pybind11Tools.cmake#L103-L108
   #
   # See:
   # - https://docs.microsoft.com/en-us/cpp/build/reference/incremental-link-incrementally?view=vs-2019
