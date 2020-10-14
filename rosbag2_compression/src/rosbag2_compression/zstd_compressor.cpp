@@ -78,15 +78,15 @@ void ZstdCompressor::compress_serialized_bag_message(
 {
   const auto start = std::chrono::high_resolution_clock::now();
   // Allocate based on compression bound and compress
-  const auto uncompressed_buffer_length =
+  const auto maximum_compressed_length =
     ZSTD_compressBound(message->serialized_data->buffer_length);
-  std::vector<uint8_t> compressed_buffer(uncompressed_buffer_length);
+  std::vector<uint8_t> compressed_buffer(maximum_compressed_length);
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
   const auto compression_result = ZSTD_compressCCtx(
     zstd_context_,
-    compressed_buffer.data(), compressed_buffer.size(),
+    compressed_buffer.data(), maximum_compressed_length,
     message->serialized_data->buffer, message->serialized_data->buffer_length,
     kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
@@ -105,7 +105,7 @@ void ZstdCompressor::compress_serialized_bag_message(
   std::copy(compressed_buffer.begin(), compressed_buffer.end(), message->serialized_data->buffer);
 
   const auto end = std::chrono::high_resolution_clock::now();
-  print_compression_statistics(start, end, uncompressed_buffer_length, compression_result);
+  print_compression_statistics(start, end, maximum_compressed_length, compression_result);
 }
 
 std::string ZstdCompressor::get_compression_identifier() const

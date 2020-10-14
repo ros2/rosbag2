@@ -18,6 +18,7 @@
 #include <string>
 
 #include "rmw/rmw.h"
+#include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
@@ -25,6 +26,8 @@
 #include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
 
 using namespace std::chrono_literals;
+
+static rcutils_allocator_t allocator = rcutils_get_default_allocator();
 
 WriterBenchmark::WriterBenchmark(const std::string & name)
 : rclcpp::Node(name)
@@ -37,6 +40,9 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
   this->declare_parameter("max_cache_size", 1);
   this->declare_parameter("db_folder", default_bag_folder);
   this->declare_parameter("results_file", default_bag_folder + "/results.csv");
+  this->declare_parameter("compression_format", "");
+  this->declare_parameter("compression_queue_size", 1);
+  this->declare_parameter("compression_threads", 0);
 
   this->get_parameter("frequency", config_.frequency);
   if (config_.frequency == 0) {
@@ -51,6 +57,9 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
   this->get_parameter("max_count", config_.max_count);
   this->get_parameter("size", config_.message_size);
   this->get_parameter("instances", instances_);
+  this->get_parameter("compression_format", compression_format_);
+  this->get_parameter("compression_queue_size", compression_queue_size_);
+  this->get_parameter("compression_threads", compression_threads_);
 
   create_producers(config_);
   create_writer();
@@ -72,20 +81,31 @@ void WriterBenchmark::start_benchmark()
 
       if (!queue->is_empty()) {  // behave as if we received the message.
         auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        auto serialized_data = std::make_shared<rcutils_uint8_array_t>();
 
         // The pointer memory is owned by the producer until past the termination of the while loop.
         // Note this ownership model should be changed if we want to generate messages on the fly
         auto byte_ma_message = queue->pop_and_return();
 
-        serialized_data->buffer = reinterpret_cast<uint8_t *>(byte_ma_message->data.data());
+        // The compressor may resize this array, so it needs to be initialized with
+        // rcutils_uint8_array_init to ensure the allocator is set properly.
+        auto msg_array = new rcutils_uint8_array_t;
+        *msg_array = rcutils_get_zero_initialized_uint8_array();
+        int error = rcutils_uint8_array_init(msg_array, byte_ma_message->data.size(), &allocator);
+        if (error != RCUTILS_RET_OK) {
+          throw std::runtime_error(
+                  "Error allocating resources for serialized message: " +
+                  std::string(rcutils_get_error_string().str));
+        }
+        // The message buffer may be modified in-place by compression algorithms, so each message
+        // needs its own copy of the data.
+        memcpy(msg_array->buffer, byte_ma_message->data.data(), byte_ma_message->data.size());
+        auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(msg_array);
         serialized_data->buffer_length = byte_ma_message->data.size();
-        serialized_data->buffer_capacity = byte_ma_message->data.size();
 
         message->serialized_data = serialized_data;
 
         rcutils_time_point_value_t time_stamp;
-        int error = rcutils_system_time_now(&time_stamp);
+        error = rcutils_system_time_now(&time_stamp);
         if (error != RCUTILS_RET_OK) {
           RCLCPP_ERROR_STREAM(
             get_logger(), "Error getting current time. Error:" <<
@@ -187,7 +207,16 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
 // Also, add an option to configure compression
 void WriterBenchmark::create_writer()
 {
-  writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
+  if (!compression_format_.empty()) {
+    rosbag2_compression::CompressionOptions compression_options{
+      compression_format_, rosbag2_compression::CompressionMode::MESSAGE,
+      compression_queue_size_, compression_threads_};
+
+    writer_ = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+      compression_options);
+  } else {
+    writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
+  }
   rosbag2_cpp::StorageOptions storage_options{};
   storage_options.uri = db_folder_;
   storage_options.storage_id = "sqlite3";

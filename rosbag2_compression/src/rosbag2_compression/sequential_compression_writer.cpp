@@ -103,10 +103,10 @@ void SequentialCompressionWriter::setup_compressor_threads()
     "setup_compressor_threads: Starting %lu threads",
     compression_options_.compression_threads);
   if (compression_options_.compression_threads < 1) {
-    // It shouldn't be possible for this to actually be set to less than 1 at
-    // this point, but we'll check it as a safety test, since if it's not at
-    // least 1, nothing will ever get compressed.
-    compression_options_.compression_threads = 1;
+    // This should have already been set to something reasonable prior to this
+    // point, but we'll double-check just to make sure.
+    auto hardware_threads = std::thread::hardware_concurrency();
+    compression_options_.compression_threads = hardware_threads > 0 ? hardware_threads : 1;
   }
   compression_is_running_ = true;
   auto compress_fn = [&]()
@@ -194,13 +194,13 @@ void SequentialCompressionWriter::open(
 
 void SequentialCompressionWriter::reset()
 {
-  std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
   if (!base_folder_.empty()) {
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
     if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
       should_compress_last_file_)
     {
+      std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
       try {
         storage_.reset();  // Storage must be closed before it can be compressed.
         if (!metadata_.relative_file_paths.empty()) {
