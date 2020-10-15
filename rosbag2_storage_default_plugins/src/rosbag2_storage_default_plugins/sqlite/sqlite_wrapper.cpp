@@ -14,6 +14,7 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>
