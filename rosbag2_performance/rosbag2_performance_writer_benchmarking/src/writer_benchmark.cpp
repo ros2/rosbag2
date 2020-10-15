@@ -96,9 +96,10 @@ void WriterBenchmark::start_benchmark()
                   "Error allocating resources for serialized message: " +
                   std::string(rcutils_get_error_string().str));
         }
-        // The message buffer may be modified in-place by compression algorithms, so each message
-        // needs its own copy of the data.
-        memcpy(msg_array->buffer, byte_ma_message->data.data(), byte_ma_message->data.size());
+        // The compressor may modify this buffer in-place, so it should take ownership of it.
+        std::move(byte_ma_message->data.data(),
+                  byte_ma_message->data.data() + byte_ma_message->data.size(),
+                  msg_array->buffer);
         auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(msg_array);
         serialized_data->buffer_length = byte_ma_message->data.size();
 
