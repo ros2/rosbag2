@@ -60,21 +60,22 @@ SqliteWrapper::SqliteWrapper(
       throw SqliteException{errmsg.str()};
     }
 
-    auto journal_mode_set = std::find_if(
-      pragmas.begin(), pragmas.end(),
-      [](const auto & pragma) {
-        return pragma.rfind("journal_mode", 0) == 0;
-      });
-    if (journal_mode_set == pragmas.end()) {
-      pragmas.push_back("journal_mode = WAL");
-    }
-    auto synchronous_set = std::find_if(
-      pragmas.begin(), pragmas.end(),
-      [](const auto & pragma) {
-        return pragma.rfind("synchronous", 0) == 0;
-      });
-    if (synchronous_set == pragmas.end()) {
-      pragmas.push_back("synchronous = NORMAL");
+    std::map<std::string, std::string> defaults = {
+      { "journal_mode", "WAL" },
+      { "synchronous", "NORMAL"}
+    };
+
+    for (const auto &kv : defaults) {
+      auto key = kv.first;
+      auto default_value = kv.second;
+      auto value_set = std::find_if(
+        pragmas.begin(), pragmas.end(),
+        [key](const auto & pragma) {
+          return pragma.rfind(key, 0) == 0;
+        });
+      if (value_set == pragmas.end()) {
+        pragmas.push_back(key + " = " + default_value);
+      }
     }
   }
 
