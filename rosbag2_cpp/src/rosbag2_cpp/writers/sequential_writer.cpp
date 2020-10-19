@@ -143,6 +143,10 @@ void SequentialWriter::reset()
   // if cache data exists, it must flush the data into the storage
   if (!cache_.empty()) {
     storage_->write(cache_);
+    // reset cache
+    cache_.clear();
+    cache_.reserve(max_cache_size_);
+    current_cache_size_ = 0u;
   }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
