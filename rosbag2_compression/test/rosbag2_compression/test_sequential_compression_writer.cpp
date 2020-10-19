@@ -19,10 +19,14 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
+
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -41,9 +45,12 @@ public:
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
-    storage_options_{},
+    tmp_dir_{rcpputils::fs::temp_directory_path() / "SequentialCompressionWriterTest"},
+    tmp_dir_storage_options_{},
     serialization_format_{"rmw_format"}
   {
+    tmp_dir_storage_options_.uri = tmp_dir_.string();
+    rcpputils::fs::remove(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
   }
@@ -53,10 +60,31 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_storage::StorageOptions storage_options_;
+  rcpputils::fs::path tmp_dir_;
+  rosbag2_storage::StorageOptions tmp_dir_storage_options_;
   std::string serialization_format_;
 };
 
+TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
+{
+  rosbag2_compression::CompressionOptions compression_options{
+    "zstd", rosbag2_compression::CompressionMode::FILE};
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
+
+  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+    compression_options,
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  EXPECT_THROW(
+    writer_->open(
+      rosbag2_storage::StorageOptions(),
+      {serialization_format_, serialization_format_}),
+    std::runtime_error);
+}
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 {
@@ -73,9 +101,10 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   EXPECT_THROW(
-    writer_->open(
-      rosbag2_storage::StorageOptions(), {serialization_format_, serialization_format_}),
+    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
     std::invalid_argument);
+
+  EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
 }
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
@@ -119,10 +148,14 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
     std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
+  auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
+  auto storage_options = rosbag2_storage::StorageOptions();
+  storage_options.uri = tmp_dir.string();
+
   EXPECT_NO_THROW(
-    writer_->open(
-      rosbag2_storage::StorageOptions(),
-      {serialization_format_, serialization_format_}));
+    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}));
+
+  EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
@@ -139,5 +172,8 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
     converter_factory_,
     std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-  writer_->open(rosbag2_storage::StorageOptions(), {serialization_format_, serialization_format_});
+
+  writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_});
+
+  EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
 }

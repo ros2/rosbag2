@@ -87,6 +87,7 @@ void SequentialWriter::open(
   storage_options_ = storage_options;
 
   cache_.reserve(storage_options.max_cache_size);
+  current_cache_size_ = 0u;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -238,18 +239,28 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
+  auto converted_msg = get_writeable_message(message);
   // if cache size is set to zero, we directly call write
   if (storage_options_.max_cache_size == 0u) {
-    storage_->write(converter_ ? converter_->convert(message) : message);
+    storage_->write(converted_msg);
   } else {
-    cache_.push_back(converter_ ? converter_->convert(message) : message);
-    if (cache_.size() >= storage_options_.max_cache_size) {
+    cache_.push_back(converted_msg);
+    current_cache_size_ += converted_msg->serialized_data->buffer_length;
+    if (current_cache_size_ >= storage_options_.max_cache_size) {
       storage_->write(cache_);
       // reset cache
       cache_.clear();
       cache_.reserve(storage_options_.max_cache_size);
+      current_cache_size_ = 0u;
     }
   }
+}
+
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+SequentialWriter::get_writeable_message(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+{
+  return converter_ ? converter_->convert(message) : message;
 }
 
 bool SequentialWriter::should_split_bagfile() const

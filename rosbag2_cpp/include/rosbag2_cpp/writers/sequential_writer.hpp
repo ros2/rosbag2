@@ -103,7 +103,7 @@ public:
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
-private:
+protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
@@ -113,6 +113,12 @@ private:
 
   rosbag2_storage::StorageOptions storage_options_;
 
+  // Used in bagfile splitting;
+  // specifies the best-effort maximum duration of a bagfile in seconds.
+  std::chrono::seconds max_bagfile_duration;
+
+  // Intermediate cache to write multiple messages into the storage.
+  uint64_t current_cache_size_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used to track topic -> message count
@@ -121,16 +127,23 @@ private:
   rosbag2_storage::BagMetadata metadata_;
 
   // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile();
+  virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile() const;
 
   // Prepares the metadata by setting initial values.
-  void init_metadata();
+  virtual void init_metadata();
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  // Helper method used by write to get the message in a format that is ready to be written.
+  // Common use cases include converting the message using the converter or
+  // performing other operations like compression on it
+  virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  get_writeable_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
 
 }  // namespace writers

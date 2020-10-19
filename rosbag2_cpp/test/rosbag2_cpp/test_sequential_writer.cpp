@@ -25,6 +25,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "mock_converter.hpp"
@@ -265,13 +266,14 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 }
 
 TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
-  const size_t counter = 1000;
+  const uint64_t counter = 1000;
   const uint64_t max_cache_size = 100;
-
+  std::string msg_content = "Hello";
+  const auto msg_length = msg_content.length();
   EXPECT_CALL(
     *storage_,
     write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  Times(counter / max_cache_size);
+  Times(static_cast<int>(counter * msg_length / max_cache_size));
   EXPECT_CALL(
     *storage_,
     write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(0);
@@ -284,6 +286,8 @@ TEST_F(SequentialWriterTest, only_write_after_cache_is_full) {
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
+  message->serialized_data = rosbag2_storage::make_serialized_message(
+    msg_content.c_str(), msg_length);
 
   storage_options_.max_bagfile_size = 0;
   storage_options_.max_cache_size = max_cache_size;
@@ -314,8 +318,13 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
 
   std::string rmw_format = "rmw_format";
 
+  std::string msg_content = "Hello";
+  auto msg_length = msg_content.length();
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
+  message->serialized_data = rosbag2_storage::make_serialized_message(
+    msg_content.c_str(), msg_length);
+
 
   storage_options_.max_bagfile_size = 0;
   storage_options_.max_cache_size = max_cache_size;

@@ -24,7 +24,7 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -48,7 +48,7 @@ namespace rosbag2_compression
 {
 
 class ROSBAG2_COMPRESSION_PUBLIC SequentialCompressionWriter
-  : public rosbag2_cpp::writer_interfaces::BaseWriterInterface
+  : public rosbag2_cpp::writers::SequentialWriter
 {
 public:
   explicit SequentialCompressionWriter(
@@ -81,33 +81,6 @@ public:
    */
   void reset() override;
 
-  /**
-   * Create a new topic in the underlying storage. Needs to be called for every topic used within
-   * a message which is passed to write(...).
-   *
-   * \param topic_with_type name and type identifier of topic to be created
-   * \throws runtime_error if the Writer is not open.
-   */
-  void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
-
-  /**
-   * Remove a new topic in the underlying storage.
-   * If creation of subscription fails remove the topic
-   * from the db (more of cleanup)
-   *
-   * \param topic_with_type name and type identifier of topic to be created
-   * \throws runtime_error if the Writer is not open.
-   */
-  void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
-
-  /**
-   * Write a message to a bagfile. The topic needs to have been created before writing is possible.
-   *
-   * \param message to be written to the bagfile
-   * \throws runtime_error if the Writer is not open.
-   */
-  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
-
 protected:
   /**
    * Compress the most recent file and update the metadata file path.
@@ -132,37 +105,27 @@ protected:
   virtual void setup_compression();
 
 private:
-  std::string base_folder_;
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_{};
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
-  std::unique_ptr<rosbag2_cpp::Converter> converter_{};
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
-
-  // Used to track topic -> message count
-  std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_{};
-
-  rosbag2_storage::BagMetadata metadata_{};
-
-  rosbag2_storage::StorageOptions storage_options_{};
 
   rosbag2_compression::CompressionOptions compression_options_{};
 
   bool should_compress_last_file_{true};
 
   // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile();
-
-  // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile() const;
+  void split_bagfile() override;
 
   // Prepares the metadata by setting initial values.
-  void init_metadata();
+  void init_metadata() override;
 
-  // Record TopicInformation into metadata
-  void finalize_metadata();
+  // Helper method used by write to get the message in a format that is ready to be written.
+  // Common use cases include converting the message using the converter or
+  // performing other operations like compression on it
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  get_writeable_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 };
+
 }  // namespace rosbag2_compression
+
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
