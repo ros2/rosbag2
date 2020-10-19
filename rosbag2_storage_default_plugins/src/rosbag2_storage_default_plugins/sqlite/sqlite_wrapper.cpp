@@ -62,10 +62,7 @@ SqliteWrapper::SqliteWrapper(
     auto journal_mode_set = std::find_if(
       pragmas.begin(), pragmas.end(),
       [](const auto & pragma) {
-        if (pragma.rfind("journal_mode", 0) == 0) {
-          return true;
-        }
-        return false;
+        return pragma.rfind("journal_mode", 0) == 0;
       });
     if (journal_mode_set == pragmas.end()) {
       pragmas.push_back("journal_mode = WAL");
@@ -73,10 +70,7 @@ SqliteWrapper::SqliteWrapper(
     auto synchronous_set = std::find_if(
       pragmas.begin(), pragmas.end(),
       [](const auto & pragma) {
-        if (pragma.rfind("synchronous", 0) == 0) {
-          return true;
-        }
-        return false;
+        return pragma.rfind("synchronous", 0) == 0;
       });
     if (synchronous_set == pragmas.end()) {
       pragmas.push_back("synchronous = NORMAL");
