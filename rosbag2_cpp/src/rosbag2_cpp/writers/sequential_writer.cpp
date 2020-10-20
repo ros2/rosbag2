@@ -136,6 +136,7 @@ void SequentialWriter::reset()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
+  reset_cache();
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
@@ -247,11 +248,7 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     cache_.push_back(converted_msg);
     current_cache_size_ += converted_msg->serialized_data->buffer_length;
     if (current_cache_size_ >= storage_options_.max_cache_size) {
-      storage_->write(cache_);
-      // reset cache
-      cache_.clear();
-      cache_.reserve(storage_options_.max_cache_size);
-      current_cache_size_ = 0u;
+      reset_cache();
     }
   }
 }
@@ -311,5 +308,16 @@ void SequentialWriter::finalize_metadata()
   }
 }
 
+void SequentialWriter::reset_cache()
+{
+  // if cache data exists, it must flush the data into the storage
+  if (!cache_.empty()) {
+    storage_->write(cache_);
+    // reset cache
+    cache_.clear();
+    cache_.reserve(max_cache_size_);
+    current_cache_size_ = 0u;
+  }
+}
 }  // namespace writers
 }  // namespace rosbag2_cpp
