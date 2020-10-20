@@ -141,6 +141,9 @@ protected:
   // Record TopicInformation into metadata
   void finalize_metadata();
 
+  // Flush data into storage, and reset cache
+  void reset_cache();
+
   // Helper method used by write to get the message in a format that is ready to be written.
   // Common use cases include converting the message using the converter or
   // performing other operations like compression on it
