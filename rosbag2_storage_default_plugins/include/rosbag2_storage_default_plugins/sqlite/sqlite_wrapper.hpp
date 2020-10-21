@@ -49,7 +49,8 @@ public:
   operator bool();
 
 private:
-  void apply_pragma_settings(std::vector<std::string> & pragmas,
+  void apply_pragma_settings(
+    std::vector<std::string> & pragmas,
     rosbag2_storage::storage_interfaces::IOFlag io_flag);
 
   DBPtr db_ptr;

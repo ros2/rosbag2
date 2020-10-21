@@ -65,7 +65,8 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
   return reset();
 }
 
-std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_check_value(bool & check_value)
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_check_value(
+  bool & check_value)
 {
   int return_code = sqlite3_step(statement_);
   if (!is_query_ok(return_code)) {
@@ -77,10 +78,9 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_chec
   }
 
   check_value = true;
+  bool no_result = return_code == SQLITE_DONE || sqlite3_column_count(statement_) == 0;
 
-  if (return_code == SQLITE_DONE
-    || sqlite3_column_count(statement_) == 0
-    || sqlite3_column_type(statement_, 0) == SQLITE_NULL) {
+  if (no_result || sqlite3_column_type(statement_, 0) == SQLITE_NULL) {
     // No result or result is null means that no such pragma exists
     check_value = false;
   }

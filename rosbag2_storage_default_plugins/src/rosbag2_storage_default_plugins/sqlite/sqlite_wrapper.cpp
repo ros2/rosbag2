@@ -68,7 +68,7 @@ SqliteWrapper::SqliteWrapper()
 : db_ptr(nullptr) {}
 
 SqliteWrapper::~SqliteWrapper()
-{;
+{
   const int rc = sqlite3_close(db_ptr);
   if (rc != SQLITE_OK) {
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
@@ -77,26 +77,27 @@ SqliteWrapper::~SqliteWrapper()
   }
 }
 
-void SqliteWrapper::apply_pragma_settings(std::vector<std::string> & pragmas,
+void SqliteWrapper::apply_pragma_settings(
+  std::vector<std::string> & pragmas,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  // sqlite pragma statements are assigned with either '= value' or '(value)' syntax, depending on pragma
+  // sqlite pragmas are assigned with either '= value' or '(value)' syntax, depending on pragma
   const std::string pragma_assign = "=";
   const std::string pragma_bracket = "(";
 
   // Apply default pragmas if not overridden by user setting
   {
-    // when executed, throws an exception if the database is not valid. Used to check whether db is readable
+    // Used to check whether db is readable
     const std::string schema = "schema_version";
 
     typedef std::map<std::string, std::string> pragmas_map;
     pragmas_map default_pragmas = {
-      { schema, ""}
+      {schema, ""}
     };
     if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
       const pragmas_map write_default_pragmas = {
-        { "journal_mode", pragma_assign + "WAL"},
-        { "synchronous", pragma_assign + "NORMAL"}
+        {"journal_mode", pragma_assign + "WAL"},
+        {"synchronous", pragma_assign + "NORMAL"}
       };
       default_pragmas.insert(write_default_pragmas.begin(), write_default_pragmas.end());
     }
@@ -115,7 +116,6 @@ void SqliteWrapper::apply_pragma_settings(std::vector<std::string> & pragmas,
   }
 
   for (auto & pragma : pragmas) {
-
     if (pragma.empty()) {
       continue;
     }
@@ -154,13 +154,12 @@ void SqliteWrapper::apply_pragma_settings(std::vector<std::string> & pragmas,
 
     // Check if the value is set, reading the pragma
     bool returned_any_value;
-    prepare_statement(pragma_keyword + " " + pragma_name + ";")->execute_and_check_value(returned_any_value);
+    auto statement_for_check = pragma_keyword + " " + pragma_name + ";";
+    prepare_statement(statement_for_check)->execute_and_check_value(returned_any_value);
     if (!returned_any_value) {
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
         "Configuration PRAGMA setting not recognized by sqlite, not applied: " << pragma_name);
-    }
-    else
-    {
+    } else {
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
         "PRAGMA " << pragma_name << " applied");
     }
