@@ -29,6 +29,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_circular_buffer.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
@@ -86,6 +87,8 @@ public:
 
   void reset_filter() override;
 
+  void close();
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -98,7 +101,7 @@ private:
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
-  using BufferQueue = std::queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+  using BufferQueue = Queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   std::shared_ptr<SqliteWrapper> database_;
   SqliteStatement write_statement_ {};

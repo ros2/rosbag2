@@ -25,6 +25,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -34,6 +35,8 @@
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 
 #include "../logging.hpp"
+
+#define FLUSH_BUFFERS 1
 
 namespace
 {
@@ -66,7 +69,11 @@ namespace rosbag2_storage_plugins
 {
 SqliteStorage::~SqliteStorage()
 {
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Waiting for database writing...");
+  close();
+}
+
+void SqliteStorage::close() {
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Waiting for consumer writing...");
   {
     std::lock_guard<std::mutex> writer_lock(stop_mutex_);
     is_stop_issued_ = true;
@@ -75,7 +82,7 @@ SqliteStorage::~SqliteStorage()
   {
     consumer_thread_.join();
   }
-  
+
   std::cout << std::endl;
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("\n Done writing!");
 }
@@ -118,9 +125,11 @@ void SqliteStorage::open(
   write_statement_ = nullptr;
 
   // Set current queuee
-  primary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue());
-  secondary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue());
+  int queue_size = 1000; //TODO(piotr.jaroszek) move this to storage options
+  primary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue(queue_size));
+  secondary_message_queue_ = std::unique_ptr<BufferQueue>(new BufferQueue(queue_size));
   current_queue_ = primary_message_queue_.get();
+  writing_queue_ = secondary_message_queue_.get();
   // Run consumer thread
   consumer_thread_ = std::thread(&SqliteStorage::consume_queue, this);
 
@@ -155,32 +164,28 @@ void SqliteStorage::commit_transaction()
 void SqliteStorage::swap_buffers() {
   {
     std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
-    if(current_queue_ == primary_message_queue_.get()) {
-      current_queue_ = secondary_message_queue_.get();
-      writing_queue_ = primary_message_queue_.get();
-    } else {
-      current_queue_ = primary_message_queue_.get();
-      writing_queue_ = secondary_message_queue_.get();
-    }
+    std::swap(writing_queue_, current_queue_);
   }
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Swapping buffers. Primary size: " << primary_message_queue_->size() << "; Secondary size: " << secondary_message_queue_->size());
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Swapping buffers");
 }
 
 void SqliteStorage::consume_queue() {
+#if FLUSH_BUFFERS
   bool exit_flag = false;
+#endif
   while (true)
   {
     swap_buffers();
 
-    if(writing_queue_->size() == 0) {
+    if(writing_queue_->is_empty()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      continue;
     }
 
-    auto queuee_size = writing_queue_->size();
-    for(unsigned int i = 0; i < queuee_size; ++i) {
+    if(!writing_queue_->is_empty()) activate_transaction();
+
+    while(!writing_queue_->is_empty()) {
       auto message = writing_queue_->front();
-      writing_queue_->pop();
+      writing_queue_->dequeue();
       if (!write_statement_) {
         prepare_for_writing();
       }
@@ -191,18 +196,34 @@ void SqliteStorage::consume_queue() {
                 "' has not been created yet! Call 'create_topic' first.");
       }
       write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-      write_statement_->execute_and_reset();
+#if FLUSH_BUFFERS
       if(is_stop_issued_) {
-        std::cout << '\r' << "Remaining entries: " << writing_queue_->size() + current_queue_->size() << std::flush;
+        std::cout << '\r' << "Remaining entries: " << writing_queue_->elements_num() + current_queue_->elements_num() << std::flush;
       }
+#else
+    std::lock_guard<std::mutex> writer_lock(stop_mutex_);
+#endif
+      write_statement_->execute_and_reset();
     }
 
-    commit_transaction();
+    if(writing_queue_->is_empty()) commit_transaction();
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-      if(exit_flag) break;
+#if FLUSH_BUFFERS
+      if(exit_flag) {
+        unsigned int missed_messages = current_queue_->failed_counter() + writing_queue_->failed_counter() + current_queue_->elements_num() + writing_queue_->elements_num();
+        ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Missed " << missed_messages << " where " << current_queue_->elements_num() + writing_queue_->elements_num() << " remaining in buffers.");
+        return;
+      }
       if(is_stop_issued_) exit_flag = true;
+#else
+      if(is_stop_issued_) {
+        unsigned int missed_messages = current_queue_->failed_counter() + writing_queue_->failed_counter() + current_queue_->elements_num() + writing_queue_->elements_num();
+        ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Missed " << missed_messages << " where " << current_queue_->elements_num() + writing_queue_->elements_num() << " remaining in buffers.");
+        return;
+      }
+#endif
     }
   }
 }
@@ -210,7 +231,7 @@ void SqliteStorage::consume_queue() {
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
-  current_queue_->push(message);
+  current_queue_->enqueue(message);
 }
 
 void SqliteStorage::write(
@@ -218,7 +239,7 @@ void SqliteStorage::write(
 {
   std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
   for (auto & message : messages) {
-    current_queue_->push(message);
+    current_queue_->enqueue(message);
   }
 }
 
