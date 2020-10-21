@@ -178,6 +178,7 @@ private:
   };
 
   std::shared_ptr<SqliteStatementWrapper> execute_and_reset();
+  std::shared_ptr<SqliteStatementWrapper> execute_and_check_value(bool & check_value);
   template<typename ... Columns>
   QueryResult<Columns ...> execute_query();
 

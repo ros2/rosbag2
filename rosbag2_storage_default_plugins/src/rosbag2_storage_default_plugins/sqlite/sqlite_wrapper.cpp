@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -47,8 +48,6 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    // throws an exception if the database is not valid.
-    pragmas.push_back("schema_version;");
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
@@ -59,30 +58,9 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-
-    std::map<std::string, std::string> defaults = {
-      { "journal_mode", "WAL" },
-      { "synchronous", "NORMAL"}
-    };
-
-    for (const auto &kv : defaults) {
-      auto key = kv.first;
-      auto default_value = kv.second;
-      auto value_set = std::find_if(
-        pragmas.begin(), pragmas.end(),
-        [key](const auto & pragma) {
-          return pragma.rfind(key, 0) == 0;
-        });
-      if (value_set == pragmas.end()) {
-        pragmas.push_back(key + " = " + default_value);
-      }
-    }
   }
 
-  for (const auto & pragma : pragmas) {
-    prepare_statement(std::string("PRAGMA ") + pragma + ";")->execute_and_reset();
-  }
-
+  apply_pragma_settings(pragmas, io_flag);
   sqlite3_extended_result_codes(db_ptr, 1);
 }
 
@@ -90,12 +68,102 @@ SqliteWrapper::SqliteWrapper()
 : db_ptr(nullptr) {}
 
 SqliteWrapper::~SqliteWrapper()
-{
+{;
   const int rc = sqlite3_close(db_ptr);
   if (rc != SQLITE_OK) {
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
       "Could not close open database. Error code: " << rc <<
         " Error message: " << sqlite3_errstr(rc));
+  }
+}
+
+void SqliteWrapper::apply_pragma_settings(std::vector<std::string> & pragmas,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  // sqlite pragma statements are assigned with either '= value' or '(value)' syntax, depending on pragma
+  const std::string pragma_assign = "=";
+  const std::string pragma_bracket = "(";
+
+  // Apply default pragmas if not overridden by user setting
+  {
+    // when executed, throws an exception if the database is not valid. Used to check whether db is readable
+    const std::string schema = "schema_version";
+
+    typedef std::map<std::string, std::string> pragmas_map;
+    pragmas_map default_pragmas = {
+      { schema, ""}
+    };
+    if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
+      const pragmas_map write_default_pragmas = {
+        { "journal_mode", pragma_assign + "WAL"},
+        { "synchronous", pragma_assign + "NORMAL"}
+      };
+      default_pragmas.insert(write_default_pragmas.begin(), write_default_pragmas.end());
+    }
+    for (const auto & kv : default_pragmas) {
+      auto key = kv.first;
+      auto default_assignment = kv.second;
+      auto pragma_in_settings = std::find_if(
+        pragmas.begin(), pragmas.end(),
+        [key](const auto & pragma) {
+          return pragma.rfind(key, 0) == 0;
+        });
+      if (pragma_in_settings == pragmas.end()) {
+        pragmas.push_back(key + default_assignment);
+      }
+    }
+  }
+
+  for (auto & pragma : pragmas) {
+
+    if (pragma.empty()) {
+      continue;
+    }
+
+    // Clean the setting from trailing characters
+    const std::string trailing_character_set("; \t\f\v\n\r");
+    auto found_last_valid = pragma.find_last_not_of(trailing_character_set);
+    if (found_last_valid == std::string::npos) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+        "Skipping malformed storage setting: " << pragma);
+      continue;
+    }
+    pragma = pragma.substr(0, found_last_valid + 1);
+
+    // Extract pragma name
+    auto pragma_name = pragma;
+    auto found_value_assignment = pragma.find(pragma_assign);
+    if (found_value_assignment == std::string::npos) {
+      found_value_assignment = pragma.find(pragma_bracket);
+    }
+    if (found_value_assignment != std::string::npos) {
+      if (found_value_assignment == 0) {
+        // Incorrect syntax, starts with = or (
+        ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+          "Skipping malformed storage setting: " << pragma);
+        continue;
+      }
+      // Strip value assignment part, trim trailing whitespaces
+      pragma_name = pragma.substr(0, found_value_assignment);
+      pragma_name = pragma_name.substr(0, pragma.find_last_not_of(" ") + 1);
+    }
+
+    // Apply the setting. Note that statements that assign value do not reliably return value
+    const std::string pragma_keyword = "PRAGMA";
+    prepare_statement(pragma_keyword + " " + pragma + ";")->execute_and_reset();
+
+    // Check if the value is set, reading the pragma
+    bool returned_any_value;
+    prepare_statement(pragma_keyword + " " + pragma_name + ";")->execute_and_check_value(returned_any_value);
+    if (!returned_any_value) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+        "Configuration PRAGMA setting not recognized by sqlite, not applied: " << pragma_name);
+    }
+    else
+    {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+        "PRAGMA " << pragma_name << " applied");
+    }
   }
 }
 
