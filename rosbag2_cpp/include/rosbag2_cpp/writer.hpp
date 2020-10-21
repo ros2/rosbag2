@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__WRITER_HPP_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -95,6 +96,7 @@ public:
   }
 
 private:
+  std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 
