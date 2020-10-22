@@ -1,4 +1,2 @@
-read:
-  pragmas: ["schema_vers"]
 write:
   pragmas: ["bad_pragma_name = 2", "worse_pragma_name(WAL)"]
