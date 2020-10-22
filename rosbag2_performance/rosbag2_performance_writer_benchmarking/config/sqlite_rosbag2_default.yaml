@@ -1,0 +1,2 @@
+write:
+  pragmas: ["synchronous = NORMAL", "journal_mode = WAL"]

@@ -1,0 +1,2 @@
+write:
+  pragmas: ["synchronous = OFF", "journal_mode = MEMORY"]
