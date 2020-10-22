@@ -121,8 +121,8 @@ void SqliteWrapper::apply_pragma_settings(
     }
 
     // Clean the setting from trailing characters
-    const std::string trailing_character_set("; \t\f\v\n\r");
-    auto found_last_valid = pragma.find_last_not_of(trailing_character_set);
+    const std::string trailing_set("; \t\f\v\n\r");
+    auto found_last_valid = pragma.find_last_not_of(trailing_set);
     if (found_last_valid == std::string::npos) {
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
         "Skipping malformed storage setting: " << pragma);
@@ -145,12 +145,13 @@ void SqliteWrapper::apply_pragma_settings(
       }
       // Strip value assignment part, trim trailing whitespaces
       pragma_name = pragma.substr(0, found_value_assignment);
-      pragma_name = pragma_name.substr(0, pragma.find_last_not_of(" ") + 1);
+      pragma_name = pragma_name.substr(0, pragma_name.find_last_not_of(trailing_set) + 1);
     }
 
     // Apply the setting. Note that statements that assign value do not reliably return value
     const std::string pragma_keyword = "PRAGMA";
-    prepare_statement(pragma_keyword + " " + pragma + ";")->execute_and_reset();
+    const std::string pragma_statement = pragma_keyword + " " + pragma + ";";
+    prepare_statement(pragma_statement)->execute_and_reset();
 
     // Check if the value is set, reading the pragma
     bool returned_any_value;
@@ -158,10 +159,7 @@ void SqliteWrapper::apply_pragma_settings(
     prepare_statement(statement_for_check)->execute_and_check_value(returned_any_value);
     if (!returned_any_value) {
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
-        "Configuration PRAGMA setting not recognized by sqlite, not applied: " << pragma_name);
-    } else {
-      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
-        "PRAGMA " << pragma_name << " applied");
+        "PRAGMA setting not recognized by sqlite, not applied: " << pragma_name);
     }
   }
 }
