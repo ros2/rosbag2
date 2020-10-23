@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -74,6 +75,51 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
   reset();
 }
 
+void SequentialCompressionWriter::compression_thread_fn()
+{
+  // Every thread needs to have its own compression context for thread safety.
+  auto compressor = compression_factory_->create_compressor(
+    compression_options_.compression_format);
+
+  std::mutex mutex;
+  std::unique_lock<std::mutex> lock(mutex);
+
+  if (!compressor) {
+    throw std::runtime_error{
+            "Cannot compress message; Writer is not open!"};
+  }
+
+  while (compression_is_running_) {
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
+    std::string file;
+    compressor_condition_.wait(lock);
+    {
+      std::lock_guard<std::mutex> queue_lock(compressor_mutex_);
+      if (!compressor_message_queue_.empty()) {
+        message = compressor_message_queue_.front();
+        compressor_message_queue_.pop();
+      } else if (!compressor_file_queue_.empty()) {
+        file = compressor_file_queue_.front();
+        compressor_file_queue_.pop();
+      }
+    }
+
+    if (message) {
+      compress_message(*compressor, message);
+
+      {
+        // Now that the message is compressed, it can be written to file using the
+        // normal method.
+        std::lock_guard<std::recursive_mutex> storage_lock(
+          storage_mutex_);
+        SequentialWriter::write(message);
+      }
+    } else if (!file.empty()) {
+      compress_file(*compressor, file);
+    }
+  }
+}
+
 void SequentialCompressionWriter::init_metadata()
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
@@ -99,60 +145,16 @@ void SequentialCompressionWriter::setup_compression()
 
 void SequentialCompressionWriter::setup_compressor_threads()
 {
-  ROSBAG2_COMPRESSION_LOG_DEBUG(
-    "setup_compressor_threads: Starting %lu threads",
-    compression_options_.compression_threads);
   if (compression_options_.compression_threads < 1) {
     // This should have already been set to something reasonable prior to this
     // point, but we'll double-check just to make sure.
     auto hardware_threads = std::thread::hardware_concurrency();
     compression_options_.compression_threads = hardware_threads > 0 ? hardware_threads : 1;
   }
+  ROSBAG2_COMPRESSION_LOG_DEBUG(
+    "setup_compressor_threads: Starting %lu threads",
+    compression_options_.compression_threads);
   compression_is_running_ = true;
-  auto compress_fn = [&]()
-    {
-      // Every thread needs to have its own compression context for thread safety.
-      auto compressor = compression_factory_->create_compressor(
-        compression_options_.compression_format);
-
-      std::mutex mutex;
-      std::unique_lock<std::mutex> lock(mutex);
-
-      if (!compressor) {
-        throw std::runtime_error{
-                "Cannot compress message; Writer is not open!"};
-      }
-
-      while (compression_is_running_) {
-        std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
-        std::string file;
-        compressor_condition_.wait(lock);
-        {
-          std::lock_guard<std::mutex> queue_lock(compressor_mutex_);
-          if (!compressor_message_queue_.empty()) {
-            message = compressor_message_queue_.front();
-            compressor_message_queue_.pop();
-          } else if (!compressor_file_queue_.empty()) {
-            file = compressor_file_queue_.front();
-            compressor_file_queue_.pop();
-          }
-        }
-
-        if (message) {
-          compress_message(*compressor, message);
-
-          {
-            // Now that the message is compressed, it can be written to file using the
-            // normal method.
-            std::lock_guard<std::recursive_mutex> storage_lock(
-              storage_mutex_);
-            SequentialWriter::write(message);
-          }
-        } else if (!file.empty()) {
-          compress_file(*compressor, file);
-        }
-      }
-    };
 
   // This function needs to throw an exception if the compression format is invalid, but because
   // each thread creates its own compressor, we can't actually catch it here if one of the threads
@@ -166,7 +168,7 @@ void SequentialCompressionWriter::setup_compressor_threads()
   }
 
   for (uint64_t i = 0; i < compression_options_.compression_threads; i++) {
-    compression_threads_.emplace_back(compress_fn);
+    compression_threads_.emplace_back([&] {compression_thread_fn();});
   }
 }
 

@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 #define ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 
+#include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -162,13 +163,17 @@ private:
   std::queue<std::string> compressor_file_queue_;
   std::mutex compressor_mutex_;
   std::vector<std::thread> compression_threads_;
-  bool compression_is_running_{false};
+  std::atomic_bool compression_is_running_{false};
   std::recursive_mutex storage_mutex_;
   std::condition_variable compressor_condition_;
 
   rosbag2_compression::CompressionOptions compression_options_{};
 
   bool should_compress_last_file_{true};
+
+  // Runs a while loop that pulls data from the compression queue until
+  // compression_is_running_ is false; should be run in a separate thread
+  void compression_thread_fn();
 
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile() override;
