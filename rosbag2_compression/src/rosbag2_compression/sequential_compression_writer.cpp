@@ -67,6 +67,8 @@ void SequentialCompressionWriter::compression_thread_fn()
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
 
+  std::mutex mutex;
+  std::unique_lock<std::mutex> lock(mutex);
 
   if (!compressor) {
     throw std::runtime_error{
@@ -76,9 +78,9 @@ void SequentialCompressionWriter::compression_thread_fn()
   while (compression_is_running_) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
+    compressor_condition_.wait(lock);
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
-      compressor_condition_.wait(lock);
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
@@ -94,7 +96,8 @@ void SequentialCompressionWriter::compression_thread_fn()
       {
         // Now that the message is compressed, it can be written to file using the
         // normal method.
-        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
+        std::lock_guard<std::recursive_mutex> storage_lock(
+          storage_mutex_);
         SequentialWriter::write(message);
       }
     } else if (!file.empty()) {
