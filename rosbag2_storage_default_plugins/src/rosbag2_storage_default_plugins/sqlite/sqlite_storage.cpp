@@ -71,18 +71,27 @@ SqliteStorage::~SqliteStorage()
 }
 
 void SqliteStorage::close() {
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Writing remaining messages from buffers to the bag.");
   {
     std::lock_guard<std::mutex> writer_lock(stop_mutex_);
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
+          "Writing remaining "
+          << current_queue_->elements_num() + writing_queue_->elements_num()
+          << " messages from buffers to the bag. It may take a while...");
     is_stop_issued_ = true;
   }
+
   if(consumer_thread_.joinable())
   {
     consumer_thread_.join();
   }
 
-  std::cout << std::endl;
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("\n Done writing!");
+  unsigned int missed_messages = current_queue_->failed_counter()
+      + writing_queue_->failed_counter()
+      + current_queue_->elements_num()
+      + writing_queue_->elements_num();
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Done writing! Total missed messages: "
+                                                  << missed_messages << ".");
+
 }
 
 void SqliteStorage::open(
@@ -191,9 +200,6 @@ void SqliteStorage::consume_queue() {
                 "' has not been created yet! Call 'create_topic' first.");
       }
       write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-      if(is_stop_issued_) {
-        std::cout << '\r' << "Remaining entries: " << writing_queue_->elements_num() + current_queue_->elements_num() << std::flush;
-      }
       write_statement_->execute_and_reset();
     }
 
@@ -201,11 +207,7 @@ void SqliteStorage::consume_queue() {
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-      if(exit_flag) {
-        unsigned int missed_messages = current_queue_->failed_counter() + writing_queue_->failed_counter() + current_queue_->elements_num() + writing_queue_->elements_num();
-        ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Missed " << missed_messages << " where " << current_queue_->elements_num() + writing_queue_->elements_num() << " remaining in buffers.");
-        return;
-      }
+      if(exit_flag) return;
       if(is_stop_issued_) exit_flag = true;
     }
   }
