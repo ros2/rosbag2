@@ -101,7 +101,8 @@ private:
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
-  using BagMessageCircBuffer = CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+  using BagMessageCircBuffer =
+    CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   std::shared_ptr<SqliteWrapper> database_;
   SqliteStatement write_statement_ {};

@@ -70,28 +70,28 @@ SqliteStorage::~SqliteStorage()
   close();
 }
 
-void SqliteStorage::close() {
+void SqliteStorage::close()
+{
   {
     std::lock_guard<std::mutex> writer_lock(stop_mutex_);
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
-          "Writing remaining "
-          << current_queue_->elements_num() + writing_queue_->elements_num()
-          << " messages from buffers to the bag. It may take a while...");
+      "Writing remaining " <<
+        current_queue_->elements_num() + writing_queue_->elements_num() <<
+        " messages from buffers to the bag. It may take a while...");
     is_stop_issued_ = true;
   }
 
-  if(consumer_thread_.joinable())
-  {
+  if (consumer_thread_.joinable()) {
     consumer_thread_.join();
   }
 
-  unsigned int missed_messages = current_queue_->failed_counter()
-      + writing_queue_->failed_counter()
-      + current_queue_->elements_num()
-      + writing_queue_->elements_num();
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Done writing! Total missed messages: "
-                                                  << missed_messages << ".");
-
+  unsigned int missed_messages = current_queue_->failed_counter() +
+    writing_queue_->failed_counter() +
+    current_queue_->elements_num() +
+    writing_queue_->elements_num();
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
+    "Done writing! Total missed messages: " <<
+      missed_messages << ".");
 }
 
 void SqliteStorage::open(
@@ -132,9 +132,12 @@ void SqliteStorage::open(
   write_statement_ = nullptr;
 
   // Set buffers
-  int queue_size = 1000; //TODO(piotr.jaroszek) move this to storage options
-  primary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
-  secondary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
+  int queue_size = 1000;  // TODO(piotr.jaroszek) move this to storage options
+  primary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(
+    new BagMessageCircBuffer(
+      queue_size));
+  secondary_message_queue_ =
+    std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
   current_queue_ = primary_message_queue_;
   writing_queue_ = secondary_message_queue_;
 
@@ -169,26 +172,27 @@ void SqliteStorage::commit_transaction()
   active_transaction_ = false;
 }
 
-void SqliteStorage::swap_buffers() {
+void SqliteStorage::swap_buffers()
+{
   {
     std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
     std::swap(writing_queue_, current_queue_);
   }
 }
 
-void SqliteStorage::consume_queue() {
+void SqliteStorage::consume_queue()
+{
   bool exit_flag = false;
-  while (true)
-  {
+  while (true) {
     swap_buffers();
 
-    if(writing_queue_->is_empty()) {
+    if (writing_queue_->is_empty()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    if(!writing_queue_->is_empty()) activate_transaction();
+    if (!writing_queue_->is_empty()) {activate_transaction();}
 
-    while(!writing_queue_->is_empty()) {
+    while (!writing_queue_->is_empty()) {
       auto message = writing_queue_->front();
       writing_queue_->dequeue();
       if (!write_statement_) {
@@ -204,12 +208,12 @@ void SqliteStorage::consume_queue() {
       write_statement_->execute_and_reset();
     }
 
-    if(writing_queue_->is_empty()) commit_transaction();
+    if (writing_queue_->is_empty()) {commit_transaction();}
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-      if(exit_flag) return;
-      if(is_stop_issued_) exit_flag = true;
+      if (exit_flag) {return;}
+      if (is_stop_issued_) {exit_flag = true;}
     }
   }
 }
