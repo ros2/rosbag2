@@ -131,12 +131,13 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
-  // Set current queuee
+  // Set buffers
   int queue_size = 1000; //TODO(piotr.jaroszek) move this to storage options
-  primary_message_queue_ = std::unique_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
-  secondary_message_queue_ = std::unique_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
-  current_queue_ = primary_message_queue_.get();
-  writing_queue_ = secondary_message_queue_.get();
+  primary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
+  secondary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
+  current_queue_ = primary_message_queue_;
+  writing_queue_ = secondary_message_queue_;
+
   // Run consumer thread
   consumer_thread_ = std::thread(&SqliteStorage::consume_queue, this);
 

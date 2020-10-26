@@ -115,10 +115,10 @@ private:
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
 
-  std::unique_ptr<BagMessageCircBuffer> primary_message_queue_;
-  std::unique_ptr<BagMessageCircBuffer> secondary_message_queue_;
-  BagMessageCircBuffer* current_queue_;
-  BagMessageCircBuffer* writing_queue_;
+  std::shared_ptr<BagMessageCircBuffer> primary_message_queue_;
+  std::shared_ptr<BagMessageCircBuffer> secondary_message_queue_;
+  std::shared_ptr<BagMessageCircBuffer> current_queue_;
+  std::shared_ptr<BagMessageCircBuffer> writing_queue_;
   std::mutex queue_mutex_;
 
   std::atomic_bool is_stop_issued_ {false};
