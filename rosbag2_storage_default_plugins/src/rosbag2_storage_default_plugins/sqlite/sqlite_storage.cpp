@@ -36,8 +36,6 @@
 
 #include "../logging.hpp"
 
-#define FLUSH_BUFFERS 1
-
 namespace
 {
 std::string to_string(rosbag2_storage::storage_interfaces::IOFlag io_flag)
@@ -169,9 +167,7 @@ void SqliteStorage::swap_buffers() {
 }
 
 void SqliteStorage::consume_queue() {
-#if FLUSH_BUFFERS
   bool exit_flag = false;
-#endif
   while (true)
   {
     swap_buffers();
@@ -195,13 +191,9 @@ void SqliteStorage::consume_queue() {
                 "' has not been created yet! Call 'create_topic' first.");
       }
       write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-#if FLUSH_BUFFERS
       if(is_stop_issued_) {
         std::cout << '\r' << "Remaining entries: " << writing_queue_->elements_num() + current_queue_->elements_num() << std::flush;
       }
-#else
-    std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-#endif
       write_statement_->execute_and_reset();
     }
 
@@ -209,20 +201,12 @@ void SqliteStorage::consume_queue() {
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-#if FLUSH_BUFFERS
       if(exit_flag) {
         unsigned int missed_messages = current_queue_->failed_counter() + writing_queue_->failed_counter() + current_queue_->elements_num() + writing_queue_->elements_num();
         ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Missed " << missed_messages << " where " << current_queue_->elements_num() + writing_queue_->elements_num() << " remaining in buffers.");
         return;
       }
       if(is_stop_issued_) exit_flag = true;
-#else
-      if(is_stop_issued_) {
-        unsigned int missed_messages = current_queue_->failed_counter() + writing_queue_->failed_counter() + current_queue_->elements_num() + writing_queue_->elements_num();
-        ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Missed " << missed_messages << " where " << current_queue_->elements_num() + writing_queue_->elements_num() << " remaining in buffers.");
-        return;
-      }
-#endif
     }
   }
 }
