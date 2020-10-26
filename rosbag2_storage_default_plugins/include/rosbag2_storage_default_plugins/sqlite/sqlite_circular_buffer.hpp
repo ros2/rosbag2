@@ -1,20 +1,24 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_CIRCULAR_BUFFER_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_CIRCULAR_BUFFER_HPP_
 
+#include <stdexcept>
+#include <vector>
+
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
 namespace rosbag2_storage_plugins
 {
 
 template < typename T >
-class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC Queue {
-private:
-  T * array_;
-  int front_index_ = 0, rear_index_ = 0, size_ = 0, failed_counter_ = 0, elements_num_ = 0;
+class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC CircularBuffer
+{
 public:
-  Queue(const int size) {
+  CircularBuffer(const int size) {
+    if (size <= 0) {
+      throw std::invalid_argument("Invalid circular buffer size.");
+    }
     size_ = size;
-    array_ = new T[size_];
+    array_.resize(size_);
   }
 
   unsigned int size() {
@@ -34,7 +38,7 @@ public:
       ++failed_counter_;
       return;
     }
-    *(this->array_ + this->rear_index_) = item;
+    array_[this->rear_index_] = item;
     this->rear_index_ = (this->rear_index_ + 1) % size_;
     elements_num_++;
   }
@@ -48,7 +52,7 @@ public:
   }
 
   T front(){
-    return is_empty() ? nullptr : *(array_ + front_index_);
+    return is_empty() ? nullptr : array_[front_index_];
   }
 
   bool is_empty() {
@@ -58,6 +62,10 @@ public:
   bool is_full() {
     return (rear_index_ + 1) % size_ == front_index_;
   }
+
+private:
+  std::vector<T> array_;
+  int front_index_ = 0, rear_index_ = 0, size_ = 0, failed_counter_ = 0, elements_num_ = 0;
 };
 }
 

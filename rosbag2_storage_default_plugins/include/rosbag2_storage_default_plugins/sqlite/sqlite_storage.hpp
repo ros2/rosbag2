@@ -101,7 +101,7 @@ private:
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
-  using BufferQueue = Queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+  using BagMessageCircBuffer = CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   std::shared_ptr<SqliteWrapper> database_;
   SqliteStatement write_statement_ {};
@@ -115,10 +115,10 @@ private:
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
 
-  std::unique_ptr<BufferQueue> primary_message_queue_;
-  std::unique_ptr<BufferQueue> secondary_message_queue_;
-  BufferQueue* current_queue_;
-  BufferQueue* writing_queue_;
+  std::unique_ptr<BagMessageCircBuffer> primary_message_queue_;
+  std::unique_ptr<BagMessageCircBuffer> secondary_message_queue_;
+  BagMessageCircBuffer* current_queue_;
+  BagMessageCircBuffer* writing_queue_;
   std::mutex queue_mutex_;
 
   std::atomic_bool is_stop_issued_ {false};
