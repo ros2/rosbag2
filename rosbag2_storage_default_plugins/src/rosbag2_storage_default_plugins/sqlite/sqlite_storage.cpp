@@ -73,7 +73,7 @@ SqliteStorage::~SqliteStorage()
 }
 
 void SqliteStorage::close() {
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Waiting for consumer writing...");
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Writing remaining messages from buffers to the bag.");
   {
     std::lock_guard<std::mutex> writer_lock(stop_mutex_);
     is_stop_issued_ = true;
@@ -163,10 +163,9 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::swap_buffers() {
   {
-    std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
+    std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
     std::swap(writing_queue_, current_queue_);
   }
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM("Swapping buffers");
 }
 
 void SqliteStorage::consume_queue() {
@@ -230,14 +229,14 @@ void SqliteStorage::consume_queue() {
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
+  std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
   current_queue_->enqueue(message);
 }
 
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  std::lock_guard<std::mutex> queuee_lock(queuee_mutex_);
+  std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
   for (auto & message : messages) {
     current_queue_->enqueue(message);
   }

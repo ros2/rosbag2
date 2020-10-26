@@ -119,7 +119,7 @@ private:
   std::unique_ptr<BufferQueue> secondary_message_queue_;
   BufferQueue* current_queue_;
   BufferQueue* writing_queue_;
-  std::mutex queuee_mutex_;
+  std::mutex queue_mutex_;
 
   std::atomic_bool is_stop_issued_ {false};
   std::mutex stop_mutex_;
