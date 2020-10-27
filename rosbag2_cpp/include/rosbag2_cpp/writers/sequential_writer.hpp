@@ -25,6 +25,7 @@
 #include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_cpp/writers/buffer_layer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -109,6 +110,7 @@ protected:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+  std::unique_ptr<rosbag2_cpp::writers::BufferLayer> buffer_layer_;
 
   // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
   uint64_t max_bagfile_size_;
@@ -116,13 +118,6 @@ protected:
   // Used in bagfile splitting;
   // specifies the best-effort maximum duration of a bagfile in seconds.
   std::chrono::seconds max_bagfile_duration;
-
-  // Intermediate cache to write multiple messages into the storage.
-  // `max_cache_size` is the number of bytes of messages to hold in storage
-  // before writing to disk.
-  uint64_t max_cache_size_;
-  uint64_t current_cache_size_;
-  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
   // Used to track topic -> message count
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
@@ -140,9 +135,6 @@ protected:
 
   // Record TopicInformation into metadata
   void finalize_metadata();
-
-  // Flush data into storage, and reset cache
-  void reset_cache();
 
   // Helper method used by write to get the message in a format that is ready to be written.
   // Common use cases include converting the message using the converter or

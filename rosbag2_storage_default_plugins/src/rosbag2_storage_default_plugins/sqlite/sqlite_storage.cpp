@@ -25,7 +25,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -67,31 +66,9 @@ namespace rosbag2_storage_plugins
 {
 SqliteStorage::~SqliteStorage()
 {
-  close();
-}
-
-void SqliteStorage::close()
-{
-  {
-    std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
-      "Writing remaining " <<
-        current_queue_->elements_num() + writing_queue_->elements_num() <<
-        " messages from buffers to the bag. It may take a while...");
-    is_stop_issued_ = true;
+  if (active_transaction_) {
+    commit_transaction();
   }
-
-  if (consumer_thread_.joinable()) {
-    consumer_thread_.join();
-  }
-
-  unsigned int missed_messages = current_queue_->failed_counter() +
-    writing_queue_->failed_counter() +
-    current_queue_->elements_num() +
-    writing_queue_->elements_num();
-  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
-    "Done writing! Total missed messages: " <<
-      missed_messages << ".");
 }
 
 void SqliteStorage::open(
@@ -131,19 +108,6 @@ void SqliteStorage::open(
   read_statement_ = nullptr;
   write_statement_ = nullptr;
 
-  // Set buffers
-  int queue_size = 1000;  // TODO(piotr.jaroszek) move this to storage options
-  primary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(
-    new BagMessageCircBuffer(
-      queue_size));
-  secondary_message_queue_ =
-    std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(queue_size));
-  current_queue_ = primary_message_queue_;
-  writing_queue_ = secondary_message_queue_;
-
-  // Run consumer thread
-  consumer_thread_ = std::thread(&SqliteStorage::consume_queue, this);
-
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
@@ -172,65 +136,36 @@ void SqliteStorage::commit_transaction()
   active_transaction_ = false;
 }
 
-void SqliteStorage::swap_buffers()
-{
-  {
-    std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
-    std::swap(writing_queue_, current_queue_);
-  }
-}
-
-void SqliteStorage::consume_queue()
-{
-  bool exit_flag = false;
-  while (true) {
-    swap_buffers();
-
-    if (writing_queue_->is_empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    if (!writing_queue_->is_empty()) {activate_transaction();}
-
-    while (!writing_queue_->is_empty()) {
-      auto message = writing_queue_->front();
-      writing_queue_->dequeue();
-      if (!write_statement_) {
-        prepare_for_writing();
-      }
-      auto topic_entry = topics_.find(message->topic_name);
-      if (topic_entry == end(topics_)) {
-        throw SqliteException(
-                "Topic '" + message->topic_name +
-                "' has not been created yet! Call 'create_topic' first.");
-      }
-      write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
-      write_statement_->execute_and_reset();
-    }
-
-    if (writing_queue_->is_empty()) {commit_transaction();}
-
-    {
-      std::lock_guard<std::mutex> writer_lock(stop_mutex_);
-      if (exit_flag) {return;}
-      if (is_stop_issued_) {exit_flag = true;}
-    }
-  }
-}
-
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
-  current_queue_->enqueue(message);
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+  auto topic_entry = topics_.find(message->topic_name);
+  if (topic_entry == end(topics_)) {
+    throw SqliteException(
+            "Topic '" + message->topic_name +
+            "' has not been created yet! Call 'create_topic' first.");
+  }
+
+  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+  write_statement_->execute_and_reset();
 }
 
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  std::lock_guard<std::mutex> queuee_lock(queue_mutex_);
-  for (auto & message : messages) {
-    current_queue_->enqueue(message);
+  if (!write_statement_) {
+    prepare_for_writing();
   }
+
+  activate_transaction();
+
+  for (auto & message : messages) {
+    write(message);
+  }
+
+  commit_transaction();
 }
 
 bool SqliteStorage::has_next()

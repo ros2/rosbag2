@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_CIRCULAR_BUFFER_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_CIRCULAR_BUFFER_HPP_
+#ifndef ROSBAG2_CPP__WRITERS__CIRCULAR_BUFFER_HPP
+#define ROSBAG2_CPP__WRITERS__CIRCULAR_BUFFER_HPP
 
 #include <stdexcept>
 #include <vector>
 
-#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
 
-namespace rosbag2_storage_plugins
+namespace rosbag2_cpp
+{
+
+namespace writers
 {
 
 template<typename T>
-class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC CircularBuffer
+class ROSBAG2_CPP_PUBLIC CircularBuffer
 {
 public:
-  CircularBuffer(const int size)
+  CircularBuffer(const uint32_t size)
   {
     if (size <= 0) {
       throw std::invalid_argument("Invalid circular buffer size.");
@@ -36,30 +39,35 @@ public:
     array_.resize(size_);
   }
 
-  unsigned int size()
+  uint32_t size()
   {
     return size_;
   }
 
-  unsigned int failed_counter()
+  uint32_t failed_counter()
   {
     return failed_counter_;
   }
 
-  unsigned int elements_num()
+  void increment_failed_counter() {
+    failed_counter_++;
+  }
+
+  uint32_t elements_num()
   {
     return elements_num_;
   }
 
-  void enqueue(T item)
+  bool enqueue(T item)
   {
     if (is_full()) {
-      ++failed_counter_;
-      return;
+      failed_counter_++;
+      return false;
     }
     array_[this->rear_index_] = item;
     this->rear_index_ = (this->rear_index_ + 1) % size_;
     elements_num_++;
+    return true;
   }
 
   void dequeue()
@@ -86,10 +94,17 @@ public:
     return (rear_index_ + 1) % size_ == front_index_;
   }
 
+  void clear()
+  {
+    array_.clear();
+  }
+
 private:
   std::vector<T> array_;
-  int front_index_ = 0, rear_index_ = 0, size_ = 0, failed_counter_ = 0, elements_num_ = 0;
+  uint32_t front_index_ = 0u, rear_index_ = 0u, size_ = 0u, failed_counter_ = 0u, elements_num_ = 0u;
 };
-}  // namespace rosbag2_storage_plugins
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_CIRCULAR_BUFFER_HPP_
+}  // namespace writers
+}  // namespace rosbag2_cpp
+
+#endif  // ROSBAG2_CPP__WRITERS__CIRCULAR_BUFFER_HPP

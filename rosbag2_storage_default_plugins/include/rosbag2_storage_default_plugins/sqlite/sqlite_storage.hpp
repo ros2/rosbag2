@@ -20,16 +20,12 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <thread>
-#include <mutex>
-#include <queue>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_circular_buffer.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
 
@@ -87,8 +83,6 @@ public:
 
   void reset_filter() override;
 
-  void close();
-
 private:
   void initialize();
   void prepare_for_writing();
@@ -96,13 +90,9 @@ private:
   void fill_topics_and_types();
   void activate_transaction();
   void commit_transaction();
-  void consume_queue();
-  void swap_buffers();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
-  using BagMessageCircBuffer =
-    CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   std::shared_ptr<SqliteWrapper> database_;
   SqliteStatement write_statement_ {};
@@ -115,16 +105,6 @@ private:
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
-
-  std::shared_ptr<BagMessageCircBuffer> primary_message_queue_;
-  std::shared_ptr<BagMessageCircBuffer> secondary_message_queue_;
-  std::shared_ptr<BagMessageCircBuffer> current_queue_;
-  std::shared_ptr<BagMessageCircBuffer> writing_queue_;
-  std::mutex queue_mutex_;
-
-  std::atomic_bool is_stop_issued_ {false};
-  std::mutex stop_mutex_;
-  std::thread consumer_thread_;
 };
 
 }  // namespace rosbag2_storage_plugins

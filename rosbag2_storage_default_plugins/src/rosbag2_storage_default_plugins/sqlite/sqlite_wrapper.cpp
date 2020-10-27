@@ -49,7 +49,7 @@ SqliteWrapper::SqliteWrapper(
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
       errmsg << "Could not read-write open database. SQLite error (" <<
