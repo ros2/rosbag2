@@ -294,7 +294,7 @@ void SequentialWriter::reset_cache()
     storage_->write(cache_);
     // reset cache
     cache_.clear();
-    cache_.reserve(max_cache_size_);
+    cache_.reserve(storage_options_.max_cache_size);
     current_cache_size_ = 0u;
   }
 }
