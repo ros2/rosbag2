@@ -31,42 +31,47 @@ BufferLayer::BufferLayer(
   storage_(storage)
 {
   max_cache_size_ = storage_options.max_cache_size;
-  max_cache_length_ = 10000;  // TODO(piotr.jaroszek) move to storage opts
 
   // Set buffers
-  primary_message_queue_ = std::shared_ptr<BagMessageCircBuffer>(
-    new BagMessageCircBuffer(
-      max_cache_length_));
-  secondary_message_queue_ =
-    std::shared_ptr<BagMessageCircBuffer>(new BagMessageCircBuffer(max_cache_length_));
+  primary_buffer_ = std::shared_ptr<BagMessageBuffer>(
+    new BagMessageBuffer());
+  secondary_buffer_ =
+    std::shared_ptr<BagMessageBuffer>(new BagMessageBuffer());
 
-  // Run consumer thread
-  consumer_thread_ = std::thread(&BufferLayer::consume_buffers, this);
+  // Run consumer thread. We need this only when max cache size is not zero. Otherwise direct
+  // storage write call is used.
+  if (max_cache_size_ > 0u) {
+    consumer_thread_ = std::thread(&BufferLayer::consume_buffers, this);
+  }
 }
 
 void BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
 
-  primary_buffer_size_ += msg->serialized_data->buffer_length;
 
-  // Just skip enqueue message if buffer size is reached, else just register failed writing
-  if (primary_buffer_size_ < max_cache_size_ || max_cache_size_ == 0u) {
-    // Automatically takes buffer length limit into accout
-    if (!primary_message_queue_->enqueue(msg)) {
-      ROSBAG2_CPP_LOG_WARN_STREAM(
+  // If cache size is set to zero, we directly call write
+  if (max_cache_size_ == 0u) {
+    storage_->write(msg);
+  } else {
+    // If buffer size got some space left, we push message regardless of its size, but if
+    // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
+    // This flag is cleared when buffers are swapped.
+    if (!drop_messages_) {
+      primary_buffer_size_ += msg->serialized_data->buffer_length;
+      primary_buffer_->push_back(msg);
+    } else {
+      ROSBAG2_CPP_LOG_DEBUG_STREAM(
         "Message on '" <<
         msg->topic_name <<
-        "' dropped. Failed with buffer length limit." <<
+        "' dropped. Cache size limit reached." <<
         std::flush);
+      elements_dropped_++;
     }
-  } else {
-    ROSBAG2_CPP_LOG_WARN_STREAM(
-      "Message on '" <<
-      msg->topic_name <<
-      "' dropped. Failed with buffer size limit." <<
-      std::flush);
-    primary_message_queue_->increment_failed_counter();
+
+    if (primary_buffer_size_ >= max_cache_size_) {
+      drop_messages_ = true;
+    }
   }
 }
 
@@ -74,8 +79,9 @@ void BufferLayer::swap_buffers()
 {
   {
     std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
-    std::swap(primary_message_queue_, secondary_message_queue_);
+    std::swap(primary_buffer_, secondary_buffer_);
     std::swap(primary_buffer_size_, secondary_buffer_size_);
+    drop_messages_ = false;
   }
 }
 
@@ -85,19 +91,13 @@ void BufferLayer::consume_buffers()
   while (true) {
     swap_buffers();
 
-    if (secondary_message_queue_->is_empty()) {
+    if (secondary_buffer_->empty()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } else {
+      secondary_buffer_size_ = 0u;
+      storage_->write(*secondary_buffer_.get());
+      secondary_buffer_->clear();
     }
-
-    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> transaction_vector;
-    while (!secondary_message_queue_->is_empty()) {
-      auto message = secondary_message_queue_->front();
-      secondary_message_queue_->dequeue();
-      transaction_vector.push_back(message);
-    }
-
-    secondary_buffer_size_ = 0u;
-    storage_->write(transaction_vector);
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
@@ -113,7 +113,7 @@ void BufferLayer::close()
     std::lock_guard<std::mutex> writer_lock(stop_mutex_);
     ROSBAG2_CPP_LOG_INFO_STREAM(
       "Writing remaining " <<
-      primary_message_queue_->elements_num() + secondary_message_queue_->elements_num() <<
+      primary_buffer_->size() + secondary_buffer_->size() <<
       " messages from buffers to the bag. It may take a while...");
     is_stop_issued_ = true;
   }
@@ -122,26 +122,22 @@ void BufferLayer::close()
     consumer_thread_.join();
   }
 
-  unsigned int missed_messages = primary_message_queue_->failed_counter() +
-    secondary_message_queue_->failed_counter() +
-    primary_message_queue_->elements_num() +
-    secondary_message_queue_->elements_num();
   ROSBAG2_CPP_LOG_INFO_STREAM(
     "Done writing! Total missed messages: " <<
-    missed_messages <<
+    elements_dropped_ <<
     " where " <<
-    primary_message_queue_->elements_num() + secondary_message_queue_->elements_num() <<
+    primary_buffer_->size() + secondary_buffer_->size() <<
     " left in buffers.");
 }
 
 void BufferLayer::reset_cache()
 {
-  if (!primary_message_queue_->is_empty()) {
-    primary_message_queue_->clear();
+  if (!primary_buffer_->empty()) {
+    primary_buffer_->clear();
     primary_buffer_size_ = 0u;
   }
-  if (!secondary_message_queue_->is_empty()) {
-    secondary_message_queue_->clear();
+  if (!secondary_buffer_->empty()) {
+    secondary_buffer_->clear();
     secondary_buffer_size_ = 0u;
   }
 }

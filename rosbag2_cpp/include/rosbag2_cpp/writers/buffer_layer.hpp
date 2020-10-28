@@ -23,7 +23,6 @@
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
-#include "rosbag2_cpp/writers/circular_buffer.hpp"
 
 namespace rosbag2_cpp
 {
@@ -45,8 +44,8 @@ public:
 
 
 private:
-  using BagMessageCircBuffer =
-    CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+  using BagMessageBuffer =
+    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
   // Swaps primary and secondary buffers data
   void swap_buffers();
@@ -59,15 +58,17 @@ private:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 
   // Double buffers and their sizes
-  std::shared_ptr<BagMessageCircBuffer> primary_message_queue_;
+  std::shared_ptr<BagMessageBuffer> primary_buffer_;
   uint64_t primary_buffer_size_ {0u};
-  std::shared_ptr<BagMessageCircBuffer> secondary_message_queue_;
+  std::shared_ptr<BagMessageBuffer> secondary_buffer_;
   uint64_t secondary_buffer_size_ {0u};
+  uint32_t elements_dropped_ = {0u};
 
   // Double buffers sync
   std::mutex buffer_mutex_;
   std::atomic_bool is_stop_issued_ {false};
   std::mutex stop_mutex_;
+  std::atomic_bool drop_messages_ {false};
 
   // Thread for writing secondary buffer to a storage
   std::thread consumer_thread_;
