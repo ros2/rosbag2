@@ -23,10 +23,11 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "rosbag2_transport/logging.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/basic_types.hpp"

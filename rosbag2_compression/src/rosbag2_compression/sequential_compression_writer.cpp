@@ -28,8 +28,8 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
@@ -96,7 +96,7 @@ void SequentialCompressionWriter::setup_compression()
 }
 
 void SequentialCompressionWriter::open(
-  const rosbag2_cpp::StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   SequentialWriter::open(storage_options, converter_options);
@@ -155,11 +155,11 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  const auto storage_uri = format_storage_uri(
+  storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+  storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();
@@ -171,7 +171,7 @@ void SequentialCompressionWriter::split_bagfile()
     should_compress_last_file_ = false;
 
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
     throw std::runtime_error{errmsg.str()};
   }
 

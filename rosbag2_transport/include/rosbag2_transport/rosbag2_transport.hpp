@@ -20,9 +20,10 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_cpp
@@ -65,7 +66,9 @@ public:
    * \param record_options Options regarding the recording (e.g. the topics to record)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void record(const StorageOptions & storage_options, const RecordOptions & record_options);
+  void record(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const RecordOptions & record_options);
 
   /**
    * Replay all topics in a bagfile.
@@ -74,7 +77,9 @@ public:
    * \param play_options Options regarding the playback (e.g. queue size)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void play(const StorageOptions & storage_options, const PlayOptions & play_options);
+  void play(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const PlayOptions & play_options);
 
   /**
    * Print the bag info contained in the metadata yaml file.

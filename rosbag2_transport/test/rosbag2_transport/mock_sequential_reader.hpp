@@ -26,7 +26,7 @@ class MockSequentialReader : public rosbag2_cpp::reader_interfaces::BaseReaderIn
 {
 public:
   void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override
   {
     (void) storage_options;
