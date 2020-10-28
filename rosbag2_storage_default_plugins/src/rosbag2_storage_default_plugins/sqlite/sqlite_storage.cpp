@@ -80,7 +80,9 @@ inline std::vector<std::string> parse_pragmas(
       YAML::Node yaml_file = YAML::LoadFile(storage_config_uri);
       pragmas = yaml_file[key]["pragmas"].as<std::vector<std::string>>();
     } catch (const YAML::Exception & ex) {
-      throw std::runtime_error(std::string("Exception on parsing info file: ") + ex.what());
+      throw std::runtime_error(
+              std::string("Exception on parsing sqlite3 config file: ") +
+              ex.what());
     }
     // poor developer's sqlinjection prevention ;-)
     std::string invalid_characters = {"';\""};
@@ -90,7 +92,9 @@ inline std::vector<std::string> parse_pragmas(
           if (pos != std::string::npos) {
             throw std::runtime_error(
                     std::string("Invalid characters in sqlite3 config file: ") +
-                    pragma_string[pos]);
+                    pragma_string[pos] +
+                    ". Avoid following characters: " +
+                    invalid_characters);
           }
         }
       };

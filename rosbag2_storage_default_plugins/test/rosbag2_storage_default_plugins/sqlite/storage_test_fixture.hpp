@@ -19,6 +19,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -134,6 +135,24 @@ public:
     }
 
     return read_messages;
+  }
+
+  rosbag2_storage::StorageOptions make_storage_options_with_config(
+    const std::string & config_yaml,
+    const std::string & plugin_id)
+  {
+    auto temp_dir = rcpputils::fs::path(temporary_dir_path_);
+    const auto storage_uri = (temp_dir / "rosbag").string();
+    const auto yaml_config = (temp_dir / "sqlite_config.yaml").string();
+
+    { // populate temporary config file
+      std::ofstream out(yaml_config);
+      out << config_yaml;
+    }
+
+    rosbag2_storage::StorageOptions storage_options{storage_uri, plugin_id, 0, 0, 0,
+      yaml_config};
+    return storage_options;
   }
 
 protected:
