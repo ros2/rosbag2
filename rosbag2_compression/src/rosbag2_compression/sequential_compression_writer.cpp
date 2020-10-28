@@ -123,6 +123,7 @@ void SequentialCompressionWriter::reset()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
+  buffer_layer_.reset();
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
