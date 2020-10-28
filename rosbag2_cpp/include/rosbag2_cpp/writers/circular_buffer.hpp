@@ -64,8 +64,8 @@ public:
       failed_counter_++;
       return false;
     }
-    array_[this->rear_index_] = item;
-    this->rear_index_ = (this->rear_index_ + 1) % size_;
+    array_[rear_index_] = item;
+    rear_index_ = (rear_index_ + 1) % size_;
     elements_num_++;
     return true;
   }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP
-#define ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP
+#ifndef ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
+#define ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
 
 #include <memory>
 #include <thread>
@@ -40,6 +40,7 @@ public:
 
   // Flush data into storage, and reset cache
   void reset_cache();
+  // Push data into primary buffer
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
 
@@ -47,31 +48,36 @@ private:
   using BagMessageCircBuffer =
     CircularBuffer<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
 
+  // Swaps primary and secondary buffers data
   void swap_buffers();
+  // Write secondary buffer data to a storage
   void consume_buffers();
+  // Flush buffers and reset them
   void close();
 
+  // Storage handler
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 
-  // Double buffers
+  // Double buffers and their sizes
   std::shared_ptr<BagMessageCircBuffer> primary_message_queue_;
-  uint64_t primary_buffer_size_;
+  uint64_t primary_buffer_size_ {0u};
   std::shared_ptr<BagMessageCircBuffer> secondary_message_queue_;
-  uint64_t secondary_buffer_size_;
-  std::shared_ptr<BagMessageCircBuffer> current_queue_;
-  std::shared_ptr<BagMessageCircBuffer> writing_queue_;
+  uint64_t secondary_buffer_size_ {0u};
+
+  // Double buffers sync
   std::mutex buffer_mutex_;
   std::atomic_bool is_stop_issued_ {false};
   std::mutex stop_mutex_;
+
+  // Thread for writing secondary buffer to a storage
   std::thread consumer_thread_;
 
   // Max cache size in bytes and length limits for buffers
   uint64_t max_cache_size_;
   uint32_t max_cache_length_;
-
 };
 
 }  // namespace writers
 }  // namespace rosbag2_cpp
 
-#endif // ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP
+#endif  // ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_

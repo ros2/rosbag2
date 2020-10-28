@@ -244,7 +244,6 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   metadata_.duration = std::max(metadata_.duration, duration);
 
   auto converted_msg = get_writeable_message(message);
-  
 
   buffer_layer_->push(converted_msg);
 }
