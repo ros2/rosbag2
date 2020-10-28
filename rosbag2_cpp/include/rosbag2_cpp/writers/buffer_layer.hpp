@@ -19,6 +19,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <vector>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -33,15 +34,14 @@ class ROSBAG2_CPP_PUBLIC BufferLayer
 {
 public:
   BufferLayer(
-      std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
-      const rosbag2_cpp::StorageOptions & storage_options);
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
+    const rosbag2_cpp::StorageOptions & storage_options);
   ~BufferLayer();
 
   // Flush data into storage, and reset cache
   void reset_cache();
   // Push data into primary buffer
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
-
 
 private:
   using BagMessageBuffer =
