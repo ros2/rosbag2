@@ -70,8 +70,8 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
     if (no_result || sqlite3_column_type(statement_, 0) == SQLITE_NULL) {
       // No result or result is null means that no such pragma exists
       std::stringstream errmsg;
-      errmsg << "Statement returned empty value while result was expected, check syntax: " <<
-        sqlite3_sql(statement_);
+      errmsg << "Statement returned empty value while result was expected: \'" <<
+        sqlite3_sql(statement_) << "\'";
 
       throw SqliteException{errmsg.str()};
     }
