@@ -63,7 +63,7 @@ public:
   virtual ~SequentialCompressionReader();
 
   void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
@@ -90,6 +90,8 @@ private:
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+
+  rosbag2_storage::StorageOptions storage_options_;
 };
 
 }  // namespace rosbag2_compression

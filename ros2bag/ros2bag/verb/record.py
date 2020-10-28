@@ -90,6 +90,9 @@ class RecordVerb(VerbExtension):
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
+        parser.add_argument(
+            '--storage-config-file', type=FileType('r'),
+            help='Path to a yaml file defining storage specific configurations.')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -120,6 +123,10 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        storage_config_file = ''
+        if args.storage_config_file:
+            storage_config_file = args.storage_config_file.name
+
         # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
         #               combined with constrained environments (as imposed by colcon test)
         #               may result in DLL loading failures when attempting to import a C
@@ -142,7 +149,8 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             topics=args.topics,
             include_hidden_topics=args.include_hidden_topics,
-            qos_profile_overrides=qos_profile_overrides)
+            qos_profile_overrides=qos_profile_overrides,
+            storage_config_file=storage_config_file)
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)

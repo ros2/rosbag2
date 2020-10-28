@@ -80,8 +80,11 @@ void SequentialReader::reset()
 }
 
 void SequentialReader::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const rosbag2_storage::StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
+  storage_options_ = storage_options;
+
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
@@ -96,14 +99,13 @@ void SequentialReader::open(
       storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
 
-    storage_ = storage_factory_->open_read_only(
-      get_current_file(), storage_options.storage_id);
+    storage_options_.uri = get_current_file();
+    storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
   } else {
-    storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
+    storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
@@ -136,8 +138,9 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     if (!storage_->has_next() && has_next_file()) {
       load_next_file();
-      storage_ = storage_factory_->open_read_only(
-        get_current_file(), metadata_.storage_identifier);
+      storage_options_.uri = get_current_file();
+
+      storage_ = storage_factory_->open_read_only(storage_options_);
     }
 
     return storage_->has_next();
