@@ -4,6 +4,7 @@
   <version>0.1.8</version>
   <description>ROSBag2 SQLite3 storage plugin</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
