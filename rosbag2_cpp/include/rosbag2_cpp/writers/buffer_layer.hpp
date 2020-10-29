@@ -15,14 +15,14 @@
 #ifndef ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
 #define ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
 
-#include <memory>
-#include <thread>
-#include <mutex>
 #include <atomic>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
-#include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/storage_options.hpp"
 
 namespace rosbag2_cpp
@@ -50,7 +50,7 @@ private:
   // Swaps primary and secondary buffers data
   void swap_buffers();
   // Write secondary buffer data to a storage
-  void consume_buffers();
+  void exec_consuming();
   // Flush buffers and reset them
   void close();
 
@@ -62,6 +62,8 @@ private:
   uint64_t primary_buffer_size_ {0u};
   std::shared_ptr<BagMessageBuffer> secondary_buffer_;
   uint64_t secondary_buffer_size_ {0u};
+
+  // Total number of dropped messages
   uint32_t elements_dropped_ = {0u};
 
   // Double buffers sync
@@ -74,8 +76,7 @@ private:
   std::thread consumer_thread_;
 
   // Max cache size in bytes and length limits for buffers
-  uint64_t max_cache_size_;
-  uint32_t max_cache_length_;
+  const uint64_t max_cache_size_;
 };
 
 }  // namespace writers

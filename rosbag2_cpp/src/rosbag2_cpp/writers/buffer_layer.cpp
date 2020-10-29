@@ -28,9 +28,8 @@ namespace writers
 BufferLayer::BufferLayer(
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
   const rosbag2_cpp::StorageOptions & storage_options)
-: storage_(storage)
+: storage_(storage), max_cache_size_(storage_options.max_cache_size)
 {
-  max_cache_size_ = storage_options.max_cache_size;
 
   // Set buffers
   primary_buffer_ = std::shared_ptr<BagMessageBuffer>(
@@ -41,14 +40,12 @@ BufferLayer::BufferLayer(
   // Run consumer thread. We need this only when max cache size is not zero. Otherwise direct
   // storage write call is used.
   if (max_cache_size_ > 0u) {
-    consumer_thread_ = std::thread(&BufferLayer::consume_buffers, this);
+    consumer_thread_ = std::thread(&BufferLayer::exec_consuming, this);
   }
 }
 
 void BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
-  std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
-
   // If cache size is set to zero, we directly call write
   if (max_cache_size_ == 0u) {
     storage_->write(msg);
@@ -56,15 +53,11 @@ void BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessa
     // If buffer size got some space left, we push message regardless of its size, but if
     // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
     // This flag is cleared when buffers are swapped.
+    std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
     if (!drop_messages_) {
       primary_buffer_size_ += msg->serialized_data->buffer_length;
       primary_buffer_->push_back(msg);
     } else {
-      ROSBAG2_CPP_LOG_DEBUG_STREAM(
-        "Message on '" <<
-          msg->topic_name <<
-          "' dropped. Cache size limit reached." <<
-          std::flush);
       elements_dropped_++;
     }
 
@@ -84,7 +77,7 @@ void BufferLayer::swap_buffers()
   }
 }
 
-void BufferLayer::consume_buffers()
+void BufferLayer::exec_consuming()
 {
   bool exit_flag = false;
   while (true) {
@@ -121,12 +114,14 @@ void BufferLayer::close()
     consumer_thread_.join();
   }
 
-  ROSBAG2_CPP_LOG_INFO_STREAM(
+  if (elements_dropped_) {
+  ROSBAG2_CPP_LOG_WARN_STREAM(
     "Done writing! Total missed messages: " <<
       elements_dropped_ <<
       " where " <<
       primary_buffer_->size() + secondary_buffer_->size() <<
       " left in buffers.");
+  }
 }
 
 void BufferLayer::reset_cache()
@@ -144,7 +139,6 @@ void BufferLayer::reset_cache()
 BufferLayer::~BufferLayer()
 {
   close();
-  reset_cache();
 }
 
 }  // namespace writers
