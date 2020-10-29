@@ -30,7 +30,6 @@ BufferLayer::BufferLayer(
   const rosbag2_cpp::StorageOptions & storage_options)
 : storage_(storage), max_cache_size_(storage_options.max_cache_size)
 {
-
   // Set buffers
   primary_buffer_ = std::shared_ptr<BagMessageBuffer>(
     new BagMessageBuffer());
@@ -44,11 +43,12 @@ BufferLayer::BufferLayer(
   }
 }
 
-void BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+bool BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   // If cache size is set to zero, we directly call write
   if (max_cache_size_ == 0u) {
     storage_->write(msg);
+    return true;
   } else {
     // If buffer size got some space left, we push message regardless of its size, but if
     // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
@@ -59,11 +59,13 @@ void BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessa
       primary_buffer_->push_back(msg);
     } else {
       elements_dropped_++;
+      return false;
     }
 
     if (primary_buffer_size_ >= max_cache_size_) {
       drop_messages_ = true;
     }
+    return true;
   }
 }
 
@@ -115,12 +117,12 @@ void BufferLayer::close()
   }
 
   if (elements_dropped_) {
-  ROSBAG2_CPP_LOG_WARN_STREAM(
-    "Done writing! Total missed messages: " <<
-      elements_dropped_ <<
-      " where " <<
-      primary_buffer_->size() + secondary_buffer_->size() <<
-      " left in buffers.");
+    ROSBAG2_CPP_LOG_WARN_STREAM(
+      "Done writing! Total missed messages: " <<
+        elements_dropped_ <<
+        " where " <<
+        primary_buffer_->size() + secondary_buffer_->size() <<
+        " left in buffers.");
   }
 }
 

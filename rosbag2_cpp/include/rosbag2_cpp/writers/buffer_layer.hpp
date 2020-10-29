@@ -41,7 +41,7 @@ public:
   // Flush data into storage, and reset cache
   void reset_cache();
   // Push data into primary buffer
-  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
 private:
   using BagMessageBuffer =

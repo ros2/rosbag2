@@ -245,7 +245,10 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   auto converted_msg = get_writeable_message(message);
 
-  buffer_layer_->push(converted_msg);
+  if (!buffer_layer_->push(converted_msg)) {
+    // Undo message count because it was dropped by buffer layer
+    --topics_names_to_info_.at(message->topic_name).message_count;
+  }
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
