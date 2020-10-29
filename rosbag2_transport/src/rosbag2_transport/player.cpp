@@ -196,6 +196,9 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
   static size_t counter = 0;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+    // DJA: What happens if we sleep for a very long time, restart, and then
+    // kill the system? Do we end up waiting here until the pause duration,
+    // potentially making it look like the system is hanging during shutdown?
     std::this_thread::sleep_until(
       start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
         1.0 / rate * message.time_since_start + paused_duration_));
