@@ -351,7 +351,9 @@ void SequentialCompressionWriter::write(
 
 bool SequentialCompressionWriter::should_split_bagfile()
 {
-  if (storage_options_.max_bagfile_size == rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
+  if (storage_options_.max_bagfile_size ==
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
+  {
     return false;
   } else {
     std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
