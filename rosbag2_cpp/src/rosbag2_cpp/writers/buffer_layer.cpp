@@ -48,29 +48,28 @@ bool BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessa
   if (max_cache_size_ == 0u) {
     storage_->write(msg);
     return true;
-  } else {
-    bool pushed = false;
-    // If buffer size got some space left, we push message regardless of its size, but if
-    // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-    // This flag is cleared when buffers are swapped.
-    {
-      std::unique_lock<std::mutex> buffer_lock(buffer_mutex_);
-      if (!drop_messages_) {
-        primary_buffer_size_ += msg->serialized_data->buffer_length;
-        primary_buffer_->push_back(msg);
-        pushed = true;
-      } else {
-        elements_dropped_++;
-        pushed = false;
-      }
-
-      if (primary_buffer_size_ >= max_cache_size_) {
-        drop_messages_ = true;
-      }
-    }
-    buffers_condition_var_.notify_one();
-    return pushed;
   }
+
+  bool pushed = false;
+  // If buffer size got some space left, we push message regardless of its size, but if
+  // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
+  // This flag is cleared when buffers are swapped.
+  {
+    std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
+    if (!drop_messages_) {
+      primary_buffer_size_ += msg->serialized_data->buffer_length;
+      primary_buffer_->push_back(msg);
+      pushed = true;
+    } else {
+      elements_dropped_++;
+    }
+
+    if (primary_buffer_size_ >= max_cache_size_) {
+      drop_messages_ = true;
+    }
+  }
+  buffers_condition_var_.notify_one();
+  return pushed;
 }
 
 void BufferLayer::swap_buffers()
@@ -136,6 +135,7 @@ void BufferLayer::close()
 
 void BufferLayer::reset_cache()
 {
+  std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
   if (!primary_buffer_->empty()) {
     primary_buffer_->clear();
     primary_buffer_size_ = 0u;
