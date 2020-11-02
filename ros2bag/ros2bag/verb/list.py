@@ -51,14 +51,14 @@ class ListVerb(VerbExtension):
                     return 'path does not exist: %s' % abs_path
 
                 xmldoc = minidom.parse(abs_path)
-                class_item = xmldoc.getElementsByTagName('class')[0]
-                class_name = class_item.attributes['name']
-                type_name = class_item.attributes['type']
-                base_class_name = class_item.attributes['base_class_type']
-                description = xmldoc.getElementsByTagName('description')[0]
+                for class_item in xmldoc.getElementsByTagName('class'):
+                    class_name = class_item.attributes['name']
+                    type_name = class_item.attributes['type']
+                    base_class_name = class_item.attributes['base_class_type']
+                    description = xmldoc.getElementsByTagName('description')[0]
 
-                print('%s%s' % (('name: ' if args.verbose else ''), class_name.value))
-                if args.verbose:
-                    print('\t%s' % description.childNodes[0].data)
-                    print('\ttype: %s' % type_name.value)
-                    print('\tbase_class: %s' % base_class_name.value)
+                    print('%s%s' % (('name: ' if args.verbose else ''), class_name.value))
+                    if args.verbose:
+                        print('\t%s' % description.childNodes[0].data)
+                        print('\ttype: %s' % type_name.value)
+                        print('\tbase_class: %s' % base_class_name.value)
