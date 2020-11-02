@@ -59,7 +59,8 @@ public:
   virtual ~SequentialReader();
 
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) override;
 
   void reset() override;
 
@@ -142,6 +143,7 @@ protected:
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
 private:
+  rosbag2_storage::StorageOptions storage_options_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 };
 

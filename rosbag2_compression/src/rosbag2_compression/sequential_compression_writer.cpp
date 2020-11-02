@@ -29,8 +29,8 @@
 #include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
@@ -186,7 +186,7 @@ void SequentialCompressionWriter::stop_compressor_threads()
 }
 
 void SequentialCompressionWriter::open(
-  const rosbag2_cpp::StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
@@ -295,7 +295,7 @@ void SequentialCompressionWriter::split_bagfile()
     base_folder_,
     metadata_.relative_file_paths.size());
 
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+  storage_ = storage_factory_->open_read_write(storage_options_);
 
   // If we're in FILE compression mode, push this file's name on to the queue so another
   // thread will handle compressing it.  If not, we can just carry on.
@@ -311,7 +311,7 @@ void SequentialCompressionWriter::split_bagfile()
     should_compress_last_file_ = false;
 
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
     throw std::runtime_error{errmsg.str()};
   }
 

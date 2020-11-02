@@ -68,7 +68,7 @@ public:
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
-    EXPECT_CALL(*storage_factory, open_read_only(_, _)).WillRepeatedly(Return(storage_));
+    EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
 
     auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
       std::move(storage_factory), converter_factory_, std::move(metadata_io));
@@ -95,7 +95,7 @@ public:
   std::string relative_path_1_;
   std::string relative_path_2_;
   std::string absolute_path_1_;
-  rosbag2_cpp::StorageOptions default_storage_options_;
+  rosbag2_storage::StorageOptions default_storage_options_;
 };
 
 class MultifileReaderTestVersion3 : public MultifileReaderTest

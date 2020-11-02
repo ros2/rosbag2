@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
-#define ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
+#ifndef ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
+#define ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
 
 #include <string>
 
-namespace rosbag2_cpp
+namespace rosbag2_storage
 {
 
 struct StorageOptions
@@ -38,8 +38,12 @@ public:
   // before these being written to disk.
   // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
+
+  // Storage specific configuration file.
+  // Defaults to empty string.
+  std::string storage_config_uri = "";
 };
 
-}  // namespace rosbag2_cpp
+}  // namespace rosbag2_storage
 
-#endif  // ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
+#endif  // ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_

@@ -187,7 +187,9 @@ public:
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
     const auto database_path = get_bag_file_path(0).string();
-    storage->open(database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    storage->open(
+      {database_path, "sqlite3"},
+      rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
 
     while (storage->has_next()) {
       table_msgs.push_back(storage->read_next());

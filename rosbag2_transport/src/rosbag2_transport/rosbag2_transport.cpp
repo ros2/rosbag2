@@ -67,7 +67,7 @@ void Rosbag2Transport::shutdown()
 }
 
 void Rosbag2Transport::record(
-  const StorageOptions & storage_options, const RecordOptions & record_options)
+  const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
     writer_->open(
@@ -94,7 +94,7 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
 }
 
 void Rosbag2Transport::play(
-  const StorageOptions & storage_options, const PlayOptions & play_options)
+  const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
     auto transport_node =

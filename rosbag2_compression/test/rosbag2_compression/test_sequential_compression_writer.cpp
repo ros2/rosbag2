@@ -19,11 +19,14 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
-#include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_cpp/writer.hpp"
+
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -48,8 +51,8 @@ public:
   {
     tmp_dir_storage_options_.uri = tmp_dir_.string();
     rcpputils::fs::remove(tmp_dir_);
-    ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(Return(storage_));
-    EXPECT_CALL(*storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
+    ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
+    EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -58,7 +61,7 @@ public:
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   rcpputils::fs::path tmp_dir_;
-  rosbag2_cpp::StorageOptions tmp_dir_storage_options_;
+  rosbag2_storage::StorageOptions tmp_dir_storage_options_;
   std::string serialization_format_;
 
   const uint64_t kDefaultCompressionQueueSize = 1;
@@ -81,7 +84,9 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   EXPECT_THROW(
-    writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_}),
+    writer_->open(
+      rosbag2_storage::StorageOptions(),
+      {serialization_format_, serialization_format_}),
     std::runtime_error);
 }
 
@@ -118,7 +123,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
   const uint64_t min_split_file_size = 10;
   const uint64_t max_bagfile_size = 5;
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
-  auto storage_options = rosbag2_cpp::StorageOptions{};
+  auto storage_options = rosbag2_storage::StorageOptions{};
   storage_options.max_bagfile_size = max_bagfile_size;
   storage_options.uri = "foo.bar";
 
@@ -151,7 +156,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
   auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
-  auto storage_options = rosbag2_cpp::StorageOptions();
+  auto storage_options = rosbag2_storage::StorageOptions();
   storage_options.uri = tmp_dir.string();
 
   EXPECT_NO_THROW(

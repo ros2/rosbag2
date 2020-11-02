@@ -22,13 +22,13 @@
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -71,7 +71,8 @@ public:
    * \param converter_options options to define in which format incoming messages are stored
    **/
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) override;
 
   void reset() override;
 
@@ -110,17 +111,13 @@ protected:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
 
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_;
+  rosbag2_storage::StorageOptions storage_options_;
 
   // Used in bagfile splitting;
   // specifies the best-effort maximum duration of a bagfile in seconds.
   std::chrono::seconds max_bagfile_duration;
 
   // Intermediate cache to write multiple messages into the storage.
-  // `max_cache_size` is the number of bytes of messages to hold in storage
-  // before writing to disk.
-  uint64_t max_cache_size_;
   uint64_t current_cache_size_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> cache_;
 
@@ -140,6 +137,9 @@ protected:
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  // Flush data into storage, and reset cache
+  void reset_cache();
 
   // Helper method used by write to get the message in a format that is ready to be written.
   // Common use cases include converting the message using the converter or

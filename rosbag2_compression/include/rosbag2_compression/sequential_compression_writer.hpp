@@ -29,12 +29,12 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
@@ -108,7 +108,7 @@ public:
    * \param converter_options options to define in which format incoming messages are stored
    **/
   void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
   /**
