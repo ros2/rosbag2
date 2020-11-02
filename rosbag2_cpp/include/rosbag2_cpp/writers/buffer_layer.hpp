@@ -14,8 +14,8 @@
 
 #ifndef ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
 #define ROSBAG2_CPP__WRITERS__BUFFER_LAYER_HPP_
-
 #include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -67,6 +67,7 @@ private:
   uint32_t elements_dropped_ = {0u};
 
   // Double buffers sync
+  std::condition_variable buffers_condition_var_;
   std::mutex buffer_mutex_;
   std::atomic_bool is_stop_issued_ {false};
   std::mutex stop_mutex_;

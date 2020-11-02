@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -50,29 +49,33 @@ bool BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessa
     storage_->write(msg);
     return true;
   } else {
+    bool pushed = false;
     // If buffer size got some space left, we push message regardless of its size, but if
     // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
     // This flag is cleared when buffers are swapped.
-    std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
-    if (!drop_messages_) {
-      primary_buffer_size_ += msg->serialized_data->buffer_length;
-      primary_buffer_->push_back(msg);
-    } else {
-      elements_dropped_++;
-      return false;
-    }
+    {
+      std::unique_lock<std::mutex> buffer_lock(buffer_mutex_);
+      if (!drop_messages_) {
+        primary_buffer_size_ += msg->serialized_data->buffer_length;
+        primary_buffer_->push_back(msg);
+        pushed = true;
+      } else {
+        elements_dropped_++;
+        pushed = false;
+      }
 
-    if (primary_buffer_size_ >= max_cache_size_) {
-      drop_messages_ = true;
+      if (primary_buffer_size_ >= max_cache_size_) {
+        drop_messages_ = true;
+      }
     }
-    return true;
+    buffers_condition_var_.notify_one();
+    return pushed;
   }
 }
 
 void BufferLayer::swap_buffers()
 {
   {
-    std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
     std::swap(primary_buffer_, secondary_buffer_);
     std::swap(primary_buffer_size_, secondary_buffer_size_);
     drop_messages_ = false;
@@ -83,15 +86,18 @@ void BufferLayer::exec_consuming()
 {
   bool exit_flag = false;
   while (true) {
-    swap_buffers();
-
-    if (secondary_buffer_->empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    } else {
-      secondary_buffer_size_ = 0u;
-      storage_->write(*secondary_buffer_.get());
-      secondary_buffer_->clear();
+    {
+      if (!is_stop_issued_) {
+        std::unique_lock<std::mutex> lock(buffer_mutex_);
+        buffers_condition_var_.wait(lock);
+      }
+      swap_buffers();
     }
+    buffers_condition_var_.notify_one();
+
+    secondary_buffer_size_ = 0u;
+    storage_->write(*secondary_buffer_.get());
+    secondary_buffer_->clear();
 
     {
       std::lock_guard<std::mutex> writer_lock(stop_mutex_);
@@ -111,6 +117,8 @@ void BufferLayer::close()
         " messages from buffers to the bag. It may take a while...");
     is_stop_issued_ = true;
   }
+
+  buffers_condition_var_.notify_one();
 
   if (consumer_thread_.joinable()) {
     consumer_thread_.join();
