@@ -44,8 +44,53 @@ public:
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
 private:
-  using BagMessageBuffer =
-    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+  class BagMessageBuffer
+  {
+public:
+    explicit BagMessageBuffer(const uint64_t max_cache_size)
+    : max_bytes_size_(max_cache_size) {}
+
+    // If buffer size got some space left, we push message regardless of its size, but if
+    // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
+    // This flag is cleared when buffers are swapped.
+    bool push(const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> & msg)
+    {
+      bool pushed = false;
+      if (!drop_messages_) {
+        buffer_bytes_size_ += msg->serialized_data->buffer_length;
+        buffer_.push_back(msg);
+        pushed = true;
+      }
+
+      if (buffer_bytes_size_ >= max_bytes_size_) {
+        drop_messages_ = true;
+      }
+      return pushed;
+    }
+
+    // Clears buffer and allow it to receive messages again
+    void clear()
+    {
+      buffer_.clear();
+      buffer_bytes_size_ = 0u;
+      drop_messages_ = false;
+    }
+
+    // Get number of elements in the buffer
+    size_t size() {return buffer_.size();}
+
+    // Get buffer data
+    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & data()
+    {
+      return buffer_;
+    }
+
+private:
+    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> buffer_;
+    uint64_t buffer_bytes_size_ {0u};  // in bytes
+    const uint64_t max_bytes_size_;  // in bytes
+    bool drop_messages_ {false};
+  };
 
   // Swaps primary and secondary buffers data
   void swap_buffers();
@@ -57,11 +102,9 @@ private:
   // Storage handler
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
 
-  // Double buffers and their sizes
+  // Double buffers
   std::shared_ptr<BagMessageBuffer> primary_buffer_;
-  uint64_t primary_buffer_size_ {0u};
   std::shared_ptr<BagMessageBuffer> secondary_buffer_;
-  uint64_t secondary_buffer_size_ {0u};
 
   // Total number of dropped messages
   uint32_t elements_dropped_ = {0u};
@@ -74,10 +117,8 @@ private:
   std::atomic_bool drop_messages_ {false};
 
   // Thread for writing secondary buffer to a storage
+  bool is_consumer_launched_;
   std::thread consumer_thread_;
-
-  // Max cache size in bytes and length limits for buffers
-  const uint64_t max_cache_size_;
 };
 
 }  // namespace writers
