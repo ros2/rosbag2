@@ -59,10 +59,13 @@ public:
     void setTranslatedStartTime(
       std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> const& t);  //!< Increments the translated start time by shift.  Useful for pausing.
     void shift(std::chrono::duration<int, std::nano> const& d);               //!< Increments the translated start time by shift.  Useful for pausing.
+    void startPause();
+    void endPause();
     std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<double, std::nano> > translate(std::chrono::nanoseconds const& t);
 
 private:
     double scale_;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> pause_start_;
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> real_start_;
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> translated_start_;
 };

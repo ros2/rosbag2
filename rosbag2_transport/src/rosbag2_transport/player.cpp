@@ -165,7 +165,6 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
   time_translator_.setRealStartTime(std::chrono::system_clock::now());
-  paused_duration_ = std::chrono::nanoseconds(0);
   do {
     play_messages_until_queue_empty(options);
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
@@ -198,8 +197,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
       lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
     {
       ROSBAG2_TRANSPORT_LOG_INFO("Paused");
-      std::chrono::time_point<std::chrono::system_clock> pause_start =
-        std::chrono::system_clock::now();
+      time_translator_.startPause();
 
       // Sleep until activated externally
       while (rosbag2_transport_->get_current_state().id() !=
@@ -208,7 +206,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
         std::this_thread::sleep_for(pause_sleep_period_);
       }
 
-      paused_duration_ += std::chrono::system_clock::now() - pause_start;
+      time_translator_.endPause();
 
       if (rclcpp::ok()) {
         ROSBAG2_TRANSPORT_LOG_INFO("Resumed");

@@ -60,6 +60,16 @@ void TimeTranslator::setTranslatedStartTime(
     translated_start_ = t;
 }
 
+void TimeTranslator::startPause()
+{
+    pause_start_ = std::chrono::system_clock::now();
+}
+
+void TimeTranslator::endPause()
+{
+    translated_start_ += std::chrono::system_clock::now() - pause_start_;
+}
+
 void TimeTranslator::shift(std::chrono::duration<int, std::nano> const& d)
 {
     translated_start_ += d;

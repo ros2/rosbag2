@@ -68,7 +68,6 @@ private:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   TimeTranslator time_translator_;
   moodycamel::ReaderWriterQueue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> message_queue_;
-  std::chrono::nanoseconds paused_duration_;
   bool played_all_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
