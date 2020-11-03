@@ -156,11 +156,18 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
+  // Flush buffer layer
+  buffer_layer_->close();
+
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
 
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  // Update storage in buffer layer and restart consumer thread
+  buffer_layer_->set_storage(storage_);
+  buffer_layer_->start_consumer();
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();

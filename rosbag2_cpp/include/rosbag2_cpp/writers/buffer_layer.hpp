@@ -35,13 +35,20 @@ class ROSBAG2_CPP_PUBLIC BufferLayer
 public:
   BufferLayer(
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
-    const rosbag2_cpp::StorageOptions & storage_options);
+    const uint64_t & max_buffer_size);
   ~BufferLayer();
 
   // Flush data into storage, and reset cache
   void reset_cache();
   // Push data into primary buffer
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+  // Flush buffers and reset them, shut down consumer thread
+  void close();
+  // Starts consumer thread if one is not working
+  void start_consumer();
+  // Sets new storage
+  void set_storage(
+    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage);
 
 private:
   class BagMessageBuffer
@@ -92,12 +99,8 @@ private:
     bool drop_messages_ {false};
   };
 
-  // Swaps primary and secondary buffers data
-  void swap_buffers();
   // Write secondary buffer data to a storage
   void exec_consuming();
-  // Flush buffers and reset them
-  void close();
 
   // Storage handler
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
@@ -112,12 +115,13 @@ private:
   // Double buffers sync
   std::condition_variable buffers_condition_var_;
   std::mutex buffer_mutex_;
+
+  // Consumer thread shutdown sync
   std::atomic_bool is_stop_issued_ {false};
   std::mutex stop_mutex_;
-  std::atomic_bool drop_messages_ {false};
 
   // Thread for writing secondary buffer to a storage
-  bool is_consumer_launched_;
+  bool is_consumer_needed_;
   std::thread consumer_thread_;
 };
 

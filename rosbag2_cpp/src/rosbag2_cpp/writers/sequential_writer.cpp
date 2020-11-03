@@ -127,7 +127,9 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  buffer_layer_ = std::make_unique<rosbag2_cpp::writers::BufferLayer>(storage_, storage_options);
+  buffer_layer_ = std::make_unique<rosbag2_cpp::writers::BufferLayer>(
+    storage_,
+    storage_options.max_cache_size);
 
   init_metadata();
 }
@@ -193,10 +195,17 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 
 void SequentialWriter::split_bagfile()
 {
+  // Flush buffer layer
+  buffer_layer_->close();
+
   const auto storage_uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+
+  // Set new storage in buffer layer and restart consumer thread
+  buffer_layer_->set_storage(storage_);
+  buffer_layer_->start_consumer();
 
   if (!storage_) {
     std::stringstream errmsg;

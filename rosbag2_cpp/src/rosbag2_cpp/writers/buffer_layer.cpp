@@ -26,20 +26,20 @@ namespace writers
 
 BufferLayer::BufferLayer(
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage,
-  const rosbag2_cpp::StorageOptions & storage_options)
+  const uint64_t & max_buffer_size)
 : storage_(storage)
 {
   // Set buffers
   primary_buffer_ = std::shared_ptr<BagMessageBuffer>(
-    new BagMessageBuffer(storage_options.max_cache_size));
+    new BagMessageBuffer(max_buffer_size));
   secondary_buffer_ =
     std::shared_ptr<BagMessageBuffer>(
-    new BagMessageBuffer(storage_options.max_cache_size));
+    new BagMessageBuffer(max_buffer_size));
 
   // Run consumer thread. We need this only when max cache size is not zero. Otherwise direct
   // storage write call is used.
-  if (storage_options.max_cache_size > 0u) {
-    is_consumer_launched_ = true;
+  if (max_buffer_size > 0u) {
+    is_consumer_needed_ = true;
     consumer_thread_ = std::thread(&BufferLayer::exec_consuming, this);
   }
 }
@@ -47,7 +47,7 @@ BufferLayer::BufferLayer(
 bool BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   // If cache size is set to zero, we directly call write
-  if (!is_consumer_launched_) {
+  if (!is_consumer_needed_) {
     storage_->write(msg);
     return true;
   }
@@ -67,14 +67,6 @@ bool BufferLayer::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessa
   return pushed;
 }
 
-void BufferLayer::swap_buffers()
-{
-  {
-    std::swap(primary_buffer_, secondary_buffer_);
-    drop_messages_ = false;
-  }
-}
-
 void BufferLayer::exec_consuming()
 {
   bool exit_flag = false;
@@ -83,7 +75,8 @@ void BufferLayer::exec_consuming()
       std::unique_lock<std::mutex> lock(buffer_mutex_);
       buffers_condition_var_.wait(lock);
     }
-    swap_buffers();
+    // Swap buffers
+    std::swap(primary_buffer_, secondary_buffer_);
 
     storage_->write(secondary_buffer_.get()->data());
     secondary_buffer_->clear();
@@ -99,7 +92,7 @@ void BufferLayer::exec_consuming()
 void BufferLayer::close()
 {
   {
-    std::lock_guard<std::mutex> writer_lock(stop_mutex_);
+    std::lock_guard<std::mutex> stop_lock(stop_mutex_);
     ROSBAG2_CPP_LOG_INFO_STREAM(
       "Writing remaining " <<
         primary_buffer_->size() + secondary_buffer_->size() <<
@@ -121,6 +114,22 @@ void BufferLayer::close()
         primary_buffer_->size() + secondary_buffer_->size() <<
         " left in buffers.");
   }
+}
+
+void BufferLayer::start_consumer()
+{
+  std::lock_guard<std::mutex> stop_lock(stop_mutex_);
+  if (is_consumer_needed_ && !consumer_thread_.joinable()) {
+    is_stop_issued_ = false;
+    consumer_thread_ = std::thread(&BufferLayer::exec_consuming, this);
+  }
+}
+
+void BufferLayer::set_storage(
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage)
+{
+  std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
+  storage_ = storage;
 }
 
 void BufferLayer::reset_cache()
