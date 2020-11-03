@@ -53,16 +53,18 @@ class TimeTranslator
 public:
     TimeTranslator();
 
+    void setTimeScale(double const& scale);
     void setRealStartTime(
-      std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> const& t);
+      std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> const& t);
     void setTranslatedStartTime(
-      std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> const& t);  //!< Increments the translated start time by shift.  Useful for pausing.
-    void shift(std::chrono::duration<int, std::milli> const& d);               //!< Increments the translated start time by shift.  Useful for pausing.
-    std::chrono::milliseconds translate(std::chrono::milliseconds const& t);
+      std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> const& t);  //!< Increments the translated start time by shift.  Useful for pausing.
+    void shift(std::chrono::duration<int, std::nano> const& d);               //!< Increments the translated start time by shift.  Useful for pausing.
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<double, std::nano> > translate(std::chrono::nanoseconds const& t);
 
 private:
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> real_start_;
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> translated_start_;
+    double scale_;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> real_start_;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> translated_start_;
 };
 
 } // namespace rosbag2_transport

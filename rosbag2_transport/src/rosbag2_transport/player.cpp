@@ -39,7 +39,6 @@
 
 #include "qos.hpp"
 #include "rosbag2_node.hpp"
-#include "replayable_message.hpp"
 
 namespace
 {
@@ -130,13 +129,11 @@ void Player::wait_for_filled_queue(const PlayOptions & options) const
 
 void Player::load_storage_content(const PlayOptions & options)
 {
-  TimePoint time_first_message;
 
-  ReplayableMessage message;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
   if (reader_->has_next()) {
-    message.message = reader_->read_next();
-    message.time_since_start = std::chrono::nanoseconds(0);
-    time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
+    message = reader_->read_next();
+    time_translator_.setRealStartTime(TimePoint(std::chrono::nanoseconds(message->time_stamp)));
     message_queue_.enqueue(message);
   }
 
@@ -146,31 +143,28 @@ void Player::load_storage_content(const PlayOptions & options)
 
   while (reader_->has_next() && rclcpp::ok()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
-      enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
+      enqueue_up_to_boundary(queue_upper_boundary);
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }
 
-void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary)
+void Player::enqueue_up_to_boundary(uint64_t boundary)
 {
-  ReplayableMessage message;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
     if (!reader_->has_next()) {
       break;
     }
-    message.message = reader_->read_next();
-    message.time_since_start =
-      TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
-
+    message = reader_->read_next();
     message_queue_.enqueue(message);
   }
 }
 
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
-  start_time_ = std::chrono::system_clock::now();
+  time_translator_.setRealStartTime(std::chrono::system_clock::now());
   paused_duration_ = std::chrono::nanoseconds(0);
   do {
     play_messages_until_queue_empty(options);
@@ -186,12 +180,11 @@ void Player::play_messages_from_queue(const PlayOptions & options)
 
 void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
-  ReplayableMessage message;
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
 
-  float rate = 1.0;
   // Use rate if in valid range
   if (options.rate > 0.0) {
-    rate = options.rate;
+    time_translator_.setTimeScale(options.rate);
   }
 
   static size_t counter = 0;
@@ -199,9 +192,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     // DJA: What happens if we sleep for a very long time, restart, and then
     // kill the system? Do we end up waiting here until the pause duration,
     // potentially making it look like the system is hanging during shutdown?
-    std::this_thread::sleep_until(
-      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / rate * message.time_since_start + paused_duration_));
+    std::this_thread::sleep_until(time_translator_.translate(std::chrono::nanoseconds(message->time_stamp)));
 
     if (rosbag2_transport_->get_current_state().id() !=
       lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
@@ -225,7 +216,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     }
 
     if (rclcpp::ok()) {
-      publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+      publishers_[message->topic_name]->publish(message->serialized_data);
       // TODO(mabelzhang) TEMPORARY, remove when done debugging. And counter above.
       fprintf(stderr, "publishing message %zu\n", (++counter));
     }

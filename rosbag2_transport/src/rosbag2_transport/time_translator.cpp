@@ -37,32 +37,38 @@
 namespace rosbag2_transport {
 
 TimeTranslator::TimeTranslator()
-    : real_start_(std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>::min()),
-    translated_start_(std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>::min())
+    : scale_(1.0),
+    real_start_(std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>::min()),
+    translated_start_(std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>::min())
 {
 }
 
+void TimeTranslator::setTimeScale(double const& scale)
+{
+    scale_ = scale;
+}
+
 void TimeTranslator::setRealStartTime(
-  std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> const& t)
+  std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> const& t)
 {
     real_start_ = t;
 }
 
 void TimeTranslator::setTranslatedStartTime(
-  std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> const& t)
+  std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> const& t)
 {
     translated_start_ = t;
 }
 
-void TimeTranslator::shift(std::chrono::duration<int, std::milli> const& d)
+void TimeTranslator::shift(std::chrono::duration<int, std::nano> const& d)
 {
     translated_start_ += d;
 }
 
-std::chrono::milliseconds TimeTranslator::translate(std::chrono::milliseconds const& t)
+std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<double, std::nano> > TimeTranslator::translate(std::chrono::nanoseconds const& t)
 {
-    auto shifted_time = translated_start_ + (t - real_start_.time_since_epoch());
-    return shifted_time.time_since_epoch();
+    auto shifted_time = translated_start_ + (t - real_start_.time_since_epoch()) / scale_;
+    return shifted_time;
 }
 
 } // namespace rosbag

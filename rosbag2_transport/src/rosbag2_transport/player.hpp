@@ -26,9 +26,10 @@
 
 #include "rclcpp/qos.hpp"
 
-#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
-#include "replayable_message.hpp"
+#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/time_translator.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
@@ -55,7 +56,7 @@ public:
 private:
   void load_storage_content(const PlayOptions & options);
   bool is_storage_completely_loaded() const;
-  void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
+  void enqueue_up_to_boundary(uint64_t boundary);
   void wait_for_filled_queue(const PlayOptions & options) const;
   void play_messages_from_queue(const PlayOptions & options);
   void play_messages_until_queue_empty(const PlayOptions & options);
@@ -65,8 +66,8 @@ private:
   static const std::chrono::milliseconds queue_read_wait_period_;
   static const std::chrono::milliseconds pause_sleep_period_;
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
-  moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
-  std::chrono::time_point<std::chrono::system_clock> start_time_;
+  TimeTranslator time_translator_;
+  moodycamel::ReaderWriterQueue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> message_queue_;
   std::chrono::nanoseconds paused_duration_;
   bool played_all_;
   mutable std::future<void> storage_loading_future_;
