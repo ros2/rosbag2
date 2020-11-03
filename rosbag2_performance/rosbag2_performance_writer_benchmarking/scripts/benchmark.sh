@@ -17,7 +17,7 @@ summary_file=${test_dir}/results.csv
 
 freq=100; #Hz
 
-for cache in 0 10 100 1000
+for cache in 0 1000000 10000000 100000000
 do
   for sz in 1000 10000 100000 1000000
   do

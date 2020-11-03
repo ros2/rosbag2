@@ -14,7 +14,9 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
+#include <algorithm>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -46,8 +48,6 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    // throws an exception if the database is not valid.
-    pragmas.push_back("schema_version;");
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
@@ -58,29 +58,9 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-
-    auto journal_mode_set = std::find_if(
-      pragmas.begin(), pragmas.end(),
-      [](const auto & pragma) {
-        return pragma.rfind("journal_mode", 0) == 0;
-      });
-    if (journal_mode_set == pragmas.end()) {
-      pragmas.push_back("journal_mode = WAL");
-    }
-    auto synchronous_set = std::find_if(
-      pragmas.begin(), pragmas.end(),
-      [](const auto & pragma) {
-        return pragma.rfind("synchronous", 0) == 0;
-      });
-    if (synchronous_set == pragmas.end()) {
-      pragmas.push_back("synchronous = NORMAL");
-    }
   }
 
-  for (const auto & pragma : pragmas) {
-    prepare_statement(std::string("PRAGMA ") + pragma + ";")->execute_and_reset();
-  }
-
+  apply_pragma_settings(pragmas, io_flag);
   sqlite3_extended_result_codes(db_ptr, 1);
 }
 
@@ -94,6 +74,88 @@ SqliteWrapper::~SqliteWrapper()
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
       "Could not close open database. Error code: " << rc <<
         " Error message: " << sqlite3_errstr(rc));
+  }
+}
+
+void SqliteWrapper::apply_pragma_settings(
+  std::vector<std::string> & pragmas,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  // sqlite pragmas are assigned with either '= value' or '(value)' syntax, depending on pragma
+  const std::string pragma_assign = "=";
+  const std::string pragma_bracket = "(";
+
+  // Apply default pragmas if not overridden by user setting
+  {
+    // Used to check whether db is readable
+    const std::string schema = "schema_version";
+
+    typedef std::map<std::string, std::string> pragmas_map;
+    pragmas_map default_pragmas = {
+      {schema, ""}
+    };
+    if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
+      const pragmas_map write_default_pragmas = {
+        {"journal_mode", pragma_assign + "WAL"},
+        {"synchronous", pragma_assign + "NORMAL"}
+      };
+      default_pragmas.insert(write_default_pragmas.begin(), write_default_pragmas.end());
+    }
+    for (const auto & kv : default_pragmas) {
+      auto key = kv.first;
+      auto default_assignment = kv.second;
+      auto pragma_in_settings = std::find_if(
+        pragmas.begin(), pragmas.end(),
+        [key](const auto & pragma) {
+          return pragma.rfind(key, 0) == 0;
+        });
+      if (pragma_in_settings == pragmas.end()) {
+        pragmas.push_back(key + default_assignment);
+      }
+    }
+  }
+
+  for (auto & pragma : pragmas) {
+    if (pragma.empty()) {
+      continue;
+    }
+
+    // Clean the setting from trailing characters
+    const std::string trailing_set("; \t\f\v\n\r");
+    auto found_last_valid = pragma.find_last_not_of(trailing_set);
+    if (found_last_valid == std::string::npos) {
+      std::stringstream errmsg;
+      errmsg << "Storage setting invalid: " << pragma;
+      throw SqliteException{errmsg.str()};
+    }
+    pragma = pragma.substr(0, found_last_valid + 1);
+
+    // Extract pragma name
+    auto pragma_name = pragma;
+    auto found_value_assignment = pragma.find(pragma_assign);
+    if (found_value_assignment == std::string::npos) {
+      found_value_assignment = pragma.find(pragma_bracket);
+    }
+    if (found_value_assignment != std::string::npos) {
+      if (found_value_assignment == 0) {
+        // Incorrect syntax, starts with = or (
+        std::stringstream errmsg;
+        errmsg << "Incorrect storage setting syntax: " << pragma;
+        throw SqliteException{errmsg.str()};
+      }
+      // Strip value assignment part, trim trailing whitespaces
+      pragma_name = pragma.substr(0, found_value_assignment);
+      pragma_name = pragma_name.substr(0, pragma_name.find_last_not_of(trailing_set) + 1);
+    }
+
+    // Apply the setting. Note that statements that assign value do not reliably return value
+    const std::string pragma_keyword = "PRAGMA";
+    const std::string pragma_statement = pragma_keyword + " " + pragma + ";";
+    prepare_statement(pragma_statement)->execute_and_reset();
+
+    // Check if the value is set, reading the pragma
+    auto statement_for_check = pragma_keyword + " " + pragma_name + ";";
+    prepare_statement(statement_for_check)->execute_and_reset(true);
   }
 }
 
