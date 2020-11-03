@@ -191,7 +191,8 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     // DJA: What happens if we sleep for a very long time, restart, and then
     // kill the system? Do we end up waiting here until the pause duration,
     // potentially making it look like the system is hanging during shutdown?
-    std::this_thread::sleep_until(time_translator_.translate(std::chrono::nanoseconds(message->time_stamp)));
+    std::this_thread::sleep_until(
+      time_translator_.translate(std::chrono::nanoseconds(message->time_stamp)));
 
     if (rosbag2_transport_->get_current_state().id() !=
       lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
