@@ -22,8 +22,8 @@
 #include <vector>
 
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
