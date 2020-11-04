@@ -75,10 +75,15 @@ void BufferLayer::exec_consuming()
       std::unique_lock<std::mutex> lock(buffer_mutex_);
       buffers_condition_var_.wait(lock);
     }
-    // Swap buffers
-    std::swap(primary_buffer_, secondary_buffer_);
 
-    storage_->write(secondary_buffer_.get()->data());
+    // Swap buffers
+    {
+      std::lock_guard<std::mutex> lock(buffer_mutex_);
+      std::swap(primary_buffer_, secondary_buffer_);
+    }
+
+
+    storage_->write(secondary_buffer_->data());
     secondary_buffer_->clear();
 
     {
