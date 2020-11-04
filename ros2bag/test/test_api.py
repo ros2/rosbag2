@@ -38,7 +38,7 @@ class TestRos2BagRecord(unittest.TestCase):
     def test_interpret_dict_as_qos_profile_valid(self):
         qos_dict = {'history': 'keep_last', 'depth': 10}
         qos_profile = interpret_dict_as_qos_profile(qos_dict)
-        assert qos_profile.history == QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST
+        assert qos_profile.history == QoSHistoryPolicy.KEEP_LAST
         expected_seconds = 1
         expected_nanoseconds = int((expected_seconds * 1e9))
         qos_dict = {'history': 'keep_all', 'deadline': {'sec': expected_seconds, 'nsec': 0}}
@@ -66,14 +66,14 @@ class TestRos2BagRecord(unittest.TestCase):
         }
         qos_profiles = convert_yaml_to_qos_profile(qos_dict)
         assert qos_profiles[topic_name_1].durability == \
-            QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_VOLATILE
+            QoSDurabilityPolicy.VOLATILE
         assert qos_profiles[topic_name_1].reliability == \
-            QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_RELIABLE
+            QoSReliabilityPolicy.RELIABLE
         assert qos_profiles[topic_name_1].history == \
-            QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL
+            QoSHistoryPolicy.KEEP_ALL
         assert qos_profiles[topic_name_2].avoid_ros_namespace_conventions == expected_convention
         assert qos_profiles[topic_name_2].history == \
-            QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_ALL
+            QoSHistoryPolicy.KEEP_ALL
 
     def test_interpret_dict_as_qos_profile_negative(self):
         qos_dict = {'history': 'keep_all', 'depth': -1}

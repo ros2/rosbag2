@@ -24,7 +24,8 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
+
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
@@ -60,9 +61,6 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  max_bagfile_size_(rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT),
-  max_bagfile_duration(
-    std::chrono::seconds(rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)),
   topics_names_to_info_(),
   metadata_()
 {}
@@ -82,12 +80,11 @@ void SequentialWriter::init_metadata()
 }
 
 void SequentialWriter::open(
-  const StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
   base_folder_ = storage_options.uri;
-  max_bagfile_size_ = storage_options.max_bagfile_size;
-  max_bagfile_duration = std::chrono::seconds(storage_options.max_bagfile_duration);
+  storage_options_ = storage_options;
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
@@ -95,7 +92,7 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  rcpputils::fs::path db_path(base_folder_);
+  rcpputils::fs::path db_path(storage_options.uri);
   if (db_path.is_directory()) {
     std::stringstream error;
     error << "Database directory already exists (" << db_path.string() <<
@@ -110,15 +107,14 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  const auto storage_uri = format_storage_uri(base_folder_, 0);
-
-  storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
+  storage_options_.uri = format_storage_uri(base_folder_, 0);
+  storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
   }
 
-  if (max_bagfile_size_ != 0 &&
-    max_bagfile_size_ < storage_->get_minimum_split_file_size())
+  if (storage_options_.max_bagfile_size != 0 &&
+    storage_options_.max_bagfile_size < storage_->get_minimum_split_file_size())
   {
     std::stringstream error;
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
@@ -198,10 +194,10 @@ void SequentialWriter::split_bagfile()
   // Flush buffer layer
   buffer_layer_->close();
 
-  const auto storage_uri = format_storage_uri(
+  storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
+  storage_ = storage_factory_->open_read_write(storage_options_);
 
   // Set new storage in buffer layer and restart consumer thread
   buffer_layer_->set_storage(storage_);
@@ -209,7 +205,7 @@ void SequentialWriter::split_bagfile()
 
   if (!storage_) {
     std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
+    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
@@ -273,16 +269,19 @@ bool SequentialWriter::should_split_bagfile() const
   bool should_split = false;
 
   // Splitting by size
-  if (max_bagfile_size_ != rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT) {
-    should_split = should_split || (storage_->get_bagfile_size() > max_bagfile_size_);
+  if (storage_options_.max_bagfile_size !=
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
+  {
+    should_split = should_split ||
+      (storage_->get_bagfile_size() > storage_options_.max_bagfile_size);
   }
 
   // Splitting by time
-  if (max_bagfile_duration != std::chrono::seconds(
-      rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT))
+  if (storage_options_.max_bagfile_duration !=
+    rosbag2_storage::storage_interfaces::MAX_BAGFILE_DURATION_NO_SPLIT)
   {
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      max_bagfile_duration);
+      std::chrono::seconds(storage_options_.max_bagfile_duration));
     should_split = should_split ||
       ((std::chrono::high_resolution_clock::now() - metadata_.starting_time) > max_duration_ns);
   }

@@ -34,7 +34,9 @@ class ROSBAG2_STORAGE_PUBLIC ReadOnlyInterface
 public:
   virtual ~ReadOnlyInterface() = default;
 
-  void open(const std::string & uri, IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
+  void open(
+    const StorageOptions & storage_options,
+    IOFlag io_flag = IOFlag::READ_ONLY) override = 0;
 
   uint64_t get_bagfile_size() const override = 0;
 

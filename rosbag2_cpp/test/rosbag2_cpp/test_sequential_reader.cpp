@@ -70,10 +70,10 @@ public:
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
 
-    EXPECT_CALL(*storage_factory, open_read_only(_, _));
+    EXPECT_CALL(*storage_factory, open_read_only(_));
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
-      [this, relative_file_path](const std::string & path, const std::string & /* storage_id */) {
-        EXPECT_STREQ(relative_file_path.c_str(), path.c_str());
+      [this, relative_file_path](const rosbag2_storage::StorageOptions & storage_options) {
+        EXPECT_STREQ(relative_file_path.c_str(), storage_options.uri.c_str());
         return storage_;
       });
 
@@ -87,7 +87,7 @@ public:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::string storage_serialization_format_;
   std::string storage_uri_;
-  rosbag2_cpp::StorageOptions default_storage_options_;
+  rosbag2_storage::StorageOptions default_storage_options_;
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {

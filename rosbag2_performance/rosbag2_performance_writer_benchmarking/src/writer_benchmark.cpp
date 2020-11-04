@@ -18,8 +18,8 @@
 #include <string>
 
 #include "rmw/rmw.h"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
 #include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
@@ -188,7 +188,7 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
 void WriterBenchmark::create_writer()
 {
   writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
-  rosbag2_cpp::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
   storage_options.uri = db_folder_;
   storage_options.storage_id = "sqlite3";
   storage_options.max_bagfile_size = 0;

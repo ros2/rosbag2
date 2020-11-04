@@ -51,7 +51,7 @@ public:
 
     ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
-    ON_CALL(*storage_factory_, open_read_only(_, _)).WillByDefault(Return(storage_));
+    ON_CALL(*storage_factory_, open_read_only(_)).WillByDefault(Return(storage_));
   }
 
   rosbag2_storage::BagMetadata construct_default_bag_metadata() const
@@ -90,7 +90,7 @@ TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   EXPECT_THROW(
-    reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
+    reader_->open(rosbag2_storage::StorageOptions(), {"", storage_serialization_format_}),
     std::invalid_argument);
 }
 
@@ -106,7 +106,7 @@ TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)
   ON_CALL(*compression_factory, create_decompressor(_))
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(1);
+  EXPECT_CALL(*storage_factory_, open_read_only(_)).Times(1);
 
   auto compression_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
     std::move(compression_factory),
@@ -115,7 +115,7 @@ TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)
     std::move(metadata_io_));
 
   compression_reader->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
 
   auto topics_and_types = compression_reader->get_all_topics_and_types();
   EXPECT_FALSE(topics_and_types.empty());
@@ -137,7 +137,7 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   // Throws runtime_error b/c compressor can't read
   EXPECT_THROW(
-    reader_->open(rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_}),
+    reader_->open(rosbag2_storage::StorageOptions(), {"", storage_serialization_format_}),
     std::runtime_error);
 }
 
@@ -155,7 +155,7 @@ TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
   ON_CALL(*compression_factory, create_decompressor(_))
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(1);
+  EXPECT_CALL(*storage_factory_, open_read_only(_)).Times(1);
 
   auto sequential_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
     std::move(compression_factory),
@@ -165,7 +165,7 @@ TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
   reader_->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
 }
 
 TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfile)
@@ -194,7 +194,7 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
   .WillByDefault(Return(ByMove(std::move(decompressor))));
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
   // open_read_only should be called twice when opening 2 split bags
-  EXPECT_CALL(*storage_factory_, open_read_only(_, _)).Times(2);
+  EXPECT_CALL(*storage_factory_, open_read_only(_)).Times(2);
   // storage::has_next() is called twice when reader::has_next() is called
   EXPECT_CALL(*storage_, has_next()).Times(2)
   .WillOnce(Return(false))  // Load the next file
@@ -207,7 +207,7 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_splitting_bagfil
     std::move(metadata_io_));
 
   compression_reader->open(
-    rosbag2_cpp::StorageOptions(), {"", storage_serialization_format_});
+    rosbag2_storage::StorageOptions(), {"", storage_serialization_format_});
   EXPECT_EQ(compression_reader->has_next_file(), true);
   EXPECT_EQ(compression_reader->has_next(), true);
   compression_reader->read_next();

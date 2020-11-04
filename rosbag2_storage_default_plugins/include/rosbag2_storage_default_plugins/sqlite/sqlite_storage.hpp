@@ -49,7 +49,7 @@ public:
   ~SqliteStorage() override;
 
   void open(
-    const std::string & uri,
+    const rosbag2_storage::StorageOptions & storage_options,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 

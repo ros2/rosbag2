@@ -45,22 +45,22 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
-    storage_options_ = rosbag2_cpp::StorageOptions{};
+    storage_options_ = rosbag2_storage::StorageOptions{};
     storage_options_.uri = "uri";
 
     rcpputils::fs::path dir(storage_options_.uri);
     rcpputils::fs::remove_all(dir);
 
-    ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(
+    ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
         Invoke(
-          [this](const std::string & uri, const std::string &) {
+          [this](const rosbag2_storage::StorageOptions & storage_options) {
             fake_storage_size_ = 0;
-            fake_storage_uri_ = uri;
+            fake_storage_uri_ = storage_options.uri;
           }),
         Return(storage_)));
     EXPECT_CALL(
-      *storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
+      *storage_factory_, open_read_write(_)).Times(AtLeast(0));
   }
 
   ~SequentialWriterTest()
@@ -74,7 +74,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_cpp::StorageOptions storage_options_;
+  rosbag2_storage::StorageOptions storage_options_;
   uint64_t fake_storage_size_;
   rosbag2_storage::BagMetadata fake_metadata_;
   std::string fake_storage_uri_;

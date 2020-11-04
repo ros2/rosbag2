@@ -32,9 +32,9 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
 
 namespace
@@ -84,7 +84,7 @@ std::unordered_map<std::string, rclcpp::QoS> PyObject_AsTopicQoSMap(PyObject * o
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
 
   static const char * kwlist[] = {
@@ -103,6 +103,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "topics",
     "include_hidden_topics",
     "qos_profile_overrides",
+    "storage_config_file",
     nullptr};
 
   char * uri = nullptr;
@@ -120,9 +121,10 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   uint64_t max_cache_size = 0u;
   PyObject * topics = nullptr;
   bool include_hidden_topics = false;
+  char * storage_config_file = nullptr;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKKObO", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|bbKKKKObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
@@ -137,7 +139,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_cache_size,
       &topics,
       &include_hidden_topics,
-      &qos_profile_overrides
+      &qos_profile_overrides,
+      &storage_config_file
   ))
   {
     return nullptr;
@@ -145,6 +148,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
   storage_options.max_bagfile_size = (uint64_t) max_bagfile_size;
   storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration);
   storage_options.max_cache_size = max_cache_size;
@@ -225,7 +229,7 @@ static PyObject *
 rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
   rosbag2_transport::PlayOptions play_options{};
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
 
   static const char * kwlist[] = {
     "uri",
@@ -237,6 +241,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "qos_profile_overrides",
     "loop",
     "topic_remapping",
+    "storage_config_file",
     nullptr
   };
 
@@ -249,8 +254,9 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   PyObject * qos_profile_overrides{nullptr};
   bool loop = false;
   PyObject * topic_remapping = nullptr;
+  char * storage_config_file = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
@@ -259,13 +265,15 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       &topics,
       &qos_profile_overrides,
       &loop,
-      &topic_remapping))
+      &topic_remapping,
+      &storage_config_file))
   {
     return nullptr;
   }
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;

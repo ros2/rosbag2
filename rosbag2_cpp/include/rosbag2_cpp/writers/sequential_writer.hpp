@@ -22,7 +22,6 @@
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writers/buffer_layer.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -30,6 +29,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -72,7 +72,8 @@ public:
    * \param converter_options options to define in which format incoming messages are stored
    **/
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) override;
 
   void reset() override;
 
@@ -112,8 +113,7 @@ protected:
   std::unique_ptr<Converter> converter_;
   std::unique_ptr<rosbag2_cpp::writers::BufferLayer> buffer_layer_;
 
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_;
+  rosbag2_storage::StorageOptions storage_options_;
 
   // Used in bagfile splitting;
   // specifies the best-effort maximum duration of a bagfile in seconds.
