@@ -121,7 +121,7 @@ private:
   std::mutex stop_mutex_;
 
   // Thread for writing secondary buffer to a storage
-  bool is_consumer_needed_;
+  bool is_consumer_needed_ {false};
   std::thread consumer_thread_;
 };
 
