@@ -224,9 +224,10 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  // Update the message count for the Topic.
+  // Get TopicInformation handler for counting messages.
+  rosbag2_storage::TopicInformation * topic_information {nullptr};
   try {
-    ++topics_names_to_info_.at(message->topic_name).message_count;
+    topic_information = &topics_names_to_info_.at(message->topic_name);
   } catch (const std::out_of_range & /* oor */) {
     std::stringstream errmsg;
     errmsg << "Failed to write on topic '" << message->topic_name <<
@@ -250,9 +251,8 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   auto converted_msg = get_writeable_message(message);
 
-  if (!buffer_layer_->push(converted_msg)) {
-    // Undo message count because it was dropped by buffer layer
-    --topics_names_to_info_.at(message->topic_name).message_count;
+  if (buffer_layer_->push(converted_msg)) {
+    ++topic_information->message_count;
   }
 }
 
