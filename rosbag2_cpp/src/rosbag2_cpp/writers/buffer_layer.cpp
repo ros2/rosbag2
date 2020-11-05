@@ -111,7 +111,7 @@ void BufferLayer::close()
     consumer_thread_.join();
   }
 
-  if (elements_dropped_) {
+  if (elements_dropped_ > 0) {
     ROSBAG2_CPP_LOG_WARN_STREAM(
       "Done writing! Total missed messages: " <<
         elements_dropped_ <<
