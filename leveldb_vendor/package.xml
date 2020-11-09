@@ -12,8 +12,8 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>libsnappy-dev</depend>
-  <depend>libleveldb-dev</depend>
+  <depend>snappy</depend>
+  <depend>leveldb</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

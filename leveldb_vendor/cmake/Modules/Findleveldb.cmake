@@ -29,11 +29,26 @@
 
 find_package(leveldb CONFIG QUIET)
 
-
 if (NOT leveldb_FOUND)
+
+  # Get package location hint from environment variable (if any)
+  if(NOT leveldb_ROOT_DIR AND DEFINED ENV{leveldb_ROOT_DIR})
+      set(leveldb_ROOT_DIR "$ENV{leveldb_ROOT_DIR}" CACHE PATH
+          "leveldb base directory location (optional, used for nonstandard installation paths)")
+  endif()
+
+   # Search path for nonstandard package locations
+   if(leveldb_ROOT_DIR)
+       set(leveldb_INCLUDE_PATH PATHS "${leveldb_ROOT_DIR}/include" NO_DEFAULT_PATH)
+       set(leveldb_LIBRARY_PATH PATHS "${leveldb_ROOT_DIR}/lib"     NO_DEFAULT_PATH)
+   else()
+       set(leveldb_INCLUDE_PATH "")
+       set(leveldb_LIBRARY_PATH "")
+   endif()
+
     # Find headers and libraries
-    find_path(leveldb_INCLUDE_DIR NAMES NAMES include/leveldb/db.h)
-    find_library(leveldb_LIBRARY  NAMES leveldb ${LEVELDB_ROOT_DIR}/lib)
+    find_path(leveldb_INCLUDE_DIR NAMES db.h PATH_SUFFIXES "leveldb" ${leveldb_INCLUDE_PATH})
+    find_library(leveldb_LIBRARY  NAMES leveldb PATH_SUFFIXES "leveldb" ${leveldb_LIBRARY_PATH})
 
     mark_as_advanced(leveldb_INCLUDE_DIR leveldb_LIBRARY)
 

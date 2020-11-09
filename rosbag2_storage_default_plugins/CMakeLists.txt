@@ -29,7 +29,7 @@ find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 find_package(yaml_cpp_vendor REQUIRED)
 find_package(leveldb_vendor REQUIRED)
-find_package(leveldb REQUIRED)
+find_package(leveldb REQUIRED) # provided by leveldb_vendor
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
@@ -72,7 +72,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(rosbag2_storage rcpputils rcutils sqlite3_vendor SQLite3)
+ament_export_dependencies(rosbag2_storage rcpputils rcutils sqlite3_vendor SQLite3 leveldb_vendor leveldb)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
