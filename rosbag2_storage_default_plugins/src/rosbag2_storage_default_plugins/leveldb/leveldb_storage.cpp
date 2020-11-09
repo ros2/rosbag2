@@ -342,6 +342,8 @@ void LeveldbStorage::set_filter(
   storage_filter_ = storage_filter;
   std::vector<std::string> remove_topic_ldb_list;
 
+  scan_ldb_for_read();
+
   if (!storage_filter_.topics.empty()) {
     // Find unfiltered topic
     for (auto topic_ldb : topic_ldb_map_) {
