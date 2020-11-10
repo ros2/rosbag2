@@ -34,22 +34,10 @@ namespace writers
 
 namespace
 {
-std::string format_storage_uri(const std::string & base_folder, uint64_t storage_count)
-{
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
-  std::stringstream storage_file_name;
-  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
-
-  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
-}
-
 std::string strip_parent_path(const std::string & relative_path)
 {
   return rcpputils::fs::path(relative_path).filename().string();
 }
-
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -123,10 +111,14 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  buffer_layer_ = std::make_unique<rosbag2_cpp::writers::BufferLayer>(
-    storage_,
-    storage_options.max_cache_size);
-
+  use_cache_ = storage_options.max_cache_size > 0u;
+  if (use_cache_) {
+    message_cache_ = std::make_shared<rosbag2_cpp::writers::cache::MessageCache>(
+      storage_options.max_cache_size);
+    cache_consumer_ = std::make_unique<rosbag2_cpp::writers::cache::CacheConsumer>(
+      message_cache_,
+      storage_);
+  }
   init_metadata();
 }
 
@@ -137,7 +129,10 @@ void SequentialWriter::reset()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  buffer_layer_.reset();
+  if (use_cache_) {
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
@@ -189,10 +184,25 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
   }
 }
 
-void SequentialWriter::split_bagfile()
+std::string SequentialWriter::format_storage_uri(
+  const std::string & base_folder, uint64_t storage_count)
 {
-  // Flush buffer layer
-  buffer_layer_->close();
+  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
+  // The name of the folder needs to be queried in case
+  // SequentialWriter is opened with a relative path.
+  std::stringstream storage_file_name;
+  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
+
+  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
+}
+
+void SequentialWriter::switch_to_next_storage()
+{
+  // consumer remaining message cache
+  if (use_cache_) {
+    cache_consumer_->close();
+    message_cache_->log_dropped();
+  }
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
@@ -200,8 +210,14 @@ void SequentialWriter::split_bagfile()
   storage_ = storage_factory_->open_read_write(storage_options_);
 
   // Set new storage in buffer layer and restart consumer thread
-  buffer_layer_->set_storage(storage_);
-  buffer_layer_->start_consumer();
+  if (use_cache_) {
+    cache_consumer_->change_storage(storage_);
+  }
+}
+
+void SequentialWriter::split_bagfile()
+{
+  switch_to_next_storage();
 
   if (!storage_) {
     std::stringstream errmsg;
@@ -251,7 +267,17 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   auto converted_msg = get_writeable_message(message);
 
-  if (buffer_layer_->push(converted_msg)) {
+  bool write_succeeded = false;
+  if (storage_options_.max_cache_size == 0u) {
+    // If cache size is set to zero, we write to storage directly
+    storage_->write(converted_msg);
+    write_succeeded = true;
+  } else {
+    // Otherwise, use cache buffer
+    write_succeeded = message_cache_->push(converted_msg);
+  }
+
+  if (write_succeeded) {
     ++topic_information->message_count;
   }
 }

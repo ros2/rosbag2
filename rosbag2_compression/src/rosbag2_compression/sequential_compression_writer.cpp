@@ -37,20 +37,6 @@
 namespace rosbag2_compression
 {
 
-namespace
-{
-std::string format_storage_uri(const std::string & base_folder, uint64_t storage_count)
-{
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
-  std::stringstream storage_file_name;
-  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
-
-  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
-}
-}  // namespace
-
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
 : SequentialWriter(),
@@ -123,7 +109,10 @@ void SequentialCompressionWriter::reset()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  buffer_layer_.reset();
+  if (use_cache_) {
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
@@ -156,18 +145,7 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  // Flush buffer layer
-  buffer_layer_->close();
-
-  storage_options_.uri = format_storage_uri(
-    base_folder_,
-    metadata_.relative_file_paths.size());
-
-  storage_ = storage_factory_->open_read_write(storage_options_);
-
-  // Update storage in buffer layer and restart consumer thread
-  buffer_layer_->set_storage(storage_);
-  buffer_layer_->start_consumer();
+  switch_to_next_storage();
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();

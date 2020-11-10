@@ -22,7 +22,8 @@
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
-#include "rosbag2_cpp/writers/buffer_layer.hpp"
+#include "rosbag2_cpp/writers/cache/cache_consumer.hpp"
+#include "rosbag2_cpp/writers/cache/message_cache.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -111,7 +112,14 @@ protected:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
-  std::unique_ptr<rosbag2_cpp::writers::BufferLayer> buffer_layer_;
+
+  bool use_cache_;
+  std::shared_ptr<rosbag2_cpp::writers::cache::MessageCache> message_cache_;
+  std::unique_ptr<rosbag2_cpp::writers::cache::CacheConsumer> cache_consumer_;
+
+  void switch_to_next_storage();
+  std::string format_storage_uri(
+    const std::string & base_folder, uint64_t storage_count);
 
   rosbag2_storage::StorageOptions storage_options_;
 
