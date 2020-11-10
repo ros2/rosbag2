@@ -16,10 +16,10 @@
 
 #include <algorithm>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rcutils/types.h"
@@ -90,12 +90,12 @@ void SqliteWrapper::apply_pragma_settings(
     // Used to check whether db is readable
     const std::string schema = "schema_version";
 
-    typedef std::map<std::string, std::string> pragmas_map;
-    pragmas_map default_pragmas = {
+    typedef std::unordered_map<std::string, std::string> pragmas_map_t;
+    pragmas_map_t default_pragmas = {
       {schema, ""}
     };
     if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
-      const pragmas_map write_default_pragmas = {
+      const pragmas_map_t write_default_pragmas = {
         {"journal_mode", pragma_assign + "WAL"},
         {"synchronous", pragma_assign + "NORMAL"}
       };
@@ -120,16 +120,6 @@ void SqliteWrapper::apply_pragma_settings(
       continue;
     }
 
-    // Clean the setting from trailing characters
-    const std::string trailing_set("; \t\f\v\n\r");
-    auto found_last_valid = pragma.find_last_not_of(trailing_set);
-    if (found_last_valid == std::string::npos) {
-      std::stringstream errmsg;
-      errmsg << "Storage setting invalid: " << pragma;
-      throw SqliteException{errmsg.str()};
-    }
-    pragma = pragma.substr(0, found_last_valid + 1);
-
     // Extract pragma name
     auto pragma_name = pragma;
     auto found_value_assignment = pragma.find(pragma_assign);
@@ -143,8 +133,9 @@ void SqliteWrapper::apply_pragma_settings(
         errmsg << "Incorrect storage setting syntax: " << pragma;
         throw SqliteException{errmsg.str()};
       }
-      // Strip value assignment part, trim trailing whitespaces
+      // Strip value assignment part, trim trailing whitespaces before = or (
       pragma_name = pragma.substr(0, found_value_assignment);
+      const std::string trailing_set(" \t\f\v\n\r");
       pragma_name = pragma_name.substr(0, pragma_name.find_last_not_of(trailing_set) + 1);
     }
 
