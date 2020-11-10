@@ -1,0 +1,14 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1409c06..dccbd19 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -94,6 +94,9 @@ if(BUILD_SHARED_LIBS)
+   add_compile_options(-fvisibility=hidden)
+ endif(BUILD_SHARED_LIBS)
+
++# Must be included before CMAKE_INSTALL_INCLUDEDIR is used.
++include(GNUInstallDirs)
++
+ add_library(leveldb "")
+ target_sources(leveldb
+   PRIVATE

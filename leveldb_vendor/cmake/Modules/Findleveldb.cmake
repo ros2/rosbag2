@@ -27,6 +27,7 @@
 #
 ##################################################################################################
 
+find_package(Threads REQUIRED)
 find_package(leveldb CONFIG QUIET)
 
 if (NOT leveldb_FOUND)
