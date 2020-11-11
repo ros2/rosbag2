@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-  <name>leveldb_vendor</name>
+  <name>snappy_vendor</name>
   <version>0.0.1</version>
-  <description>leveldb vendor package, providing a dependency for leveldb.</description>
+  <description>snappy vendor package, providing a dependency for snappy.</description>
   <maintainer email="barry.xu@sony.com">Barry Xu</maintainer>
   <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
   <license>BSD</license>  <!-- leveldb is BSD -->
 
-  <url type="website">https://github.com/google/leveldb</url>
+  <url type="website">https://github.com/google/snappy</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>snappy_vendor</depend>
-  <depend>leveldb</depend>
+  <depend>snappy</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

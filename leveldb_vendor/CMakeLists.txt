@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.7)
 project(leveldb_vendor)
 
 find_package(ament_cmake REQUIRED)
+find_package(snappy_vendor REQUIRED)
+find_package(snappy REQUIRED)
+
+string(REPLACE "include" "" snappy_install_path ${snappy_INCLUDE_DIR})
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 find_package(leveldb QUIET)
@@ -25,6 +29,7 @@ if (NOT leveldb_FOUND)
       -DBUILD_SHARED_LIBS:BOOL=ON
       -DLEVELDB_BUILD_TESTS:BOOL=OFF
       -DLEVELDB_BUILD_BENCHMARKS:BOOL=OFF
+      -DSNAPPY_INSTALL_PATH:STRING=${snappy_install_path}
       ${extra_cmake_args}
     PATCH_COMMAND
       ${Patch_EXECUTABLE} -p1 -N < ${CMAKE_CURRENT_SOURCE_DIR}/leveldb_cmakefile.diff
