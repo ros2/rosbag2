@@ -86,18 +86,3 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-<<<<<<< HEAD
-          linter: [pep257, flake8]
-=======
-          linter: [pep257] # TODO re-enable flake8 when it is fixed
->>>>>>> github/foxy
-    steps:
-    # TODO(setup-ros-docker#7): calling chown is necessary for now
-    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
-      with:
-        linter: ${{ matrix.linter }}
-        distribution: foxy
-        package-name: |
-            ros2bag
