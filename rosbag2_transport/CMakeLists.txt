@@ -22,7 +22,10 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
+<<<<<<< HEAD
 find_package(lifecycle_msgs REQUIRED)
+=======
+>>>>>>> github/foxy
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)

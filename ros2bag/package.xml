@@ -2,11 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>ros2bag</name>
-  <version>0.3.2</version>
+  <version>0.3.5</version>
   <description>
     Entry point for rosbag in ROS 2
   </description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 

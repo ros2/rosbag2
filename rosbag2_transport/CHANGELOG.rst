@@ -3,6 +3,23 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.5 (2020-08-31)
+------------------
+* resolve memory leak for serialized message (`#502 <https://github.com/ros2/rosbag2/issues/502>`_) (`#518 <https://github.com/ros2/rosbag2/issues/518>`_)
+* Use shared logic for importing the rosbag2_transport_py library in Python (`#482 <https://github.com/ros2/rosbag2/issues/482>`_) (`#494 <https://github.com/ros2/rosbag2/issues/494>`_)
+* Contributors: Emerson Knapp, Karsten Knese
+
+0.3.4 (2020-08-05)
+------------------
+* fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_) (`#481 <https://github.com/ros2/rosbag2/issues/481>`_)
+  Co-authored-by: Dirk Thomas <dirk-thomas@users.noreply.github.com>
+* Contributors: Karsten Knese
+
+0.3.3 (2020-06-23)
+------------------
+* export shared_queues_vendor for modern cmake support (`#434 <https://github.com/ros2/rosbag2/issues/434>`_) (`#438 <https://github.com/ros2/rosbag2/issues/438>`_)
+* Contributors: Karsten Knese
+
 0.3.2 (2020-06-03)
 ------------------
 
