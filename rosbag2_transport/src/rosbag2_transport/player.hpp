@@ -30,6 +30,7 @@
 
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/time_translator.hpp"
+#include "rosbag2_node.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
@@ -62,6 +63,7 @@ private:
   void play_messages_until_queue_empty(const PlayOptions & options);
   void prepare_publishers(const PlayOptions & options);
 
+  std::shared_ptr<Rosbag2Node> node_;
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   static const std::chrono::milliseconds pause_sleep_period_;
