@@ -23,6 +23,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -69,38 +70,75 @@ bool is_read_write(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
   return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE;
 }
 
-inline std::vector<std::string> parse_pragmas(
+// Return pragma-name to full statement map
+inline std::unordered_map<std::string, std::string> parse_pragmas(
   const std::string & storage_config_uri, const rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  std::vector<std::string> pragmas;
-  if (!storage_config_uri.empty()) {
-    try {
-      auto key =
-        io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY ? "read" : "write";
-      YAML::Node yaml_file = YAML::LoadFile(storage_config_uri);
-      pragmas = yaml_file[key]["pragmas"].as<std::vector<std::string>>();
-    } catch (const YAML::Exception & ex) {
-      throw std::runtime_error(
-              std::string("Exception on parsing sqlite3 config file: ") +
-              ex.what());
-    }
-    // poor developer's sqlinjection prevention ;-)
-    std::string invalid_characters = {"';\""};
-    auto throw_on_invalid_character = [](const auto & pragmas, const auto & invalid_characters) {
-        for (const auto & pragma_string : pragmas) {
-          auto pos = pragma_string.find_first_of(invalid_characters);
-          if (pos != std::string::npos) {
-            throw std::runtime_error(
-                    std::string("Invalid characters in sqlite3 config file: ") +
-                    pragma_string[pos] +
-                    ". Avoid following characters: " +
-                    invalid_characters);
-          }
-        }
-      };
-    throw_on_invalid_character(pragmas, invalid_characters);
+  std::unordered_map<std::string, std::string> pragmas;
+  if (storage_config_uri.empty()) {
+    return pragmas;
   }
 
+  std::vector<std::string> pragma_entries;
+  try {
+    auto key =
+      io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY ? "read" : "write";
+    YAML::Node yaml_file = YAML::LoadFile(storage_config_uri);
+    pragma_entries = yaml_file[key]["pragmas"].as<std::vector<std::string>>();
+  } catch (const YAML::Exception & ex) {
+    throw std::runtime_error(
+            std::string("Exception on parsing sqlite3 config file: ") +
+            ex.what());
+  }
+  // poor developer's sqlinjection prevention ;-)
+  std::string invalid_characters = {"';\""};
+  auto throw_on_invalid_character = [](const auto & pragmas, const auto & invalid_characters) {
+      for (const auto & pragma_string : pragmas) {
+        auto pos = pragma_string.find_first_of(invalid_characters);
+        if (pos != std::string::npos) {
+          throw std::runtime_error(
+                  std::string("Invalid characters in sqlite3 config file: ") +
+                  pragma_string[pos] +
+                  ". Avoid following characters: " +
+                  invalid_characters);
+        }
+      }
+    };
+  throw_on_invalid_character(pragma_entries, invalid_characters);
+
+  // Extract pragma name and map to full pragma statement
+  for (const auto & pragma : pragma_entries) {
+    if (pragma.empty()) {
+      continue;
+    }
+
+    const std::string pragma_assign = "=";
+    const std::string pragma_bracket = "(";
+    auto found_value_assignment = pragma.find(pragma_assign);
+
+    // Extract pragma name. It is the same as statement for read only pragmas
+    auto pragma_name = pragma;
+
+    // Find assignment operator and strip value assignment part
+    if (found_value_assignment == std::string::npos) {
+      found_value_assignment = pragma.find(pragma_bracket);
+    }
+    if (found_value_assignment != std::string::npos) {
+      if (found_value_assignment == 0) {
+        // Incorrect syntax, starts with = or (
+        std::stringstream errmsg;
+        errmsg << "Incorrect storage setting syntax: " << pragma;
+        throw std::runtime_error{errmsg.str()};
+      }
+      // Strip value assignment part, trim trailing whitespaces before = or (
+      pragma_name = pragma.substr(0, found_value_assignment);
+      const std::string whitespaces(" \t");
+      pragma_name = pragma_name.substr(0, pragma_name.find_last_not_of(whitespaces) + 1);
+    }
+
+    auto full_pragma_statement = "PRAGMA " + pragma + ";";
+    pragmas.insert({pragma_name, full_pragma_statement});
+  }
   return pragmas;
 }
 

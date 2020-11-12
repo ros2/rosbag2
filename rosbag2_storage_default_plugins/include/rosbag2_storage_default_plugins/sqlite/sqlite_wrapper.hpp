@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -38,7 +38,7 @@ public:
   SqliteWrapper(
     const std::string & uri,
     rosbag2_storage::storage_interfaces::IOFlag io_flag,
-    std::vector<std::string> && pragmas = {});
+    std::unordered_map<std::string, std::string> && pragmas = {});
   SqliteWrapper();
   ~SqliteWrapper();
 
@@ -50,7 +50,7 @@ public:
 
 private:
   void apply_pragma_settings(
-    std::vector<std::string> & pragmas,
+    std::unordered_map<std::string, std::string> & pragmas,
     rosbag2_storage::storage_interfaces::IOFlag io_flag);
 
   DBPtr db_ptr;
