@@ -14,11 +14,13 @@
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <vector>
+#include <unordered_map>
+#include <utility>
 
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -31,7 +33,9 @@ namespace rosbag2_storage_plugins
 {
 
 SqliteWrapper::SqliteWrapper(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
+  const std::string & uri,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag,
+  std::unordered_map<std::string, std::string> && pragmas)
 : db_ptr(nullptr)
 {
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
@@ -44,8 +48,6 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    // throws an exception if the database is not valid.
-    prepare_statement("PRAGMA schema_version;")->execute_and_reset();
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
@@ -56,10 +58,9 @@ SqliteWrapper::SqliteWrapper(
         rc << "): " << sqlite3_errstr(rc);
       throw SqliteException{errmsg.str()};
     }
-    prepare_statement("PRAGMA journal_mode = WAL;")->execute_and_reset();
-    prepare_statement("PRAGMA synchronous = NORMAL;")->execute_and_reset();
   }
 
+  apply_pragma_settings(pragmas, io_flag);
   sqlite3_extended_result_codes(db_ptr, 1);
 }
 
@@ -73,6 +74,46 @@ SqliteWrapper::~SqliteWrapper()
     ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
       "Could not close open database. Error code: " << rc <<
         " Error message: " << sqlite3_errstr(rc));
+  }
+}
+
+void SqliteWrapper::apply_pragma_settings(
+  std::unordered_map<std::string, std::string> & pragmas,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  // Add default pragmas if not overridden by user setting
+  {
+    typedef std::unordered_map<std::string, std::string> pragmas_map_t;
+    pragmas_map_t default_pragmas = {
+      // Used to check whether db is readable
+      {"schema_version", "PRAGMA schema_version;"}
+    };
+    if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
+      const pragmas_map_t write_default_pragmas = {
+        {"journal_mode", "PRAGMA journal_mode=WAL;"},
+        {"synchronous", "PRAGMA synchronous=NORMAL;"}
+      };
+      default_pragmas.insert(write_default_pragmas.begin(), write_default_pragmas.end());
+    }
+    for (const auto & kv : default_pragmas) {
+      auto key = kv.first;
+      auto default_full_statement = kv.second;
+      // insert default if other value not specified for the same key
+      if (pragmas.find(key) == pragmas.end()) {
+        pragmas.insert(std::make_pair(key, default_full_statement));
+      }
+    }
+  }
+
+  for (auto & kv : pragmas) {
+    // Apply the setting. Note that statements that assign value do not reliably return value
+    auto pragma_name = kv.first;
+    auto pragma_statement = kv.second;
+    prepare_statement(pragma_statement)->execute_and_reset();
+
+    // Check if the value is set, reading the pragma
+    auto statement_for_check = "PRAGMA " + pragma_name + ";";
+    prepare_statement(statement_for_check)->execute_and_reset(true);
   }
 }
 
