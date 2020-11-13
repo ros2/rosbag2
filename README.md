@@ -113,6 +113,29 @@ Currently, the only `compression-format` available is `zstd`. Both the mode and 
 
 It is recommended to use this feature with the splitting options.
 
+#### Recording with a storage configuration
+
+Storage configuration can be specified in a YAML file passed through the `--storage-config-file` option.
+This can be used to optimize performance for specific use-cases.
+
+For the default storage plugin (sqlite3), the file has a following syntax:
+```
+read:
+  pragmas: <list of pragma settings for read-only>
+write:
+  pragmas: <list of pragma settings for read/write>
+```
+Please refer to [documentation of pragmas](https://www.sqlite.org/pragma.html).
+Settings are fully exposed to the user and should be applied with understanding.
+
+An example configuration file could look like this:
+
+```
+write:
+  pragmas: ["journal_mode = MEMORY", "synchronous = OFF", "schema.cache_size = 1000", "schema.page_size = 4096"]
+
+```
+
 ### Replaying data
 
 After recording data, the next logical step is to replay this data:
