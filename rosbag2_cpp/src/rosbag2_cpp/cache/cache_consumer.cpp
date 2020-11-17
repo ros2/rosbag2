@@ -14,21 +14,19 @@
 
 #include <memory>
 
-#include "rosbag2_cpp/writers/cache/cache_consumer.hpp"
+#include "rosbag2_cpp/cache/cache_consumer.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
 
 CacheConsumer::CacheConsumer(
   std::shared_ptr<MessageCache> message_cache,
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage)
+  consume_callback_function_t consume_callback)
 : message_cache_(message_cache),
-  storage_(storage)
+  consume_callback_(consume_callback)
 {
   consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
 }
@@ -40,12 +38,9 @@ CacheConsumer::~CacheConsumer()
 
 void CacheConsumer::close()
 {
-  {
-    std::lock_guard<std::mutex> consumer_lock(consumer_mutex_);
-    ROSBAG2_CPP_LOG_INFO_STREAM(
-      "Writing remaining messages from cache to the bag. It may take a while");
-    is_stop_issued_ = true;
-  }
+  ROSBAG2_CPP_LOG_INFO_STREAM(
+    "Writing remaining messages from cache to the bag. It may take a while");
+  is_stop_issued_ = true;
 
   message_cache_->allow_swap();
 
@@ -54,11 +49,11 @@ void CacheConsumer::close()
   }
 }
 
-void CacheConsumer::change_storage(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage)
+void CacheConsumer::change_consume_callback(
+  CacheConsumer::consume_callback_function_t consume_callback)
 {
   std::lock_guard<std::mutex> consumer_lock(consumer_mutex_);
-  storage_ = storage;
+  consume_callback_ = consume_callback;
   if (!consumer_thread_.joinable()) {
     is_stop_issued_ = false;
     consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
@@ -71,12 +66,12 @@ void CacheConsumer::exec_consuming()
   while (!exit_flag) {
     if (!is_stop_issued_) {
       // wait for any data in producer buffer to swap it with consumer buffer
-      message_cache_->swap_when_allowed();
+      message_cache_->wait_for_swap();
     }
 
     // consume all the data from consumer buffer
     auto consumer_buffer = message_cache_->consumer_buffer();
-    storage_->write(consumer_buffer->data());
+    consume_callback_(consumer_buffer->data());
     consumer_buffer->clear();
 
     {
@@ -87,5 +82,4 @@ void CacheConsumer::exec_consuming()
 }
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp

@@ -45,6 +45,9 @@ find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/rosbag2_cpp/cache/cache_consumer.cpp
+  src/rosbag2_cpp/cache/message_cache_buffer.cpp
+  src/rosbag2_cpp/cache/message_cache.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
@@ -54,9 +57,6 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
-  src/rosbag2_cpp/writers/cache/cache_consumer.cpp
-  src/rosbag2_cpp/writers/cache/message_cache_buffer.cpp
-  src/rosbag2_cpp/writers/cache/message_cache.cpp
   src/rosbag2_cpp/writers/sequential_writer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}

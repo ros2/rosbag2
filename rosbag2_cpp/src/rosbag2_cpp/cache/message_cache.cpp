@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
+#include <string>
 #include <utility>
 
+#include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/logging.hpp"
-#include "rosbag2_cpp/writers/cache/message_cache.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
@@ -43,7 +43,7 @@ bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   allow_swap();
 
   if (!pushed) {
-    elements_dropped_++;
+    messages_dropped_per_topic_[msg->topic_name]++;
   }
   return pushed;
 }
@@ -53,7 +53,7 @@ void MessageCache::allow_swap()
   swap_ready_.notify_one();
 }
 
-void MessageCache::swap_when_allowed()
+void MessageCache::wait_for_swap()
 {
   std::unique_lock<std::mutex> lock(buffer_mutex_);
   swap_ready_.wait(lock);
@@ -67,13 +67,30 @@ std::shared_ptr<MessageCacheBuffer> MessageCache::consumer_buffer()
 
 void MessageCache::log_dropped()
 {
-  if (elements_dropped_ > 0) {
+  uint64_t total_lost = 0;
+  std::string log_text("Cache buffers lost messages per topic: ");
+
+  std::for_each(
+    messages_dropped_per_topic_.begin(),
+    messages_dropped_per_topic_.end(),
+    [&total_lost, &log_text](const auto & e) {
+      uint32_t lost = e.second;
+      if (lost > 0) {
+        log_text += "\n\t" + e.first + ": " + std::to_string(lost);
+        total_lost += lost;
+      }
+    });
+
+  if (total_lost > 0) {
+    log_text += "\nTotal lost: " + std::to_string(total_lost);
+    ROSBAG2_CPP_LOG_WARN_STREAM(log_text);
+  }
+
+  size_t remaining = primary_buffer_->size() + secondary_buffer_->size();
+  if (remaining > 0) {
     ROSBAG2_CPP_LOG_WARN_STREAM(
-      "Cache buffers total lost messages: " <<
-        elements_dropped_ <<
-        " where " <<
-        primary_buffer_->size() + secondary_buffer_->size() <<
-        " left in buffers.");
+      "Cache buffers were unflushed with " << remaining << " remaining messages"
+    );
   }
 }
 
@@ -83,5 +100,4 @@ MessageCache::~MessageCache()
 }
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp

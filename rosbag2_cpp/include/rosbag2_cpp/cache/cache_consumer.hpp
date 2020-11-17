@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__WRITERS__CACHE__CACHE_CONSUMER_HPP_
-#define ROSBAG2_CPP__WRITERS__CACHE__CACHE_CONSUMER_HPP_
+#ifndef ROSBAG2_CPP__CACHE__CACHE_CONSUMER_HPP_
+#define ROSBAG2_CPP__CACHE__CACHE_CONSUMER_HPP_
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
 
-#include "rosbag2_cpp/writers/cache/message_cache.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_cpp/cache/message_cache.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
@@ -33,21 +31,24 @@ namespace cache
 class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
+  typedef std::function<void (const std::vector<MessageCacheBuffer::buffer_element_t> &)>
+    consume_callback_function_t;
+
   CacheConsumer(
     std::shared_ptr<MessageCache> message_cache,
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage);
+    consume_callback_function_t consume_callback);
+
   ~CacheConsumer();
 
   // shut down consumer thread
   void close();
 
-  // Set new storage to write to, restart thread if necessary
-  void change_storage(
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage);
+  // Set new consume callback, restart thread if necessary
+  void change_consume_callback(consume_callback_function_t callback);
 
 private:
   std::shared_ptr<MessageCache> message_cache_;
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  consume_callback_function_t consume_callback_;
 
   // Write buffer data to a storage
   void exec_consuming();
@@ -60,7 +61,6 @@ private:
 };
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_CPP__WRITERS__CACHE__CACHE_CONSUMER_HPP_
+#endif  // ROSBAG2_CPP__CACHE__CACHE_CONSUMER_HPP_

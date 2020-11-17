@@ -15,11 +15,9 @@
 #include <memory>
 #include <vector>
 
-#include "rosbag2_cpp/writers/cache/message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
@@ -29,8 +27,7 @@ MessageCacheBuffer::MessageCacheBuffer(const uint64_t max_cache_size)
 {
 }
 
-bool MessageCacheBuffer::push(
-  const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> & msg)
+bool MessageCacheBuffer::push(buffer_element_t msg)
 {
   bool pushed = false;
   if (!drop_messages_) {
@@ -57,12 +54,10 @@ size_t MessageCacheBuffer::size()
   return buffer_.size();
 }
 
-std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &
-MessageCacheBuffer::data()
+const std::vector<MessageCacheBuffer::buffer_element_t> & MessageCacheBuffer::data()
 {
   return buffer_;
 }
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp

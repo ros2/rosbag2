@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_HPP_
-#define ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_HPP_
+#ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_HPP_
+#define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_HPP_
 
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
-#include "rosbag2_cpp/writers/cache/message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
@@ -37,16 +37,21 @@ class ROSBAG2_CPP_PUBLIC MessageCache
 {
 public:
   MessageCache(const uint64_t & max_buffer_size);
+
   ~MessageCache();
 
   // Push data into primary buffer
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+
   // Summarize dropped/remaining messages
   void log_dropped();
+
   // Notify of data in the primary buffer
   void allow_swap();
+
   // Consumer API: wait until there is data to consume and swap
-  void swap_when_allowed();
+  void wait_for_swap();
+
   // Consumer API: get current buffer to consume
   std::shared_ptr<MessageCacheBuffer> consumer_buffer();
 
@@ -55,8 +60,8 @@ private:
   std::shared_ptr<MessageCacheBuffer> primary_buffer_;
   std::shared_ptr<MessageCacheBuffer> secondary_buffer_;
 
-  // Total number of dropped messages
-  uint32_t elements_dropped_ = {0u};
+  // Dropped messages per topic. Used for printing in alphabetic order
+  std::map<std::string, uint32_t> messages_dropped_per_topic_;
 
   // Double buffers sync
   std::condition_variable swap_ready_;
@@ -64,7 +69,6 @@ private:
 };
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_HPP_
+#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_HPP_

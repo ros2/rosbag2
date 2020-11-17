@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_BUFFER_HPP_
-#define ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -22,8 +23,6 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_cpp
-{
-namespace writers
 {
 namespace cache
 {
@@ -34,11 +33,12 @@ class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
 public:
   explicit MessageCacheBuffer(const uint64_t max_cache_size);
 
+  typedef std::shared_ptr<const rosbag2_storage::SerializedBagMessage> buffer_element_t;
+
   // If buffer size got some space left, we push message regardless of its size, but if
   // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
   // This flag is cleared when buffers are swapped.
-  bool push(
-    const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> & msg);
+  bool push(buffer_element_t msg);
 
   // Clear buffer
   void clear();
@@ -47,17 +47,16 @@ public:
   size_t size();
 
   // Get buffer data
-  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & data();
+  const std::vector<buffer_element_t> & data();
 
 private:
-  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> buffer_;
+  std::vector<buffer_element_t> buffer_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
-  bool drop_messages_ {false};
+  std::atomic_bool drop_messages_ {false};
 };
 
 }  // namespace cache
-}  // namespace writers
 }  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_CPP__WRITERS__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_

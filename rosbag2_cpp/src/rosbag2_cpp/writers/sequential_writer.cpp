@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -37,6 +38,15 @@ namespace
 std::string strip_parent_path(const std::string & relative_path)
 {
   return rcpputils::fs::path(relative_path).filename().string();
+}
+
+rosbag2_cpp::cache::CacheConsumer::consume_callback_function_t make_callback(
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_interface)
+{
+  return [callback_interface = storage_interface](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs) {
+           return callback_interface->write(msgs);
+         };
 }
 }  // namespace
 
@@ -113,11 +123,11 @@ void SequentialWriter::open(
 
   use_cache_ = storage_options.max_cache_size > 0u;
   if (use_cache_) {
-    message_cache_ = std::make_shared<rosbag2_cpp::writers::cache::MessageCache>(
+    message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
       storage_options.max_cache_size);
-    cache_consumer_ = std::make_unique<rosbag2_cpp::writers::cache::CacheConsumer>(
+    cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,
-      storage_);
+      make_callback(storage_));
   }
   init_metadata();
 }
@@ -211,7 +221,7 @@ void SequentialWriter::switch_to_next_storage()
 
   // Set new storage in buffer layer and restart consumer thread
   if (use_cache_) {
-    cache_consumer_->change_storage(storage_);
+    cache_consumer_->change_consume_callback(make_callback(storage_));
   }
 }
 
