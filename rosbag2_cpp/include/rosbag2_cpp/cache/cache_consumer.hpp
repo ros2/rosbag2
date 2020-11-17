@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
 
