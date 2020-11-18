@@ -33,7 +33,7 @@ class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
 public:
   explicit MessageCacheBuffer(const uint64_t max_cache_size);
 
-  typedef std::shared_ptr<const rosbag2_storage::SerializedBagMessage> buffer_element_t;
+  using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
 
   // If buffer size got some space left, we push message regardless of its size, but if
   // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.

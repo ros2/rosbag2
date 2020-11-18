@@ -32,8 +32,8 @@ namespace cache
 class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
-  typedef std::function<void (const std::vector<MessageCacheBuffer::buffer_element_t> &)>
-    consume_callback_function_t;
+  using consume_callback_function_t = std::function<void (const
+      std::vector<MessageCacheBuffer::buffer_element_t> &)>;
 
   CacheConsumer(
     std::shared_ptr<MessageCache> message_cache,

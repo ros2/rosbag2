@@ -38,11 +38,11 @@ CacheConsumer::~CacheConsumer()
 
 void CacheConsumer::close()
 {
-  ROSBAG2_CPP_LOG_INFO_STREAM(
-    "Writing remaining messages from cache to the bag. It may take a while");
+  message_cache_->finalize();
   is_stop_issued_ = true;
 
-  message_cache_->allow_swap();
+  ROSBAG2_CPP_LOG_INFO_STREAM(
+    "Writing remaining messages from cache to the bag. It may take a while");
 
   if (consumer_thread_.joinable()) {
     consumer_thread_.join();
@@ -52,7 +52,6 @@ void CacheConsumer::close()
 void CacheConsumer::change_consume_callback(
   CacheConsumer::consume_callback_function_t consume_callback)
 {
-  std::lock_guard<std::mutex> consumer_lock(consumer_mutex_);
   consume_callback_ = consume_callback;
   if (!consumer_thread_.joinable()) {
     is_stop_issued_ = false;
@@ -63,21 +62,23 @@ void CacheConsumer::change_consume_callback(
 void CacheConsumer::exec_consuming()
 {
   bool exit_flag = false;
+  bool flushing = false;
   while (!exit_flag) {
-    if (!is_stop_issued_) {
-      // wait for any data in producer buffer to swap it with consumer buffer
-      message_cache_->wait_for_swap();
-    }
+    // Invariant at loop start: consumer buffer is empty
+
+    // swap producer buffer with consumer buffer
+    message_cache_->wait_for_buffer();
+
+    // make sure to use consistent callback for each iteration
+    auto callback_for_this_loop = consume_callback_;
 
     // consume all the data from consumer buffer
     auto consumer_buffer = message_cache_->consumer_buffer();
-    consume_callback_(consumer_buffer->data());
+    callback_for_this_loop(consumer_buffer->data());
     consumer_buffer->clear();
 
-    {
-      std::lock_guard<std::mutex> consumer_lock(consumer_mutex_);
-      if (is_stop_issued_) {exit_flag = true;}
-    }
+    if (flushing) {exit_flag = true;}  // this was the final run
+    if (is_stop_issued_) {flushing = true;}  // run one final time to flush
   }
 }
 

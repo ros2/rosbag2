@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
@@ -31,32 +33,52 @@ MessageCache::MessageCache(const uint64_t & max_buffer_size)
   secondary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
 }
 
-bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+void MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   // While pushing, we keep track of inserted and dropped messages as well
   bool pushed = false;
   {
-    std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
-    pushed = primary_buffer_->push(msg);
+    std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+    if (!flushing_) {
+      pushed = primary_buffer_->push(msg);
+    }
   }
-
-  allow_swap();
-
   if (!pushed) {
     messages_dropped_per_topic_[msg->topic_name]++;
   }
-  return pushed;
+
+  notify_buffer_consumer();
 }
 
-void MessageCache::allow_swap()
+void MessageCache::finalize()
 {
-  swap_ready_.notify_one();
+  {
+    std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+    flushing_ = true;
+  }
+  cache_condition_var_.notify_one();
 }
 
-void MessageCache::wait_for_swap()
+void MessageCache::notify_buffer_consumer()
 {
-  std::unique_lock<std::mutex> lock(buffer_mutex_);
-  swap_ready_.wait(lock);
+  {
+    std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+    primary_buffer_can_be_swapped_ = true;
+  }
+  cache_condition_var_.notify_one();
+}
+
+void MessageCache::wait_for_buffer()
+{
+  std::unique_lock<std::mutex> lock(cache_mutex_);
+  if (!flushing_) {
+    // Required condition check to protect against spurious wakeups
+    cache_condition_var_.wait(
+      lock, [this] {
+        return primary_buffer_can_be_swapped_ || flushing_;
+      });
+    primary_buffer_can_be_swapped_ = false;
+  }
   std::swap(primary_buffer_, secondary_buffer_);
 }
 
@@ -65,10 +87,19 @@ std::shared_ptr<MessageCacheBuffer> MessageCache::consumer_buffer()
   return secondary_buffer_;
 }
 
+std::unordered_map<std::string, uint32_t> MessageCache::messages_dropped() const
+{
+  return messages_dropped_per_topic_;
+}
+
 void MessageCache::log_dropped()
 {
   uint64_t total_lost = 0;
   std::string log_text("Cache buffers lost messages per topic: ");
+
+  // worse performance than sorting key vector (neglible), but cleaner
+  std::map<std::string, uint32_t> messages_dropped_per_topic_sorted(
+    messages_dropped_per_topic_.begin(), messages_dropped_per_topic_.end());
 
   std::for_each(
     messages_dropped_per_topic_.begin(),

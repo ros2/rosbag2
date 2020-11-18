@@ -155,18 +155,9 @@ void SequentialCompressionWriter::split_bagfile()
     // Add a check to make sure reset() does not compress the file again if we couldn't load the
     // storage plugin.
     should_compress_last_file_ = false;
-
-    std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
-    throw std::runtime_error{errmsg.str()};
   }
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
-
-  // Re-register all topics since we rolled-over to a new bagfile.
-  for (const auto & topic : topics_names_to_info_) {
-    storage_->create_topic(topic.second.topic_metadata);
-  }
 }
 
 void SequentialCompressionWriter::compress_message(

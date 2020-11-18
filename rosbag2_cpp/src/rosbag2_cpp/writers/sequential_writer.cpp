@@ -19,6 +19,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -41,11 +42,20 @@ std::string strip_parent_path(const std::string & relative_path)
 }
 
 rosbag2_cpp::cache::CacheConsumer::consume_callback_function_t make_callback(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_interface)
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_interface,
+  std::unordered_map<std::string, rosbag2_storage::TopicInformation> & topics_info_map,
+  std::mutex & topics_mutex)
 {
-  return [callback_interface = storage_interface](
+  return [callback_interface = storage_interface, &topics_info_map, &topics_mutex](
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs) {
-           return callback_interface->write(msgs);
+           callback_interface->write(msgs);
+           for (const auto & msg : msgs) {
+             // count messages as successfully written
+             std::lock_guard<std::mutex> lock(topics_mutex);
+             if (topics_info_map.find(msg->topic_name) != topics_info_map.end()) {
+               topics_info_map[msg->topic_name].message_count++;
+             }
+           }
          };
 }
 }  // namespace
@@ -127,22 +137,27 @@ void SequentialWriter::open(
       storage_options.max_cache_size);
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,
-      make_callback(storage_));
+      make_callback(
+        storage_,
+        topics_names_to_info_,
+        topics_info_mutex_));
   }
   init_metadata();
 }
 
 void SequentialWriter::reset()
 {
+  if (use_cache_) {
+    // destructor will flush message cache
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
+
   if (!base_folder_.empty()) {
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  if (use_cache_) {
-    cache_consumer_.reset();
-    message_cache_.reset();
-  }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
@@ -163,10 +178,15 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
     rosbag2_storage::TopicInformation info{};
     info.topic_metadata = topic_with_type;
 
-    const auto insert_res = topics_names_to_info_.insert(
-      std::make_pair(topic_with_type.name, info));
+    bool insert_succeded = false;
+    {
+      std::lock_guard<std::mutex> lock(topics_info_mutex_);
+      const auto insert_res = topics_names_to_info_.insert(
+        std::make_pair(topic_with_type.name, info));
+      insert_succeded = insert_res.second;
+    }
 
-    if (!insert_res.second) {
+    if (!insert_succeded) {
       std::stringstream errmsg;
       errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
 
@@ -183,7 +203,13 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
     throw std::runtime_error("Bag is not open. Call open() before removing.");
   }
 
-  if (topics_names_to_info_.erase(topic_with_type.name) > 0) {
+  bool erased = false;
+  {
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    erased = topics_names_to_info_.erase(topic_with_type.name) > 0;
+  }
+
+  if (erased) {
     storage_->remove_topic(topic_with_type);
   } else {
     std::stringstream errmsg;
@@ -219,16 +245,6 @@ void SequentialWriter::switch_to_next_storage()
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
 
-  // Set new storage in buffer layer and restart consumer thread
-  if (use_cache_) {
-    cache_consumer_->change_consume_callback(make_callback(storage_));
-  }
-}
-
-void SequentialWriter::split_bagfile()
-{
-  switch_to_next_storage();
-
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
@@ -236,12 +252,26 @@ void SequentialWriter::split_bagfile()
     throw std::runtime_error(errmsg.str());
   }
 
-  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
-
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }
+
+  // Set new storage in buffer layer and restart consumer thread
+  if (use_cache_) {
+    cache_consumer_->change_consume_callback(
+      make_callback(
+        storage_,
+        topics_names_to_info_,
+        topics_info_mutex_));
+  }
+}
+
+void SequentialWriter::split_bagfile()
+{
+  switch_to_next_storage();
+
+  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -277,18 +307,13 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   auto converted_msg = get_writeable_message(message);
 
-  bool write_succeeded = false;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
     storage_->write(converted_msg);
-    write_succeeded = true;
+    ++topic_information->message_count;
   } else {
     // Otherwise, use cache buffer
-    write_succeeded = message_cache_->push(converted_msg);
-  }
-
-  if (write_succeeded) {
-    ++topic_information->message_count;
+    message_cache_->push(converted_msg);
   }
 }
 

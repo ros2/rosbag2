@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -118,6 +119,7 @@ protected:
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
 
   void switch_to_next_storage();
+
   std::string format_storage_uri(
     const std::string & base_folder, uint64_t storage_count);
 
@@ -127,8 +129,9 @@ protected:
   // specifies the best-effort maximum duration of a bagfile in seconds.
   std::chrono::seconds max_bagfile_duration;
 
-  // Used to track topic -> message count
+  // Used to track topic -> message count. If cache is present, it is updated by CacheConsumer
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
+  std::mutex topics_info_mutex_;
 
   rosbag2_storage::BagMetadata metadata_;
 
