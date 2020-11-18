@@ -12,7 +12,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>snappy_vendor</depend>
+  <depend>snappy</depend>
   <depend>leveldb</depend>
 
   <export>

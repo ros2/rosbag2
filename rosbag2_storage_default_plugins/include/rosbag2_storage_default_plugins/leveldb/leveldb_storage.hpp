@@ -93,7 +93,7 @@ private:
   {
     bool operator()(
       const rcutils_time_point_value_t & ts1,
-      const rcutils_time_point_value_t & ts2)
+      const rcutils_time_point_value_t & ts2) const
     {
       return ts1 < ts2;
     }
