@@ -2,6 +2,31 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
+* List all storage plugins in plugin xml file (`#554 <https://github.com/ros2/rosbag2/issues/554>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update deprecated qos policy value names (`#548 <https://github.com/ros2/rosbag2/issues/548>`_)
+* Add record test for ros2bag (`#523 <https://github.com/ros2/rosbag2/issues/523>`_)
+* Removed duplicated code in record (`#534 <https://github.com/ros2/rosbag2/issues/534>`_)
+* Change default cache size for sequential_writer to a non zero value (`#533 <https://github.com/ros2/rosbag2/issues/533>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* [ros2bag test_record] Gets rid of time.sleep and move to using command.wait_for_output (`#525 <https://github.com/ros2/rosbag2/issues/525>`_)
+* Add pytest.ini back to ros2bag. (`#492 <https://github.com/ros2/rosbag2/issues/492>`_)
+* performance testing packages (`#442 <https://github.com/ros2/rosbag2/issues/442>`_)
+* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_)
+* catch parent exception (`#472 <https://github.com/ros2/rosbag2/issues/472>`_)
+* add wait for closed file handles on Windows (`#470 <https://github.com/ros2/rosbag2/issues/470>`_)
+* introduce ros2 bag list <plugins> (`#468 <https://github.com/ros2/rosbag2/issues/468>`_)
+* move wait_for_shutdown() call out of the context manager (`#466 <https://github.com/ros2/rosbag2/issues/466>`_)
+* Adding db directory creation to rosbag2_cpp (`#450 <https://github.com/ros2/rosbag2/issues/450>`_)
+* use a single temp dir for the test class (`#462 <https://github.com/ros2/rosbag2/issues/462>`_)
+* Add per-message ZSTD compression (`#418 <https://github.com/ros2/rosbag2/issues/418>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* Add pytest.ini so local tests don't display warning (`#446 <https://github.com/ros2/rosbag2/issues/446>`_)
+* Contributors: Adam Dąbrowski, Barry Xu, Chris Lalancette, Dirk Thomas, Ivan Santiago Paunovic, Jacob Perron, Jaison Titus, Jesse Ikawa, Karsten Knese, Marwan Taher, Michael Jeronimo, P. J. Reed, jhdcs
+
 0.3.2 (2020-06-03)
 ------------------
 * Improve help message for CLI verbs (`#427 <https://github.com/ros2/rosbag2/issues/427>`_)

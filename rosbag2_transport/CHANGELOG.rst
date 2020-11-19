@@ -3,6 +3,19 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* resolve memory leak for serialized message (`#502 <https://github.com/ros2/rosbag2/issues/502>`_)
+* Use shared logic for importing the rosbag2_transport_py library in Python (`#482 <https://github.com/ros2/rosbag2/issues/482>`_)
+* fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_)
+* reenable cppcheck for rosbag2_transport (`#461 <https://github.com/ros2/rosbag2/issues/461>`_)
+* More reliable topic remapping test (`#456 <https://github.com/ros2/rosbag2/issues/456>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* export shared_queues_vendor (`#434 <https://github.com/ros2/rosbag2/issues/434>`_)
+* Contributors: Dirk Thomas, Emerson Knapp, Karsten Knese, Michael Jeronimo, jhdcs
+
 0.3.2 (2020-06-03)
 ------------------
 

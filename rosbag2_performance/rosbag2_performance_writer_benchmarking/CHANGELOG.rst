@@ -1,12 +1,14 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package shared_queues_vendor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package rosbag2_performance_writer_benchmarking
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Forthcoming
 -----------
+* read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
-* Contributors: Michael Jeronimo
+* performance testing packages (`#442 <https://github.com/ros2/rosbag2/issues/442>`_)
+* Contributors: Adam Dąbrowski, Karsten Knese, Michael Jeronimo
 
 0.3.2 (2020-06-03)
 ------------------
@@ -16,8 +18,6 @@ Forthcoming
 
 0.3.0 (2020-05-26)
 ------------------
-* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
-* Contributors: Karsten Knese
 
 0.2.8 (2020-05-18)
 ------------------
@@ -30,14 +30,12 @@ Forthcoming
 
 0.2.5 (2020-04-30)
 ------------------
-* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
-* Contributors: Karsten Knese
 
-0.2.4 (2019-11-18)
-------------------
+0.2.4 (2019-11-18 17:51)
+------------------------
 
-0.2.3 (2019-11-18)
-------------------
+0.2.3 (2019-11-18 13:55)
+------------------------
 
 0.2.2 (2019-11-13)
 ------------------
@@ -62,15 +60,12 @@ Forthcoming
 
 0.0.4 (2018-12-19)
 ------------------
-* 0.0.3
-* Contributors: Karsten Knese
+
+0.0.3 (2018-12-14)
+------------------
 
 0.0.2 (2018-12-12)
 ------------------
-* update maintainer email
-* Contributors: Karsten Knese
 
 0.0.1 (2018-12-11)
 ------------------
-* Add correct timing behaviour for rosbag play (`#32 <https://github.com/ros2/rosbag2/issues/32>`_)
-* Contributors: Martin Idel
