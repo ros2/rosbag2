@@ -59,6 +59,11 @@ void MessageCache::finalize()
   cache_condition_var_.notify_one();
 }
 
+void MessageCache::notify_flushing_done()
+{
+  flushing_ = false;
+}
+
 void MessageCache::notify_buffer_consumer()
 {
   {

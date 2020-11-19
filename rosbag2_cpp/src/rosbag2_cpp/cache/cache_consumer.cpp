@@ -47,6 +47,7 @@ void CacheConsumer::close()
   if (consumer_thread_.joinable()) {
     consumer_thread_.join();
   }
+  message_cache_->notify_flushing_done();
 }
 
 void CacheConsumer::change_consume_callback(

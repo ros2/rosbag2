@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_HPP_
 #define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_HPP_
 
+#include <atomic>
 #include <condition_variable>
 #include <unordered_map>
 #include <memory>
@@ -52,6 +53,9 @@ public:
   // Set the cache to consume-only mode for final buffer flush before closing
   void finalize();
 
+  // Notify that flushing is complete
+  void notify_flushing_done();
+
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
   * The caller thread (consumer thread) will sleep on a conditional variable
@@ -81,7 +85,7 @@ private:
   std::mutex cache_mutex_;
 
   // Cache is no longer accepting messages and is in the process of flushing
-  bool flushing_ {false};
+  std::atomic_bool flushing_ {false};
 };
 
 }  // namespace cache
