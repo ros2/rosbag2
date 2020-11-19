@@ -3,8 +3,8 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.4.0 (2020-11-19)
+------------------
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
 * Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)

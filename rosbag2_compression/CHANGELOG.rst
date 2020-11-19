@@ -2,8 +2,8 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2020-11-19)
+------------------
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
 * Do not expect empty StorageOptions URI to work in CompressionWriterTest (`#526 <https://github.com/ros2/rosbag2/issues/526>`_)

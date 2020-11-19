@@ -3,8 +3,8 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.4.0 (2020-11-19)
+------------------
 * correct master build (`#552 <https://github.com/ros2/rosbag2/issues/552>`_)
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_)

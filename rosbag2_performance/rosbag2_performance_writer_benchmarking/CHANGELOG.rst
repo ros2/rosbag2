@@ -2,8 +2,8 @@
 Changelog for package rosbag2_performance_writer_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2020-11-19)
+------------------
 * read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)

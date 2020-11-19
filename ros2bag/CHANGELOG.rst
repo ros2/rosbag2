@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2020-11-19)
+------------------
 * read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
 * List all storage plugins in plugin xml file (`#554 <https://github.com/ros2/rosbag2/issues/554>`_)
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
