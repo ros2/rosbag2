@@ -19,6 +19,14 @@ Changelog for package rosbag2
 0.3.3 (2020-06-23)
 ------------------
 
+0.4.0 (2020-11-19)
+------------------
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* AMENT_IGNORE rosbag2_py for now (`#509 <https://github.com/ros2/rosbag2/issues/509>`_)
+* rosbag2_py reader and writer (`#308 <https://github.com/ros2/rosbag2/issues/308>`_)
+* Contributors: Karsten Knese, Mabel Zhang, Michael Jeronimo
+
 0.3.2 (2020-06-03)
 ------------------
 
