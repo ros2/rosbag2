@@ -27,7 +27,7 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(const uint64_t & max_buffer_size)
+MessageCache::MessageCache(uint64_t max_buffer_size)
 {
   primary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
   secondary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);

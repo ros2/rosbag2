@@ -53,7 +53,7 @@ namespace cache
 class ROSBAG2_CPP_PUBLIC MessageCache
 {
 public:
-  MessageCache(const uint64_t & max_buffer_size);
+  MessageCache(uint64_t max_buffer_size);
 
   ~MessageCache();
 
