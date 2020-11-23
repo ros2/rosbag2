@@ -32,7 +32,8 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-/* This class is responsible for implementing message cache, using two cache
+/**
+* This class is responsible for implementing message cache, using two cache
 * buffers and providing synchronization API for producer-consumer pattern.
 *
 * Double buffering is a part of producer-consumer pattern and optimizes for
@@ -53,23 +54,23 @@ namespace cache
 class ROSBAG2_CPP_PUBLIC MessageCache
 {
 public:
-  MessageCache(uint64_t max_buffer_size);
+  explicit MessageCache(uint64_t max_buffer_size);
 
   ~MessageCache();
 
-  // Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
+  /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
-  // Summarize dropped/remaining messages
+  /// Summarize dropped/remaining messages
   void log_dropped();
 
-  // Producer API: notify consumer to wake-up (primary buffer has data)
+  /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_buffer_consumer();
 
-  // Set the cache to consume-only mode for final buffer flush before closing
+  /// Set the cache to consume-only mode for final buffer flush before closing
   void finalize();
 
-  // Notify that flushing is complete
+  /// Notify that flushing is complete
   void notify_flushing_done();
 
   /**
@@ -81,26 +82,26 @@ public:
   **/
   void wait_for_buffer();
 
-  // Consumer API: get current buffer to consume
+  /// Consumer API: get current buffer to consume
   std::shared_ptr<MessageCacheBuffer> consumer_buffer();
 
-  // Exposes counts of messages dropped per topic
+  /// Exposes counts of messages dropped per topic
   std::unordered_map<std::string, uint32_t> messages_dropped() const;
 
 private:
-  // Double buffers
+  /// Double buffers
   std::shared_ptr<MessageCacheBuffer> primary_buffer_;
   std::shared_ptr<MessageCacheBuffer> secondary_buffer_;
 
-  // Dropped messages per topic. Used for printing in alphabetic order
+  /// Dropped messages per topic. Used for printing in alphabetic order
   std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
 
-  // Double buffers sync (following cpp core guidelines for condition variables)
+  /// Double buffers sync (following cpp core guidelines for condition variables)
   bool primary_buffer_can_be_swapped_ {false};
   std::condition_variable cache_condition_var_;
   std::mutex cache_mutex_;
 
-  // Cache is no longer accepting messages and is in the process of flushing
+  /// Cache is no longer accepting messages and is in the process of flushing
   std::atomic_bool flushing_ {false};
 };
 

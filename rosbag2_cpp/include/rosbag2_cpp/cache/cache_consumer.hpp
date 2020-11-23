@@ -28,7 +28,8 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-/* This class is responsible for consuming the cache using provided fuction.
+/**
+* This class is responsible for consuming the cache using provided fuction.
 * It can work with any callback conforming to the consume_callback_function_t
 * signature, e.g. a storage write function. Consuming and thus the callback are
 * called in a separate thread.
@@ -60,20 +61,20 @@ public:
 
   ~CacheConsumer();
 
-  // shut down consumer thread
+  /// shut down the consumer thread
   void close();
 
-  // Set new consume callback, restart thread if necessary
+  /// Set new consume callback, restart thread if necessary
   void change_consume_callback(consume_callback_function_t callback);
 
 private:
   std::shared_ptr<MessageCache> message_cache_;
   consume_callback_function_t consume_callback_;
 
-  // Write buffer data to a storage
+  /// Write buffer data to a storage
   void exec_consuming();
 
-  // Consumer thread shutdown sync
+  /// Consumer thread shutdown sync
   std::atomic_bool is_stop_issued_ {false};
   std::mutex consumer_mutex_;
 

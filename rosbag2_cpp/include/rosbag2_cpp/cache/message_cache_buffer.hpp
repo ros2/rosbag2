@@ -26,7 +26,8 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-/* This class implements a single buffer for message cache. The buffer is byte size
+/**
+* This class implements a single buffer for message cache. The buffer is byte size
 * limited and won't accept any messages when current buffer byte size is already
 * over the limit set by max_cache_size. This means that buffer can at times use
 * more memory than max_cache_size, but never by more than a single message. When
@@ -42,18 +43,20 @@ public:
 
   using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
 
-  // If buffer size got some space left, we push message regardless of its size, but if
-  // this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-  // This flag is cleared when buffers are swapped.
+  /**
+  * If buffer size got some space left, we push message regardless of its size, but if
+  * this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
+  * This flag is cleared when buffers are swapped.
+  */
   bool push(buffer_element_t msg);
 
-  // Clear buffer
+  /// Clear buffer
   void clear();
 
-  // Get number of elements in the buffer
+  /// Get number of elements in the buffer
   size_t size();
 
-  // Get buffer data
+  /// Get buffer data
   const std::vector<buffer_element_t> & data();
 
 private:
