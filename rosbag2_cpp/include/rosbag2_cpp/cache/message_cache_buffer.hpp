@@ -26,8 +26,15 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-// This class implements a single buffer for message cache. Note that it could
-// be reused as a template with any class that has ->byte_size() - like interface
+/* This class implements a single buffer for message cache. The buffer is byte size
+* limited and won't accept any messages when current buffer byte size is already
+* over the limit set by max_cache_size. This means that buffer can at times use
+* more memory than max_cache_size, but never by more than a single message. When
+* the buffer is full, the next incoming message is dropped.
+*
+* Note that it could be reused as a template with any class that has
+* ->byte_size() - like interface
+*/
 class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
 {
 public:

@@ -32,8 +32,24 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-// This class is responsible for implementing message cache, using cache buffers
-// and providing synchronization API for producer-consumer pattern
+/* This class is responsible for implementing message cache, using two cache
+* buffers and providing synchronization API for producer-consumer pattern.
+*
+* Double buffering is a part of producer-consumer pattern and optimizes for
+* the consumer performance (which can be a bottleneck, e.g. disk writes).
+*
+* Two instances of MessageCacheBuffer are used, one for producer and one for
+* the consumer. Buffers are switched through wait_for_buffer function, which
+* involves synchronization and a simple pointer switch.
+*
+* The cache can enter a flushing state, intended as a finalization state,
+* where all the remaining data is going to be processed: no new messages are
+* accepted and buffer switching can be done unconditionally on consumer demand.
+*
+* The cache holds infomation about dropped messages (per topic). These are
+* messages that were pushed to the cache when it was full. Such situation signals
+* performance issues, most likely with the CacheConsumer consumer callback.
+*/
 class ROSBAG2_CPP_PUBLIC MessageCache
 {
 public:

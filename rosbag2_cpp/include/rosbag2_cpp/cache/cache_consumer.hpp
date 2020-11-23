@@ -28,7 +28,26 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-// This class is responsible for constantly writing the cache to storage
+/* This class is responsible for consuming the cache using provided fuction.
+* It can work with any callback conforming to the consume_callback_function_t
+* signature, e.g. a storage write function. Consuming and thus the callback are
+* called in a separate thread.
+*
+* Since the consuming callback likely involves disk operations, the main motivation
+* for design is to make sure that consumer is busy anytime there is any work.
+* This is realized through conditional variable and greedy buffer switching.
+*
+* The consumer uses MessageCache and waits for consumer buffer to be ready. This
+* will happen as soon as that there are any messages put into producer buffer -
+* a switch of buffer pointers will result in these messages being available for
+* consumption. The consumer then proceeds to process the entire buffer in one go.
+* While this is ongoing, the producer buffer is being filled with new messages.
+*
+* For SQLite implementation of storage, consumer callback will write consumer buffer
+* in each loop iteration as a separate transaction. This results in a balancing
+* mechanism for high-performance cases, where transaction size can be increased
+* dynamically as previous, smaller transactions introduce delays in loop iteration.
+*/
 class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
