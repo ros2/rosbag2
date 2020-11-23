@@ -39,6 +39,11 @@ public:
   // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
 
+  // Indicates whether to use more robust storage settings instead of optimized.
+  // When true, causes performace hit on writing, but increases resistance to
+  // bagfile data corruption in case of crashes
+  bool resilient_storage_writing = false;
+
   // Storage specific configuration file.
   // Defaults to empty string.
   std::string storage_config_uri = "";

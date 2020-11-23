@@ -91,6 +91,13 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         parser.add_argument(
+            '--resilient-storage-writing', action='store_true',
+            help='Indicate preference for avoiding data corruption in case of crashes, '
+                 'at the cost of performance. Setting this flag disables '
+                 'optimization settings for storage. When set, this flag can override '
+                 'settings in config passed with --storage-config-file.'
+        )
+        parser.add_argument(
             '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations. '
                  'For the default storage plugin settings are specified through syntax:'
@@ -154,6 +161,7 @@ class RecordVerb(VerbExtension):
             topics=args.topics,
             include_hidden_topics=args.include_hidden_topics,
             qos_profile_overrides=qos_profile_overrides,
+            resilient_storage_writing=args.resilient_storage_writing,
             storage_config_file=storage_config_file)
 
         if os.path.isdir(uri) and not os.listdir(uri):

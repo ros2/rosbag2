@@ -31,8 +31,9 @@
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_pragmas.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -142,6 +143,14 @@ inline std::unordered_map<std::string, std::string> parse_pragmas(
   return pragmas;
 }
 
+void apply_resilient_storage_settings(std::unordered_map<std::string, std::string> & pragmas)
+{
+  auto overriding_pragmas = rosbag2_storage_plugins::SqlitePragmas::robust_writing_pragmas();
+  for (const auto & kv : overriding_pragmas) {
+    pragmas[kv.first] = kv.second;
+  }
+}
+
 constexpr const auto FILE_EXTENSION = ".db3";
 
 // Minimum size of a sqlite3 database file in bytes (84 kiB).
@@ -162,6 +171,9 @@ void SqliteStorage::open(
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
+  if (storage_options.resilient_storage_writing && is_read_write(io_flag)) {
+    apply_resilient_storage_settings(pragmas);
+  }
 
   if (is_read_write(io_flag)) {
     relative_path_ = storage_options.uri + FILE_EXTENSION;
