@@ -24,6 +24,14 @@
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2_cpp
 {
 namespace cache
@@ -83,5 +91,9 @@ private:
 
 }  // namespace cache
 }  // namespace rosbag2_cpp
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_CPP__CACHE__CACHE_CONSUMER_HPP_

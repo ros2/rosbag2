@@ -71,8 +71,8 @@ public:
 TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
   const uint32_t message_count = 100;
   uint64_t size_bytes_so_far = 0;
-  uint32_t should_be_dropped_count = 0;
-  uint32_t consumed_message_count {0};
+  size_t should_be_dropped_count = 0;
+  size_t consumed_message_count {0};
 
   auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(
     cache_size_);
@@ -146,7 +146,7 @@ TEST_F(MessageCacheTest, message_cache_changing_callback) {
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(20ms);
 
-  uint32_t sum_consumed = callback1_counter + callback2_counter;
+  size_t sum_consumed = callback1_counter + callback2_counter;
 
   EXPECT_EQ(sum_consumed, message_count);
 }
