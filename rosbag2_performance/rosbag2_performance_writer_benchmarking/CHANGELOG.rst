@@ -1,24 +1,23 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package zstd_vendor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package rosbag2_performance_writer_benchmarking
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.4.0 (2020-11-19)
 ------------------
+* read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
-* Contributors: Michael Jeronimo
+* performance testing packages (`#442 <https://github.com/ros2/rosbag2/issues/442>`_)
+* Contributors: Adam Dąbrowski, Karsten Knese, Michael Jeronimo
 
 0.3.2 (2020-06-03)
 ------------------
 
 0.3.1 (2020-06-01)
 ------------------
-* Shared publisher handle (`#420 <https://github.com/ros2/rosbag2/issues/420>`_)
-* Contributors: Chris Lalancette
 
 0.3.0 (2020-05-26)
 ------------------
-* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
-* Contributors: Karsten Knese
 
 0.2.8 (2020-05-18)
 ------------------
@@ -31,8 +30,6 @@ Changelog for package zstd_vendor
 
 0.2.5 (2020-04-30)
 ------------------
-* [Compression - 5] Add Zstd file compression (`#220 <https://github.com/ros2/rosbag2/issues/220>`_)
-* Contributors: Anas Abou Allaban, Zachary Michaels
 
 0.2.4 (2019-11-18 17:51)
 ------------------------

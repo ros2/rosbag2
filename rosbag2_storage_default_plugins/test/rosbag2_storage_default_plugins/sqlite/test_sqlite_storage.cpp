@@ -311,3 +311,25 @@ TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
     rosbag2_storage::storage_interfaces::IOFlag::APPEND);
   EXPECT_EQ(append_storage->get_relative_file_path(), storage_filename);
 }
+
+TEST_F(StorageTestFixture, loads_config_file) {
+  // Check that storage opens with correct sqlite config file
+  const auto valid_yaml = "write:\n  pragmas: [\"journal_mode = MEMORY\"]\n";
+  const auto writable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  EXPECT_NO_THROW(
+    writable_storage->open(
+      make_storage_options_with_config(valid_yaml, kPluginID),
+      rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE));
+}
+
+TEST_F(StorageTestFixture, throws_on_invalid_pragma_in_config_file) {
+  // Check that storage throws on invalid pragma statement in sqlite config
+  const auto invalid_yaml = "write:\n  pragmas: [\"unrecognized_pragma_name = 2\"]\n";
+  const auto writable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  EXPECT_THROW(
+    writable_storage->open(
+      make_storage_options_with_config(invalid_yaml, kPluginID),
+      rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE),
+    std::runtime_error);
+}

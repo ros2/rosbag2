@@ -102,7 +102,11 @@ class RecordVerb(VerbExtension):
         )
         parser.add_argument(
             '--storage-config-file', type=FileType('r'),
-            help='Path to a yaml file defining storage specific configurations.')
+            help='Path to a yaml file defining storage specific configurations. '
+                 'For the default storage plugin settings are specified through syntax:'
+                 'write:'
+                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
+                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102

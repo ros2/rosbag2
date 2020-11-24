@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_storage_default_plugins</name>
-  <version>0.3.2</version>
+  <version>0.4.0</version>
   <description>ROSBag2 SQLite3 storage plugin</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
@@ -15,6 +15,7 @@
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
   <depend>sqlite3_vendor</depend>
+  <depend>yaml_cpp_vendor</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

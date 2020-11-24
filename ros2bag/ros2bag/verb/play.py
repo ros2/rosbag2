@@ -58,7 +58,12 @@ class PlayVerb(VerbExtension):
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
         parser.add_argument(
             '--storage-config-file', type=FileType('r'),
-            help='Path to a yaml file defining storage specific configurations.')
+            help='Path to a yaml file defining storage specific configurations. '
+                 'For the default storage plugin settings are specified through syntax:'
+                 'read:'
+                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
+                 'Note that applicable settings are limited to read-only for ros2 bag play.'
+                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
