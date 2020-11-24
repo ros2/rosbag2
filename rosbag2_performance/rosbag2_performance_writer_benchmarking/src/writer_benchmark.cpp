@@ -24,6 +24,8 @@
 
 #include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
 
+#include "yaml-cpp/yaml.h"
+
 using namespace std::chrono_literals;
 
 WriterBenchmark::WriterBenchmark(const std::string & name)
@@ -34,9 +36,11 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
   this->declare_parameter("max_count", 1000);
   this->declare_parameter("size", 1000000);
   this->declare_parameter("instances", 1);
-  this->declare_parameter("max_cache_size", 1);
+  this->declare_parameter("max_cache_size", 10000000);
+  this->declare_parameter("max_bag_size", 0);
   this->declare_parameter("db_folder", default_bag_folder);
   this->declare_parameter("results_file", default_bag_folder + "/results.csv");
+  this->declare_parameter("storage_config_file", "");
 
   this->get_parameter("frequency", config_.frequency);
   if (config_.frequency == 0) {
@@ -45,8 +49,12 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
     return;
   }
 
-  this->get_parameter("max_cache_size", max_cache_size_);
-  this->get_parameter("db_folder", db_folder_);
+  storage_options_.storage_id = "sqlite3";
+  this->get_parameter("max_cache_size", storage_options_.max_cache_size);
+  this->get_parameter("db_folder", storage_options_.uri);
+  this->get_parameter("storage_config_file", storage_options_.storage_config_uri);
+  this->get_parameter("max_bag_size", storage_options_.max_bagfile_size);
+
   this->get_parameter("results_file", results_file_);
   this->get_parameter("max_count", config_.max_count);
   this->get_parameter("size", config_.message_size);
@@ -58,7 +66,7 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
 
 void WriterBenchmark::start_benchmark()
 {
-  RCLCPP_INFO(get_logger(), "Starting. A dot is a write, an X is a miss");
+  RCLCPP_INFO(get_logger(), "Starting");
   start_producers();
   while (rclcpp::ok()) {
     int count = 0;
@@ -99,7 +107,6 @@ void WriterBenchmark::start_benchmark()
         } catch (const std::runtime_error & e) {
           RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
         }
-        std::cerr << "." << std::flush;
         ++count;
       }
     }
@@ -114,23 +121,36 @@ void WriterBenchmark::start_benchmark()
     prod_thread.join();
   }
 
-  unsigned int total_missed_messages = 0;
-  for (const auto & queue : queues_) {
-    total_missed_messages += queue->get_missed_elements_count();
-  }
-  write_results(total_missed_messages);
+  writer_->reset();
+  write_results();
 }
 
-void WriterBenchmark::write_results(const unsigned int & total_missed) const
+int WriterBenchmark::get_message_count_from_metadata() const
 {
+  int total_recorded_count = 0;
+  std::string metadata_filename(rosbag2_storage::MetadataIo::metadata_filename);
+  std::string metadata_path = storage_options_.uri + "/" + metadata_filename;
+  try {
+    YAML::Node yaml_file = YAML::LoadFile(metadata_path);
+    total_recorded_count = yaml_file["rosbag2_bagfile_information"]["message_count"].as<int>();
+  } catch (const YAML::Exception & ex) {
+    throw std::runtime_error(
+            std::string("Exception on parsing metadata file to get total message count: ") +
+            metadata_path + " " +
+            ex.what());
+  }
+  return total_recorded_count;
+}
+
+void WriterBenchmark::write_results() const
+{
+  int total_recorded_count = get_message_count_from_metadata();
   auto total_messages_sent = config_.max_count * producers_.size();
-  float percentage_recorded = 100.0f - static_cast<float>(total_missed * 100.0f) /
+  float percentage_recorded = static_cast<float>(total_recorded_count * 100.0f) /
     total_messages_sent;
 
-  RCLCPP_INFO(get_logger(), "\nWriterBenchmark terminating");
-  RCLCPP_INFO_STREAM(get_logger(), "Total missed messages: " << total_missed);
   RCLCPP_INFO_STREAM(
-    get_logger(), "Percentage of all message that was successfully recorded: " <<
+    get_logger(), "Percentage of all messages that was successfully recorded: " <<
       percentage_recorded);
 
   bool new_file = false;
@@ -151,18 +171,17 @@ void WriterBenchmark::write_results(const unsigned int & total_missed) const
 
   if (new_file) {
     output_file << "instances frequency message_size cache_size total_messages_sent ";
-    output_file << "total_messages_missed percentage_recorded\n";
+    output_file << "percentage_recorded\n";
   }
 
   // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
   output_file << instances_ << " ";
   output_file << config_.frequency << " ";
   output_file << config_.message_size << " ";
-  output_file << max_cache_size_ << " ";
+  output_file << storage_options_.max_cache_size << " ";
   output_file << total_messages_sent << " ";
 
   // results of the test. Use std::setprecision if preferred
-  output_file << total_missed << " ";
   output_file << percentage_recorded << std::endl;
 }
 
@@ -172,7 +191,8 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
     get_logger(), "\nWriterBenchmark: creating " << instances_ <<
       " message producers with frequency " << config.frequency <<
       " and message size in bytes " << config.message_size <<
-      ". Cache is " << max_cache_size_ << ". Each will send " << config.max_count <<
+      ". Cache is " << storage_options_.max_cache_size <<
+      ". Each will send " << config.max_count <<
       " messages before terminating");
   const unsigned int queue_max_size = 10;
   for (unsigned int i = 0; i < instances_; ++i) {
@@ -188,15 +208,10 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
 void WriterBenchmark::create_writer()
 {
   writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
-  rosbag2_storage::StorageOptions storage_options{};
-  storage_options.uri = db_folder_;
-  storage_options.storage_id = "sqlite3";
-  storage_options.max_bagfile_size = 0;
-  storage_options.max_cache_size = max_cache_size_;
 
   // TODO(adamdbrw) generalize if converters are to be included in benchmarks
   std::string serialization_format = rmw_get_serialization_format();
-  writer_->open(storage_options, {serialization_format, serialization_format});
+  writer_->open(storage_options_, {serialization_format, serialization_format});
 
   for (const auto & queue : queues_) {
     rosbag2_storage::TopicMetadata topic;

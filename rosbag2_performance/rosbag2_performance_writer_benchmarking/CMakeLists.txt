@@ -19,6 +19,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(rosbag2_storage REQUIRED)
   find_package(rmw REQUIRED)
   find_package(std_msgs REQUIRED)
+  find_package(yaml_cpp_vendor REQUIRED)
 
   add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
   target_include_directories(writer_benchmark
@@ -30,6 +31,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     rclcpp
     std_msgs
     rosbag2_cpp
+    yaml_cpp_vendor
   )
 
   install(TARGETS writer_benchmark
