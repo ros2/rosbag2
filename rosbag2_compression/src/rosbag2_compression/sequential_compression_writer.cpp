@@ -37,20 +37,6 @@
 namespace rosbag2_compression
 {
 
-namespace
-{
-std::string format_storage_uri(const std::string & base_folder, uint64_t storage_count)
-{
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
-  std::stringstream storage_file_name;
-  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
-
-  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
-}
-}  // namespace
-
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
 : SequentialWriter(),
@@ -123,6 +109,10 @@ void SequentialCompressionWriter::reset()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
+  if (use_cache_) {
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
 }
@@ -155,11 +145,7 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  storage_options_.uri = format_storage_uri(
-    base_folder_,
-    metadata_.relative_file_paths.size());
-
-  storage_ = storage_factory_->open_read_write(storage_options_);
+  switch_to_next_storage();
 
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();
@@ -169,18 +155,9 @@ void SequentialCompressionWriter::split_bagfile()
     // Add a check to make sure reset() does not compress the file again if we couldn't load the
     // storage plugin.
     should_compress_last_file_ = false;
-
-    std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
-    throw std::runtime_error{errmsg.str()};
   }
 
   metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
-
-  // Re-register all topics since we rolled-over to a new bagfile.
-  for (const auto & topic : topics_names_to_info_) {
-    storage_->create_topic(topic.second.topic_metadata);
-  }
 }
 
 void SequentialCompressionWriter::compress_message(
