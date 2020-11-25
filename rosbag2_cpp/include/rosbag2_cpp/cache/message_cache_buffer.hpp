@@ -71,6 +71,8 @@ private:
   std::vector<buffer_element_t> buffer_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
+
+  /// set when buffer is full and should drop messages instead of inserting them
   std::atomic_bool drop_messages_ {false};
 };
 
