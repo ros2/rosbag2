@@ -51,7 +51,7 @@ uint32_t sum_up(const std::unordered_map<std::string, uint32_t> & map)
     std::begin(map),
     std::end(map),
     0,
-    [](const std::size_t previous, const auto & element) {
+    [](const uint32_t previous, const auto & element) {
       return previous + element.second;
     }
   );
