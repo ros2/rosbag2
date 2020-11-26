@@ -83,6 +83,8 @@ public:
 
   void reset_filter() override;
 
+  std::string get_storage_setting(const std::string & key);
+
 private:
   void initialize();
   void prepare_for_writing();

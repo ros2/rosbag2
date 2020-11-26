@@ -93,9 +93,9 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--resilient-storage-writing', action='store_true',
             help='Indicate preference for avoiding data corruption in case of crashes, '
-                 'at the cost of performance. Setting this flag disables '
-                 'optimization settings for storage. When set, this flag can override '
-                 'settings in config passed with --storage-config-file.'
+                 'at the cost of performance. Setting this flag disables optimization '
+                 'settings for storage (the defaut). When set, this flag will override '
+                 'corresponding settings in the config passed with --storage-config-file.'
         )
         parser.add_argument(
             '--storage-config-file', type=FileType('r'),

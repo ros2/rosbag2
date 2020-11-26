@@ -322,6 +322,28 @@ TEST_F(StorageTestFixture, loads_config_file) {
       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE));
 }
 
+TEST_F(StorageTestFixture, resilient_storage_writing_applies_over_configuration) {
+  // Check that "resilient" values are applied
+  const auto journal_setting = "\"journal_mode = some_value\"";
+  const auto synchronous_setting = "\"synchronous = another_value\"";
+  const auto not_overriden_setting = "\"cache_size = 1337\"";
+  const auto to_be_overriden_yaml = std::string("write:\n  pragmas: [") +
+    journal_setting + ", " + synchronous_setting + ", " + not_overriden_setting + "]\n";
+  const auto writable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  auto options = make_storage_options_with_config(to_be_overriden_yaml, kPluginID);
+  options.resilient_storage_writing = true;
+  writable_storage->open(options, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
+
+  // resilient_storage_writing should replace "some_value" with "wal
+  EXPECT_EQ(writable_storage->get_storage_setting("journal_mode"), "wal");
+
+  // resilient_storage_writing should replace "another_value" with "2"
+  EXPECT_EQ(writable_storage->get_storage_setting("synchronous"), "1");
+
+  // resilient_storage_writing should not touch schema.cache_size value
+  EXPECT_EQ(writable_storage->get_storage_setting("cache_size"), "1337");
+}
+
 TEST_F(StorageTestFixture, throws_on_invalid_pragma_in_config_file) {
   // Check that storage throws on invalid pragma statement in sqlite config
   const auto invalid_yaml = "write:\n  pragmas: [\"unrecognized_pragma_name = 2\"]\n";

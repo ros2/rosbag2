@@ -471,6 +471,11 @@ void SqliteStorage::reset_filter()
   storage_filter_ = rosbag2_storage::StorageFilter();
 }
 
+std::string SqliteStorage::get_storage_setting(const std::string & key)
+{
+  return database_->query_pragma_value(key);
+}
+
 }  // namespace rosbag2_storage_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT

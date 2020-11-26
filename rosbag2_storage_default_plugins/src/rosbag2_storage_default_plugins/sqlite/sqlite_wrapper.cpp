@@ -111,6 +111,13 @@ void SqliteWrapper::apply_pragma_settings(
   }
 }
 
+std::string SqliteWrapper::query_pragma_value(const std::string & key)
+{
+  auto query = "PRAGMA " + key + ";";
+  auto pragma_value = prepare_statement(query)->execute_query<std::string>().get_single_line();
+  return std::get<0>(pragma_value);
+}
+
 SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
 {
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
