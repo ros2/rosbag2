@@ -150,7 +150,7 @@ void WriterBenchmark::write_results() const
     total_messages_sent;
 
   RCLCPP_INFO_STREAM(
-    get_logger(), "Percentage of all messages that was successfully recorded: " <<
+    get_logger(), "Percentage of all messages that were successfully recorded: " <<
       percentage_recorded);
 
   bool new_file = false;
