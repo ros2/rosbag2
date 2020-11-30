@@ -337,7 +337,7 @@ TEST_F(StorageTestFixture, resilient_storage_writing_applies_over_configuration)
   // resilient_storage_writing should replace "some_value" with "wal
   EXPECT_EQ(writable_storage->get_storage_setting("journal_mode"), "wal");
 
-  // resilient_storage_writing should replace "another_value" with "2"
+  // resilient_storage_writing should replace "another_value" with "1"
   EXPECT_EQ(writable_storage->get_storage_setting("synchronous"), "1");
 
   // resilient_storage_writing should not touch schema.cache_size value
