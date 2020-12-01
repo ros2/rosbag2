@@ -11,6 +11,6 @@
     type="rosbag2_storage_plugins::LeveldbStorage"
     base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
   >
-    <description>Plugin to write to leveldb</description>
+    <description>Plugin to support leveldb</description>
   </class>
 </library>

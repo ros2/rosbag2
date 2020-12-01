@@ -79,7 +79,7 @@ void LeveldbStorage::open(
     // APPEND and READ_ONLY require the DB to exist
     if (!path.exists()) {
       throw std::runtime_error(
-              "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
+              "Failed to read from bag: Directory '" + relative_path_ + "' does not exist!");
     }
   }
 
@@ -245,7 +245,6 @@ void LeveldbStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
     std::replace(dir_name.begin(), dir_name.end(), '/', '_');
     std::shared_ptr<class LeveldbWrapper> ldb_wrapper =
       std::make_shared<class LeveldbWrapper>(relative_path_, topic.name, dir_name, true);
-
 
     ldb_wrapper->init_ldb();
     ldb_wrapper->write_metadata(topic);

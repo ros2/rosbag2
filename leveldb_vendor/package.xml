@@ -5,6 +5,7 @@
   <version>0.0.1</version>
   <description>leveldb vendor package, providing a dependency for leveldb.</description>
   <maintainer email="barry.xu@sony.com">Barry Xu</maintainer>
+  <maintainer email="tomoya.fujita@sony.com">Tomoya Fujita</maintainer>
   <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
   <license>BSD</license>  <!-- leveldb is BSD -->
 

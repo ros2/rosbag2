@@ -128,7 +128,7 @@ void LeveldbWrapper::open_leveldb(const std::string & path, leveldb::DB ** ldb, 
   }
 
   // Disable compression function in leveldb
-  // options.compression = leveldb::kNoCompression;
+  options.compression = leveldb::kNoCompression;
 
   // For message ldb, timestamp comparator need to be used while open leveldb
   if (ldb == &ldb_data_) {
