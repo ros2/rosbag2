@@ -3,11 +3,7 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-0.3.7 (2021-02-15)
-------------------
-* [foxy backport] Fix --topics flag for ros2 bag play being ignored for all bags after the first one (`#619 <https://github.com/ros2/rosbag2/issues/619>`_) (`#654 <https://github.com/ros2/rosbag2/issues/654>`_)
-* Contributors: Aleksandr Rozhdestvenskii
-
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
@@ -22,6 +18,13 @@ Changelog for package rosbag2
 
 0.3.3 (2020-06-23)
 ------------------
+=======
+Forthcoming
+-----------
+* Add back rosbag2_cpp::StorageOptions as deprecated (`#563 <https://github.com/ros2/rosbag2/issues/563>`_)
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski, Jacob Perron
+>>>>>>> Changelog.
 
 0.4.0 (2020-11-19)
 ------------------

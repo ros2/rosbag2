@@ -3,11 +3,7 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-0.3.7 (2021-02-15)
-------------------
-* [foxy backport] Fix --topics flag for ros2 bag play being ignored for all bags after the first one (`#619 <https://github.com/ros2/rosbag2/issues/619>`_) (`#654 <https://github.com/ros2/rosbag2/issues/654>`_)
-* Contributors: Aleksandr Rozhdestvenskii
-
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -21,6 +17,10 @@ Changelog for package rosbag2_tests
 
 0.3.3 (2020-06-23)
 ------------------
+=======
+Forthcoming
+-----------
+>>>>>>> Changelog.
 
 0.4.0 (2020-11-19)
 ------------------

@@ -2,9 +2,7 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.3.7 (2021-02-15)
-------------------
-
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -20,6 +18,12 @@ Changelog for package rosbag2_compression
 
 0.3.3 (2020-06-23)
 ------------------
+=======
+Forthcoming
+-----------
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski
+>>>>>>> Changelog.
 
 0.4.0 (2020-11-19)
 ------------------
