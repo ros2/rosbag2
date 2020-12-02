@@ -2,6 +2,57 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+  * Double buffers
+  * Circular queue and FLUSH option as define
+  * Minor naming and lexical fixes.
+  * Removed FLUSH_BUFFERS define check.
+  * Sqlite3 storage logging fixes.
+  * Sqlite3 storage circular buffer with pre allocated memory.
+  * Sqlite3 storage buffers moved to shared_ptrs.
+  * Uncrustify
+  * Moved double buffers to writer
+  * Buffer layer reset in seq compression writer in rosbag2 cpp
+  * Buffer layer for rosbag2 writer refactor
+  * Changed buffers in BufferLayer to std vectors.
+  * BufferLayer uncrustify
+  * Removed non-applicable test for writer cache.
+  * BufferLayer review fixes
+  * Rosbag metadata msgs count fixed for BufferLayer
+  * Condition variable for buffer layer sync.
+  * Fixed buffer locks
+  * Buffers in BufferLayer refactored, moved into new class
+  * Buffer layer split bags fixed.
+  * Storage options include fix in buffer layer header.
+  * Mutex around swapping buffers in buffer layer.
+  * Fixed cache 0 bug in buffer layer.
+  * Minor buffer layer refactor.
+  * Counting messages in writer refactored.
+  * Changed default cache size to 100Mb and updated parameter description
+  * Applied review remarks:
+  - significant refactoring: separation of cache classes
+  - applied suggested improvements
+  - some renaming
+  - reduce code duplication that would otherwise increase with cache refactor, between compression and plain writers
+  * Applied review comments
+  - cache consumer now takes a callback and is independent of storage
+  - namespace changes, renaming, cleaning
+  - counting and logging messages by topic
+  * linter
+  * Changes after review: fixing flushing, topic counts, and more
+  * Fix for splitting - flushing state now correctly turns off
+  * cache classes documentation
+  * simplified signature
+  * a couple of tests for cache
+  * address review: explicit constructor and doxygen styling
+  * Windows warnings fix
+  * fixed type mismatch warning on Windows
+  * added minor comment
+  Co-authored-by: Piotr Jaroszek <piotr.jaroszek@robotec.ai>
+* Contributors: Adam Dąbrowski
+
 0.4.0 (2020-11-19)
 ------------------
 * read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
