@@ -4,6 +4,7 @@ Changelog for package shared_queues_vendor
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -21,6 +22,10 @@ Changelog for package shared_queues_vendor
 Forthcoming
 -----------
 >>>>>>> Changelog.
+=======
+0.5.0 (2020-12-02)
+------------------
+>>>>>>> 0.5.0
 
 0.4.0 (2020-11-19)
 ------------------

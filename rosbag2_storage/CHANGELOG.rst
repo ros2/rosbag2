@@ -4,6 +4,7 @@ Changelog for package rosbag2_storage
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -20,6 +21,10 @@ Changelog for package rosbag2_storage
 =======
 Forthcoming
 -----------
+=======
+0.5.0 (2020-12-02)
+------------------
+>>>>>>> 0.5.0
 * Update codes since rcutils_calculate_directory_size() is changed (`#567 <https://github.com/ros2/rosbag2/issues/567>`_)
 * Contributors: Barry Xu
 >>>>>>> Changelog.

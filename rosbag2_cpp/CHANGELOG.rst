@@ -4,6 +4,7 @@ Changelog for package rosbag2
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
@@ -21,6 +22,10 @@ Changelog for package rosbag2
 =======
 Forthcoming
 -----------
+=======
+0.5.0 (2020-12-02)
+------------------
+>>>>>>> 0.5.0
 * Add back rosbag2_cpp::StorageOptions as deprecated (`#563 <https://github.com/ros2/rosbag2/issues/563>`_)
 * Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
 * Contributors: Adam Dąbrowski, Jacob Perron

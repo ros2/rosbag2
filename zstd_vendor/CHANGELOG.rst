@@ -3,6 +3,7 @@ Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Patch zstd 1.4.4 to include cmake_minimum_version bump to 2.8.12 (`#579 <https://github.com/ros2/rosbag2/issues/579>`_) (`#587 <https://github.com/ros2/rosbag2/issues/587>`_)
@@ -21,6 +22,10 @@ Changelog for package zstd_vendor
 Forthcoming
 -----------
 >>>>>>> Changelog.
+=======
+0.5.0 (2020-12-02)
+------------------
+>>>>>>> 0.5.0
 
 0.4.0 (2020-11-19)
 ------------------
