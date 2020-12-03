@@ -13,6 +13,7 @@
 
   <depend>ros2cli</depend>
   <depend>rosbag2_transport</depend>
+  <depend>rosbag2_py</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
