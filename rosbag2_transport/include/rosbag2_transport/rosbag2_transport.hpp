@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_transport/convert_options.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/storage_options.hpp"
@@ -76,18 +75,6 @@ public:
    */
   ROSBAG2_TRANSPORT_PUBLIC
   void play(const StorageOptions & storage_options, const PlayOptions & play_options);
-
-  /**
-   * Convert a bagfile from one storage to another.
-   *
-   * \param input_storage_options Options regarding the input storage (e.g. input bag file name)
-   * \param output_storage_options Options regarding the output storage (e.g. bag file name)
-   */
-  ROSBAG2_TRANSPORT_PUBLIC
-  void convert(
-    const StorageOptions & input_storage_options,
-    const StorageOptions & output_storage_options,
-    const ConvertOptions & convert_options);
 
   /**
    * Print the bag info contained in the metadata yaml file.
