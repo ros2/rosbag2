@@ -19,8 +19,6 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
@@ -35,6 +33,12 @@
 namespace rosbag2_storage
 {
 
+namespace storage_interfaces
+{
+class ReadOnlyInterface;
+class ReadWriteInterface;
+}  // namespace storage_interfaces
+
 class StorageFactoryImpl;
 
 /// Factory to create instances of various storage interfaces
@@ -45,10 +49,10 @@ public:
   ~StorageFactory() override;
 
   std::shared_ptr<storage_interfaces::ReadOnlyInterface>
-  open_read_only(const std::string & uri, const std::string & storage_id) override;
+  open_read_only(const StorageOptions & storage_options) override;
 
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
-  open_read_write(const std::string & uri, const std::string & storage_id) override;
+  open_read_write(const StorageOptions & storage_options) override;
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;

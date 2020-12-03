@@ -55,7 +55,8 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
     auto topic_with_type = rosbag2_storage::TopicMetadata{
       "topic",
       "test_msgs/BasicTypes",
-      kRmwFormat
+      kRmwFormat,
+      ""
     };
 
     auto topic_information = rosbag2_storage::TopicInformation{
@@ -71,12 +72,14 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
   }
 
   auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
-  EXPECT_CALL(*storage_factory, open_read_only(_, kStorageId)).Times(1).WillOnce(Return(storage_));
+  EXPECT_CALL(
+    *storage_factory,
+    open_read_only(_)).Times(1).WillOnce(Return(storage_));
 
   auto metadata_io = std::make_unique<StrictMock<MockMetadataIo>>();
   EXPECT_CALL(*metadata_io, metadata_file_exists).Times(1).WillOnce(Return(false));
 
-  rosbag2_cpp::StorageOptions storage_options;
+  rosbag2_storage::StorageOptions storage_options;
   storage_options.storage_id = kStorageId;
 
   auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(

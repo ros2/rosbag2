@@ -22,14 +22,16 @@
 #include <utility>
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_cpp
 {
+
+static constexpr char const * kDefaultStorageID = "sqlite3";
 
 Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl)
 : writer_impl_(std::move(writer_impl))
@@ -40,24 +42,38 @@ Writer::~Writer()
   writer_impl_.reset();
 }
 
+void Writer::open(const std::string & uri)
+{
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = uri;
+  storage_options.storage_id = kDefaultStorageID;
+
+  rosbag2_cpp::ConverterOptions converter_options{};
+  return open(storage_options, converter_options);
+}
+
 void Writer::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const rosbag2_storage::StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
   writer_impl_->open(storage_options, converter_options);
 }
 
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->create_topic(topic_with_type);
 }
 
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->remove_topic(topic_with_type);
 }
 
 void Writer::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->write(message);
 }
 

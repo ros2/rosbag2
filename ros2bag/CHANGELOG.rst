@@ -2,6 +2,122 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2020-12-02)
+------------------
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+  * Double buffers
+  * Circular queue and FLUSH option as define
+  * Minor naming and lexical fixes.
+  * Removed FLUSH_BUFFERS define check.
+  * Sqlite3 storage logging fixes.
+  * Sqlite3 storage circular buffer with pre allocated memory.
+  * Sqlite3 storage buffers moved to shared_ptrs.
+  * Uncrustify
+  * Moved double buffers to writer
+  * Buffer layer reset in seq compression writer in rosbag2 cpp
+  * Buffer layer for rosbag2 writer refactor
+  * Changed buffers in BufferLayer to std vectors.
+  * BufferLayer uncrustify
+  * Removed non-applicable test for writer cache.
+  * BufferLayer review fixes
+  * Rosbag metadata msgs count fixed for BufferLayer
+  * Condition variable for buffer layer sync.
+  * Fixed buffer locks
+  * Buffers in BufferLayer refactored, moved into new class
+  * Buffer layer split bags fixed.
+  * Storage options include fix in buffer layer header.
+  * Mutex around swapping buffers in buffer layer.
+  * Fixed cache 0 bug in buffer layer.
+  * Minor buffer layer refactor.
+  * Counting messages in writer refactored.
+  * Changed default cache size to 100Mb and updated parameter description
+  * Applied review remarks:
+  - significant refactoring: separation of cache classes
+  - applied suggested improvements
+  - some renaming
+  - reduce code duplication that would otherwise increase with cache refactor, between compression and plain writers
+  * Applied review comments
+  - cache consumer now takes a callback and is independent of storage
+  - namespace changes, renaming, cleaning
+  - counting and logging messages by topic
+  * linter
+  * Changes after review: fixing flushing, topic counts, and more
+  * Fix for splitting - flushing state now correctly turns off
+  * cache classes documentation
+  * simplified signature
+  * a couple of tests for cache
+  * address review: explicit constructor and doxygen styling
+  * Windows warnings fix
+  * fixed type mismatch warning on Windows
+  * added minor comment
+  Co-authored-by: Piotr Jaroszek <piotr.jaroszek@robotec.ai>
+* Contributors: Adam Dąbrowski
+
+0.4.0 (2020-11-19)
+------------------
+* read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
+* List all storage plugins in plugin xml file (`#554 <https://github.com/ros2/rosbag2/issues/554>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update deprecated qos policy value names (`#548 <https://github.com/ros2/rosbag2/issues/548>`_)
+* Add record test for ros2bag (`#523 <https://github.com/ros2/rosbag2/issues/523>`_)
+* Removed duplicated code in record (`#534 <https://github.com/ros2/rosbag2/issues/534>`_)
+* Change default cache size for sequential_writer to a non zero value (`#533 <https://github.com/ros2/rosbag2/issues/533>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* [ros2bag test_record] Gets rid of time.sleep and move to using command.wait_for_output (`#525 <https://github.com/ros2/rosbag2/issues/525>`_)
+* Add pytest.ini back to ros2bag. (`#492 <https://github.com/ros2/rosbag2/issues/492>`_)
+* performance testing packages (`#442 <https://github.com/ros2/rosbag2/issues/442>`_)
+* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_)
+* catch parent exception (`#472 <https://github.com/ros2/rosbag2/issues/472>`_)
+* add wait for closed file handles on Windows (`#470 <https://github.com/ros2/rosbag2/issues/470>`_)
+* introduce ros2 bag list <plugins> (`#468 <https://github.com/ros2/rosbag2/issues/468>`_)
+* move wait_for_shutdown() call out of the context manager (`#466 <https://github.com/ros2/rosbag2/issues/466>`_)
+* Adding db directory creation to rosbag2_cpp (`#450 <https://github.com/ros2/rosbag2/issues/450>`_)
+* use a single temp dir for the test class (`#462 <https://github.com/ros2/rosbag2/issues/462>`_)
+* Add per-message ZSTD compression (`#418 <https://github.com/ros2/rosbag2/issues/418>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* Add pytest.ini so local tests don't display warning (`#446 <https://github.com/ros2/rosbag2/issues/446>`_)
+* Contributors: Adam Dąbrowski, Barry Xu, Chris Lalancette, Dirk Thomas, Ivan Santiago Paunovic, Jacob Perron, Jaison Titus, Jesse Ikawa, Karsten Knese, Marwan Taher, Michael Jeronimo, P. J. Reed, jhdcs
+
+0.3.2 (2020-06-03)
+------------------
+* Improve help message for CLI verbs (`#427 <https://github.com/ros2/rosbag2/issues/427>`_)
+* Contributors: Jacob Perron
+
+0.3.1 (2020-06-01)
+------------------
+
+0.3.0 (2020-05-26)
+------------------
+* Don't allow user to specify unimplemented compression mode 'message' (`#415 <https://github.com/ros2/rosbag2/issues/415>`_)
+* Use consistent quotes in help messages (`#416 <https://github.com/ros2/rosbag2/issues/416>`_)
+* Contributors: Dirk Thomas, Emerson Knapp
+
+0.2.8 (2020-05-18)
+------------------
+
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+
+0.2.5 (2020-04-30)
+------------------
+* add topic remapping option to rosbag2 play (`#388 <https://github.com/ros2/rosbag2/issues/388>`_)
+* Add loop option to rosbag play (`#361 <https://github.com/ros2/rosbag2/issues/361>`_)
+* Expose topic filter to command line (addresses `#342 <https://github.com/ros2/rosbag2/issues/342>`_) (`#363 <https://github.com/ros2/rosbag2/issues/363>`_)
+* Override QoS Profiles in CLI - Playback (`#356 <https://github.com/ros2/rosbag2/issues/356>`_)
+* Refactor utility functions in ros2bag (`#358 <https://github.com/ros2/rosbag2/issues/358>`_)
+* Add QoS Profile override to CLI (`#347 <https://github.com/ros2/rosbag2/issues/347>`_)
+* Transaction based sqlite3 inserts (`#225 <https://github.com/ros2/rosbag2/issues/225>`_)
+* include hidden topics (`#332 <https://github.com/ros2/rosbag2/issues/332>`_)
+* more verbose test_flake8 error messages (same as `ros2/launch_ros#135 <https://github.com/ros2/launch_ros/issues/135>`_)
+* Add playback rate command line arg (`#304 <https://github.com/ros2/rosbag2/issues/304>`_)
+* [compression] Enable compression through ros2bag cli (`#263 <https://github.com/ros2/rosbag2/issues/263>`_)
+* switch to not deprecated API (`#261 <https://github.com/ros2/rosbag2/issues/261>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Anas Abou Allaban, Dirk Thomas, Karsten Knese, Mabel Zhang, Sriram Raghunathan, Zachary Michaels, ketatam
+
 0.2.4 (2019-11-18)
 ------------------
 

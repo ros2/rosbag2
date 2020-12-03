@@ -28,14 +28,16 @@ TestReadOnlyPlugin::~TestReadOnlyPlugin()
 }
 
 void TestReadOnlyPlugin::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
+  const rosbag2_storage::StorageOptions & storage_options,
+  rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";
   } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
     std::cout << "opening testplugin read write: ";
   }
-  std::cout << uri << ".\n";
+  std::cout << "storage uri: " << storage_options.uri << ".\n";
+  std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
 bool TestReadOnlyPlugin::has_next()
@@ -77,6 +79,17 @@ std::string TestReadOnlyPlugin::get_storage_identifier() const
 {
   std::cout << "\nreturning storage identifier\n";
   return test_constants::READ_ONLY_PLUGIN_IDENTIFIER;
+}
+
+void TestReadOnlyPlugin::set_filter(
+  const rosbag2_storage::StorageFilter & /*storage_filter*/)
+{
+  std::cout << "\nsetting storage filter\n";
+}
+
+void TestReadOnlyPlugin::reset_filter()
+{
+  std::cout << "\nresetting storage filter\n";
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

@@ -31,14 +31,16 @@ TestPlugin::~TestPlugin()
 }
 
 void TestPlugin::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
+  const rosbag2_storage::StorageOptions & storage_options,
+  rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";
   } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
     std::cout << "opening testplugin read write: ";
   }
-  std::cout << uri << ".\n";
+  std::cout << "storage uri: " << storage_options.uri << ".\n";
+  std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
 bool TestPlugin::has_next()
@@ -66,6 +68,13 @@ void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBa
 {
   (void) msg;
   std::cout << "\nwriting\n";
+}
+
+void TestPlugin::write(
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg)
+{
+  (void) msg;
+  std::cout << "\nwriting multiple\n";
 }
 
 std::vector<rosbag2_storage::TopicMetadata> TestPlugin::get_all_topics_and_types()
@@ -102,6 +111,17 @@ uint64_t TestPlugin::get_minimum_split_file_size() const
 {
   std::cout << "\nreturning minimum split file size\n";
   return test_constants::MIN_SPLIT_FILE_SIZE;
+}
+
+void TestPlugin::set_filter(
+  const rosbag2_storage::StorageFilter & /*storage_filter*/)
+{
+  std::cout << "\nsetting storage filter\n";
+}
+
+void TestPlugin::reset_filter()
+{
+  std::cout << "\nresetting storage filter\n";
 }
 
 PLUGINLIB_EXPORT_CLASS(TestPlugin, rosbag2_storage::storage_interfaces::ReadWriteInterface)

@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -23,6 +24,7 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/visibility_control.hpp"
@@ -43,10 +45,11 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteStorage
 {
 public:
   SqliteStorage() = default;
-  ~SqliteStorage() override = default;
+
+  ~SqliteStorage() override;
 
   void open(
-    const std::string & uri,
+    const rosbag2_storage::StorageOptions & storage_options,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
 
@@ -55,6 +58,10 @@ public:
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
+
+  void write(
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+  override;
 
   bool has_next() override;
 
@@ -72,11 +79,17 @@ public:
 
   uint64_t get_minimum_split_file_size() const override;
 
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
+
 private:
   void initialize();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
+  void activate_transaction();
+  void commit_transaction();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
@@ -90,6 +103,8 @@ private:
   std::unordered_map<std::string, int> topics_;
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
+  std::atomic_bool active_transaction_ {false};
+  rosbag2_storage::StorageFilter storage_filter_ {};
 };
 
 }  // namespace rosbag2_storage_plugins

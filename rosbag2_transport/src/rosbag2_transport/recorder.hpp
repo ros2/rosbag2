@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
+
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -47,16 +49,31 @@ public:
 
   void record(const RecordOptions & record_options);
 
+  const std::unordered_set<std::string> &
+  topics_using_fallback_qos() const
+  {
+    return topics_warned_about_incompatibility_;
+  }
+
+  const std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> &
+  subscriptions() const
+  {
+    return subscriptions_;
+  }
+
 private:
   void topics_discovery(
     std::chrono::milliseconds topic_polling_interval,
-    const std::vector<std::string> & requested_topics = {});
+    const std::vector<std::string> & requested_topics = {},
+    bool include_hidden_topics = false);
 
   std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics(const std::vector<std::string> & requested_topics);
+  get_requested_or_available_topics(
+    const std::vector<std::string> & requested_topics,
+    bool include_hidden_topics = false);
 
   std::unordered_map<std::string, std::string>
-  get_missing_topics(const std::unordered_map<std::string, std::string> & topics);
+  get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
 
   void subscribe_topics(
     const std::unordered_map<std::string, std::string> & topics_and_types);
@@ -64,15 +81,32 @@ private:
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
   std::shared_ptr<GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type);
+    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   void record_messages() const;
 
+  /**
+   * Find the QoS profile that should be used for subscribing.
+   *
+   * Uses the override from record_options, if it is specified for this topic.
+   * Otherwise, falls back to Rosbag2QoS::adapt_request_to_offers
+   *
+   *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+   *   \return The QoS profile to be used for subscribing.
+   */
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
+
+  // Serialize all currently offered QoS profiles for a topic into a YAML list.
+  std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
+
+  void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
+
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;
-  std::vector<std::shared_ptr<GenericSubscription>> subscriptions_;
-  std::unordered_set<std::string> subscribed_topics_;
+  std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
 }  // namespace rosbag2_transport

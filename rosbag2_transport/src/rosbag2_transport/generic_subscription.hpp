@@ -20,6 +20,7 @@
 
 #include "rclcpp/any_subscription_callback.hpp"
 #include "rclcpp/macros.hpp"
+#include "rclcpp/serialization.hpp"
 #include "rclcpp/subscription.hpp"
 
 namespace rosbag2_transport
@@ -34,6 +35,7 @@ namespace rosbag2_transport
 class GenericSubscription : public rclcpp::SubscriptionBase
 {
 public:
+  // cppcheck-suppress unknownMacro
   RCLCPP_SMART_PTR_DEFINITIONS(GenericSubscription)
 
   /**
@@ -49,30 +51,36 @@ public:
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
-    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
+    const rclcpp::QoS & qos,
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
 
-  std::shared_ptr<rmw_serialized_message_t> create_serialized_message() override;
+  std::shared_ptr<rclcpp::SerializedMessage> create_serialized_message() override;
 
   void handle_message(
-    std::shared_ptr<void> & message, const rmw_message_info_t & message_info) override;
+    std::shared_ptr<void> & message, const rclcpp::MessageInfo & message_info) override;
 
   void handle_loaned_message(
-    void * loaned_message, const rmw_message_info_t & message_info) override;
+    void * loaned_message, const rclcpp::MessageInfo & message_info) override;
 
   // Same as return_serialized_message() as the subscription is to serialized_messages only
   void return_message(std::shared_ptr<void> & message) override;
 
-  void return_serialized_message(std::shared_ptr<rmw_serialized_message_t> & message) override;
+  void return_serialized_message(std::shared_ptr<rclcpp::SerializedMessage> & message) override;
+
+  // Provide a const reference to the QoS Profile used to create this subscription.
+  const rclcpp::QoS & qos_profile() const;
 
 private:
+  // cppcheck-suppress unknownMacro
   RCLCPP_DISABLE_COPY(GenericSubscription)
 
-  std::shared_ptr<rmw_serialized_message_t> borrow_serialized_message(size_t capacity);
+  std::shared_ptr<rclcpp::SerializedMessage> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
-  std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback_;
+  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback_;
+  const rclcpp::QoS qos_;
 };
 
 }  // namespace rosbag2_transport

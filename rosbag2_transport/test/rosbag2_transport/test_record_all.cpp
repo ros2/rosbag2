@@ -44,7 +44,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
   auto recorded_messages = writer.get_messages();
 
-  ASSERT_THAT(recorded_messages, SizeIs(4));
+  // We may receive additional messages from rosout, it doesn't matter,
+  // as long as we have received at least as many total messages as we expect
+  EXPECT_THAT(recorded_messages, SizeIs(Ge(4u)));
   auto string_messages = filter_messages<test_msgs::msg::Strings>(
     recorded_messages, string_topic);
   auto array_messages = filter_messages<test_msgs::msg::Arrays>(

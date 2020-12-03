@@ -28,6 +28,8 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
+#include "rcpputils/shared_library.hpp"
+
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
 // b) there are no inline functions.
@@ -43,7 +45,10 @@ namespace rosbag2_cpp
 // Only used internally.
 struct ConverterTypeSupport
 {
+  std::shared_ptr<rcpputils::SharedLibrary> type_support_library;
   const rosidl_message_type_support_t * rmw_type_support;
+
+  std::shared_ptr<rcpputils::SharedLibrary> introspection_type_support_library;
   const rosidl_message_type_support_t * introspection_type_support;
 };
 

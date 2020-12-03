@@ -3,6 +3,45 @@ Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+
+0.4.0 (2020-11-19)
+------------------
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* Contributors: Michael Jeronimo
+
+0.3.2 (2020-06-03)
+------------------
+
+0.3.1 (2020-06-01)
+------------------
+
+0.3.0 (2020-05-26)
+------------------
+
+0.2.8 (2020-05-18)
+------------------
+
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+* Correct usage of rcpputils::SharedLibrary loading. (`#400 <https://github.com/ros2/rosbag2/issues/400>`_)
+* Contributors: Karsten Knese
+
+0.2.5 (2020-04-30)
+------------------
+* Fixed string related with poco (`#374 <https://github.com/ros2/rosbag2/issues/374>`_)
+* rename rosidl_generator_cpp namespace to rosidl_runtime_cpp (`#366 <https://github.com/ros2/rosbag2/issues/366>`_)
+* added rosidl_runtime c and cpp depencencies (`#310 <https://github.com/ros2/rosbag2/issues/310>`_)
+* Replace poco dependency by rcutils (`#322 <https://github.com/ros2/rosbag2/issues/322>`_)
+* code style only: wrap after open parenthesis if not in one line (`#280 <https://github.com/ros2/rosbag2/issues/280>`_)
+* Make rosbag2 a metapackage (`#241 <https://github.com/ros2/rosbag2/issues/241>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Alejandro Hernández Cordero, Dirk Thomas, Karsten Knese
+
 0.2.4 (2019-11-18)
 ------------------
 

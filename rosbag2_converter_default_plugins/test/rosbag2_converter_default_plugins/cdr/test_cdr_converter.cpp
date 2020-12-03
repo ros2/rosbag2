@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include "rcpputils/shared_library.hpp"
 #include "rcutils/strdup.h"
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
@@ -77,8 +78,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_pr
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::BasicTypes primitive_test_msg;
   ros_message->message = &primitive_test_msg;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/BasicTypes", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -96,8 +99,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_prim
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/BasicTypes", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/BasicTypes", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
@@ -119,8 +124,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::Strings string_test_msg;
   ros_message->message = &string_test_msg;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/Strings", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/Strings", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/Strings", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -138,8 +145,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stri
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/Strings", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/Strings", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/Strings", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
@@ -161,8 +170,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_ws
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::WStrings wstring_test_msg;
   ros_message->message = &wstring_test_msg;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/WStrings", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/WStrings", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/WStrings", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -180,8 +191,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_wstr
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/WStrings", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/WStrings", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/WStrings", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
@@ -203,8 +216,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_st
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::Arrays primitive_test_msg;
   ros_message->message = &primitive_test_msg;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/Arrays", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/Arrays", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -222,8 +237,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_stat
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/Arrays", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/Arrays", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/Arrays", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
@@ -245,8 +262,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_un
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::UnboundedSequences dynamic_nested_message;
   ros_message->message = &dynamic_nested_message;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -265,8 +284,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_unbo
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/UnboundedSequences", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 
@@ -288,8 +309,10 @@ TEST_F(CdrConverterTestFixture, deserialize_converts_cdr_into_ros_message_for_mu
   auto ros_message = make_shared_ros_message();
   test_msgs::msg::MultiNested multi_nested_message;
   ros_message->message = &multi_nested_message;
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/MultiNested", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp", library);
 
   converter_->deserialize(serialized_message, type_support, ros_message);
 
@@ -307,8 +330,10 @@ TEST_F(CdrConverterTestFixture, serialize_converts_ros_message_into_cdr_for_mult
 
   auto serialized_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_message->serialized_data = memory_management_->make_initialized_message();
-  auto type_support =
-    rosbag2_cpp::get_typesupport("test_msgs/MultiNested", "rosidl_typesupport_cpp");
+  auto library = rosbag2_cpp::get_typesupport_library(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp");
+  auto type_support = rosbag2_cpp::get_typesupport_handle(
+    "test_msgs/MultiNested", "rosidl_typesupport_cpp", library);
 
   converter_->serialize(ros_message, type_support, serialized_message);
 

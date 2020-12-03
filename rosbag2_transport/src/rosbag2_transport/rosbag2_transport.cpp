@@ -1,4 +1,5 @@
 // Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2020, TNG Technology Consulting GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,7 +67,7 @@ void Rosbag2Transport::shutdown()
 }
 
 void Rosbag2Transport::record(
-  const StorageOptions & storage_options, const RecordOptions & record_options)
+  const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
     writer_->open(
@@ -81,24 +82,28 @@ void Rosbag2Transport::record(
   }
 }
 
-std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(std::string node_prefix)
+std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
+  std::string node_prefix,
+  const std::vector<std::string> & topic_remapping_options)
 {
   if (!transport_node_) {
-    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2");
+    auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
+    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2", node_options);
   }
   return transport_node_;
 }
 
 void Rosbag2Transport::play(
-  const StorageOptions & storage_options, const PlayOptions & play_options)
+  const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
-    reader_->open(storage_options, {"", rmw_get_serialization_format()});
-
-    auto transport_node = setup_node(play_options.node_prefix);
-
+    auto transport_node =
+      setup_node(play_options.node_prefix, play_options.topic_remapping_options);
     Player player(reader_, transport_node);
-    player.play(play_options);
+    do {
+      reader_->open(storage_options, {"", rmw_get_serialization_format()});
+      player.play(play_options);
+    } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
   }

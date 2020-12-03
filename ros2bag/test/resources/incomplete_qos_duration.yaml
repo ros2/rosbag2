@@ -1,0 +1,7 @@
+/test_topic:
+  history: keep_all
+  depth: 0
+  reliability: reliable
+  durability: volatile
+  deadline:
+    sec: 2147483647  # LONG_MAX

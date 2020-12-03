@@ -22,14 +22,12 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(poco_vendor REQUIRED)
-find_package(Poco COMPONENTS Foundation)
 find_package(pluginlib REQUIRED)
-find_package(rcutils REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rmw_fastrtps_cpp QUIET)
 find_package(rosbag2_cpp REQUIRED)
-find_package(rosidl_generator_cpp REQUIRED)
+find_package(rosidl_runtime_cpp REQUIRED)
 
 if(rmw_fastrtps_cpp_FOUND)
   add_library(${PROJECT_NAME} SHARED
@@ -38,11 +36,10 @@ if(rmw_fastrtps_cpp_FOUND)
   ament_target_dependencies(${PROJECT_NAME}
     ament_index_cpp
     pluginlib
-    Poco
-    rcutils
+    rcpputils
     rmw
     rosbag2_cpp
-    rosidl_generator_cpp)
+    rosidl_runtime_cpp)
 
   target_include_directories(${PROJECT_NAME}
     PUBLIC

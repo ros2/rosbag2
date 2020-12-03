@@ -62,6 +62,11 @@ public:
     rclcpp::init(0, nullptr);
   }
 
+  void TearDown() override
+  {
+    remove_directory_recursively(root_bag_path_.string());
+  }
+
   static void TearDownTestCase()
   {
     rclcpp::shutdown();
@@ -90,6 +95,11 @@ public:
   rcpputils::fs::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
+  }
+
+  rcpputils::fs::path get_relative_bag_file_path(int split_index)
+  {
+    return rcpputils::fs::path(get_bag_file_name(split_index) + ".db3");
   }
 
   void wait_for_metadata()
@@ -177,7 +187,9 @@ public:
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
     auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
     const auto database_path = get_bag_file_path(0).string();
-    storage->open(database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    storage->open(
+      {database_path, "sqlite3"},
+      rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
 
     while (storage->has_next()) {
       table_msgs.push_back(storage->read_next());

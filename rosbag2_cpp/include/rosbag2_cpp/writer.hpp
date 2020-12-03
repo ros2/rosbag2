@@ -16,15 +16,17 @@
 #define ROSBAG2_CPP__WRITER_HPP_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -49,9 +51,26 @@ class BaseWriterInterface;
 class ROSBAG2_CPP_PUBLIC Writer final
 {
 public:
-  explicit Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl);
+  explicit Writer(
+    std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl =
+    std::make_unique<writers::SequentialWriter>());
 
   ~Writer();
+
+  /**
+   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * This must be called before any other function is used.
+   *
+   * \note This will open URI with the default storage options
+   * * using sqlite3 storage backend
+   * * using no converter options, storing messages with the incoming serialization format
+   * \sa rmw_get_serialization_format.
+   * For specifications, please see \sa open, which let's you specify
+   * more storage and converter options.
+   *
+   * \param storage_uri URI of the storage to open.
+   **/
+  void open(const std::string & uri);
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
@@ -60,7 +79,9 @@ public:
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
-  void open(const StorageOptions & storage_options, const ConverterOptions & converter_options);
+  void open(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options = ConverterOptions());
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -95,6 +116,7 @@ public:
   }
 
 private:
+  std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 

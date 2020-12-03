@@ -12,30 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import FileType
 import datetime
 import os
 
+from rclpy.qos import InvalidQoSProfileException
+from ros2bag.api import convert_yaml_to_qos_profile
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
-
 from ros2cli.node import NODE_NAME_PREFIX
+import yaml
 
 
 class RecordVerb(VerbExtension):
-    """ros2 bag record."""
+    """Record ROS data to a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
             '-a', '--all', action='store_true',
             help='recording all topics, required if no topics are listed explicitly.')
         parser.add_argument(
-            'topics', nargs='*', help='topics to be recorded')
+            'topics', nargs='*', default=None, help='topics to be recorded')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used, defaults to "sqlite3"')
+            help="storage identifier to be used, defaults to 'sqlite3'")
         parser.add_argument(
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
@@ -56,77 +60,103 @@ class RecordVerb(VerbExtension):
                   'is disabled.'
         )
         parser.add_argument(
+            '-d', '--max-bag-duration', type=int, default=0,
+            help='maximum duration in seconds before the bagfile will be split. '
+                  'Default is zero, recording written in single bagfile and splitting '
+                  'is disabled. If both splitting by size and duration are enabled, '
+                  'the bag will split at whichever threshold is reached first.'
+        )
+        parser.add_argument(
+            '--max-cache-size', type=int, default=100*1024*1024,
+            help='maximum size (in bytes) of messages to hold in each buffer of cache.'
+                 'Default is 100 mebibytes. The cache is handled through double buffering, '
+                 'which means that in pessimistic case up to twice the parameter value of memory'
+                 'is needed. A rule of thumb is to cache an order of magitude corresponding to'
+                 'about one second of total recorded data volume.'
+                 'If the value specified is 0, then every message is directly written to disk.'
+        )
+        parser.add_argument(
             '--compression-mode', type=str, default='none',
             choices=['none', 'file', 'message'],
-            help='Determine whether to compress by file or message. Default is "none".'
+            help="Determine whether to compress by file or message. Default is 'none'."
         )
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
             help='Specify the compression format/algorithm. Default is none.'
         )
+        parser.add_argument(
+            '--include-hidden-topics', action='store_true',
+            help='record also hidden topics.'
+        )
+        parser.add_argument(
+            '--qos-profile-overrides-path', type=FileType('r'),
+            help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
+        )
+        parser.add_argument(
+            '--storage-config-file', type=FileType('r'),
+            help='Path to a yaml file defining storage specific configurations. '
+                 'For the default storage plugin settings are specified through syntax:'
+                 'write:'
+                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
+                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
         self._subparser = parser
 
-    def create_bag_directory(self, uri):
-        try:
-            os.makedirs(uri)
-        except OSError:
-            return "[ERROR] [ros2bag]: Could not create bag folder '{}'.".format(uri)
-
     def main(self, *, args):  # noqa: D102
+        # both all and topics cannot be true
         if args.all and args.topics:
-            return 'Invalid choice: Can not specify topics and -a at the same time.'
+            return print_error('Invalid choice: Can not specify topics and -a at the same time.')
+        # both all and topics cannot be false
+        if not(args.all or (args.topics and len(args.topics) > 0)):
+            return print_error('Invalid choice: Must specify topic(s) or -a')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
-            return "[ERROR] [ros2bag]: Output folder '{}' already exists.".format(uri)
+            return print_error("Output folder '{}' already exists.".format(uri))
 
         if args.compression_format and args.compression_mode == 'none':
-            return 'Invalid choice: Cannot specify compression format without a compression mode.'
+            return print_error('Invalid choice: Cannot specify compression format '
+                               'without a compression mode.')
+
         args.compression_mode = args.compression_mode.upper()
 
-        self.create_bag_directory(uri)
+        qos_profile_overrides = {}  # Specify a valid default
+        if args.qos_profile_overrides_path:
+            qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
+            try:
+                qos_profile_overrides = convert_yaml_to_qos_profile(
+                    qos_profile_dict)
+            except (InvalidQoSProfileException, ValueError) as e:
+                return print_error(str(e))
 
-        if args.all:
-            # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-            #               combined with constrained environments (as imposed by colcon test)
-            #               may result in DLL loading failures when attempting to import a C
-            #               extension. Therefore, do not import rosbag2_transport at the module
-            #               level but on demand, right before first use.
-            from rosbag2_transport import rosbag2_transport_py
+        storage_config_file = ''
+        if args.storage_config_file:
+            storage_config_file = args.storage_config_file.name
 
-            rosbag2_transport_py.record(
-                uri=uri,
-                storage_id=args.storage,
-                serialization_format=args.serialization_format,
-                node_prefix=NODE_NAME_PREFIX,
-                compression_mode=args.compression_mode,
-                compression_format=args.compression_format,
-                all=True,
-                no_discovery=args.no_discovery,
-                polling_interval=args.polling_interval,
-                max_bagfile_size=args.max_bag_size)
-        elif args.topics and len(args.topics) > 0:
-            # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-            #               combined with constrained environments (as imposed by colcon test)
-            #               may result in DLL loading failures when attempting to import a C
-            #               extension. Therefore, do not import rosbag2_transport at the module
-            #               level but on demand, right before first use.
-            from rosbag2_transport import rosbag2_transport_py
+        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
+        #               combined with constrained environments (as imposed by colcon test)
+        #               may result in DLL loading failures when attempting to import a C
+        #               extension. Therefore, do not import rosbag2_transport at the module
+        #               level but on demand, right before first use.
+        from rosbag2_transport import rosbag2_transport_py
 
-            rosbag2_transport_py.record(
-                uri=uri,
-                storage_id=args.storage,
-                serialization_format=args.serialization_format,
-                node_prefix=NODE_NAME_PREFIX,
-                compression_mode=args.compression_mode,
-                compression_format=args.compression_format,
-                no_discovery=args.no_discovery,
-                polling_interval=args.polling_interval,
-                max_bagfile_size=args.max_bag_size,
-                topics=args.topics)
-        else:
-            self._subparser.print_help()
+        rosbag2_transport_py.record(
+            uri=uri,
+            storage_id=args.storage,
+            serialization_format=args.serialization_format,
+            node_prefix=NODE_NAME_PREFIX,
+            compression_mode=args.compression_mode,
+            compression_format=args.compression_format,
+            all=args.all,
+            no_discovery=args.no_discovery,
+            polling_interval=args.polling_interval,
+            max_bagfile_size=args.max_bag_size,
+            max_bagfile_duration=args.max_bag_duration,
+            max_cache_size=args.max_cache_size,
+            topics=args.topics,
+            include_hidden_topics=args.include_hidden_topics,
+            qos_profile_overrides=qos_profile_overrides,
+            storage_config_file=storage_config_file)
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)

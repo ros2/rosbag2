@@ -6,13 +6,15 @@ on:
 jobs:
   ament_copyright:
     name: ament_copyright
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: copyright
+        distribution: foxy
         package-name: |
             ros2bag
             rosbag2_compression
@@ -25,13 +27,15 @@ jobs:
 
   ament_xmllint:
     name: ament_xmllint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: xmllint
+        distribution: foxy
         package-name: |
             ros2bag
             rosbag2
@@ -46,17 +50,19 @@ jobs:
 
   ament_lint_cpp: # Linters applicable to C++ packages
     name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
+        distribution: foxy
         package-name: |
             rosbag2_compression
             rosbag2_converter_default_plugins
@@ -68,16 +74,18 @@ jobs:
 
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     strategy:
       fail-fast: false
       matrix:
-          linter: [flake8, pep257]
+          linter: [pep257, flake8]
     steps:
-    - uses: actions/checkout@v1
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-lint@0.0.5
+    - uses: actions/checkout@v2
+    - uses: ros-tooling/action-ros-lint@0.0.6
       with:
         linter: ${{ matrix.linter }}
+        distribution: foxy
         package-name: |
             ros2bag

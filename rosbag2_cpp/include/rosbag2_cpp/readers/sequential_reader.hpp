@@ -28,6 +28,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -58,7 +59,8 @@ public:
   virtual ~SequentialReader();
 
   void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) override;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) override;
 
   void reset() override;
 
@@ -66,7 +68,13 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  const rosbag2_storage::BagMetadata & get_metadata() const override;
+
+  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
+
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
 
   /**
    * Ask whether there is another database file to read from the list of relative
@@ -96,7 +104,6 @@ protected:
   */
   virtual void load_next_file();
 
-private:
   /**
    * Checks if all topics in the bagfile have the same RMW serialization format.
    * Currently a bag file can only be played if all topics have the same serialization format.
@@ -121,14 +128,23 @@ private:
     const std::string & converter_serialization_format,
     const std::string & storage_serialization_format);
 
+  /**
+    * Fill topics_metadata_ cache vector with information from metadata_
+    */
+  virtual void fill_topics_metadata();
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
+  std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
+
+private:
+  rosbag2_storage::StorageOptions storage_options_;
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 };
 
 }  // namespace readers

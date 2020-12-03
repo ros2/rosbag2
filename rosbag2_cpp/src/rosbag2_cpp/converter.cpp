@@ -22,10 +22,10 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
@@ -82,9 +82,18 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> Converter::convert(
 void Converter::add_topic(const std::string & topic, const std::string & type)
 {
   ConverterTypeSupport type_support;
-  type_support.rmw_type_support = get_typesupport(type, "rosidl_typesupport_cpp");
-  type_support.introspection_type_support =
-    get_typesupport(type, "rosidl_typesupport_introspection_cpp");
+
+  type_support.type_support_library = get_typesupport_library(
+    type, "rosidl_typesupport_cpp");
+  type_support.rmw_type_support = get_typesupport_handle(
+    type, "rosidl_typesupport_cpp",
+    type_support.type_support_library);
+
+  type_support.introspection_type_support_library = get_typesupport_library(
+    type, "rosidl_typesupport_introspection_cpp");
+  type_support.introspection_type_support = get_typesupport_handle(
+    type, "rosidl_typesupport_introspection_cpp",
+    type_support.introspection_type_support_library);
 
   topics_and_types_.insert({topic, type_support});
 }

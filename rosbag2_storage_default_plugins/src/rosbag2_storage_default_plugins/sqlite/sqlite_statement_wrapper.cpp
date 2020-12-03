@@ -52,7 +52,8 @@ SqliteStatementWrapper::~SqliteStatementWrapper()
   }
 }
 
-std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset()
+std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_reset(
+  bool assert_return_value)
 {
   int return_code = sqlite3_step(statement_);
   if (!is_query_ok(return_code)) {
@@ -62,6 +63,20 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
 
     throw SqliteException{errmsg.str()};
   }
+
+  if (assert_return_value) {
+    bool no_result = return_code == SQLITE_DONE || sqlite3_column_count(statement_) == 0;
+
+    if (no_result || sqlite3_column_type(statement_, 0) == SQLITE_NULL) {
+      // No result or result is null means that no such pragma exists
+      std::stringstream errmsg;
+      errmsg << "Statement returned empty value while result was expected: \'" <<
+        sqlite3_sql(statement_) << "\'";
+
+      throw SqliteException{errmsg.str()};
+    }
+  }
+
   return reset();
 }
 

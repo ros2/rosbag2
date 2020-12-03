@@ -15,24 +15,13 @@
 #ifndef ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 #define ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 
-#include <string>
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
 
-struct StorageOptions
-{
-public:
-  std::string uri;
-  std::string storage_id;
-
-  /**
-   * The maximum size a bagfile can be, in bytes, before it is split.
-   * A value of 0 indicates that bagfile splitting will not be used.
-   */
-  uint64_t max_bagfile_size;
-};
+using StorageOptions [[deprecated("use rosbag2_storage::StorageOptions instead")]] =
+  rosbag2_storage::StorageOptions;
 
 }  // namespace rosbag2_cpp
-
 #endif  // ROSBAG2_CPP__STORAGE_OPTIONS_HPP_

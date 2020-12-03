@@ -18,8 +18,9 @@
 #include <memory>
 #include <queue>
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rcl/graph.h"
 
@@ -30,10 +31,44 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
+#include "rosbag2_storage/storage_filter.hpp"
+
 #include "rosbag2_transport/logging.hpp"
 
+#include "qos.hpp"
 #include "rosbag2_node.hpp"
 #include "replayable_message.hpp"
+
+namespace
+{
+/**
+ * Determine which QoS to offer for a topic.
+ * The priority of the profile selected is:
+ *   1. The override specified in play_options (if one exists for the topic).
+ *   2. A profile automatically adapted to the recorded QoS profiles of publishers on the topic.
+ *
+ * \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+ * \param topic_qos_profile_overrides A map of topic to QoS profile overrides.
+ * @return The QoS profile to be used for subscribing.
+ */
+rclcpp::QoS publisher_qos_for_topic(
+  const rosbag2_storage::TopicMetadata & topic,
+  const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides)
+{
+  using rosbag2_transport::Rosbag2QoS;
+  auto qos_it = topic_qos_profile_overrides.find(topic.name);
+  if (qos_it != topic_qos_profile_overrides.end()) {
+    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
+    return Rosbag2QoS{qos_it->second};
+  } else if (topic.offered_qos_profiles.empty()) {
+    return Rosbag2QoS{};
+  }
+
+  const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
+  const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
+  return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
+}
+}  // namespace
 
 namespace rosbag2_transport
 {
@@ -58,7 +93,8 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
-  prepare_publishers();
+  topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
+  prepare_publishers(options);
 
   storage_loading_future_ = std::async(
     std::launch::async,
@@ -66,7 +102,7 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
-  play_messages_from_queue();
+  play_messages_from_queue(options);
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
@@ -119,11 +155,11 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::play_messages_from_queue()
+void Player::play_messages_from_queue(const PlayOptions & options)
 {
   start_time_ = std::chrono::system_clock::now();
   do {
-    play_messages_until_queue_empty();
+    play_messages_until_queue_empty(options);
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -132,24 +168,39 @@ void Player::play_messages_from_queue()
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty()
+void Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
+
+  float rate = 1.0;
+  // Use rate if in valid range
+  if (options.rate > 0.0) {
+    rate = options.rate;
+  }
+
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(start_time_ + message.time_since_start);
+    std::this_thread::sleep_until(
+      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
+        1.0 / rate * message.time_since_start));
     if (rclcpp::ok()) {
       publishers_[message.message->topic_name]->publish(message.message->serialized_data);
     }
   }
 }
 
-void Player::prepare_publishers()
+void Player::prepare_publishers(const PlayOptions & options)
 {
+  rosbag2_storage::StorageFilter storage_filter;
+  storage_filter.topics = options.topics_to_filter;
+  reader_->set_filter(storage_filter);
+
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
+    auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
     publishers_.insert(
       std::make_pair(
-        topic.name, rosbag2_transport_->create_generic_publisher(topic.name, topic.type)));
+        topic.name, rosbag2_transport_->create_generic_publisher(
+          topic.name, topic.type, topic_qos)));
   }
 }
 

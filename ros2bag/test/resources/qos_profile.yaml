@@ -1,0 +1,16 @@
+/test_topic:
+  history: keep_all
+  depth: 0
+  reliability: reliable
+  durability: transient_local
+  deadline:
+    sec: 2147483647
+    nsec: 4294967295
+  lifespan:
+    sec: 2147483647
+    nsec: 4294967295
+  liveliness: automatic
+  liveliness_lease_duration:
+    sec: 2147483647
+    nsec: 4294967295
+  avoid_ros_namespace_conventions: false

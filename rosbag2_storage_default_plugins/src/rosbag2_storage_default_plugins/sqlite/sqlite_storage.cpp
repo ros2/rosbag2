@@ -16,12 +16,14 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -31,6 +33,19 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+
+#ifdef _WIN32
+// This is necessary because of a bug in yaml-cpp's cmake
+#define YAML_CPP_DLL
+// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
+# pragma warning(push)
+# pragma warning(disable:4251)
+# pragma warning(disable:4275)
+#endif
+#include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #include "../logging.hpp"
 
@@ -55,6 +70,78 @@ bool is_read_write(const rosbag2_storage::storage_interfaces::IOFlag io_flag)
   return io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE;
 }
 
+// Return pragma-name to full statement map
+inline std::unordered_map<std::string, std::string> parse_pragmas(
+  const std::string & storage_config_uri, const rosbag2_storage::storage_interfaces::IOFlag io_flag)
+{
+  std::unordered_map<std::string, std::string> pragmas;
+  if (storage_config_uri.empty()) {
+    return pragmas;
+  }
+
+  std::vector<std::string> pragma_entries;
+  try {
+    auto key =
+      io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY ? "read" : "write";
+    YAML::Node yaml_file = YAML::LoadFile(storage_config_uri);
+    pragma_entries = yaml_file[key]["pragmas"].as<std::vector<std::string>>();
+  } catch (const YAML::Exception & ex) {
+    throw std::runtime_error(
+            std::string("Exception on parsing sqlite3 config file: ") +
+            ex.what());
+  }
+  // poor developer's sqlinjection prevention ;-)
+  std::string invalid_characters = {"';\""};
+  auto throw_on_invalid_character = [](const auto & pragmas, const auto & invalid_characters) {
+      for (const auto & pragma_string : pragmas) {
+        auto pos = pragma_string.find_first_of(invalid_characters);
+        if (pos != std::string::npos) {
+          throw std::runtime_error(
+                  std::string("Invalid characters in sqlite3 config file: ") +
+                  pragma_string[pos] +
+                  ". Avoid following characters: " +
+                  invalid_characters);
+        }
+      }
+    };
+  throw_on_invalid_character(pragma_entries, invalid_characters);
+
+  // Extract pragma name and map to full pragma statement
+  for (const auto & pragma : pragma_entries) {
+    if (pragma.empty()) {
+      continue;
+    }
+
+    const std::string pragma_assign = "=";
+    const std::string pragma_bracket = "(";
+    auto found_value_assignment = pragma.find(pragma_assign);
+
+    // Extract pragma name. It is the same as statement for read only pragmas
+    auto pragma_name = pragma;
+
+    // Find assignment operator and strip value assignment part
+    if (found_value_assignment == std::string::npos) {
+      found_value_assignment = pragma.find(pragma_bracket);
+    }
+    if (found_value_assignment != std::string::npos) {
+      if (found_value_assignment == 0) {
+        // Incorrect syntax, starts with = or (
+        std::stringstream errmsg;
+        errmsg << "Incorrect storage setting syntax: " << pragma;
+        throw std::runtime_error{errmsg.str()};
+      }
+      // Strip value assignment part, trim trailing whitespaces before = or (
+      pragma_name = pragma.substr(0, found_value_assignment);
+      const std::string whitespaces(" \t");
+      pragma_name = pragma_name.substr(0, pragma_name.find_last_not_of(whitespaces) + 1);
+    }
+
+    auto full_pragma_statement = "PRAGMA " + pragma + ";";
+    pragmas.insert({pragma_name, full_pragma_statement});
+  }
+  return pragmas;
+}
+
 constexpr const auto FILE_EXTENSION = ".db3";
 
 // Minimum size of a sqlite3 database file in bytes (84 kiB).
@@ -63,12 +150,21 @@ constexpr const uint64_t MIN_SPLIT_FILE_SIZE = 86016;
 
 namespace rosbag2_storage_plugins
 {
+SqliteStorage::~SqliteStorage()
+{
+  if (active_transaction_) {
+    commit_transaction();
+  }
+}
 
 void SqliteStorage::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
+  const rosbag2_storage::StorageOptions & storage_options,
+  rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
+
   if (is_read_write(io_flag)) {
-    relative_path_ = uri + FILE_EXTENSION;
+    relative_path_ = storage_options.uri + FILE_EXTENSION;
 
     // READ_WRITE requires the DB to not exist.
     if (rcpputils::fs::path(relative_path_).exists()) {
@@ -76,7 +172,7 @@ void SqliteStorage::open(
               "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
   } else {  // APPEND and READ_ONLY
-    relative_path_ = uri;
+    relative_path_ = storage_options.uri;
 
     // APPEND and READ_ONLY require the DB to exist
     if (!rcpputils::fs::path(relative_path_).exists()) {
@@ -86,7 +182,7 @@ void SqliteStorage::open(
   }
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag);
+    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag, std::move(pragmas));
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
@@ -105,6 +201,30 @@ void SqliteStorage::open(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
 }
 
+void SqliteStorage::activate_transaction()
+{
+  if (active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("begin transaction");
+  database_->prepare_statement("BEGIN TRANSACTION;")->execute_and_reset();
+
+  active_transaction_ = true;
+}
+
+void SqliteStorage::commit_transaction()
+{
+  if (!active_transaction_) {
+    return;
+  }
+
+  ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM("commit transaction");
+  database_->prepare_statement("COMMIT;")->execute_and_reset();
+
+  active_transaction_ = false;
+}
+
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
@@ -119,6 +239,22 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 
   write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   write_statement_->execute_and_reset();
+}
+
+void SqliteStorage::write(
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+{
+  if (!write_statement_) {
+    prepare_for_writing();
+  }
+
+  activate_transaction();
+
+  for (auto & message : messages) {
+    write(message);
+  }
+
+  commit_transaction();
 }
 
 bool SqliteStorage::has_next()
@@ -167,7 +303,8 @@ void SqliteStorage::initialize()
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
-    "serialization_format TEXT NOT NULL);";
+    "serialization_format TEXT NOT NULL," \
+    "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
@@ -184,8 +321,10 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
-      "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
-    insert_topic->bind(topic.name, topic.type, topic.serialization_format);
+      "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) "
+      "VALUES (?, ?, ?, ?)");
+    insert_topic->bind(
+      topic.name, topic.type, topic.serialization_format, topic.offered_qos_profiles);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
   }
@@ -211,10 +350,27 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
-  read_statement_ = database_->prepare_statement(
-    "SELECT data, timestamp, topics.name "
-    "FROM messages JOIN topics ON messages.topic_id = topics.id "
-    "ORDER BY messages.timestamp;");
+  if (!storage_filter_.topics.empty()) {
+    // Construct string for selected topics
+    std::string topic_list{""};
+    for (auto & topic : storage_filter_.topics) {
+      topic_list += "'" + topic + "'";
+      if (&topic != &storage_filter_.topics.back()) {
+        topic_list += ",";
+      }
+    }
+
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "WHERE topics.name IN (" + topic_list + ")"
+      "ORDER BY messages.timestamp;");
+  } else {
+    read_statement_ = database_->prepare_statement(
+      "SELECT data, timestamp, topics.name "
+      "FROM messages JOIN topics ON messages.topic_id = topics.id "
+      "ORDER BY messages.timestamp;");
+  }
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
   current_message_row_ = message_result_.begin();
@@ -228,7 +384,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
   }
 }
 
@@ -270,7 +426,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result)},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
         static_cast<size_t>(std::get<3>(result))
       });
 
@@ -290,6 +446,17 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.bag_size = get_bagfile_size();
 
   return metadata;
+}
+
+void SqliteStorage::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  storage_filter_ = storage_filter;
+}
+
+void SqliteStorage::reset_filter()
+{
+  storage_filter_ = rosbag2_storage::StorageFilter();
 }
 
 }  // namespace rosbag2_storage_plugins

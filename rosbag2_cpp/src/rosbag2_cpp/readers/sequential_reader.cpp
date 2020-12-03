@@ -18,24 +18,53 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 
+
 namespace rosbag2_cpp
 {
 namespace readers
 {
+namespace details
+{
+std::vector<std::string> resolve_relative_paths(
+  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
+{
+  auto base_path = rcpputils::fs::path(base_folder);
+  if (version < 4) {
+    // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
+    base_path = rcpputils::fs::path(base_folder).parent_path();
+  }
+
+  rcpputils::require_true(
+    base_path.exists(), "base folder does not exist: " + base_folder);
+  rcpputils::require_true(
+    base_path.is_directory(), "base folder has to be a directory: " + base_folder);
+
+  for (auto & file : relative_files) {
+    auto path = rcpputils::fs::path(file);
+    if (path.is_absolute()) {
+      continue;
+    }
+    file = (base_path / path).string();
+  }
+
+  return relative_files;
+}
+}  // namespace details
 
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
-  converter_factory_(std::move(converter_factory)),
   converter_(nullptr),
-  metadata_io_(std::move(metadata_io))
+  metadata_io_(std::move(metadata_io)),
+  converter_factory_(std::move(converter_factory))
 {}
 
 SequentialReader::~SequentialReader()
@@ -45,12 +74,17 @@ SequentialReader::~SequentialReader()
 
 void SequentialReader::reset()
 {
-  storage_.reset();
+  if (storage_) {
+    storage_.reset();
+  }
 }
 
 void SequentialReader::open(
-  const StorageOptions & storage_options, const ConverterOptions & converter_options)
+  const rosbag2_storage::StorageOptions & storage_options,
+  const ConverterOptions & converter_options)
 {
+  storage_options_ = storage_options;
+
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
@@ -61,18 +95,17 @@ void SequentialReader::open(
       return;
     }
 
-    file_paths_ = metadata_.relative_file_paths;
+    file_paths_ = details::resolve_relative_paths(
+      storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
 
-    storage_ = storage_factory_->open_read_only(
-      get_current_file(), storage_options.storage_id);
+    storage_options_.uri = get_current_file();
+    storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
-
   } else {
-    storage_ = storage_factory_->open_read_only(
-      storage_options.uri, storage_options.storage_id);
+    storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
@@ -89,6 +122,7 @@ void SequentialReader::open(
     ROSBAG2_CPP_LOG_WARN("No topics were listed in metadata.");
     return;
   }
+  fill_topics_metadata();
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   check_topics_serialization_formats(topics);
@@ -104,8 +138,9 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     if (!storage_->has_next() && has_next_file()) {
       load_next_file();
-      storage_ = storage_factory_->open_read_only(
-        get_current_file(), metadata_.storage_identifier);
+      storage_options_.uri = get_current_file();
+
+      storage_ = storage_factory_->open_read_only(storage_options_);
     }
 
     return storage_->has_next();
@@ -122,12 +157,37 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_ne
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
-std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types()
+const rosbag2_storage::BagMetadata & SequentialReader::get_metadata() const
+{
+  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  return metadata_;
+}
+
+std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types() const
+{
+  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  return topics_metadata_;
+}
+
+void SequentialReader::set_filter(
+  const rosbag2_storage::StorageFilter & storage_filter)
 {
   if (storage_) {
-    return storage_->get_all_topics_and_types();
+    storage_->set_filter(storage_filter);
+    return;
   }
-  throw std::runtime_error("Bag is not open. Call open() before reading.");
+  throw std::runtime_error(
+          "Bag is not open. Call open() before setting filter.");
+}
+
+void SequentialReader::reset_filter()
+{
+  if (storage_) {
+    storage_->reset_filter();
+    return;
+  }
+  throw std::runtime_error(
+          "Bag is not open. Call open() before resetting filter.");
 }
 
 bool SequentialReader::has_next_file() const
@@ -170,6 +230,8 @@ void SequentialReader::check_converter_serialization_format(
   const std::string & converter_serialization_format,
   const std::string & storage_serialization_format)
 {
+  if (converter_serialization_format.empty()) {return;}
+
   if (converter_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
@@ -181,5 +243,16 @@ void SequentialReader::check_converter_serialization_format(
     }
   }
 }
+
+void SequentialReader::fill_topics_metadata()
+{
+  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  topics_metadata_.clear();
+  topics_metadata_.reserve(metadata_.topics_with_message_count.size());
+  for (const auto & topic_information : metadata_.topics_with_message_count) {
+    topics_metadata_.push_back(topic_information.topic_metadata);
+  }
+}
+
 }  // namespace readers
 }  // namespace rosbag2_cpp

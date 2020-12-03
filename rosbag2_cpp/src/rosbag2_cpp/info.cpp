@@ -19,6 +19,7 @@
 #include <string>
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2_cpp
@@ -34,7 +35,7 @@ rosbag2_storage::BagMetadata Info::read_metadata(
   if (!storage_id.empty()) {
     rosbag2_storage::StorageFactory factory;
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage;
-    storage = factory.open_read_only(uri, storage_id);
+    storage = factory.open_read_only({uri, storage_id});
     if (!storage) {
       throw std::runtime_error(
               "The metadata.yaml file does not exist and the bag could not be "

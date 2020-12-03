@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rcpputils/shared_library.hpp"
 #include "rcutils/types.h"
 
 #include "generic_publisher.hpp"
@@ -34,17 +37,21 @@ class Rosbag2Node : public rclcpp::Node
 {
 public:
   explicit Rosbag2Node(const std::string & node_name);
+  explicit Rosbag2Node(
+    const std::string & node_name,
+    const rclcpp::NodeOptions & options);
   ~Rosbag2Node() override = default;
 
   std::shared_ptr<GenericPublisher>
   create_generic_publisher(
-    const std::string & topic, const std::string & type);
+    const std::string & topic, const std::string & type, const rclcpp::QoS & qos);
 
   std::shared_ptr<GenericSubscription>
   create_generic_subscription(
     const std::string & topic,
     const std::string & type,
-    std::function<void(std::shared_ptr<rmw_serialized_message_t>)> callback);
+    const rclcpp::QoS & qos,
+    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   std::unordered_map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);
@@ -53,11 +60,16 @@ public:
   expand_topic_name(const std::string & topic_name);
 
   std::unordered_map<std::string, std::string>
-  get_all_topics_with_types();
+  get_all_topics_with_types(bool include_hidden_topics = false);
 
   std::unordered_map<std::string, std::string>
   filter_topics_with_more_than_one_type(
-    std::map<std::string, std::vector<std::string>> topics_and_types);
+    const std::map<std::string, std::vector<std::string>> & topics_and_types,
+    bool include_hidden_topics = false);
+
+private:
+  std::shared_ptr<rcpputils::SharedLibrary> library_generic_subscriptor_;
+  std::shared_ptr<rcpputils::SharedLibrary> library_generic_publisher_;
 };
 
 }  // namespace rosbag2_transport

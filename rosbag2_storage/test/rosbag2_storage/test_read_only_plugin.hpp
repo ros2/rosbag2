@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
 class TestReadOnlyPlugin : public rosbag2_storage::storage_interfaces::ReadOnlyInterface
@@ -26,7 +27,9 @@ class TestReadOnlyPlugin : public rosbag2_storage::storage_interfaces::ReadOnlyI
 public:
   ~TestReadOnlyPlugin() override;
 
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag) override;
+  void open(
+    const rosbag2_storage::StorageOptions & storage_options,
+    rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
   bool has_next() override;
 
@@ -41,6 +44,10 @@ public:
   uint64_t get_bagfile_size() const override;
 
   std::string get_storage_identifier() const override;
+
+  void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
+
+  void reset_filter() override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_READ_ONLY_PLUGIN_HPP_

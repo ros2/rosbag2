@@ -3,6 +3,43 @@ Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+
+0.4.0 (2020-11-19)
+------------------
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* use interface_include_directories (`#426 <https://github.com/ros2/rosbag2/issues/426>`_)
+* Contributors: Karsten Knese, Michael Jeronimo
+
+0.3.2 (2020-06-03)
+------------------
+
+0.3.1 (2020-06-01)
+------------------
+
+0.3.0 (2020-05-26)
+------------------
+* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
+* Contributors: Karsten Knese
+
+0.2.8 (2020-05-18)
+------------------
+
+0.2.7 (2020-05-12)
+------------------
+
+0.2.6 (2020-05-07)
+------------------
+
+0.2.5 (2020-04-30)
+------------------
+* fix CMake warning about using uninitialized variables (`#382 <https://github.com/ros2/rosbag2/issues/382>`_)
+* Add project() to sqlite3_cmakelists.txt (`#324 <https://github.com/ros2/rosbag2/issues/324>`_)
+* make sqlite3_vendor an ament package (`#252 <https://github.com/ros2/rosbag2/issues/252>`_)
+* make ros tooling working group maintainer (`#211 <https://github.com/ros2/rosbag2/issues/211>`_)
+* Contributors: Dirk Thomas, Karsten Knese, Mikael Arguedas, brawner
+
 0.2.4 (2019-11-18)
 ------------------
 

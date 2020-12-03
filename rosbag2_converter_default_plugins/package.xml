@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_converter_default_plugins</name>
-  <version>0.2.4</version>
+  <version>0.5.0</version>
   <description>Package containing default plugins for format converters</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
@@ -11,9 +12,8 @@
 
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
-  <depend>poco_vendor</depend>
-  <depend>rosidl_generator_cpp</depend>
-  <depend>rcutils</depend>
+  <depend>rosidl_runtime_cpp</depend>
+  <depend>rcpputils</depend>
   <depend>rmw</depend>
   <depend>rmw_fastrtps_cpp</depend>
   <depend>rosbag2_cpp</depend>
@@ -21,7 +21,7 @@
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <test_depend>rcutils</test_depend>
+  <test_depend>rcpputils</test_depend>
   <test_depend>rmw_fastrtps_cpp</test_depend>
   <test_depend>rosbag2_cpp</test_depend>
   <test_depend>rosbag2_test_common</test_depend>

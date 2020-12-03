@@ -19,10 +19,12 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_cpp
@@ -36,7 +38,8 @@ public:
   virtual ~BaseReaderInterface() {}
 
   virtual void open(
-    const StorageOptions & storage_options, const ConverterOptions & converter_options) = 0;
+    const rosbag2_storage::StorageOptions & storage_options,
+    const ConverterOptions & converter_options) = 0;
 
   virtual void reset() = 0;
 
@@ -44,7 +47,13 @@ public:
 
   virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() = 0;
 
-  virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() = 0;
+  virtual const rosbag2_storage::BagMetadata & get_metadata() const = 0;
+
+  virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const = 0;
+
+  virtual void set_filter(const rosbag2_storage::StorageFilter & storage_filter) = 0;
+
+  virtual void reset_filter() = 0;
 };
 
 }  // namespace reader_interfaces

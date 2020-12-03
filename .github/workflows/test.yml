@@ -1,6 +1,6 @@
 name: Test rosbag2
 on:
-  pull_request:
+  # pull_request:
   push:
     branches:
       - master
@@ -11,13 +11,25 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
-    - uses: ros-tooling/setup-ros@0.0.13
-    - uses: ros-tooling/action-ros-ci@0.0.13
+    - uses: ros-tooling/action-ros-ci@0.1.0
       with:
-        package-name: ros2bag rosbag2_compression rosbag2_cpp rosbag2_storage rosbag2_storage_default_plugins rosbag2_test_common rosbag2_tests shared_queues_vendor sqlite3_vendor
-    - uses: actions/upload-artifact@master
+        package-name: |
+          ros2bag
+          rosbag2_compression
+          rosbag2_converter_default_plugins
+          rosbag2_cpp
+          rosbag2_storage
+          rosbag2_storage_default_plugins
+          rosbag2_transport
+          shared_queues_vendor
+          sqlite3_vendor
+          rosbag2_test_common
+          rosbag2_tests
+    - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
         path: ros_ws/log
