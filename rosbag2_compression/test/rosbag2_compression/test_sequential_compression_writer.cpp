@@ -63,12 +63,16 @@ public:
   rcpputils::fs::path tmp_dir_;
   rosbag2_storage::StorageOptions tmp_dir_storage_options_;
   std::string serialization_format_;
+
+  const uint64_t kDefaultCompressionQueueSize = 1;
+  const uint64_t kDefaultCompressionQueueThreads = 4;
 };
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE};
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
@@ -89,7 +93,8 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri
 TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "bad_format", rosbag2_compression::CompressionMode::FILE};
+    "bad_format", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
@@ -110,7 +115,8 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE};
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   // Set minimum file size greater than max bagfile size option
@@ -137,7 +143,8 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_format)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE};
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
   auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
@@ -161,7 +168,8 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE};
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
   EXPECT_CALL(*compression_factory, create_compressor(_)).Times(1);
 
@@ -173,7 +181,11 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
     std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
-  writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_});
+  // This will throw an exception because the MockCompressionFactory does not actually create
+  // a compressor.
+  EXPECT_THROW(
+    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
+    std::runtime_error);
 
   EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
 }
