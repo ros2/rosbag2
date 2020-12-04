@@ -37,7 +37,7 @@ void Formatter::format_bag_meta_data(const rosbag2_storage::BagMetadata & metada
   int indentation_spaces = 19;  // The longest info field (Topics with Type:) plus one space.
 
   info_stream << std::endl;
-  info_stream << "Files:             ";
+  info_stream << "Files/Directories: ";
   format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
   info_stream << "Bag size:          " << format_file_size(
     metadata.bag_size) << std::endl;

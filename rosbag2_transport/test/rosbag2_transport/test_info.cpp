@@ -47,7 +47,7 @@ TEST_F(Rosbag2TransportTestFixture, info_pretty_prints_information_from_bagfile)
   std::string output = internal::GetCapturedStdout();
   EXPECT_THAT(
     output, ContainsRegex(
-      "\nFiles:             some_relative_path\n"
+      "\nFiles/Directories: some_relative_path\n"
       "                   some_other_relative_path\n"
       "Bag size:          0 B\n"
       "Storage id:        sqlite3\n"

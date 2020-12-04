@@ -294,11 +294,21 @@ uint64_t LeveldbWrapper::get_topic_ldb_size()
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
 
-  uint64_t size = rcutils_calculate_directory_size(path_metadata_.c_str(), allocator);
+  uint64_t metadata_ldb_size;
+  if (RCUTILS_RET_OK !=
+    rcutils_calculate_directory_size(path_metadata_.c_str(), &metadata_ldb_size, allocator))
+  {
+    throw LeveldbException("Failed to get the size of metadata leveldb !");
+  }
 
-  size += rcutils_calculate_directory_size(path_data_.c_str(), allocator);
+  uint64_t message_ldb_size;
+  if (RCUTILS_RET_OK !=
+    rcutils_calculate_directory_size(path_data_.c_str(), &message_ldb_size, allocator))
+  {
+    throw LeveldbException("Failed to get the size of metadata leveldb !");
+  }
 
-  return size;
+  return metadata_ldb_size + message_ldb_size;
 }
 
 void LeveldbWrapper::remove_database()
