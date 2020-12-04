@@ -51,17 +51,17 @@ public:
     messages_per_topic_[message->topic_name] += 1;
   }
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> get_messages()
+  const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & get_messages()
   {
     return messages_;
   }
 
-  std::unordered_map<std::string, size_t> messages_per_topic()
+  const std::unordered_map<std::string, size_t> & messages_per_topic()
   {
     return messages_per_topic_;
   }
 
-  std::unordered_map<std::string, rosbag2_storage::TopicMetadata> get_topics()
+  const std::unordered_map<std::string, rosbag2_storage::TopicMetadata> & get_topics()
   {
     return topics_;
   }
