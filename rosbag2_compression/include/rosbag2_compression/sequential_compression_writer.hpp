@@ -25,6 +25,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rcpputils/thread_safety_annotations.hpp"
+
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
@@ -159,9 +161,10 @@ protected:
 private:
   std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
-  std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> compressor_message_queue_;
-  std::queue<std::string> compressor_file_queue_;
-  std::mutex compressor_mutex_;
+  std::mutex compressor_queue_mutex_;
+  std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  compressor_message_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
+  std::queue<std::string> compressor_file_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::vector<std::thread> compression_threads_;
   std::atomic_bool compression_is_running_{false};
   std::recursive_mutex storage_mutex_;

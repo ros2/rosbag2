@@ -67,8 +67,6 @@ void SequentialCompressionWriter::compression_thread_fn()
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
 
-  std::mutex mutex;
-  std::unique_lock<std::mutex> lock(mutex);
 
   if (!compressor) {
     throw std::runtime_error{
@@ -78,9 +76,9 @@ void SequentialCompressionWriter::compression_thread_fn()
   while (compression_is_running_) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
-    compressor_condition_.wait(lock);
     {
-      std::lock_guard<std::mutex> queue_lock(compressor_mutex_);
+      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compressor_condition_.wait(lock);
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
@@ -96,8 +94,7 @@ void SequentialCompressionWriter::compression_thread_fn()
       {
         // Now that the message is compressed, it can be written to file using the
         // normal method.
-        std::lock_guard<std::recursive_mutex> storage_lock(
-          storage_mutex_);
+        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
         SequentialWriter::write(message);
       }
     } else if (!file.empty()) {
@@ -189,6 +186,7 @@ void SequentialCompressionWriter::reset()
       should_compress_last_file_)
     {
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+      std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
       try {
         storage_.reset();  // Storage must be closed before it can be compressed.
         if (!metadata_.relative_file_paths.empty()) {
@@ -238,20 +236,11 @@ void SequentialCompressionWriter::compress_file(
 
   if (to_compress.exists() && to_compress.file_size() > 0u) {
     const auto compressed_uri = compressor.compress_uri(to_compress.string());
-
     {
-      // After we've compressed the file, replace the name in the file list with the
-      // new name.
-      // It feels inefficient here to just search through the vector for the file name,
-      // but it's the easiest way to handle this; both the size and the order of this vector
-      // are important, since they're used to handle the generation of new files names and the
-      // order of the bag files.  If we have multiple threads that could all be compressing
-      // files at once, there's no guarantee in which order they'll finish.  All that means
-      // that we can't remove items or change their order after they're added, and we can't
-      // rely on the file we just finished compressing being in any particular place.  We can't
-      // even rely on holding on to a reference to an iterator in the vector, since newly added
-      // entries could have invalidated that vector.  We just have to go find our entry again.
-      std::lock_guard<std::mutex> lock(compressor_mutex_);
+      // After we've compressed the file, replace the name in the file list with the new name.
+      // Must search for the entry because other threads may have changed the order of the vector
+      // and invalidated any index or iterator we held to it.
+      std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
       auto iter = std::find(
         metadata_.relative_file_paths.begin(),
         metadata_.relative_file_paths.end(),
@@ -279,7 +268,7 @@ void SequentialCompressionWriter::compress_file(
 void SequentialCompressionWriter::split_bagfile()
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  std::lock_guard<std::mutex> compressor_lock(compressor_mutex_);
+  std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
   switch_to_next_storage();
 
@@ -317,7 +306,7 @@ void SequentialCompressionWriter::write(
   if (compression_options_.compression_mode == CompressionMode::FILE) {
     SequentialWriter::write(message);
   } else {
-    std::lock_guard<std::mutex> lock(compressor_mutex_);
+    std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
       compressor_message_queue_.pop();
     }
