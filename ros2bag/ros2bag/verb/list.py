@@ -55,7 +55,7 @@ class ListVerb(VerbExtension):
                     class_name = class_item.attributes['name']
                     type_name = class_item.attributes['type']
                     base_class_name = class_item.attributes['base_class_type']
-                    description = xmldoc.getElementsByTagName('description')[0]
+                    description = class_item.getElementsByTagName('description')[0]
 
                     print('%s%s' % (('name: ' if args.verbose else ''), class_name.value))
                     if args.verbose:
