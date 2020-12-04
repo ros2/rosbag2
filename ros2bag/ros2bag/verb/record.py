@@ -85,6 +85,16 @@ class RecordVerb(VerbExtension):
             help='Specify the compression format/algorithm. Default is none.'
         )
         parser.add_argument(
+            '--compression-queue-size', type=int, default=1,
+            help='Number of files or messages that may be queued for compression '
+                 'before being dropped.  Default is 1.'
+        )
+        parser.add_argument(
+            '--compression-threads', type=int, default=0,
+            help='Number of files or messages that may be compressed in parallel. '
+                 'Default is 0, which will be interpreted as the number of CPU cores.'
+        )
+        parser.add_argument(
             '--include-hidden-topics', action='store_true',
             help='record also hidden topics.'
         )
@@ -118,6 +128,9 @@ class RecordVerb(VerbExtension):
             return print_error('Invalid choice: Cannot specify compression format '
                                'without a compression mode.')
 
+        if args.compression_queue_size < 1:
+            return print_error('Compression queue size must be at least 1.')
+
         args.compression_mode = args.compression_mode.upper()
 
         qos_profile_overrides = {}  # Specify a valid default
@@ -147,6 +160,8 @@ class RecordVerb(VerbExtension):
             node_prefix=NODE_NAME_PREFIX,
             compression_mode=args.compression_mode,
             compression_format=args.compression_format,
+            compression_queue_size=args.compression_queue_size,
+            compression_threads=args.compression_threads,
             all=args.all,
             no_discovery=args.no_discovery,
             polling_interval=args.polling_interval,

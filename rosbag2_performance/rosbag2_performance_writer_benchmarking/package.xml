@@ -12,7 +12,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
+  <depend>rosbag2_storage</depend>
   <depend>rmw</depend>
   <depend>std_msgs</depend>
 

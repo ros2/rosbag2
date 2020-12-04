@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_performance_writer_benchmarking/message_queue.hpp"
@@ -46,6 +47,11 @@ private:
   std::vector<std::thread> producer_threads_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
   std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
+
+  std::string compression_format_;
+  rosbag2_compression::CompressionMode compression_mode_;
+  uint64_t compression_queue_size_;
+  uint64_t compression_threads_;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
 };
 
