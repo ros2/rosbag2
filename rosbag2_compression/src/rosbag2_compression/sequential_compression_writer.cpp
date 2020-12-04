@@ -137,9 +137,9 @@ void SequentialCompressionWriter::setup_compressor_threads()
     auto hardware_threads = std::thread::hardware_concurrency();
     compression_options_.compression_threads = hardware_threads > 0 ? hardware_threads : 1;
   }
-  ROSBAG2_COMPRESSION_LOG_DEBUG(
-    "setup_compressor_threads: Starting %lu threads",
-    compression_options_.compression_threads);
+  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+    "setup_compressor_threads: Starting " <<
+      compression_options_.compression_threads << " threads");
   compression_is_running_ = true;
 
   // This function needs to throw an exception if the compression format is invalid, but because
