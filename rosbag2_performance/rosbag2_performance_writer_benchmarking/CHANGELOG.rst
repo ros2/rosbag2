@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_writer_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2020-12-02)
+------------------
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski
+
 0.4.0 (2020-11-19)
 ------------------
 * read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)

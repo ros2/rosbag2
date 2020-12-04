@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2020-12-02)
+------------------
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski
+
 0.4.0 (2020-11-19)
 ------------------
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)

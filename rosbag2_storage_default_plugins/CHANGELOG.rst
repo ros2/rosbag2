@@ -3,6 +3,9 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+
 0.4.0 (2020-11-19)
 ------------------
 * read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)

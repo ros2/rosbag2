@@ -44,7 +44,6 @@ private:
   unsigned int instances_;
   std::string db_folder_;
   std::string results_file_;
-  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
   std::vector<std::thread> producer_threads_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
   std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
@@ -53,6 +52,7 @@ private:
   rosbag2_compression::CompressionMode compression_mode_;
   uint64_t compression_queue_size_;
   uint64_t compression_threads_;
+  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
 };
 
 #endif  // ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_

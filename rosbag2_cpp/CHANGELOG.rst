@@ -3,6 +3,12 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+* Add back rosbag2_cpp::StorageOptions as deprecated (`#563 <https://github.com/ros2/rosbag2/issues/563>`_)
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski, Jacob Perron
+
 0.4.0 (2020-11-19)
 ------------------
 * correct master build (`#552 <https://github.com/ros2/rosbag2/issues/552>`_)
