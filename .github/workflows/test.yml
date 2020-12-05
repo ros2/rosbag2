@@ -1,6 +1,6 @@
 name: Test rosbag2
 on:
-  # pull_request:
+  pull_request:
   push:
     branches:
       - master
