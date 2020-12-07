@@ -76,9 +76,9 @@ TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_strings_message_with_emp
   auto data = static_cast<test_msgs::msg::Strings *>(message->message);
   if (!data) {
     fprintf(stderr, "allocation failed for string\n");
+  } else {
+    data->string_value = "";
   }
-
-  data->string_value = "";
 }
 
 TEST_F(Ros2MessageTest, allocate_ros2_message_allocates_strings_message_with_big_string_no_SSO) {
