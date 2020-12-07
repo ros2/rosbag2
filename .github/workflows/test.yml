@@ -1,6 +1,6 @@
 name: Test rosbag2
 on:
-  # pull_request:
+  pull_request:
   push:
     branches:
       - master
@@ -13,7 +13,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-latest
     steps:
     - uses: ros-tooling/action-ros-ci@0.1.0
       with:
@@ -29,6 +29,7 @@ jobs:
           sqlite3_vendor
           rosbag2_test_common
           rosbag2_tests
+        target-ros2-distro: rolling
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
