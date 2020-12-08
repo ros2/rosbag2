@@ -62,15 +62,10 @@ public:
   }
 
 private:
-  void topics_discovery(
-    std::chrono::milliseconds topic_polling_interval,
-    const std::vector<std::string> & requested_topics = {},
-    bool include_hidden_topics = false);
+  void topics_discovery_callback();
 
   std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics(
-    const std::vector<std::string> & requested_topics,
-    bool include_hidden_topics = false);
+  get_requested_or_available_topics();
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
@@ -100,6 +95,10 @@ private:
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
+
+  std::vector<std::string> requested_topics_;
+  bool include_hidden_topics_;
+  rclcpp::TimerBase::SharedPtr discovery_timer_;
 
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<Rosbag2Node> node_;

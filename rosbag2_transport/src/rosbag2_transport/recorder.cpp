@@ -56,59 +56,43 @@ void Recorder::record(const RecordOptions & record_options)
     throw std::runtime_error("No serialization format specified!");
   }
   serialization_format_ = record_options.rmw_serialization_format;
-  ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
-  subscribe_topics(
-    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
+  requested_topics_ = record_options.topics;
+  include_hidden_topics_ = record_options.include_hidden_topics;
 
-  std::future<void> discovery_future;
+  ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
+  subscribe_topics(get_requested_or_available_topics());
+
   if (!record_options.is_discovery_disabled) {
-    auto discovery = std::bind(
-      &Recorder::topics_discovery, this,
-      record_options.topic_polling_interval,
-      record_options.topics,
-      record_options.include_hidden_topics);
-    discovery_future = std::async(std::launch::async, discovery);
+    discovery_timer_ = node_->create_wall_timer(record_options.topic_polling_interval,
+      std::bind(&Recorder::topics_discovery_callback, this));
   }
 
   record_messages();
 
-  if (discovery_future.valid()) {
-    discovery_future.wait();
-  }
-
   subscriptions_.clear();
 }
 
-void Recorder::topics_discovery(
-  std::chrono::milliseconds topic_polling_interval,
-  const std::vector<std::string> & requested_topics,
-  bool include_hidden_topics)
+void Recorder::topics_discovery_callback()
 {
-  while (rclcpp::ok()) {
-    auto topics_to_subscribe =
-      get_requested_or_available_topics(requested_topics, include_hidden_topics);
+    auto topics_to_subscribe = get_requested_or_available_topics();
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
-    if (!requested_topics.empty() && subscriptions_.size() == requested_topics.size()) {
+    if (!requested_topics_.empty() && subscriptions_.size() == requested_topics_.size()) {
       ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
-      return;
+      discovery_timer_->cancel();
     }
-    std::this_thread::sleep_for(topic_polling_interval);
-  }
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_requested_or_available_topics(
-  const std::vector<std::string> & requested_topics,
-  bool include_hidden_topics)
+Recorder::get_requested_or_available_topics()
 {
-  return requested_topics.empty() ?
-         node_->get_all_topics_with_types(include_hidden_topics) :
-         node_->get_topics_with_types(requested_topics);
+  return requested_topics_.empty() ?
+         node_->get_all_topics_with_types(include_hidden_topics_) :
+         node_->get_topics_with_types(requested_topics_);
 }
 
 std::unordered_map<std::string, std::string>
