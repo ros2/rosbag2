@@ -73,6 +73,7 @@ pybind11_add_module(_reader SHARED
 ament_target_dependencies(_reader PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
+  "rosbag2_storage"
 )
 clean_windows_flags(_reader)
 
@@ -91,6 +92,7 @@ pybind11_add_module(_writer SHARED
 ament_target_dependencies(_writer PUBLIC
   "rosbag2_compression"
   "rosbag2_cpp"
+  "rosbag2_storage"
 )
 clean_windows_flags(_writer)
 
