@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(rclcpp REQUIRED)
   find_package(rcutils REQUIRED)
+  find_package(rosbag2_compression REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rmw REQUIRED)
@@ -22,16 +23,17 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(yaml_cpp_vendor REQUIRED)
 
   add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
+  ament_target_dependencies(writer_benchmark
+    rclcpp
+    std_msgs
+    rosbag2_compression
+    rosbag2_cpp
+    yaml_cpp_vendor
+  )
   target_include_directories(writer_benchmark
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-  )
-  ament_target_dependencies(writer_benchmark
-    rclcpp
-    std_msgs
-    rosbag2_cpp
-    yaml_cpp_vendor
   )
 
   install(TARGETS writer_benchmark

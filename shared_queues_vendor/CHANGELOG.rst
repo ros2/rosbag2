@@ -3,6 +3,9 @@ Changelog for package shared_queues_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+
 0.4.0 (2020-11-19)
 ------------------
 * Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)

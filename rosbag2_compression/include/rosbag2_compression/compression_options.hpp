@@ -58,6 +58,8 @@ struct CompressionOptions
 {
   std::string compression_format;
   CompressionMode compression_mode;
+  uint64_t compression_queue_size;
+  uint64_t compression_threads;
 };
 
 }  // namespace rosbag2_compression

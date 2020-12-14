@@ -26,6 +26,21 @@
 
 namespace rosbag2_compression
 {
+ZstdDecompressor::ZstdDecompressor()
+{
+  // From the zstd manual: https://facebook.github.io/zstd/zstd_manual.html#Chapter4
+  // When decompressing many times,
+  // it is recommended to allocate a context only once,
+  // and re-use it for each successive compression operation.
+  // This will make workload friendlier for system's memory.
+  // Use one context per thread for parallel execution.
+  zstd_context_ = ZSTD_createDCtx();
+}
+
+ZstdDecompressor::~ZstdDecompressor()
+{
+  ZSTD_freeDCtx(zstd_context_);
+}
 
 std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 {
@@ -45,7 +60,8 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
   // the initializer list constructor instead.
   std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
 
-  const auto decompression_result = ZSTD_decompress(
+  const auto decompression_result = ZSTD_decompressDCtx(
+    zstd_context_,
     decompressed_buffer.data(), decompressed_buffer_length,
     compressed_buffer.data(), compressed_buffer_length);
 
@@ -76,7 +92,8 @@ void ZstdDecompressor::decompress_serialized_bag_message(
   // the initializer list constructor instead.
   std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
 
-  const auto decompression_result = ZSTD_decompress(
+  const auto decompression_result = ZSTD_decompressDCtx(
+    zstd_context_,
     decompressed_buffer.data(), decompressed_buffer_length,
     message->serialized_data->buffer, compressed_buffer_length);
 
