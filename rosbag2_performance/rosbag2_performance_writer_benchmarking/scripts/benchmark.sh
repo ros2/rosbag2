@@ -21,6 +21,10 @@ config_default_path=${storage_config_dir}/storage_default.yaml
 
 # Set this to "zstd" to test with compression
 compression_format=""
+compression_arg=""
+if [ -n "$compression_format" ]; then
+  compression_arg="-p compression_format:=${compression_format}"
+fi
 
 for storage_config_file_path in ${config_optimized_path} ${config_default_path}
 do
@@ -46,7 +50,7 @@ do
           outfile=${outdir}/${try}.log
           echo "Results will be written to file: ${outfile}"
           ros2 run rosbag2_performance_writer_benchmarking writer_benchmark --ros-args \
-            -p compression_format:=${compression_format} \
+            ${compression_arg} \
             -p frequency:=${freq} \
             -p size:=${sz} \
             -p instances:=${inst} \
