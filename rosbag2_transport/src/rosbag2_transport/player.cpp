@@ -165,10 +165,6 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
-  rclcpp::executors::MultiThreadedExecutor exe;
-  exe.add_node(rosbag2_transport_->get_node_base_interface());
-  exe.spin();
-
   time_translator_.setRealStartTime(std::chrono::system_clock::now());
   do {
     play_messages_until_queue_empty(options);

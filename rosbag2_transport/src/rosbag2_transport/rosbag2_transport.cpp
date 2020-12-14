@@ -102,7 +102,9 @@ void Rosbag2Transport::play(
     Player player(reader_, transport_node);
     do {
       reader_->open(storage_options, {"", rmw_get_serialization_format()});
-      player.play(play_options);
+      std::thread play_thread(&Player::play, &player, play_options);
+      play_thread.join();
+//      player.play(play_options);
     } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
