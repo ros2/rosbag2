@@ -94,6 +94,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "node_prefix",
     "compression_mode",
     "compression_format",
+    "compression_queue_size",
+    "compression_threads",
     "all",
     "no_discovery",
     "polling_interval",
@@ -103,6 +105,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "topics",
     "include_hidden_topics",
     "qos_profile_overrides",
+    "resilient_storage_writing",
     "storage_config_file",
     nullptr};
 
