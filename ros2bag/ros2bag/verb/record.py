@@ -67,11 +67,13 @@ class RecordVerb(VerbExtension):
                   'the bag will split at whichever threshold is reached first.'
         )
         parser.add_argument(
-            '--max-cache-size', type=int, default=1024*1024,
-            help='maximum size (in bytes) of messages to hold in cache before writing to disk. '
-                 'Default is 1 mebibyte, everytime the cache size equals or exceeds 1MB, '
-                 'it will be written to disk. If the value specified is 0, then every message is'
-                 'directly written to disk.'
+            '--max-cache-size', type=int, default=100*1024*1024,
+            help='maximum size (in bytes) of messages to hold in each buffer of cache.'
+                 'Default is 100 mebibytes. The cache is handled through double buffering, '
+                 'which means that in pessimistic case up to twice the parameter value of memory'
+                 'is needed. A rule of thumb is to cache an order of magitude corresponding to'
+                 'about one second of total recorded data volume.'
+                 'If the value specified is 0, then every message is directly written to disk.'
         )
         parser.add_argument(
             '--compression-mode', type=str, default='none',
@@ -81,6 +83,16 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--compression-format', type=str, default='', choices=['zstd'],
             help='Specify the compression format/algorithm. Default is none.'
+        )
+        parser.add_argument(
+            '--compression-queue-size', type=int, default=1,
+            help='Number of files or messages that may be queued for compression '
+                 'before being dropped.  Default is 1.'
+        )
+        parser.add_argument(
+            '--compression-threads', type=int, default=0,
+            help='Number of files or messages that may be compressed in parallel. '
+                 'Default is 0, which will be interpreted as the number of CPU cores.'
         )
         parser.add_argument(
             '--include-hidden-topics', action='store_true',
@@ -123,6 +135,9 @@ class RecordVerb(VerbExtension):
             return print_error('Invalid choice: Cannot specify compression format '
                                'without a compression mode.')
 
+        if args.compression_queue_size < 1:
+            return print_error('Compression queue size must be at least 1.')
+
         args.compression_mode = args.compression_mode.upper()
 
         qos_profile_overrides = {}  # Specify a valid default
@@ -152,6 +167,8 @@ class RecordVerb(VerbExtension):
             node_prefix=NODE_NAME_PREFIX,
             compression_mode=args.compression_mode,
             compression_format=args.compression_format,
+            compression_queue_size=args.compression_queue_size,
+            compression_threads=args.compression_threads,
             all=args.all,
             no_discovery=args.no_discovery,
             polling_interval=args.polling_interval,

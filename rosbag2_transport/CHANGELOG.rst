@@ -3,6 +3,9 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.5.0 (2020-12-02)
+------------------
+
 0.4.0 (2020-11-19)
 ------------------
 * add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)

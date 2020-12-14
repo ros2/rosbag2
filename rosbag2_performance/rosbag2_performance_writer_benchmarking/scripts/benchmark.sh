@@ -17,6 +17,9 @@ summary_file=${test_dir}/results.csv
 
 freq=100; #Hz
 
+# Set this to "zstd" to test with compression
+compression_format=""
+
 for cache in 0 1000000 10000000 100000000
 do
   for sz in 1000 10000 100000 1000000
@@ -36,6 +39,7 @@ do
         outfile=${outdir}/${try}.log
         echo "Results will be written to file: ${outfile}"
         ros2 run rosbag2_performance_writer_benchmarking writer_benchmark --ros-args \
+          -p compression_format:=${compression_format} \
           -p frequency:=${freq} \
           -p size:=${sz} \
           -p instances:=${inst} \
