@@ -50,7 +50,6 @@ private:
   std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
 
   std::string compression_format_;
-  rosbag2_compression::CompressionMode compression_mode_;
   uint64_t compression_queue_size_;
   uint64_t compression_threads_;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
