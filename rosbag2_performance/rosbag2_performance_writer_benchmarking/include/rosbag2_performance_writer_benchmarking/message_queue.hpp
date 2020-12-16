@@ -40,7 +40,6 @@ public:
     std::lock_guard<std::mutex> lock(mutex_);
     if (queue_.size() > max_size_) {  // We skip the element and consider it "lost"
       ++unsuccessful_insert_count_;
-      std::cerr << "X" << std::flush;
       return;
     }
     queue_.push(elem);
