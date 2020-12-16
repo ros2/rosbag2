@@ -37,19 +37,19 @@ private:
   void create_producers(const ProducerConfig & config);
   void create_writer();
   void start_producers();
-  void write_results(const unsigned int & total_missed) const;
+  void write_results() const;
+  int get_message_count_from_metadata() const;
 
   ProducerConfig config_;
-  unsigned int max_cache_size_;
   unsigned int instances_;
-  std::string db_folder_;
   std::string results_file_;
+
+  rosbag2_storage::StorageOptions storage_options_;
   std::vector<std::thread> producer_threads_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
   std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
 
   std::string compression_format_;
-  rosbag2_compression::CompressionMode compression_mode_;
   uint64_t compression_queue_size_;
   uint64_t compression_threads_;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
