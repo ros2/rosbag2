@@ -145,9 +145,12 @@ inline std::unordered_map<std::string, std::string> parse_pragmas(
 
 void apply_resilient_storage_settings(std::unordered_map<std::string, std::string> & pragmas)
 {
-  auto overriding_pragmas = rosbag2_storage_plugins::SqlitePragmas::robust_writing_pragmas();
-  for (const auto & kv : overriding_pragmas) {
-    pragmas[kv.first] = kv.second;
+  auto robust_pragmas = rosbag2_storage_plugins::SqlitePragmas::robust_writing_pragmas();
+  for (const auto & kv : robust_pragmas) {
+    // do not override settings from configuration file, otherwise apply
+    if (pragmas.count(kv.first) == 0) {
+      pragmas[kv.first] = kv.second;
+    }
   }
 }
 
@@ -170,8 +173,9 @@ void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  const bool resilient_preset = "resilient" == storage_options.storage_preset_profile;
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
-  if (storage_options.resilient_storage_writing && is_read_write(io_flag)) {
+  if (resilient_preset && is_read_write(io_flag)) {
     apply_resilient_storage_settings(pragmas);
   }
 

@@ -35,6 +35,8 @@ public:
     return p;
   }
 
+  // more robust storage settings will cause performace hit on writing,
+  // but increase resistance to bagfile data corruption in case of crashes
   static pragmas_map_t robust_writing_pragmas()
   {
     static pragmas_map_t p = {

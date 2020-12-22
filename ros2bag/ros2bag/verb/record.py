@@ -103,10 +103,12 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         parser.add_argument(
-            '--resilient-storage-writing', action='store_true',
-            help='Indicate preference for avoiding data corruption in case of crashes, '
-                 'at the cost of performance. Setting this flag disables optimization '
-                 'settings for storage (the defaut). When set, this flag will override '
+            '--storage-preset-profile', type=str, default='none', choices=['none', 'resilient'],
+            help='Select a configuration preset for storage.'
+                 'resilient (sqlite3):'
+                 'indicate preference for avoiding data corruption in case of crashes,'
+                 'at the cost of performance. Setting this flag disables optimization settings '
+                 'for storage (the defaut). This flag settings can still be overriden by '
                  'corresponding settings in the config passed with --storage-config-file.'
         )
         parser.add_argument(
@@ -178,7 +180,7 @@ class RecordVerb(VerbExtension):
             topics=args.topics,
             include_hidden_topics=args.include_hidden_topics,
             qos_profile_overrides=qos_profile_overrides,
-            resilient_storage_writing=args.resilient_storage_writing,
+            storage_preset_profile=args.storage_preset_profile,
             storage_config_file=storage_config_file)
 
         if os.path.isdir(uri) and not os.listdir(uri):
