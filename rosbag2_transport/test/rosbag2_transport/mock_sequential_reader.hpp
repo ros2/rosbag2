@@ -44,7 +44,7 @@ public:
 
     while (num_read_ < messages_.size()) {
       for (const auto & filter_topic : filter_.topics) {
-        if (!messages_[num_read_ + 1]->topic_name.compare(filter_topic)) {
+        if (!messages_[num_read_]->topic_name.compare(filter_topic)) {
           return true;
         }
       }
