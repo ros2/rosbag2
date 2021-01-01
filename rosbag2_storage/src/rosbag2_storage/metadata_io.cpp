@@ -253,7 +253,7 @@ std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 
 bool MetadataIo::metadata_file_exists(const std::string & uri)
 {
-  return rcpputils::fs::path(get_metadata_file_name(uri)).exists();
+  return rcpputils::fs::exists(rcpputils::fs::path(get_metadata_file_name(uri)));
 }
 
 }  // namespace rosbag2_storage
