@@ -24,7 +24,7 @@
 #include "rosbag2_storage/storage_options.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
-#include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
+#include "rosbag2_performance_benchmarking/writer_benchmark.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -233,7 +233,14 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
     auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
     queues_.push_back(queue);
-    producers_.push_back(std::make_unique<ByteProducer>(config, queue));
+    producers_.push_back(std::make_unique<ByteProducer>(
+      config,
+      [queue] (std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
+        queue->push(msg);
+      },
+      [queue] {
+        queue->set_complete();
+      }));
   }
 }
 

@@ -1,7 +1,6 @@
 # Rosbag2 writer benchmarking
 
-The primary package to test transport-less performance of the rosbag2 writer and storage.
-Enables parametrized batch execution of benchmarks and tries to replicate the flow to capture message loss in queues.
+The primary package to test performance of the rosbag2.
 
 ## How it works
 
@@ -21,7 +20,7 @@ To modify this behavior, modify the benchmark.sh script.
 To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)
 
 If you already built rosbag2, you can use `packages-select` option to build benchmarks.
-Example: `colcon build --packages-select rosbag2_performance_writer_benchmarking --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`.
+Example: `colcon build --packages-select rosbag2_performance_benchmarking --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`.
 
 ## General knowledge: I/O benchmarking
 

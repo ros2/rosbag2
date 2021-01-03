@@ -14,14 +14,14 @@
 
 #include <memory>
 #include "rclcpp/executors/single_threaded_executor.hpp"
-#include "rosbag2_performance_writer_benchmarking/writer_benchmark.hpp"
+#include "rosbag2_performance_benchmarking/writer_benchmark.hpp"
 
 // TODO(adamdbrw) the benchmark being ROS node is not necessary, only used for logging
 // and parameters. Otherwise ROS dependencies are calls to rcl and rmw.
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto bench = std::make_shared<WriterBenchmark>("rosbag2_performance_writer_benchmarking_node");
+  auto bench = std::make_shared<WriterBenchmark>("rosbag2_performance_benchmarking_node");
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(bench);
 

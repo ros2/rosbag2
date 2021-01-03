@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rosbag2_performance_writer_benchmarking)
+project(rosbag2_performance_benchmarking)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)

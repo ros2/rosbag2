@@ -12,19 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_
-#define ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_
+#ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__BYTE_PRODUCER_HPP_
+#define ROSBAG2_PERFORMANCE_BENCHMARKING__BYTE_PRODUCER_HPP_
 
 #include <chrono>
 #include <memory>
 #include <thread>
-#include <vector>
+#include <functional>
 
 #include "rclcpp/utilities.hpp"
-
 #include "std_msgs/msg/byte_multi_array.hpp"
-
-#include "rosbag2_performance_writer_benchmarking/message_queue.hpp"
 
 struct ProducerConfig
 {
@@ -49,9 +46,18 @@ inline auto generate_random_message(const ProducerConfig & config)
 class ByteProducer
 {
 public:
-  ByteProducer(const ProducerConfig & config, std::shared_ptr<ByteMessageQueue> queue)
+  using producer_callback_function_t = std::function<void (
+      std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
+
+  using producer_finalize_function_t = std::function<void ()>;
+
+  ByteProducer(
+    const ProducerConfig & config,
+    producer_callback_function_t producer_callback,
+    producer_finalize_function_t producer_finalize)
   : configuration_(config),
-    queue_(queue),
+    producer_callback_(producer_callback),
+    producer_finalize_(producer_finalize),
     sleep_time_(configuration_.frequency == 0 ? 1 : 1000 / configuration_.frequency),
     message_(generate_random_message(configuration_))
   {}
@@ -62,18 +68,19 @@ public:
       if (!rclcpp::ok()) {
         break;
       }
-      queue_->push(message_);
+      producer_callback_(message_);
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time_));
     }
-    queue_->set_complete();
+    producer_finalize_();
   }
 
 private:
   ProducerConfig configuration_;
-  std::shared_ptr<ByteMessageQueue> queue_;
+  producer_callback_function_t producer_callback_;
+  producer_finalize_function_t producer_finalize_;
   unsigned int sleep_time_;  // in milliseconds
   // for simplification, this pointer will be reused
   std::shared_ptr<std_msgs::msg::ByteMultiArray> message_;
 };
 
-#endif  // ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__BYTE_PRODUCER_HPP_
+#endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__BYTE_PRODUCER_HPP_

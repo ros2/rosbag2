@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
-#define ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#define ROSBAG2_PERFORMANCE_BENCHMARKING__WRITER_BENCHMARK_HPP_
 
 #include <memory>
 #include <string>
@@ -24,8 +24,8 @@
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-#include "rosbag2_performance_writer_benchmarking/message_queue.hpp"
-#include "rosbag2_performance_writer_benchmarking/byte_producer.hpp"
+#include "rosbag2_performance_benchmarking/message_queue.hpp"
+#include "rosbag2_performance_benchmarking/byte_producer.hpp"
 
 class WriterBenchmark : public rclcpp::Node
 {
@@ -55,4 +55,4 @@ private:
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
 };
 
-#endif  // ROSBAG2_PERFORMANCE_WRITER_BENCHMARKING__WRITER_BENCHMARK_HPP_
+#endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__WRITER_BENCHMARK_HPP_
