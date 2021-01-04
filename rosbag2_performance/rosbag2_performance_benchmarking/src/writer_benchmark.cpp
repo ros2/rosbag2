@@ -233,14 +233,15 @@ void WriterBenchmark::create_producers(const ProducerConfig & config)
     std::string topic = "/writer_benchmark/producer " + std::to_string(i);
     auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
     queues_.push_back(queue);
-    producers_.push_back(std::make_unique<ByteProducer>(
-      config,
-      [queue] (std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
-        queue->push(msg);
-      },
-      [queue] {
-        queue->set_complete();
-      }));
+    producers_.push_back(
+      std::make_unique<ByteProducer>(
+        config,
+        [queue](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
+          queue->push(msg);
+        },
+        [queue] {
+          queue->set_complete();
+        }));
   }
 }
 

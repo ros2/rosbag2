@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 
-#include "std_msgs/msg/byte_multi_array.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
-
-#include <vector>
+#include "std_msgs/msg/byte_multi_array.hpp"
 
 struct PublisherGroupConfiguration
 {
-  PublisherGroupConfiguration() : count(0), qos(10) {}
+  PublisherGroupConfiguration()
+  : count(0), qos(10) {}
   uint count;
   ProducerConfig producer_config;
   std::string topic_root;
@@ -34,7 +37,7 @@ class BenchmarkPublishers : public rclcpp::Node
 {
 public:
   explicit BenchmarkPublishers(const std::string & name)
-    : rclcpp::Node(name)
+  : rclcpp::Node(name)
   {
     process_configuration();
     create_benchmark_publishers_and_producers();
@@ -67,11 +70,21 @@ private:
       this->declare_parameter(group_prefix + ".rate_hz");
 
       PublisherGroupConfiguration group_config;
-      this->get_parameter(group_prefix + ".publishers_count", group_config.count);
-      this->get_parameter(group_prefix + ".topic_root", group_config.topic_root);
-      this->get_parameter(group_prefix + ".msg_size_bytes", group_config.producer_config.message_size);
-      this->get_parameter(group_prefix + ".msg_count_each", group_config.producer_config.max_count);
-      this->get_parameter(group_prefix + ".rate_hz", group_config.producer_config.frequency);
+      this->get_parameter(
+        group_prefix + ".publishers_count",
+        group_config.count);
+      this->get_parameter(
+        group_prefix + ".topic_root",
+        group_config.topic_root);
+      this->get_parameter(
+        group_prefix + ".msg_size_bytes",
+        group_config.producer_config.message_size);
+      this->get_parameter(
+        group_prefix + ".msg_count_each",
+        group_config.producer_config.max_count);
+      this->get_parameter(
+        group_prefix + ".rate_hz",
+        group_config.producer_config.frequency);
       process_qos_configuration(group_config, group_prefix);
 
       configurations_.push_back(group_config);
@@ -95,10 +108,10 @@ private:
 
     group_config.qos.keep_last(qos_depth);
     // TODO(adamdbrw) - error handling / map string to function
-    if (qos_reliability == "reliable") group_config.qos.reliable();
-    if (qos_reliability == "best_effort") group_config.qos.best_effort();
-    if (qos_reliability == "transient_local") group_config.qos.transient_local();
-    if (qos_reliability == "volatile") group_config.qos.durability_volatile();
+    if (qos_reliability == "reliable") {group_config.qos.reliable();}
+    if (qos_reliability == "best_effort") {group_config.qos.best_effort();}
+    if (qos_reliability == "transient_local") {group_config.qos.transient_local();}
+    if (qos_reliability == "volatile") {group_config.qos.durability_volatile();}
   }
 
   void create_benchmark_publishers_and_producers()
@@ -106,15 +119,16 @@ private:
     const std::string topic_prefix(this->get_fully_qualified_name());
     for (auto & c : configurations_) {
       for (uint i = 0; i < c.count; ++i) {
-        std::string topic = topic_prefix + "/" + c.topic_root + "_" + std::to_string(i+1);
+        auto topic = topic_prefix + "/" + c.topic_root + "_" + std::to_string(i + 1);
         auto pub = this->create_publisher<std_msgs::msg::ByteMultiArray>(topic, c.qos);
         publishers_.push_back(pub);
-        producers_.push_back(std::make_unique<ByteProducer>(
-          c.producer_config,
-          [pub] (std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
-            pub->publish(*msg);
-          },
-          [] {  /* empty lambda */ }));
+        producers_.push_back(
+          std::make_unique<ByteProducer>(
+            c.producer_config,
+            [pub](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
+              pub->publish(*msg);
+            },
+            [] { /* empty lambda */}));
       }
     }
   }

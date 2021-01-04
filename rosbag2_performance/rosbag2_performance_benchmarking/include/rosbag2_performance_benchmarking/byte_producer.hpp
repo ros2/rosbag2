@@ -47,7 +47,7 @@ class ByteProducer
 {
 public:
   using producer_callback_function_t = std::function<void (
-      std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
+        std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
 
   using producer_finalize_function_t = std::function<void ()>;
 
