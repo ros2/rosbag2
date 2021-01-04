@@ -14,3 +14,7 @@ rosbag2_performance_benchmarking_publishers:
         msg_size_bytes:     10000000
         msg_count_each:     100
         rate_hz:            10
+        qos:
+          qos_depth:          5
+          qos_reliability:    "best_effort" # "reliable"
+          qos_durability:     "volatile" # "transient_local"
