@@ -2,6 +2,12 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.6 (2021-01-05)
+------------------
+* Patch zstd 1.4.4 to include cmake_minimum_version bump to 2.8.12 (`#579 <https://github.com/ros2/rosbag2/issues/579>`_) (`#587 <https://github.com/ros2/rosbag2/issues/587>`_)
+* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
+* Contributors: Emerson Knapp, Jacob Perron, Michael Jeronimo
+
 0.3.5 (2020-08-31)
 ------------------
 
