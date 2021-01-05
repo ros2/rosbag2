@@ -24,8 +24,9 @@
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-#include "rosbag2_performance_benchmarking/message_queue.hpp"
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
+#include "rosbag2_performance_benchmarking/message_queue.hpp"
+#include "rosbag2_performance_benchmarking/producer_config.hpp"
 
 class WriterBenchmark : public rclcpp::Node
 {

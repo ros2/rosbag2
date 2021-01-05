@@ -17,21 +17,14 @@
 #include <vector>
 
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
+#include "rosbag2_performance_benchmarking/config_utils.hpp"
+#include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
-struct PublisherGroupConfiguration
-{
-  PublisherGroupConfiguration()
-  : count(0), qos(10) {}
-  uint count;
-  ProducerConfig producer_config;
-  std::string topic_root;
-  rclcpp::QoS qos;
-};
 
 class BenchmarkPublishers : public rclcpp::Node
 {
@@ -39,7 +32,7 @@ public:
   explicit BenchmarkPublishers(const std::string & name)
   : rclcpp::Node(name)
   {
-    process_configuration();
+    configurations_ = config_utils::load_from_node_parameters(*this);
     create_benchmark_publishers_and_producers();
   }
 
@@ -56,64 +49,6 @@ public:
   }
 
 private:
-  void process_configuration()
-  {
-    std::vector<std::string> publisher_groups;
-    this->declare_parameter("publishers.publisher_groups");
-    this->get_parameter("publishers.publisher_groups", publisher_groups);
-    for (const auto & group_name : publisher_groups) {
-      auto group_prefix = "publishers." + group_name;
-      this->declare_parameter(group_prefix + ".publishers_count");
-      this->declare_parameter(group_prefix + ".topic_root");
-      this->declare_parameter(group_prefix + ".msg_size_bytes");
-      this->declare_parameter(group_prefix + ".msg_count_each");
-      this->declare_parameter(group_prefix + ".rate_hz");
-
-      PublisherGroupConfiguration group_config;
-      this->get_parameter(
-        group_prefix + ".publishers_count",
-        group_config.count);
-      this->get_parameter(
-        group_prefix + ".topic_root",
-        group_config.topic_root);
-      this->get_parameter(
-        group_prefix + ".msg_size_bytes",
-        group_config.producer_config.message_size);
-      this->get_parameter(
-        group_prefix + ".msg_count_each",
-        group_config.producer_config.max_count);
-      this->get_parameter(
-        group_prefix + ".rate_hz",
-        group_config.producer_config.frequency);
-      process_qos_configuration(group_config, group_prefix);
-
-      configurations_.push_back(group_config);
-    }
-  }
-
-  void process_qos_configuration(
-    PublisherGroupConfiguration & group_config,
-    const std::string & group_prefix)
-  {
-    auto qos_prefix = group_prefix + ".qos";
-    this->declare_parameter(qos_prefix + ".qos_depth");
-    this->declare_parameter(qos_prefix + ".qos_reliability");
-    this->declare_parameter(qos_prefix + ".qos_durability");
-
-    uint qos_depth = 10;
-    std::string qos_reliability, qos_durability;
-    this->get_parameter(qos_prefix + ".qos_depth", qos_depth);
-    this->get_parameter(qos_prefix + ".qos_reliability", qos_reliability);
-    this->get_parameter(qos_prefix + ".qos_durability", qos_durability);
-
-    group_config.qos.keep_last(qos_depth);
-    // TODO(adamdbrw) - error handling / map string to function
-    if (qos_reliability == "reliable") {group_config.qos.reliable();}
-    if (qos_reliability == "best_effort") {group_config.qos.best_effort();}
-    if (qos_reliability == "transient_local") {group_config.qos.transient_local();}
-    if (qos_reliability == "volatile") {group_config.qos.durability_volatile();}
-  }
-
   void create_benchmark_publishers_and_producers()
   {
     const std::string topic_prefix(this->get_fully_qualified_name());
@@ -133,7 +68,7 @@ private:
     }
   }
 
-  std::vector<PublisherGroupConfiguration> configurations_;
+  std::vector<PublisherGroupConfig> configurations_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
   std::vector<std::shared_ptr<rclcpp::Publisher<std_msgs::msg::ByteMultiArray>>> publishers_;
 };

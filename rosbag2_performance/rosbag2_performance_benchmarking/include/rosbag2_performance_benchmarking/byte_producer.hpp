@@ -23,12 +23,7 @@
 #include "rclcpp/utilities.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
-struct ProducerConfig
-{
-  unsigned int frequency;
-  unsigned int max_count;
-  unsigned int message_size;
-};
+#include "rosbag2_performance_benchmarking/producer_config.hpp"
 
 inline auto generate_random_message(const ProducerConfig & config)
 {
