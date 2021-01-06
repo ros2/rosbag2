@@ -3,7 +3,7 @@
 <package format="2">
   <name>rosbag2_compression</name>
   <version>0.5.0</version>
-  <description>Compression implementations for rosbag2 bags and messages.</description>
+  <description>Abstract plugin interface for compression implementations for rosbag2 messages and files.</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>

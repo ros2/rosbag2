@@ -12,6 +12,7 @@
 
   <exec_depend>ros2bag</exec_depend>
   <exec_depend>rosbag2_compression</exec_depend>
+  <exec_depend>rosbag2_compression_zstd</exec_depend>
   <exec_depend>rosbag2_converter_default_plugins</exec_depend>
   <exec_depend>rosbag2_cpp</exec_depend>
   <exec_depend>rosbag2_py</exec_depend>

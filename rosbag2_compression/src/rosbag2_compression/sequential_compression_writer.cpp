@@ -26,8 +26,6 @@
 
 #include "rcutils/filesystem.h"
 
-#include "rosbag2_compression/zstd_compressor.hpp"
-
 #include "rosbag2_cpp/info.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"

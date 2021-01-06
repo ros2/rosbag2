@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_COMPRESSION__COMPRESSION_UTILS_HPP_
-#define ROSBAG2_COMPRESSION__COMPRESSION_UTILS_HPP_
+#ifndef ROSBAG2_COMPRESSION_ZSTD__COMPRESSION_UTILS_HPP_
+#define ROSBAG2_COMPRESSION_ZSTD__COMPRESSION_UTILS_HPP_
 
 #include <zstd.h>
 
@@ -26,7 +26,7 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 
-namespace rosbag2_compression
+namespace rosbag2_compression_zstd
 {
 // Increasing the compression level will:
 //   - Increase the time taken to compress
@@ -102,6 +102,6 @@ void print_compression_statistics(
   const std::chrono::high_resolution_clock::time_point end,
   const size_t decompressed_size,
   const size_t compressed_size);
-}  // namespace rosbag2_compression
+}  // namespace rosbag2_compression_zstd
 
-#endif  // ROSBAG2_COMPRESSION__COMPRESSION_UTILS_HPP_
+#endif  // ROSBAG2_COMPRESSION_ZSTD__COMPRESSION_UTILS_HPP_

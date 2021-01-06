@@ -36,6 +36,7 @@ if(BUILD_TESTING)
     find_package(rclcpp REQUIRED)
     find_package(rcpputils REQUIRED)
     find_package(rosbag2_compression REQUIRED)
+    find_package(rosbag2_compression_zstd REQUIRED)
     find_package(rosbag2_cpp REQUIRED)
     find_package(rosbag2_storage REQUIRED)
     find_package(rosbag2_storage_default_plugins REQUIRED)
@@ -50,6 +51,7 @@ if(BUILD_TESTING)
       ament_target_dependencies(test_rosbag2_record_end_to_end
         rclcpp
         rosbag2_compression
+        rosbag2_compression_zstd
         rosbag2_storage
         rosbag2_storage_default_plugins
         rosbag2_test_common
