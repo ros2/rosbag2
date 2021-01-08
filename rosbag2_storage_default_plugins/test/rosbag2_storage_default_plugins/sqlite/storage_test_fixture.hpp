@@ -151,7 +151,7 @@ public:
     }
 
     rosbag2_storage::StorageOptions storage_options{storage_uri, plugin_id, 0, 0, 0,
-      yaml_config};
+      "", yaml_config};
     return storage_options;
   }
 

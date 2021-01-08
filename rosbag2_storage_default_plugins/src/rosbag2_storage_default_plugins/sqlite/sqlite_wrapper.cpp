@@ -26,6 +26,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_pragmas.hpp"
 
 #include "../logging.hpp"
 
@@ -83,16 +84,9 @@ void SqliteWrapper::apply_pragma_settings(
 {
   // Add default pragmas if not overridden by user setting
   {
-    typedef std::unordered_map<std::string, std::string> pragmas_map_t;
-    pragmas_map_t default_pragmas = {
-      // Used to check whether db is readable
-      {"schema_version", "PRAGMA schema_version;"}
-    };
+    auto default_pragmas = SqlitePragmas::default_pragmas();
     if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
-      const pragmas_map_t write_default_pragmas = {
-        {"journal_mode", "PRAGMA journal_mode=WAL;"},
-        {"synchronous", "PRAGMA synchronous=NORMAL;"}
-      };
+      const auto write_default_pragmas = SqlitePragmas::optimized_writing_pragmas();
       default_pragmas.insert(write_default_pragmas.begin(), write_default_pragmas.end());
     }
     for (const auto & kv : default_pragmas) {
@@ -115,6 +109,13 @@ void SqliteWrapper::apply_pragma_settings(
     auto statement_for_check = "PRAGMA " + pragma_name + ";";
     prepare_statement(statement_for_check)->execute_and_reset(true);
   }
+}
+
+std::string SqliteWrapper::query_pragma_value(const std::string & key)
+{
+  auto query = "PRAGMA " + key + ";";
+  auto pragma_value = prepare_statement(query)->execute_query<std::string>().get_single_line();
+  return std::get<0>(pragma_value);
 }
 
 SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
