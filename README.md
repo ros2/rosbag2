@@ -125,8 +125,14 @@ read:
 write:
   pragmas: <list of pragma settings for read/write>
 ```
-Please refer to [documentation of pragmas](https://www.sqlite.org/pragma.html).
+
+By default, SQLite settings are significantly optimized for performance.
+This might have consequences of bag data being corrupted after an application or system-level crash.
+This consideration only applies to current bagfile in case bag splitting is on (through `--max-bag-*` parameters).
+If increased crash-caused corruption resistance is necessary, use `resilient` option for `--storage-preset-profile` setting.
+
 Settings are fully exposed to the user and should be applied with understanding.
+Please refer to [documentation of pragmas](https://www.sqlite.org/pragma.html).
 
 An example configuration file could look like this:
 
