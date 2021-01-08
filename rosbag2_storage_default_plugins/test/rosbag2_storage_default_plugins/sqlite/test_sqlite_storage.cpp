@@ -359,7 +359,7 @@ TEST_F(StorageTestFixture, storage_preset_profile_applies_over_defaults) {
   EXPECT_EQ(writable_storage->get_storage_setting("journal_mode"), "wal");
 
   // resilient preset should replace default of 0 with 1
-  EXPECT_EQ(writable_storage->get_storage_setting("synchronous"), "0");
+  EXPECT_EQ(writable_storage->get_storage_setting("synchronous"), "1");
 }
 
 TEST_F(StorageTestFixture, throws_on_invalid_pragma_in_config_file) {
