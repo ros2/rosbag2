@@ -78,7 +78,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto publishers_node = std::make_shared<BenchmarkPublishers>(
-    "rosbag2_performance_benchmarking_publishers");
+    "rosbag2_performance_benchmarking_node");
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(publishers_node);

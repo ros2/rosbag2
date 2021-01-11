@@ -26,7 +26,7 @@
 
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 #include "rosbag2_performance_benchmarking/message_queue.hpp"
-#include "rosbag2_performance_benchmarking/producer_config.hpp"
+#include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
 
 class WriterBenchmark : public rclcpp::Node
 {
@@ -35,13 +35,13 @@ public:
   void start_benchmark();
 
 private:
-  void create_producers(const ProducerConfig & config);
+  void create_producers();
   void create_writer();
   void start_producers();
   void write_results() const;
   int get_message_count_from_metadata() const;
 
-  ProducerConfig config_;
+  std::vector<PublisherGroupConfig> configurations_;
   unsigned int instances_;
   std::string results_file_;
 

@@ -14,6 +14,7 @@ echo "${test_dir} created"
 db_path=${test_dir}/bag
 rm -fr ${db_path}
 script_dir=$(dirname $(readlink -f "$0"))
+parameters_yaml=${script_dir}/../examples/mixed_110Mbs.yaml
 
 storage_config_dir=${script_dir}/storage_config
 config_optimized_path=${storage_config_dir}/storage_optimized.yaml
@@ -37,11 +38,11 @@ do
       for inst in 1 10 100 1000
       do
         freq=100; #Hz
-        let total=$inst*$sz*$freq
-        if [[ $total -lt 100000000 || $total -gt 500000000 ]]; then
+        #let total=$inst*$sz*$freq
+        #if [[ $total -lt 100000000 || $total -gt 500000000 ]]; then
           #echo "skipping the case of ${inst} instances and size ${sz}"
-          continue
-        fi
+        #  continue
+        #fi
         echo "processing case of ${inst} instances and size ${sz} with cache ${cache} and config ${config_file_name}"
         outdir=${test_dir}/size${sz}_inst${inst}_cache${cache}
         mkdir -p ${outdir}
@@ -50,10 +51,8 @@ do
           outfile=${outdir}/${try}.log
           echo "Results will be written to file: ${outfile}"
           ros2 run rosbag2_performance_benchmarking writer_benchmark --ros-args \
+            --params-file ${parameters_yaml} \
             ${compression_arg} \
-            -p frequency:=${freq} \
-            -p size:=${sz} \
-            -p instances:=${inst} \
             -p max_cache_size:=${cache} \
             -p db_folder:=${db_path} \
             -p storage_config_file:=${storage_config_file_path} \

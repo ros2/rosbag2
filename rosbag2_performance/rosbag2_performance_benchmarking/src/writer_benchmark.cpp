@@ -24,7 +24,9 @@
 #include "rosbag2_storage/storage_options.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
+#include "rosbag2_performance_benchmarking/config_utils.hpp"
 #include "rosbag2_performance_benchmarking/writer_benchmark.hpp"
+
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -46,42 +48,32 @@ static rcutils_allocator_t allocator = rcutils_get_default_allocator();
 WriterBenchmark::WriterBenchmark(const std::string & name)
 : rclcpp::Node(name)
 {
+  RCLCPP_INFO(get_logger(), "WriterBenchmark parsing configurations");
+  configurations_ = config_utils::load_from_node_parameters(*this);
+  RCLCPP_INFO(get_logger(), "Configurations parsed");
+
   const std::string default_bag_folder("/tmp/rosbag2_test");
-  this->declare_parameter("frequency", 100);
-  this->declare_parameter("max_count", 1000);
-  this->declare_parameter("size", 1000000);
-  this->declare_parameter("instances", 1);
+
   this->declare_parameter("max_cache_size", 10000000);
   this->declare_parameter("max_bag_size", 0);
   this->declare_parameter("db_folder", default_bag_folder);
-  this->declare_parameter("results_file", default_bag_folder + "/results.csv");
   this->declare_parameter("storage_config_file", "");
   this->declare_parameter("compression_format", "");
   this->declare_parameter("compression_queue_size", 1);
   this->declare_parameter("compression_threads", 0);
-
-  this->get_parameter("frequency", config_.frequency);
-  if (config_.frequency == 0) {
-    RCLCPP_ERROR(this->get_logger(), "Frequency can't be 0. Exiting.");
-    rclcpp::shutdown(nullptr, "frequency error");
-    return;
-  }
+  this->declare_parameter("results_file", default_bag_folder + "/results.csv");
 
   storage_options_.storage_id = "sqlite3";
   this->get_parameter("max_cache_size", storage_options_.max_cache_size);
+  this->get_parameter("max_bag_size", storage_options_.max_bagfile_size);
   this->get_parameter("db_folder", storage_options_.uri);
   this->get_parameter("storage_config_file", storage_options_.storage_config_uri);
-  this->get_parameter("max_bag_size", storage_options_.max_bagfile_size);
-
-  this->get_parameter("results_file", results_file_);
-  this->get_parameter("max_count", config_.max_count);
-  this->get_parameter("size", config_.message_size);
-  this->get_parameter("instances", instances_);
   this->get_parameter("compression_format", compression_format_);
   this->get_parameter("compression_queue_size", compression_queue_size_);
   this->get_parameter("compression_threads", compression_threads_);
+  this->get_parameter("results_file", results_file_);
 
-  create_producers(config_);
+  create_producers();
   create_writer();
 }
 
@@ -178,15 +170,6 @@ int WriterBenchmark::get_message_count_from_metadata() const
 
 void WriterBenchmark::write_results() const
 {
-  int total_recorded_count = get_message_count_from_metadata();
-  auto total_messages_sent = config_.max_count * producers_.size();
-  float percentage_recorded = static_cast<float>(total_recorded_count * 100.0f) /
-    total_messages_sent;
-
-  RCLCPP_INFO_STREAM(
-    get_logger(), "Percentage of all messages that were successfully recorded: " <<
-      percentage_recorded);
-
   bool new_file = false;
   { // test if file exists - we want to write a csv header after creation if not
     // use std::filesystem when switching to C++17
@@ -204,44 +187,55 @@ void WriterBenchmark::write_results() const
   }
 
   if (new_file) {
-    output_file << "instances frequency message_size cache_size total_messages_sent ";
-    output_file << "percentage_recorded\n";
+    output_file << "instances frequency message_size total_messages_sent cache_size compression ";
+    output_file << "total_produced total_recorded_count\n";
   }
 
-  // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
-  output_file << instances_ << " ";
-  output_file << config_.frequency << " ";
-  output_file << config_.message_size << " ";
-  output_file << storage_options_.max_cache_size << " ";
-  output_file << total_messages_sent << " ";
+  int total_recorded_count = get_message_count_from_metadata();
 
-  // results of the test. Use std::setprecision if preferred
-  output_file << percentage_recorded << std::endl;
+  // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
+  for (const auto & c : configurations_) {
+    output_file << c.count << " ";
+    output_file << c.producer_config.frequency << " ";
+    output_file << c.producer_config.message_size << " ";
+    output_file << c.producer_config.max_count << " ";
+    output_file << storage_options_.max_cache_size << " ";
+    output_file << compression_format_ << " ";
+
+    // TODO(adamdbrw) - this is a result for the entire group, but we don't yet have per-group stats
+    // For now, these need to be summed for each group
+    auto total_messages_produced = c.producer_config.max_count * c.count;
+    output_file << total_messages_produced << " ";
+    output_file << total_recorded_count << std::endl;
+  }
 }
 
-void WriterBenchmark::create_producers(const ProducerConfig & config)
+void WriterBenchmark::create_producers()
 {
-  RCLCPP_INFO_STREAM(
-    get_logger(), "\nWriterBenchmark: creating " << instances_ <<
-      " message producers with frequency " << config.frequency <<
-      " and message size in bytes " << config.message_size <<
-      ". Cache is " << storage_options_.max_cache_size <<
-      ". Each will send " << config.max_count <<
-      " messages before terminating");
-  const unsigned int queue_max_size = 10;
-  for (unsigned int i = 0; i < instances_; ++i) {
-    std::string topic = "/writer_benchmark/producer " + std::to_string(i);
-    auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
-    queues_.push_back(queue);
-    producers_.push_back(
-      std::make_unique<ByteProducer>(
-        config,
-        [queue](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
-          queue->push(msg);
-        },
-        [queue] {
-          queue->set_complete();
-        }));
+  RCLCPP_INFO_STREAM(get_logger(), "creating producers");
+  for (const auto & c : configurations_) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "\nWriterBenchmark: creating " << c.count <<
+        " message producers with frequency " << c.producer_config.frequency <<
+        " and message size in bytes " << c.producer_config.message_size <<
+        " for topic root of " << c.topic_root <<
+        ". Each will send " << c.producer_config.max_count <<
+        " messages before terminating");
+    const unsigned int queue_max_size = 10;
+    for (unsigned int i = 0; i < c.count; ++i) {
+      std::string topic = c.topic_root + std::to_string(i);
+      auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
+      queues_.push_back(queue);
+      producers_.push_back(
+        std::make_unique<ByteProducer>(
+          c.producer_config,
+          [queue](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
+            queue->push(msg);
+          },
+          [queue] {
+            queue->set_complete();
+          }));
+    }
   }
 }
 

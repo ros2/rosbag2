@@ -81,6 +81,13 @@ std::vector<PublisherGroupConfig> load_from_node_parameters(
     node.get_parameter(
       group_prefix + ".rate_hz",
       group_config.producer_config.frequency);
+
+    if (group_config.producer_config.frequency == 0) {
+      RCLCPP_ERROR(node.get_logger(), "Frequency can't be 0. Exiting.");
+      rclcpp::shutdown(nullptr, "Invalid frequency parameter");
+      return configurations;
+    }
+
     config_utils::load_qos_configuration(node, group_config, group_prefix);
 
     configurations.push_back(group_config);

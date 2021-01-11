@@ -1,4 +1,4 @@
-rosbag2_performance_benchmarking_publishers:
+rosbag2_performance_benchmarking_node:
   ros__parameters:
     publishers:
       publisher_groups: [ "10Mbs_many_frequent_small", "100Mbs_large" ]
@@ -14,7 +14,7 @@ rosbag2_performance_benchmarking_publishers:
         msg_size_bytes:     10000000
         msg_count_each:     100
         rate_hz:            10
-        qos:
+        qos:  # qos settings are ignored for writer only benchmarking
           qos_depth:          5
           qos_reliability:    "best_effort" # "reliable"
           qos_durability:     "volatile" # "transient_local"
