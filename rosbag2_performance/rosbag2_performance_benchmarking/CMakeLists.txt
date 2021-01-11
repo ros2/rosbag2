@@ -54,6 +54,12 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   install(TARGETS writer_benchmark benchmark_publishers
     DESTINATION lib/${PROJECT_NAME})
 
+  install(DIRECTORY
+    launch
+    config
+    DESTINATION share/${PROJECT_NAME}
+  )
+
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
