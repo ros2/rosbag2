@@ -17,10 +17,13 @@
 
 #include <string>
 #include <vector>
-#include "rosbag2_performance_benchmarking/producer_config.hpp"
-#include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
+
+#include "rosbag2_performance_benchmarking/bag_config.hpp"
+#include "rosbag2_performance_benchmarking/producer_config.hpp"
+#include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
 
 namespace config_utils
 {
@@ -49,7 +52,7 @@ void load_qos_configuration(
   if (qos_reliability == "volatile") {group_config.qos.durability_volatile();}
 }
 
-std::vector<PublisherGroupConfig> load_from_node_parameters(
+std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
   rclcpp::Node & node)
 {
   std::vector<PublisherGroupConfig> configurations;
@@ -93,6 +96,33 @@ std::vector<PublisherGroupConfig> load_from_node_parameters(
     configurations.push_back(group_config);
   }
   return configurations;
+}
+
+BagConfig bag_config_from_node_parameters(
+  rclcpp::Node & node)
+{
+  const std::string default_bag_folder("/tmp/rosbag2_test");
+  BagConfig bag_config;
+
+  node.declare_parameter("storage_id", "sqlite3");
+  node.declare_parameter("max_cache_size", 10000000);
+  node.declare_parameter("max_bag_size", 0);
+  node.declare_parameter("db_folder", default_bag_folder);
+  node.declare_parameter("storage_config_file", "");
+  node.declare_parameter("compression_format", "");
+  node.declare_parameter("compression_queue_size", 1);
+  node.declare_parameter("compression_threads", 0);
+
+  node.get_parameter("storage_id", bag_config.storage_options.storage_id);
+  node.get_parameter("max_cache_size", bag_config.storage_options.max_cache_size);
+  node.get_parameter("max_bag_size", bag_config.storage_options.max_bagfile_size);
+  node.get_parameter("db_folder", bag_config.storage_options.uri);
+  node.get_parameter("storage_config_file", bag_config.storage_options.storage_config_uri);
+  node.get_parameter("compression_format", bag_config.compression_format);
+  node.get_parameter("compression_queue_size", bag_config.compression_queue_size);
+  node.get_parameter("compression_threads", bag_config.compression_threads);
+
+  return bag_config;
 }
 
 }  // namespace config_utils

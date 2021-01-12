@@ -13,33 +13,18 @@
 // limitations under the License.
 
 #include <chrono>
-#include <fstream>
 #include <memory>
 #include <string>
 
-#include "rmw/rmw.h"
+#include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/storage_options.hpp"
+#include "rmw/rmw.h"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
 #include "rosbag2_performance_benchmarking/config_utils.hpp"
+#include "rosbag2_performance_benchmarking/result_utils.hpp"
 #include "rosbag2_performance_benchmarking/writer_benchmark.hpp"
-
-
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
 
 using namespace std::chrono_literals;
 
@@ -49,29 +34,22 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
 : rclcpp::Node(name)
 {
   RCLCPP_INFO(get_logger(), "WriterBenchmark parsing configurations");
-  configurations_ = config_utils::load_from_node_parameters(*this);
-  RCLCPP_INFO(get_logger(), "Configurations parsed");
+  configurations_ = config_utils::publisher_groups_from_node_parameters(*this);
+  if (configurations_.empty()) {
+    RCLCPP_ERROR(get_logger(), "No publishers/producers found in node parameters");
+    return;
+  }
 
-  const std::string default_bag_folder("/tmp/rosbag2_test");
+  bag_config_ = config_utils::bag_config_from_node_parameters(*this);
+  if (bag_config_.storage_options.storage_id != "sqlite3") {
+    RCLCPP_ERROR(get_logger(), "Benchmarking only supported for sqlite3 for now");
+    return;
+  }
 
-  this->declare_parameter("max_cache_size", 10000000);
-  this->declare_parameter("max_bag_size", 0);
-  this->declare_parameter("db_folder", default_bag_folder);
-  this->declare_parameter("storage_config_file", "");
-  this->declare_parameter("compression_format", "");
-  this->declare_parameter("compression_queue_size", 1);
-  this->declare_parameter("compression_threads", 0);
-  this->declare_parameter("results_file", default_bag_folder + "/results.csv");
-
-  storage_options_.storage_id = "sqlite3";
-  this->get_parameter("max_cache_size", storage_options_.max_cache_size);
-  this->get_parameter("max_bag_size", storage_options_.max_bagfile_size);
-  this->get_parameter("db_folder", storage_options_.uri);
-  this->get_parameter("storage_config_file", storage_options_.storage_config_uri);
-  this->get_parameter("compression_format", compression_format_);
-  this->get_parameter("compression_queue_size", compression_queue_size_);
-  this->get_parameter("compression_threads", compression_threads_);
+  this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
   this->get_parameter("results_file", results_file_);
+
+  RCLCPP_INFO(get_logger(), "configuration parameters processed");
 
   create_producers();
   create_writer();
@@ -79,7 +57,7 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
 
 void WriterBenchmark::start_benchmark()
 {
-  RCLCPP_INFO(get_logger(), "Starting");
+  RCLCPP_INFO(get_logger(), "Starting the WriterBenchmark");
   start_producers();
   while (rclcpp::ok()) {
     int count = 0;
@@ -146,68 +124,9 @@ void WriterBenchmark::start_benchmark()
   for (auto & prod_thread : producer_threads_) {
     prod_thread.join();
   }
-
   writer_->reset();
-  write_results();
-}
 
-int WriterBenchmark::get_message_count_from_metadata() const
-{
-  int total_recorded_count = 0;
-  std::string metadata_filename(rosbag2_storage::MetadataIo::metadata_filename);
-  std::string metadata_path = storage_options_.uri + "/" + metadata_filename;
-  try {
-    YAML::Node yaml_file = YAML::LoadFile(metadata_path);
-    total_recorded_count = yaml_file["rosbag2_bagfile_information"]["message_count"].as<int>();
-  } catch (const YAML::Exception & ex) {
-    throw std::runtime_error(
-            std::string("Exception on parsing metadata file to get total message count: ") +
-            metadata_path + " " +
-            ex.what());
-  }
-  return total_recorded_count;
-}
-
-void WriterBenchmark::write_results() const
-{
-  bool new_file = false;
-  { // test if file exists - we want to write a csv header after creation if not
-    // use std::filesystem when switching to C++17
-    std::ifstream test_existence(results_file_);
-    if (!test_existence) {
-      new_file = true;
-    }
-  }
-
-  // append, we want to accumulate results from multiple runs
-  std::ofstream output_file(results_file_, std::ios_base::app);
-  if (!output_file.is_open()) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Could not open file " << results_file_);
-    return;
-  }
-
-  if (new_file) {
-    output_file << "instances frequency message_size total_messages_sent cache_size compression ";
-    output_file << "total_produced total_recorded_count\n";
-  }
-
-  int total_recorded_count = get_message_count_from_metadata();
-
-  // configuration of the test. TODO(adamdbrw) wrap into a dict and define << operator.
-  for (const auto & c : configurations_) {
-    output_file << c.count << " ";
-    output_file << c.producer_config.frequency << " ";
-    output_file << c.producer_config.message_size << " ";
-    output_file << c.producer_config.max_count << " ";
-    output_file << storage_options_.max_cache_size << " ";
-    output_file << compression_format_ << " ";
-
-    // TODO(adamdbrw) - this is a result for the entire group, but we don't yet have per-group stats
-    // For now, these need to be summed for each group
-    auto total_messages_produced = c.producer_config.max_count * c.count;
-    output_file << total_messages_produced << " ";
-    output_file << total_recorded_count << std::endl;
-  }
+  result_utils::write_benchmark_results(configurations_, bag_config_, results_file_);
 }
 
 void WriterBenchmark::create_producers()
@@ -239,14 +158,12 @@ void WriterBenchmark::create_producers()
   }
 }
 
-// TODO(adamdbrw) extend to other writers - based on parametrization
-// Also, add an option to configure compression
 void WriterBenchmark::create_writer()
 {
-  if (!compression_format_.empty()) {
+  if (!bag_config_.compression_format.empty()) {
     rosbag2_compression::CompressionOptions compression_options{
-      compression_format_, rosbag2_compression::CompressionMode::MESSAGE,
-      compression_queue_size_, compression_threads_};
+      bag_config_.compression_format, rosbag2_compression::CompressionMode::MESSAGE,
+      bag_config_.compression_queue_size, bag_config_.compression_threads};
 
     writer_ = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
       compression_options);
@@ -256,7 +173,7 @@ void WriterBenchmark::create_writer()
 
   // TODO(adamdbrw) generalize if converters are to be included in benchmarks
   std::string serialization_format = rmw_get_serialization_format();
-  writer_->open(storage_options_, {serialization_format, serialization_format});
+  writer_->open(bag_config_.storage_options, {serialization_format, serialization_format});
 
   for (const auto & queue : queues_) {
     rosbag2_storage::TopicMetadata topic;
@@ -273,4 +190,20 @@ void WriterBenchmark::start_producers()
   for (auto & producer : producers_) {
     producer_threads_.push_back(std::thread(&ByteProducer::run, producer.get()));
   }
+}
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  auto bench = std::make_shared<WriterBenchmark>("rosbag2_performance_benchmarking_node");
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(bench);
+
+  // The benchmark has its own control loop but uses spinning for parameters
+  std::thread spin_thread([&executor]() {executor.spin();});
+  bench->start_benchmark();
+  RCLCPP_INFO(bench->get_logger(), "Benchmark terminated");
+  rclcpp::shutdown();
+  spin_thread.join();
+  return 0;
 }

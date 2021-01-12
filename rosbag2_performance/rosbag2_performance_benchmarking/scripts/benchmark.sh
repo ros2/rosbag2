@@ -57,7 +57,7 @@ do
             -p db_folder:=${db_path} \
             -p storage_config_file:=${storage_config_file_path} \
             -p results_file:=${summary_file} \
-            --ros-args -r __node:=rosbag2_performance_benchmarking_node_batch \
+            --ros-args -r __node:=rosbag2_performance_benchmarking_node \
             2> ${outfile}
           sleep 2 # making sure to flush both application and disk caches and have a fresh start
           cp ${db_path}/metadata.yaml ${outdir}/${try}_metadata.yaml # preserve metadata from test

@@ -22,7 +22,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(std_msgs REQUIRED)
   find_package(yaml_cpp_vendor REQUIRED)
 
-  add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
+  add_executable(writer_benchmark src/writer_benchmark.cpp)
   add_executable(benchmark_publishers src/benchmark_publishers.cpp)
 
   ament_target_dependencies(writer_benchmark
@@ -30,11 +30,13 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     std_msgs
     rosbag2_compression
     rosbag2_cpp
+    rosbag2_storage
     yaml_cpp_vendor
   )
 
   ament_target_dependencies(benchmark_publishers
     rclcpp
+    rosbag2_storage
     std_msgs
     yaml_cpp_vendor
   )

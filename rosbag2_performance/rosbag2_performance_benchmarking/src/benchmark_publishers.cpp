@@ -32,7 +32,12 @@ public:
   explicit BenchmarkPublishers(const std::string & name)
   : rclcpp::Node(name)
   {
-    configurations_ = config_utils::load_from_node_parameters(*this);
+    configurations_ = config_utils::publisher_groups_from_node_parameters(*this);
+    if (configurations_.empty()) {
+      RCLCPP_ERROR(get_logger(), "No publishers/producers found in node parameters");
+      return;
+    }
+
     create_benchmark_publishers_and_producers();
   }
 

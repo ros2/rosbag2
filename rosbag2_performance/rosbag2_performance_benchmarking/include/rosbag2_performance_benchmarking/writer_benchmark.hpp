@@ -27,6 +27,7 @@
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 #include "rosbag2_performance_benchmarking/message_queue.hpp"
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+#include "rosbag2_performance_benchmarking/bag_config.hpp"
 
 class WriterBenchmark : public rclcpp::Node
 {
@@ -42,17 +43,12 @@ private:
   int get_message_count_from_metadata() const;
 
   std::vector<PublisherGroupConfig> configurations_;
-  unsigned int instances_;
   std::string results_file_;
+  BagConfig bag_config_;
 
-  rosbag2_storage::StorageOptions storage_options_;
   std::vector<std::thread> producer_threads_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
   std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
-
-  std::string compression_format_;
-  uint64_t compression_queue_size_;
-  uint64_t compression_threads_;
   std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
 };
 
