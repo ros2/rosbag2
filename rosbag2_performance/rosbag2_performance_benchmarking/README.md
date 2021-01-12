@@ -4,16 +4,22 @@ The primary package to test performance of the rosbag2.
 
 ## How it works
 
-Use `scripts/benchmark.sh` to run an entire set of benchmarks.
-These are currently aimed at several 100Mb/s scenarios.
-Parameters are easy to change inside the script.
+Use `benchmark_launch.py` launchfile to run an entire set of benchmarks.
 
-By default, results will be written to `/tmp/rosbag2_test/[current_date]`.
-The summary of benchmarks goes into `results.csv` file, which includes rows of execution parameters and results.
-Benchmarks also produce execution logs in a series of sub-directories in `size[size]_inst[inst]_cache[cache]/` format.
+Launchfile requires two arguments:
 
-Database (bag) files are removed after recording to avoid filling up the disk.
-To modify this behavior, modify the benchmark.sh script.
+- `benchmark` - provides benchmark description (how many repetitions, cache sizes, database configurations etc.),
+- `producers` - provides producers description (how many publisher instances, frequency, messages options etc.)
+
+Templates for these configuration files are in `config` directory of this package.
+
+To run test benchmark (with `test.yaml` and `mixed_110Mbs.yaml`):
+
+```bash
+ros2 launch rosbag2_performance_benchmarking benchmark_launch.py benchmark:=`ros2 pkg prefix rosbag2_performance_benchmarking`/share/rosbag2_performance_benchmarking/config/benchmarks/test.yaml producers:=`ros2 pkg prefix rosbag2_performance_benchmarking`/share/rosbag2_performance_benchmarking/config/producers/mixed_110Mbs.yaml
+```
+
+The summary of benchmarks goes into `results.csv` files, which includes rows of execution parameters and results. These files lie inside corresponding for each test optimization -> compression directories.
 
 ## Building
 

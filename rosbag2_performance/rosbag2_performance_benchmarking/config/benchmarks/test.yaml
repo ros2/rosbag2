@@ -4,13 +4,12 @@ rosbag2_performance_benchmarking:
       benchmark:
         summary_result_file:  "results.csv"
         db_root_folder:       "rosbag2_performance_test_results"
-        repeat_each:          1
+        repeat_each:          2
         no_transport:         True
-        preserve_bags:        False
+        preserve_bags:        True
         parameters:
-          max_cache_size:       [ 10000000, 100000000 ]
-          compression:          ["", "zstd"]
-          storage_config_file:  ["storage_default.yaml", "storage_optimized.yaml"]
-          instances:            [1, 10]
-          size:                 [100000, 1000000]
-          max_count:            [10]
+          max_cache_size:         [10000000, 100000000]
+          compression:            ["", "zstd"]
+          compression_queue_size: [1]
+          compression_threads:    [0]
+          storage_config_file:    ["", "storage_optimized.yaml"]
