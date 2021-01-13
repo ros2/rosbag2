@@ -81,7 +81,9 @@ void write_benchmark_results(
   }
 
   if (new_file) {
-    output_file << "instances frequency message_size total_messages_sent cache_size compression ";
+    output_file << "instances frequency message_size total_messages_sent cache_size ";
+    output_file << "max_bagfile_size storage_config ";
+    output_file << "compression compression_queue compression_threads ";
     output_file << "total_produced total_recorded_count\n";
   }
 
@@ -93,7 +95,11 @@ void write_benchmark_results(
     output_file << c.producer_config.message_size << " ";
     output_file << c.producer_config.max_count << " ";
     output_file << bag_config.storage_options.max_cache_size << " ";
+    output_file << bag_config.storage_options.max_bagfile_size << " ";
+    output_file << bag_config.storage_options.storage_config_uri << " ";
     output_file << bag_config.compression_format << " ";
+    output_file << bag_config.compression_queue_size << " ";
+    output_file << bag_config.compression_threads << " ";
 
     // TODO(adamdbrw) - this is a result for the entire group,
     // but we don't yet have per-group stats.
