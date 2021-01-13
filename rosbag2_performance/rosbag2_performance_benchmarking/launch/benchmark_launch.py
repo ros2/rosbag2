@@ -14,6 +14,7 @@
 
 import datetime
 import pathlib
+import shutil
 import sys
 
 from ament_index_python import get_package_share_directory
@@ -24,8 +25,8 @@ import launch_ros
 
 import yaml
 
-_batch_cfg = None
-_producers_cfg = None
+_bench_cfg_path = None
+_producers_cfg_path = None
 
 _producer_idx = 0
 _producer_nodes = []
@@ -33,9 +34,9 @@ _producer_nodes = []
 
 def _parse_arguments(args=sys.argv[4:]):
     """Parse benchmark and producers config files."""
-    batch_cfg = None
+    bench_cfg_path = None
     producers_cfg_path = None
-    err_str = 'Missing or invalid arguments detected.' \
+    err_str = 'Missing or invalid arguments detected. ' \
         'Launchfile requires "benchmark:=" and "producers:=" arguments ' \
         'with coresponding config files.'
 
@@ -50,26 +51,25 @@ def _parse_arguments(args=sys.argv[4:]):
                     raise RuntimeError(
                         'Batch config file {} does not exist.'.format(bench_cfg_path)
                     )
-                with open(bench_cfg_path, 'r') as config_file:
-                    batch_cfg_yaml = yaml.load(config_file, Loader=yaml.FullLoader)
-                    batch_cfg = (batch_cfg_yaml['rosbag2_performance_benchmarking']
-                                 ['benchmark_node']
-                                 ['ros__parameters'])
             elif 'producers:=' in arg:
                 producers_cfg_path = pathlib.Path(arg.replace('producers:=', ''))
                 if not producers_cfg_path.is_file():
                     raise RuntimeError(
                         'Producers config file {} does not exist.'.format(producers_cfg_path)
-                        )
+                    )
             else:
                 raise RuntimeError(err_str)
-        return batch_cfg, producers_cfg_path
+        return bench_cfg_path, producers_cfg_path
 
 
 def _launch_producers():
     """Launch next writer."""
     global _producer_idx, _producer_nodes
     if _producer_idx == len(_producer_nodes):
+        # Copy yaml configs for current benchmark after benchmark is finished
+        benchmark_path = pathlib.Path(_producer_nodes[0]['parameters']['db_folder'])
+        shutil.copy(str(_bench_cfg_path), str(benchmark_path.with_name('benchmark.yaml')))
+        shutil.copy(str(_producers_cfg_path), str(benchmark_path.with_name('producers.yaml')))
         return launch.actions.LogInfo(msg='Benchmark finished!')
     node = _producer_nodes[_producer_idx]['node']
     return node
@@ -79,7 +79,7 @@ def _producer_node_started(event, context):
     """Log current status on producer start."""
     global _producer_idx
     return launch.actions.LogInfo(
-            msg='-----------{}/{}-----------'.format(_producer_idx+1, len(_producer_nodes))
+        msg='-----------{}/{}-----------'.format(_producer_idx + 1, len(_producer_nodes))
     )
 
 
@@ -91,8 +91,9 @@ def _producer_node_exited(event, context):
     if event.returncode != 0:
         return [
             launch.actions.LogInfo(msg='Writer error. Shutting down benchmark.'),
-            launch.actions.EmitEvent(event=launch.events.Shutdown(
-                reason='Writer error'
+            launch.actions.EmitEvent(
+                event=launch.events.Shutdown(
+                    reason='Writer error'
                 )
             )
         ]
@@ -114,11 +115,19 @@ def _producer_node_exited(event, context):
 
 def generate_launch_description():
     """Generate launch description for ros2 launch system."""
-    global _producer_idx, _producer_nodes, _batch_cfg, _producers_cfg
-    _batch_cfg, _producers_cfg = _parse_arguments()
+    global _producer_idx, _producer_nodes, _bench_cfg_path, _producers_cfg_path
+    _bench_cfg_path, _producers_cfg_path = _parse_arguments()
+
+    # Parse yaml config for benchmark
+    bench_cfg = None
+    with open(_bench_cfg_path, 'r') as config_file:
+        bench_cfg_yaml = yaml.load(config_file, Loader=yaml.FullLoader)
+        bench_cfg = (bench_cfg_yaml['rosbag2_performance_benchmarking']
+                                   ['benchmark_node']
+                                   ['ros__parameters'])
 
     # Benchmark options
-    benchmark_params = _batch_cfg['benchmark']
+    benchmark_params = bench_cfg['benchmark']
 
     repeat_each = benchmark_params.get('repeat_each')
     db_root_folder = benchmark_params.get('db_root_folder')
@@ -127,7 +136,7 @@ def generate_launch_description():
     preserve_bags = benchmark_params.get('preserve_bags')
 
     # Producers options
-    producers_params = _batch_cfg['benchmark']['parameters']
+    producers_params = bench_cfg['benchmark']['parameters']
 
     max_cache_size_params = producers_params.get('max_cache_size')
     max_bag_size_params = producers_params.get('max_bag_size')
@@ -156,7 +165,7 @@ def generate_launch_description():
             storage_conf_path = pathlib.Path(
                 get_package_share_directory(
                     'rosbag2_performance_benchmarking'
-                    )
+                )
             ).joinpath('config', 'storage', storage_config)
             if not storage_conf_path.exists():
                 raise RuntimeError(
@@ -200,7 +209,7 @@ def generate_launch_description():
                 'compression_queue_size': compression_queue_size,
                 'compression_threads': compression_threads,
                 'storage_config_file': str(storage_conf_path),
-                'config_file': str(_producers_cfg),
+                'config_file': str(_producers_cfg_path),
                 'max_bag_size': max_bag_size
             }
         )
