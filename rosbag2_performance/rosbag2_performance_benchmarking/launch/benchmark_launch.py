@@ -19,9 +19,8 @@ import sys
 from ament_index_python import get_package_share_directory
 
 import launch
-from launch import LaunchDescription
 
-from launch_ros.actions import Node
+import launch_ros
 
 import yaml
 
@@ -131,79 +130,101 @@ def generate_launch_description():
     producers_params = _batch_cfg['benchmark']['parameters']
 
     max_cache_size_params = producers_params.get('max_cache_size')
+    max_bag_size_params = producers_params.get('max_bag_size')
     compression_params = producers_params.get('compression')
     compression_queue_size_params = producers_params.get('compression_queue_size')
     compression_threads_params = producers_params.get('compression_threads')
     storage_config_file_params = producers_params.get('storage_config_file')
 
-    # Params cross section for whole benchmark
+    # Parameters cross section for whole benchmark
+    # Parameters cross section is a list of all possible parameters variants
     params_cross_section = []
     timestamp_name = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    for i in range(0, repeat_each):
-        for cache in max_cache_size_params:
-            for compression in compression_params:
-                for compression_queue_size in compression_queue_size_params:
-                    for compression_threads in compression_threads_params:
-                        for storage_config in storage_config_file_params:
-                            # Storage conf parameter for each producer node
-                            st_conf_filename = storage_config.replace('.yaml', '')
-                            storage_conf_path = ''
-                            if storage_config != '':
-                                storage_conf_path = pathlib.Path(
-                                    get_package_share_directory(
-                                        'rosbag2_performance_benchmarking'
-                                        )
-                                ).joinpath('config', 'storage', storage_config)
-                                if not storage_conf_path.exists():
-                                    raise RuntimeError(
-                                        'Config {} does not exist.'.format(storage_config))
-                                st_conf_filename = pathlib.Path(storage_config).with_suffix('')
 
-                            # Generates unique name for each producer node
-                            node_title = 'benchmark_' + \
-                                '{i}_{cache}_{comp}_{comp_q}_{comp_t}_{st_conf}'.format(
-                                    i=i,
-                                    cache=cache,
-                                    comp=compression if compression else 'default',
-                                    comp_q=compression_queue_size,
-                                    comp_t=compression_threads,
-                                    st_conf=st_conf_filename if st_conf_filename else 'default'
-                                )
+    # Helper function for generating cross section list
+    def __generate_cross_section_parameter(i,
+                                           cache,
+                                           compression,
+                                           compression_queue_size,
+                                           compression_threads,
+                                           storage_config,
+                                           max_bag_size):
+        # Storage conf parameter for each producer
+        st_conf_filename = storage_config.replace('.yaml', '')
+        storage_conf_path = ''
+        if storage_config != '':
+            storage_conf_path = pathlib.Path(
+                get_package_share_directory(
+                    'rosbag2_performance_benchmarking'
+                    )
+            ).joinpath('config', 'storage', storage_config)
+            if not storage_conf_path.exists():
+                raise RuntimeError(
+                    'Config {} does not exist.'.format(storage_config))
+            st_conf_filename = pathlib.Path(storage_config).with_suffix('')
 
-                            # Result file path
-                            result_file = pathlib.Path(db_root_folder).joinpath(
-                                timestamp_name,
-                                st_conf_filename if st_conf_filename else 'storage_default',
-                                'compr_' + compression if compression else 'compr_default',
-                                summary_result_file
-                            )
+        # Generates unique title for producer
+        node_title = 'run_' + \
+            '{i}_{cache}_{comp}_{comp_q}_{comp_t}_{st_conf}_{bag_size}'.format(
+                i=i,
+                cache=cache,
+                comp=compression if compression else 'default_compression',
+                comp_q=compression_queue_size,
+                comp_t=compression_threads,
+                st_conf=st_conf_filename if st_conf_filename else 'default_config',
+                bag_size=max_bag_size
+            )
 
-                            # Database folder path
-                            db_folder = pathlib.Path(db_root_folder).joinpath(
-                                timestamp_name,
-                                st_conf_filename if st_conf_filename else 'storage_default',
-                                'compr_' + compression if compression else 'compr_default',
-                                node_title
-                            )
+        # Result file path for producer
+        result_file = pathlib.Path(db_root_folder).joinpath(
+            timestamp_name,
+            summary_result_file
+        )
 
-                            # Fill up parameters cross section for benchmark
-                            params_cross_section.append(
-                                {
-                                    'node_title': node_title,
-                                    'db_folder': str(db_folder),
-                                    'cache': cache,
-                                    'preserve_bags': preserve_bags,
-                                    'no_transport': no_transport,
-                                    'result_file': str(result_file),
-                                    'compression_format': compression,
-                                    'compression_queue_size': compression_queue_size,
-                                    'compression_threads': compression_threads,
-                                    'storage_config_file': str(storage_conf_path),
-                                    'config_file': str(_producers_cfg)
-                                }
-                            )
+        # Database folder path for producer
+        db_folder = pathlib.Path(db_root_folder).joinpath(
+            timestamp_name,
+            node_title
+        )
 
-    ld = LaunchDescription()
+        # Filling up parameters cross section list for benchmark
+        params_cross_section.append(
+            {
+                'node_title': node_title,
+                'db_folder': str(db_folder),
+                'cache': cache,
+                'preserve_bags': preserve_bags,
+                'no_transport': no_transport,
+                'result_file': str(result_file),
+                'compression_format': compression,
+                'compression_queue_size': compression_queue_size,
+                'compression_threads': compression_threads,
+                'storage_config_file': str(storage_conf_path),
+                'config_file': str(_producers_cfg),
+                'max_bag_size': max_bag_size
+            }
+        )
+
+    # For the sake of python indentation, multiple for loops in alternative way with helper func
+    [
+        __generate_cross_section_parameter(
+            i,
+            cache,
+            compression,
+            compression_queue_size,
+            compression_threads,
+            storage_config,
+            max_bag_size)
+        for i in range(0, repeat_each)
+        for cache in max_cache_size_params
+        for compression in compression_params
+        for compression_queue_size in compression_queue_size_params
+        for compression_threads in compression_threads_params
+        for storage_config in storage_config_file_params
+        for max_bag_size in max_bag_size_params
+    ]
+
+    ld = launch.LaunchDescription()
     ld.add_action(
         launch.actions.LogInfo(msg='Launching benchmark!'),
     )
@@ -213,7 +234,7 @@ def generate_launch_description():
         parameters = [
             producer_param['config_file'],
             {'max_cache_size': producer_param['cache']},
-            {'max_bag_size': 0},
+            {'max_bag_size': producer_param['max_bag_size']},
             {'db_folder': producer_param['db_folder']},
             {'results_file': producer_param['result_file']},
             {'compression_queue_size': producer_param['compression_queue_size']},
@@ -226,7 +247,7 @@ def generate_launch_description():
             parameters.append({'compression_format': producer_param['compression_format']})
 
         # TODO(piotr.jaroszek): choose node based on 'no_transport' parameter
-        producer_node = Node(
+        producer_node = launch_ros.actions.Node(
             package='rosbag2_performance_benchmarking',
             executable='writer_benchmark',
             name='rosbag2_performance_benchmarking_node',

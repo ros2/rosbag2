@@ -9,6 +9,7 @@ rosbag2_performance_benchmarking:
         preserve_bags:        False
         parameters:
           max_cache_size:         [10000000, 100000000]
+          max_bag_size:           [0]
           compression:            ["", "zstd"]
           compression_queue_size: [1]
           compression_threads:    [0]
