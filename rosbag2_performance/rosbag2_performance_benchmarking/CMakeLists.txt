@@ -24,6 +24,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
 
   add_executable(writer_benchmark src/writer_benchmark.cpp)
   add_executable(benchmark_publishers src/benchmark_publishers.cpp)
+  add_executable(results_writer src/results_writer.cpp)
 
   ament_target_dependencies(writer_benchmark
     rclcpp
@@ -41,6 +42,11 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     yaml_cpp_vendor
   )
 
+  ament_target_dependencies(results_writer
+    rclcpp
+    rosbag2_storage
+  )
+
   target_include_directories(writer_benchmark
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -53,7 +59,13 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     $<INSTALL_INTERFACE:include>
   )
 
-  install(TARGETS writer_benchmark benchmark_publishers
+  target_include_directories(results_writer
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+
+  install(TARGETS writer_benchmark benchmark_publishers results_writer
     DESTINATION lib/${PROJECT_NAME})
 
   install(DIRECTORY

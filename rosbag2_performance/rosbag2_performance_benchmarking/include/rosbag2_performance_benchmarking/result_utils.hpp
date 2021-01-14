@@ -26,6 +26,7 @@
 
 #include "rosbag2_performance_benchmarking/bag_config.hpp"
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+#include "rosbag2_performance_benchmarking/config_utils.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -108,6 +109,19 @@ void write_benchmark_results(
     output_file << total_messages_produced << " ";
     output_file << total_recorded_count << std::endl;
   }
+}
+
+// this version works with a standalone node using node parameters
+void write_benchmark_results(rclcpp::Node & node)
+{
+  auto configurations = config_utils::publisher_groups_from_node_parameters(node);
+  auto bag_config = config_utils::bag_config_from_node_parameters(node);
+
+  std::string results_file;
+  node.declare_parameter("results_file", bag_config.storage_options.uri + "/results.csv");
+  node.get_parameter("results_file", results_file);
+
+  write_benchmark_results(configurations, bag_config, results_file);
 }
 
 }  // namespace result_utils
