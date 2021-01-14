@@ -13,9 +13,12 @@
 # limitations under the License.
 
 import datetime
+import os
 import pathlib
 import shutil
+import signal
 import sys
+import time
 
 from ament_index_python import get_package_share_directory
 
@@ -30,6 +33,11 @@ _producers_cfg_path = None
 
 _producer_idx = 0
 _producer_nodes = []
+
+_rosbag_processes = []
+_rosbag_pid = None
+
+_result_writers = []
 
 
 def _parse_arguments(args=sys.argv[4:]):
@@ -62,17 +70,65 @@ def _parse_arguments(args=sys.argv[4:]):
         return bench_cfg_path, producers_cfg_path
 
 
+def _copy_yamls():
+    # Copy yaml configs for current benchmark after benchmark is finished
+    benchmark_path = pathlib.Path(_producer_nodes[0]['parameters']['db_folder'])
+    shutil.copy(str(_bench_cfg_path), str(benchmark_path.with_name('benchmark.yaml')))
+    shutil.copy(str(_producers_cfg_path), str(benchmark_path.with_name('producers.yaml')))
+
+
 def _launch_producers():
     """Launch next writer."""
     global _producer_idx, _producer_nodes
     if _producer_idx == len(_producer_nodes):
-        # Copy yaml configs for current benchmark after benchmark is finished
-        benchmark_path = pathlib.Path(_producer_nodes[0]['parameters']['db_folder'])
-        shutil.copy(str(_bench_cfg_path), str(benchmark_path.with_name('benchmark.yaml')))
-        shutil.copy(str(_producers_cfg_path), str(benchmark_path.with_name('producers.yaml')))
+        _copy_yamls()
         return launch.actions.LogInfo(msg='Benchmark finished!')
     node = _producer_nodes[_producer_idx]['node']
     return node
+
+
+def _launch_rosbags():
+    """Launch next ros bag record."""
+    global _producer_idx, _rosbag_processes
+    if _producer_idx == len(_producer_nodes):
+        _copy_yamls()
+        return launch.actions.LogInfo(msg='Benchmark finished!')
+    node = _rosbag_processes[_producer_idx]
+    return node
+
+
+def _rosbag_proc_started(event, context):
+    """Log current status on producer start."""
+    global _producer_idx, _rosbag_pid
+    _rosbag_pid = event.pid
+    # TODO(piotr.jaroszek) wait for rosbag IO "Listening for topics"
+    # Wait for rosbag start
+    time.sleep(1)
+    return [
+        launch.actions.LogInfo(
+            msg='-----------{}/{}-----------'.format(_producer_idx + 1, len(_producer_nodes))
+        ),
+        _launch_producers()
+    ]
+
+
+def _rosbag_proc_exited(event, context):
+    """Log current status on producer start."""
+    global _producer_idx, _result_writers, _rosbag_pid
+    if event.returncode != 2:
+        _rosbag_pid = None
+        return [
+            launch.actions.LogInfo(msg='Rosbag record error. Shutting down benchmark.'),
+            launch.actions.EmitEvent(
+                event=launch.events.Shutdown(
+                    reason='Rosbag record error'
+                )
+            )
+        ]
+    return [
+            _result_writers[_producer_idx-1],
+            _launch_rosbags()
+    ]
 
 
 def _producer_node_started(event, context):
@@ -85,8 +141,24 @@ def _producer_node_started(event, context):
 
 def _producer_node_exited(event, context):
     """Launch new producer when previously has finished."""
-    global _producer_idx, _producer_nodes
+    global _producer_idx, _producer_nodes, _rosbag_pid
     node_params = _producer_nodes[_producer_idx]['parameters']
+
+    # Handle clearing bag files
+    if not node_params['preserve_bags']:
+        db_files = pathlib.Path.cwd().joinpath(node_params['db_folder']).glob('*.db3')
+        for f in db_files:
+            f.unlink()
+
+    if _rosbag_pid is not None:
+        os.kill(_rosbag_pid, signal.SIGINT)
+        _producer_idx += 1
+        _rosbag_pid = None
+        return [
+            launch.actions.LogInfo(
+                msg='---------------------------'
+            )
+        ]
 
     if event.returncode != 0:
         return [
@@ -97,12 +169,6 @@ def _producer_node_exited(event, context):
                 )
             )
         ]
-
-    # Handle clearing bag files
-    if not node_params['preserve_bags']:
-        db_files = pathlib.Path.cwd().joinpath(node_params['db_folder']).glob('*.db3')
-        for f in db_files:
-            f.unlink()
 
     _producer_idx += 1
     return [
@@ -259,37 +325,95 @@ def generate_launch_description():
             parameters.append({'compression_format': producer_param['compression_format']})
 
         # TODO(piotr.jaroszek): choose node based on 'no_transport' parameter
-        producer_node = launch_ros.actions.Node(
-            package='rosbag2_performance_benchmarking',
-            executable='writer_benchmark',
-            name='rosbag2_performance_benchmarking_node',
-            parameters=parameters
-        )
+        if no_transport:
+            producer_node = launch_ros.actions.Node(
+                package='rosbag2_performance_benchmarking',
+                executable='writer_benchmark',
+                name='rosbag2_performance_benchmarking_node',
+                parameters=parameters
+            )
+        else:
+            producer_node = launch_ros.actions.Node(
+                package='rosbag2_performance_benchmarking',
+                executable='benchmark_publishers',
+                name='rosbag2_performance_benchmarking_node',
+                parameters=parameters
+            )
+
+            # TODO(piotr.jaroszek) change '-a' param to produced topic list
+            rosbag_process = launch.actions.ExecuteProcess(
+                sigkill_timeout=launch.substitutions.LaunchConfiguration(
+                    'sigkill_timeout', default=15),
+                sigterm_timeout=launch.substitutions.LaunchConfiguration(
+                    'sigterm_timeout', default=15),
+                cmd=['ros2', 'bag', 'record', '-a'] +
+                    ['-o', str(parameters[3]['db_folder'])]
+            )
+
+            result_writer = launch_ros.actions.Node(
+                package='rosbag2_performance_benchmarking',
+                executable='results_writer',
+                name='rosbag2_performance_benchmarking_node',
+                parameters=parameters
+            )
+            # Fill up list with rosbag record process and result writers actions
+            _rosbag_processes.append(rosbag_process)
+            _result_writers.append(result_writer)
 
         # Fill up dict with producer nodes and their corresponding parameters
         _producer_nodes.append({'node': producer_node, 'parameters': producer_param})
 
     # Connect start and exit events for each producer
-    for producer_node in _producer_nodes:
-        ld.add_action(
-            launch.actions.RegisterEventHandler(
-                launch.event_handlers.OnProcessExit(
-                    target_action=producer_node['node'],
-                    on_exit=_producer_node_exited
+    if no_transport:
+        for producer_node in _producer_nodes:
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessExit(
+                        target_action=producer_node['node'],
+                        on_exit=_producer_node_exited
+                    )
                 )
             )
-        )
-        ld.add_action(
-            launch.actions.RegisterEventHandler(
-                launch.event_handlers.OnProcessStart(
-                    target_action=producer_node['node'],
-                    on_start=_producer_node_started
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessStart(
+                        target_action=producer_node['node'],
+                        on_start=_producer_node_started
+                    )
                 )
             )
-        )
+    else:
+        for producer_node, rosbag_proc in zip(_producer_nodes, _rosbag_processes):
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessExit(
+                        target_action=producer_node['node'],
+                        on_exit=_producer_node_exited
+                    )
+                )
+            )
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessStart(
+                        target_action=rosbag_proc,
+                        on_start=_rosbag_proc_started
+                    )
+                )
+            )
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessExit(
+                        target_action=rosbag_proc,
+                        on_exit=_rosbag_proc_exited
+                    )
+                )
+            )
 
     # Launch nodes one after another. Next node is launched after previous is finished.
-    ld.add_action(_launch_producers())
+    if no_transport:
+        ld.add_action(_launch_producers())
+    else:
+        ld.add_action(_launch_rosbags())
 
     return ld
 
