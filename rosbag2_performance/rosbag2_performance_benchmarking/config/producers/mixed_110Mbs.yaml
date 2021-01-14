@@ -1,6 +1,6 @@
 rosbag2_performance_benchmarking_node:
   ros__parameters:
-    publishers:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups 
       publisher_groups: [ "10Mbs_many_frequent_small", "100Mbs_large" ]
       10Mbs_many_frequent_small:
         publishers_count:   500

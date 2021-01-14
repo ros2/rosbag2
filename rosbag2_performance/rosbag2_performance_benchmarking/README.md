@@ -8,8 +8,8 @@ Use `benchmark_launch.py` launchfile to run an entire set of benchmarks.
 
 Launchfile requires two arguments:
 
-- `benchmark` - provides benchmark description (how many repetitions, cache sizes, database configurations etc.),
-- `producers` - provides producers description (how many publisher instances, frequency, messages options etc.)
+- `benchmark` - provides benchmark description (how many repetitions, cache size, database configuration etc.),
+- `producers` - provides producers description (how many publisher/producer instances, frequency, messages size etc.)
 
 Templates for these configuration files are in `config` directory of this package.
 
@@ -26,8 +26,16 @@ For human friendly output, a postprocess report generation tool can be used. Lau
 ```bash
 scripts/report_gen.py -i <BENCHMARK_RESULT_DIR>
 ```
+#### Binaries
 
-## Compression
+These are used in the launch file:
+
+*  `benchmark_publishers` - runs publishers based on provided parameters. Used when `no_transport` parameter is set to `False`;
+*  `writer_benchmark` - runs storage-only benchmarking, mimicking subscription queues but using no transport whatsoever. Used when `no_transport` parameter is set to `True`.
+*  `results_writer` - based on provider parameters, write results (percentage of recorded messages) after recording. One of the parameters is the
+storage uri, which is used to read the bag metadata file.
+
+#### Compression
 
 Note that while you can opt to select compression for benchmarking, the generated data is random so it is likely not representative for this specific case. To publish non-random data, you need to modify the ByteProducer.
 

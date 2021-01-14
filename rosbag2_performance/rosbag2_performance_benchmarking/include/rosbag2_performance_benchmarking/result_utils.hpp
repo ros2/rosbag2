@@ -44,6 +44,7 @@
 namespace result_utils
 {
 
+/// Read total count of recorded messages from metadata.yaml file
 int get_message_count_from_metadata(const std::string & uri)
 {
   int total_recorded_count = 0;
@@ -61,6 +62,7 @@ int get_message_count_from_metadata(const std::string & uri)
   return total_recorded_count;
 }
 
+/// Based on configuration and metadata from completed benchmark, write results
 void write_benchmark_results(
   const std::vector<PublisherGroupConfig> & publisher_groups_config,
   const BagConfig & bag_config,
@@ -111,7 +113,7 @@ void write_benchmark_results(
   }
 }
 
-// this version works with a standalone node using node parameters
+/// this version works with a standalone node using node parameters
 void write_benchmark_results(rclcpp::Node & node)
 {
   auto configurations = config_utils::publisher_groups_from_node_parameters(node);
