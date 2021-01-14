@@ -21,6 +21,10 @@ ros2 launch rosbag2_performance_benchmarking benchmark_launch.py benchmark:=`ros
 
 The summary of benchmarks goes into `results.csv` files, which includes rows of execution parameters and results. These files lie inside corresponding for each test optimization -> compression directories.
 
+## Compression
+
+Note that while you can opt to select compression for benchmarking, the generated data is random so it is likely not representative for this specific case. To publish non-random data, you need to modify the ByteProducer.
+
 ## Building
 
 To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)
