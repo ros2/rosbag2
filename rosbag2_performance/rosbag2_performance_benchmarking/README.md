@@ -21,6 +21,12 @@ ros2 launch rosbag2_performance_benchmarking benchmark_launch.py benchmark:=`ros
 
 The summary of benchmarks goes into `results.csv` files, which includes rows of execution parameters and results. These files lie inside corresponding for each test optimization -> compression directories.
 
+For human friendly output, a postprocess report generation tool can be used. Launch it with benchmark result directory as an `-i` argument (directory with `results.csv` file):
+
+```bash
+scripts/report_gen.py -i <BENCHMARK_RESULT_DIR>
+```
+
 ## Compression
 
 Note that while you can opt to select compression for benchmarking, the generated data is random so it is likely not representative for this specific case. To publish non-random data, you need to modify the ByteProducer.

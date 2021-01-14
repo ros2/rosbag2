@@ -148,7 +148,10 @@ def generate_launch_description():
     # Parameters cross section for whole benchmark
     # Parameters cross section is a list of all possible parameters variants
     params_cross_section = []
-    timestamp_name = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    benchmark_cfg_name = pathlib.Path(_bench_cfg_path).name.replace('.yaml', '')
+    producer_cfg_name = pathlib.Path(_producers_cfg_path).name.replace('.yaml', '')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamped_name = benchmark_cfg_name + '_' + producer_cfg_name + '_' + timestamp
 
     # Helper function for generating cross section list
     def __generate_cross_section_parameter(i,
@@ -186,13 +189,13 @@ def generate_launch_description():
 
         # Result file path for producer
         result_file = pathlib.Path(db_root_folder).joinpath(
-            timestamp_name,
+            timestamped_name,
             summary_result_file
         )
 
         # Database folder path for producer
         db_folder = pathlib.Path(db_root_folder).joinpath(
-            timestamp_name,
+            timestamped_name,
             node_title
         )
 
