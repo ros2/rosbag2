@@ -31,6 +31,8 @@
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_cpp/reindexer.hpp"
+#include "rosbag2_cpp/reindexers/sequential_reindexer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
@@ -205,6 +207,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   auto info = std::make_shared<rosbag2_cpp::Info>();
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
     std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  auto reindexer = std::make_shared<rosbag2_cpp::Reindexer>(
+    std::make_unique<rosbag2_cpp::reindexers::SequentialReindexer>());
   std::shared_ptr<rosbag2_cpp::Writer> writer;
   // Change writer based on recording options
   if (record_options.compression_format == "zstd") {
@@ -215,7 +219,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info, reindexer);
   transport.init();
   transport.record(storage_options, record_options);
   transport.shutdown();
@@ -319,6 +323,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_storage::BagMetadata metadata{};
   // Specify defaults
   auto info = std::make_shared<rosbag2_cpp::Info>();
+  auto reindexer = std::make_shared<rosbag2_cpp::Reindexer>(
+    std::make_unique<rosbag2_cpp::reindexers::SequentialReindexer>());
   std::shared_ptr<rosbag2_cpp::Reader> reader;
   auto writer = std::make_shared<rosbag2_cpp::Writer>(
     std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
@@ -337,7 +343,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info, reindexer);
   transport.init();
   transport.play(storage_options, play_options);
   transport.shutdown();
@@ -367,6 +373,62 @@ rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   Py_RETURN_NONE;
 }
 
+static PyObject *
+rosbag2_transport_reindex(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
+{
+  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_transport::RecordOptions record_options{};
+  static const char * kwlist[] =
+  {"uri", "storage_id", "serialization_format", "compression_format", nullptr};
+
+  char * char_uri = nullptr;
+  char * char_storage_id = nullptr;
+  char * char_serialization_fmt = nullptr;
+  char * char_compression_fmt = nullptr;
+  if (!PyArg_ParseTupleAndKeywords(
+      args, kwargs, "ssss", const_cast<char **>(kwlist),
+      &char_uri,
+      &char_storage_id,
+      &char_serialization_fmt,
+      &char_compression_fmt))
+  {
+    return nullptr;
+  }
+
+  storage_options.uri = std::string(char_uri);
+  storage_options.storage_id = std::string(char_storage_id);
+  record_options.compression_format = std::string(char_compression_fmt);
+
+  record_options.rmw_serialization_format = std::string(char_serialization_fmt).empty() ?
+    rmw_get_serialization_format() :
+    char_serialization_fmt;
+
+  // Specify defaults
+  auto info = std::make_shared<rosbag2_cpp::Info>();
+  auto reader = std::make_shared<rosbag2_cpp::Reader>(
+    std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+  auto reindexer = std::make_shared<rosbag2_cpp::Reindexer>(
+    std::make_unique<rosbag2_cpp::reindexers::SequentialReindexer>());
+  // std::shared_ptr<rosbag2_cpp::Writer> writer;
+  // // Change writer based on recording options
+  // if (record_options.compression_format == "zstd") {
+  //   writer = std::make_shared<rosbag2_cpp::Writer>(
+  //     std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
+  // } else {
+  //   writer = std::make_shared<rosbag2_cpp::Writer>(
+  //     std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+  // }
+  auto writer = std::make_shared<rosbag2_cpp::Writer>(
+    std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+
+  rosbag2_transport::Rosbag2Transport transport(reader, writer, info, reindexer);
+  transport.init();
+  transport.reindex(storage_options);
+  transport.shutdown();
+
+  Py_RETURN_NONE;
+}
+
 /// Define the public methods of this module
 #if __GNUC__ >= 8
 # pragma GCC diagnostic push
@@ -384,6 +446,12 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "info", reinterpret_cast<PyCFunction>(rosbag2_transport_info), METH_VARARGS | METH_KEYWORDS,
     "Print bag info"
+  },
+  {
+    "reindex",
+    reinterpret_cast<PyCFunction>(rosbag2_transport_reindex),
+    METH_VARARGS | METH_KEYWORDS,
+    "Reindex bag"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

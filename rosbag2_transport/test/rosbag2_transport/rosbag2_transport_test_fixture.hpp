@@ -87,6 +87,7 @@ public:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<MockInfo> info_;
+  std::shared_ptr<rosbag2_cpp::Reindexer> reindexer_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_

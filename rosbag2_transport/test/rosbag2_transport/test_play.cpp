@@ -75,7 +75,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_, reindexer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -144,7 +144,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_, reindexer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -236,7 +236,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_, reindexer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -257,7 +257,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_, reindexer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -417,7 +417,7 @@ public:
   void play_and_wait(Duration timeout, bool expect_timeout = false)
   {
     auto await_received_messages = sub_->spin_subscriptions();
-    Rosbag2Transport transport{reader_, writer_, info_};
+    Rosbag2Transport transport{reader_, writer_, info_, reindexer_};
     transport.play(storage_options_, play_options_);
     const auto result = await_received_messages.wait_for(timeout);
     // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out

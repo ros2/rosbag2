@@ -31,6 +31,7 @@ namespace rosbag2_cpp
 class Info;
 class Reader;
 class Writer;
+class Reindexer;
 }  // namespace rosbag2_cpp
 
 namespace rosbag2_transport
@@ -50,7 +51,8 @@ public:
   Rosbag2Transport(
     std::shared_ptr<rosbag2_cpp::Reader> reader,
     std::shared_ptr<rosbag2_cpp::Writer> writer,
-    std::shared_ptr<rosbag2_cpp::Info> info);
+    std::shared_ptr<rosbag2_cpp::Info> info,
+    std::shared_ptr<rosbag2_cpp::Reindexer> reindexer);
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();
@@ -89,6 +91,16 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void print_bag_info(const std::string & uri, const std::string & storage_id);
 
+  /**
+   * Reconstruct the metadata yaml file from the stored data in the bag.
+   *
+   * \param uri path to the bag
+   * \param storage_options Options regarding the storage (e.g. bag file name)
+   * \param record_options Options regarding how the file was recorded (e.g. compression format)
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void reindex(const StorageOptions & storage_options);
+
 private:
   std::shared_ptr<Rosbag2Node> setup_node(
     std::string node_prefix = "",
@@ -97,6 +109,7 @@ private:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   std::shared_ptr<rosbag2_cpp::Info> info_;
+  std::shared_ptr<rosbag2_cpp::Reindexer> reindexer_;
 
   std::shared_ptr<Rosbag2Node> transport_node_;
 };

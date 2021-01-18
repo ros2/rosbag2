@@ -42,6 +42,7 @@ if(BUILD_TESTING)
     find_package(rosbag2_test_common REQUIRED)
     find_package(std_msgs REQUIRED)
     find_package(test_msgs REQUIRED)
+    find_package(yaml-cpp REQUIRED)
 
     ament_add_gmock(test_rosbag2_record_end_to_end
       test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
@@ -78,6 +79,16 @@ if(BUILD_TESTING)
         rosbag2_storage
         rosbag2_test_common)
       ament_add_test_label(test_rosbag2_info_end_to_end xfail)
+    endif()
+
+    ament_add_gmock(test_rosbag2_reindex_end_to_end
+      test/rosbag2_tests/test_rosbag2_reindex_end_to_end.cpp
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    if(TARGET test_rosbag2_reindex_end_to_end)
+      ament_target_dependencies(test_rosbag2_reindex_end_to_end
+        rosbag2_storage
+        rosbag2_storage_default_plugins
+        rosbag2_test_common)
     endif()
 
     ament_add_gmock(test_converter

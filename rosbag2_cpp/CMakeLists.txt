@@ -33,6 +33,14 @@ if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
   endif()
 endif()
 
+# Set Boost options
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED OFF)
+set(Boost_USE_STATIC_RUNTIME OFF)
+
+# Enable Boost
+find_package(Boost REQUIRED COMPONENTS filesystem)
+
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -57,19 +65,28 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
-  src/rosbag2_cpp/writers/sequential_writer.cpp)
+  src/rosbag2_cpp/writers/sequential_writer.cpp
+  src/rosbag2_cpp/reindexer.cpp
+  src/rosbag2_cpp/reindexers/sequential_reindexer.cpp)
+
+target_link_libraries(${PROJECT_NAME}
+  PRIVATE
+    Boost::filesystem
+)
 
 ament_target_dependencies(${PROJECT_NAME}
-  ament_index_cpp
-  pluginlib
-  rcpputils
-  rcutils
-  rosbag2_storage
-  rosidl_runtime_c
-  rosidl_runtime_cpp
-  rosidl_typesupport_cpp
-  rosidl_typesupport_introspection_cpp
+  PUBLIC
+    ament_index_cpp
+    pluginlib
+    rcpputils
+    rcutils
+    rosbag2_storage
+    rosidl_runtime_c
+    rosidl_runtime_cpp
+    rosidl_typesupport_cpp
+    rosidl_typesupport_introspection_cpp
 )
+
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC

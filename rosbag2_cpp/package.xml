@@ -10,7 +10,10 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <build_depend>libboost-filesystem-dev</build_depend>
+
   <depend>ament_index_cpp</depend>
+  <depend>libboost-filesystem</depend>
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
   <depend>rcpputils</depend>

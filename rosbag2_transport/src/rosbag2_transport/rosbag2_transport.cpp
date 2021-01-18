@@ -31,6 +31,8 @@
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_cpp/reindexer.hpp"
+#include "rosbag2_cpp/reindexers/sequential_reindexer.hpp"
 
 #include "rosbag2_transport/logging.hpp"
 
@@ -47,14 +49,20 @@ Rosbag2Transport::Rosbag2Transport()
       std::make_unique<rosbag2_cpp::readers::SequentialReader>())),
   writer_(std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>())),
-  info_(std::make_shared<rosbag2_cpp::Info>())
+  info_(std::make_shared<rosbag2_cpp::Info>()),
+  reindexer_(std::make_shared<rosbag2_cpp::Reindexer>(
+      std::make_unique<rosbag2_cpp::reindexers::SequentialReindexer>()))
 {}
 
 Rosbag2Transport::Rosbag2Transport(
   std::shared_ptr<rosbag2_cpp::Reader> reader,
   std::shared_ptr<rosbag2_cpp::Writer> writer,
-  std::shared_ptr<rosbag2_cpp::Info> info)
-: reader_(std::move(reader)), writer_(std::move(writer)), info_(std::move(info)) {}
+  std::shared_ptr<rosbag2_cpp::Info> info,
+  std::shared_ptr<rosbag2_cpp::Reindexer> reindexer)
+: reader_(std::move(reader)),
+  writer_(std::move(writer)),
+  info_(std::move(info)),
+  reindexer_(std::move(reindexer)) {}
 
 void Rosbag2Transport::init()
 {
@@ -106,6 +114,16 @@ void Rosbag2Transport::play(
     } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
+  }
+}
+
+void Rosbag2Transport::reindex(
+  const StorageOptions & storage_options)
+{
+  try {
+    reindexer_->reindex(storage_options);
+  } catch (std::runtime_error & e) {
+    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to reindex: %s", e.what());
   }
 }
 
