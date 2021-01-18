@@ -376,7 +376,7 @@ rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
 static PyObject *
 rosbag2_transport_reindex(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
   static const char * kwlist[] =
   {"uri", "storage_id", "serialization_format", "compression_format", nullptr};
