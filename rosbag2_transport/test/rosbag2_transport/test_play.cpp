@@ -213,7 +213,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_, reindexer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -309,7 +309,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_, info_, reindexer_);
   play_options_.topics_to_filter = {"topic2"};
   rosbag2_transport.play(storage_options_, play_options_);
 
@@ -335,7 +335,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_, reindexer_);
   play_options_.topics_to_filter = {"topic1"};
   rosbag2_transport.play(storage_options_, play_options_);
 
@@ -362,7 +362,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_, reindexer_);
   play_options_.topics_to_filter = {"topic1", "topic2"};
   rosbag2_transport.play(storage_options_, play_options_);
 
