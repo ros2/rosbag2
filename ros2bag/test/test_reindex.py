@@ -37,7 +37,7 @@ import pytest
 import yaml
 
 
-RESOURCES_PATH = Path(__file__).parent / 'resources' / 'reindexing'
+RESOURCES_PATH = Path(__file__).parent / 'resources' / 'reindex_test_bags'
 # TEST_NODE = 'ros2bag_record_qos_profile_test_node'
 # TEST_NAMESPACE = 'ros2bag_record_qos_profile'
 TEST_NODE = 'ros2bag_reindex_node'
