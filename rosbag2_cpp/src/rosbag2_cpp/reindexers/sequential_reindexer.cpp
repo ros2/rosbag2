@@ -316,7 +316,7 @@ void SequentialReindexer::reindex(const rosbag2_storage::StorageOptions & storag
   }
 
   // Create initial metadata
-  init_metadata(files);
+  init_metadata(files, storage_options);
 
   // Collect all metadata from database files
   aggregate_metadata(files, storage_options);
