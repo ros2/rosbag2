@@ -99,7 +99,9 @@ private:
   void open(const rosbag2_storage::StorageOptions & storage_options);
 
   // Prepares the metadata by setting initial values.
-  void init_metadata(const std::vector<rcpputils::fs::path> & files, const rosbag2_storage::StorageOptions & storage_options);
+  void init_metadata(
+    const std::vector<rcpputils::fs::path> & files,
+    const rosbag2_storage::StorageOptions & storage_options);
 
   // Attempts to harvest metadata from all bag files, and aggregates the result
   void aggregate_metadata(

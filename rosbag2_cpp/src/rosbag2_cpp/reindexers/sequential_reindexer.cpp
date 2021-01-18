@@ -227,7 +227,9 @@ void SequentialReindexer::fill_topics_metadata()
   }
 }
 
-void SequentialReindexer::init_metadata(const std::vector<rcpputils::fs::path> & files, const rosbag2_storage::StorageOptions & storage_options)
+void SequentialReindexer::init_metadata(
+  const std::vector<rcpputils::fs::path> & files,
+  const rosbag2_storage::StorageOptions & storage_options)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
 
