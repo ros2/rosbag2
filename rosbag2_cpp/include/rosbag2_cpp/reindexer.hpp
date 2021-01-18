@@ -26,12 +26,12 @@
 #include <memory>
 
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -65,7 +65,7 @@ public:
    *
    * \throws runtime_error if the Reader is not open.
    */
-  void reindex(const StorageOptions & storage_options);
+  void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
 private:
   std::unique_ptr<reindexer_interfaces::BaseReindexerInterface> reindexer_impl;

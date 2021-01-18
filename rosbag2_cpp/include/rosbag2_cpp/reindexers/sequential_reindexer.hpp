@@ -39,6 +39,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
@@ -70,7 +71,7 @@ public:
   virtual ~SequentialReindexer();
 
 
-  void reindex(const StorageOptions & storage_options) override;
+  void reindex(const rosbag2_storage::StorageOptions & storage_options) override;
 
   void fill_topics_metadata();
 
@@ -95,16 +96,15 @@ private:
 
   std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
 
-  void open(
-    const rcpputils::fs::path & database_file,
-    const StorageOptions & storage_options);
+  void open(const rosbag2_storage::StorageOptions & storage_options);
 
   // Prepares the metadata by setting initial values.
   void init_metadata(const std::vector<rcpputils::fs::path> & files);
 
   // Attempts to harvest metadata from all bag files, and aggregates the result
   void aggregate_metadata(
-    const std::vector<rcpputils::fs::path> & files, const StorageOptions & storage_options);
+    const std::vector<rcpputils::fs::path> & files,
+    const rosbag2_storage::StorageOptions & storage_options);
 
   // Compairson function for std::sort with our filepath convention
   static bool comp_rel_file(

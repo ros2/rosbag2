@@ -34,6 +34,8 @@
 #include "rosbag2_cpp/reindexer.hpp"
 #include "rosbag2_cpp/reindexers/sequential_reindexer.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_transport/logging.hpp"
 
 #include "formatter.hpp"
@@ -118,7 +120,7 @@ void Rosbag2Transport::play(
 }
 
 void Rosbag2Transport::reindex(
-  const StorageOptions & storage_options)
+  const rosbag2_storage::StorageOptions & storage_options)
 {
   try {
     reindexer_->reindex(storage_options);

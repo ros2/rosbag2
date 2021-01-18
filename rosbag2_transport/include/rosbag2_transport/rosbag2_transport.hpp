@@ -99,7 +99,7 @@ public:
    * \param record_options Options regarding how the file was recorded (e.g. compression format)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void reindex(const StorageOptions & storage_options);
+  void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
 private:
   std::shared_ptr<Rosbag2Node> setup_node(

@@ -35,6 +35,8 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reindexers/sequential_reindexer.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #ifdef WIN32
 // Import windows filesystem functionality
 #include <windows.h>
@@ -205,14 +207,11 @@ std::vector<rcpputils::fs::path> SequentialReindexer::get_database_files(
   return output;
 }
 
-void SequentialReindexer::open(
-  const rcpputils::fs::path & database_file,
-  const StorageOptions & storage_options)
+void SequentialReindexer::open(const rosbag2_storage::StorageOptions & storage_options)
 {
   // Since this is a reindexing operation, assume that there is no metadata.yaml file.
   // As such, ask the storage with the given URI for its metadata.
-  storage_ = storage_factory_->open_read_only(
-    database_file.string(), storage_options.storage_id);
+  storage_ = storage_factory_->open_read_only(storage_options);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
@@ -245,15 +244,24 @@ void SequentialReindexer::init_metadata(const std::vector<rcpputils::fs::path> &
 }
 
 void SequentialReindexer::aggregate_metadata(
-  const std::vector<rcpputils::fs::path> & files, const StorageOptions & storage_options)
+  const std::vector<rcpputils::fs::path> & files,
+  const rosbag2_storage::StorageOptions & storage_options)
 {
   // In order to most accurately reconstruct the metadata, we need to
   // visit each of the contained relative database files in the bag,
   // open them, slurp up the info, and stuff it into the master
   // metadata object.
-  ROSBAG2_CPP_LOG_INFO("Extracting metadata from database(s)");
+  ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
-    open(f_.string(), storage_options);  // Class storage_ is now full
+    rosbag2_storage::StorageOptions temp_so = {
+      f_.string(),  // uri
+      storage_options.storage_id,  // storage_id
+      storage_options.max_bagfile_size,  // max_bagfile_size
+      storage_options.max_bagfile_duration,  // max_bagfile_duration
+      storage_options.max_cache_size,  // max_cache_size
+      storage_options.storage_config_uri  // storage_config_uri
+    };
+    open(temp_so);  // Class storage_ is now full
 
     auto temp_metadata = storage_->get_metadata();
 
@@ -294,7 +302,7 @@ void SequentialReindexer::aggregate_metadata(
   }
 }
 
-void SequentialReindexer::reindex(const StorageOptions & storage_options)
+void SequentialReindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
   ROSBAG2_CPP_LOG_INFO("Beginning Reindex Operation.");
 

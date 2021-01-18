@@ -26,9 +26,10 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reindexer_interfaces/base_reindexer_interface.hpp"
+
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
@@ -39,7 +40,7 @@ Reindexer::Reindexer(std::unique_ptr<reindexer_interfaces::BaseReindexerInterfac
 
 Reindexer::~Reindexer() {}
 
-void Reindexer::reindex(const StorageOptions & storage_options)
+void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
   reindexer_impl->reindex(storage_options);
 }
