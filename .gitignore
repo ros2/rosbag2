@@ -5,3 +5,4 @@ cmake-build-release/
 build/
 venv/
 **/.pytest_cache/
+**/__pycache__/**
