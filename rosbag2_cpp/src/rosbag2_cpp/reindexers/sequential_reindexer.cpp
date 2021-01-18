@@ -227,12 +227,12 @@ void SequentialReindexer::fill_topics_metadata()
   }
 }
 
-void SequentialReindexer::init_metadata(const std::vector<rcpputils::fs::path> & files)
+void SequentialReindexer::init_metadata(const std::vector<rcpputils::fs::path> & files, const rosbag2_storage::StorageOptions & storage_options)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
 
   // This reindexer will only work on SQLite files, so this can't change
-  metadata_.storage_identifier = "sqlite3";
+  metadata_.storage_identifier = storage_options.storage_id;
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
 

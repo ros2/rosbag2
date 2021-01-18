@@ -63,17 +63,16 @@ add_library(${PROJECT_NAME} SHARED
 
 ament_target_dependencies(${PROJECT_NAME}
   PUBLIC
-    ament_index_cpp
-    pluginlib
-    rcpputils
-    rcutils
-    rosbag2_storage
-    rosidl_runtime_c
-    rosidl_runtime_cpp
-    rosidl_typesupport_cpp
-    rosidl_typesupport_introspection_cpp
+  ament_index_cpp
+  pluginlib
+  rcpputils
+  rcutils
+  rosbag2_storage
+  rosidl_runtime_c
+  rosidl_runtime_cpp
+  rosidl_typesupport_cpp
+  rosidl_typesupport_introspection_cpp
 )
-
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
