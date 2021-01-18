@@ -17,7 +17,6 @@
 //
 // This notice must appear in all copies of this file and its derivatives.
 
-#include <boost/filesystem.hpp>
 #include <algorithm>
 #include <iostream>
 #include <memory>
