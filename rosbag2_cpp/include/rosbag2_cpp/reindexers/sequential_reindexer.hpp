@@ -78,7 +78,8 @@ protected:
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<rcpputils::fs::path> file_paths_{};  // List of database files.
-  std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};  // Index of file to read from
+  // Index of file to read from
+  std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};
 
 private:
   rcpputils::fs::path base_folder_;
@@ -98,7 +99,9 @@ private:
     const std::vector<rcpputils::fs::path> & files, const StorageOptions & storage_options);
 
   // Compairson function for std::sort with our filepath convention
-  static bool comp_rel_file(const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path);
+  static bool comp_rel_file(
+    const rcpputils::fs::path & first_path,
+    const rcpputils::fs::path & second_path);
 };
 
 }  // namespace reindexers
