@@ -141,7 +141,7 @@ std::vector<rcpputils::fs::path> SequentialReindexer::get_database_files(const r
     if (hFind == INVALID_HANDLE_VALUE) {
       DWORD dwError = GetLastError();
       std::error_code ec (dwError, std::system_category());
-      throw(ec, "Failure searching database");
+      throw(std::system_error(ec));
     }
 
     // Loop through the directory, collecting file names as we go
