@@ -28,6 +28,16 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reindexers/sequential_reindexer.hpp"
 
+#ifdef WIN32
+// Import windows filesystem functionality
+#include <windows.h>
+#include <tchar.h>
+#include <stdio.h>
+#else
+// We're on a UNIX system. Import their filesystem stuff instead
+#include <dirent.h>
+#endif
+
 
 namespace rosbag2_cpp
 {
@@ -35,19 +45,19 @@ namespace reindexers
 {
 namespace details
 {
-std::vector<std::string> resolve_relative_paths(
-  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
+std::vector<rcpputils::fs::path> resolve_relative_paths(
+  const rcpputils::fs::path & base_folder, std::vector<rcpputils::fs::path> relative_files, const int version = 4)
 {
-  auto base_path = rcpputils::fs::path(base_folder);
+  auto base_path = rcpputils::fs::path(base_folder);  // Preserve folder
   if (version < 4) {
     // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
     base_path = rcpputils::fs::path(base_folder).parent_path();
   }
 
   rcpputils::require_true(
-    base_path.exists(), "base folder does not exist: " + base_folder);
+    base_path.exists(), "base folder does not exist: " + base_folder.string());
   rcpputils::require_true(
-    base_path.is_directory(), "base folder has to be a directory: " + base_folder);
+    base_path.is_directory(), "base folder has to be a directory: " + base_folder.string());
 
   for (auto & file : relative_files) {
     auto path = rcpputils::fs::path(file);
@@ -61,9 +71,9 @@ std::vector<std::string> resolve_relative_paths(
 }
 }  // namespace details
 
-std::string strip_parent_path(const std::string & relative_path)
+std::string strip_parent_path(const rcpputils::fs::path & relative_path)
 {
-  return rcpputils::fs::path(relative_path).filename().string();
+  return relative_path.filename().string();
 }
 
 SequentialReindexer::SequentialReindexer(
@@ -90,15 +100,18 @@ void SequentialReindexer::reset()
 
 
 bool SequentialReindexer::comp_rel_file(
-  const std::string & first_path, const std::string & second_path)
+  const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
 {
   std::regex regex_rule(".*_(\\d+)\\.db3", std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
 
-  auto first_regex_good = std::regex_match(first_path, first_match, regex_rule);
-  auto second_regex_good = std::regex_match(second_path, second_match, regex_rule);
+  auto first_path_string = first_path.string();
+  auto second_path_string = second_path.string();
+
+  auto first_regex_good = std::regex_match(first_path_string, first_match, regex_rule);
+  auto second_regex_good = std::regex_match(second_path_string, second_match, regex_rule);
 
   // Make sure the paths have regex matches
   if (!first_regex_good || !second_regex_good) {
@@ -112,36 +125,83 @@ bool SequentialReindexer::comp_rel_file(
   return first_db_num < second_db_num;
 }
 
-std::vector<std::string> SequentialReindexer::get_database_files(const std::string & base_folder)
+std::vector<rcpputils::fs::path> SequentialReindexer::get_database_files(const rcpputils::fs::path & base_folder)
 {
   // Look in the uri directory to see what database files are there
-  std::vector<std::string> output;
-  for (auto & p_ : boost::filesystem::directory_iterator(base_folder)) {
-    // We are ONLY interested in database files
-    if (p_.path().extension() != ".db3") {
-      continue;
+  std::vector<rcpputils::fs::path> output;
+
+  #ifdef WIN32
+  {
+    // Code placed in scope so variables can't accidentally be used elsewhere
+    WIN32_FIND_DATA FindFileData;
+    HANDLE hFind;
+
+    std::string search_dir = base_folder.string() + "\\*";
+    hFind = FindFirstFile(search_dir, &FindFileData);
+    // If an error occurs, we want to abort
+    if (hFind == INVALID_HANDLE_VALUE) {
+      DWORD dwError = GetLastError();
+      std::error_code ec (dwError, std::system_category());
+      throw(ec, "Failure searching database");
     }
 
-    output.emplace_back(p_.path().c_str());
-    std::cout << "Found path: " << p_.path().c_str() << "\n";
+    // Loop through the directory, collecting file names as we go
+    do {
+      if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        // I guess it's a directory in the bag file?
+        // Still, not interested in it.
+        continue;
+      } else {
+        auto temp_path = rcpputils::fs::path(ffd.cFileName);
+
+        // We are ONLY interested in database files
+        if (temp_path.extension().string() != ".db3") {
+          continue;
+        }
+        output.emplace_back(temp_path);
+      }
+    }
+    FindClose(hFind);
   }
+  #else
+  {
+    // Code placed in scope so variables can't accidentally be used elsewhere
+    auto dirp = opendir(base_folder.string().c_str());
+    // If an error occurs, we want to abort
+    if (dirp == NULL) {
+      throw std::system_error(errno, std::generic_category());
+    }
+    dirent * dp;
+    while ((dp = readdir(dirp)) != NULL) {
+      auto temp_path = rcpputils::fs::path(dp->d_name);
+
+      // We are ONLY interested in database files
+      if (temp_path.extension().string() != ".db3") {
+        continue;
+      }
+
+      output.emplace_back(temp_path);
+    }
+    closedir(dirp);
+  }
+  #endif
 
   // Sort relative file path by database number
   std::sort(
     output.begin(), output.end(),
-    [](std::string a, std::string b) {return comp_rel_file(a, b);});
+    [](rcpputils::fs::path a, rcpputils::fs::path b) {return comp_rel_file(a, b);});
 
   return output;
 }
 
 void SequentialReindexer::open(
-  const std::string & database_file,
+  const rcpputils::fs::path & database_file,
   const StorageOptions & storage_options)
 {
   // Since this is a reindexing operation, assume that there is no metadata.yaml file.
   // As such, ask the storage with the given URI for its metadata.
   storage_ = storage_factory_->open_read_only(
-    database_file, storage_options.storage_id);
+    database_file.string(), storage_options.storage_id);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
@@ -157,7 +217,7 @@ void SequentialReindexer::fill_topics_metadata()
   }
 }
 
-void SequentialReindexer::init_metadata(const std::vector<std::string> & files)
+void SequentialReindexer::init_metadata(const std::vector<rcpputils::fs::path> & files)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
 
@@ -174,7 +234,7 @@ void SequentialReindexer::init_metadata(const std::vector<std::string> & files)
 }
 
 void SequentialReindexer::aggregate_metadata(
-  const std::vector<std::string> & files, const StorageOptions & storage_options)
+  const std::vector<rcpputils::fs::path> & files, const StorageOptions & storage_options)
 {
   // In order to most accurately reconstruct the metadata, we need to
   // visit each of the contained relative database files in the bag,
@@ -182,7 +242,7 @@ void SequentialReindexer::aggregate_metadata(
   // metadata object.
   ROSBAG2_CPP_LOG_INFO("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
-    open(f_, storage_options);  // Class storage_ is now full
+    open(f_.string(), storage_options);  // Class storage_ is now full
 
     auto temp_metadata = storage_->get_metadata();
 
@@ -245,7 +305,7 @@ void SequentialReindexer::reindex(const StorageOptions & storage_options)
   // Perform final touch-up
   finalize_metadata();
 
-  metadata_io_->write_metadata(base_folder_, metadata_);
+  metadata_io_->write_metadata(base_folder_.string(), metadata_);
   ROSBAG2_CPP_LOG_INFO("Reindexing operation completed.");
 }
 

@@ -15,11 +15,12 @@
 #ifndef ROSBAG2_CPP__REINDEXERS__SEQUENTIAL_REINDEXER_HPP_
 #define ROSBAG2_CPP__REINDEXERS__SEQUENTIAL_REINDEXER_HPP_
 
-#include <boost/filesystem.hpp>
 #include <memory>
 #include <regex>
 #include <string>
 #include <vector>
+
+#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/reindexer_interfaces/base_reindexer_interface.hpp"
@@ -76,28 +77,28 @@ protected:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
-  std::vector<std::string> file_paths_{};  // List of database files.
-  std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
+  std::vector<rcpputils::fs::path> file_paths_{};  // List of database files.
+  std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};  // Index of file to read from
 
 private:
-  std::string base_folder_;
+  rcpputils::fs::path base_folder_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 
-  std::vector<std::string> get_database_files(const std::string & base_folder);
+  std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
 
   void open(
-    const std::string & database_file,
+    const rcpputils::fs::path & database_file,
     const StorageOptions & storage_options);
 
   // Prepares the metadata by setting initial values.
-  void init_metadata(const std::vector<std::string> & files);
+  void init_metadata(const std::vector<rcpputils::fs::path> & files);
 
   // Attempts to harvest metadata from all bag files, and aggregates the result
   void aggregate_metadata(
-    const std::vector<std::string> & files, const StorageOptions & storage_options);
+    const std::vector<rcpputils::fs::path> & files, const StorageOptions & storage_options);
 
   // Compairson function for std::sort with our filepath convention
-  static bool comp_rel_file(const std::string & first_path, const std::string & second_path);
+  static bool comp_rel_file(const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path);
 };
 
 }  // namespace reindexers
