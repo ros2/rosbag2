@@ -244,79 +244,79 @@ class TestRos2BagReindexMultiFile(unittest.TestCase):
         compare_metadata_files(target_file, metadata_file)
 
 
-class TestRos2BagReindexMessageCompression(unittest.TestCase):
+# class TestRos2BagReindexMessageCompression(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls, launch_service, proc_info, proc_output):
-        @contextlib.contextmanager
-        def launch_bag_command(self, arguments, **kwargs):
-            pkg_command_action = ExecuteProcess(
-                cmd=['ros2', 'bag', *arguments],
-                additional_env={'PYTHONUNBUFFERED': '1'},
-                name='ros2bag-cli',
-                output='screen',
-                **kwargs
-            )
-            with launch_testing.tools.launch_process(
-                    launch_service, pkg_command_action, proc_info, proc_output
-            ) as pkg_command:
-                yield pkg_command
-        cls.launch_bag_command = launch_bag_command
+#     @classmethod
+#     def setUpClass(cls, launch_service, proc_info, proc_output):
+#         @contextlib.contextmanager
+#         def launch_bag_command(self, arguments, **kwargs):
+#             pkg_command_action = ExecuteProcess(
+#                 cmd=['ros2', 'bag', *arguments],
+#                 additional_env={'PYTHONUNBUFFERED': '1'},
+#                 name='ros2bag-cli',
+#                 output='screen',
+#                 **kwargs
+#             )
+#             with launch_testing.tools.launch_process(
+#                     launch_service, pkg_command_action, proc_info, proc_output
+#             ) as pkg_command:
+#                 yield pkg_command
+#         cls.launch_bag_command = launch_bag_command
 
-    @classmethod
-    def tearDown(cls) -> None:
-        metadata_file = RESOURCES_PATH / 'message_compression' / 'metadata.yaml'
-        metadata_file.unlink(True)
+#     @classmethod
+#     def tearDown(cls) -> None:
+#         metadata_file = RESOURCES_PATH / 'message_compression' / 'metadata.yaml'
+#         metadata_file.unlink(True)
 
-    def test_compressed(self):
-        bag_path = RESOURCES_PATH / 'message_compression'
-        metadata_file = bag_path / 'metadata.yaml'
-        target_file = bag_path / 'message_compression_target.yaml'
+#     def test_compressed(self):
+#         bag_path = RESOURCES_PATH / 'message_compression'
+#         metadata_file = bag_path / 'metadata.yaml'
+#         target_file = bag_path / 'message_compression_target.yaml'
 
-        arguments = ['reindex', bag_path.as_posix(),
-                     '--compression-format', 'zstd',
-                     '--compression-mode', 'message']
-        with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+#         arguments = ['reindex', bag_path.as_posix(),
+#                      '--compression-format', 'zstd',
+#                      '--compression-mode', 'message']
+#         with self.launch_bag_command(arguments=arguments) as bag_command:
+#             bag_command.wait_for_shutdown(timeout=5)
 
-        # Metadata.yaml file should be created at this point
-        compare_metadata_files(target_file, metadata_file)
+#         # Metadata.yaml file should be created at this point
+#         compare_metadata_files(target_file, metadata_file)
 
 
-class TestRos2BagReindexFileCompression(unittest.TestCase):
+# class TestRos2BagReindexFileCompression(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls, launch_service, proc_info, proc_output):
-        @contextlib.contextmanager
-        def launch_bag_command(self, arguments, **kwargs):
-            pkg_command_action = ExecuteProcess(
-                cmd=['ros2', 'bag', *arguments],
-                additional_env={'PYTHONUNBUFFERED': '1'},
-                name='ros2bag-cli',
-                output='screen',
-                **kwargs
-            )
-            with launch_testing.tools.launch_process(
-                    launch_service, pkg_command_action, proc_info, proc_output
-            ) as pkg_command:
-                yield pkg_command
-        cls.launch_bag_command = launch_bag_command
+#     @classmethod
+#     def setUpClass(cls, launch_service, proc_info, proc_output):
+#         @contextlib.contextmanager
+#         def launch_bag_command(self, arguments, **kwargs):
+#             pkg_command_action = ExecuteProcess(
+#                 cmd=['ros2', 'bag', *arguments],
+#                 additional_env={'PYTHONUNBUFFERED': '1'},
+#                 name='ros2bag-cli',
+#                 output='screen',
+#                 **kwargs
+#             )
+#             with launch_testing.tools.launch_process(
+#                     launch_service, pkg_command_action, proc_info, proc_output
+#             ) as pkg_command:
+#                 yield pkg_command
+#         cls.launch_bag_command = launch_bag_command
 
-    @classmethod
-    def tearDown(cls) -> None:
-        metadata_file = RESOURCES_PATH / 'file_compression' / 'metadata.yaml'
-        metadata_file.unlink(True)
+#     @classmethod
+#     def tearDown(cls) -> None:
+#         metadata_file = RESOURCES_PATH / 'file_compression' / 'metadata.yaml'
+#         metadata_file.unlink(True)
 
-    def test_compressed(self):
-        bag_path = RESOURCES_PATH / 'file_compression'
-        metadata_file = bag_path / 'metadata.yaml'
-        target_file = bag_path / 'file_compression_target.yaml'
+#     def test_compressed(self):
+#         bag_path = RESOURCES_PATH / 'file_compression'
+#         metadata_file = bag_path / 'metadata.yaml'
+#         target_file = bag_path / 'file_compression_target.yaml'
 
-        arguments = ['reindex', bag_path.as_posix(),
-                     '--compression-format', 'zstd',
-                     '--compression-mode', 'file']
-        with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
+#         arguments = ['reindex', bag_path.as_posix(),
+#                      '--compression-format', 'zstd',
+#                      '--compression-mode', 'file']
+#         with self.launch_bag_command(arguments=arguments) as bag_command:
+#             bag_command.wait_for_shutdown(timeout=5)
 
-        # Metadata.yaml file should be created at this point
-        compare_metadata_files(target_file, metadata_file)
+#         # Metadata.yaml file should be created at this point
+#         compare_metadata_files(target_file, metadata_file)
