@@ -30,9 +30,13 @@ class RecordVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
             '-a', '--all', action='store_true',
-            help='recording all topics, required if no topics are listed explicitly.')
+            help='recording all topics, required if no topics '
+            'are listed explicitly or through a regex')
         parser.add_argument(
             'topics', nargs='*', default=None, help='topics to be recorded')
+        parser.add_argument(
+            '-x', '--regex', default='', help='recording only topics '
+            'matching provided regular expression')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
@@ -122,11 +126,11 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
-        if args.all and args.topics:
-            return print_error('Invalid choice: Can not specify topics and -a at the same time.')
-        # both all and topics cannot be false
-        if not(args.all or (args.topics and len(args.topics) > 0)):
-            return print_error('Invalid choice: Must specify topic(s) or -a')
+        if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
+            return print_error('Must specify only one option out of topics, regex or -a')
+        # one out of "all", "topics" and "regex" must be true
+        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
+            return print_error('Invalid choice: Must specify topic(s), regex or -a')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
@@ -178,6 +182,7 @@ class RecordVerb(VerbExtension):
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
             topics=args.topics,
+            regex=args.regex,
             include_hidden_topics=args.include_hidden_topics,
             qos_profile_overrides=qos_profile_overrides,
             storage_preset_profile=args.storage_preset_profile,
