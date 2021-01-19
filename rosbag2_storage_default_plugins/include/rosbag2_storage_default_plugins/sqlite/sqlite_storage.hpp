@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -92,6 +93,7 @@ private:
   void fill_topics_and_types();
   void activate_transaction();
   void commit_transaction();
+  void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
@@ -107,6 +109,7 @@ private:
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
+  std::mutex database_write_mutex_;
 };
 
 }  // namespace rosbag2_storage_plugins
