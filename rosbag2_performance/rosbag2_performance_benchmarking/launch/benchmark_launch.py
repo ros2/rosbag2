@@ -12,6 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Launchfile for benchmarking rosbag2.
+
+This launchfile can only be launched with 'ros2 launch' command.
+
+Two launch arguments are required:
+* benchmark - path to benchmark description in yaml format ('benchmark:=<PATH>'),
+* producers - path to producers description in yaml format ('producers:=<PATH>').
+
+Goal of this launchfile is to launch in sequence all processes and/or nodes with right parameters
+required for selected benchmark. Cross section of parameters is generated based on parameters from
+'benchmark' yaml description file.
+
+Based on 'no_transport' parameter in benchmark description, a single run in launch sequence
+looks as follow:
+
+NO TRANSPORT:
+Only 'writer_benchmark' node is used as 'producer node' (PN). It directly writes messages to
+a storage and then fill up a result file. No additional processes are required.
+
+PN starts -> PN exits
+
+TRANSPORT:
+For end-to-end benchmark, `ros2 bag record` (ROSBAG) process and 'result writer' (RW) are also
+included in a single launch sequence run. In this case 'benchmark_publishers' node act as
+producer node. Result writer node writes final result file.
+
+ROSBAG starts -> PN starts -> PN exits -> ROSBAG exits -> RW starts
+
+After the whole sequence is finished, both producers and benchmark description files are copied
+to benchmark folder.
+"""
+
 import datetime
 import os
 import pathlib
@@ -41,7 +74,7 @@ _result_writers = []
 
 
 def _parse_arguments(args=sys.argv[4:]):
-    """Parse benchmark and producers config files."""
+    """Parse benchmark and producers config file paths."""
     bench_cfg_path = None
     producers_cfg_path = None
     err_str = 'Missing or invalid arguments detected. ' \
@@ -70,69 +103,69 @@ def _parse_arguments(args=sys.argv[4:]):
         return bench_cfg_path, producers_cfg_path
 
 
-def _copy_yamls():
+def _copy_config_files():
+    """Copy benchmark and producers config files to benchmark folder."""
+    global _bench_cfg_path, _producers_cfg_path
     # Copy yaml configs for current benchmark after benchmark is finished
     benchmark_path = pathlib.Path(_producer_nodes[0]['parameters']['db_folder'])
     shutil.copy(str(_bench_cfg_path), str(benchmark_path.with_name('benchmark.yaml')))
     shutil.copy(str(_producers_cfg_path), str(benchmark_path.with_name('producers.yaml')))
 
 
-def _launch_producers():
-    """Launch next writer."""
-    global _producer_idx, _producer_nodes
-    if _producer_idx == len(_producer_nodes):
-        _copy_yamls()
-        return launch.actions.LogInfo(msg='Benchmark finished!')
-    node = _producer_nodes[_producer_idx]['node']
-    return node
+def _launch_sequence(transport):
+    """
+    Continue with launch sequence (launch entry action of next run).
 
+    Launches next producer node or rosbag2 record process, based on transport (end to end)
+    or transportless type of benchmark.
 
-def _launch_rosbags():
-    """Launch next ros bag record."""
-    global _producer_idx, _rosbag_processes
+    :param" transport If True launch a 'ros2 bag record' process, else a producer node.
+    """
+    global _producer_idx, _producer_nodes, _rosbag_processes
     if _producer_idx == len(_producer_nodes):
-        _copy_yamls()
+        _copy_config_files()
         return launch.actions.LogInfo(msg='Benchmark finished!')
-    node = _rosbag_processes[_producer_idx]
-    return node
+    action = None
+    if transport:
+        action = _rosbag_processes[_producer_idx]
+    else:
+        action = _producer_nodes[_producer_idx]['node']
+    return action
 
 
 def _rosbag_proc_started(event, context):
-    """Log current status on producer start."""
+    """Register current rosbag2 PID so we can terminate it when producer exits."""
     global _producer_idx, _rosbag_pid
     _rosbag_pid = event.pid
     # TODO(piotr.jaroszek) wait for rosbag IO "Listening for topics"
     # Wait for rosbag start
     time.sleep(1)
-    return [
-        launch.actions.LogInfo(
-            msg='-----------{}/{}-----------'.format(_producer_idx + 1, len(_producer_nodes))
-        ),
-        _launch_producers()
-    ]
+    return _launch_sequence(transport=False)
 
 
 def _rosbag_proc_exited(event, context):
-    """Log current status on producer start."""
+    """Start next rosbag2 record process after current one exits."""
     global _producer_idx, _result_writers, _rosbag_pid
+
+    # ROS2 bag returns 2 if terminated with SIGINT, which we expect here
     if event.returncode != 2:
         _rosbag_pid = None
         return [
-            launch.actions.LogInfo(msg='Rosbag record error. Shutting down benchmark.'),
+            launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark.'),
             launch.actions.EmitEvent(
                 event=launch.events.Shutdown(
-                    reason='Rosbag record error'
+                    reason='Rosbag2 record error'
                 )
             )
         ]
     return [
             _result_writers[_producer_idx-1],
-            _launch_rosbags()
+            _launch_sequence(transport=True)
     ]
 
 
 def _producer_node_started(event, context):
-    """Log current status on producer start."""
+    """Log current benchmark progress on producer start."""
     global _producer_idx
     return launch.actions.LogInfo(
         msg='-----------{}/{}-----------'.format(_producer_idx + 1, len(_producer_nodes))
@@ -140,9 +173,14 @@ def _producer_node_started(event, context):
 
 
 def _producer_node_exited(event, context):
-    """Launch new producer when previously has finished."""
+    """
+    Launch new producer when current has finished.
+
+    If transport is on, then also stops rosbag2 recorder process. Handles clearing of bags.
+    """
     global _producer_idx, _producer_nodes, _rosbag_pid
     node_params = _producer_nodes[_producer_idx]['parameters']
+    transport = node_params['transport']
 
     # Handle clearing bag files
     if not node_params['preserve_bags']:
@@ -150,6 +188,7 @@ def _producer_node_exited(event, context):
         for f in db_files:
             f.unlink()
 
+    # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
     if _rosbag_pid is not None:
         os.kill(_rosbag_pid, signal.SIGINT)
         _producer_idx += 1
@@ -160,6 +199,7 @@ def _producer_node_exited(event, context):
             )
         ]
 
+    # Shutdown benchmark with error if producer node crashes
     if event.returncode != 0:
         return [
             launch.actions.LogInfo(msg='Writer error. Shutting down benchmark.'),
@@ -170,12 +210,13 @@ def _producer_node_exited(event, context):
             )
         ]
 
+    # Bump up producer index, so the launch sequence can continue
     _producer_idx += 1
     return [
         launch.actions.LogInfo(
             msg='---------------------------'
         ),
-        _launch_producers()
+        _launch_sequence(transport=transport)
     ]
 
 
@@ -198,7 +239,7 @@ def generate_launch_description():
     repeat_each = benchmark_params.get('repeat_each')
     db_root_folder = benchmark_params.get('db_root_folder')
     summary_result_file = benchmark_params.get('summary_result_file')
-    no_transport = benchmark_params.get('no_transport')
+    transport = not benchmark_params.get('no_transport')
     preserve_bags = benchmark_params.get('preserve_bags')
 
     # Producers options
@@ -214,10 +255,12 @@ def generate_launch_description():
     # Parameters cross section for whole benchmark
     # Parameters cross section is a list of all possible parameters variants
     params_cross_section = []
+
+    # Generate unique benchmark directory name
     benchmark_cfg_name = pathlib.Path(_bench_cfg_path).name.replace('.yaml', '')
     producer_cfg_name = pathlib.Path(_producers_cfg_path).name.replace('.yaml', '')
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    timestamped_name = benchmark_cfg_name + '_' + producer_cfg_name + '_' + timestamp
+    benchmark_dir_name = benchmark_cfg_name + '_' + producer_cfg_name + '_' + timestamp
 
     # Helper function for generating cross section list
     def __generate_cross_section_parameter(i,
@@ -255,13 +298,13 @@ def generate_launch_description():
 
         # Result file path for producer
         result_file = pathlib.Path(db_root_folder).joinpath(
-            timestamped_name,
+            benchmark_dir_name,
             summary_result_file
         )
 
         # Database folder path for producer
         db_folder = pathlib.Path(db_root_folder).joinpath(
-            timestamped_name,
+            benchmark_dir_name,
             node_title
         )
 
@@ -272,7 +315,7 @@ def generate_launch_description():
                 'db_folder': str(db_folder),
                 'cache': cache,
                 'preserve_bags': preserve_bags,
-                'no_transport': no_transport,
+                'transport': transport,
                 'result_file': str(result_file),
                 'compression_format': compression,
                 'compression_queue_size': compression_queue_size,
@@ -307,7 +350,7 @@ def generate_launch_description():
         launch.actions.LogInfo(msg='Launching benchmark!'),
     )
 
-    # Create all required nodes for benchmark
+    # Create all required nodes and processes for benchmark
     for producer_param in params_cross_section:
         parameters = [
             producer_param['config_file'],
@@ -324,8 +367,8 @@ def generate_launch_description():
         if producer_param['compression_format'] != '':
             parameters.append({'compression_format': producer_param['compression_format']})
 
-        # TODO(piotr.jaroszek): choose node based on 'no_transport' parameter
-        if no_transport:
+        if not transport:
+            # Writer benchmark node writes messages directly to a storage, uses no publishers
             producer_node = launch_ros.actions.Node(
                 package='rosbag2_performance_benchmarking',
                 executable='writer_benchmark',
@@ -333,6 +376,7 @@ def generate_launch_description():
                 parameters=parameters
             )
         else:
+            # Benchmark publishers node uses standard publishers for publishing messages
             producer_node = launch_ros.actions.Node(
                 package='rosbag2_performance_benchmarking',
                 executable='benchmark_publishers',
@@ -340,22 +384,25 @@ def generate_launch_description():
                 parameters=parameters
             )
 
-            # TODO(piotr.jaroszek) change '-a' param to produced topic list
+            # ROS2 bag process for recording messages
             rosbag_process = launch.actions.ExecuteProcess(
                 sigkill_timeout=launch.substitutions.LaunchConfiguration(
-                    'sigkill_timeout', default=15),
+                    'sigkill_timeout', default=60),
                 sigterm_timeout=launch.substitutions.LaunchConfiguration(
-                    'sigterm_timeout', default=15),
+                    'sigterm_timeout', default=60),
                 cmd=['ros2', 'bag', 'record', '-a'] +
-                    ['-o', str(parameters[3]['db_folder'])]
+                    ['-o', str(producer_param['db_folder'])]
             )
 
+            # Result writer node walks through output metadata files and generates
+            # output results file
             result_writer = launch_ros.actions.Node(
                 package='rosbag2_performance_benchmarking',
                 executable='results_writer',
                 name='rosbag2_performance_benchmarking_node',
                 parameters=parameters
             )
+
             # Fill up list with rosbag record process and result writers actions
             _rosbag_processes.append(rosbag_process)
             _result_writers.append(result_writer)
@@ -363,8 +410,8 @@ def generate_launch_description():
         # Fill up dict with producer nodes and their corresponding parameters
         _producer_nodes.append({'node': producer_node, 'parameters': producer_param})
 
-    # Connect start and exit events for each producer
-    if no_transport:
+    # Connect start and exit events for a proper sequence
+    if not transport:
         for producer_node in _producer_nodes:
             ld.add_action(
                 launch.actions.RegisterEventHandler(
@@ -395,6 +442,14 @@ def generate_launch_description():
             ld.add_action(
                 launch.actions.RegisterEventHandler(
                     launch.event_handlers.OnProcessStart(
+                        target_action=producer_node['node'],
+                        on_start=_producer_node_started
+                    )
+                )
+            ),
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessStart(
                         target_action=rosbag_proc,
                         on_start=_rosbag_proc_started
                     )
@@ -410,13 +465,10 @@ def generate_launch_description():
             )
 
     # Launch nodes one after another. Next node is launched after previous is finished.
-    if no_transport:
-        ld.add_action(_launch_producers())
-    else:
-        ld.add_action(_launch_rosbags())
+    ld.add_action(_launch_sequence(transport=transport))
 
     return ld
 
 
 if __name__ == '__main__':
-    raise RuntimeError('Batch benchmark launchfile does not support standalone execution.')
+    raise RuntimeError('Benchmark launchfile does not support standalone execution.')
