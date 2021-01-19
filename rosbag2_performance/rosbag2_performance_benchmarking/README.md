@@ -19,9 +19,9 @@ To run test benchmark (with `test.yaml` and `mixed_110Mbs.yaml`):
 ros2 launch rosbag2_performance_benchmarking benchmark_launch.py benchmark:=`ros2 pkg prefix rosbag2_performance_benchmarking`/share/rosbag2_performance_benchmarking/config/benchmarks/test.yaml producers:=`ros2 pkg prefix rosbag2_performance_benchmarking`/share/rosbag2_performance_benchmarking/config/producers/mixed_110Mbs.yaml
 ```
 
-The summary of benchmarks goes into `results.csv` files, which includes rows of execution parameters and results. These files lie inside corresponding for each test optimization -> compression directories.
+The summary of benchmark goes into result file described in benchmark config: `<db_root_folder>/<BENCHMARK_NAME>/summary_result_file` where `BENCHMARK_NAME` is a name generated from config names, transport type and timestamp.
 
-For human friendly output, a postprocess report generation tool can be used. Launch it with benchmark result directory as an `-i` argument (directory with `results.csv` file):
+For human friendly output, a postprocess report generation tool can be used. Launch it with benchmark result directory as an `-i` argument (directory with `summary_result_file` file):
 
 ```bash
 scripts/report_gen.py -i <BENCHMARK_RESULT_DIR>
