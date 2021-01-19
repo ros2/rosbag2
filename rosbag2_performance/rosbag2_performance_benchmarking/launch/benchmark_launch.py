@@ -135,16 +135,26 @@ def _launch_sequence(transport):
 
 def _rosbag_proc_started(event, context):
     """Register current rosbag2 PID so we can terminate it when producer exits."""
-    global _producer_idx, _rosbag_pid
+    global _rosbag_pid
     _rosbag_pid = event.pid
-    # TODO(piotr.jaroszek) wait for rosbag IO "Listening for topics"
-    # Wait for rosbag start
-    time.sleep(1)
-    return _launch_sequence(transport=False)
+
+
+def _rosbag_ready_check(event):
+    """Consider rosbag2 ready when 'Listening for topics...' string is printed.
+
+    Launches producer node if ready.
+    """
+    target_str = 'Listening for topics...'
+    if target_str in event.text.decode():
+        return _launch_sequence(transport=False)
 
 
 def _rosbag_proc_exited(event, context):
-    """Start next rosbag2 record process after current one exits."""
+    """
+    Start next rosbag2 record process after current one exits.
+
+    Launches result writer on exit.
+    """
     global _producer_idx, _result_writers, _rosbag_pid
 
     # ROS2 bag returns 2 if terminated with SIGINT, which we expect here
@@ -159,8 +169,7 @@ def _rosbag_proc_exited(event, context):
             )
         ]
     return [
-            _result_writers[_producer_idx-1],
-            _launch_sequence(transport=True)
+            _result_writers[_producer_idx-1]
     ]
 
 
@@ -176,7 +185,9 @@ def _producer_node_exited(event, context):
     """
     Launch new producer when current has finished.
 
-    If transport is on, then also stops rosbag2 recorder process. Handles clearing of bags.
+    If transport is on, then stops rosbag2 recorder process. 
+
+    Handles clearing of bags.
     """
     global _producer_idx, _producer_nodes, _rosbag_pid
     node_params = _producer_nodes[_producer_idx]['parameters']
@@ -189,15 +200,9 @@ def _producer_node_exited(event, context):
             f.unlink()
 
     # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
-    if _rosbag_pid is not None:
+    if _rosbag_pid is not None and transport:
         os.kill(_rosbag_pid, signal.SIGINT)
-        _producer_idx += 1
         _rosbag_pid = None
-        return [
-            launch.actions.LogInfo(
-                msg='---------------------------'
-            )
-        ]
 
     # Shutdown benchmark with error if producer node crashes
     if event.returncode != 0:
@@ -222,7 +227,7 @@ def _producer_node_exited(event, context):
 
 def generate_launch_description():
     """Generate launch description for ros2 launch system."""
-    global _producer_idx, _producer_nodes, _bench_cfg_path, _producers_cfg_path
+    global _producer_nodes, _bench_cfg_path, _producers_cfg_path
     _bench_cfg_path, _producers_cfg_path = _parse_arguments()
 
     # Parse yaml config for benchmark
@@ -260,7 +265,11 @@ def generate_launch_description():
     benchmark_cfg_name = pathlib.Path(_bench_cfg_path).name.replace('.yaml', '')
     producer_cfg_name = pathlib.Path(_producers_cfg_path).name.replace('.yaml', '')
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    benchmark_dir_name = benchmark_cfg_name + '_' + producer_cfg_name + '_' + timestamp
+    transport_postfix = 'transport' if transport else 'no_transport'
+    benchmark_dir_name = benchmark_cfg_name + \
+        '_' + producer_cfg_name + \
+        '_' + transport_postfix + \
+        '_' + timestamp
 
     # Helper function for generating cross section list
     def __generate_cross_section_parameter(i,
@@ -452,6 +461,15 @@ def generate_launch_description():
                     launch.event_handlers.OnProcessStart(
                         target_action=rosbag_proc,
                         on_start=_rosbag_proc_started
+                    )
+                )
+            )
+            ld.add_action(
+                launch.actions.RegisterEventHandler(
+                    launch.event_handlers.OnProcessIO(
+                        target_action=rosbag_proc,
+                        on_stdout=_rosbag_ready_check,
+                        on_stderr=_rosbag_ready_check
                     )
                 )
             )
