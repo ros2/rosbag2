@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Tool for generating human friendly benchmark report."""
+
 import argparse
 import csv
 import pathlib
@@ -23,14 +25,30 @@ import yaml
 
 
 class Postprocess:
+    """Base class for posprocess calculations."""
 
     def process(self, grouped_data, benchmark_config, producers_config):
         raise NotImplementedError
 
 
 class PostprocessStorageConfig(Postprocess):
+    """
+    Postprocess.
+
+    Calculate percent of recorded messages per storage config for different
+    benchmark parameters.
+    """
 
     def process(self, grouped_data, benchmark_config, producers_config):
+        """
+        Process grouped data and prints human friendly informations.
+
+        :param: grouped data List of grouped results. Grouped result is a list with rows from
+            single benchmark run (ie. run with two publisher groups returns two rows in results
+            file).
+        :param: benchmark_config Benchmark description from yaml config.
+        :param: producers_config Producers description from yaml config.
+        """
         benchmark_config_cleaned = (benchmark_config['rosbag2_performance_benchmarking']
                                                     ['benchmark_node']
                                                     ['ros__parameters'])
@@ -41,7 +59,7 @@ class PostprocessStorageConfig(Postprocess):
                                                        ['ros__parameters']
                                                        ['publishers'])
 
-        # Split for storage configs
+        # Split data for storage configs
         splitted_data = {}
         for data in grouped_data:
             storage_cfg_name = data[0]['storage_config']
@@ -50,8 +68,7 @@ class PostprocessStorageConfig(Postprocess):
                 splitted_data.update({storage_cfg_name: []})
             splitted_data[storage_cfg_name].append(data)
 
-        # {'storage_optimized': {10000: 78%, 100000: 55%, ...}, 'storage_resilient': ... }
-        storage_pack = {}
+        cache_data_per_storage_conf = {}
 
         print(yaml.dump(producers_config_publishers))
 
@@ -60,13 +77,14 @@ class PostprocessStorageConfig(Postprocess):
                            compression_threads_selected,
                            max_bagfile_size_selected):
             for storage_cfg_name, data in splitted_data.items():
-                # {10000: [sample0_rec_%, ..., sampleM_rec_%], 100000: [sampleN_rec_%..]}
                 cache_samples = {}
                 for sample in data:
-                    # sample contains multiple rows
+                    # Single sample contains multiple rows
                     if len(sample) != len(producers_config_publishers['publisher_groups']):
                         raise RuntimeError('Invalid number of records in results detected.')
 
+                    # These parameters are same for all rows in sample
+                    # (multiple publishers in publisher group)
                     if sample[0]['compression'] != compression_selected:
                         continue
                     if int(sample[0]['compression_queue']) != compression_queue_size_selected:
@@ -76,25 +94,25 @@ class PostprocessStorageConfig(Postprocess):
                     if int(sample[0]['max_bagfile_size']) != max_bagfile_size_selected:
                         continue
 
-                    # process only default compression and 0 max_bag_filesize
                     if sample[0]['cache_size'] not in cache_samples.keys():
                         cache_samples.update({sample[0]['cache_size']: []})
 
-                    # TODO(piotr.jaroszek) WARNING, currently results returns 'total_produced'
-                    # correctly (per publisher group), but 'total_recorded' is already summed for
-                    # all the publisher groups!
+                    # TODO(piotr.jaroszek) WARNING, currently results in 'total_produced' column
+                    # are correct (per publisher group), but 'total_recorded' is already summed
+                    # for all the publisher groups!
                     sample_total_produced = 0
                     for row in sample:
                         sample_total_produced += int(row['total_produced'])
                     cache_samples[sample[0]['cache_size']].append(
                         int(sample[0]['total_recorded_count'])/sample_total_produced)
 
-                # {10000: 78%, 100000: 55%}
                 cache_avg_recorded_percentage = {
                     cache: statistics.mean(samples)
                     for cache, samples in cache_samples.items()
                 }
-                storage_pack.update({storage_cfg_name: cache_avg_recorded_percentage})
+                cache_data_per_storage_conf.update(
+                    {storage_cfg_name: cache_avg_recorded_percentage}
+                )
 
             result = {
                 'repeat_each': repeat_each,
@@ -102,7 +120,7 @@ class PostprocessStorageConfig(Postprocess):
                 'compression': compression_selected,
                 'compression_threads': compression_threads_selected,
                 'compression_queue_size': compression_queue_size_selected,
-                'cache_data': storage_pack
+                'cache_data': cache_data_per_storage_conf
             }
 
             print('Results: ')
@@ -135,13 +153,16 @@ class PostprocessStorageConfig(Postprocess):
 
 
 class Report:
+    """Report generator main class."""
 
     def __init__(self, benchmark_dir):
+        """Initialize with config and results data."""
         self.__benchmark_dir = benchmark_dir
         self.__load_configs()
         self.__load_results()
 
     def generate(self):
+        """Handle data posprocesses."""
         psc = PostprocessStorageConfig()
         psc.process(
             self.__results_data,
@@ -175,6 +196,11 @@ class Report:
                                        ['publisher_groups'])
 
             publishers_groups_num = len(publishers_groups)
+
+            # Group rows in results file, so that rows within same benchmark run are
+            # in one list
+            # Example: one benchmark run with two publisher groups returns two rows in results
+            # file. We want to group these.
             results_grouped = [
                 results[i:i+(publishers_groups_num)]
                 for i in range(0, len(results), publishers_groups_num)
@@ -188,6 +214,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', help='Benchmark results folder.')
     args = parser.parse_args()
     benchmark_dir = args.input
+
     if benchmark_dir:
         raport = Report(benchmark_dir)
         raport.generate()

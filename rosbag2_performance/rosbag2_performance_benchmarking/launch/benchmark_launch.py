@@ -51,7 +51,6 @@ import pathlib
 import shutil
 import signal
 import sys
-import time
 
 from ament_index_python import get_package_share_directory
 
@@ -140,7 +139,8 @@ def _rosbag_proc_started(event, context):
 
 
 def _rosbag_ready_check(event):
-    """Consider rosbag2 ready when 'Listening for topics...' string is printed.
+    """
+    Consider rosbag2 ready when 'Listening for topics...' string is printed.
 
     Launches producer node if ready.
     """
@@ -185,7 +185,7 @@ def _producer_node_exited(event, context):
     """
     Launch new producer when current has finished.
 
-    If transport is on, then stops rosbag2 recorder process. 
+    If transport is on, then stops rosbag2 recorder process.
 
     Handles clearing of bags.
     """
