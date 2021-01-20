@@ -35,7 +35,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             'topics', nargs='*', default=None, help='topics to be recorded')
         parser.add_argument(
-            '-x', '--regex', default='', help='recording only topics '
+            '-e', '--regex', default='', help='recording only topics '
             'matching provided regular expression')
         parser.add_argument(
             '-o', '--output',
