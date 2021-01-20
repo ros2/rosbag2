@@ -61,16 +61,19 @@ void Writer::open(
 
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->create_topic(topic_with_type);
 }
 
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->remove_topic(topic_with_type);
 }
 
 void Writer::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->write(message);
 }
 
