@@ -127,7 +127,9 @@ protected:
    * \param file_relative_to_bag Relative path of the file to compress, as stored in metadata -
    *   meaning the path is relative to the bag base folder.
    */
-  virtual void compress_file(BaseCompressorInterface & compressor, const std::string & file_relative_to_bag);
+  virtual void compress_file(
+    BaseCompressorInterface & compressor,
+    const std::string & file_relative_to_bag);
 
   /**
    * Checks if the compression by message option is specified and a compressor exists.

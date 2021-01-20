@@ -61,8 +61,10 @@ public:
       });
   }
 
-  void initializeFakeFileStorage() {
-    // Mock functionality for storage initialization when opening a new bagfile
+  void initializeFakeFileStorage()
+  {
+    // Create mock implementation of the storage, using files and a size of 1 per message
+    // initialize values when opening a new bagfile
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
         Invoke(
@@ -75,19 +77,16 @@ public:
             output << "Fake storage data";
           }),
         Return(storage_)));
-    // Mock functioality for writing a single message
     ON_CALL(
       *storage_,
       write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
       [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
         fake_storage_size_ += 1;
       });
-    // Mock functionality for providing bagfile's current size
     ON_CALL(*storage_, get_bagfile_size).WillByDefault(
       [this]() {
         return fake_storage_size_;
       });
-    // Mock function for providing current relative bagfile path
     ON_CALL(*storage_, get_relative_file_path).WillByDefault(
       [this]() {
         return fake_storage_uri_;
@@ -96,8 +95,8 @@ public:
 
   void initializeWriter(
     const rosbag2_compression::CompressionOptions & compression_options,
-    std::unique_ptr<rosbag2_compression::CompressionFactory> custom_compression_factory = nullptr
-  ) {
+    std::unique_ptr<rosbag2_compression::CompressionFactory> custom_compression_factory = nullptr)
+  {
     auto compression_factory = std::move(custom_compression_factory);
     if (!compression_factory) {
       compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
