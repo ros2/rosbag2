@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -45,16 +46,32 @@ public:
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
-    tmp_dir_{rcpputils::fs::temp_directory_path() / "SequentialCompressionWriterTest"},
+    tmp_dir_{rcpputils::fs::temp_directory_path() / bag_name_},
     tmp_dir_storage_options_{},
     serialization_format_{"rmw_format"}
   {
     tmp_dir_storage_options_.uri = tmp_dir_.string();
-    rcpputils::fs::remove(tmp_dir_);
+    EXPECT_TRUE(rcpputils::fs::remove_all(tmp_dir_));
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
+    // intercept the metadata write so we can analyze it.
+    ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+      [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+        intercepted_metadata_ = metadata;
+      });
+    ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+      DoAll(
+        Invoke(
+          [this](const rosbag2_storage::StorageOptions & storage_options) {
+            fake_storage_size_ = 0;
+            fake_storage_uri_ = storage_options.uri;
+            std::ofstream output(storage_options.uri);
+            output << "Fake storage data";
+          }),
+        Return(storage_)));
   }
 
+  const std::string bag_name_ = "SequentialCompressionWriterTest";
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
@@ -62,7 +79,10 @@ public:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   rcpputils::fs::path tmp_dir_;
   rosbag2_storage::StorageOptions tmp_dir_storage_options_;
+  rosbag2_storage::BagMetadata intercepted_metadata_;
   std::string serialization_format_;
+  uint64_t fake_storage_size_;
+  std::string fake_storage_uri_;
 
   const uint64_t kDefaultCompressionQueueSize = 1;
   const uint64_t kDefaultCompressionQueueThreads = 4;
@@ -188,4 +208,70 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
     std::runtime_error);
 
   EXPECT_TRUE(rcpputils::fs::remove(tmp_dir_));
+}
+
+TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative_filepaths)
+{
+  // In this test, check that the SequentialCompressionWriter creates relative filepaths correctly
+  // Check both the first path, which is created in init_metadata,
+  // and subsequent paths, which are created in the splitting logic
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+
+  ON_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
+    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+      fake_storage_size_ += 1;
+    });
+
+  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+    [this]() {
+      return fake_storage_size_;
+    });
+  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+    [this]() {
+      return fake_storage_uri_;
+    });
+
+  rosbag2_compression::CompressionOptions compression_options {
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads
+  };
+  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
+  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+    compression_options,
+    std::move(compression_factory),
+    std::move(storage_factory_),
+    converter_factory_,
+    std::move(metadata_io_));
+
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  tmp_dir_storage_options_.max_bagfile_size = 1;
+  writer_->open(tmp_dir_storage_options_, {"rmw_format", "rmw_format"});
+
+  writer_->create_topic({test_topic_name, test_topic_type, "", ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = test_topic_name;
+
+  writer_->write(message);
+  // bag size == max_bafile_size, no split yet
+  writer_->write(message);
+  // bag size > max_bagfile_size, split
+  writer_->write(message);
+  writer_.reset();
+
+  EXPECT_EQ(
+    intercepted_metadata_.relative_file_paths.size(), 2u);
+
+  const auto base_path = tmp_dir_storage_options_.uri;
+  int counter = 0;
+  for (const auto & path : intercepted_metadata_.relative_file_paths) {
+    std::stringstream ss;
+    ss << bag_name_ << "_" << counter << ".zstd";
+    counter++;
+    EXPECT_EQ(ss.str(), path);
+  }
 }
