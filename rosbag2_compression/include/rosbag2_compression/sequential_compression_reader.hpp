@@ -70,20 +70,12 @@ public:
 
 protected:
   /**
-   * Increment the current file iterator to point to the next file in the list of relative file
-   * paths.
-   *
-   * Expected usage:
-   * if (has_next_file()) load_next_file();
-   */
-  void load_next_file() override;
-
-  /**
-   * Initializes the decompressor if a compression mode is specified in the metadata.
+   * Decompress the current bagfile so that it is openable by the storage implementation.
+   * Initializes the decompressor if it has not been created yet.
    *
    * \throws std::invalid_argument If compression format doesn't exist.
    */
-  virtual void setup_decompression();
+  virtual void preprocess_current_file() override;
 
 private:
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};

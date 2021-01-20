@@ -99,6 +99,8 @@ void SequentialReader::open(
       storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
 
+    preprocess_current_file();
+
     storage_options_.uri = get_current_file();
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
@@ -199,6 +201,7 @@ void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  preprocess_current_file();
 }
 
 std::string SequentialReader::get_current_file() const
