@@ -51,7 +51,7 @@ public:
     serialization_format_{"rmw_format"}
   {
     tmp_dir_storage_options_.uri = tmp_dir_.string();
-    EXPECT_TRUE(rcpputils::fs::remove_all(tmp_dir_));
+    rcpputils::fs::remove_all(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
     // intercept the metadata write so we can analyze it.
@@ -59,16 +59,56 @@ public:
       [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
         intercepted_metadata_ = metadata;
       });
+  }
+
+  void initializeFakeFileStorage() {
+    // Mock functionality for storage initialization when opening a new bagfile
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
         Invoke(
           [this](const rosbag2_storage::StorageOptions & storage_options) {
             fake_storage_size_ = 0;
             fake_storage_uri_ = storage_options.uri;
+            // Touch the file
             std::ofstream output(storage_options.uri);
+            // Put some arbitrary bytes in the file so it isn't interpreted as being empty
             output << "Fake storage data";
           }),
         Return(storage_)));
+    // Mock functioality for writing a single message
+    ON_CALL(
+      *storage_,
+      write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
+      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+        fake_storage_size_ += 1;
+      });
+    // Mock functionality for providing bagfile's current size
+    ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+      [this]() {
+        return fake_storage_size_;
+      });
+    // Mock function for providing current relative bagfile path
+    ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+      [this]() {
+        return fake_storage_uri_;
+      });
+  }
+
+  void initializeWriter(
+    const rosbag2_compression::CompressionOptions & compression_options,
+    std::unique_ptr<rosbag2_compression::CompressionFactory> custom_compression_factory = nullptr
+  ) {
+    auto compression_factory = std::move(custom_compression_factory);
+    if (!compression_factory) {
+      compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
+    }
+    auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
+      compression_options,
+      std::move(compression_factory),
+      std::move(storage_factory_),
+      converter_factory_,
+      std::move(metadata_io_));
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
   }
 
   const std::string bag_name_ = "SequentialCompressionWriterTest";
@@ -93,15 +133,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri
   rosbag2_compression::CompressionOptions compression_options{
     "zstd", rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
-  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
-
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  initializeWriter(compression_options);
 
   EXPECT_THROW(
     writer_->open(
@@ -115,15 +147,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
   rosbag2_compression::CompressionOptions compression_options{
     "bad_format", rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
-  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
-
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  initializeWriter(compression_options);
 
   EXPECT_THROW(
     writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
@@ -134,27 +158,19 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 {
-  rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
-    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
-  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
-
   // Set minimum file size greater than max bagfile size option
   const uint64_t min_split_file_size = 10;
   const uint64_t max_bagfile_size = 5;
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
-  auto storage_options = rosbag2_storage::StorageOptions{};
+
+  rosbag2_compression::CompressionOptions compression_options{
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
+  initializeWriter(compression_options);
+
+  rosbag2_storage::StorageOptions storage_options{};
   storage_options.max_bagfile_size = max_bagfile_size;
   storage_options.uri = "foo.bar";
-
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
-
   EXPECT_THROW(
     writer_->open(storage_options, {serialization_format_, serialization_format_}),
     std::runtime_error);
@@ -165,15 +181,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
   rosbag2_compression::CompressionOptions compression_options{
     "zstd", rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
-  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
-
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  initializeWriter(compression_options);
 
   auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
   auto storage_options = rosbag2_storage::StorageOptions();
@@ -193,13 +201,7 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
   auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
   EXPECT_CALL(*compression_factory, create_compressor(_)).Times(1);
 
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  initializeWriter(compression_options, std::move(compression_factory));
 
   // This will throw an exception because the MockCompressionFactory does not actually create
   // a compressor.
@@ -217,40 +219,18 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   // and subsequent paths, which are created in the splitting logic
   const std::string test_topic_name = "test_topic";
   const std::string test_topic_type = "test_msgs/BasicTypes";
-
-  ON_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_;
-    });
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
   rosbag2_compression::CompressionOptions compression_options {
-    "zstd", rosbag2_compression::CompressionMode::FILE,
-    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads
+    "zstd",
+    rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize,
+    kDefaultCompressionQueueThreads
   };
-  auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
-  auto sequential_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-    compression_options,
-    std::move(compression_factory),
-    std::move(storage_factory_),
-    converter_factory_,
-    std::move(metadata_io_));
 
-  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  initializeFakeFileStorage();
+  initializeWriter(compression_options);
 
   tmp_dir_storage_options_.max_bagfile_size = 1;
-  writer_->open(tmp_dir_storage_options_, {"rmw_format", "rmw_format"});
-
+  writer_->open(tmp_dir_storage_options_);
   writer_->create_topic({test_topic_name, test_topic_type, "", ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
