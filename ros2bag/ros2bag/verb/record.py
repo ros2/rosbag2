@@ -38,6 +38,10 @@ class RecordVerb(VerbExtension):
             '-e', '--regex', default='', help='recording only topics '
             'matching provided regular expression')
         parser.add_argument(
+            '-x', '--exclude', default='', help='exclude topics '
+            'matching provided regular expression. Works with -a and -e, '
+            'substracting excluded topics')
+        parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
@@ -132,6 +136,12 @@ class RecordVerb(VerbExtension):
         if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
             return print_error('Invalid choice: Must specify topic(s), regex or -a')
 
+        if args.topics and args.exclude:
+            return print_error('Exclude argument only works with -a or -e')
+
+        if args.exclude and not(args.regex or args.all):
+            return print_error('Exclude argument requires either -a or -e')
+
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
@@ -183,6 +193,7 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             topics=args.topics,
             regex=args.regex,
+            exclude=args.exclude,
             include_hidden_topics=args.include_hidden_topics,
             qos_profile_overrides=qos_profile_overrides,
             storage_preset_profile=args.storage_preset_profile,
