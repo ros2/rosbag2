@@ -42,7 +42,7 @@ SqliteWrapper::SqliteWrapper(
   if (io_flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
-      SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nullptr);
+      SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
       errmsg << "Could not read-only open database. SQLite error (" <<
@@ -52,7 +52,7 @@ SqliteWrapper::SqliteWrapper(
   } else {
     int rc = sqlite3_open_v2(
       uri.c_str(), &db_ptr,
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
+      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (rc != SQLITE_OK) {
       std::stringstream errmsg;
       errmsg << "Could not read-write open database. SQLite error (" <<
