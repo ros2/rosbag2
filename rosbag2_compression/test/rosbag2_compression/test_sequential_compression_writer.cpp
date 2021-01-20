@@ -74,7 +74,7 @@ public:
             // Touch the file
             std::ofstream output(storage_options.uri);
             // Put some arbitrary bytes in the file so it isn't interpreted as being empty
-            output << "Fake storage data";
+            output << "Fake storage data" << std::endl;
           }),
         Return(storage_)));
     ON_CALL(

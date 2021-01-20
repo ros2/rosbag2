@@ -44,7 +44,7 @@ SequentialCompressionReader::~SequentialCompressionReader()
 void SequentialCompressionReader::preprocess_current_file()
 {
   if (!decompressor_) {
-    compression_mode_ = rosbag2_compression::compression_mode_from_string(metadata_.compression_mode);
+    compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
     if (compression_mode_ == rosbag2_compression::CompressionMode::NONE) {
       throw std::invalid_argument{
               "SequentialCompressionReader requires a CompressionMode that is not NONE!"};

@@ -75,7 +75,7 @@ protected:
    *
    * \throws std::invalid_argument If compression format doesn't exist.
    */
-  virtual void preprocess_current_file() override;
+  void preprocess_current_file() override;
 
 private:
   std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
