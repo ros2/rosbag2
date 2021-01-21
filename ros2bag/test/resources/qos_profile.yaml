@@ -4,13 +4,13 @@
   reliability: reliable
   durability: transient_local
   deadline:
-    sec: 2147483647
-    nsec: 4294967295
+    sec: 0
+    nsec: 0
   lifespan:
-    sec: 2147483647
-    nsec: 4294967295
+    sec: 0
+    nsec: 0
   liveliness: automatic
   liveliness_lease_duration:
-    sec: 2147483647
-    nsec: 4294967295
+    sec: 0
+    nsec: 0
   avoid_ros_namespace_conventions: false

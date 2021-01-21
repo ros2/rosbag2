@@ -187,15 +187,18 @@ Below is an example profile set to the default ROS2 QoS settings.
   reliability: reliable
   durability: volatile
   deadline:
-    sec: 2147483647   # LONG_MAX
-    nsec: 4294967295  # ULONG_MAX
+    # unspecified/infinity
+    sec: 0
+    nsec: 0
   lifespan:
-    sec: 2147483647
-    nsec: 4294967295
+    # unspecified/infinity
+    sec: 0
+    nsec: 0
   liveliness: system_default
   liveliness_lease_duration:
-    sec: 2147483647
-    nsec: 4294967295
+    # unspecified/infinity
+    sec: 0
+    nsec: 0
   avoid_ros_namespace_conventions: false
 ```
 
