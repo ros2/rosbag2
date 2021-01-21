@@ -342,8 +342,8 @@ void SqliteStorage::initialize()
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
-    std::lock_guard<std::mutex> db_lock(database_write_mutex_);
     auto insert_topic =
       database_->prepare_statement(
       "INSERT INTO topics (name, type, serialization_format, offered_qos_profiles) "
@@ -357,8 +357,8 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
-    std::lock_guard<std::mutex> db_lock(database_write_mutex_);
     auto delete_topic =
       database_->prepare_statement(
       "DELETE FROM topics where name = ? and type = ? and serialization_format = ?");
