@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -108,6 +109,7 @@ private:
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
+  std::mutex database_write_mutex_;
 };
 
 }  // namespace rosbag2_storage_plugins
