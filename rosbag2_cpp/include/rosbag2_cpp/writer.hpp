@@ -16,7 +16,6 @@
 #define ROSBAG2_CPP__WRITER_HPP_
 
 #include <memory>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -117,15 +116,6 @@ public:
 
 private:
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
-
-  /**
-   * This mutex is necessary here because writer implementations use intermediate
-   * structures to store topic information and the discovery mechanism that calls
-   * create_topic (and others) is multi-threaded and can call this function with
-   * the same argument more than once. This requires a guarantee that create_topic
-   * fully executes before we can call another.
-   */
-  std::mutex writer_mutex_;
 };
 
 }  // namespace rosbag2_cpp
