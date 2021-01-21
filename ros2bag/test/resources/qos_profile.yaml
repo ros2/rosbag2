@@ -4,13 +4,16 @@
   reliability: reliable
   durability: transient_local
   deadline:
+    # unspecified/infinity
     sec: 0
     nsec: 0
   lifespan:
+    # unspecified/infinity
     sec: 0
     nsec: 0
   liveliness: automatic
   liveliness_lease_duration:
+    # unspecified/infinity
     sec: 0
     nsec: 0
   avoid_ros_namespace_conventions: false

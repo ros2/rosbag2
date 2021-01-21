@@ -4,4 +4,4 @@
   reliability: reliable
   durability: volatile
   deadline:
-    sec: 0
+    sec: 2
