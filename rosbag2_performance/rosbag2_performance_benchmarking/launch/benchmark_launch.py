@@ -394,13 +394,48 @@ def generate_launch_description():
             )
 
             # ROS2 bag process for recording messages
+            rosbag_args = []
+            if producer_param['storage_config_file']:
+                rosbag_args += [
+                    '--storage-config-file',
+                    str(producer_param['storage_config_file'])
+                ]
+            if producer_param['cache']:
+                rosbag_args += [
+                    '--max-cache-size',
+                    str(producer_param['cache'])
+                ]
+            if producer_param['compression_format']:
+                rosbag_args += [
+                    '--compression-mode',
+                    'message'
+                ]
+                rosbag_args += [
+                    '--compression-format',
+                    str(producer_param['compression_format'])
+                ]
+            if producer_param['compression_queue_size']:
+                rosbag_args += [
+                    '--compression-queue-size',
+                    str(producer_param['compression_queue_size'])
+                ]
+            if producer_param['compression_threads']:
+                rosbag_args += [
+                    '--compression-threads',
+                    str(producer_param['compression_threads'])
+                ]
+            if producer_param['max_bag_size']:
+                rosbag_args += [
+                    '-b',
+                    str(producer_param['max_bag_size'])
+                ]
+            rosbag_args += ['-o', str(producer_param['db_folder'])]
             rosbag_process = launch.actions.ExecuteProcess(
                 sigkill_timeout=launch.substitutions.LaunchConfiguration(
                     'sigkill_timeout', default=60),
                 sigterm_timeout=launch.substitutions.LaunchConfiguration(
                     'sigterm_timeout', default=60),
-                cmd=['ros2', 'bag', 'record', '-a'] +
-                    ['-o', str(producer_param['db_folder'])]
+                cmd=['ros2', 'bag', 'record', '-a'] + rosbag_args
             )
 
             # Result writer node walks through output metadata files and generates
