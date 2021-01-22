@@ -50,7 +50,30 @@ std::vector<std::string> resolve_relative_paths(
     if (path.is_absolute()) {
       continue;
     }
-    file = (base_path / path).string();
+    if (version == 4) {
+      /*
+       * Rosbag2 was released with incorrect relative file naming for compressed bags
+       * which were written called v4, using v3 logic: "- base/bagfile" instead of "- bagfile"
+       * Because we have no way to check whether the bag was written correctly,
+       * check for the existence of the prefixed file as a fallback.
+       */
+      auto resolved = base_path / path;
+      if (resolved.exists()) {
+        file = resolved.string();
+      } else {
+        auto base_stripped = path.filename();
+        auto resolved_stripped = base_path / base_stripped;
+        ROSBAG2_CPP_LOG_DEBUG_STREAM(
+          "Unable to find specified bagfile " << resolved.string() <<
+            ". Falling back to checking for " << resolved_stripped.string());
+        rcpputils::require_true(
+          resolved_stripped.exists(),
+          "Unable to resolve relative file path either as a V3 or V4 relative path");
+        file = resolved_stripped.string();
+      }
+    } else {
+      file = (base_path / path).string();
+    }
   }
 
   return relative_files;
@@ -98,6 +121,8 @@ void SequentialReader::open(
     file_paths_ = details::resolve_relative_paths(
       storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
+
+    preprocess_current_file();
 
     storage_options_.uri = get_current_file();
     storage_ = storage_factory_->open_read_only(storage_options_);
@@ -199,6 +224,7 @@ void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  preprocess_current_file();
 }
 
 std::string SequentialReader::get_current_file() const

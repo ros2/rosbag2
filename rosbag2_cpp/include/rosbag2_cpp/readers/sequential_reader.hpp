@@ -133,6 +133,12 @@ protected:
     */
   virtual void fill_topics_metadata();
 
+  /**
+    * Prepare current file for opening by the storage implementation.
+    * This may be used by subclasses, for example decompressing
+    */
+  virtual void preprocess_current_file() {}
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
