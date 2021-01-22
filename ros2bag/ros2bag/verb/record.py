@@ -40,7 +40,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-x', '--exclude', default='', help='exclude topics '
             'matching provided regular expression. Works with -a and -e, '
-            'substracting excluded topics')
+            'subtracting excluded topics')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
