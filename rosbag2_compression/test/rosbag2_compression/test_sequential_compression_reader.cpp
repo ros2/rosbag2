@@ -57,9 +57,10 @@ public:
     message->topic_name = topic_with_type_.name;
 
     metadata_ = construct_default_bag_metadata();
-    ON_CALL(*metadata_io_, read_metadata).WillByDefault([this](auto /*uri*/) {
-      return metadata_;
-    });
+    ON_CALL(*metadata_io_, read_metadata).WillByDefault(
+      [this](auto /*uri*/) {
+        return metadata_;
+      });
     ON_CALL(*metadata_io_, metadata_file_exists(_)).WillByDefault(Return(true));
 
     ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
@@ -97,11 +98,12 @@ public:
   std::unique_ptr<rosbag2_compression::SequentialCompressionReader> create_reader()
   {
     auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
-    ON_CALL(*decompressor, decompress_uri).WillByDefault([](auto uri) {
-      auto path = rcpputils::fs::path(uri);
-      EXPECT_TRUE(path.exists());
-      return rcpputils::fs::remove_extension(path).string();
-    });
+    ON_CALL(*decompressor, decompress_uri).WillByDefault(
+      [](auto uri) {
+        auto path = rcpputils::fs::path(uri);
+        EXPECT_TRUE(path.exists());
+        return rcpputils::fs::remove_extension(path).string();
+      });
     auto compression_factory = std::make_unique<NiceMock<MockCompressionFactory>>();
     ON_CALL(*compression_factory, create_decompressor(_))
     .WillByDefault(Return(ByMove(std::move(decompressor))));
@@ -283,5 +285,4 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_b
   // Expect that this does not raise an exception - because the files can be found
   reader->open(storage_options_, converter_options_);
   EXPECT_TRUE(reader->has_next_file());
-
 }

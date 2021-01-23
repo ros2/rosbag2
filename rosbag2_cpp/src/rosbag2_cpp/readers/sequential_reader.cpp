@@ -50,30 +50,7 @@ std::vector<std::string> resolve_relative_paths(
     if (path.is_absolute()) {
       continue;
     }
-    if (version == 4) {
-      /*
-       * Rosbag2 was released with incorrect relative file naming for compressed bags
-       * which were written called v4, using v3 logic: "- base/bagfile" instead of "- bagfile"
-       * Because we have no way to check whether the bag was written correctly,
-       * check for the existence of the prefixed file as a fallback.
-       */
-      auto resolved = base_path / path;
-      if (resolved.exists()) {
-        file = resolved.string();
-      } else {
-        auto base_stripped = path.filename();
-        auto resolved_stripped = base_path / base_stripped;
-        ROSBAG2_CPP_LOG_DEBUG_STREAM(
-          "Unable to find specified bagfile " << resolved.string() <<
-            ". Falling back to checking for " << resolved_stripped.string());
-        rcpputils::require_true(
-          resolved_stripped.exists(),
-          "Unable to resolve relative file path either as a V3 or V4 relative path");
-        file = resolved_stripped.string();
-      }
-    } else {
-      file = (base_path / path).string();
-    }
+    file = (base_path / path).string();
   }
 
   return relative_files;
@@ -107,6 +84,7 @@ void SequentialReader::open(
   const ConverterOptions & converter_options)
 {
   storage_options_ = storage_options;
+  base_folder_ = storage_options.uri;
 
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.

@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
@@ -62,6 +63,30 @@ void SequentialCompressionReader::setup_decompression()
 void SequentialCompressionReader::preprocess_current_file()
 {
   setup_decompression();
+
+  if (metadata_.version == 4) {
+    /*
+     * Rosbag2 was released with incorrect relative file naming for compressed bags
+     * which were written as v4, using v3 logic which had the bag name prefixed on the file path.
+     * Because we have no way to check whether the bag was written correctly,
+     * check for the existence of the prefixed file as a fallback.
+     */
+    rcpputils::fs::path base{base_folder_};
+    rcpputils::fs::path relative{get_current_file()};
+    auto resolved = base / relative;
+    if (!resolved.exists()) {
+      auto base_stripped = relative.filename();
+      auto resolved_stripped = base / base_stripped;
+      ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+        "Unable to find specified bagfile " << resolved.string() <<
+          ". Falling back to checking for " << resolved_stripped.string());
+      rcpputils::require_true(
+        resolved_stripped.exists(),
+        "Unable to resolve relative file path either as a V3 or V4 relative path");
+      *current_file_iterator_ = resolved_stripped.string();
+    }
+  }
+
   if (compression_mode_ == CompressionMode::FILE) {
     ROSBAG2_COMPRESSION_LOG_INFO_STREAM("Decompressing " << get_current_file().c_str());
     *current_file_iterator_ = decompressor_->decompress_uri(get_current_file());

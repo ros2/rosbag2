@@ -148,6 +148,9 @@ protected:
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
 
+  // Hang on to this because storage_options_ is mutated to point at individual files
+  std::string base_folder_;
+
 private:
   rosbag2_storage::StorageOptions storage_options_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
