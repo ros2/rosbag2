@@ -131,16 +131,17 @@ class RecordVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
         if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
-            return print_error('Must specify only one option out of topics, regex or -a')
+            return print_error('Must specify only one option out of topics, --regex or --all')
         # one out of "all", "topics" and "regex" must be true
         if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
-            return print_error('Invalid choice: Must specify topic(s), regex or -a')
+            return print_error('Invalid choice: Must specify topic(s), --regex or --all')
 
         if args.topics and args.exclude:
-            return print_error('Exclude argument only works with -a or -e')
+            return print_error('--exclude argument cannot be used when specifying a list '
+                               'of topics explicitly')
 
         if args.exclude and not(args.regex or args.all):
-            return print_error('Exclude argument requires either -a or -e')
+            return print_error('--exclude argument requires either --all or --regex')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 

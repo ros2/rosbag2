@@ -99,12 +99,12 @@ void Recorder::topics_discovery(const RecordOptions & record_options)
 std::unordered_map<std::string, std::string>
 Recorder::get_requested_or_available_topics(const RecordOptions & record_options)
 {
-  auto tt = record_options.topics.empty() ?
+  auto unfiltered_topics = record_options.topics.empty() ?
     node_->get_all_topics_with_types(record_options.include_hidden_topics) :
     node_->get_topics_with_types(record_options.topics);
 
   if (record_options.regex.empty() && record_options.exclude.empty()) {
-    return tt;
+    return unfiltered_topics;
   }
 
   std::unordered_map<std::string, std::string> filtered_by_regex;
@@ -112,11 +112,9 @@ Recorder::get_requested_or_available_topics(const RecordOptions & record_options
   std::regex topic_regex(record_options.regex);
   std::regex exclude_regex(record_options.exclude);
   bool take = record_options.all;
-  for (const auto & kv : tt) {
-    if (!record_options.regex.empty()) {
-      take = std::regex_search(kv.first, topic_regex);
-    }
-    if (take && !record_options.exclude.empty()) {
+  for (const auto & kv : unfiltered_topics) {
+    take = std::regex_search(kv.first, topic_regex);
+    if (take) {
       take = !std::regex_search(kv.first, exclude_regex);
     }
     if (take) {
