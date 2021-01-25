@@ -28,28 +28,34 @@ TEST_F(RecordIntegrationTestFixture, only_regex_matching_topics_are_recorded)
   auto test_string_messages = get_messages_strings();
   auto test_array_messages = get_messages_arrays();
   std::string regex = "/[a-z]+_nice(_.*)";
+  std::string regex_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
 
-  // valid topics
+  // matching topics - the only ones that should be recorded
   std::string v1 = "/awesome_nice_topic";
-  std::string v2 = "/quite_nice_namespace/anything_else";
-  std::string v3 = "/still_nice_topic";
+  std::string v2 = "/still_nice_topic";
+
+  // excluded topics
+  std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
 
   // topics that shouldn't match
   std::string b1 = "/numberslike1arenot_nice";
   std::string b2 = "/namespace_before/not_nice";
-  std::string b3 = "/invalid_topic";
 
   // checking the test data itself
   std::regex re(regex);
+  std::regex exclude(regex_exclude);
   ASSERT_TRUE(std::regex_search(v1, re));
   ASSERT_TRUE(std::regex_search(v2, re));
-  ASSERT_TRUE(std::regex_search(v3, re));
   ASSERT_FALSE(std::regex_search(b1, re));
   ASSERT_FALSE(std::regex_search(b2, re));
-  ASSERT_FALSE(std::regex_search(b3, re));
+
+  // this example matches both regexes - should be excluded
+  ASSERT_TRUE(std::regex_search(e1, re));
+  ASSERT_TRUE(std::regex_search(e1, exclude));
 
   RecordOptions ro{false, false, {}, "rmw_format", 10ms};
   ro.regex = regex;
+  ro.exclude = regex_exclude;
 
   start_recording(ro);
 
@@ -57,15 +63,14 @@ TEST_F(RecordIntegrationTestFixture, only_regex_matching_topics_are_recorded)
     v1, test_string_messages[0], 0);
   pub_man_.add_publisher<test_msgs::msg::Strings>(
     v2, test_string_messages[1], 0);
-  pub_man_.add_publisher<test_msgs::msg::Arrays>(
-    v3, test_array_messages[0], 0);
 
   pub_man_.add_publisher<test_msgs::msg::Strings>(
     b1, test_string_messages[0], 0);
   pub_man_.add_publisher<test_msgs::msg::Strings>(
     b2, test_string_messages[1], 0);
+
   pub_man_.add_publisher<test_msgs::msg::Arrays>(
-    b3, test_array_messages[0], 0);
+    e1, test_array_messages[0], 0);
 
   run_publishers();
   stop_recording();
@@ -74,9 +79,8 @@ TEST_F(RecordIntegrationTestFixture, only_regex_matching_topics_are_recorded)
     static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
   auto recorded_topics = writer.get_topics();
 
-  EXPECT_THAT(recorded_topics, SizeIs(3));
+  EXPECT_THAT(recorded_topics, SizeIs(2));
 
   EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
   EXPECT_TRUE(recorded_topics.find(v2) != recorded_topics.end());
-  EXPECT_TRUE(recorded_topics.find(v3) != recorded_topics.end());
 }

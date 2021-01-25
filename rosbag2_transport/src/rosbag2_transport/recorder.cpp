@@ -103,14 +103,23 @@ Recorder::get_requested_or_available_topics(const RecordOptions & record_options
     node_->get_all_topics_with_types(record_options.include_hidden_topics) :
     node_->get_topics_with_types(record_options.topics);
 
-  if (record_options.regex.empty()) {
+  if (record_options.regex.empty() && record_options.exclude.empty()) {
     return tt;
   }
 
   std::unordered_map<std::string, std::string> filtered_by_regex;
+
   std::regex topic_regex(record_options.regex);
+  std::regex exclude_regex(record_options.exclude);
+  bool take = record_options.all;
   for (const auto & kv : tt) {
-    if (std::regex_search(kv.first, topic_regex)) {
+    if (!record_options.regex.empty()) {
+      take = std::regex_search(kv.first, topic_regex);
+    }
+    if (take && !record_options.exclude.empty()) {
+      take = !std::regex_search(kv.first, exclude_regex);
+    }
+    if (take) {
       filtered_by_regex.insert(kv);
     }
   }
