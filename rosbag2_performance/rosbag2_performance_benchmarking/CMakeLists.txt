@@ -22,9 +22,19 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(std_msgs REQUIRED)
   find_package(yaml_cpp_vendor REQUIRED)
 
-  add_executable(writer_benchmark src/writer_benchmark.cpp)
-  add_executable(benchmark_publishers src/benchmark_publishers.cpp)
-  add_executable(results_writer src/results_writer.cpp)
+  add_executable(writer_benchmark
+    src/config_utils.cpp
+    src/result_utils.cpp
+    src/writer_benchmark.cpp)
+
+  add_executable(benchmark_publishers
+    src/benchmark_publishers.cpp
+    src/config_utils.cpp)
+
+  add_executable(results_writer
+    src/config_utils.cpp
+    src/result_utils.cpp
+    src/results_writer.cpp)
 
   ament_target_dependencies(writer_benchmark
     rclcpp
