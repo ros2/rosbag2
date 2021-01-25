@@ -78,7 +78,10 @@ private:
   /**
    * Initializes the decompressor if a compression mode is specified in the metadata.
    *
-   * \throws std::invalid_argument If compression format doesn't exist.
+   * \throw std::invalid_argument If compression mode is NONE
+   * \throw std::invalid_argument If compression format could not be found
+   * \throw rcpputils::IllegalStateException if the decompressor could not be initialized for
+   *        any other reason
    */
   void setup_decompression();
 

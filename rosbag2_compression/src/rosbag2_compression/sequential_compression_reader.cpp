@@ -49,15 +49,12 @@ void SequentialCompressionReader::setup_decompression()
   }
 
   compression_mode_ = compression_mode_from_string(metadata_.compression_mode);
-  if (compression_mode_ != rosbag2_compression::CompressionMode::NONE) {
-    decompressor_ = compression_factory_->create_decompressor(metadata_.compression_format);
-  } else {
-    throw std::invalid_argument{
-            "SequentialCompressionReader requires a CompressionMode that is not NONE!"};
-  }
-  if (!decompressor_) {
-    throw std::runtime_error{"Couldn't initialize decompressor."};
-  }
+  rcpputils::require_true(
+    compression_mode_ != rosbag2_compression::CompressionMode::NONE,
+    "SequentialCompressionReader should not be initialized with NONE compression mode.");
+
+  decompressor_ = compression_factory_->create_decompressor(metadata_.compression_format);
+  rcpputils::check_true(decompressor_ != nullptr, "Couldn't initialize decompressor.");
 }
 
 void SequentialCompressionReader::preprocess_current_file()
@@ -71,12 +68,12 @@ void SequentialCompressionReader::preprocess_current_file()
      * Because we have no way to check whether the bag was written correctly,
      * check for the existence of the prefixed file as a fallback.
      */
-    rcpputils::fs::path base{base_folder_};
-    rcpputils::fs::path relative{get_current_file()};
-    auto resolved = base / relative;
+    const rcpputils::fs::path base{base_folder_};
+    const rcpputils::fs::path relative{get_current_file()};
+    const auto resolved = base / relative;
     if (!resolved.exists()) {
-      auto base_stripped = relative.filename();
-      auto resolved_stripped = base / base_stripped;
+      const auto base_stripped = relative.filename();
+      const auto resolved_stripped = base / base_stripped;
       ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
         "Unable to find specified bagfile " << resolved.string() <<
           ". Falling back to checking for " << resolved_stripped.string());
