@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <exception>
 #include <memory>
 #include <string>
 #include <vector>
@@ -57,6 +58,8 @@ private:
   void create_benchmark_publishers_and_producers()
   {
     const std::string topic_prefix(this->get_fully_qualified_name());
+    auto wait_for_subs = config_utils::wait_for_subscriptions_from_node_parameters(*this);
+
     for (auto & c : configurations_) {
       for (uint i = 0; i < c.count; ++i) {
         auto topic = topic_prefix + "/" + c.topic_root + "_" + std::to_string(i + 1);
@@ -65,6 +68,20 @@ private:
         producers_.push_back(
           std::make_unique<ByteProducer>(
             c.producer_config,
+            [this, topic, wait_for_subs] {
+              if (!wait_for_subs) {return;}
+              if (!rclcpp::ok()) {return;}
+              const double max_subscription_wait_time = 5.0;
+              auto start_time = std::chrono::high_resolution_clock::now();
+              while (!this->count_subscribers(topic)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                auto current_time = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> elapsed = current_time - start_time;
+                if (elapsed.count() >= max_subscription_wait_time) {
+                  throw std::runtime_error("Waited too long for " + topic);
+                }
+              }
+            },
             [pub](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
               pub->publish(*msg);
             },

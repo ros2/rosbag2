@@ -41,6 +41,7 @@ inline auto generate_random_message(const ProducerConfig & config)
 class ByteProducer
 {
 public:
+  using producer_initialize_function_t = std::function<void ()>;
   using producer_callback_function_t = std::function<void (
         std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
 
@@ -48,9 +49,11 @@ public:
 
   ByteProducer(
     const ProducerConfig & config,
+    producer_initialize_function_t producer_initialize,
     producer_callback_function_t producer_callback,
     producer_finalize_function_t producer_finalize)
   : configuration_(config),
+    producer_initialize_(producer_initialize),
     producer_callback_(producer_callback),
     producer_finalize_(producer_finalize),
     sleep_time_(configuration_.frequency == 0 ? 1 : 1000 / configuration_.frequency),
@@ -59,6 +62,7 @@ public:
 
   void run()
   {
+    producer_initialize_();
     for (auto i = 0u; i < configuration_.max_count; ++i) {
       if (!rclcpp::ok()) {
         break;
@@ -71,6 +75,7 @@ public:
 
 private:
   ProducerConfig configuration_;
+  producer_initialize_function_t producer_initialize_;
   producer_callback_function_t producer_callback_;
   producer_finalize_function_t producer_finalize_;
   unsigned int sleep_time_;  // in milliseconds

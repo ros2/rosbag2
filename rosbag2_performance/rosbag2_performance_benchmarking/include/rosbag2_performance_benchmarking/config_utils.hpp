@@ -52,6 +52,15 @@ void load_qos_configuration(
   if (qos_reliability == "volatile") {group_config.qos.durability_volatile();}
 }
 
+bool wait_for_subscriptions_from_node_parameters(rclcpp::Node & node)
+{
+  const std::string parameters_ns = "publishers";
+  node.declare_parameter(parameters_ns + ".wait_for_subscriptions", true);
+  bool wait_for_subscriptions;
+  node.get_parameter(parameters_ns + ".wait_for_subscriptions", wait_for_subscriptions);
+  return wait_for_subscriptions;
+}
+
 std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
   rclcpp::Node & node)
 {

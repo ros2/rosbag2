@@ -148,6 +148,7 @@ void WriterBenchmark::create_producers()
       producers_.push_back(
         std::make_unique<ByteProducer>(
           c.producer_config,
+          [] { /* empty lambda */},
           [queue](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
             queue->push(msg);
           },
