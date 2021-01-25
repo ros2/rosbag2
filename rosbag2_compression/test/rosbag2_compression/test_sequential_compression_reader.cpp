@@ -131,7 +131,7 @@ public:
 TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
 {
   metadata_.compression_format = "bad_format";
-  EXPECT_CALL(*metadata_io_, read_metadata(_)).Times(AtLeast(1));
+  EXPECT_CALL(*metadata_io_, read_metadata(_)).Times(1);
   EXPECT_CALL(*metadata_io_, metadata_file_exists(_)).Times(AtLeast(1));
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
@@ -267,8 +267,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames)
   }
   auto reader = create_reader();
 
-  // Expect that this does not raise an exception - because the files can be found
-  reader->open(storage_options_, converter_options_);
+  EXPECT_NO_THROW(reader->open(storage_options_, converter_options_));
   EXPECT_TRUE(reader->has_next_file());
 }
 
@@ -282,7 +281,6 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_b
   }
   auto reader = create_reader();
 
-  // Expect that this does not raise an exception - because the files can be found
-  reader->open(storage_options_, converter_options_);
+  EXPECT_NO_THROW(reader->open(storage_options_, converter_options_));
   EXPECT_TRUE(reader->has_next_file());
 }
