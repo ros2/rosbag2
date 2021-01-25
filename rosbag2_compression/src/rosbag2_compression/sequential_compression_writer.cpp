@@ -266,7 +266,9 @@ void SequentialCompressionWriter::compress_file(
 
     if (!rcpputils::fs::remove(file_relative_to_pwd)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-        "Failed to remove uncompressed bag: \"" << file_relative_to_pwd.string() << "\"");
+        "Failed to remove original pre-compressed bag file: \"" <<
+          file_relative_to_pwd.string() << "\". This should never happen - but execution " <<
+          "will not be halted because the compressed output was successfully created.");
     }
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
@@ -281,7 +283,7 @@ void SequentialCompressionWriter::split_bagfile()
   std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
   // Grab last file before calling common splitting logic, which pushes the new filename
-  std::string last_file = metadata_.relative_file_paths.back();
+  const auto last_file = metadata_.relative_file_paths.back();
 
   SequentialWriter::split_bagfile();
 
