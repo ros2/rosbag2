@@ -170,10 +170,8 @@ void SequentialCompressionWriter::stop_compressor_threads()
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
       compression_is_running_ = false;
-      // Normally you are better off not holding the mutex when calling notify -
-      // but the behavior is still correct, and we need it to synchronize these two variables
-      compressor_condition_.notify_all();
     }
+    compressor_condition_.notify_all();
     for (auto & thread : compression_threads_) {
       thread.join();
     }
