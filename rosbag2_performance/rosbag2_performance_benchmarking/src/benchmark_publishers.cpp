@@ -61,7 +61,7 @@ private:
     auto wait_for_subs = config_utils::wait_for_subscriptions_from_node_parameters(*this);
 
     for (auto & c : configurations_) {
-      for (uint i = 0; i < c.count; ++i) {
+      for (unsigned int i = 0; i < c.count; ++i) {
         auto topic = topic_prefix + "/" + c.topic_root + "_" + std::to_string(i + 1);
         auto pub = this->create_publisher<std_msgs::msg::ByteMultiArray>(topic, c.qos);
         publishers_.push_back(pub);

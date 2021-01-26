@@ -33,7 +33,7 @@ void load_qos_configuration(
   node.declare_parameter(qos_prefix + ".qos_reliability");
   node.declare_parameter(qos_prefix + ".qos_durability");
 
-  uint qos_depth = 10;
+  unsigned int qos_depth = 10;
   std::string qos_reliability, qos_durability;
   node.get_parameter(qos_prefix + ".qos_depth", qos_depth);
   node.get_parameter(qos_prefix + ".qos_reliability", qos_reliability);

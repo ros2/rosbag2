@@ -23,7 +23,7 @@ struct PublisherGroupConfig
 {
   PublisherGroupConfig()
   : count(0), qos(10) {}
-  uint count;
+  unsigned int count;
   ProducerConfig producer_config;
   std::string topic_root;
   rclcpp::QoS qos;
