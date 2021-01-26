@@ -77,11 +77,9 @@ void SequentialCompressionWriter::compression_thread_fn()
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
     {
+      // This mutex synchronizes both the condition and the running_ boolean, so it has to be
+      // held when dealing with either/both
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
-      // The mutex needs to be held for checking both exit conditions (shutdown & work available)
-      // If it is not, the main thread could set both compression_is_running_ and notify_all()
-      // on shutdown, after we read running_, and before we call wait().
-      // In this case this thread would have missed the final notification and wait forever.
       if (!compression_is_running_) {
         break;
       }
@@ -144,7 +142,10 @@ void SequentialCompressionWriter::setup_compressor_threads()
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
     "setup_compressor_threads: Starting " <<
       compression_options_.compression_threads << " threads");
-  compression_is_running_ = true;
+  {
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+    compression_is_running_ = true;
+  }
 
   // This function needs to throw an exception if the compression format is invalid, but because
   // each thread creates its own compressor, we can't actually catch it here if one of the threads
@@ -166,8 +167,13 @@ void SequentialCompressionWriter::stop_compressor_threads()
 {
   if (!compression_threads_.empty()) {
     ROSBAG2_COMPRESSION_LOG_DEBUG("Waiting for compressor threads to finish.");
-    compression_is_running_ = false;
-    compressor_condition_.notify_all();
+    {
+      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compression_is_running_ = false;
+      // Normally you are better off not holding the mutex when calling notify -
+      // but the behavior is still correct, and we need it to synchronize these two variables
+      compressor_condition_.notify_all();
+    }
     for (auto & thread : compression_threads_) {
       thread.join();
     }

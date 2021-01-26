@@ -166,7 +166,7 @@ private:
   compressor_message_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::queue<std::string> compressor_file_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::vector<std::thread> compression_threads_;
-  std::atomic_bool compression_is_running_{false};
+  std::atomic_bool compression_is_running_{false} RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::recursive_mutex storage_mutex_;
   std::condition_variable compressor_condition_;
 
