@@ -73,11 +73,18 @@ void SequentialCompressionWriter::compression_thread_fn()
             "Cannot compress message; Writer is not open!"};
   }
 
-  while (compression_is_running_) {
+  while (true) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      // The mutex needs to be held for checking both exit conditions (shutdown & work available)
+      // If it is not, the main thread could set both compression_is_running_ and notify_all()
+      // on shutdown, after we read running_, and before we call wait().
+      // In this case this thread would have missed the final notification and wait forever.
+      if (!compression_is_running_) {
+        break;
+      }
       compressor_condition_.wait(lock);
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
