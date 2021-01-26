@@ -1,0 +1,3 @@
+# note: this is the default now, using this file does not change how the storage behaves
+write:
+  pragmas: ["journal_mode = MEMORY", "synchronous = OFF"]

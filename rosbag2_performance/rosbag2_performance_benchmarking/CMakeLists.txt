@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rosbag2_performance_writer_benchmarking)
+project(rosbag2_performance_benchmarking)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -22,22 +22,67 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(std_msgs REQUIRED)
   find_package(yaml_cpp_vendor REQUIRED)
 
-  add_executable(writer_benchmark src/writer_benchmark.cpp src/main.cpp)
+  add_executable(writer_benchmark
+    src/config_utils.cpp
+    src/result_utils.cpp
+    src/writer_benchmark.cpp)
+
+  add_executable(benchmark_publishers
+    src/benchmark_publishers.cpp
+    src/config_utils.cpp)
+
+  add_executable(results_writer
+    src/config_utils.cpp
+    src/result_utils.cpp
+    src/results_writer.cpp)
+
   ament_target_dependencies(writer_benchmark
     rclcpp
     std_msgs
     rosbag2_compression
     rosbag2_cpp
+    rosbag2_storage
     yaml_cpp_vendor
   )
+
+  ament_target_dependencies(benchmark_publishers
+    rclcpp
+    rosbag2_storage
+    std_msgs
+    yaml_cpp_vendor
+  )
+
+  ament_target_dependencies(results_writer
+    rclcpp
+    rosbag2_storage
+  )
+
   target_include_directories(writer_benchmark
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
 
-  install(TARGETS writer_benchmark
+  target_include_directories(benchmark_publishers
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+
+  target_include_directories(results_writer
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+
+  install(TARGETS writer_benchmark benchmark_publishers results_writer
     DESTINATION lib/${PROJECT_NAME})
+
+  install(DIRECTORY
+    launch
+    config
+    DESTINATION share/${PROJECT_NAME}
+  )
 
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
