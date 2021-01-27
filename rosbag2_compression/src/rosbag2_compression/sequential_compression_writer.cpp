@@ -53,9 +53,7 @@ std::string format_storage_uri(const std::string & base_folder, uint64_t storage
 
 SequentialCompressionWriter::SequentialCompressionWriter(
   const rosbag2_compression::CompressionOptions & compression_options)
-: storage_factory_{std::make_unique<rosbag2_storage::StorageFactory>()},
-  converter_factory_{std::make_shared<rosbag2_cpp::SerializationFormatConverterFactory>()},
-  metadata_io_{std::make_unique<rosbag2_storage::MetadataIo>()},
+: SequentialWriter(),
   compression_factory_{std::make_unique<rosbag2_compression::CompressionFactory>()},
   compression_options_{compression_options}
 {}
@@ -66,9 +64,8 @@ SequentialCompressionWriter::SequentialCompressionWriter(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
-: storage_factory_{std::move(storage_factory)},
-  converter_factory_{std::move(converter_factory)},
-  metadata_io_{std::move(metadata_io)},
+: SequentialWriter(
+    std::move(storage_factory), std::move(converter_factory), std::move(metadata_io)),
   compression_factory_{std::move(compression_factory)},
   compression_options_{compression_options}
 {}
@@ -80,11 +77,7 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
 
 void SequentialCompressionWriter::init_metadata()
 {
-  metadata_ = rosbag2_storage::BagMetadata{};
-  metadata_.storage_identifier = storage_->get_storage_identifier();
-  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>{
-    std::chrono::nanoseconds::max()};
-  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
+  SequentialWriter::init_metadata();
   metadata_.compression_format = compression_options_.compression_format;
   metadata_.compression_mode =
     rosbag2_compression::compression_mode_to_string(compression_options_.compression_mode);
@@ -203,20 +196,24 @@ void SequentialCompressionWriter::remove_topic(
 
 void SequentialCompressionWriter::compress_last_file()
 {
+  using rcpputils::fs::path;
   if (!compressor_) {
     throw std::runtime_error{"compress_last_file: Compressor was not opened!"};
   }
 
-  const auto to_compress = rcpputils::fs::path{metadata_.relative_file_paths.back()};
+  const auto to_compress = path(base_folder_) / path{metadata_.relative_file_paths.back()};
 
   if (to_compress.exists() && to_compress.file_size() > 0u) {
     const auto compressed_uri = compressor_->compress_uri(to_compress.string());
 
-    metadata_.relative_file_paths.back() = compressed_uri;
+    const auto relative_compressed_uri = path(compressed_uri).filename();
+    metadata_.relative_file_paths.back() = relative_compressed_uri.string();
 
     if (!rcpputils::fs::remove(to_compress)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-        "Failed to remove uncompressed bag: \"" << to_compress.string() << "\"");
+        "Failed to remove original pre-compressed bag file: \"" <<
+          to_compress.string() << "\". This should never happen - but execution " <<
+          "will not be halted because the compressed output was successfully created.");
     }
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
@@ -229,31 +226,14 @@ void SequentialCompressionWriter::compress_last_file()
 
 void SequentialCompressionWriter::split_bagfile()
 {
-  const auto storage_uri = format_storage_uri(
-    base_folder_,
-    metadata_.relative_file_paths.size());
-
-  storage_ = storage_factory_->open_read_write(storage_uri, metadata_.storage_identifier);
-
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
     compress_last_file();
   }
-
-  if (!storage_) {
-    // Add a check to make sure reset() does not compress the file again if we couldn't load the
-    // storage plugin.
+  try {
+    SequentialWriter::split_bagfile();
+  } catch (std::runtime_error err) {
     should_compress_last_file_ = false;
-
-    std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_uri << "\"!";
-    throw std::runtime_error{errmsg.str()};
-  }
-
-  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
-
-  // Re-register all topics since we rolled-over to a new bagfile.
-  for (const auto & topic : topics_names_to_info_) {
-    storage_->create_topic(topic.second.topic_metadata);
+    throw err;
   }
 }
 
