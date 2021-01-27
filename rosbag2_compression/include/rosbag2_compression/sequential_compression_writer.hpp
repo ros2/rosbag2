@@ -123,10 +123,17 @@ protected:
   /**
    * Compress a file and update the metadata file path.
    *
+   * Note: this may log an error without raising an exception in the case that the input file
+   * could not be deleted after compressing. This is an error and should never happen, but given
+   * that the desired output is created, execution will not be halted.
+   *
    * \param compressor An initialized compression context.
-   * \param message The URI of the file to compress.
+   * \param file_relative_to_bag Relative path of the file to compress, as stored in metadata -
+   *   meaning the path is relative to the bag base folder.
    */
-  virtual void compress_file(BaseCompressorInterface & compressor, const std::string & file);
+  virtual void compress_file(
+    BaseCompressorInterface & compressor,
+    const std::string & file_relative_to_bag);
 
   /**
    * Checks if the compression by message option is specified and a compressor exists.
