@@ -122,7 +122,7 @@ public:
   rosbag2_storage::TopicMetadata topic_with_type_;
   const std::string bag_name_ = "SequentialCompressionReaderTest";
   rcpputils::fs::path tmp_dir_;
-  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_cpp::StorageOptions storage_options_;
   rosbag2_storage::BagMetadata metadata_;
   rosbag2_cpp::ConverterOptions converter_options_;
 };

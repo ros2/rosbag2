@@ -69,11 +69,11 @@ void SequentialCompressionReader::preprocess_current_file()
      * Because we have no way to check whether the bag was written correctly,
      * check for the existence of the prefixed file as a fallback.
      */
-    const rcpputils::fs::path base{base_folder_};
+    rcpputils::fs::path base{base_folder_};
     const rcpputils::fs::path relative{get_current_file()};
     const auto resolved = base / relative;
     if (!resolved.exists()) {
-      const auto base_stripped = relative.filename();
+      auto base_stripped = relative.filename();
       const auto resolved_stripped = base / base_stripped;
       ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
         "Unable to find specified bagfile " << resolved.string() <<
