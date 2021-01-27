@@ -144,7 +144,7 @@ if(BUILD_TESTING)
     test/rosbag2_compression/test_sequential_compression_writer.cpp)
   target_include_directories(test_sequential_compression_writer PUBLIC include)
   target_link_libraries(test_sequential_compression_writer ${PROJECT_NAME})
-  ament_target_dependencies(test_sequential_compression_writer rosbag2_cpp rosbag2_test_common)
+  ament_target_dependencies(test_sequential_compression_writer rosbag2_cpp)
 endif()
 
 ament_package()

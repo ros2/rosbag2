@@ -28,7 +28,6 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
-#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -39,7 +38,7 @@
 
 using namespace testing;  // NOLINT
 
-class SequentialCompressionWriterTest : public rosbag2_test_common::TemporaryDirectoryFixture
+class SequentialCompressionWriterTest : public Test
 {
 public:
   SequentialCompressionWriterTest()
@@ -47,11 +46,12 @@ public:
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
-    tmp_dir_{rcpputils::fs::path(temporary_dir_path_) / bag_name_},
+    tmp_dir_{rcpputils::fs::temp_directory_path() / "SequentialCompressionWriterTest"},
     tmp_dir_storage_options_{},
     serialization_format_{"rmw_format"}
   {
     tmp_dir_storage_options_.uri = tmp_dir_.string();
+    rcpputils::fs::remove_all(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
     // intercept the metadata write so we can analyze it.
@@ -59,6 +59,11 @@ public:
       [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
         intercepted_metadata_ = metadata;
       });
+  }
+
+  ~SequentialCompressionWriterTest()
+  {
+    rcpputils::fs::remove_all(tmp_dir_);
   }
 
   void initializeFakeFileStorage()
@@ -157,19 +162,20 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 {
+  rosbag2_compression::CompressionOptions compression_options{
+    "zstd", rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
+
   // Set minimum file size greater than max bagfile size option
   const uint64_t min_split_file_size = 10;
   const uint64_t max_bagfile_size = 5;
   ON_CALL(*storage_, get_minimum_split_file_size()).WillByDefault(Return(min_split_file_size));
-
-  rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
-    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
-  initializeWriter(compression_options);
-
-  rosbag2_storage::StorageOptions storage_options{};
+  auto storage_options = rosbag2_storage::StorageOptions{};
   storage_options.max_bagfile_size = max_bagfile_size;
   storage_options.uri = "foo.bar";
+
+  initializeWriter(compression_options);
+
   EXPECT_THROW(
     writer_->open(storage_options, {serialization_format_, serialization_format_}),
     std::runtime_error);
