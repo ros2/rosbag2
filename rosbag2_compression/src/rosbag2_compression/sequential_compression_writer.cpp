@@ -73,11 +73,16 @@ void SequentialCompressionWriter::compression_thread_fn()
             "Cannot compress message; Writer is not open!"};
   }
 
-  while (compression_is_running_) {
+  while (true) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
     {
+      // This mutex synchronizes both the condition and the running_ boolean, so it has to be
+      // held when dealing with either/both
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      if (!compression_is_running_) {
+        break;
+      }
       compressor_condition_.wait(lock);
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
@@ -137,7 +142,10 @@ void SequentialCompressionWriter::setup_compressor_threads()
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
     "setup_compressor_threads: Starting " <<
       compression_options_.compression_threads << " threads");
-  compression_is_running_ = true;
+  {
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+    compression_is_running_ = true;
+  }
 
   // This function needs to throw an exception if the compression format is invalid, but because
   // each thread creates its own compressor, we can't actually catch it here if one of the threads
@@ -159,7 +167,10 @@ void SequentialCompressionWriter::stop_compressor_threads()
 {
   if (!compression_threads_.empty()) {
     ROSBAG2_COMPRESSION_LOG_DEBUG("Waiting for compressor threads to finish.");
-    compression_is_running_ = false;
+    {
+      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compression_is_running_ = false;
+    }
     compressor_condition_.notify_all();
     for (auto & thread : compression_threads_) {
       thread.join();
