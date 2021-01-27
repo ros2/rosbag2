@@ -23,7 +23,59 @@
 
 #include "record_integration_fixture.hpp"
 
-TEST_F(RecordIntegrationTestFixture, only_regex_matching_topics_are_recorded)
+TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
+{
+  auto test_string_messages = get_messages_strings();
+  auto test_array_messages = get_messages_arrays();
+  std::string regex = "/aa";
+
+  // matching topic
+  std::string v1 = "/aa";
+
+  // topics that shouldn't match
+  std::string b1 = "/aaa";
+  std::string b2 = "/baa";
+  std::string b3 = "/baaa";
+  std::string b4 = "/aa/aa";
+
+  // checking the test data itself
+  std::regex re(regex);
+  ASSERT_TRUE(std::regex_match(v1, re));
+  ASSERT_FALSE(std::regex_match(b1, re));
+  ASSERT_FALSE(std::regex_match(b2, re));
+  ASSERT_FALSE(std::regex_match(b3, re));
+  ASSERT_FALSE(std::regex_match(b4, re));
+
+  RecordOptions ro{false, false, {}, "rmw_format", 10ms};
+  ro.regex = regex;
+
+  start_recording(ro);
+
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    v1, test_string_messages[0], 0);
+
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    b1, test_string_messages[0], 0);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    b2, test_string_messages[1], 0);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    b3, test_string_messages[0], 0);
+  pub_man_.add_publisher<test_msgs::msg::Strings>(
+    b4, test_string_messages[1], 0);
+
+  run_publishers();
+  stop_recording();
+
+  MockSequentialWriter & writer =
+    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  auto recorded_topics = writer.get_topics();
+
+  EXPECT_THAT(recorded_topics, SizeIs(1));
+
+  EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
 {
   auto test_string_messages = get_messages_strings();
   auto test_array_messages = get_messages_arrays();
@@ -44,14 +96,14 @@ TEST_F(RecordIntegrationTestFixture, only_regex_matching_topics_are_recorded)
   // checking the test data itself
   std::regex re(regex);
   std::regex exclude(regex_exclude);
-  ASSERT_TRUE(std::regex_search(v1, re));
-  ASSERT_TRUE(std::regex_search(v2, re));
-  ASSERT_FALSE(std::regex_search(b1, re));
-  ASSERT_FALSE(std::regex_search(b2, re));
+  ASSERT_TRUE(std::regex_match(v1, re));
+  ASSERT_TRUE(std::regex_match(v2, re));
+  ASSERT_FALSE(std::regex_match(b1, re));
+  ASSERT_FALSE(std::regex_match(b2, re));
 
   // this example matches both regexes - should be excluded
-  ASSERT_TRUE(std::regex_search(e1, re));
-  ASSERT_TRUE(std::regex_search(e1, exclude));
+  ASSERT_TRUE(std::regex_match(e1, re));
+  ASSERT_TRUE(std::regex_match(e1, exclude));
 
   RecordOptions ro{false, false, {}, "rmw_format", 10ms};
   ro.regex = regex;
