@@ -536,7 +536,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   for (const auto & path : metadata.relative_file_paths) {
-    const auto file_path = rcpputils::fs::path{path};
+    const auto file_path = root_bag_path_ / rcpputils::fs::path{path};
 
     EXPECT_TRUE(file_path.exists()) << "File: \"" <<
       file_path.string() << "\" does not exist!";
