@@ -240,8 +240,8 @@ void SequentialCompressionWriter::compress_file(
 {
   using rcpputils::fs::path;
 
-  auto file_relative_to_pwd = path(base_folder_) / file_relative_to_bag;
-  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM("Compressing file: " << file_relative_to_pwd.string());
+  const auto file_relative_to_pwd = path(base_folder_) / file_relative_to_bag;
+  ROSBAG2_COMPRESSION_LOG_INFO_STREAM("Compressing file: " << file_relative_to_pwd.string());
 
   if (file_relative_to_pwd.exists() && file_relative_to_pwd.file_size() > 0u) {
     const auto compressed_uri = compressor.compress_uri(file_relative_to_pwd.string());
@@ -251,7 +251,7 @@ void SequentialCompressionWriter::compress_file(
       // Must search for the entry because other threads may have changed the order of the vector
       // and invalidated any index or iterator we held to it.
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-      auto iter = std::find(
+      const auto iter = std::find(
         metadata_.relative_file_paths.begin(),
         metadata_.relative_file_paths.end(),
         file_relative_to_bag);
@@ -271,7 +271,7 @@ void SequentialCompressionWriter::compress_file(
           "will not be halted because the compressed output was successfully created.");
     }
   } else {
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+    ROSBAG2_COMPRESSION_LOG_INFO_STREAM(
       "Removing last file: \"" << file_relative_to_pwd.string() <<
         "\" because it either is empty or does not exist.");
   }
