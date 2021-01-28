@@ -1,0 +1,14 @@
+<library path="rosbag2_compression_zstd">
+  <class
+    name="zstd"
+    type="rosbag2_compression::ZstdCompressor"
+    base_class_type="rosbag2_compression::BaseCompressorInterface">
+    <description>Zstd implementation for rosbag2 compressor</description>
+  </class>
+  <class
+    name="zstd"
+    type="rosbag2_compression::ZstdDecompressor"
+    base_class_type="rosbag2_compression::BaseDecompressorInterface">
+    <description>Zstd implementation for rosbag2 decompressor</description>
+  </class>
+</library>

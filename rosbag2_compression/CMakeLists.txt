@@ -21,6 +21,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_cpp)
@@ -47,6 +48,7 @@ ament_target_dependencies(${PROJECT_NAME}_zstd
 target_compile_definitions(${PROJECT_NAME}_zstd
   PRIVATE
   ROSBAG2_COMPRESSION_BUILDING_DLL)
+pluginlib_export_plugin_description_file(rosbag2_compression plugin_description.xml)
 
 add_library(${PROJECT_NAME}
   SHARED
@@ -58,13 +60,16 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_zstd)
 ament_target_dependencies(${PROJECT_NAME}
+  pluginlib
   rcpputils
   rcutils
   rosbag2_cpp
   rosbag2_storage)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+
+# prevent pluginlib from using boost
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 install(
   DIRECTORY include/
@@ -81,7 +86,7 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME} ${PROJECT_NAME}_zstd)
 ament_export_targets(export_${PROJECT_NAME})
 # order matters here, first vendor, then zstd
-ament_export_dependencies(rcpputils rcutils rosbag2_cpp rosbag2_storage zstd_vendor zstd)
+ament_export_dependencies(pluginlib rcpputils rcutils rosbag2_cpp rosbag2_storage zstd_vendor zstd)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)

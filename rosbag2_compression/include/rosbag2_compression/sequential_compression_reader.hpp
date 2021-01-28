@@ -35,7 +35,6 @@
 
 #include "compression_factory.hpp"
 #include "visibility_control.hpp"
-#include "zstd_decompressor.hpp"
 
 
 #ifdef _WIN32
