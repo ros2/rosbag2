@@ -31,8 +31,9 @@
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_pragmas.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -142,6 +143,17 @@ inline std::unordered_map<std::string, std::string> parse_pragmas(
   return pragmas;
 }
 
+void apply_resilient_storage_settings(std::unordered_map<std::string, std::string> & pragmas)
+{
+  auto robust_pragmas = rosbag2_storage_plugins::SqlitePragmas::robust_writing_pragmas();
+  for (const auto & kv : robust_pragmas) {
+    // do not override settings from configuration file, otherwise apply
+    if (pragmas.count(kv.first) == 0) {
+      pragmas[kv.first] = kv.second;
+    }
+  }
+}
+
 constexpr const auto FILE_EXTENSION = ".db3";
 
 // Minimum size of a sqlite3 database file in bytes (84 kiB).
@@ -161,7 +173,11 @@ void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  const bool resilient_preset = "resilient" == storage_options.storage_preset_profile;
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
+  if (resilient_preset && is_read_write(io_flag)) {
+    apply_resilient_storage_settings(pragmas);
+  }
 
   if (is_read_write(io_flag)) {
     relative_path_ = storage_options.uri + FILE_EXTENSION;
@@ -227,6 +243,13 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  write_locked(message);
+}
+
+void SqliteStorage::write_locked(
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+{
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -244,6 +267,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -251,7 +275,7 @@ void SqliteStorage::write(
   activate_transaction();
 
   for (auto & message : messages) {
-    write(message);
+    write_locked(message);
   }
 
   commit_transaction();
@@ -318,6 +342,7 @@ void SqliteStorage::initialize()
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
@@ -332,6 +357,7 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
     auto delete_topic =
       database_->prepare_statement(
@@ -457,6 +483,11 @@ void SqliteStorage::set_filter(
 void SqliteStorage::reset_filter()
 {
   storage_filter_ = rosbag2_storage::StorageFilter();
+}
+
+std::string SqliteStorage::get_storage_setting(const std::string & key)
+{
+  return database_->query_pragma_value(key);
 }
 
 }  // namespace rosbag2_storage_plugins

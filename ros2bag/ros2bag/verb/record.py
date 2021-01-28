@@ -30,9 +30,17 @@ class RecordVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
             '-a', '--all', action='store_true',
-            help='recording all topics, required if no topics are listed explicitly.')
+            help='recording all topics, required if no topics '
+            'are listed explicitly or through a regex')
         parser.add_argument(
             'topics', nargs='*', default=None, help='topics to be recorded')
+        parser.add_argument(
+            '-e', '--regex', default='', help='recording only topics '
+            'matching provided regular expression')
+        parser.add_argument(
+            '-x', '--exclude', default='', help='exclude topics '
+            'matching provided regular expression. Works with -a and -e, '
+            'subtracting excluded topics')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
@@ -103,6 +111,15 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         parser.add_argument(
+            '--storage-preset-profile', type=str, default='none', choices=['none', 'resilient'],
+            help='Select a configuration preset for storage.'
+                 'resilient (sqlite3):'
+                 'indicate preference for avoiding data corruption in case of crashes,'
+                 'at the cost of performance. Setting this flag disables optimization settings '
+                 'for storage (the defaut). This flag settings can still be overriden by '
+                 'corresponding settings in the config passed with --storage-config-file.'
+        )
+        parser.add_argument(
             '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations. '
                  'For the default storage plugin settings are specified through syntax:'
@@ -113,11 +130,18 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
-        if args.all and args.topics:
-            return print_error('Invalid choice: Can not specify topics and -a at the same time.')
-        # both all and topics cannot be false
-        if not(args.all or (args.topics and len(args.topics) > 0)):
-            return print_error('Invalid choice: Must specify topic(s) or -a')
+        if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
+            return print_error('Must specify only one option out of topics, --regex or --all')
+        # one out of "all", "topics" and "regex" must be true
+        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
+            return print_error('Invalid choice: Must specify topic(s), --regex or --all')
+
+        if args.topics and args.exclude:
+            return print_error('--exclude argument cannot be used when specifying a list '
+                               'of topics explicitly')
+
+        if args.exclude and not(args.regex or args.all):
+            return print_error('--exclude argument requires either --all or --regex')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
@@ -169,8 +193,11 @@ class RecordVerb(VerbExtension):
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
             topics=args.topics,
+            regex=args.regex,
+            exclude=args.exclude,
             include_hidden_topics=args.include_hidden_topics,
             qos_profile_overrides=qos_profile_overrides,
+            storage_preset_profile=args.storage_preset_profile,
             storage_config_file=storage_config_file)
 
         if os.path.isdir(uri) and not os.listdir(uri):

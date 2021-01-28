@@ -17,10 +17,12 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -83,6 +85,8 @@ public:
 
   void reset_filter() override;
 
+  std::string get_storage_setting(const std::string & key);
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -90,21 +94,28 @@ private:
   void fill_topics_and_types();
   void activate_transaction();
   void commit_transaction();
+  void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+  RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
 
-  std::shared_ptr<SqliteWrapper> database_;
+  std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
   SqliteStatement write_statement_ {};
   SqliteStatement read_statement_ {};
   ReadQueryResult message_result_ {nullptr};
   ReadQueryResult::Iterator current_message_row_ {
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
-  std::unordered_map<std::string, int> topics_;
+  std::unordered_map<std::string, int> topics_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
   rosbag2_storage::StorageFilter storage_filter_ {};
+
+  // This mutex is necessary to protect:
+  // a) database access (this could also be done with FULLMUTEX), but see b)
+  // b) topics_ collection - since we could be writing and reading it at the same time
+  std::mutex database_write_mutex_;
 };
 
 }  // namespace rosbag2_storage_plugins

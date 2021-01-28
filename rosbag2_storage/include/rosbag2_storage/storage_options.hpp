@@ -39,6 +39,10 @@ public:
   // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
 
+  // Preset storage configuration. Preset settings can be overriden with
+  // corresponding settings specified through storage_config_uri file
+  std::string storage_preset_profile = "";
+
   // Storage specific configuration file.
   // Defaults to empty string.
   std::string storage_config_uri = "";
