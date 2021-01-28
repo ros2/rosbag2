@@ -262,6 +262,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "node_prefix",
     "read_ahead_queue_size",
     "rate",
+    "start_time",
+    "stop_time",
     "topics",
     "qos_profile_overrides",
     "loop",
@@ -275,18 +277,22 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   char * node_prefix;
   size_t read_ahead_queue_size;
   float rate;
+  long start_time;
+  long stop_time;
   PyObject * topics = nullptr;
   PyObject * qos_profile_overrides{nullptr};
   bool loop = false;
   PyObject * topic_remapping = nullptr;
   char * storage_config_file = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObOs", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfllOObO", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
       &read_ahead_queue_size,
       &rate,
+      &start_time,
+      &stop_time,
       &topics,
       &qos_profile_overrides,
       &loop,
@@ -303,6 +309,8 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
   play_options.rate = rate;
+  play_options.start_time = start_time;
+  play_options.stop_time = stop_time;
   play_options.loop = loop;
 
   if (topics) {

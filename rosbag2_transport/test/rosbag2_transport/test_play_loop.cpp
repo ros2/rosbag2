@@ -42,6 +42,8 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   const size_t expected_number_of_messages = num_messages * 2;
   const size_t read_ahead_queue_size = 1000;
   const float rate = 1.0;
+  const long start_time = 700;
+  const long stop_time = 700;
   const bool loop_playback = true;
 
   auto primitive_message1 = get_messages_basic_types()[0];
@@ -70,7 +72,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
     info_);
   std::thread loop_thread(&rosbag2_transport::Rosbag2Transport::play, rosbag2_transport_ptr,
     storage_options_,
-    rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}});
+    rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, start_time, stop_time, {}, {}, loop_playback, {}});
 
   await_received_messages.get();
   rclcpp::shutdown();

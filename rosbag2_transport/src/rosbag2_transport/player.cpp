@@ -134,7 +134,12 @@ void Player::load_storage_content(const PlayOptions & options)
 
   while (reader_->has_next() && rclcpp::ok()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
-      enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
+        if(options.start_time != 1){
+            enqueue_up_to_boundary(TimePoint(std::chrono::nanoseconds(options.start_time)), queue_upper_boundary);
+        }
+        else{
+            enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
+        }
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -180,6 +185,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+    if(options.start_time < message.message->time_stamp and message.message->time_stamp < options.stop_time) {
     std::this_thread::sleep_until(
       start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
         1.0 / rate * message.time_since_start));
@@ -188,6 +194,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
       if (publisher_iter != publishers_.end()) {
         publisher_iter->second->publish(message.message->serialized_data);
       }
+    }
     }
   }
 }

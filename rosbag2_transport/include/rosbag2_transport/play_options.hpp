@@ -31,6 +31,8 @@ public:
   size_t read_ahead_queue_size;
   std::string node_prefix = "";
   float rate = 1.0;
+  long start_time = 1;
+  long stop_time = 1;
 
   // Topic names to whitelist when playing a bag.
   // Only messages matching these specified topics will be played.
