@@ -44,11 +44,13 @@ public:
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
-    tmp_dir_storage_options_{},
+    tmp_dir_{rcpputils::fs::temp_directory_path() / bag_name_},
+    storage_options_{},
     serialization_format_{"rmw_format"}
   {
-    tmp_dir_storage_options_.uri = tmp_dir_.string();
+    storage_options_.uri = tmp_dir_.string();
     rcpputils::fs::remove_all(tmp_dir_);
+    rcpputils::fs::create_directories(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
     // intercept the metadata write so we can analyze it.
@@ -121,28 +123,13 @@ public:
   std::unique_ptr<MockMetadataIo> metadata_io_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   rcpputils::fs::path tmp_dir_;
-  rosbag2_cpp::StorageOptions tmp_dir_storage_options_;
+  rosbag2_cpp::StorageOptions storage_options_;
   rosbag2_storage::BagMetadata intercepted_metadata_;
   std::string serialization_format_;
   uint64_t fake_storage_size_;
   std::string fake_storage_uri_;
-
-  const uint64_t kDefaultCompressionQueueSize = 1;
-  const uint64_t kDefaultCompressionQueueThreads = 4;
 };
 
-TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
-{
-  rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE};
-  initializeWriter(compression_options);
-
-  EXPECT_THROW(
-    writer_->open(
-      rosbag2_cpp::StorageOptions(),
-      {serialization_format_, serialization_format_}),
-    std::runtime_error);
-}
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 {
@@ -182,7 +169,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
   initializeWriter(compression_options);
 
   EXPECT_NO_THROW(
-    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}));
+    writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_}));
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
@@ -194,11 +181,7 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
 
   initializeWriter(compression_options, std::move(compression_factory));
 
-  // This will throw an exception because the MockCompressionFactory does not actually create
-  // a compressor.
-  EXPECT_THROW(
-    writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
-    std::runtime_error);
+  writer_->open(rosbag2_cpp::StorageOptions(), {serialization_format_, serialization_format_});
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative_filepaths)
@@ -216,8 +199,8 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   initializeFakeFileStorage();
   initializeWriter(compression_options);
 
-  tmp_dir_storage_options_.max_bagfile_size = 1;
-  writer_->open(tmp_dir_storage_options_, {"", ""});
+  storage_options_.max_bagfile_size = 1;
+  writer_->open(storage_options_, {"", ""});
   writer_->create_topic({test_topic_name, test_topic_type, "", ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -233,7 +216,7 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   EXPECT_EQ(
     intercepted_metadata_.relative_file_paths.size(), 2u);
 
-  const auto base_path = tmp_dir_storage_options_.uri;
+  const auto base_path = storage_options_.uri;
   int counter = 0;
   for (const auto & path : intercepted_metadata_.relative_file_paths) {
     std::stringstream ss;

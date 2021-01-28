@@ -231,7 +231,7 @@ void SequentialCompressionWriter::split_bagfile()
   }
   try {
     SequentialWriter::split_bagfile();
-  } catch (std::runtime_error err) {
+  } catch (const std::runtime_error & err) {
     should_compress_last_file_ = false;
     throw err;
   }
