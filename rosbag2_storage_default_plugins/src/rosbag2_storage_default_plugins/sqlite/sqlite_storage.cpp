@@ -243,6 +243,13 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  write_locked(message);
+}
+
+void SqliteStorage::write_locked(
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+{
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -260,6 +267,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -267,7 +275,7 @@ void SqliteStorage::write(
   activate_transaction();
 
   for (auto & message : messages) {
-    write(message);
+    write_locked(message);
   }
 
   commit_transaction();
@@ -334,6 +342,7 @@ void SqliteStorage::initialize()
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
@@ -348,6 +357,7 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
     auto delete_topic =
       database_->prepare_statement(

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <future>
 #include <memory>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -57,16 +58,13 @@ void Recorder::record(const RecordOptions & record_options)
   }
   serialization_format_ = record_options.rmw_serialization_format;
   ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
-  subscribe_topics(
-    get_requested_or_available_topics(record_options.topics, record_options.include_hidden_topics));
+  subscribe_topics(get_requested_or_available_topics(record_options));
 
   std::future<void> discovery_future;
   if (!record_options.is_discovery_disabled) {
     auto discovery = std::bind(
       &Recorder::topics_discovery, this,
-      record_options.topic_polling_interval,
-      record_options.topics,
-      record_options.include_hidden_topics);
+      record_options);
     discovery_future = std::async(std::launch::async, discovery);
   }
 
@@ -79,36 +77,51 @@ void Recorder::record(const RecordOptions & record_options)
   subscriptions_.clear();
 }
 
-void Recorder::topics_discovery(
-  std::chrono::milliseconds topic_polling_interval,
-  const std::vector<std::string> & requested_topics,
-  bool include_hidden_topics)
+void Recorder::topics_discovery(const RecordOptions & record_options)
 {
   while (rclcpp::ok()) {
     auto topics_to_subscribe =
-      get_requested_or_available_topics(requested_topics, include_hidden_topics);
+      get_requested_or_available_topics(record_options);
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
-    if (!requested_topics.empty() && subscriptions_.size() == requested_topics.size()) {
+    if (!record_options.topics.empty() && subscriptions_.size() == record_options.topics.size()) {
       ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
       return;
     }
-    std::this_thread::sleep_for(topic_polling_interval);
+    std::this_thread::sleep_for(record_options.topic_polling_interval);
   }
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_requested_or_available_topics(
-  const std::vector<std::string> & requested_topics,
-  bool include_hidden_topics)
+Recorder::get_requested_or_available_topics(const RecordOptions & record_options)
 {
-  return requested_topics.empty() ?
-         node_->get_all_topics_with_types(include_hidden_topics) :
-         node_->get_topics_with_types(requested_topics);
+  auto unfiltered_topics = record_options.topics.empty() ?
+    node_->get_all_topics_with_types(record_options.include_hidden_topics) :
+    node_->get_topics_with_types(record_options.topics);
+
+  if (record_options.regex.empty() && record_options.exclude.empty()) {
+    return unfiltered_topics;
+  }
+
+  std::unordered_map<std::string, std::string> filtered_by_regex;
+
+  std::regex topic_regex(record_options.regex);
+  std::regex exclude_regex(record_options.exclude);
+  bool take = record_options.all;
+  for (const auto & kv : unfiltered_topics) {
+    take = std::regex_search(kv.first, topic_regex);
+    if (take) {
+      take = !std::regex_search(kv.first, exclude_regex);
+    }
+    if (take) {
+      filtered_by_regex.insert(kv);
+    }
+  }
+  return filtered_by_regex;
 }
 
 std::unordered_map<std::string, std::string>

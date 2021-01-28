@@ -84,6 +84,7 @@ void SequentialReader::open(
   const ConverterOptions & converter_options)
 {
   storage_options_ = storage_options;
+  base_folder_ = storage_options.uri;
 
   // If there is a metadata.yaml file present, load it.
   // If not, let's ask the storage with the given URI for its metadata.
@@ -98,6 +99,8 @@ void SequentialReader::open(
     file_paths_ = details::resolve_relative_paths(
       storage_options.uri, metadata_.relative_file_paths, metadata_.version);
     current_file_iterator_ = file_paths_.begin();
+
+    preprocess_current_file();
 
     storage_options_.uri = get_current_file();
     storage_ = storage_factory_->open_read_only(storage_options_);
@@ -199,6 +202,7 @@ void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  preprocess_current_file();
 }
 
 std::string SequentialReader::get_current_file() const

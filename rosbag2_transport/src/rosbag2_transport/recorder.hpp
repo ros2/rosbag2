@@ -62,15 +62,10 @@ public:
   }
 
 private:
-  void topics_discovery(
-    std::chrono::milliseconds topic_polling_interval,
-    const std::vector<std::string> & requested_topics = {},
-    bool include_hidden_topics = false);
+  void topics_discovery(const RecordOptions & record_options);
 
   std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics(
-    const std::vector<std::string> & requested_topics,
-    bool include_hidden_topics = false);
+  get_requested_or_available_topics(const RecordOptions & record_options);
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);

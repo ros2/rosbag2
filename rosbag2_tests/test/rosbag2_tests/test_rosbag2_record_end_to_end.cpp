@@ -536,7 +536,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   for (const auto & path : metadata.relative_file_paths) {
-    const auto file_path = rcpputils::fs::path{path};
+    const auto file_path = root_bag_path_ / rcpputils::fs::path{path};
 
     EXPECT_TRUE(file_path.exists()) << "File: \"" <<
       file_path.string() << "\" does not exist!";
@@ -564,7 +564,7 @@ TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(error_output, HasSubstr("Can not specify topics and -a at the same time."));
+  EXPECT_FALSE(error_output.empty());
 }
 
 TEST_F(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
@@ -574,7 +574,7 @@ TEST_F(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) 
   auto output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(output, HasSubstr("Invalid choice: Must specify topic(s) or -a"));
+  EXPECT_FALSE(output.empty());
 }
 
 TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {

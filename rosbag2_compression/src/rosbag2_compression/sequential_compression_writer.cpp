@@ -75,18 +75,28 @@ void SequentialCompressionWriter::compression_thread_fn()
             "Cannot compress message; Writer is not open!"};
   }
 
-  while (compression_is_running_) {
+  while (true) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
     std::string file;
-    compressor_condition_.wait(lock);
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compressor_condition_.wait(
+        lock,
+        [&] {
+          return !compression_is_running_ ||
+          !compressor_message_queue_.empty() ||
+          !compressor_file_queue_.empty();
+        });
+
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
       } else if (!compressor_file_queue_.empty()) {
         file = compressor_file_queue_.front();
         compressor_file_queue_.pop();
+      } else if (!compression_is_running_) {
+        // I woke up, all work queues are empty, and the main thread has stopped execution. Exit.
+        break;
       }
     }
 
@@ -109,11 +119,7 @@ void SequentialCompressionWriter::compression_thread_fn()
 void SequentialCompressionWriter::init_metadata()
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  metadata_ = rosbag2_storage::BagMetadata{};
-  metadata_.storage_identifier = storage_->get_storage_identifier();
-  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>{
-    std::chrono::nanoseconds::max()};
-  metadata_.relative_file_paths = {storage_->get_relative_file_path()};
+  SequentialWriter::init_metadata();
   metadata_.compression_format = compression_options_.compression_format;
   metadata_.compression_mode =
     rosbag2_compression::compression_mode_to_string(compression_options_.compression_mode);
@@ -140,7 +146,10 @@ void SequentialCompressionWriter::setup_compressor_threads()
   ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
     "setup_compressor_threads: Starting " <<
       compression_options_.compression_threads << " threads");
-  compression_is_running_ = true;
+  {
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+    compression_is_running_ = true;
+  }
 
   // This function needs to throw an exception if the compression format is invalid, but because
   // each thread creates its own compressor, we can't actually catch it here if one of the threads
@@ -162,7 +171,10 @@ void SequentialCompressionWriter::stop_compressor_threads()
 {
   if (!compression_threads_.empty()) {
     ROSBAG2_COMPRESSION_LOG_DEBUG("Waiting for compressor threads to finish.");
-    compression_is_running_ = false;
+    {
+      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compression_is_running_ = false;
+    }
     compressor_condition_.notify_all();
     for (auto & thread : compression_threads_) {
       thread.join();
@@ -232,38 +244,43 @@ void SequentialCompressionWriter::remove_topic(
 
 void SequentialCompressionWriter::compress_file(
   BaseCompressorInterface & compressor,
-  const std::string & file)
+  const std::string & file_relative_to_bag)
 {
-  ROSBAG2_COMPRESSION_LOG_DEBUG("Compressing file: %s", file.c_str());
-  const auto to_compress = rcpputils::fs::path{file};
+  using rcpputils::fs::path;
 
-  if (to_compress.exists() && to_compress.file_size() > 0u) {
-    const auto compressed_uri = compressor.compress_uri(to_compress.string());
+  const auto file_relative_to_pwd = path(base_folder_) / file_relative_to_bag;
+  ROSBAG2_COMPRESSION_LOG_INFO_STREAM("Compressing file: " << file_relative_to_pwd.string());
+
+  if (file_relative_to_pwd.exists() && file_relative_to_pwd.file_size() > 0u) {
+    const auto compressed_uri = compressor.compress_uri(file_relative_to_pwd.string());
+    const auto relative_compressed_uri = path(compressed_uri).filename();
     {
       // After we've compressed the file, replace the name in the file list with the new name.
       // Must search for the entry because other threads may have changed the order of the vector
       // and invalidated any index or iterator we held to it.
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-      auto iter = std::find(
+      const auto iter = std::find(
         metadata_.relative_file_paths.begin(),
         metadata_.relative_file_paths.end(),
-        file);
+        file_relative_to_bag);
       if (iter != metadata_.relative_file_paths.end()) {
-        *iter = compressed_uri;
+        *iter = relative_compressed_uri.string();
       } else {
         ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-          "Failed to find path to uncompressed bag: \"" << file <<
+          "Failed to find path to uncompressed bag: \"" << file_relative_to_pwd.string() <<
             "\"; this shouldn't happen.");
       }
     }
 
-    if (!rcpputils::fs::remove(to_compress)) {
+    if (!rcpputils::fs::remove(file_relative_to_pwd)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-        "Failed to remove uncompressed bag: \"" << to_compress.string() << "\"");
+        "Failed to remove original pre-compressed bag file: \"" <<
+          file_relative_to_pwd.string() << "\". This should never happen - but execution " <<
+          "will not be halted because the compressed output was successfully created.");
     }
   } else {
     ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-      "Removing last file: \"" << to_compress.string() <<
+      "Removing last file: \"" << file_relative_to_pwd.string() <<
         "\" because it either is empty or does not exist.");
   }
 }
@@ -273,13 +290,14 @@ void SequentialCompressionWriter::split_bagfile()
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
   std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
-  switch_to_next_storage();
+  // Grab last file before calling common splitting logic, which pushes the new filename
+  const auto last_file = metadata_.relative_file_paths.back();
+  SequentialWriter::split_bagfile();
 
   // If we're in FILE compression mode, push this file's name on to the queue so another
   // thread will handle compressing it.  If not, we can just carry on.
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
-    std::string file = metadata_.relative_file_paths.back();
-    compressor_file_queue_.push(file);
+    compressor_file_queue_.push(last_file);
     compressor_condition_.notify_one();
   }
 
@@ -288,8 +306,6 @@ void SequentialCompressionWriter::split_bagfile()
     // storage plugin.
     should_compress_last_file_ = false;
   }
-
-  metadata_.relative_file_paths.push_back(storage_->get_relative_file_path());
 }
 
 void SequentialCompressionWriter::compress_message(
