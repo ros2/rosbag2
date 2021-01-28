@@ -35,8 +35,8 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
-  pluginlib
   rosbag2_storage
+  pluginlib
   rcpputils
   rcutils
   SQLite3
