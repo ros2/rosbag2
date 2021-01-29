@@ -53,7 +53,7 @@ public:
    * \return A unique pointer to the newly created compressor.
    * \throw invalid_argument If the compression format does not exist.
    */
-  virtual std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
+  virtual std::shared_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string & compression_format);
 
   /**
@@ -63,7 +63,7 @@ public:
    * \return A unique pointer to the newly created decompressor.
    * \throw invalid_argument If the compression format does not exist.
    */
-  virtual std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
+  virtual std::shared_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string & compression_format);
 
 private:

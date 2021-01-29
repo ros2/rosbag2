@@ -27,12 +27,12 @@ class MockCompressionFactory : public rosbag2_compression::CompressionFactory
 public:
   MOCK_METHOD1(
     create_compressor,
-    std::unique_ptr<rosbag2_compression::BaseCompressorInterface>(
+    std::shared_ptr<rosbag2_compression::BaseCompressorInterface>(
       const std::string &));
 
   MOCK_METHOD1(
     create_decompressor,
-    std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>(
+    std::shared_ptr<rosbag2_compression::BaseDecompressorInterface>(
       const std::string &));
 };
 

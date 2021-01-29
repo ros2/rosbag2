@@ -166,7 +166,7 @@ protected:
   virtual void stop_compressor_threads();
 
 private:
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
   std::mutex compressor_queue_mutex_;
   std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>

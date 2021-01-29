@@ -56,7 +56,7 @@ get_class_loader()
 }
 
 template<typename InterfaceT>
-std::unique_ptr<InterfaceT>
+std::shared_ptr<InterfaceT>
 get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const std::string & compression_format)
@@ -70,10 +70,9 @@ get_interface_instance(
     return nullptr;
   }
 
-  std::unique_ptr<InterfaceT> instance = nullptr;
+  std::shared_ptr<InterfaceT> instance = nullptr;
   try {
-    auto unmanaged_instance = class_loader->createUnmanagedInstance(compression_format);
-    instance = std::unique_ptr<InterfaceT>(unmanaged_instance);
+    instance = class_loader->createSharedInstance(compression_format);
   } catch (const std::runtime_error & ex) {
     ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
       "Unable to load instance of compression interface: " << ex.what());
@@ -105,7 +104,7 @@ public:
   virtual ~CompressionFactoryImpl() = default;
 
   /// See CompressionFactory::create_compressor for documentation.
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface>
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface>
   create_compressor(const std::string & compression_format)
   {
     auto instance = get_interface_instance(compressor_class_loader_, compression_format);
@@ -117,7 +116,7 @@ public:
   }
 
   /// See CompressionFactory::create_decompressor for documentation.
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface>
+  std::shared_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string & compression_format)
   {
     auto instance = get_interface_instance(decompressor_class_loader_, compression_format);

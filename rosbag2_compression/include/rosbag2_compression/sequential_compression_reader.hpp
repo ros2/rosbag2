@@ -84,7 +84,7 @@ private:
    */
   void setup_decompression();
 
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
+  std::shared_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
