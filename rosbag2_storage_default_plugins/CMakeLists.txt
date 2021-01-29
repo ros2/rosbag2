@@ -88,7 +88,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_wrapper)
     target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
-    ament_target_dependencies(test_sqlite_wrapper rosbag2_test_common)
+    ament_target_dependencies(test_sqlite_wrapper rosbag2_storage rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_sqlite_storage
@@ -96,7 +96,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_storage)
     target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
-    ament_target_dependencies(test_sqlite_storage rosbag2_test_common)
+    ament_target_dependencies(test_sqlite_storage rosbag2_storage rosbag2_test_common)
   endif()
 endif()
 
