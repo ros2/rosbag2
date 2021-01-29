@@ -51,8 +51,9 @@ template<typename InterfaceT>
 std::shared_ptr<pluginlib::ClassLoader<InterfaceT>>
 get_class_loader()
 {
-  const char * lookup_name = CompressionTraits<InterfaceT>::name;
-  return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_compression", lookup_name);
+  const auto lookup_name = CompressionTraits<InterfaceT>::name;
+  return std::make_shared<pluginlib::ClassLoader<InterfaceT>>(
+    "rosbag2_compression", lookup_name);
 }
 
 template<typename InterfaceT>
@@ -65,8 +66,8 @@ get_interface_instance(
   auto class_iter = std::find(
     registered_classes.begin(), registered_classes.end(), compression_format);
   if (class_iter == registered_classes.end()) {
-    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
-      "Requested compression format '" << compression_format << "' does not exist");
+    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+      "No registered plugin found for compression format '" << compression_format << "'");
     return nullptr;
   }
 
@@ -111,6 +112,7 @@ public:
     if (instance == nullptr) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
         "Could not load/open plugin for compression format '" << compression_format << "'");
+      return nullptr;
     }
     return instance;
   }

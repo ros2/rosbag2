@@ -151,12 +151,14 @@ protected:
    * Initializes the compressor if a compression mode is specified.
    *
    * \throws std::invalid_argument if compression_options isn't supported.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
    */
   virtual void setup_compression();
 
   /**
    * Initializes a number of threads to do file or message compression equal to the
    * value of the compression_threads parameter.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
    */
   virtual void setup_compressor_threads();
 
