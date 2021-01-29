@@ -104,8 +104,7 @@ void SequentialCompressionWriter::compression_thread_fn()
       {
         // Now that the message is compressed, it can be written to file using the
         // normal method.
-        std::lock_guard<std::recursive_mutex> storage_lock(
-          storage_mutex_);
+        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
         SequentialWriter::write(message);
       }
     } else if (!file.empty()) {
