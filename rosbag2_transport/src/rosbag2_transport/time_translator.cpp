@@ -33,6 +33,7 @@
 *********************************************************************/
 
 #include "rosbag2_transport/time_translator.hpp"
+#include "rosbag2_transport/logging.hpp"
 
 namespace rosbag2_transport {
 
@@ -77,7 +78,13 @@ void TimeTranslator::shift(std::chrono::duration<int, std::nano> const& d)
 
 std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<double, std::nano> > TimeTranslator::translate(std::chrono::nanoseconds const& t)
 {
-    auto shifted_time = translated_start_ + (t - real_start_.time_since_epoch()) / scale_;
+    //ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Start: " << std::chrono::time_point_cast<std::chrono::seconds>(translated_start_));
+    auto shifted_time = translated_start_ +
+        (t - real_start_.time_since_epoch()) / scale_;
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("\tTranslated Start: " << translated_start_.time_since_epoch().count());
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("\tReal Start: " << real_start_.time_since_epoch().count());
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("\tt: " << t.count());
+    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("\tShifted: " << shifted_time.time_since_epoch().count());
     return shifted_time;
 }
 
