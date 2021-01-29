@@ -117,6 +117,7 @@ if(BUILD_TESTING)
     SHARED
     test/rosbag2_cpp/serializer_test_plugin.cpp
     test/rosbag2_cpp/converter_test_plugin.cpp)
+  ament_target_dependencies(converter_test_plugins rosbag2_storage)
   target_link_libraries(converter_test_plugins ${PROJECT_NAME})
   install(
     TARGETS converter_test_plugins
@@ -150,12 +151,14 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp)
   if(TARGET test_sequential_reader)
+    ament_target_dependencies(test_sequential_reader rosbag2_storage)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_storage_without_metadata_file
     test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
   if(TARGET test_storage_without_metadata_file)
+    ament_target_dependencies(test_storage_without_metadata_file rosbag2_storage)
     target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
   endif()
 
@@ -193,12 +196,14 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_writer
     test/rosbag2_cpp/test_sequential_writer.cpp)
   if(TARGET test_sequential_writer)
+    ament_target_dependencies(test_sequential_writer rosbag2_storage)
     target_link_libraries(test_sequential_writer ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_multifile_reader
     test/rosbag2_cpp/test_multifile_reader.cpp)
   if(TARGET test_multifile_reader)
+    ament_target_dependencies(test_multifile_reader rosbag2_storage)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
   endif()
 endif()
