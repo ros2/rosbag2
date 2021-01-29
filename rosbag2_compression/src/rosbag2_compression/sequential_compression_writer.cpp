@@ -67,8 +67,6 @@ void SequentialCompressionWriter::compression_thread_fn()
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
 
-  std::mutex mutex;
-  std::unique_lock<std::mutex> lock(mutex);
 
   if (!compressor) {
     throw std::runtime_error{
