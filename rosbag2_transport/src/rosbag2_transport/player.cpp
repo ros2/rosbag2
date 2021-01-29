@@ -165,10 +165,8 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
-  ROSBAG2_TRANSPORT_LOG_ERROR("Setting up clock");
   time_translator_.setRealStartTime(reader_->get_metadata().starting_time);
   time_translator_.setTranslatedStartTime(std::chrono::system_clock::now());
-  ROSBAG2_TRANSPORT_LOG_ERROR("Finished setting up clock");
   do {
     play_messages_until_queue_empty(options);
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
@@ -190,13 +188,7 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     time_translator_.setTimeScale(options.rate);
   }
 
-  static size_t counter = 0;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    // DJA: What happens if we sleep for a very long time, restart, and then
-    // kill the system? Do we end up waiting here until the pause duration,
-    // potentially making it look like the system is hanging during shutdown?
-    auto d_time = time_translator_.translate(std::chrono::nanoseconds(message->time_stamp));
-    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM("Translate time " << (std::chrono::system_clock::now() - d_time).count());
     std::this_thread::sleep_until(
       time_translator_.translate(std::chrono::nanoseconds(message->time_stamp)));
 
@@ -222,8 +214,6 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
 
     if (rclcpp::ok()) {
       publishers_[message->topic_name]->publish(message->serialized_data);
-      // TODO(mabelzhang) TEMPORARY, remove when done debugging. And counter above.
-      fprintf(stderr, "publishing message %zu\n", (++counter));
     }
   }
 }
