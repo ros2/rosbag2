@@ -39,58 +39,6 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
 
 namespace rosbag2_compression
 {
-std::vector<uint8_t> get_input_buffer(const std::string & uri)
-{
-  // Read in buffer, handling accordingly
-  const auto file_pointer = open_file(uri, "rb");
-  if (file_pointer == nullptr) {
-    std::stringstream errmsg;
-    errmsg << "Failed to open file: \"" << uri <<
-      "\" for binary reading! errno(" << errno << ")";
-
-    throw std::runtime_error{errmsg.str()};
-  }
-
-  const auto file_path = rcpputils::fs::path{uri};
-  const auto input_buffer_length = file_path.exists() ? file_path.file_size() : 0u;
-  if (input_buffer_length == 0) {
-    fclose(file_pointer);
-
-    std::stringstream errmsg;
-    errmsg << "Unable to get size of file: \"" << uri << "\"";
-
-    throw std::runtime_error{errmsg.str()};
-  }
-
-  // Initialize compress_buffer with size = compressed_buffer_length.
-  // Uniform initialization cannot be used here since it will choose
-  // the initializer list constructor instead.
-  std::vector<uint8_t> input_buffer(input_buffer_length);
-
-  const auto read_count = fread(
-    input_buffer.data(), sizeof(decltype(input_buffer)::value_type),
-    input_buffer_length, file_pointer);
-
-  if (read_count != input_buffer_length) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
-      "Bytes read !(" <<
-        read_count << ") != buffer size (" << input_buffer.size() <<
-        ")!");
-    // An error indicator is set by fread, so the following check will throw.
-  }
-
-  if (ferror(file_pointer)) {
-    fclose(file_pointer);
-
-    std::stringstream errmsg;
-    errmsg << "Unable to read binary data from file: \"" << uri << "\"!";
-
-    throw std::runtime_error{errmsg.str()};
-  }
-
-  fclose(file_pointer);
-  return input_buffer;
-}
 
 void write_output_buffer(
   const std::vector<uint8_t> & output_buffer,

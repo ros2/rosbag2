@@ -47,31 +47,51 @@ std::string ZstdDecompressor::decompress_uri(const std::string & uri)
   const auto start = std::chrono::high_resolution_clock::now();
   const auto uri_path = rcpputils::fs::path{uri};
   const auto decompressed_uri = rcpputils::fs::remove_extension(uri_path).string();
-  const auto compressed_buffer = get_input_buffer(uri);
-  const auto compressed_buffer_length = compressed_buffer.size();
 
-  const auto decompressed_buffer_length =
-    ZSTD_getFrameContentSize(compressed_buffer.data(), compressed_buffer_length);
+  std::ifstream input(uri, std::ios::in | std::ios::binary);
+  if (!input.is_open()) {
+    std::stringstream errmsg;
+    errmsg << "Failed to open file: \"" << uri <<
+      "\" for binary reading! errno(" << errno << ")";
 
-  throw_on_invalid_frame_content(decompressed_buffer_length);
+    throw std::runtime_error{errmsg.str()};
+  }
+  std::ofstream output(decompressed_uri, std::ios::out | std::ios::binary);
+  if (!output.is_open()) {
+    std::stringstream errmsg;
+    errmsg << "Failed to open file: \"" << uri <<
+      "\" for binary writing! errno(" << errno << ")";
 
-  // Initializes decompressed_buffer with size = decompressed_buffer_length.
-  // Uniform initialization cannot be used here since it will choose
-  // the initializer list constructor instead.
-  std::vector<uint8_t> decompressed_buffer(decompressed_buffer_length);
-
-  const auto decompression_result = ZSTD_decompressDCtx(
-    zstd_context_,
-    decompressed_buffer.data(), decompressed_buffer_length,
-    compressed_buffer.data(), compressed_buffer_length);
-
-  throw_on_zstd_error(decompression_result);
-  decompressed_buffer.resize(decompression_result);
-
-  write_output_buffer(decompressed_buffer, decompressed_uri);
+    throw std::runtime_error{errmsg.str()};
+  }
+  // Base on the example from https://github.com/facebook/zstd/blob/dev/examples/streaming_decompression.c
+  const size_t buff_in_size = ZSTD_DStreamInSize();
+  const size_t buff_out_size = ZSTD_DStreamOutSize();
+  size_t total_size = 0;
+  std::vector<char> in_buffer(buff_in_size);
+  std::vector<char> out_buffer(buff_out_size);
+  size_t final_result = 0;
+  do {
+    input.read(in_buffer.data(), buff_in_size);
+    const auto size = size_t(input.gcount());
+    if (size > 0) {
+      ZSTD_inBuffer z_in_buffer = {in_buffer.data(), static_cast<size_t>(size), 0};
+      while (z_in_buffer.pos < z_in_buffer.size) {
+        ZSTD_outBuffer z_out_buffer = {out_buffer.data(), out_buffer.size(), 0};
+        const auto ret = ZSTD_decompressStream(zstd_context_, &z_out_buffer, &z_in_buffer);
+        throw_on_zstd_error(ret);
+        output.write(out_buffer.data(), z_out_buffer.pos);
+        total_size += z_out_buffer.pos;
+        final_result = ret;
+      }
+    }
+  } while (!input.eof());
+  output.flush();
+  output.close();
+  input.close();
 
   const auto end = std::chrono::high_resolution_clock::now();
-  print_compression_statistics(start, end, decompression_result, compressed_buffer_length);
+  print_compression_statistics(start, end, final_result, total_size);
 
   return decompressed_uri;
 }

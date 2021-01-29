@@ -49,14 +49,6 @@ using ZstdDecompressReturnType = decltype(ZSTD_decompress(
 using ZstdGetFrameContentSizeReturnType = decltype(ZSTD_getFrameContentSize(nullptr, 0));
 
 /**
- * Read a file from the supplied uri into a vector.
- *
- * \param uri is the path to the file.
- * \return the contents of the buffer as a vector.
- */
-std::vector<uint8_t> get_input_buffer(const std::string & uri);
-
-/**
  * Writes the output buffer to the specified file path.
  * \param output_buffer is the data to write.
  * \param uri is the relative file path to the output storage.
