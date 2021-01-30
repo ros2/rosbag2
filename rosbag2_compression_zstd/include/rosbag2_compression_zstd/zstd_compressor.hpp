@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_COMPRESSION__ZSTD_COMPRESSOR_HPP_
-#define ROSBAG2_COMPRESSION__ZSTD_COMPRESSOR_HPP_
+#ifndef ROSBAG2_COMPRESSION_ZSTD__ZSTD_COMPRESSOR_HPP_
+#define ROSBAG2_COMPRESSION_ZSTD__ZSTD_COMPRESSOR_HPP_
 
 #include <zstd.h>
 
@@ -24,17 +24,17 @@
 #include <string>
 
 #include "rosbag2_compression/base_compressor_interface.hpp"
-#include "rosbag2_compression/visibility_control.hpp"
 
-namespace rosbag2_compression
+#include "rosbag2_compression_zstd/visibility_control.hpp"
+
+namespace rosbag2_compression_zstd
 {
 
 /**
  * A BaseCompressorInterface that is used to compress bagfiles stored using ZStandard compression.
- *
- * ZstdCompressor should only be initialized by Writer.
  */
-class ROSBAG2_COMPRESSION_PUBLIC ZstdCompressor : public BaseCompressorInterface
+class ROSBAG2_COMPRESSION_ZSTD_PUBLIC ZstdCompressor
+  : public rosbag2_compression::BaseCompressorInterface
 {
 public:
   ZstdCompressor();
@@ -52,6 +52,6 @@ private:
   ZSTD_CCtx * zstd_context_;
 };
 
-}  // namespace rosbag2_compression
+}  // namespace rosbag2_compression_zstd
 
-#endif  // ROSBAG2_COMPRESSION__ZSTD_COMPRESSOR_HPP_
+#endif  // ROSBAG2_COMPRESSION_ZSTD__ZSTD_COMPRESSOR_HPP_

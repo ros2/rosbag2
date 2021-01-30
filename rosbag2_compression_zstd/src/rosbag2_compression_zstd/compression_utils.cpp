@@ -37,7 +37,7 @@ FILE * open_file(const std::string & uri, const std::string & read_mode)
 }
 }  // namespace
 
-namespace rosbag2_compression
+namespace rosbag2_compression_zstd
 {
 
 void write_output_buffer(
@@ -65,7 +65,7 @@ void write_output_buffer(
     output_buffer.size(), file_pointer);
 
   if (write_count != output_buffer.size()) {
-    ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+    ROSBAG2_COMPRESSION_ZSTD_LOG_ERROR_STREAM(
       "Bytes written (" <<
         write_count << " != output_buffer size (" << output_buffer.size() <<
         ")!");
@@ -139,10 +139,10 @@ void print_compression_statistics(
   const auto decompression_ratio =
     static_cast<double>(decompressed_size) / static_cast<double>(compressed_size);
 
-  ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+  ROSBAG2_COMPRESSION_ZSTD_LOG_DEBUG_STREAM(
     "\"Compression statistics\" : {" <<
       "\"Time\" : " << (duration.count() / 1000.0) <<
       ", \"Compression Ratio\" : " << decompression_ratio <<
       "}");
 }
-}  // namespace rosbag2_compression
+}  // namespace rosbag2_compression_zstd
