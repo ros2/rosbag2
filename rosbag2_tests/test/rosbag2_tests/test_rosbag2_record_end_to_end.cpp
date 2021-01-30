@@ -21,7 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/filesystem.h"
-#include "rosbag2_compression/zstd_decompressor.hpp"
+#include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
@@ -90,7 +90,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
     "Expected compressed bag file path: \"" <<
     compressed_bag_file_path.string() << "\" to exist!";
 
-  rosbag2_compression::ZstdDecompressor decompressor;
+  rosbag2_compression_zstd::ZstdDecompressor decompressor;
 
   const auto decompressed_uri = decompressor.decompress_uri(compressed_bag_file_path.string());
   const auto database_path = get_bag_file_path(0).string();

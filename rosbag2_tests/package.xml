@@ -20,6 +20,7 @@
   <test_depend>rcpputils</test_depend>
   <test_depend>ros2bag</test_depend>
   <test_depend>rosbag2_compression</test_depend>
+  <test_depend>rosbag2_compression_zstd</test_depend>
   <test_depend>rosbag2_cpp</test_depend>
   <test_depend>rosbag2_converter_default_plugins</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
