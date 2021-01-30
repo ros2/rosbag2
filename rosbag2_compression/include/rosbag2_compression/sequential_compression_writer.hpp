@@ -151,12 +151,14 @@ protected:
    * Initializes the compressor if a compression mode is specified.
    *
    * \throws std::invalid_argument if compression_options isn't supported.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
    */
   virtual void setup_compression();
 
   /**
    * Initializes a number of threads to do file or message compression equal to the
    * value of the compression_threads parameter.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
    */
   virtual void setup_compressor_threads();
 
@@ -166,7 +168,7 @@ protected:
   virtual void stop_compressor_threads();
 
 private:
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
   std::mutex compressor_queue_mutex_;
   std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>

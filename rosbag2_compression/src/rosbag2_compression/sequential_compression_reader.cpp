@@ -24,7 +24,6 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
-#include "rosbag2_compression/zstd_decompressor.hpp"
 
 #include "logging.hpp"
 
