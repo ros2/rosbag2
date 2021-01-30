@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
@@ -143,7 +144,7 @@ TEST_F(SequentialCompressionReaderTest, open_throws_if_unsupported_compressor)
 
   EXPECT_THROW(
     sequential_reader->open(storage_options_, converter_options_),
-    std::invalid_argument);
+    rcpputils::IllegalStateException);
 }
 
 TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)

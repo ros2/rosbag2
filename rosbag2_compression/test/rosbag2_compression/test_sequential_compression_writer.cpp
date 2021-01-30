@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
@@ -157,7 +158,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 
   EXPECT_THROW(
     writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
-    std::invalid_argument);
+    rcpputils::IllegalStateException);
 }
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
@@ -210,7 +211,7 @@ TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
   // a compressor.
   EXPECT_THROW(
     writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}),
-    std::runtime_error);
+    rcpputils::IllegalStateException);
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative_filepaths)

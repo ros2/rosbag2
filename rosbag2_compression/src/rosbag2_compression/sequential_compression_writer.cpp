@@ -22,11 +22,10 @@
 #include <string>
 #include <utility>
 
+#include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rcutils/filesystem.h"
-
-#include "rosbag2_compression/zstd_compressor.hpp"
 
 #include "rosbag2_cpp/info.hpp"
 
@@ -66,12 +65,7 @@ void SequentialCompressionWriter::compression_thread_fn()
   // Every thread needs to have its own compression context for thread safety.
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
-
-
-  if (!compressor) {
-    throw std::runtime_error{
-            "Cannot compress message; Writer is not open!"};
-  }
+  rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
 
   while (true) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
@@ -154,10 +148,7 @@ void SequentialCompressionWriter::setup_compressor_threads()
   // throw an exception if the format is invalid.
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
-  if (!compressor) {
-    throw std::runtime_error{
-            "Cannot compress message; Writer is not open!"};
-  }
+  rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
 
   for (uint64_t i = 0; i < compression_options_.compression_threads; i++) {
     compression_threads_.emplace_back([&] {compression_thread_fn();});

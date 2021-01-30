@@ -142,3 +142,8 @@ std::string ZstdCompressor::get_compression_identifier() const
 }
 
 }  // namespace rosbag2_compression
+
+#include "pluginlib/class_list_macros.hpp"  // NOLINT
+PLUGINLIB_EXPORT_CLASS(
+  rosbag2_compression::ZstdCompressor,
+  rosbag2_compression::BaseCompressorInterface)
