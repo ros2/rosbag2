@@ -4,6 +4,7 @@ Changelog for package rosbag2_compression
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -23,6 +24,19 @@ Changelog for package rosbag2_compression
 Forthcoming
 -----------
 =======
+=======
+0.6.0 (2021-02-01)
+------------------
+* Make compressor implementations into a plugin via pluginlib (`#624 <https://github.com/ros2/rosbag2/issues/624>`_)
+* Use ZSTD's streaming interface for [de]compressing files (`#543 <https://github.com/ros2/rosbag2/issues/543>`_)
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Fix relative metadata paths in SequentialCompressionWriter (`#613 <https://github.com/ros2/rosbag2/issues/613>`_)
+* Fix deadlock race condition on compression shutdown (`#616 <https://github.com/ros2/rosbag2/issues/616>`_)
+* Deduplicate SequentialCompressionReader business logic, add fallback to find bagfiles in incorrectly-written metadata (`#612 <https://github.com/ros2/rosbag2/issues/612>`_)
+* Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
+* Contributors: Emerson Knapp, P. J. Reed
+
+>>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
 >>>>>>> 0.5.0

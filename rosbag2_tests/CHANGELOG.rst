@@ -5,6 +5,7 @@ Changelog for package rosbag2_tests
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -23,6 +24,15 @@ Forthcoming
 -----------
 >>>>>>> Changelog.
 =======
+=======
+0.6.0 (2021-02-01)
+------------------
+* Fix relative metadata paths in SequentialCompressionWriter (`#613 <https://github.com/ros2/rosbag2/issues/613>`_)
+* Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
+* Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
+* Contributors: Adam Dąbrowski, Emerson Knapp
+
+>>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
 >>>>>>> 0.5.0

@@ -5,6 +5,7 @@ Changelog for package rosbag2
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
@@ -23,6 +24,16 @@ Changelog for package rosbag2
 Forthcoming
 -----------
 =======
+=======
+0.6.0 (2021-02-01)
+------------------
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Deduplicate SequentialCompressionReader business logic, add fallback to find bagfiles in incorrectly-written metadata (`#612 <https://github.com/ros2/rosbag2/issues/612>`_)
+* include what you use (`#600 <https://github.com/ros2/rosbag2/issues/600>`_)
+* Only dereference the data pointer if it is valid. (`#581 <https://github.com/ros2/rosbag2/issues/581>`_)
+* Contributors: Chris Lalancette, Emerson Knapp, Ivan Santiago Paunovic, P. J. Reed
+
+>>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
 >>>>>>> 0.5.0

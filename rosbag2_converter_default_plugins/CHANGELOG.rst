@@ -5,6 +5,7 @@ Changelog for package rosbag2_converter_default_plugins
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -23,6 +24,11 @@ Forthcoming
 -----------
 >>>>>>> Changelog.
 =======
+=======
+0.6.0 (2021-02-01)
+------------------
+
+>>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
 >>>>>>> 0.5.0

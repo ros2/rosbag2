@@ -4,6 +4,7 @@ Changelog for package ros2bag
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -26,6 +27,17 @@ Changelog for package ros2bag
 Forthcoming
 -----------
 =======
+=======
+0.6.0 (2021-02-01)
+------------------
+* Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
+* Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+* Fix a bug on parsing wrong description in plugin xml file (`#578 <https://github.com/ros2/rosbag2/issues/578>`_)
+* Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
+* Contributors: Adam Dąbrowski, Barry Xu, Emerson Knapp, P. J. Reed
+
+>>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
 >>>>>>> 0.5.0
