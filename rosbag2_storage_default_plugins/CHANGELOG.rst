@@ -3,6 +3,13 @@ Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.6.0 (2021-02-01)
+------------------
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Mutex protection for db writing and stl collections in writer & storage (`#603 <https://github.com/ros2/rosbag2/issues/603>`_)
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+* Contributors: Adam Dąbrowski, P. J. Reed
+
 0.5.0 (2020-12-02)
 ------------------
 

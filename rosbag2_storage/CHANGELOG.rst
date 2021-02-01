@@ -3,6 +3,13 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.6.0 (2021-02-01)
+------------------
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+  * Use optimized pragmas by default in sqlite storage. Added option to use former behavior
+* Use std::filesystem compliant non-member `exists` function for path object (`#593 <https://github.com/ros2/rosbag2/issues/593>`_)
+* Contributors: Adam Dąbrowski, Josh Langsfeld
+
 0.5.0 (2020-12-02)
 ------------------
 * Update codes since rcutils_calculate_directory_size() is changed (`#567 <https://github.com/ros2/rosbag2/issues/567>`_)
