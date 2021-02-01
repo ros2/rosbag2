@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Performance benchmarking refactor (`#594 <https://github.com/ros2/rosbag2/issues/594>`_)
+* Contributors: Adam Dąbrowski
+
 0.5.0 (2020-12-02)
 ------------------
 * Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
