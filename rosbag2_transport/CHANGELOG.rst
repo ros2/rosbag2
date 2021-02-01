@@ -3,8 +3,8 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.6.0 (2021-02-01)
+------------------
 * Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
 * Regex and exclude fix for rosbag recorder (`#620 <https://github.com/ros2/rosbag2/issues/620>`_)
 * Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)

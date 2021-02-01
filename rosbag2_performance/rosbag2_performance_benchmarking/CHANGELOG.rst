@@ -2,8 +2,8 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2021-02-01)
+------------------
 * Performance benchmarking refactor (`#594 <https://github.com/ros2/rosbag2/issues/594>`_)
 * Contributors: Adam Dąbrowski
 

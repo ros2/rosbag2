@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2021-02-01)
+------------------
 * Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
 * Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
 * SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)

@@ -3,8 +3,8 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.6.0 (2021-02-01)
+------------------
 * Fix relative metadata paths in SequentialCompressionWriter (`#613 <https://github.com/ros2/rosbag2/issues/613>`_)
 * Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
 * Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
