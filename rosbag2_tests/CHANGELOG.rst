@@ -2,29 +2,6 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-0.3.6 (2021-01-05)
-------------------
-* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
-* Contributors: Michael Jeronimo
-
-0.3.5 (2020-08-31)
-------------------
-
-0.3.4 (2020-08-05)
-------------------
-
-0.3.3 (2020-06-23)
-------------------
-=======
-Forthcoming
------------
->>>>>>> Changelog.
-=======
-=======
 0.6.0 (2021-02-01)
 ------------------
 * Fix relative metadata paths in SequentialCompressionWriter (`#613 <https://github.com/ros2/rosbag2/issues/613>`_)
@@ -32,10 +9,8 @@ Forthcoming
 * Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
 * Contributors: Adam Dąbrowski, Emerson Knapp
 
->>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
->>>>>>> 0.5.0
 
 0.4.0 (2020-11-19)
 ------------------
@@ -49,6 +24,20 @@ Forthcoming
 * minimal c++ API test (`#451 <https://github.com/ros2/rosbag2/issues/451>`_)
 * Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
 * Contributors: Emerson Knapp, Jaison Titus, Karsten Knese, Marwan Taher, Michael Jeronimo, jhdcs
+
+0.3.6 (2021-01-05)
+------------------
+* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
+* Contributors: Michael Jeronimo
+
+0.3.5 (2020-08-31)
+------------------
+
+0.3.4 (2020-08-05)
+------------------
+
+0.3.3 (2020-06-23)
+------------------
 
 0.3.2 (2020-06-03)
 ------------------

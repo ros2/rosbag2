@@ -2,32 +2,6 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-0.3.6 (2021-01-05)
-------------------
-* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
-* Contributors: Michael Jeronimo
-
-0.3.5 (2020-08-31)
-------------------
-* Add pytest.ini so local tests don't display warning. (`#446 <https://github.com/ros2/rosbag2/issues/446>`_) (`#514 <https://github.com/ros2/rosbag2/issues/514>`_)
-* Contributors: Emerson Knapp
-
-0.3.4 (2020-08-05)
-------------------
-* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_) (`#490 <https://github.com/ros2/rosbag2/issues/490>`_)
-  Co-authored-by: Jesse Ikawa <64169356+jikawa-az@users.noreply.github.com>
-* Contributors: Devin Bonnie
-
-0.3.3 (2020-06-23)
-------------------
-=======
-Forthcoming
------------
-=======
-=======
 0.6.0 (2021-02-01)
 ------------------
 * Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
@@ -37,10 +11,8 @@ Forthcoming
 * Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
 * Contributors: Adam Dąbrowski, Barry Xu, Emerson Knapp, P. J. Reed
 
->>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
->>>>>>> 0.5.0
 * Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
   * Double buffers
   * Circular queue and FLUSH option as define
@@ -89,7 +61,6 @@ Forthcoming
   * added minor comment
   Co-authored-by: Piotr Jaroszek <piotr.jaroszek@robotec.ai>
 * Contributors: Adam Dąbrowski
->>>>>>> Changelog.
 
 0.4.0 (2020-11-19)
 ------------------
@@ -115,6 +86,25 @@ Forthcoming
 * Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
 * Add pytest.ini so local tests don't display warning (`#446 <https://github.com/ros2/rosbag2/issues/446>`_)
 * Contributors: Adam Dąbrowski, Barry Xu, Chris Lalancette, Dirk Thomas, Ivan Santiago Paunovic, Jacob Perron, Jaison Titus, Jesse Ikawa, Karsten Knese, Marwan Taher, Michael Jeronimo, P. J. Reed, jhdcs
+
+0.3.6 (2021-01-05)
+------------------
+* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
+* Contributors: Michael Jeronimo
+
+0.3.5 (2020-08-31)
+------------------
+* Add pytest.ini so local tests don't display warning. (`#446 <https://github.com/ros2/rosbag2/issues/446>`_) (`#514 <https://github.com/ros2/rosbag2/issues/514>`_)
+* Contributors: Emerson Knapp
+
+0.3.4 (2020-08-05)
+------------------
+* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_) (`#490 <https://github.com/ros2/rosbag2/issues/490>`_)
+  Co-authored-by: Jesse Ikawa <64169356+jikawa-az@users.noreply.github.com>
+* Contributors: Devin Bonnie
+
+0.3.3 (2020-06-23)
+------------------
 
 0.3.2 (2020-06-03)
 ------------------

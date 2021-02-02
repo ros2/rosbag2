@@ -2,10 +2,25 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.0 (2021-02-01)
+------------------
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+  * Use optimized pragmas by default in sqlite storage. Added option to use former behavior
+* Use std::filesystem compliant non-member `exists` function for path object (`#593 <https://github.com/ros2/rosbag2/issues/593>`_)
+* Contributors: Adam Dąbrowski, Josh Langsfeld
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+0.5.0 (2020-12-02)
+------------------
+* Update codes since rcutils_calculate_directory_size() is changed (`#567 <https://github.com/ros2/rosbag2/issues/567>`_)
+* Contributors: Barry Xu
+
+0.4.0 (2020-11-19)
+------------------
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* Contributors: Karsten Knese, Michael Jeronimo, jhdcs
+
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -19,32 +34,6 @@ Changelog for package rosbag2_storage
 
 0.3.3 (2020-06-23)
 ------------------
-=======
-Forthcoming
------------
-=======
-=======
-0.6.0 (2021-02-01)
-------------------
-* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
-  * Use optimized pragmas by default in sqlite storage. Added option to use former behavior
-* Use std::filesystem compliant non-member `exists` function for path object (`#593 <https://github.com/ros2/rosbag2/issues/593>`_)
-* Contributors: Adam Dąbrowski, Josh Langsfeld
-
->>>>>>> Prepare bloom release 0.6.0 (#628)
-0.5.0 (2020-12-02)
-------------------
->>>>>>> 0.5.0
-* Update codes since rcutils_calculate_directory_size() is changed (`#567 <https://github.com/ros2/rosbag2/issues/567>`_)
-* Contributors: Barry Xu
->>>>>>> Changelog.
-
-0.4.0 (2020-11-19)
-------------------
-* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
-* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
-* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
-* Contributors: Karsten Knese, Michael Jeronimo, jhdcs
 
 0.3.2 (2020-06-03)
 ------------------

@@ -2,29 +2,6 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-0.3.6 (2021-01-05)
-------------------
-* Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
-* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
-* Contributors: Michael Jeronimo, Patrick Spieler
-
-0.3.5 (2020-08-31)
-------------------
-
-0.3.4 (2020-08-05)
-------------------
-
-0.3.3 (2020-06-23)
-------------------
-=======
-Forthcoming
------------
-=======
-=======
 0.6.0 (2021-02-01)
 ------------------
 * Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
@@ -33,14 +10,11 @@ Forthcoming
 * Only dereference the data pointer if it is valid. (`#581 <https://github.com/ros2/rosbag2/issues/581>`_)
 * Contributors: Chris Lalancette, Emerson Knapp, Ivan Santiago Paunovic, P. J. Reed
 
->>>>>>> Prepare bloom release 0.6.0 (#628)
 0.5.0 (2020-12-02)
 ------------------
->>>>>>> 0.5.0
 * Add back rosbag2_cpp::StorageOptions as deprecated (`#563 <https://github.com/ros2/rosbag2/issues/563>`_)
 * Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
 * Contributors: Adam Dąbrowski, Jacob Perron
->>>>>>> Changelog.
 
 0.4.0 (2020-11-19)
 ------------------
@@ -60,6 +34,21 @@ Forthcoming
 * minimal c++ API test (`#451 <https://github.com/ros2/rosbag2/issues/451>`_)
 * Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
 * Contributors: Dirk Thomas, Jacob Perron, Jaison Titus, Karsten Knese, Marwan Taher, Michael Jeronimo, Patrick Spieler, jhdcs, Tomoya Fujita
+
+0.3.6 (2021-01-05)
+------------------
+* Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
+* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
+* Contributors: Michael Jeronimo, Patrick Spieler
+
+0.3.5 (2020-08-31)
+------------------
+
+0.3.4 (2020-08-05)
+------------------
+
+0.3.3 (2020-06-23)
+------------------
 
 0.3.2 (2020-06-03)
 ------------------

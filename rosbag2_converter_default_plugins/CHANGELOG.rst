@@ -2,10 +2,17 @@
 Changelog for package rosbag2_converter_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.0 (2021-02-01)
+------------------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+0.5.0 (2020-12-02)
+------------------
+
+0.4.0 (2020-11-19)
+------------------
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* Contributors: Michael Jeronimo
+
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -19,24 +26,6 @@ Changelog for package rosbag2_converter_default_plugins
 
 0.3.3 (2020-06-23)
 ------------------
-=======
-Forthcoming
------------
->>>>>>> Changelog.
-=======
-=======
-0.6.0 (2021-02-01)
-------------------
-
->>>>>>> Prepare bloom release 0.6.0 (#628)
-0.5.0 (2020-12-02)
-------------------
->>>>>>> 0.5.0
-
-0.4.0 (2020-11-19)
-------------------
-* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
-* Contributors: Michael Jeronimo
 
 0.3.2 (2020-06-03)
 ------------------

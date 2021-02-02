@@ -2,10 +2,18 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.0 (2021-02-01)
+------------------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+0.5.0 (2020-12-02)
+------------------
+
+0.4.0 (2020-11-19)
+------------------
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* use interface_include_directories (`#426 <https://github.com/ros2/rosbag2/issues/426>`_)
+* Contributors: Karsten Knese, Michael Jeronimo
+
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
@@ -21,25 +29,6 @@ Changelog for package sqlite3_vendor
 ------------------
 * use interface_include_directories in find_sqlite3 (`#426 <https://github.com/ros2/rosbag2/issues/426>`_) (`#444 <https://github.com/ros2/rosbag2/issues/444>`_)
 * Contributors: Karsten Knese
-=======
-Forthcoming
------------
->>>>>>> Changelog.
-=======
-=======
-0.6.0 (2021-02-01)
-------------------
-
->>>>>>> Prepare bloom release 0.6.0 (#628)
-0.5.0 (2020-12-02)
-------------------
->>>>>>> 0.5.0
-
-0.4.0 (2020-11-19)
-------------------
-* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
-* use interface_include_directories (`#426 <https://github.com/ros2/rosbag2/issues/426>`_)
-* Contributors: Karsten Knese, Michael Jeronimo
 
 0.3.2 (2020-06-03)
 ------------------
