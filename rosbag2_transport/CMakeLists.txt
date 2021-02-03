@@ -166,7 +166,7 @@ function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_record_regex
     test/rosbag2_transport/test_record_regex.cpp
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common
+    AMENT_DEPS test_msgs rosbag2_cpp rosbag2_test_common
     ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_play

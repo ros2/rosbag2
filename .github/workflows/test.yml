@@ -29,7 +29,8 @@ jobs:
           sqlite3_vendor
           rosbag2_test_common
           rosbag2_tests
-        target-ros2-distro: rolling
+        target-ros2-distro: foxy
+        vcs-repo-file-url: ""
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
