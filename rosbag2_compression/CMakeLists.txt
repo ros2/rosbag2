@@ -95,15 +95,17 @@ if(BUILD_TESTING)
   find_package(rosbag2_test_common REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  add_library(fake_compressor SHARED
-    test/rosbag2_compression/fake_compressor.cpp)
-  target_include_directories(fake_compressor PUBLIC include)
-  ament_target_dependencies(fake_compressor rosbag2_storage)
-  set_target_properties(fake_compressor
-    PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN 1)
-  target_compile_definitions(fake_compressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
+  add_library(fake_plugin SHARED
+    test/rosbag2_compression/fake_compressor.cpp
+    test/rosbag2_compression/fake_decompressor.cpp)
+  target_link_libraries(fake_plugin ${PROJECT_NAME})
+  install(
+    TARGETS fake_plugin
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin)
+  pluginlib_export_plugin_description_file(
+    rosbag2_compression test/rosbag2_compression/fake_plugin.xml)
 
   ament_add_gmock(test_compression_factory
     test/rosbag2_compression/test_compression_factory.cpp)
@@ -111,28 +113,12 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_compressor
     test/rosbag2_compression/test_compressor.cpp)
-  target_link_libraries(test_compressor fake_compressor)
+  target_link_libraries(test_compressor fake_plugin)
   ament_target_dependencies(test_compressor rcpputils)
-
-  add_library(fake_decompressor SHARED
-    test/rosbag2_compression/fake_decompressor.cpp)
-  target_include_directories(fake_decompressor PUBLIC include)
-  ament_target_dependencies(fake_decompressor rosbag2_storage rcpputils)
-  set_target_properties(fake_decompressor
-    PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN 1)
-  target_compile_definitions(fake_decompressor PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
 
   ament_add_gmock(test_decompressor
     test/rosbag2_compression/test_decompressor.cpp)
-  target_link_libraries(test_decompressor fake_decompressor)
-
-  ament_add_gmock(test_zstd_compressor
-    test/rosbag2_compression/test_zstd_compressor.cpp)
-  target_include_directories(test_zstd_compressor PUBLIC include)
-  target_link_libraries(test_zstd_compressor ${PROJECT_NAME}_zstd)
-  ament_target_dependencies(test_zstd_compressor rclcpp rosbag2_test_common rosbag2_storage)
+  target_link_libraries(test_decompressor fake_plugin)
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)

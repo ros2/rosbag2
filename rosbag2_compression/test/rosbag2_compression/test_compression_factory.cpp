@@ -25,18 +25,18 @@ public:
   rosbag2_compression::CompressionFactory factory{};
 };
 
-TEST_F(CompressionFactoryTest, creates_zstd_compressor) {
-  const auto compression_format = "zstd";
-  auto zstd_compressor = factory.create_compressor(compression_format);
-  ASSERT_TRUE(zstd_compressor != nullptr);
-  ASSERT_EQ(compression_format, zstd_compressor->get_compression_identifier());
+TEST_F(CompressionFactoryTest, load_test_compressor) {
+  const auto compression_format = "fake_comp";
+  auto compressor = factory.create_compressor(compression_format);
+  ASSERT_TRUE(compressor != nullptr);
+  ASSERT_EQ(compression_format, compressor->get_compression_identifier());
 }
 
-TEST_F(CompressionFactoryTest, creates_zstd_decompressor) {
-  const auto compression_format = "zstd";
-  auto zstd_decompressor = factory.create_decompressor(compression_format);
-  ASSERT_TRUE(zstd_decompressor != nullptr);
-  ASSERT_EQ(compression_format, zstd_decompressor->get_decompression_identifier());
+TEST_F(CompressionFactoryTest, load_test_decompressor) {
+  const auto compression_format = "fake_comp";
+  auto decompressor = factory.create_decompressor(compression_format);
+  ASSERT_TRUE(decompressor != nullptr);
+  ASSERT_EQ(compression_format, decompressor->get_decompression_identifier());
 }
 
 TEST_F(CompressionFactoryTest, throws_on_bad_compressor_format) {

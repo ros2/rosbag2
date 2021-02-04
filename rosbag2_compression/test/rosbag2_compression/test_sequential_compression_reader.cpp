@@ -76,11 +76,11 @@ public:
     rosbag2_storage::BagMetadata metadata;
     metadata.version = 4;
     metadata.relative_file_paths = {
-      "bagfile_0.zstd",
-      "bagfile_1.zstd"
+      "bagfile_0.fake_comp",
+      "bagfile_1.fake_comp"
     };
     metadata.topics_with_message_count.push_back({{topic_with_type_}, 1});
-    metadata.compression_format = "zstd";
+    metadata.compression_format = "fake_comp";
     metadata.compression_mode =
       rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
     return metadata;
@@ -169,7 +169,7 @@ TEST_F(SequentialCompressionReaderTest, returns_all_topics_and_types)
   EXPECT_FALSE(topics_and_types.empty());
 }
 
-TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
+TEST_F(SequentialCompressionReaderTest, compressor_factory_creates_callable_compressor)
 {
   auto compression_factory = std::make_unique<rosbag2_compression::CompressionFactory>();
 
@@ -180,10 +180,7 @@ TEST_F(SequentialCompressionReaderTest, open_supports_zstd_compressor)
     std::move(metadata_io_));
 
   reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
-  // Throws runtime_error b/c compressor can't read
-  EXPECT_THROW(
-    reader_->open(storage_options_, converter_options_),
-    std::runtime_error);
+  EXPECT_NO_THROW(reader_->open(storage_options_, converter_options_));
 }
 
 TEST_F(SequentialCompressionReaderTest, reader_calls_create_decompressor)
