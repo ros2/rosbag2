@@ -51,7 +51,7 @@ public:
     const std::string & topic,
     const std::string & type,
     const rclcpp::QoS & qos,
-    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
+    GenericSubscriptionCallback callback);
 
   std::unordered_map<std::string, std::string>
   get_topics_with_types(const std::vector<std::string> & topic_names);

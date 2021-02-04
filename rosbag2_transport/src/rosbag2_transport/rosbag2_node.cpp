@@ -56,7 +56,7 @@ std::shared_ptr<GenericSubscription> Rosbag2Node::create_generic_subscription(
   const std::string & topic,
   const std::string & type,
   const rclcpp::QoS & qos,
-  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback)
+  GenericSubscriptionCallback callback)
 {
   library_generic_subscriptor_ = rosbag2_cpp::get_typesupport_library(
     type, "rosidl_typesupport_cpp");

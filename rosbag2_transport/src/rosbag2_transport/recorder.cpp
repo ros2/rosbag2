@@ -180,7 +180,10 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
+    [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message, const rclcpp::MessageInfo & message_info) {
+      const auto & mi = message_info.get_rmw_message_info();
+      ROSBAG2_TRANSPORT_LOG_INFO_STREAM("MESSAGE INFO on " << topic_name << ": pubgid " << mi.publisher_gid.data);
+
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       // the serialized bag message takes ownership of the incoming rclcpp serialized message
       // we therefore have to make sure to cleanup that memory in a custom deleter.

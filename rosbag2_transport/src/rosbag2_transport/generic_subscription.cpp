@@ -40,7 +40,7 @@ GenericSubscription::GenericSubscription(
   const rosidl_message_type_support_t & ts,
   const std::string & topic_name,
   const rclcpp::QoS & qos,
-  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback)
+  GenericSubscriptionCallback callback)
 : SubscriptionBase(
     node_base,
     ts,
@@ -67,7 +67,7 @@ void GenericSubscription::handle_message(
 {
   (void) message_info;
   auto typed_message = std::static_pointer_cast<rclcpp::SerializedMessage>(message);
-  callback_(typed_message);
+  callback_(typed_message, message_info);
 }
 
 void GenericSubscription::handle_loaned_message(

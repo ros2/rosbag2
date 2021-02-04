@@ -26,6 +26,10 @@
 namespace rosbag2_transport
 {
 
+typedef std::function<void(
+  std::shared_ptr<rclcpp::SerializedMessage>,
+  const rclcpp::MessageInfo & message_info
+)> GenericSubscriptionCallback;
 /**
  * This class is an implementation of an rclcpp::Subscription for serialized messages whose topic
  * is not known at compile time (hence templating does not work).
@@ -52,7 +56,7 @@ public:
     const rosidl_message_type_support_t & ts,
     const std::string & topic_name,
     const rclcpp::QoS & qos,
-    std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
+    GenericSubscriptionCallback callback);
 
   // Same as create_serialized_message() as the subscription is to serialized_messages only
   std::shared_ptr<void> create_message() override;
@@ -79,7 +83,7 @@ private:
 
   std::shared_ptr<rclcpp::SerializedMessage> borrow_serialized_message(size_t capacity);
   rcutils_allocator_t default_allocator_;
-  std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback_;
+  GenericSubscriptionCallback callback_;
   const rclcpp::QoS qos_;
 };
 
