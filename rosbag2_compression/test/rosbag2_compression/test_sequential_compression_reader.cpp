@@ -37,6 +37,8 @@
 
 using namespace testing;  // NOLINT
 
+static constexpr const char * DefaultTestCompressor = "fake_comp";
+
 class SequentialCompressionReaderTest : public Test
 {
 public:
@@ -76,11 +78,11 @@ public:
     rosbag2_storage::BagMetadata metadata;
     metadata.version = 4;
     metadata.relative_file_paths = {
-      "bagfile_0.fake_comp",
-      "bagfile_1.fake_comp"
+      "bagfile_0." + std::string(DefaultTestCompressor),
+      "bagfile_1." + std::string(DefaultTestCompressor)
     };
     metadata.topics_with_message_count.push_back({{topic_with_type_}, 1});
-    metadata.compression_format = "fake_comp";
+    metadata.compression_format = DefaultTestCompressor;
     metadata.compression_mode =
       rosbag2_compression::compression_mode_to_string(rosbag2_compression::CompressionMode::FILE);
     return metadata;
