@@ -39,6 +39,8 @@
 
 using namespace testing;  // NOLINT
 
+static constexpr const char * DefaultTestCompressor = "fake_comp";
+
 class SequentialCompressionWriterTest : public Test
 {
 public:
@@ -138,7 +140,7 @@ public:
 TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
+    DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   initializeWriter(compression_options);
 
@@ -164,7 +166,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_bad_compression_format)
 TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
+    DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
 
   // Set minimum file size greater than max bagfile size option
@@ -185,7 +187,7 @@ TEST_F(SequentialCompressionWriterTest, open_throws_on_invalid_splitting_size)
 TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_format)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
+    DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   initializeWriter(compression_options);
 
@@ -200,7 +202,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
 {
   rosbag2_compression::CompressionOptions compression_options{
-    "zstd", rosbag2_compression::CompressionMode::FILE,
+    DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
   EXPECT_CALL(*compression_factory, create_compressor(_)).Times(1);
@@ -222,7 +224,7 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   const std::string test_topic_name = "test_topic";
   const std::string test_topic_type = "test_msgs/BasicTypes";
   rosbag2_compression::CompressionOptions compression_options {
-    "zstd",
+    DefaultTestCompressor,
     rosbag2_compression::CompressionMode::FILE,
     kDefaultCompressionQueueSize,
     kDefaultCompressionQueueThreads
@@ -252,7 +254,7 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   int counter = 0;
   for (const auto & path : intercepted_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << bag_name_ << "_" << counter << ".zstd";
+    ss << bag_name_ << "_" << counter << "." << DefaultTestCompressor;
     counter++;
     EXPECT_EQ(ss.str(), path);
   }
