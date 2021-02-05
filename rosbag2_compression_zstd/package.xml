@@ -19,6 +19,7 @@
   <depend>rosbag2_compression</depend>
   <depend>zstd_vendor</depend>
 
+  <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>rclcpp</test_depend>
