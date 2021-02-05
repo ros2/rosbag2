@@ -111,15 +111,6 @@ if(BUILD_TESTING)
     test/rosbag2_compression/test_compression_factory.cpp)
   target_link_libraries(test_compression_factory ${PROJECT_NAME})
 
-  ament_add_gmock(test_compressor
-    test/rosbag2_compression/test_compressor.cpp)
-  target_link_libraries(test_compressor fake_plugin)
-  ament_target_dependencies(test_compressor rcpputils)
-
-  ament_add_gmock(test_decompressor
-    test/rosbag2_compression/test_decompressor.cpp)
-  target_link_libraries(test_decompressor fake_plugin)
-
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
   target_include_directories(test_compression_options PUBLIC include)
