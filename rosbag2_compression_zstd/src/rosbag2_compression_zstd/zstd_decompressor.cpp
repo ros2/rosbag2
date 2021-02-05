@@ -22,9 +22,9 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "compression_utils.hpp"
-#include "rosbag2_compression/zstd_decompressor.hpp"
+#include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 
-namespace rosbag2_compression
+namespace rosbag2_compression_zstd
 {
 ZstdDecompressor::ZstdDecompressor()
 {
@@ -136,9 +136,9 @@ std::string ZstdDecompressor::get_decompression_identifier() const
 {
   return kDecompressionIdentifier;
 }
-}  // namespace rosbag2_compression
+}  // namespace rosbag2_compression_zstd
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(
-  rosbag2_compression::ZstdDecompressor,
+  rosbag2_compression_zstd::ZstdDecompressor,
   rosbag2_compression::BaseDecompressorInterface)

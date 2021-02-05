@@ -50,6 +50,7 @@ if(BUILD_TESTING)
       ament_target_dependencies(test_rosbag2_record_end_to_end
         rclcpp
         rosbag2_compression
+        rosbag2_compression_zstd
         rosbag2_storage
         rosbag2_storage_default_plugins
         rosbag2_test_common

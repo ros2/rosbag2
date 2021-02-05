@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rosbag2_compression_zstd</name>
+  <version>0.5.0</version>
+  <description>Zstandard compression library implementation of rosbag2_compression</description>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS 2 Tooling WG</maintainer>
+  <license>Apache 2.0</license>
+
+  <author email="eknapp@amazon.com">Emerson Knapp</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>pluginlib</depend>
+  <depend>rcpputils</depend>
+  <depend>rcutils</depend>
+  <depend>rosbag2_compression</depend>
+  <depend>zstd_vendor</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>rclcpp</test_depend>
+  <test_depend>rosbag2_test_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

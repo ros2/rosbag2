@@ -23,8 +23,8 @@
 
 #include "rcpputils/filesystem_helper.hpp"
 
-#include "rosbag2_compression/zstd_compressor.hpp"
-#include "rosbag2_compression/zstd_decompressor.hpp"
+#include "rosbag2_compression_zstd/zstd_compressor.hpp"
+#include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 
 #include "rosbag2_storage/ros_helper.hpp"
 
@@ -140,7 +140,7 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
   ASSERT_TRUE(rcpputils::fs::exists(uri)) <<
     "Expected uncompressed URI: \"" << uri << "\" to exist.";
 
-  auto zstd_compressor = rosbag2_compression::ZstdCompressor{};
+  auto zstd_compressor = rosbag2_compression_zstd::ZstdCompressor{};
   const auto compressed_uri = zstd_compressor.compress_uri(uri);
 
   ASSERT_TRUE(rcpputils::fs::exists(compressed_uri)) <<
@@ -171,7 +171,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
 
   const auto initial_file_size = initial_file_path.file_size();
 
-  auto zstd_compressor = rosbag2_compression::ZstdCompressor{};
+  auto zstd_compressor = rosbag2_compression_zstd::ZstdCompressor{};
   const auto compressed_uri = zstd_compressor.compress_uri(uri);
 
   // The test is invalid if the initial file is not deleted
@@ -180,7 +180,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
     "\" failed! The remaining tests require \"" <<
     initial_file_path.string() << "\" to be deleted!";
 
-  auto zstd_decompressor = rosbag2_compression::ZstdDecompressor{};
+  auto zstd_decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
   const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
   const auto decompressed_file_path = rcpputils::fs::path{decompressed_uri};
   const auto expected_decompressed_uri = uri;
@@ -213,7 +213,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
     initial_data.size() * sizeof(decltype(initial_data)::value_type),
     initial_file_size) << "Expected data contents of file to equal file size!";
 
-  auto compressor = rosbag2_compression::ZstdCompressor{};
+  auto compressor = rosbag2_compression_zstd::ZstdCompressor{};
   const auto compressed_uri = compressor.compress_uri(uri);
 
   ASSERT_TRUE(rcpputils::fs::exists(compressed_uri)) <<
@@ -223,7 +223,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
     "Removal of initial file: \"" << uri <<
     "\" failed! The remaining tests require \"" << uri << "\" to be deleted.";
 
-  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+  auto decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
   const auto decompressed_uri = decompressor.decompress_uri(compressed_uri);
   const auto decompressed_file_path = rcpputils::fs::path{decompressed_uri};
 
@@ -252,7 +252,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
   const auto uri = (rcpputils::fs::path(temporary_dir_path_) / "file3.txt").string();
   create_garbage_file(uri);
 
-  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+  auto decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
   EXPECT_THROW(decompressor.decompress_uri(uri), std::runtime_error) <<
     "Expected decompress(\"" << uri << "\") to fail!";
 }
@@ -260,7 +260,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
 TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_uri)
 {
   const auto bad_uri = (rcpputils::fs::path(temporary_dir_path_) / "bad_uri.txt").string();
-  auto decompressor = rosbag2_compression::ZstdDecompressor{};
+  auto decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
 
   EXPECT_THROW(decompressor.decompress_uri(bad_uri), std::runtime_error) <<
     "Expected decompress_uri(\"" << bad_uri << "\") to fail!";
@@ -273,7 +273,7 @@ TEST_F(CompressionHelperFixture, zstd_compress_serialized_bag_message)
   msg->serialized_data = rosbag2_storage::make_serialized_message(
     message_.data(), message_.length());
 
-  rosbag2_compression::ZstdCompressor compressor;
+  rosbag2_compression_zstd::ZstdCompressor compressor;
   compressor.compress_serialized_bag_message(msg.get());
 
   ASSERT_EQ(compressed_length_, msg->serialized_data->buffer_length);
@@ -286,13 +286,13 @@ TEST_F(CompressionHelperFixture, zstd_decompress_serialized_bag_message)
   msg->serialized_data = rosbag2_storage::make_serialized_message(
     message_.data(), message_.length());
 
-  rosbag2_compression::ZstdCompressor compressor;
+  rosbag2_compression_zstd::ZstdCompressor compressor;
   compressor.compress_serialized_bag_message(msg.get());
 
   const auto compressed_length = msg->serialized_data->buffer_length;
   EXPECT_EQ(compressed_length_, compressed_length);
 
-  rosbag2_compression::ZstdDecompressor decompressor;
+  rosbag2_compression_zstd::ZstdDecompressor decompressor;
   EXPECT_NO_THROW(decompressor.decompress_serialized_bag_message(msg.get()));
   std::string new_msg = deserialize_message(msg->serialized_data);
   EXPECT_EQ(new_msg, message_);
