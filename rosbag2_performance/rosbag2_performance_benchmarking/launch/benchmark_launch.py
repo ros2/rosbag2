@@ -197,20 +197,22 @@ def _producer_node_exited(event, context):
     # Handle clearing bag files
     if not node_params['preserve_bags']:
         db_files = pathlib.Path.cwd().joinpath(node_params['db_folder']).glob('*.db3')
-        total_size = 0
+        stats_path = pathlib.Path.cwd().joinpath(node_params['db_folder'], 'bagfiles_info.yaml')
+        stats = {
+            'total_size': 0,
+            'bagfiles': []
+        }
+
+        # Delete rosbag files
         for f in db_files:
             filesize = f.stat().st_size
             f.unlink()
-            # Replace removed storage file with empty file informing about size
-            pathlib.Path.cwd().joinpath(
-                node_params['db_folder'],
-                str(int(filesize/1000000)) + 'MB_' + f.name).touch()
-            total_size += filesize
+            stats['bagfiles'].append({f.name: {'size': filesize}})
+            stats['total_size'] += filesize
 
-        # Additional info about total size
-        pathlib.Path.cwd().joinpath(
-            node_params['db_folder'],
-            str(int(total_size/1000000)) + 'MB_TOTAL').touch()
+        # Dump files size information
+        with open(stats_path, 'w') as stats_file:
+            yaml.dump(stats, stats_file)
 
     # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
     if _rosbag_pid is not None and transport:
