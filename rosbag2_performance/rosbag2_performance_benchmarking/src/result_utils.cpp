@@ -49,9 +49,19 @@ int get_message_count_from_metadata(const std::string & uri)
   int total_recorded_count = 0;
   std::string metadata_filename(rosbag2_storage::MetadataIo::metadata_filename);
   std::string metadata_path = uri + "/" + metadata_filename;
+  const std::string topic_prefix = "/rosbag2_performance_benchmarking_node";
+
   try {
     YAML::Node yaml_file = YAML::LoadFile(metadata_path);
-    total_recorded_count = yaml_file["rosbag2_bagfile_information"]["message_count"].as<int>();
+    YAML::Node topics = yaml_file["rosbag2_bagfile_information"]["topics_with_message_count"];
+    for (auto it = topics.begin(); it != topics.end(); it++) {
+      auto metadata = (*it)["topic_metadata"];
+
+      auto topic_name = metadata["name"].as<std::string>();
+      if (topic_name.compare(0, topic_prefix.size(), topic_prefix) == 0) {
+        total_recorded_count += (*it)["message_count"].as<int>();
+      }
+    }
   } catch (const YAML::Exception & ex) {
     throw std::runtime_error(
             std::string("Exception on parsing metadata file to get total message count: ") +
