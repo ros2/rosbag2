@@ -207,10 +207,10 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   const std::string topic = "/mixed_nondelivery_policies";
   const size_t same_history = 5;
   const size_t different_history = 12;
-  const rmw_time_t deadline{0, 1000};
-  const rmw_time_t lifespan{3, 12};
+  const rmw_duration_t deadline{1000};
+  const rmw_duration_t lifespan{RCUTILS_S_TO_NS(3) + 12};
   const auto liveliness = RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC;
-  const rmw_time_t liveliness_lease_duration{0, 5000000};
+  const rmw_duration_t liveliness_lease_duration{5000000};
 
   auto publisher_node = std::make_shared<rclcpp::Node>("publisher_for");
   auto create_pub = [publisher_node, topic](auto qos) {

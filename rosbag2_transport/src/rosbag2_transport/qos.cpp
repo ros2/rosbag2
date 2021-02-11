@@ -19,22 +19,25 @@
 
 #include "qos.hpp"
 
-namespace YAML
+namespace
 {
-Node convert<rmw_time_t>::encode(const rmw_time_t & time)
+YAML::Node encode_rmw_duration(rmw_duration_t duration)
 {
-  Node node;
-  node["sec"] = time.sec;
-  node["nsec"] = time.nsec;
+  YAML::Node node;
+  node["sec"] = RCUTILS_NS_TO_S(duration);
+  node["nsec"] = duration % 1000000000LL;
   return node;
 }
 
-bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
+rmw_duration_t decode_rmw_duration(const YAML::Node & node)
 {
-  time.sec = node["sec"].as<uint64_t>();
-  time.nsec = node["nsec"].as<uint64_t>();
-  return true;
+  return RCUTILS_S_TO_NS(node["sec"].as<uint64_t>()) + node["nsec"].as<uint64_t>();
 }
+}  // namespace
+
+
+namespace YAML
+{
 
 Node convert<rosbag2_transport::Rosbag2QoS>::encode(const rosbag2_transport::Rosbag2QoS & qos)
 {
@@ -44,10 +47,10 @@ Node convert<rosbag2_transport::Rosbag2QoS>::encode(const rosbag2_transport::Ros
   node["depth"] = p.depth;
   node["reliability"] = static_cast<int>(p.reliability);
   node["durability"] = static_cast<int>(p.durability);
-  node["deadline"] = p.deadline;
-  node["lifespan"] = p.lifespan;
+  node["deadline"] = encode_rmw_duration(p.deadline);
+  node["lifespan"] = encode_rmw_duration(p.lifespan);
   node["liveliness"] = static_cast<int>(p.liveliness);
-  node["liveliness_lease_duration"] = p.liveliness_lease_duration;
+  node["liveliness_lease_duration"] = encode_rmw_duration(p.liveliness_lease_duration);
   node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
   return node;
 }
@@ -65,10 +68,10 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   .history(history)
   .reliability(reliability)
   .durability(durability)
-  .deadline(node["deadline"].as<rmw_time_t>())
-  .lifespan(node["lifespan"].as<rmw_time_t>())
+  .deadline(decode_rmw_duration(node["deadline"]))
+  .lifespan(decode_rmw_duration(node["lifespan"]))
   .liveliness(liveliness)
-  .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
+  .liveliness_lease_duration(decode_rmw_duration(node["liveliness_lease_duration"]))
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
   return true;
 }
@@ -147,11 +150,6 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
 
 namespace
 {
-bool operator==(const rmw_time_t & lhs, const rmw_time_t & rhs)
-{
-  return lhs.sec == rhs.sec && lhs.nsec == rhs.nsec;
-}
-
 /** Check if all QoS profiles in the vector are identical when only looking at
   * policies that affect compatibility.
   * This means it excludes history and lifespan from the equality check.

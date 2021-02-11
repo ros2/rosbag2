@@ -80,13 +80,6 @@ public:
 namespace YAML
 {
 template<>
-struct convert<rmw_time_t>
-{
-  static Node encode(const rmw_time_t & time);
-  static bool decode(const Node & node, rmw_time_t & time);
-};
-
-template<>
 struct convert<rosbag2_transport::Rosbag2QoS>
 {
   static Node encode(const rosbag2_transport::Rosbag2QoS & qos);

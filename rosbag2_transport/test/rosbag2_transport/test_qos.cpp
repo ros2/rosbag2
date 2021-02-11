@@ -62,16 +62,16 @@ TEST(TestQoS, supports_version_4)
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
-  rmw_time_t zerotime{0, 0};
+  rmw_duration_t zero_duration = 0;
   // Explicitly set up the same QoS profile in case defaults change
   auto expected_qos = rosbag2_transport::Rosbag2QoS{}
   .default_history()
   .reliable()
   .durability_volatile()
-  .deadline(zerotime)
-  .lifespan(zerotime)
+  .deadline(zero_duration)
+  .lifespan(zero_duration)
   .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
-  .liveliness_lease_duration(zerotime).get_rmw_qos_profile();
+  .liveliness_lease_duration(zero_duration).get_rmw_qos_profile();
 
   EXPECT_EQ(actual_qos.reliability, expected_qos.reliability);
   EXPECT_EQ(actual_qos.durability, expected_qos.durability);
@@ -79,18 +79,18 @@ TEST(TestQoS, supports_version_4)
 
 TEST(TestQoS, detect_new_qos_fields)
 {
+  const rmw_duration_t zero_duration{0};
   // By trying to construct a profile explicitly by fields, the build fails if policies are added
   // This build failure indicates that we need to update QoS serialization in rosbag2_transport
-  rmw_time_t notime{0, 0};
   rmw_qos_profile_t profile{
     RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT,
     10,
     RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT,
     RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT,
-    notime,
-    notime,
+    zero_duration,
+    zero_duration,
     RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-    notime,
+    zero_duration,
     false,
   };
   EXPECT_EQ(profile.history, RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT);  // fix "unused variable"
