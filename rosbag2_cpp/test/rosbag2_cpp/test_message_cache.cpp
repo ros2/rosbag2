@@ -131,6 +131,7 @@ TEST_F(MessageCacheTest, message_cache_changing_callback) {
   uint32_t counter = 0;
   for (uint32_t i = 0; i < message_count; ++i) {
     if (counter >= message_count / 2) {
+      mock_cache_consumer->close();
       mock_cache_consumer->change_consume_callback(cb2);
     }
     auto msg = make_test_msg();
