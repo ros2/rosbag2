@@ -243,13 +243,6 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
-  write_locked(message);
-}
-
-void SqliteStorage::write_locked(
-  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
-{
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -267,7 +260,6 @@ void SqliteStorage::write_locked(
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -275,7 +267,7 @@ void SqliteStorage::write(
   activate_transaction();
 
   for (auto & message : messages) {
-    write_locked(message);
+    write(message);
   }
 
   commit_transaction();
@@ -342,7 +334,6 @@ void SqliteStorage::initialize()
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
@@ -357,7 +348,6 @@ void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
     auto delete_topic =
       database_->prepare_statement(
@@ -440,19 +430,19 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 
   auto statement = database_->prepare_statement(
     "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
-    "MAX(messages.timestamp) "
+    "MAX(messages.timestamp), offered_qos_profiles "
     "FROM messages JOIN topics on topics.id = messages.topic_id "
     "GROUP BY topics.name;");
   auto query_results = statement->execute_query<
     std::string, std::string, std::string, int, rcutils_time_point_value_t,
-    rcutils_time_point_value_t>();
+    rcutils_time_point_value_t, std::string>();
 
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
   for (auto result : query_results) {
     metadata.topics_with_message_count.push_back(
       {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
         static_cast<size_t>(std::get<3>(result))
       });
 
