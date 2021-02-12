@@ -264,6 +264,8 @@ void Reindexer::aggregate_metadata(
   // visit each of the contained relative database files in the bag,
   // open them, slurp up the info, and stuff it into the master
   // metadata object.
+  auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_INFO_STREAM("Extracting from file: " + f_.string());
@@ -277,8 +279,6 @@ void Reindexer::aggregate_metadata(
       storage_options.max_cache_size,  // max_cache_size
       storage_options.storage_config_uri  // storage_config_uri
     };
-    auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
-      std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
@@ -322,8 +322,9 @@ void Reindexer::aggregate_metadata(
     }
 
     ROSBAG2_CPP_LOG_INFO("Closing database");
-    bag_reader.reset();   // Close the reader
+    bag_reader->reset();   // Close the reader's storage
   }
+  bag_reader.reset();   // Delete the reader
 }
 
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
@@ -341,13 +342,17 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 
   // Create initial metadata
   init_metadata(files, storage_options);
+  ROSBAG2_CPP_LOG_INFO_STREAM("Completed init_metadata");
 
   // Collect all metadata from database files
   aggregate_metadata(files, storage_options);
+  ROSBAG2_CPP_LOG_INFO_STREAM("Completed aggregate_metadata");
 
   // Perform final touch-up
   finalize_metadata();
+  ROSBAG2_CPP_LOG_INFO_STREAM("Completed finalize_metadata");
 
+  ROSBAG2_CPP_LOG_INFO_STREAM("Base folder located at: " + base_folder_.string());
   metadata_io_->write_metadata(base_folder_.string(), metadata_);
   ROSBAG2_CPP_LOG_INFO("Reindexing operation completed.");
 }
