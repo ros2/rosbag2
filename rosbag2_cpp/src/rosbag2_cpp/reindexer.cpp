@@ -33,6 +33,7 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/reindexer.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
@@ -95,7 +96,16 @@ Reindexer::Reindexer (
   converter_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_factory_(std::move(converter_factory))
-{}
+{
+  // Make sure pointer isn't pointing to uninitialized memory
+  // std::unique_ptr<rosbag2_cpp::readers::SequentialReader> bagfile_reader = nullptr;
+
+  // // TODO: figure out how to make reader creation more generic
+  // //       i.e: allow other reader types here, automagically
+  // auto bagfile_reader_ = std::make_unique<rosbag2_cpp::Reader> (
+  //   std::make_unique<rosbag2_cpp::readers::SequentialReader>(storage_factory_, converter_, metadata_io_)
+  // );
+}
 
 Reindexer::~Reindexer()
 {
@@ -104,9 +114,9 @@ Reindexer::~Reindexer()
 
 void Reindexer::reset()
 {
-  if (storage_) {
-    storage_.reset();
-  }
+  // if (storage_) {
+  //   storage_.reset();
+  // }
 }
 
 bool Reindexer::comp_rel_file(
@@ -207,19 +217,19 @@ std::vector<rcpputils::fs::path> Reindexer::get_database_files(
   return output;
 }
 
-void Reindexer::open(const rosbag2_storage::StorageOptions & storage_options)
-{
-  // Since this is a reindexing operation, assume that there is no metadata.yaml file.
-  // As such, ask the storage with the given URI for its metadata.
-  storage_ = storage_factory_->open_read_only(storage_options);
-  if (!storage_) {
-    throw std::runtime_error{"No storage could be initialized. Abort"};
-  }
-}
+// void Reindexer::open(const rcpputils::fs::path & bag_file)
+// {
+//   // // Since this is a reindexing operation, assume that there is no metadata.yaml file.
+//   // // As such, ask the storage with the given URI for its metadata.
+//   // storage_ = storage_factory_->open_read_only(storage_options);
+//   // if (!storage_) {
+//   //   throw std::runtime_error{"No storage could be initialized. Abort"};
+//   // }
+// }
 
 void Reindexer::fill_topics_metadata()
 {
-  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  // rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
   topics_metadata_.clear();
   topics_metadata_.reserve(metadata_.topics_with_message_count.size());
   for (const auto & topic_information : metadata_.topics_with_message_count) {
@@ -255,6 +265,8 @@ void Reindexer::aggregate_metadata(
   // metadata object.
   ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
+
+    // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
       f_.string(),  // uri
       storage_options.storage_id,  // storage_id
@@ -263,12 +275,20 @@ void Reindexer::aggregate_metadata(
       storage_options.max_cache_size,  // max_cache_size
       storage_options.storage_config_uri  // storage_config_uri
     };
-    open(temp_so);  // Class storage_ is now full
+    auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
+      storage_factory_, converter_factory_, metadata_io_);
+    
+    // We aren't actually interested in reading messages, so use a blank converter option
+    rosbag2_cpp::ConverterOptions blank_converter_options {};
 
-    auto temp_metadata = storage_->get_metadata();
+    bag_reader->open(temp_so, blank_converter_options);
 
-    // Last opened file will have our starting time
-    metadata_.starting_time = temp_metadata.starting_time;
+    // Get metadata from the bag file
+    auto temp_metadata = bag_reader->get_metadata();
+
+    if (temp_metadata.starting_time < metadata_.starting_time) {
+      metadata_.starting_time = temp_metadata.starting_time;
+    }
     metadata_.duration += temp_metadata.duration;
     metadata_.message_count += temp_metadata.message_count;
 
@@ -300,7 +320,7 @@ void Reindexer::aggregate_metadata(
     }
 
     ROSBAG2_CPP_LOG_INFO("Closing database");
-    storage_.reset();  // Class storage_ is now empty
+    bag_reader.reset(); // Close the reader
   }
 }
 
