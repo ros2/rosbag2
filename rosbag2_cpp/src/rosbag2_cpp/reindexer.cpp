@@ -53,8 +53,6 @@
 
 namespace rosbag2_cpp
 {
-namespace reindexers
-{
 namespace details
 {
 std::vector<rcpputils::fs::path> resolve_relative_paths(
@@ -316,5 +314,4 @@ void Reindexer::finalize_metadata()
     }
   }
 }
-}  // namespace reindexers
 }  // namespace rosbag2_cpp
