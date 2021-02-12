@@ -245,11 +245,12 @@ void Reindexer::aggregate_metadata(
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
     }
-    // ROSBAG2_CPP_LOG_INFO_STREAM("Current duration: " + std::to_string(metadata_.duration.count()));
+    // ROSBAG2_CPP_LOG_INFO_STREAM(
+    //  "Current duration: " + std::to_string(metadata_.duration.count()));
     // ROSBAG2_CPP_LOG_INFO_STREAM(
     //   "Incoming duration: " + std::to_string(temp_metadata.duration.count()));
     metadata_.duration += temp_metadata.duration;
-    // ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
+    ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
     metadata_.message_count += temp_metadata.message_count;
 
     // Add the topic metadata
