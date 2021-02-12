@@ -105,18 +105,15 @@ void SequentialReader::open(
     storage_options_.uri = get_current_file();
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
-      ROSBAG2_CPP_LOG_WARN("Error at sequential_reader, line 105");
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
   } else {
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
-      ROSBAG2_CPP_LOG_WARN("Error at sequential_reader, line 111");
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
-      ROSBAG2_CPP_LOG_WARN("Error at sequential_reader, line 116");
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
     }
@@ -125,7 +122,6 @@ void SequentialReader::open(
   }
   auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
-    ROSBAG2_CPP_LOG_WARN("Error at sequential_reader, line 125");
     ROSBAG2_CPP_LOG_WARN("No topics were listed in metadata.");
     return;
   }
