@@ -264,8 +264,9 @@ void Reindexer::aggregate_metadata(
   // visit each of the contained relative database files in the bag,
   // open them, slurp up the info, and stuff it into the master
   // metadata object.
+  auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
   auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
-    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
   ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_INFO_STREAM("Extracting from file: " + f_.string());
