@@ -70,20 +70,15 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
 
   reindexer->reindex(so);
 
-  // We should have a metadata file at this point
   auto generated_file = rcpputils::fs::path(bag_dir + "/metadata.yaml");
   EXPECT_TRUE(generated_file.exists());
 
-  // We made it here. Excellent. Truly excellent.
-  // Read the generated and target metadata
   auto metadata_io = std::make_unique<rosbag2_storage::MetadataIo>();
   auto generated_metadata = metadata_io->read_metadata(bag_dir);
   auto target_metadata = metadata_io->read_metadata(target_dir + "/multiple_files");
 
-  // Compare versions
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
 
-  // Compare relative file paths
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
     EXPECT_TRUE(
       std::find(
@@ -92,19 +87,15 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
         gen_rel_path) != target_metadata.relative_file_paths.end());
   }
 
-  // Compare starting times
   // Disabled for now, since it may not be possible to 100% recreate
   //   original starting time from metadata
   // EXPECT_EQ(generated_metadata.starting_time, target_metadata.starting_time);
 
-  // Compare durations
   // Disabled for now, since I'm not sure how duraction is created, and if it's correct (jhdcs)
   // EXPECT_EQ(generated_metadata.duration, target_metadata.duration);
 
-  // Compare message count
   EXPECT_EQ(generated_metadata.message_count, target_metadata.message_count);
 
-  // Compare topic information
   // Reindexer can only reconstruct topics that had messages, so not all topics may exist
   for (const auto & gen_topic : generated_metadata.topics_with_message_count) {
     EXPECT_TRUE(
@@ -122,7 +113,6 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
     );
   }
 
-  // Clean up generated file
   if (generated_file.exists()) {
     remove(generated_file);
   }

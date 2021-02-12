@@ -60,8 +60,6 @@ public:
   Reindexer(
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
@@ -89,12 +87,7 @@ protected:
 private:
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
-  // std::unique_ptr<rosbag2_cpp::Reader> bagfile_reader_;
-
   std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
-
-  // // Open a single bag FILE (not the whole bag, just an internal file) for processing
-  // void open(const rcpputils::fs::path & bag_file);
 
   // Prepares the metadata by setting initial values.
   void init_metadata(
@@ -106,7 +99,7 @@ private:
     const std::vector<rcpputils::fs::path> & files,
     const rosbag2_storage::StorageOptions & storage_options);
 
-  // Compairson function for std::sort with our filepath convention
+  // Comparison function for std::sort with our filepath convention
   static bool comp_rel_file(
     const rcpputils::fs::path & first_path,
     const rcpputils::fs::path & second_path);
