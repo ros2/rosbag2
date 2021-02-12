@@ -90,12 +90,10 @@ std::string strip_parent_path(const rcpputils::fs::path & relative_path)
 
 Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
   converter_(nullptr),
-  metadata_io_(std::move(metadata_io)),
-  converter_factory_(std::move(converter_factory)) {}
+  metadata_io_(std::move(metadata_io)) {}
 
 Reindexer::~Reindexer()
 {
@@ -104,9 +102,6 @@ Reindexer::~Reindexer()
 
 void Reindexer::reset()
 {
-  // if (storage_) {
-  //   storage_.reset();
-  // }
 }
 
 bool Reindexer::comp_rel_file(
@@ -128,7 +123,6 @@ bool Reindexer::comp_rel_file(
     throw std::runtime_error("Malformed relative file name. Expected numerical identifier.");
   }
 
-  // Convert database numbers to uint
   u_int32_t first_db_num = std::stoul(first_match.str(1), nullptr, 10);
   u_int32_t second_db_num = std::stoul(second_match.str(1), nullptr, 10);
 
