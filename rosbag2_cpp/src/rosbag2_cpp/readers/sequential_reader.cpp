@@ -138,6 +138,7 @@ bool SequentialReader::has_next()
       load_next_file();
       storage_ = storage_factory_->open_read_only(
         get_current_file(), metadata_.storage_identifier);
+      storage_->set_filter(topics_filter_);
     }
 
     return storage_->has_next();
@@ -169,8 +170,9 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and
 void SequentialReader::set_filter(
   const rosbag2_storage::StorageFilter & storage_filter)
 {
+  topics_filter_ = storage_filter;
   if (storage_) {
-    storage_->set_filter(storage_filter);
+    storage_->set_filter(topics_filter_);
     return;
   }
   throw std::runtime_error(
@@ -179,6 +181,7 @@ void SequentialReader::set_filter(
 
 void SequentialReader::reset_filter()
 {
+  topics_filter_ = rosbag2_storage::StorageFilter();
   if (storage_) {
     storage_->reset_filter();
     return;

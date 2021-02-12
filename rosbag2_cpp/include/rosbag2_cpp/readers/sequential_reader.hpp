@@ -137,6 +137,7 @@ protected:
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
+  rosbag2_storage::StorageFilter topics_filter_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
