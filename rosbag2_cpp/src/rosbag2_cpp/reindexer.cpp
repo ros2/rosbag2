@@ -54,46 +54,10 @@
 
 namespace rosbag2_cpp
 {
-namespace details
-{
-std::vector<rcpputils::fs::path> resolve_relative_paths(
-  const rcpputils::fs::path & base_folder,
-  std::vector<rcpputils::fs::path> relative_files,
-  const int version = 4)
-{
-  auto base_path = rcpputils::fs::path(base_folder);  // Preserve folder
-  if (version < 4) {
-    // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
-    base_path = rcpputils::fs::path(base_folder).parent_path();
-  }
-
-  rcpputils::require_true(
-    base_path.exists(), "base folder does not exist: " + base_folder.string());
-  rcpputils::require_true(
-    base_path.is_directory(), "base folder has to be a directory: " + base_folder.string());
-
-  for (auto & file : relative_files) {
-    auto path = rcpputils::fs::path(file);
-    if (path.is_absolute()) {
-      continue;
-    }
-    file = (base_path / path).string();
-  }
-
-  return relative_files;
-}
-}  // namespace details
-
-std::string strip_parent_path(const rcpputils::fs::path & relative_path)
-{
-  return relative_path.filename().string();
-}
-
 Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
-  converter_(nullptr),
   metadata_io_(std::move(metadata_io)) {}
 
 Reindexer::~Reindexer()
@@ -101,11 +65,7 @@ Reindexer::~Reindexer()
   reset();
 }
 
-void Reindexer::reset()
-{
-}
-
-bool Reindexer::comp_rel_file(
+bool Reindexer::compare_relative_file(
   const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
 {
   std::regex regex_rule(".*_(\\d+)\\.db3", std::regex_constants::ECMAScript);
@@ -130,7 +90,7 @@ bool Reindexer::comp_rel_file(
   return first_db_num < second_db_num;
 }
 
-std::vector<rcpputils::fs::path> Reindexer::get_database_files(
+std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
   const rcpputils::fs::path & base_folder)
 {
   // Look in the uri directory to see what database files are there
@@ -186,7 +146,7 @@ void Reindexer::init_metadata(
 
   // Record the relative paths to the metadata
   for (const auto & path : files) {
-    auto cleaned_path = strip_parent_path(path);
+    auto cleaned_path = path.filename().string();
     metadata_.relative_file_paths.push_back(cleaned_path);
   }
 }
@@ -225,16 +185,11 @@ void Reindexer::aggregate_metadata(
     ROSBAG2_CPP_LOG_INFO_STREAM("Preparing to open...");
     bag_reader->open(temp_so, blank_converter_options);
     ROSBAG2_CPP_LOG_INFO_STREAM("Opened");
-    // Get metadata from the bag file
     auto temp_metadata = bag_reader->get_metadata();
 
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
     }
-    // ROSBAG2_CPP_LOG_INFO_STREAM(
-    //  "Current duration: " + std::to_string(metadata_.duration.count()));
-    // ROSBAG2_CPP_LOG_INFO_STREAM(
-    //   "Incoming duration: " + std::to_string(temp_metadata.duration.count()));
     metadata_.duration += temp_metadata.duration;
     ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
     metadata_.message_count += temp_metadata.message_count;
@@ -264,7 +219,7 @@ void Reindexer::aggregate_metadata(
     }
 
     ROSBAG2_CPP_LOG_INFO("Closing database");
-    bag_reader->reset();   // Close the reader's storage
+    bag_reader->reset();
   }
 
   // Convert the topic map into topic metadata
@@ -277,9 +232,9 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
   ROSBAG2_CPP_LOG_INFO("Beginning Reindex Operation.");
 
-  // Identify all database files
+  // Identify all bag files
   base_folder_ = storage_options.uri;
-  auto files = get_database_files(base_folder_);
+  auto files = get_bag_files(base_folder_);
   std::cout << "Finished getting database files\n";
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
