@@ -56,7 +56,9 @@ macro(rosbag2_storage_register_storage_plugin target)
   endforeach()
 
   if(_ARG_SKIP_INSTALL)
-    ament_index_register_resource("rosbag2_storage_plugins" CONTENT ${_STORAGE_PLUGINS} AMENT_INDEX_BINARY_DIR "${CMAKE_BINARY_DIR}/ament_cmake_index_$<CONFIG>" SKIP_INSTALL)
+    ament_index_register_resource("rosbag2_storage_plugins" CONTENT ${_STORAGE_PLUGINS}
+      AMENT_INDEX_BINARY_DIR "${CMAKE_BINARY_DIR}/ament_cmake_index_$<CONFIG>"
+      SKIP_INSTALL)
   else()
     ament_index_register_resource("rosbag2_storage_plugins" CONTENT ${_STORAGE_PLUGINS})
   endif()
