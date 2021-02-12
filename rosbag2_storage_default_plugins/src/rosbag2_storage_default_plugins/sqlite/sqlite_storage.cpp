@@ -260,6 +260,7 @@ void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMe
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
