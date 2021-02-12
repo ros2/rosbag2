@@ -106,12 +106,16 @@ class PostprocessStorageConfig(Postprocess):
                     cache_samples[sample[0]['cache_size']].append(
                         int(sample[0]['total_recorded_count'])/sample_total_produced)
 
-                cache_avg_recorded_percentage = {
-                    cache: statistics.mean(samples)
+                cache_recorded_percentage_stats = {
+                    cache: {
+                        'avg': statistics.mean(samples),
+                        'min': min(samples),
+                        'max': max(samples)
+                    }
                     for cache, samples in cache_samples.items()
                 }
                 cache_data_per_storage_conf.update(
-                    {storage_cfg_name: cache_avg_recorded_percentage}
+                    {storage_cfg_name: cache_recorded_percentage_stats}
                 )
 
             result = {
@@ -135,9 +139,11 @@ class PostprocessStorageConfig(Postprocess):
             for storage_cfg, caches in result['cache_data'].items():
                 print('\t\tstorage config: {}:'.format(pathlib.Path(storage_cfg).name))
                 for cache, percent_recorded in caches.items():
-                    print('\t\t\tcache [bytes]: {:,}: {:.2%} recorded'.format(
+                    print('\t\t\tcache {:,} - min: {:.2%}, average: {:.2%}, max: {:.2%}'.format(
                         int(cache),
-                        percent_recorded))
+                        percent_recorded['min'],
+                        percent_recorded['avg'],
+                        percent_recorded['max']))
 
         [
             __process_test(

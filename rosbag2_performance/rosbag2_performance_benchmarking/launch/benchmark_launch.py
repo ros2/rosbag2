@@ -51,6 +51,7 @@ import pathlib
 import shutil
 import signal
 import sys
+import time
 
 from ament_index_python import get_package_share_directory
 
@@ -196,8 +197,22 @@ def _producer_node_exited(event, context):
     # Handle clearing bag files
     if not node_params['preserve_bags']:
         db_files = pathlib.Path.cwd().joinpath(node_params['db_folder']).glob('*.db3')
+        stats_path = pathlib.Path.cwd().joinpath(node_params['db_folder'], 'bagfiles_info.yaml')
+        stats = {
+            'total_size': 0,
+            'bagfiles': []
+        }
+
+        # Delete rosbag files
         for f in db_files:
+            filesize = f.stat().st_size
             f.unlink()
+            stats['bagfiles'].append({f.name: {'size': filesize}})
+            stats['total_size'] += filesize
+
+        # Dump files size information
+        with open(stats_path, 'w') as stats_file:
+            yaml.dump(stats, stats_file)
 
     # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
     if _rosbag_pid is not None and transport:
@@ -217,6 +232,10 @@ def _producer_node_exited(event, context):
 
     # Bump up producer index, so the launch sequence can continue
     _producer_idx += 1
+
+    # Give disks some time to flush their internal cache before starting next experiment
+    time.sleep(5)
+
     return [
         launch.actions.LogInfo(
             msg='---------------------------'
@@ -435,7 +454,7 @@ def generate_launch_description():
                     'sigkill_timeout', default=60),
                 sigterm_timeout=launch.substitutions.LaunchConfiguration(
                     'sigterm_timeout', default=60),
-                cmd=['ros2', 'bag', 'record', '-a'] + rosbag_args
+                cmd=['ros2', 'bag', 'record', '-e', r'\/.*_benchmarking_node\/.*'] + rosbag_args
             )
 
             # Result writer node walks through output metadata files and generates

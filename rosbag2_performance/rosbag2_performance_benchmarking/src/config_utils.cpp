@@ -43,8 +43,8 @@ void load_qos_configuration(
   // TODO(adamdbrw) - error handling / map string to function
   if (qos_reliability == "reliable") {group_config.qos.reliable();}
   if (qos_reliability == "best_effort") {group_config.qos.best_effort();}
-  if (qos_reliability == "transient_local") {group_config.qos.transient_local();}
-  if (qos_reliability == "volatile") {group_config.qos.durability_volatile();}
+  if (qos_durability == "transient_local") {group_config.qos.transient_local();}
+  if (qos_durability == "volatile") {group_config.qos.durability_volatile();}
 }
 
 bool wait_for_subscriptions_from_node_parameters(rclcpp::Node & node)
