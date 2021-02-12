@@ -243,6 +243,7 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
