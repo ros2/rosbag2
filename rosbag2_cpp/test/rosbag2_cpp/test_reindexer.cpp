@@ -55,13 +55,8 @@ public:
     target_dir = database_path + "/target_metadata";
   }
 
-  // std::shared_ptr<NiceMock<MockStorage>> storage_;
-  // std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
-  // std::unique_ptr<rosbag2_cpp::Reader> reader_;
-  // std::string storage_serialization_format_;
   std::string database_path;
   std::string target_dir;
-  // rosbag2_storage::StorageOptions default_storage_options_;
 };
 
 TEST_F(ReindexTestFixture, test_multiple_files) {
