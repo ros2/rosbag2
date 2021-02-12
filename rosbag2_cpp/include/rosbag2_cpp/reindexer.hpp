@@ -20,8 +20,8 @@
 //
 // This notice must appear in all copies of this file and its derivatives.
 
-#ifndef ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
-#define ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
+#ifndef ROSBAG2_CPP__REINDEXER_HPP_
+#define ROSBAG2_CPP__REINDEXER_HPP_
 
 #include <memory>
 #include <regex>
@@ -121,4 +121,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
+#endif  // ROSBAG2_CPP__REINDEXER_HPP_
