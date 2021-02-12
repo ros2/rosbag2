@@ -31,6 +31,7 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -79,7 +80,6 @@ public:
 
 protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
@@ -89,12 +89,14 @@ protected:
   std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};
 
 private:
-  rcpputils::fs::path base_folder_;
+  rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
+  // std::unique_ptr<rosbag2_cpp::Reader> bagfile_reader_;
 
   std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
 
-  void open(const rosbag2_storage::StorageOptions & storage_options);
+  // // Open a single bag FILE (not the whole bag, just an internal file) for processing
+  // void open(const rcpputils::fs::path & bag_file);
 
   // Prepares the metadata by setting initial values.
   void init_metadata(
