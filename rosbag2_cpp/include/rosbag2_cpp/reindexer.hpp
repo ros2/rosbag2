@@ -59,7 +59,7 @@ namespace rosbag2_cpp
  *
  * Reindexing is an operation where a bag that is missing a metadata.yaml file can have a new
  *   file created through parsing of the metadata stored within the actual files of the bag.
- *   For instance: Here, we are working with SQL databases (.db3). We can open the individual
+ *   For instance: Imagine we are working with SQL databases (.db3). We can open the individual
  *   .db3 files within the bag and read their metadata (not the messages themselves) to replicate
  *   a usable metadata.yaml file, so that the bag can once again be read by the standard read
  *   command.
@@ -91,18 +91,14 @@ public:
 
 protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
-  std::vector<rcpputils::fs::path> file_paths_{};  // List of database files.
-  // Index of file to read from
-  std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};
 
 private:
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
+  std::vector<rcpputils::fs::path> get_bag_files(const rcpputils::fs::path & base_folder);
 
   // Reconstructs the topic metadata portion of the metadata.yaml file
   void fill_topics_metadata();
@@ -118,7 +114,7 @@ private:
     const rosbag2_storage::StorageOptions & storage_options);
 
   // Comparison function for std::sort with our filepath convention
-  static bool comp_rel_file(
+  static bool compare_relative_file(
     const rcpputils::fs::path & first_path,
     const rcpputils::fs::path & second_path);
 };
