@@ -276,7 +276,7 @@ void Reindexer::aggregate_metadata(
       storage_options.storage_config_uri  // storage_config_uri
     };
     auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
-      storage_factory_, converter_factory_, metadata_io_);
+      std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
     
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
