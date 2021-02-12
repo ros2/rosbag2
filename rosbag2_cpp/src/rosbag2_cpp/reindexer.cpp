@@ -97,18 +97,7 @@ Reindexer::Reindexer(
 : storage_factory_(std::move(storage_factory)),
   converter_(nullptr),
   metadata_io_(std::move(metadata_io)),
-  converter_factory_(std::move(converter_factory))
-{
-  // Make sure pointer isn't pointing to uninitialized memory
-  // std::unique_ptr<rosbag2_cpp::readers::SequentialReader> bagfile_reader = nullptr;
-
-  // // TODO: figure out how to make reader creation more generic
-  // //       i.e: allow other reader types here, automagically
-  // auto bagfile_reader_ = std::make_unique<rosbag2_cpp::Reader> (
-  //   std::make_unique<rosbag2_cpp::readers::SequentialReader>(storage_factory_,
-  //      converter_, metadata_io_)
-  // );
-}
+  converter_factory_(std::move(converter_factory)) {}
 
 Reindexer::~Reindexer()
 {
@@ -295,8 +284,7 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   auto files = get_database_files(base_folder_);
   std::cout << "Finished getting database files\n";
   if (files.empty()) {
-    ROSBAG2_CPP_LOG_ERROR("No database files found for reindexing. Abort");
-    return;
+    throw std::runtime_error("No database files found for reindexing. Abort");
   }
 
   // Create initial metadata
