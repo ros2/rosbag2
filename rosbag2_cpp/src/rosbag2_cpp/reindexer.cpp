@@ -32,6 +32,8 @@
 #include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
+#include "rcutils/filesystem.h"
+
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/reindexer.hpp"
@@ -152,63 +154,24 @@ std::vector<rcpputils::fs::path> Reindexer::get_database_files(
   // Look in the uri directory to see what database files are there
   std::vector<rcpputils::fs::path> output;
 
-  #ifdef WIN32
-  {
-    // Code placed in scope so variables can't accidentally be used elsewhere
-    WIN32_FIND_DATA FindFileData;
-    HANDLE hFind;
+  auto allocator = rcutils_get_default_allocator();
+  auto dir_iter = rcutils_dir_iter_start(base_folder.string().c_str(), allocator);
 
-    std::string search_dir = base_folder.string() + "\\*";
-    hFind = FindFirstFile(search_dir, &FindFileData);
-    // If an error occurs, we want to abort
-    if (hFind == INVALID_HANDLE_VALUE) {
-      DWORD dwError = GetLastError();
-      std::error_code ec(dwError, std::system_category());
-      throw(std::system_error(ec));
-    }
-
-    // Loop through the directory, collecting file names as we go
-    do {
-      if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        // I guess it's a directory in the bag file?
-        // Still, not interested in it.
-        continue;
-      } else {
-        auto temp_path = rcpputils::fs::path(ffd.cFileName);
-
-        // We are ONLY interested in database files
-        if (temp_path.extension().string() != ".db3") {
-          continue;
-        }
-        output.emplace_back(temp_path);
-      }
-    } while (FindNextFile(hFind, &ffd) != 0);
-
-    FindClose(hFind);
+  // Make sure there are files in the directory
+  if (dir_iter == nullptr) {
+    throw std::runtime_error("Empty directory.");
   }
-  #else
-  {
-    // Code placed in scope so variables can't accidentally be used elsewhere
-    auto dirp = opendir(base_folder.string().c_str());
-    // If an error occurs, we want to abort
-    if (dirp == NULL) {
-      throw std::system_error(errno, std::generic_category());
-    }
-    dirent * dp;
-    while ((dp = readdir(dirp)) != NULL) {
-      auto non_const_folder = rcpputils::fs::path(base_folder);
-      auto temp_path = non_const_folder /= rcpputils::fs::path(dp->d_name);
 
-      // We are ONLY interested in database files
-      if (temp_path.extension().string() != ".db3") {
-        continue;
-      }
+  // Get all file names in directory
+  do {
+    auto found_file = rcpputils::fs::path(dir_iter->entry_name);
 
-      output.emplace_back(temp_path);
+    // We are ONLY interested in database files
+    if (found_file.extension().string() == ".db3") {
+      auto full_path = base_folder / found_file;
+      output.emplace_back(full_path);
     }
-    closedir(dirp);
-  }
-  #endif
+  } while (rcutils_dir_iter_next(dir_iter));
 
   // Sort relative file path by database number
   std::sort(
@@ -217,16 +180,6 @@ std::vector<rcpputils::fs::path> Reindexer::get_database_files(
 
   return output;
 }
-
-// void Reindexer::open(const rcpputils::fs::path & bag_file)
-// {
-//   // // Since this is a reindexing operation, assume that there is no metadata.yaml file.
-//   // // As such, ask the storage with the given URI for its metadata.
-//   // storage_ = storage_factory_->open_read_only(storage_options);
-//   // if (!storage_) {
-//   //   throw std::runtime_error{"No storage could be initialized. Abort"};
-//   // }
-// }
 
 void Reindexer::fill_topics_metadata()
 {
@@ -292,11 +245,11 @@ void Reindexer::aggregate_metadata(
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
     }
-    ROSBAG2_CPP_LOG_INFO_STREAM("Current duration: " + std::to_string(metadata_.duration.count()));
-    ROSBAG2_CPP_LOG_INFO_STREAM(
-      "Incoming duration: " + std::to_string(temp_metadata.duration.count()));
+    // ROSBAG2_CPP_LOG_INFO_STREAM("Current duration: " + std::to_string(metadata_.duration.count()));
+    // ROSBAG2_CPP_LOG_INFO_STREAM(
+    //   "Incoming duration: " + std::to_string(temp_metadata.duration.count()));
     metadata_.duration += temp_metadata.duration;
-    ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
+    // ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
     metadata_.message_count += temp_metadata.message_count;
 
     // Add the topic metadata
