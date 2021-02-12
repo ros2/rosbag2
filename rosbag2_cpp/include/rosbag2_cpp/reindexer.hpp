@@ -54,6 +54,22 @@
 namespace rosbag2_cpp
 {
 
+/*************************************************************************************************
+ * Base class for a Reindexer
+ *
+ * Reindexing is an operation where a bag that is missing a metadata.yaml file can have a new
+ *   file created through parsing of the metadata stored within the actual files of the bag.
+ *   For instance: Here, we are working with SQL databases (.db3). We can open the individual
+ *   .db3 files within the bag and read their metadata (not the messages themselves) to replicate
+ *   a usable metadata.yaml file, so that the bag can once again be read by the standard read
+ *   command.
+ *
+ * Reindexing has some limitations - It cannot perfectly replicate the original metadata file,
+ *   since some information known by the program from the start up command cannot be found
+ *   within the metadata. But it should at least repair a bag to the point it can be read
+ *   again.
+ *************************************************************************************************
+  */
 class ROSBAG2_CPP_PUBLIC Reindexer
 {
 public:
@@ -65,14 +81,13 @@ public:
 
   virtual ~Reindexer();
 
-
+  // Uses the supplied storage options to reindex a bag defined by the storage options URI
+  //
+  // The passed-in storage options should contain the best-guess information of the bag's
+  //   original creation parameters.
   void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
-  void fill_topics_metadata();
-
   void reset();
-
-  void finalize_metadata();
 
 protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
@@ -88,6 +103,9 @@ private:
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
+
+  // Reconstructs the topic metadata portion of the metadata.yaml file
+  void fill_topics_metadata();
 
   // Prepares the metadata by setting initial values.
   void init_metadata(

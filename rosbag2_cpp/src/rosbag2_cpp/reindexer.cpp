@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -194,6 +195,8 @@ void Reindexer::aggregate_metadata(
   const std::vector<rcpputils::fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)
 {
+  std::map<std::string, rosbag2_storage::TopicInformation> temp_topic_info;
+
   // In order to most accurately reconstruct the metadata, we need to
   // visit each of the contained relative database files in the bag,
   // open them, slurp up the info, and stuff it into the master
@@ -204,6 +207,8 @@ void Reindexer::aggregate_metadata(
   ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_INFO_STREAM("Extracting from file: " + f_.string());
+
+    metadata_.bag_size = f_.file_size();
 
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
@@ -236,27 +241,24 @@ void Reindexer::aggregate_metadata(
 
     // Add the topic metadata
     for (const auto & topic : temp_metadata.topics_with_message_count) {
-      auto found_topic = std::find_if(
-        metadata_.topics_with_message_count.begin(),
-        metadata_.topics_with_message_count.end(),
-        [&topic](const rosbag2_storage::TopicInformation & agg_topic)
-        {return topic.topic_metadata.name == agg_topic.topic_metadata.name;});
-      if (found_topic == metadata_.topics_with_message_count.end()) {
+      auto found_topic = temp_topic_info.find(topic.topic_metadata.name);
+      if (found_topic == temp_topic_info.end()) {
         // It's a new topic. Add it.
-        metadata_.topics_with_message_count.emplace_back(topic);
+        temp_topic_info[topic.topic_metadata.name] = topic;
       } else {
+        ROSBAG2_CPP_LOG_INFO_STREAM("Found topic!");
         // Merge in the new information
-        found_topic->message_count += topic.message_count;
+        found_topic->second.message_count += topic.message_count;
         if (topic.topic_metadata.offered_qos_profiles != "") {
-          found_topic->topic_metadata.offered_qos_profiles =
+          found_topic->second.topic_metadata.offered_qos_profiles =
             topic.topic_metadata.offered_qos_profiles;
         }
         if (topic.topic_metadata.serialization_format != "") {
-          found_topic->topic_metadata.serialization_format =
+          found_topic->second.topic_metadata.serialization_format =
             topic.topic_metadata.serialization_format;
         }
         if (topic.topic_metadata.type != "") {
-          found_topic->topic_metadata.type = topic.topic_metadata.type;
+          found_topic->second.topic_metadata.type = topic.topic_metadata.type;
         }
       }
     }
@@ -264,7 +266,11 @@ void Reindexer::aggregate_metadata(
     ROSBAG2_CPP_LOG_INFO("Closing database");
     bag_reader->reset();   // Close the reader's storage
   }
-  bag_reader.reset();   // Delete the reader
+
+  // Convert the topic map into topic metadata
+  for (auto & topic : temp_topic_info) {
+    metadata_.topics_with_message_count.emplace_back(topic.second);
+  }
 }
 
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
@@ -287,25 +293,8 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   aggregate_metadata(files, storage_options);
   ROSBAG2_CPP_LOG_INFO_STREAM("Completed aggregate_metadata");
 
-  // Perform final touch-up
-  finalize_metadata();
-  ROSBAG2_CPP_LOG_INFO_STREAM("Completed finalize_metadata");
-
   ROSBAG2_CPP_LOG_INFO_STREAM("Base folder located at: " + base_folder_.string());
   metadata_io_->write_metadata(base_folder_.string(), metadata_);
   ROSBAG2_CPP_LOG_INFO("Reindexing operation completed.");
-}
-
-void Reindexer::finalize_metadata()
-{
-  metadata_.bag_size = 0;
-
-  for (const auto & path : metadata_.relative_file_paths) {
-    const auto bag_path = rcpputils::fs::path{path};
-
-    if (bag_path.exists()) {
-      metadata_.bag_size += bag_path.file_size();
-    }
-  }
 }
 }  // namespace rosbag2_cpp
