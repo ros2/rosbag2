@@ -53,8 +53,6 @@
 
 namespace rosbag2_cpp
 {
-namespace reindexers
-{
 
 class ROSBAG2_CPP_PUBLIC Reindexer
 {
@@ -114,7 +112,6 @@ private:
     const rcpputils::fs::path & second_path);
 };
 
-}  // namespace reindexers
 }  // namespace rosbag2_cpp
 
 #ifdef _WIN32

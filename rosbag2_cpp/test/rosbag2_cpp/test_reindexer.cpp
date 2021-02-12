@@ -61,8 +61,8 @@ public:
 
 TEST_F(ReindexTestFixture, test_multiple_files) {
   auto bag_dir = database_path + "/multiple_files";
-  std::unique_ptr<rosbag2_cpp::reindexers::Reindexer> reindexer =
-    std::make_unique<rosbag2_cpp::reindexers::Reindexer>();
+  std::unique_ptr<rosbag2_cpp::Reindexer> reindexer =
+    std::make_unique<rosbag2_cpp::Reindexer>();
 
   rosbag2_storage::StorageOptions so = rosbag2_storage::StorageOptions();
   so.uri = bag_dir;
