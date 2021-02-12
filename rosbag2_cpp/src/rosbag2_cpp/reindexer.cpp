@@ -60,10 +60,7 @@ Reindexer::Reindexer(
 : storage_factory_(std::move(storage_factory)),
   metadata_io_(std::move(metadata_io)) {}
 
-Reindexer::~Reindexer()
-{
-  reset();
-}
+Reindexer::~Reindexer() {}
 
 bool Reindexer::compare_relative_file(
   const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
@@ -118,7 +115,7 @@ std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
   // Sort relative file path by database number
   std::sort(
     output.begin(), output.end(),
-    [](rcpputils::fs::path a, rcpputils::fs::path b) {return comp_rel_file(a, b);});
+    [](rcpputils::fs::path a, rcpputils::fs::path b) {return compare_relative_file(a, b);});
 
   return output;
 }
