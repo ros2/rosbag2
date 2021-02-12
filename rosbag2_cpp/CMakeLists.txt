@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_cpp)
 
+add_definitions(-D_SRC_REINDEX_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/rosbag2_cpp/reindex_test_bags")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -175,6 +177,12 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_message_cache.cpp)
   if(TARGET test_message_cache)
     target_link_libraries(test_message_cache ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_reindex
+    test/rosbag2_cpp/test_reindexer.cpp)
+  if(TARGET test_reindex)
+    target_link_libraries(test_reindex ${PROJECT_NAME})
   endif()
 
   # If compiling with gcc, run this test with sanitizers enabled

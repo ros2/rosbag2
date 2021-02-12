@@ -88,7 +88,7 @@ std::string strip_parent_path(const rcpputils::fs::path & relative_path)
   return relative_path.filename().string();
 }
 
-Reindexer::Reindexer (
+Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
@@ -103,7 +103,8 @@ Reindexer::Reindexer (
   // // TODO: figure out how to make reader creation more generic
   // //       i.e: allow other reader types here, automagically
   // auto bagfile_reader_ = std::make_unique<rosbag2_cpp::Reader> (
-  //   std::make_unique<rosbag2_cpp::readers::SequentialReader>(storage_factory_, converter_, metadata_io_)
+  //   std::make_unique<rosbag2_cpp::readers::SequentialReader>(storage_factory_,
+  //      converter_, metadata_io_)
   // );
 }
 
@@ -265,6 +266,7 @@ void Reindexer::aggregate_metadata(
   // metadata object.
   ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
+    ROSBAG2_CPP_LOG_INFO_STREAM("Extracting from file: " + f_.string());
 
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
@@ -277,12 +279,12 @@ void Reindexer::aggregate_metadata(
     };
     auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
       std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
-    
+
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
-
+    ROSBAG2_CPP_LOG_INFO_STREAM("Preparing to open...");
     bag_reader->open(temp_so, blank_converter_options);
-
+    ROSBAG2_CPP_LOG_INFO_STREAM("Opened");
     // Get metadata from the bag file
     auto temp_metadata = bag_reader->get_metadata();
 
@@ -320,7 +322,7 @@ void Reindexer::aggregate_metadata(
     }
 
     ROSBAG2_CPP_LOG_INFO("Closing database");
-    bag_reader.reset(); // Close the reader
+    bag_reader.reset();   // Close the reader
   }
 }
 
