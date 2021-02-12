@@ -20,19 +20,27 @@
 //
 // This notice must appear in all copies of this file and its derivatives.
 
-#ifndef ROSBAG2_CPP__REINDEXER_HPP_
-#define ROSBAG2_CPP__REINDEXER_HPP_
+#ifndef ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
+#define ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
 
 #include <memory>
+#include <regex>
+#include <string>
+#include <vector>
 
-#include "rosbag2_cpp/converter_options.hpp"
+#include "rcpputils/filesystem_helper.hpp"
+
+#include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/serialization_format_converter_factory.hpp"
+#include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
-#include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
-#include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
@@ -44,37 +52,71 @@
 
 namespace rosbag2_cpp
 {
-
-namespace reindexer_interfaces
+namespace reindexers
 {
-class BaseReindexerInterface;
-}  // namespace reindexer_interfaces
 
-/**
- * The reindexer attempts to construct a metadata file based on information contained in the bag.
- */
-class ROSBAG2_CPP_PUBLIC Reindexer final
+class ROSBAG2_CPP_PUBLIC Reindexer
 {
 public:
-  explicit Reindexer(std::unique_ptr<reindexer_interfaces::BaseReindexerInterface> reindexer_impl);
+  Reindexer(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
+    std::make_unique<rosbag2_storage::StorageFactory>(),
+    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
+    std::make_shared<SerializationFormatConverterFactory>(),
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
+    std::make_unique<rosbag2_storage::MetadataIo>());
 
-  ~Reindexer();
+  virtual ~Reindexer();
 
-  /**
-   * Attempts to create a metadata file from the specified bag
-   *
-   * \throws runtime_error if the Reader is not open.
-   */
+
   void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
+  void fill_topics_metadata();
+
+  void reset();
+
+  void finalize_metadata();
+
+protected:
+  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
+  std::unique_ptr<Converter> converter_{};
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
+  rosbag2_storage::BagMetadata metadata_{};
+  std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
+  std::vector<rcpputils::fs::path> file_paths_{};  // List of database files.
+  // Index of file to read from
+  std::vector<rcpputils::fs::path>::iterator current_file_iterator_{};
+
 private:
-  std::unique_ptr<reindexer_interfaces::BaseReindexerInterface> reindexer_impl;
+  rcpputils::fs::path base_folder_;
+  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
+
+  std::vector<rcpputils::fs::path> get_database_files(const rcpputils::fs::path & base_folder);
+
+  void open(const rosbag2_storage::StorageOptions & storage_options);
+
+  // Prepares the metadata by setting initial values.
+  void init_metadata(
+    const std::vector<rcpputils::fs::path> & files,
+    const rosbag2_storage::StorageOptions & storage_options);
+
+  // Attempts to harvest metadata from all bag files, and aggregates the result
+  void aggregate_metadata(
+    const std::vector<rcpputils::fs::path> & files,
+    const rosbag2_storage::StorageOptions & storage_options);
+
+  // Compairson function for std::sort with our filepath convention
+  static bool comp_rel_file(
+    const rcpputils::fs::path & first_path,
+    const rcpputils::fs::path & second_path);
 };
 
+}  // namespace reindexers
 }  // namespace rosbag2_cpp
 
 #ifdef _WIN32
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__REINDEXER_HPP_
+#endif  // ROSBAG2_CPP__REINDEXERS__REINDEXER_HPP_
