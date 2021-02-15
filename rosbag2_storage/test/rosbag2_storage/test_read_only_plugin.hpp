@@ -45,6 +45,8 @@ public:
 
   std::string get_storage_identifier() const override;
 
+  std::string get_storage_extension() const override;
+
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
   void reset_filter() override;

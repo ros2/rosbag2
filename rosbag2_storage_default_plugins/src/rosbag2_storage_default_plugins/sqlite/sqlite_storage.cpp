@@ -169,6 +169,11 @@ SqliteStorage::~SqliteStorage()
   }
 }
 
+std::string SqliteStorage::get_storage_extension() const
+{
+  return FILE_EXTENSION;
+}
+
 void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)

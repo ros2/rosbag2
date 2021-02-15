@@ -81,6 +81,12 @@ std::string TestReadOnlyPlugin::get_storage_identifier() const
   return test_constants::READ_ONLY_PLUGIN_IDENTIFIER;
 }
 
+std::string TestReadOnlyPlugin::get_storage_extension() const
+{
+  std::cout << "\nreturning storage file extension\n";
+  return test_constants::READ_ONLY_PLUGIN_EXTENSION;
+}
+
 void TestReadOnlyPlugin::set_filter(
   const rosbag2_storage::StorageFilter & /*storage_filter*/)
 {
