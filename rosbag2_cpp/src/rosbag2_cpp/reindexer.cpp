@@ -65,7 +65,8 @@ Reindexer::~Reindexer() {}
 bool Reindexer::compare_relative_file(
   const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
 {
-  std::regex regex_rule(".*_(\\d+)\\.db3", std::regex_constants::ECMAScript);
+  std::string regex_pattern = ".*_(\\d+)\\.db3";
+  std::regex regex_rule(regex_pattern, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -78,7 +79,11 @@ bool Reindexer::compare_relative_file(
 
   // Make sure the paths have regex matches
   if (!first_regex_good || !second_regex_good) {
-    throw std::runtime_error("Malformed relative file name. Expected numerical identifier.");
+    std::stringstream ss;
+    ss << "Path " << first_path.string() <<
+      "didn't meet expected naming convention: " << regex_pattern;
+    std::string error_text = ss.str();
+    throw std::runtime_error(error_text.c_str());
   }
 
   u_int32_t first_db_num = std::stoul(first_match.str(1), nullptr, 10);
@@ -136,7 +141,6 @@ void Reindexer::init_metadata(
 {
   metadata_ = rosbag2_storage::BagMetadata{};
 
-  // This reindexer will only work on SQLite files, so this can't change
   metadata_.storage_identifier = storage_options.storage_id;
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
@@ -161,9 +165,9 @@ void Reindexer::aggregate_metadata(
   auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
   auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
-  ROSBAG2_CPP_LOG_INFO_STREAM("Extracting metadata from database(s)");
+  ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
-    ROSBAG2_CPP_LOG_INFO_STREAM("Extracting from file: " + f_.string());
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
 
     metadata_.bag_size = f_.file_size();
 
@@ -179,16 +183,16 @@ void Reindexer::aggregate_metadata(
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
-    ROSBAG2_CPP_LOG_INFO_STREAM("Preparing to open...");
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Preparing to open...");
     bag_reader->open(temp_so, blank_converter_options);
-    ROSBAG2_CPP_LOG_INFO_STREAM("Opened");
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Opened");
     auto temp_metadata = bag_reader->get_metadata();
 
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
     }
     metadata_.duration += temp_metadata.duration;
-    ROSBAG2_CPP_LOG_INFO_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("New duration: " + std::to_string(metadata_.duration.count()));
     metadata_.message_count += temp_metadata.message_count;
 
     // Add the topic metadata
@@ -198,7 +202,7 @@ void Reindexer::aggregate_metadata(
         // It's a new topic. Add it.
         temp_topic_info[topic.topic_metadata.name] = topic;
       } else {
-        ROSBAG2_CPP_LOG_INFO_STREAM("Found topic!");
+        ROSBAG2_CPP_LOG_DEBUG_STREAM("Found topic!");
         // Merge in the new information
         found_topic->second.message_count += topic.message_count;
         if (topic.topic_metadata.offered_qos_profiles != "") {
@@ -215,7 +219,7 @@ void Reindexer::aggregate_metadata(
       }
     }
 
-    ROSBAG2_CPP_LOG_INFO("Closing database");
+    ROSBAG2_CPP_LOG_DEBUG("Closing database");
     bag_reader->reset();
   }
 
@@ -227,26 +231,24 @@ void Reindexer::aggregate_metadata(
 
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
-  ROSBAG2_CPP_LOG_INFO("Beginning Reindex Operation.");
+  ROSBAG2_CPP_LOG_INFO_STREAM("Beginning bag in directory: " << base_folder_);
 
   // Identify all bag files
   base_folder_ = storage_options.uri;
   auto files = get_bag_files(base_folder_);
-  std::cout << "Finished getting database files\n";
+  ROSBAG2_CPP_LOG_DEBUG("Finished getting database files");
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
   }
 
-  // Create initial metadata
   init_metadata(files, storage_options);
-  ROSBAG2_CPP_LOG_INFO_STREAM("Completed init_metadata");
+  ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed init_metadata");
 
   // Collect all metadata from database files
   aggregate_metadata(files, storage_options);
-  ROSBAG2_CPP_LOG_INFO_STREAM("Completed aggregate_metadata");
+  ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed aggregate_metadata");
 
-  ROSBAG2_CPP_LOG_INFO_STREAM("Base folder located at: " + base_folder_.string());
   metadata_io_->write_metadata(base_folder_.string(), metadata_);
-  ROSBAG2_CPP_LOG_INFO("Reindexing operation completed.");
+  ROSBAG2_CPP_LOG_INFO("Reindexing complete.");
 }
 }  // namespace rosbag2_cpp
