@@ -97,6 +97,7 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
 
 private:
+  std::string regex_bag_extension_pattern_;
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::vector<rcpputils::fs::path> get_bag_files(const rcpputils::fs::path & base_folder);
@@ -112,7 +113,7 @@ private:
     const rosbag2_storage::StorageOptions & storage_options);
 
   // Comparison function for std::sort with our filepath convention
-  static bool compare_relative_file(
+  bool compare_relative_file(
     const rcpputils::fs::path & first_path,
     const rcpputils::fs::path & second_path);
 };

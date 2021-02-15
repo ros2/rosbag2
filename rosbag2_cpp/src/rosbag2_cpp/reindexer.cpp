@@ -58,15 +58,17 @@ Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
-  metadata_io_(std::move(metadata_io)) {}
+  metadata_io_(std::move(metadata_io))
+  {
+    regex_bag_extension_pattern_ = R"(._(\d+)\.([a-zA-Z0-9]))";
+  }
 
 Reindexer::~Reindexer() {}
 
 bool Reindexer::compare_relative_file(
   const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
 {
-  std::string regex_pattern = ".*_(\\d+)\\.db3";
-  std::regex regex_rule(regex_pattern, std::regex_constants::ECMAScript);
+  std::regex regex_rule(regex_bag_extension_pattern_, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -81,7 +83,7 @@ bool Reindexer::compare_relative_file(
   if (!first_regex_good || !second_regex_good) {
     std::stringstream ss;
     ss << "Path " << first_path.string() <<
-      "didn't meet expected naming convention: " << regex_pattern;
+      "didn't meet expected naming convention: " << regex_bag_extension_pattern_;
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
   }
@@ -120,7 +122,7 @@ std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
   // Sort relative file path by database number
   std::sort(
     output.begin(), output.end(),
-    [](rcpputils::fs::path a, rcpputils::fs::path b) {return compare_relative_file(a, b);});
+    [this](rcpputils::fs::path a, rcpputils::fs::path b) {return compare_relative_file(a, b);});
 
   return output;
 }
