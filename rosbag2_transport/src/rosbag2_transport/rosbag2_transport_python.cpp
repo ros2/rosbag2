@@ -285,7 +285,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   PyObject * topic_remapping = nullptr;
   char * storage_config_file = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfllOObO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfllOObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,

@@ -222,11 +222,27 @@ void Player::prepare_publishers(const PlayOptions & options)
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
+    // filter topics to add publishers if necessary
+    auto & filter_topics = storage_filter.topics;
+    if (!filter_topics.empty()) {
+      auto iter = std::find(filter_topics.begin(), filter_topics.end(), topic.name);
+      if (iter == filter_topics.end()) {
+        continue;
+      }
+    }
+
     auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
-    publishers_.insert(
-      std::make_pair(
-        topic.name, rosbag2_transport_->create_generic_publisher(
-          topic.name, topic.type, topic_qos)));
+    try {
+      publishers_.insert(
+        std::make_pair(
+          topic.name, rosbag2_transport_->create_generic_publisher(
+            topic.name, topic.type, topic_qos)));
+    } catch (const std::runtime_error & e) {
+      // using a warning log seems better than adding a new option
+      // to ignore some unknown message type library
+      ROSBAG2_TRANSPORT_LOG_WARN(
+        "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
+    }
   }
 }
 
