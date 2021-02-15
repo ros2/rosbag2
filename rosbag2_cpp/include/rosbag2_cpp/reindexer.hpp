@@ -102,6 +102,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(
     const rcpputils::fs::path & base_folder,
+    const std::string & expected_extension,
     std::vector<rcpputils::fs::path> & output);
 
   // Prepares the metadata by setting initial values.

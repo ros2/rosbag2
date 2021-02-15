@@ -106,8 +106,10 @@ bool Reindexer::compare_relative_file(
  */
 void Reindexer::get_bag_files(
   const rcpputils::fs::path & base_folder,
+  const std::string & expected_extension,
   std::vector<rcpputils::fs::path> & output)
 {
+  // std::regex regex_rule(R"([a-zA-Z0-9])", std::regex_constants::ECMAScript);
   auto allocator = rcutils_get_default_allocator();
   auto dir_iter = rcutils_dir_iter_start(base_folder.string().c_str(), allocator);
 
@@ -120,8 +122,9 @@ void Reindexer::get_bag_files(
   do {
     auto found_file = rcpputils::fs::path(dir_iter->entry_name);
 
-    // We are ONLY interested in database files
-    if (found_file.extension().string() == ".db3") {
+    // if (std::regex_match(found_file.extension().string(), regex_rule)) {
+    if (found_file.extension().string() == expected_extension)
+    {
       auto full_path = base_folder / found_file;
       output.emplace_back(full_path);
     }
@@ -167,6 +170,7 @@ void Reindexer::init_metadata(
  */
 void Reindexer::aggregate_metadata(
   const std::vector<rcpputils::fs::path> & files,
+  const std::unique_ptr<rosbag2_cpp::readers::SequentialReader> & bag_reader,
   const rosbag2_storage::StorageOptions & storage_options)
 {
   std::map<std::string, rosbag2_storage::TopicInformation> temp_topic_info;
@@ -175,9 +179,6 @@ void Reindexer::aggregate_metadata(
   // visit each of the contained relative database files in the bag,
   // open them, slurp up the info, and stuff it into the master
   // metadata object.
-  auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
-  auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
-    std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
@@ -250,10 +251,16 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
   ROSBAG2_CPP_LOG_INFO_STREAM("Beginning reindexing bag in directory: " << base_folder_);
 
+  auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
+  auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
+  
+  auto expected_extension = bag_reader->storage_->get_storage_extension();  // Does not currently work
+
   // Identify all bag files
   std::vector<rcpputils::fs::path> files;
   base_folder_ = storage_options.uri;
-  get_bag_files(base_folder_, files);
+  get_bag_files(base_folder_, expected_extension, files);
   ROSBAG2_CPP_LOG_DEBUG("Finished getting database files");
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
@@ -263,7 +270,7 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed init_metadata");
 
   // Collect all metadata from database files
-  aggregate_metadata(files, storage_options);
+  aggregate_metadata(files, bag_reader, storage_options);
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed aggregate_metadata");
 
   metadata_io_->write_metadata(base_folder_.string(), metadata_);
