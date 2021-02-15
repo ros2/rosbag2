@@ -125,16 +125,6 @@ std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
   return output;
 }
 
-void Reindexer::fill_topics_metadata()
-{
-  // rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
-  topics_metadata_.clear();
-  topics_metadata_.reserve(metadata_.topics_with_message_count.size());
-  for (const auto & topic_information : metadata_.topics_with_message_count) {
-    topics_metadata_.push_back(topic_information.topic_metadata);
-  }
-}
-
 void Reindexer::init_metadata(
   const std::vector<rcpputils::fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)

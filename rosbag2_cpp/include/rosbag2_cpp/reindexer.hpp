@@ -101,9 +101,6 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   std::vector<rcpputils::fs::path> get_bag_files(const rcpputils::fs::path & base_folder);
 
-  // Reconstructs the topic metadata portion of the metadata.yaml file
-  void fill_topics_metadata();
-
   // Prepares the metadata by setting initial values.
   void init_metadata(
     const std::vector<rcpputils::fs::path> & files,
