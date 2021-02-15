@@ -566,6 +566,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
 }
 
+#ifndef _WIN32
 TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
 
@@ -626,3 +627,4 @@ TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   // stops thread
   sub->add_subscription<test_msgs::msg::Strings>(first_topic_name, 0);
 }
+#endif
