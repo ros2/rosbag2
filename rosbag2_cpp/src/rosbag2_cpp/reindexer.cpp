@@ -182,7 +182,7 @@ void Reindexer::aggregate_metadata(
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
 
-    metadata_.bag_size = f_.file_size();
+    metadata_.bag_size += f_.file_size();
 
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
@@ -196,9 +196,7 @@ void Reindexer::aggregate_metadata(
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
-    ROSBAG2_CPP_LOG_DEBUG_STREAM("Preparing to open...");
     bag_reader->open(temp_so, blank_converter_options);
-    ROSBAG2_CPP_LOG_DEBUG_STREAM("Opened");
     auto temp_metadata = bag_reader->get_metadata();
 
     if (temp_metadata.starting_time < metadata_.starting_time) {
@@ -232,7 +230,6 @@ void Reindexer::aggregate_metadata(
       }
     }
 
-    ROSBAG2_CPP_LOG_DEBUG("Closing database");
     bag_reader->reset();
   }
 
