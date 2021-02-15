@@ -100,7 +100,9 @@ private:
   std::string regex_bag_extension_pattern_;
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::vector<rcpputils::fs::path> get_bag_files(const rcpputils::fs::path & base_folder);
+  void get_bag_files(
+    const rcpputils::fs::path & base_folder,
+    std::vector<rcpputils::fs::path> & output);
 
   // Prepares the metadata by setting initial values.
   void init_metadata(

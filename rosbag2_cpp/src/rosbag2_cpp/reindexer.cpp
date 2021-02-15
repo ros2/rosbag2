@@ -65,6 +65,11 @@ Reindexer::Reindexer(
 
 Reindexer::~Reindexer() {}
 
+// Determines which path should be placed first in a vector ordered by file number.
+/**
+ * Used to re-order discovered bag files, since the filesystem discovery functions
+ * don't guarantee a preserved order
+ */
 bool Reindexer::compare_relative_file(
   const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
 {
@@ -94,12 +99,15 @@ bool Reindexer::compare_relative_file(
   return first_db_num < second_db_num;
 }
 
-std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
-  const rcpputils::fs::path & base_folder)
+// Retrieves bag storage files from the bag directory.
+/**
+ * @param output: A vector to save the discovered files inside of
+ *    The files will be `emplace_back`-ed on the passed vector
+ */
+void Reindexer::get_bag_files(
+  const rcpputils::fs::path & base_folder,
+  std::vector<rcpputils::fs::path> & output)
 {
-  // Look in the uri directory to see what database files are there
-  std::vector<rcpputils::fs::path> output;
-
   auto allocator = rcutils_get_default_allocator();
   auto dir_iter = rcutils_dir_iter_start(base_folder.string().c_str(), allocator);
 
@@ -123,10 +131,14 @@ std::vector<rcpputils::fs::path> Reindexer::get_bag_files(
   std::sort(
     output.begin(), output.end(),
     [this](rcpputils::fs::path a, rcpputils::fs::path b) {return compare_relative_file(a, b);});
-
-  return output;
 }
 
+// Prepares a fresh BagMetadata object for reindexing.
+/**
+ * Creates a new `BagMetadata` object with the `storage_identifier` and `relative_file_paths` filled in
+ * 
+ * Also fills in `starting_time` with a dummy default value. Important for later functions
+ */
 void Reindexer::init_metadata(
   const std::vector<rcpputils::fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)
@@ -144,6 +156,15 @@ void Reindexer::init_metadata(
   }
 }
 
+// Iterates through the bag files to collect various metadata parameters
+/**
+ * Collects the topic metadata, `starting_time`, and `duration` portions of the `BagMetadata`
+ * being constructed
+ * 
+ * @param: files The list of bag files to reindex
+ * 
+ * @param: storage_options Used to construct the `Reader` needed to parse the bag files
+ */
 void Reindexer::aggregate_metadata(
   const std::vector<rcpputils::fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)
@@ -221,13 +242,21 @@ void Reindexer::aggregate_metadata(
   }
 }
 
+// Reconstructs a bag's `metadata.yaml` file from the enclosed bag files.
+/**
+ * The reindexer opens the files within the bag directory and uses the metadata of the files to
+ * reconstruct the metadata file. Currently does not support compressed bags.
+ * 
+ * @param: storage_options The best-guess original storage options for the bag
+ */
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
-  ROSBAG2_CPP_LOG_INFO_STREAM("Beginning bag in directory: " << base_folder_);
+  ROSBAG2_CPP_LOG_INFO_STREAM("Beginning reindexing bag in directory: " << base_folder_);
 
   // Identify all bag files
+  std::vector<rcpputils::fs::path> files;
   base_folder_ = storage_options.uri;
-  auto files = get_bag_files(base_folder_);
+  get_bag_files(base_folder_, files);
   ROSBAG2_CPP_LOG_DEBUG("Finished getting database files");
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
