@@ -79,6 +79,8 @@ public:
 
   std::string get_storage_identifier() const override;
 
+  std::string get_storage_extension() const override;
+
   uint64_t get_minimum_split_file_size() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
