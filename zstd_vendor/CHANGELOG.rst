@@ -2,6 +2,11 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.7 (2021-02-15)
+------------------
+* [foxy backport] Zstd should not install internal headers (`#631 <https://github.com/ros2/rosbag2/issues/631>`_) (`#653 <https://github.com/ros2/rosbag2/issues/653>`_)
+* Contributors: Emerson Knapp
+
 0.3.6 (2021-01-05)
 ------------------
 * Patch zstd 1.4.4 to include cmake_minimum_version bump to 2.8.12 (`#579 <https://github.com/ros2/rosbag2/issues/579>`_) (`#587 <https://github.com/ros2/rosbag2/issues/587>`_)

@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.7 (2021-02-15)
+------------------
+
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
