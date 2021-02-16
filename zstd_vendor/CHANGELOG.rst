@@ -2,8 +2,8 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.7 (2021-02-15)
+------------------
 * [foxy backport] Zstd should not install internal headers (`#631 <https://github.com/ros2/rosbag2/issues/631>`_) (`#653 <https://github.com/ros2/rosbag2/issues/653>`_)
 * Contributors: Emerson Knapp
 
