@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"

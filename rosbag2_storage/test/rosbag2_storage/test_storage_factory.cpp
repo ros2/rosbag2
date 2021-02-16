@@ -100,3 +100,16 @@ TEST_F(StorageFactoryTest, load_unavailable_plugin) {
     {bag_file_path, test_unavailable_plugin_id});
   EXPECT_EQ(nullptr, instance_ro);
 }
+
+TEST_F(StorageFactoryTest, list_registered_plugins) {
+  {
+    auto read_only_plugins = factory.get_declared_read_only_plugins();
+    auto it = std::find(read_only_plugins.begin(), read_only_plugins.end(), test_read_only_plugin_id);
+    EXPECT_NE(it, read_only_plugins.end());
+  }
+  {
+    auto read_write_plugins = factory.get_declared_read_write_plugins();
+    auto it = std::find(read_write_plugins.begin(), read_write_plugins.end(), test_plugin_id);
+    EXPECT_NE(it, read_write_plugins.end());
+  }
+}

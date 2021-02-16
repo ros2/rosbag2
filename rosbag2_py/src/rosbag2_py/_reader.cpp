@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
@@ -77,7 +79,6 @@ public:
   {
     reader_->reset_filter();
   }
-
 
 protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
