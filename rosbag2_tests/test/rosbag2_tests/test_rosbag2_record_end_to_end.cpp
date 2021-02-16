@@ -23,6 +23,7 @@
 #include "rcutils/filesystem.h"
 #include "rosbag2_compression/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "record_fixture.hpp"
@@ -564,3 +565,66 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
     get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
 }
+
+#ifndef _WIN32
+TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
+  constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
+
+  std::stringstream command_record;
+  command_record << "ros2 bag record" <<
+    " --output " << root_bag_path_.string() <<
+    " --max-bag-size " << bagfile_split_size <<
+    " -a";
+  auto process_handle = start_execution(command_record.str());
+
+  wait_for_db();
+
+  constexpr const char first_topic_name[] = "/test_topic0";
+  constexpr const char second_topic_name[] = "/test_topic1";
+  constexpr const int expected_splits = 4;
+  constexpr const char message_str[] = "Test";
+  constexpr const int message_size = 1024 * 1024;  // 1MB
+  constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+  const auto message = create_string_message(message_str, message_size);
+  constexpr const int message_batch_size = message_count / 2;
+  {
+    pub_man_.run_scoped_publisher(
+      first_topic_name,
+      message,
+      50ms,
+      message_batch_size);
+
+    pub_man_.run_scoped_publisher(
+      second_topic_name,
+      message,
+      50ms,
+      message_batch_size);
+  }
+
+  stop_execution(process_handle);
+
+  wait_for_metadata();
+
+  auto sub = std::make_unique<SubscriptionManager>();
+  sub->add_subscription<test_msgs::msg::Strings>(
+    first_topic_name,
+    message_batch_size);
+  auto sub_future = sub->spin_subscriptions();
+
+  std::stringstream command_play;
+  command_play << "ros2 bag play " << root_bag_path_.string() << " --topics " <<
+    second_topic_name;
+
+  int exit_code = execute_and_wait_until_completion(command_play.str(), ".");
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+
+  sub_future.wait_for(1s);
+
+  auto first_topic_msgs = sub->get_received_messages<test_msgs::msg::Strings>(first_topic_name);
+
+  EXPECT_THAT(first_topic_msgs, SizeIs(Eq(0u)));
+
+  // stops thread
+  sub->add_subscription<test_msgs::msg::Strings>(first_topic_name, 0);
+}
+#endif
