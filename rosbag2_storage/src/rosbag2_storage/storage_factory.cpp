@@ -47,4 +47,14 @@ std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
 {
   return impl_->open_read_write(storage_options);
 }
+
+std::vector<std::string> StorageFactory::get_declared_read_only_plugins() const
+{
+  return impl_->get_declared_read_only_plugins();
+}
+
+std::vector<std::string> StorageFactory::get_declared_read_write_plugins() const
+{
+  return impl_->get_declared_read_write_plugins();
+}
 }  // namespace rosbag2_storage

@@ -35,6 +35,9 @@ public:
     open_read_write,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
       const rosbag2_storage::StorageOptions &));
+
+  std::vector<std::string> get_declared_read_only_plugins() const override { return {}; }
+  std::vector<std::string> get_declared_read_write_plugins() const override { return {}; }
 };
 
 #endif  // ROSBAG2_CPP__MOCK_STORAGE_FACTORY_HPP_

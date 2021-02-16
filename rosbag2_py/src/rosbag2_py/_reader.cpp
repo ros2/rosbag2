@@ -78,9 +78,17 @@ public:
     reader_->reset_filter();
   }
 
+
 protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
+
+std::vector<std::string> get_registered_readers()
+{
+  rosbag2_stroage::StorageFactory storage_factory;
+  return storage_factory.get_declared_read_plugins();
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_reader, m) {
@@ -116,4 +124,9 @@ PYBIND11_MODULE(_reader, m) {
   .def(
     "reset_filter",
     &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::reset_filter);
+
+  m.def(
+    "get_registered_readers",
+    &rosbag2_py::get_registered_readers,
+    "Returns list of discovered plugins that support rosbag2 playback.");
 }
