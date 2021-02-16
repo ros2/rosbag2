@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.3.6 (2021-01-05)
 ------------------
 * Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)

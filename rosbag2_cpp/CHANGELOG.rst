@@ -3,6 +3,11 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* [foxy backport] Fix --topics flag for ros2 bag play being ignored for all bags after the first one (`#619 <https://github.com/ros2/rosbag2/issues/619>`_) (`#654 <https://github.com/ros2/rosbag2/issues/654>`_)
+* Contributors: Aleksandr Rozhdestvenskii
+
 0.3.6 (2021-01-05)
 ------------------
 * Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_) (`#575 <https://github.com/ros2/rosbag2/issues/575>`_)
