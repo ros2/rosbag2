@@ -104,7 +104,8 @@ TEST_F(StorageFactoryTest, load_unavailable_plugin) {
 TEST_F(StorageFactoryTest, list_registered_plugins) {
   {
     auto read_only_plugins = factory.get_declared_read_only_plugins();
-    auto it = std::find(read_only_plugins.begin(), read_only_plugins.end(), test_read_only_plugin_id);
+    auto it = std::find(
+      read_only_plugins.begin(), read_only_plugins.end(), test_read_only_plugin_id);
     EXPECT_NE(it, read_only_plugins.end());
   }
   {
