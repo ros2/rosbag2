@@ -31,10 +31,7 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-    auto tmpdir = rcpputils::fs::temp_directory_path();
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory(
-      rcpputils::fs::temp_directory_path(),
-      "tmp_test_dir").string();
+    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
   }
 
   ~TemporaryDirectoryFixture() override
