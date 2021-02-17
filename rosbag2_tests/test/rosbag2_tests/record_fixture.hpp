@@ -52,9 +52,7 @@ public:
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    if (root_bag_path_.exists()) {
-      remove_directory_recursively(root_bag_path_.string());
-    }
+    rcpputils::fs::remove_all(root_bag_path_);
   }
 
   static void SetUpTestCase()
@@ -64,7 +62,7 @@ public:
 
   void TearDown() override
   {
-    remove_directory_recursively(root_bag_path_.string());
+    rcpputils::fs::remove_all(root_bag_path_);
   }
 
   static void TearDownTestCase()
