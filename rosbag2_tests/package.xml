@@ -18,6 +18,11 @@
   <test_depend>ament_lint_common</test_depend>
   <test_depend>rclcpp</test_depend>
   <test_depend>rcpputils</test_depend>
+  <!--
+  TODO(emersonknapp): remove this once we aren't pulling in fastrtps as a dependency.
+  For now, since fastrtps is installed, cyclone is not automatically installed for PR builds
+  -->
+  <test_depend>rmw_cyclonedds_cpp</test_depend>
   <test_depend>ros2bag</test_depend>
   <test_depend>rosbag2_compression</test_depend>
   <test_depend>rosbag2_compression_zstd</test_depend>
