@@ -110,3 +110,5 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_metadata_serialization rosbag2_test_common)
   endif()
 endif()
+
+ament_package()
