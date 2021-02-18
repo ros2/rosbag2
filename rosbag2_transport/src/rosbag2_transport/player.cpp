@@ -186,7 +186,16 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     if (rclcpp::ok()) {
       auto publisher_iter = publishers_.find(message.message->topic_name);
       if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message.message->serialized_data);
+        auto & current_publisher{publisher_iter->second};
+
+        if (current_publisher->can_loan_messages()) {
+          auto loaned_msg{current_publisher->borrow_loaned_message()};
+          current_publisher->deserialize_message(
+            message.message->serialized_data.get(), loaned_msg);
+          current_publisher->publish_loaned_message(loaned_msg);
+        } else {
+          current_publisher->publish(message.message->serialized_data);
+        }
       }
     }
   }

@@ -35,6 +35,14 @@ public:
   virtual ~GenericPublisher() = default;
 
   void publish(std::shared_ptr<rmw_serialized_message_t> message);
+  void publish_loaned_message(void * ros_message);
+  void * borrow_loaned_message();
+  void deserialize_message(
+    const rmw_serialized_message_t * serialized_message,
+    void * deserialized_msg);
+
+private:
+  const rosidl_message_type_support_t & type_support_;
 };
 
 }  // namespace rosbag2_transport

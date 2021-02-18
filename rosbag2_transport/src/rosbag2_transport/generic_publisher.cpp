@@ -35,7 +35,8 @@ GenericPublisher::GenericPublisher(
   const rosidl_message_type_support_t & type_support,
   const std::string & topic_name,
   const rclcpp::QoS & qos)
-: rclcpp::PublisherBase(node_base, topic_name, type_support, rosbag2_get_publisher_options(qos))
+: rclcpp::PublisherBase(node_base, topic_name, type_support, rosbag2_get_publisher_options(qos)),
+  type_support_{type_support}
 {}
 
 void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message)
@@ -45,6 +46,36 @@ void GenericPublisher::publish(std::shared_ptr<rmw_serialized_message_t> message
 
   if (return_code != RCL_RET_OK) {
     rclcpp::exceptions::throw_from_rcl_error(return_code, "failed to publish serialized message");
+  }
+}
+
+void GenericPublisher::publish_loaned_message(void * ros_message)
+{
+  auto return_code{rcl_publish_loaned_message(
+      get_publisher_handle().get(), ros_message, NULL)};
+  if (return_code != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(return_code, "failed to publish loaned message");
+  }
+}
+
+void * GenericPublisher::borrow_loaned_message()
+{
+  void * loaned_message{nullptr};
+  auto ret{rcl_borrow_loaned_message(
+      this->get_publisher_handle().get(), &this->type_support_, &loaned_message)};
+  if (ret != RMW_RET_OK) {
+    throw std::runtime_error("failed to publish borrow loaned msg");
+  }
+  return loaned_message;
+}
+
+void GenericPublisher::deserialize_message(
+  const rmw_serialized_message_t * serialized_message,
+  void * deserialized_msg)
+{
+  auto ret{rmw_deserialize(serialized_message, &this->type_support_, deserialized_msg)};
+  if (ret != RMW_RET_OK) {
+    throw std::runtime_error("failed to deserialize msg");
   }
 }
 
