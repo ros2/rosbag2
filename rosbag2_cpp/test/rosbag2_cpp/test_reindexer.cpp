@@ -91,7 +91,7 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
   //   original starting time from metadata
   // EXPECT_EQ(generated_metadata.starting_time, target_metadata.starting_time);
 
-  // Disabled for now, since I'm not sure how duraction is created, and if it's correct (jhdcs)
+  // Disabled for now, since I'm not sure how duration is created, and if it's correct (jhdcs)
   // EXPECT_EQ(generated_metadata.duration, target_metadata.duration);
 
   EXPECT_EQ(generated_metadata.message_count, target_metadata.message_count);
