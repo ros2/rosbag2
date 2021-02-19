@@ -88,8 +88,6 @@ public:
   */
   void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
-  void reset();
-
 protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
