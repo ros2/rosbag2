@@ -97,12 +97,11 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
 
 private:
-  std::string regex_bag_extension_pattern_;
+  std::string regex_bag_pattern_;
   rcpputils::fs::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(
     const rcpputils::fs::path & base_folder,
-    const std::string & expected_extension,
     std::vector<rcpputils::fs::path> & output);
 
   // Prepares the metadata by setting initial values.
@@ -113,6 +112,7 @@ private:
   // Attempts to harvest metadata from all bag files, and aggregates the result
   void aggregate_metadata(
     const std::vector<rcpputils::fs::path> & files,
+    const std::unique_ptr<rosbag2_cpp::readers::SequentialReader> & bag_reader,
     const rosbag2_storage::StorageOptions & storage_options);
 
   // Comparison function for std::sort with our filepath convention

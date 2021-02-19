@@ -59,9 +59,9 @@ Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
 : storage_factory_(std::move(storage_factory)),
   metadata_io_(std::move(metadata_io))
-  {
-    regex_bag_extension_pattern_ = R"(._(\d+)\.([a-zA-Z0-9]))";
-  }
+{
+  regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9])+)";
+}
 
 Reindexer::~Reindexer() {}
 
@@ -71,9 +71,10 @@ Reindexer::~Reindexer() {}
  * don't guarantee a preserved order
  */
 bool Reindexer::compare_relative_file(
-  const rcpputils::fs::path & first_path, const rcpputils::fs::path & second_path)
+  const rcpputils::fs::path & first_path,
+  const rcpputils::fs::path & second_path)
 {
-  std::regex regex_rule(regex_bag_extension_pattern_, std::regex_constants::ECMAScript);
+  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -84,11 +85,16 @@ bool Reindexer::compare_relative_file(
   auto first_regex_good = std::regex_match(first_path_string, first_match, regex_rule);
   auto second_regex_good = std::regex_match(second_path_string, second_match, regex_rule);
 
-  // Make sure the paths have regex matches
-  if (!first_regex_good || !second_regex_good) {
+  if (!first_regex_good) {
     std::stringstream ss;
     ss << "Path " << first_path.string() <<
-      "didn't meet expected naming convention: " << regex_bag_extension_pattern_;
+      "didn't meet expected naming convention: " << regex_bag_pattern_;
+    std::string error_text = ss.str();
+    throw std::runtime_error(error_text.c_str());
+  } else if (!second_regex_good) {
+    std::stringstream ss;
+    ss << "Path " << second_path.string() <<
+      "didn't meet expected naming convention: " << regex_bag_pattern_;
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
   }
@@ -106,10 +112,9 @@ bool Reindexer::compare_relative_file(
  */
 void Reindexer::get_bag_files(
   const rcpputils::fs::path & base_folder,
-  const std::string & expected_extension,
   std::vector<rcpputils::fs::path> & output)
 {
-  // std::regex regex_rule(R"([a-zA-Z0-9])", std::regex_constants::ECMAScript);
+  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
   auto allocator = rcutils_get_default_allocator();
   auto dir_iter = rcutils_dir_iter_start(base_folder.string().c_str(), allocator);
 
@@ -121,10 +126,9 @@ void Reindexer::get_bag_files(
   // Get all file names in directory
   do {
     auto found_file = rcpputils::fs::path(dir_iter->entry_name);
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Found file: " << found_file.string());
 
-    // if (std::regex_match(found_file.extension().string(), regex_rule)) {
-    if (found_file.extension().string() == expected_extension)
-    {
+    if (std::regex_match(found_file.string(), regex_rule)) {
       auto full_path = base_folder / found_file;
       output.emplace_back(full_path);
     }
@@ -133,13 +137,14 @@ void Reindexer::get_bag_files(
   // Sort relative file path by database number
   std::sort(
     output.begin(), output.end(),
-    [this](rcpputils::fs::path a, rcpputils::fs::path b) {return compare_relative_file(a, b);});
+    [&, this](rcpputils::fs::path a, rcpputils::fs::path b) {
+      return compare_relative_file(a, b);
+    });
 }
 
 // Prepares a fresh BagMetadata object for reindexing.
 /**
  * Creates a new `BagMetadata` object with the `storage_identifier` and `relative_file_paths` filled in
- * 
  * Also fills in `starting_time` with a dummy default value. Important for later functions
  */
 void Reindexer::init_metadata(
@@ -163,9 +168,7 @@ void Reindexer::init_metadata(
 /**
  * Collects the topic metadata, `starting_time`, and `duration` portions of the `BagMetadata`
  * being constructed
- * 
  * @param: files The list of bag files to reindex
- * 
  * @param: storage_options Used to construct the `Reader` needed to parse the bag files
  */
 void Reindexer::aggregate_metadata(
@@ -176,9 +179,8 @@ void Reindexer::aggregate_metadata(
   std::map<std::string, rosbag2_storage::TopicInformation> temp_topic_info;
 
   // In order to most accurately reconstruct the metadata, we need to
-  // visit each of the contained relative database files in the bag,
-  // open them, slurp up the info, and stuff it into the master
-  // metadata object.
+  // visit each of the contained relative files files in the bag,
+  // open them, read the info, and write it into an aggregated metadata object.
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from database(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
@@ -244,7 +246,6 @@ void Reindexer::aggregate_metadata(
 /**
  * The reindexer opens the files within the bag directory and uses the metadata of the files to
  * reconstruct the metadata file. Currently does not support compressed bags.
- * 
  * @param: storage_options The best-guess original storage options for the bag
  */
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
@@ -254,14 +255,11 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
   auto bag_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
-  
-  auto expected_extension = bag_reader->storage_->get_storage_extension();  // Does not currently work
 
   // Identify all bag files
   std::vector<rcpputils::fs::path> files;
   base_folder_ = storage_options.uri;
-  get_bag_files(base_folder_, expected_extension, files);
-  ROSBAG2_CPP_LOG_DEBUG("Finished getting database files");
+  get_bag_files(base_folder_, files);
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
   }
