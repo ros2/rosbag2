@@ -54,7 +54,7 @@
 namespace rosbag2_cpp
 {
 
-/*************************************************************************************************
+/**
  * Tool to reconstruct bag metadata files in the event of loss or corruption
  *
  * Reindexing is an operation where a bag that is missing a metadata.yaml file can have a new
@@ -68,8 +68,8 @@ namespace rosbag2_cpp
  *   since some information known by the program from the start up command cannot be found
  *   within the metadata. But it should at least repair a bag to the point it can be read
  *   again.
- *************************************************************************************************
-  */
+ *
+ */
 class ROSBAG2_CPP_PUBLIC Reindexer
 {
 public:
@@ -81,10 +81,9 @@ public:
 
   virtual ~Reindexer();
 
-  // Uses the supplied storage options to reindex a bag defined by the storage options URI/
+  /// Use the supplied storage options to reindex a bag defined by the storage options URI.
   /*
-   * The passed-in storage options should contain the best-guess information of the bag's
-   * original creation parameters.
+  * \param storage_options Provides best-guess parameters for the bag's original settings.
   */
   void reindex(const rosbag2_storage::StorageOptions & storage_options);
 
