@@ -52,7 +52,7 @@ Reindexer::Reindexer(
   regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9])+)";
 }
 
-// Determines which path should be placed first in a vector ordered by file number.
+/// Determine which path should be placed first in a vector ordered by file number.
 /**
  * Used to re-order discovered bag files, since the filesystem discovery functions
  * don't guarantee a preserved order
@@ -92,8 +92,9 @@ bool Reindexer::compare_relative_file(
   return first_db_num < second_db_num;
 }
 
-// Retrieves bag storage files from the bag directory.
+/// Retrieve bag storage files from the bag directory.
 /**
+ * @param base_folder: The bag directory that contains all the bag storage files
  * @param output: A vector to save the discovered files inside of
  *    The files will be `emplace_back`-ed on the passed vector
  */
@@ -129,7 +130,7 @@ void Reindexer::get_bag_files(
     });
 }
 
-// Prepares a fresh BagMetadata object for reindexing.
+/// Prepare a fresh BagMetadata object for reindexing.
 /**
  * Creates a new `BagMetadata` object with the `storage_identifier` and `relative_file_paths` filled in
  * Also fills in `starting_time` with a dummy default value. Important for later functions
@@ -151,7 +152,7 @@ void Reindexer::init_metadata(
   }
 }
 
-// Iterates through the bag files to collect various metadata parameters
+/// Iterate through the bag files to collect various metadata parameters
 /**
  * Collects the topic metadata, `starting_time`, and `duration` portions of the `BagMetadata`
  * being constructed
@@ -229,7 +230,7 @@ void Reindexer::aggregate_metadata(
   }
 }
 
-// Reconstructs a bag's `metadata.yaml` file from the enclosed bag files.
+/// Reconstruct a bag's `metadata.yaml` file from the enclosed bag files.
 /**
  * The reindexer opens the files within the bag directory and uses the metadata of the files to
  * reconstruct the metadata file. Currently does not support compressed bags.
