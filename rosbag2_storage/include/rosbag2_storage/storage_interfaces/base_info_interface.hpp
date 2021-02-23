@@ -51,12 +51,6 @@ public:
    * \returns the identifier.
    */
   virtual std::string get_storage_identifier() const = 0;
-
-  /**
-   * Returns the extension of the bagfile.
-   * \returns the bagfile's extension
-   */
-  virtual std::string get_storage_extension() const = 0;
 };
 
 }  // namespace storage_interfaces
