@@ -79,7 +79,7 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
-  virtual ~Reindexer();
+  virtual ~Reindexer() = default;
 
   /// Use the supplied storage options to reindex a bag defined by the storage options URI.
   /*

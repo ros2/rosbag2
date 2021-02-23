@@ -41,17 +41,6 @@
 
 #include "rosbag2_storage/storage_options.hpp"
 
-#ifdef WIN32
-// Import windows filesystem functionality
-#include <windows.h>
-#include <tchar.h>
-#include <stdio.h>
-#else
-// We're on a UNIX system. Import their filesystem stuff instead
-#include <dirent.h>
-#endif
-
-
 namespace rosbag2_cpp
 {
 Reindexer::Reindexer(
@@ -62,8 +51,6 @@ Reindexer::Reindexer(
 {
   regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9])+)";
 }
-
-Reindexer::~Reindexer() {}
 
 // Determines which path should be placed first in a vector ordered by file number.
 /**
