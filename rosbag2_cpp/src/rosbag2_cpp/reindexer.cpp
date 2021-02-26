@@ -86,8 +86,8 @@ bool Reindexer::compare_relative_file(
     throw std::runtime_error(error_text.c_str());
   }
 
-  u_int32_t first_db_num = std::stoul(first_match.str(1), nullptr, 10);
-  u_int32_t second_db_num = std::stoul(second_match.str(1), nullptr, 10);
+  auto first_db_num = std::stoul(first_match.str(1), nullptr, 10);
+  auto second_db_num = std::stoul(second_match.str(1), nullptr, 10);
 
   return first_db_num < second_db_num;
 }
