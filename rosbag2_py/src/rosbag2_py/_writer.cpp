@@ -80,12 +80,8 @@ protected:
 std::unordered_set<std::string> get_registered_writers()
 {
   rosbag2_storage::StorageFactory storage_factory;
-  std::unordered_set<std::string> all_writers;
-
-  auto read_write = storage_factory.get_declared_read_write_plugins();
-  std::copy(read_write.begin(), read_write.end(), std::inserter(all_writers, all_writers.end()));
-
-  return all_writers;
+  const auto read_write = storage_factory.get_declared_read_write_plugins();
+  return std::unordered_set<std::string>(read_write.begin(), read_write.end());
 }
 
 }  // namespace rosbag2_py

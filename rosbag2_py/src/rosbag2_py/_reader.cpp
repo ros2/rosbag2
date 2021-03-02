@@ -87,10 +87,9 @@ protected:
 std::unordered_set<std::string> get_registered_readers()
 {
   rosbag2_storage::StorageFactory storage_factory;
-  std::unordered_set<std::string> all_readers;
 
-  auto read_only = storage_factory.get_declared_read_only_plugins();
-  std::copy(read_only.begin(), read_only.end(), std::inserter(all_readers, all_readers.end()));
+  const auto read_only = storage_factory.get_declared_read_only_plugins();
+  std::unordered_set<std::string> all_readers(read_only.begin(), read_only.end());
 
   auto read_write = storage_factory.get_declared_read_write_plugins();
   std::copy(read_write.begin(), read_write.end(), std::inserter(all_readers, all_readers.end()));
