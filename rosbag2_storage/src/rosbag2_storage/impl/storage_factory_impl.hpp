@@ -58,7 +58,7 @@ get_interface_instance(
     registered_classes.begin(),
     registered_classes.end(), storage_options.storage_id);
   if (class_exists == registered_classes.end()) {
-    ROSBAG2_STORAGE_LOG_DEBUG_STREAM(
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
       "Requested storage id '" << storage_options.storage_id << "' does not exist");
     return nullptr;
   }
