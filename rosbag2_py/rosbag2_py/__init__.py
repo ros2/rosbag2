@@ -18,20 +18,27 @@ from rpyutils import add_dll_directories_from_env
 # to the search path.
 # See https://docs.python.org/3/whatsnew/3.8.html#bpo-36085-whatsnew
 with add_dll_directories_from_env('PATH'):
-    from rosbag2_py._reader import \
-        SequentialCompressionReader, \
-        SequentialReader
-    from rosbag2_py._storage import \
-        ConverterOptions, \
-        StorageFilter, \
-        StorageOptions, \
-        TopicMetadata
-    from rosbag2_py._writer import \
-        SequentialCompressionWriter, \
-        SequentialWriter
+    from rosbag2_py._reader import (
+        SequentialCompressionReader,
+        SequentialReader,
+        get_registered_readers,
+    )
+    from rosbag2_py._storage import (
+        ConverterOptions,
+        StorageFilter,
+        StorageOptions,
+        TopicMetadata,
+    )
+    from rosbag2_py._writer import (
+        SequentialCompressionWriter,
+        SequentialWriter,
+        get_registered_writers,
+    )
 
 __all__ = [
     'ConverterOptions',
+    'get_registered_readers',
+    'get_registered_writers',
     'SequentialCompressionReader',
     'SequentialCompressionWriter',
     'SequentialReader',

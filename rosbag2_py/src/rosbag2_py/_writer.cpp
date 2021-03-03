@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
@@ -75,6 +77,13 @@ protected:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
 
+std::unordered_set<std::string> get_registered_writers()
+{
+  rosbag2_storage::StorageFactory storage_factory;
+  const auto read_write = storage_factory.get_declared_read_write_plugins();
+  return std::unordered_set<std::string>(read_write.begin(), read_write.end());
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_writer, m) {
@@ -99,4 +108,9 @@ PYBIND11_MODULE(_writer, m) {
   .def(
     "create_topic",
     &rosbag2_py::Writer<rosbag2_compression::SequentialCompressionWriter>::create_topic);
+
+  m.def(
+    "get_registered_writers",
+    &rosbag2_py::get_registered_writers,
+    "Returns list of discovered plugins that support rosbag2 recording");
 }

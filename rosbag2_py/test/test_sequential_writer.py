@@ -94,3 +94,8 @@ def test_sequential_writer(tmp_path):
         assert t == msg_counter * 100
 
         msg_counter += 1
+
+
+def test_plugin_list():
+    writer_plugins = rosbag2_py.get_registered_writers()
+    assert 'my_test_plugin' in writer_plugins

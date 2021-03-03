@@ -12,6 +12,7 @@
   <license>Apache License 2.0</license>
 
   <depend>ros2cli</depend>
+  <depend>rosbag2_py</depend>
   <depend>rosbag2_transport</depend>
 
   <test_depend>ament_copyright</test_depend>

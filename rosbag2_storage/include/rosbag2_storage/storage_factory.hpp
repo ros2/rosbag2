@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
@@ -53,6 +54,9 @@ public:
 
   std::shared_ptr<storage_interfaces::ReadWriteInterface>
   open_read_write(const StorageOptions & storage_options) override;
+
+  std::vector<std::string> get_declared_read_only_plugins() const override;
+  std::vector<std::string> get_declared_read_write_plugins() const override;
 
 private:
   std::unique_ptr<StorageFactoryImpl> impl_;
