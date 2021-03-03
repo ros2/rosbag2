@@ -78,3 +78,8 @@ def test_sequential_reader():
         if isinstance(msg, String):
             assert msg.data == f'Hello, world! {msg_counter}'
             msg_counter += 1
+
+
+def test_plugin_list():
+    reader_plugins = rosbag2_py.get_registered_readers()
+    assert 'my_read_only_test_plugin' in reader_plugins

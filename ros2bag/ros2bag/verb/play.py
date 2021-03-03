@@ -21,6 +21,7 @@ from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import get_registered_readers
 import yaml
 
 
@@ -28,11 +29,14 @@ class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        reader_choices = get_registered_readers()
+        default_reader = 'sqlite3' if 'sqlite3' in reader_choices else reader_choices[0]
+
         parser.add_argument(
             'bag_file', type=check_path_exists, help='bag file to replay')
         parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help="storage identifier to be used, defaults to 'sqlite3'")
+            '-s', '--storage', default=default_reader, choices=reader_choices,
+            help=f"storage identifier to be used, defaults to '{default_reader}'")
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '

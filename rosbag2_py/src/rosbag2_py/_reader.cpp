@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
@@ -81,6 +83,20 @@ public:
 protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
+
+std::unordered_set<std::string> get_registered_readers()
+{
+  rosbag2_storage::StorageFactory storage_factory;
+
+  const auto read_only = storage_factory.get_declared_read_only_plugins();
+  std::unordered_set<std::string> all_readers(read_only.begin(), read_only.end());
+
+  const auto read_write = storage_factory.get_declared_read_write_plugins();
+  std::copy(read_write.begin(), read_write.end(), std::inserter(all_readers, all_readers.end()));
+
+  return all_readers;
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_reader, m) {
@@ -116,4 +132,9 @@ PYBIND11_MODULE(_reader, m) {
   .def(
     "reset_filter",
     &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::reset_filter);
+
+  m.def(
+    "get_registered_readers",
+    &rosbag2_py::get_registered_readers,
+    "Returns list of discovered plugins that support rosbag2 playback.");
 }
