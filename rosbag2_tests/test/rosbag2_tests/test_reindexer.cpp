@@ -38,12 +38,6 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
-#include "mock_converter.hpp"
-#include "mock_converter_factory.hpp"
-#include "mock_metadata_io.hpp"
-#include "mock_storage.hpp"
-#include "mock_storage_factory.hpp"
-
 using namespace testing;  // NOLINT
 
 class ReindexTestFixture : public Test
@@ -51,7 +45,7 @@ class ReindexTestFixture : public Test
 public:
   ReindexTestFixture()
   {
-    database_path = _SRC_REINDEX_DIR_PATH;
+    database_path = std::string(_SRC_RESOURCES_DIR_PATH) + std::string("/reindex_test_bags");
     target_dir = database_path + "/target_metadata";
   }
 

@@ -172,11 +172,6 @@ if(BUILD_TESTING)
     target_link_libraries(test_message_cache ${PROJECT_NAME})
   endif()
 
-  ament_add_gmock(test_reindex
-    test/rosbag2_cpp/test_reindexer.cpp)
-  if(TARGET test_reindex)
-    target_link_libraries(test_reindex ${PROJECT_NAME})
-  endif()
 
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
