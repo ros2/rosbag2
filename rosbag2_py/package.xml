@@ -28,7 +28,6 @@
   <test_depend>python3-pytest</test_depend>
   <test_depend>rcl_interfaces</test_depend>
   <test_depend>rclpy</test_depend>
-  <test_depend>rosbag2_converter_default_plugins</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
   <test_depend>rosidl_runtime_py</test_depend>
   <test_depend>std_msgs</test_depend>

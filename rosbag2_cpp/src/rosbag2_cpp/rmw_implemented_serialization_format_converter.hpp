@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CONVERTER_DEFAULT_PLUGINS__CDR__CDR_CONVERTER_HPP_
-#define ROSBAG2_CONVERTER_DEFAULT_PLUGINS__CDR__CDR_CONVERTER_HPP_
-
-#include <memory>
-#include <string>
-
-#include "rmw/types.h"
-
-#include "rosidl_runtime_cpp/message_type_support_decl.hpp"
-
-#include "rcpputils/shared_library.hpp"
+#ifndef ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_
+#define ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
-#include "rosbag2_cpp/types.hpp"
 
-namespace rosbag2_converter_default_plugins
+namespace rosbag2_cpp
 {
+class RMWImplementedConverterImpl;
 
-class CdrConverter : public rosbag2_cpp::converter_interfaces::SerializationFormatConverter
+/**
+ * Default implementation of the SerializationFormatConverter.
+ *
+ * This converter does not understand any serialization formats on its own, instead it
+ * searches the system for an installed RMW implementation that understands the requested format,
+ * loads that library if found, and uses its implementation for serialization.
+ */
+class RMWImplementedConverter
+: public rosbag2_cpp::converter_interfaces::SerializationFormatConverter
 {
 public:
-  CdrConverter();
+  /**
+   * Constructor.
+   * \throws std::runtime_error if no RMW implementation was found supporting the format.
+   */
+  RMWImplementedConverter(const std::string & format);
+  virtual ~RMWImplementedConverter();
 
   void deserialize(
     std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message,
@@ -46,20 +50,8 @@ public:
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message) override;
 
 private:
-  std::shared_ptr<rcpputils::SharedLibrary> library;
-
-protected:
-  rmw_ret_t (* serialize_fcn_)(
-    const void *,
-    const rosidl_message_type_support_t *,
-    rmw_serialized_message_t *) = nullptr;
-
-  rmw_ret_t (* deserialize_fcn_)(
-    const rmw_serialized_message_t *,
-    const rosidl_message_type_support_t *,
-    void *) = nullptr;
+  std::unique_ptr<RMWImplementedConverterImpl> impl_;
 };
+}  // rosbag2_cpp
 
-}  // namespace rosbag2_converter_default_plugins
-
-#endif  // ROSBAG2_CONVERTER_DEFAULT_PLUGINS__CDR__CDR_CONVERTER_HPP_
+#endif  // ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_

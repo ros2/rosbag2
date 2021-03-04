@@ -14,6 +14,8 @@
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
   <depend>rcpputils</depend>
+  <depend>rmw</depend>
+  <depend>rmw_implementation</depend>
   <depend>rosbag2_storage</depend>
   <depend>rosidl_runtime_c</depend>
   <depend>rosidl_runtime_cpp</depend>
