@@ -49,8 +49,8 @@ T get_function_from(const char * function_name, std::shared_ptr<rcpputils::Share
 {
   if (!library->has_symbol(function_name)) {
     std::stringstream ss;
-    ss << "Converter could not find expected symbol '" << function_name
-       << "' in rmw implementation " << library->get_library_path();
+    ss << "Converter could not find expected symbol '" << function_name <<
+      "' in rmw implementation " << library->get_library_path();
     throw std::runtime_error{ss.str()};
   }
   T loaded_function = nullptr;
@@ -67,24 +67,29 @@ namespace rosbag2_cpp
 typedef std::shared_ptr<rosbag2_storage::SerializedBagMessage> Msg;
 typedef std::shared_ptr<const rosbag2_storage::SerializedBagMessage> ConstMsg;
 
-class ConverterImpl {
+class ConverterImpl
+{
 public:
-  ConverterImpl(const ConverterOptions & options)
+  explicit ConverterImpl(const ConverterOptions & options)
   {
     const std::string current_implementation_format{rmw_get_serialization_format()};
     if (current_implementation_format == options.input_serialization_format) {
       deserialize_fn_ = &rmw_deserialize;
-    } else if (current_implementation_format == options.output_serialization_format) {
+      ROSBAG2_CPP_LOG_INFO("The current impl is the DESER");
+    }
+    if (current_implementation_format == options.output_serialization_format) {
       serialize_fn_ = &rmw_serialize;
-    } else {
-      throw std::runtime_error{
-        "Message converter created but neither input nor output serialization formats match "
-        "the currently loaded RMW implementation."};
+      ROSBAG2_CPP_LOG_INFO("The current impl is the SER");
     }
 
     auto packages_with_prefixes = ament_index_cpp::get_resources("rmw_typesupport");
 
     for (const auto & package_prefix_pair : packages_with_prefixes) {
+      ROSBAG2_CPP_LOG_ERROR_STREAM("YOW A PAKAJ " << package_prefix_pair.first);
+      if (serialize_fn_ && deserialize_fn_) {
+        break;
+      }
+
       const auto & pkg = package_prefix_pair.first;
       if (pkg == "rmw_implementation") {
         continue;
@@ -100,10 +105,10 @@ public:
       auto get_format_fn = get_function_from<decltype(&rmw_get_serialization_format)>(
         "rmw_get_serialization_format", library);
       const char * fmt = get_format_fn();
-      if (fmt == options.input_serialization_format) {
+      if (!serialize_fn_ && fmt == options.input_serialization_format) {
         deserialize_fn_ = get_function_from<decltype(deserialize_fn_)>(
           "rmw_deserialize", library);
-      } else if (fmt == options.output_serialization_format) {
+      } else if (!deserialize_fn_ && fmt == options.output_serialization_format) {
         serialize_fn_ = get_function_from<decltype(serialize_fn_)>(
           "rmw_serialize", library);
       }
@@ -111,17 +116,18 @@ public:
 
     if (!deserialize_fn_) {
       throw std::runtime_error{
-        std::string("No implementation could be found for deserializing from format ") +
-        options.input_serialization_format};
+              std::string("No implementation could be found for deserializing from format ") +
+              options.input_serialization_format};
     }
     if (!serialize_fn_) {
       throw std::runtime_error{
-        std::string("No implementation could be found for serializing to format ") +
-        options.input_serialization_format};
+              std::string("No implementation could be found for serializing to format ") +
+              options.output_serialization_format};
     }
   }
 
-  Msg convert(ConstMsg message) {
+  Msg convert(ConstMsg message)
+  {
     auto ts = topics_and_types_.at(message->topic_name).rmw_type_support;
     auto introspection_ts = topics_and_types_.at(message->topic_name).introspection_type_support;
     auto allocator = rcutils_get_default_allocator();
@@ -177,9 +183,6 @@ Converter::Converter(const ConverterOptions & converter_options)
 
 Converter::~Converter()
 {
-  // input_converter_.reset();
-  // output_converter_.reset();
-  // converter_factory_.reset();  // needs to be destroyed only after the converters
 }
 
 Msg Converter::convert(ConstMsg message) const

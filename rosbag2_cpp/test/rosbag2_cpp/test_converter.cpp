@@ -28,5 +28,5 @@ public:
 
 TEST_F(ConverterTest, gets_converter_impls)
 {
-  rosbag2_cpp::Converter conv{"cdr", "pooper"};
+  rosbag2_cpp::Converter conv{"cdr", "cdr"};
 }
