@@ -43,6 +43,8 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
+find_package(rmw REQUIRED)
+find_package(rmw_implementation REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/cache_consumer.cpp
@@ -64,6 +66,8 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   rcpputils
   rcutils
+  rmw
+  rmw_implementation
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
@@ -99,6 +103,8 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(pluginlib
+  rmw
+  rmw_implementation
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
@@ -125,6 +131,11 @@ if(BUILD_TESTING)
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
   pluginlib_export_plugin_description_file(rosbag2_cpp test/rosbag2_cpp/converter_test_plugin.xml)
+
+  ament_add_gmock(test_converter
+    test/rosbag2_cpp/test_converter.cpp)
+  target_include_directories(test_converter PRIVATE include)
+  target_link_libraries(test_converter ${PROJECT_NAME})
 
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)

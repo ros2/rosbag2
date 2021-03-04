@@ -98,7 +98,7 @@ void SequentialWriter::open(
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
   {
-    converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
+    converter_ = std::make_unique<Converter>(converter_options);
   }
 
   rcpputils::fs::path db_path(storage_options.uri);

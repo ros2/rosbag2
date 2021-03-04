@@ -242,8 +242,7 @@ void SequentialReader::check_converter_serialization_format(
   if (converter_serialization_format != storage_serialization_format) {
     converter_ = std::make_unique<Converter>(
       storage_serialization_format,
-      converter_serialization_format,
-      converter_factory_);
+      converter_serialization_format);
     auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {
       converter_->add_topic(topic_with_type.name, topic_with_type.type);

@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
@@ -41,33 +40,16 @@
 namespace rosbag2_cpp
 {
 
-// Convenience struct to keep both type supports (rmw and introspection) together.
-// Only used internally.
-struct ConverterTypeSupport
-{
-  std::shared_ptr<rcpputils::SharedLibrary> type_support_library;
-  const rosidl_message_type_support_t * rmw_type_support;
-
-  std::shared_ptr<rcpputils::SharedLibrary> introspection_type_support_library;
-  const rosidl_message_type_support_t * introspection_type_support;
-};
+class ConverterImpl;
 
 class ROSBAG2_CPP_PUBLIC Converter
 {
 public:
   explicit
-  Converter(
-    const std::string & input_format,
-    const std::string & output_format,
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>());
+  Converter(const std::string & input_format, const std::string & output_format);
+  Converter(const ConverterOptions & converter_options);
 
-  Converter(
-    const ConverterOptions & converter_options,
-    std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory =
-    std::make_shared<SerializationFormatConverterFactory>());
-
-  ~Converter();
+  virtual ~Converter();
 
   /**
    * Converts the given SerializedBagMessage into the output format of the converter. The
@@ -78,15 +60,12 @@ public:
    * \returns Converted message
    */
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  convert(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
+  convert(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) const;
 
   void add_topic(const std::string & topic, const std::string & type);
 
 private:
-  std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
-  std::unique_ptr<converter_interfaces::SerializationFormatDeserializer> input_converter_;
-  std::unique_ptr<converter_interfaces::SerializationFormatSerializer> output_converter_;
-  std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
+  std::unique_ptr<ConverterImpl> impl_;
 };
 
 }  // namespace rosbag2_cpp
