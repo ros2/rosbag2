@@ -24,13 +24,6 @@
 #include <string>
 #include <vector>
 
-// #include "rosbag2_compression/sequential_compression_reader.hpp"
-// #include "rosbag2_cpp/converter_options.hpp"
-// #include "rosbag2_cpp/readers/sequential_reader.hpp"
-// #include "rosbag2_cpp/reader.hpp"
-// #include "rosbag2_storage/storage_filter.hpp"
-// #include "rosbag2_storage/storage_options.hpp"
-// #include "rosbag2_storage/topic_metadata.hpp"
 # include "rosbag2_cpp/reindexer.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
