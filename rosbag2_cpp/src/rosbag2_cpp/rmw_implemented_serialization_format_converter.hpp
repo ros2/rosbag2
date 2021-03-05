@@ -15,6 +15,9 @@
 #ifndef ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_
 #define ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_
 
+#include <memory>
+#include <string>
+
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
 
 namespace rosbag2_cpp
@@ -29,14 +32,14 @@ class RMWImplementedConverterImpl;
  * loads that library if found, and uses its implementation for serialization.
  */
 class RMWImplementedConverter
-: public rosbag2_cpp::converter_interfaces::SerializationFormatConverter
+  : public rosbag2_cpp::converter_interfaces::SerializationFormatConverter
 {
 public:
   /**
    * Constructor.
    * \throws std::runtime_error if no RMW implementation was found supporting the format.
    */
-  RMWImplementedConverter(const std::string & format);
+  explicit RMWImplementedConverter(const std::string & format);
   virtual ~RMWImplementedConverter();
 
   void deserialize(
@@ -52,6 +55,6 @@ public:
 private:
   std::unique_ptr<RMWImplementedConverterImpl> impl_;
 };
-}  // rosbag2_cpp
+}  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__RMW_IMPLEMENTED_SERIALIZATION_FORMAT_CONVERTER_HPP_

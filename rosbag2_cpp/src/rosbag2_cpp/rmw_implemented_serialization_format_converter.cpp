@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 
 #include "ament_index_cpp/get_resources.hpp"
 #include "rcpputils/find_library.hpp"
@@ -49,7 +50,7 @@ namespace rosbag2_cpp
 class RMWImplementedConverterImpl
 {
 public:
-  RMWImplementedConverterImpl(const std::string & format)
+  explicit RMWImplementedConverterImpl(const std::string & format)
   {
     const std::string current_implementation_format{rmw_get_serialization_format()};
     if (current_implementation_format == format) {
@@ -70,7 +71,7 @@ public:
       const auto libpath = rcpputils::find_library_path(pkg);
       if (libpath.empty()) {
         ROSBAG2_CPP_LOG_ERROR_STREAM(
-                "Unexpectedly could not find library for RMW implementation " << pkg);
+          "Unexpectedly could not find library for RMW implementation " << pkg);
         continue;
       }
       library_ = std::make_shared<rcpputils::SharedLibrary>(libpath);
@@ -128,4 +129,4 @@ void RMWImplementedConverter::serialize(
   }
 }
 
-}  // rosbag2_converte_default_plugins
+}  // namespace rosbag2_cpp

@@ -114,8 +114,8 @@ private:
           converter_class_loader_->createUnmanagedInstance(converter_id));
       } catch (const std::runtime_error & ex) {
         ROSBAG2_CPP_LOG_ERROR_STREAM(
-                "Unexpectedly unable to load instance of discovered converter interface: " <<
-                ex.what() << ". Falling back to RMW implementation search.");
+          "Unexpectedly unable to load instance of discovered converter interface: " <<
+            ex.what() << ". Falling back to RMW implementation search.");
       }
     }
 
@@ -123,8 +123,8 @@ private:
       return std::make_unique<RMWImplementedConverter>(format);
     } catch (const std::runtime_error & ex) {
       ROSBAG2_CPP_LOG_ERROR_STREAM(
-              "No installed RMW implementation found for format '" << format <<
-              "'. Unable to initialize converter.");
+        "No installed RMW implementation found for format '" << format <<
+          "'. Unable to initialize converter.");
     }
     return nullptr;
   }
