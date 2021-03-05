@@ -56,8 +56,6 @@ public:
       deserialize_fn_ = &rmw_deserialize;
       serialize_fn_ = &rmw_serialize;
       return;
-    } else {
-      throw std::runtime_error{"Current implementation does not provide requested format"};
     }
 
     auto packages_with_prefixes = ament_index_cpp::get_resources("rmw_typesupport");
@@ -85,14 +83,13 @@ public:
           "rmw_deserialize", library_);
         serialize_fn_ = get_function_from<decltype(serialize_fn_)>(
           "rmw_serialize", library_);
+        return;
       }
     }
 
-    if (!deserialize_fn_ || !serialize_fn_) {
-      throw std::runtime_error{
-              std::string("No RMW implementation found supporting serialization format ") +
-              format};
-    }
+    throw std::runtime_error{
+            std::string("No RMW implementation found supporting serialization format ") +
+            format};
   }
 
   std::shared_ptr<rcpputils::SharedLibrary> library_;
