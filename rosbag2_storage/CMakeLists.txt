@@ -63,10 +63,6 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-install(
-  DIRECTORY cmake
-  DESTINATION share/${PROJECT_NAME})
-
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
@@ -115,5 +111,4 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-ament_package(
-  CONFIG_EXTRAS cmake/rosbag2_storage_register_storage_plugin.cmake)
+ament_package()
