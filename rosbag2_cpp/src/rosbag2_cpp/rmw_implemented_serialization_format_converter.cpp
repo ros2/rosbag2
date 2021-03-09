@@ -17,6 +17,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "ament_index_cpp/get_resources.hpp"
 #include "rcpputils/find_library.hpp"
@@ -41,6 +42,25 @@ T get_function_from(const char * function_name, std::shared_ptr<rcpputils::Share
   T loaded_function = (T)(library->get_symbol(function_name));
   return loaded_function;
 }
+
+/// Search the ament index for registered RMW implementations and return their names.
+/**
+  * Implementation is a translation of https://github.com/ros2/rmw/blob/master/rmw_implementation_cmake/cmake/get_available_rmw_implementations.cmake
+  * There is also a Python implementation https://github.com/ros2/rclpy/blob/master/rclpy/rclpy/utilities.py
+  * There does not currently exist a C++ implementation of this query.
+  */
+std::vector<std::string>
+get_available_rmw_implementations()
+{
+  std::vector<std::string> result;
+  const auto packages_with_prefixes = ament_index_cpp::get_resources("rmw_typesupport");
+  for (const auto & package_prefix_pair : packages_with_prefixes) {
+    if (package_prefix_pair.first != "rmw_implementation") {
+      result.push_back(package_prefix_pair.first);
+    }
+  }
+  return result;
+}
 }  // namespace
 
 namespace rosbag2_cpp
@@ -58,15 +78,8 @@ public:
       return;
     }
 
-    auto packages_with_prefixes = ament_index_cpp::get_resources("rmw_typesupport");
-
-    for (const auto & package_prefix_pair : packages_with_prefixes) {
-      ROSBAG2_CPP_LOG_INFO_STREAM("Found package " << package_prefix_pair.first);
-      const auto & pkg = package_prefix_pair.first;
-      if (pkg == "rmw_implementation") {
-        continue;
-      }
-
+    const auto rmw_implementations = get_available_rmw_implementations();
+    for (const auto & pkg : rmw_implementations) {
       const auto libpath = rcpputils::find_library_path(pkg);
       if (libpath.empty()) {
         ROSBAG2_CPP_LOG_ERROR_STREAM(
