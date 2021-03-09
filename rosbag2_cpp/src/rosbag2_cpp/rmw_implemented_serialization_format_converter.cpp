@@ -37,9 +37,8 @@ T get_function_from(const char * function_name, std::shared_ptr<rcpputils::Share
       "' in rmw implementation library " << library->get_library_path();
     throw std::runtime_error{ss.str()};
   }
-  T loaded_function = nullptr;
   // Function expected to return a value because has_symbol was checked first.
-  loaded_function = (decltype(loaded_function))(library->get_symbol(function_name));
+  T loaded_function = (T)(library->get_symbol(function_name));
   return loaded_function;
 }
 }  // namespace
