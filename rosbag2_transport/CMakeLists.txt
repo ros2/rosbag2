@@ -35,7 +35,6 @@ find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
-  src/rosbag2_transport/formatter.cpp
   src/rosbag2_transport/generic_publisher.cpp
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/qos.cpp
@@ -92,11 +91,6 @@ ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression shared_queues_vendor yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
-  rosbag2_transport_add_gmock(test_info
-    test/rosbag2_transport/test_info.cpp
-    LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage rosbag2_test_common)
-
   rosbag2_transport_add_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
     LINK_LIBS rosbag2_transport
@@ -132,11 +126,6 @@ function(create_tests_for_rmw_implementation)
       rosbag2_test_common
       test_msgs
       yaml_cpp_vendor)
-
-  rosbag2_transport_add_gmock(test_formatter
-    test/rosbag2_transport/test_formatter.cpp
-    src/rosbag2_transport/formatter.cpp
-    LINK_LIBS rosbag2_transport)
 
   rosbag2_transport_add_gmock(test_qos
     src/rosbag2_transport/qos.cpp

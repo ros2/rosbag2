@@ -25,7 +25,6 @@
 
 #include "rcutils/time.h"
 
-#include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
@@ -34,7 +33,6 @@
 
 #include "rosbag2_transport/logging.hpp"
 
-#include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
 #include "rosbag2_node.hpp"
@@ -46,15 +44,13 @@ Rosbag2Transport::Rosbag2Transport()
 : reader_(std::make_shared<rosbag2_cpp::Reader>(
       std::make_unique<rosbag2_cpp::readers::SequentialReader>())),
   writer_(std::make_shared<rosbag2_cpp::Writer>(
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>())),
-  info_(std::make_shared<rosbag2_cpp::Info>())
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>()))
 {}
 
 Rosbag2Transport::Rosbag2Transport(
   std::shared_ptr<rosbag2_cpp::Reader> reader,
-  std::shared_ptr<rosbag2_cpp::Writer> writer,
-  std::shared_ptr<rosbag2_cpp::Info> info)
-: reader_(std::move(reader)), writer_(std::move(writer)), info_(std::move(info)) {}
+  std::shared_ptr<rosbag2_cpp::Writer> writer)
+: reader_(std::move(reader)), writer_(std::move(writer)) {}
 
 void Rosbag2Transport::init()
 {
@@ -107,23 +103,6 @@ void Rosbag2Transport::play(
   } catch (std::runtime_error & e) {
     ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
   }
-}
-
-void Rosbag2Transport::print_bag_info(const std::string & uri, const std::string & storage_id)
-{
-  rosbag2_storage::BagMetadata metadata;
-  try {
-    metadata = info_->read_metadata(uri, storage_id);
-  } catch (std::runtime_error & e) {
-    (void) e;
-    ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-      "Could not read metadata for " << uri << ". Please specify "
-        "the path to the folder containing an existing 'metadata.yaml' file or provide correct "
-        "storage id if metadata file doesn't exist (see help).");
-    return;
-  }
-
-  Formatter::format_bag_meta_data(metadata);
 }
 
 }  // namespace rosbag2_transport

@@ -79,6 +79,7 @@ clean_windows_flags(_reader)
 
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
+  src/rosbag2_py/format_bag_metadata.cpp
 )
 ament_target_dependencies(_storage PUBLIC
   "rosbag2_cpp"
@@ -96,12 +97,22 @@ ament_target_dependencies(_writer PUBLIC
 )
 clean_windows_flags(_writer)
 
+pybind11_add_module(_info SHARED
+  src/rosbag2_py/_info.cpp
+)
+ament_target_dependencies(_info PUBLIC
+  "rosbag2_cpp"
+  "rosbag2_storage"
+)
+clean_windows_flags(_info)
+
 # Install cython modules as sub-modules of the project
 install(
   TARGETS
     _reader
     _storage
     _writer
+    _info
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 

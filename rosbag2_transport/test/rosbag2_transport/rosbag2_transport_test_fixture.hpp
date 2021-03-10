@@ -39,7 +39,6 @@
 
 #include "rosbag2_test_common/memory_management.hpp"
 
-#include "mock_info.hpp"
 #include "mock_sequential_reader.hpp"
 #include "mock_sequential_writer.hpp"
 
@@ -61,8 +60,7 @@ public:
   Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id", 0, 100}), play_options_({1000}),
     reader_(std::make_shared<rosbag2_cpp::Reader>(std::make_unique<MockSequentialReader>())),
-    writer_(std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>())),
-    info_(std::make_shared<MockInfo>()) {}
+    writer_(std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>())) {}
 
   template<typename MessageT>
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
@@ -86,7 +84,6 @@ public:
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  std::shared_ptr<MockInfo> info_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_

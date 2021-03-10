@@ -26,5 +26,6 @@
 #pragma clang diagnostic pop
 #endif
 #include <pybind11/stl.h>
+#include <pybind11/chrono.h>
 
 #endif  // ROSBAG2_PY__PYBIND11_HPP_

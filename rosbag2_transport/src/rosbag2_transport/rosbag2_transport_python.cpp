@@ -26,7 +26,6 @@
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
-#include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
@@ -210,7 +209,6 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     serilization_format;
 
   // Specify defaults
-  auto info = std::make_shared<rosbag2_cpp::Info>();
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
     std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   std::shared_ptr<rosbag2_cpp::Writer> writer;
@@ -223,7 +221,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer);
   transport.init();
   transport.record(storage_options, record_options);
   transport.shutdown();
@@ -326,7 +324,6 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
   // Specify defaults
-  auto info = std::make_shared<rosbag2_cpp::Info>();
   std::shared_ptr<rosbag2_cpp::Reader> reader;
   auto writer = std::make_shared<rosbag2_cpp::Writer>(
     std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
@@ -345,32 +342,10 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer);
   transport.init();
   transport.play(storage_options, play_options);
   transport.shutdown();
-
-  Py_RETURN_NONE;
-}
-
-static PyObject *
-rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
-{
-  static const char * kwlist[] = {"uri", "storage_id", nullptr};
-
-  char * char_uri;
-  char * char_storage_id;
-  if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ss", const_cast<char **>(kwlist), &char_uri, &char_storage_id))
-  {
-    return nullptr;
-  }
-
-  std::string uri = std::string(char_uri);
-  std::string storage_id = std::string(char_storage_id);
-
-  rosbag2_transport::Rosbag2Transport transport;
-  transport.print_bag_info(uri, storage_id);
 
   Py_RETURN_NONE;
 }
@@ -388,10 +363,6 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "play", reinterpret_cast<PyCFunction>(rosbag2_transport_play), METH_VARARGS | METH_KEYWORDS,
     "Play bag"
-  },
-  {
-    "info", reinterpret_cast<PyCFunction>(rosbag2_transport_info), METH_VARARGS | METH_KEYWORDS,
-    "Print bag info"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

@@ -28,11 +28,16 @@ with add_dll_directories_from_env('PATH'):
         StorageFilter,
         StorageOptions,
         TopicMetadata,
+        TopicInformation,
+        BagMetadata,
     )
     from rosbag2_py._writer import (
         SequentialCompressionWriter,
         SequentialWriter,
         get_registered_writers,
+    )
+    from rosbag2_py._info import (
+        Info,
     )
 
 __all__ = [
@@ -46,4 +51,7 @@ __all__ = [
     'StorageFilter',
     'StorageOptions',
     'TopicMetadata',
+    'TopicInformation',
+    'BagMetadata',
+    'Info',
 ]
