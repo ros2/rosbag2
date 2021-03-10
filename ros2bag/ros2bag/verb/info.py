@@ -37,5 +37,12 @@ class InfoVerb(VerbExtension):
         #               may result in DLL loading failures when attempting to import a C
         #               extension. Therefore, do not import rosbag2_transport at the module
         #               level but on demand, right before first use.
-        from rosbag2_transport import rosbag2_transport_py
-        rosbag2_transport_py.info(uri=bag_file, storage_id=args.storage)
+        from rosbag2_py._info import Info
+        try:
+            m = Info().read_metadata(bag_file, args.storage)
+            print(m)
+        except RuntimeError:
+            return ('Could not read metadata for {}.'
+                    'Please specify the path to the folder containing'
+                    "an existing 'metadata.yaml' file or provide correct storage id"
+                    "if metadata file doesn't exist (see help).".format(bag_file))

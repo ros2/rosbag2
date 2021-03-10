@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2018-2021, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "formatter.hpp"
+#ifndef ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
+#define ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
 
 #include <chrono>
 #include <iostream>
@@ -26,37 +27,17 @@
 #include <time.h>
 #endif
 
-namespace rosbag2_transport
+#include "rosbag2_storage/bag_metadata.hpp"
+
+namespace details
 {
 
-void Formatter::format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
+void indent(std::stringstream & info_stream, int number_of_spaces)
 {
-  auto start_time = metadata.starting_time.time_since_epoch();
-  auto end_time = start_time + metadata.duration;
-  std::stringstream info_stream;
-  int indentation_spaces = 19;  // The longest info field (Topics with Type:) plus one space.
-
-  info_stream << std::endl;
-  info_stream << "Files:             ";
-  format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
-  info_stream << "Bag size:          " << format_file_size(
-    metadata.bag_size) << std::endl;
-  info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;
-  info_stream << "Duration:          " << format_duration(
-    metadata.duration)["time_in_sec"] << "s" << std::endl;
-  info_stream << "Start:             " << format_time_point(start_time) <<
-    std::endl;
-  info_stream << "End:               " << format_time_point(end_time) << std::endl;
-  info_stream << "Messages:          " << metadata.message_count << std::endl;
-  info_stream << "Topic information: ";
-  format_topics_with_type(
-    metadata.topics_with_message_count, info_stream, indentation_spaces);
-
-  // print to console
-  std::cout << info_stream.str() << std::endl;
+  info_stream << std::string(number_of_spaces, ' ');
 }
 
-std::unordered_map<std::string, std::string> Formatter::format_duration(
+std::unordered_map<std::string, std::string> format_duration(
   std::chrono::high_resolution_clock::duration duration)
 {
   std::unordered_map<std::string, std::string> formatted_duration;
@@ -82,7 +63,7 @@ std::unordered_map<std::string, std::string> Formatter::format_duration(
   return formatted_duration;
 }
 
-std::string Formatter::format_time_point(
+std::string format_time_point(
   std::chrono::high_resolution_clock::duration duration)
 {
   auto formatted_duration = format_duration(duration);
@@ -90,7 +71,7 @@ std::string Formatter::format_time_point(
          " (" + formatted_duration["time_in_sec"] + ")";
 }
 
-std::string Formatter::format_file_size(uint64_t file_size)
+std::string format_file_size(uint64_t file_size)
 {
   double size = static_cast<double>(file_size);
   static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
@@ -107,7 +88,7 @@ std::string Formatter::format_file_size(uint64_t file_size)
   return rounded_size.str() + " " + units[index];
 }
 
-void Formatter::format_file_paths(
+void format_file_paths(
   const std::vector<std::string> & paths,
   std::stringstream & info_stream,
   int indentation_spaces)
@@ -125,7 +106,7 @@ void Formatter::format_file_paths(
   }
 }
 
-void Formatter::format_topics_with_type(
+void format_topics_with_type(
   const std::vector<rosbag2_storage::TopicInformation> & topics,
   std::stringstream & info_stream,
   int indentation_spaces)
@@ -152,9 +133,32 @@ void Formatter::format_topics_with_type(
   }
 }
 
-void Formatter::indent(std::stringstream & info_stream, int number_of_spaces)
+}  // namespace details
+
+inline std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
 {
-  info_stream << std::string(number_of_spaces, ' ');
+  auto start_time = metadata.starting_time.time_since_epoch();
+  auto end_time = start_time + metadata.duration;
+  std::stringstream info_stream;
+  int indentation_spaces = 19;  // The longest info field (Topics with Type:) plus one space.
+
+  info_stream << std::endl;
+  info_stream << "Files:             ";
+  details::format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
+  info_stream << "Bag size:          " << details::format_file_size(
+    metadata.bag_size) << std::endl;
+  info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;
+  info_stream << "Duration:          " << details::format_duration(
+    metadata.duration)["time_in_sec"] << "s" << std::endl;
+  info_stream << "Start:             " << details::format_time_point(start_time) <<
+    std::endl;
+  info_stream << "End:               " << details::format_time_point(end_time) << std::endl;
+  info_stream << "Messages:          " << metadata.message_count << std::endl;
+  info_stream << "Topic information: ";
+  details::format_topics_with_type(
+    metadata.topics_with_message_count, info_stream, indentation_spaces);
+
+  return info_stream.str();
 }
 
-}  // namespace rosbag2_transport
+#endif  // ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
