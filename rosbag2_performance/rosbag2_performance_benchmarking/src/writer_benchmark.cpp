@@ -91,7 +91,19 @@ void WriterBenchmark::start_benchmark()
           byte_ma_message->data.data(),
           byte_ma_message->data.data() + byte_ma_message->data.size(),
           msg_array->buffer);
-        auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(msg_array);
+
+        auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+          msg_array,
+          [this](rcutils_uint8_array_t * msg) {
+            int error = rcutils_uint8_array_fini(msg);
+            delete msg;
+            if (error != RCUTILS_RET_OK) {
+              RCLCPP_ERROR_STREAM(
+                get_logger(),
+                "Leaking memory. Error: " << rcutils_get_error_string().str);
+            }
+          });
+
         serialized_data->buffer_length = byte_ma_message->data.size();
 
         message->serialized_data = serialized_data;
