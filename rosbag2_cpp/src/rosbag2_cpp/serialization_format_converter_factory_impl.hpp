@@ -106,7 +106,8 @@ private:
         return std::unique_ptr<SerializationFormatIface>(
           class_loader->createUnmanagedInstance(converter_id));
       } catch (const std::runtime_error & ex) {
-        (void) ex;  // Ignore, try to load converter instead
+        (void) ex;
+        // Plugin was not a SerializationFormatIface, try to load as SerializationFormatConverter.
       }
 
       try {
@@ -119,12 +120,13 @@ private:
       }
     }
 
+    ROSBAG2_CPP_LOG_INFO(
+      "No plugin found providing serialization format. "
+      "Falling back to checking RMW implementations.");
     try {
       return std::make_unique<RMWImplementedConverter>(format);
     } catch (const std::runtime_error & ex) {
-      ROSBAG2_CPP_LOG_ERROR_STREAM(
-        "No installed RMW implementation found for format '" << format <<
-          "'. Unable to initialize converter.");
+      ROSBAG2_CPP_LOG_ERROR_STREAM("Could not initialize RMWImplementedConverter: " << ex.what());
     }
     return nullptr;
   }
