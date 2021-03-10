@@ -117,7 +117,7 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   EXPECT_THAT(
-    error_output, HasSubstr("Requested converter for format 'wrong_format' does not exist"));
+    error_output, HasSubstr("Could not find converter for format wrong_format"));
 }
 
 /*

@@ -38,6 +38,8 @@ find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rmw REQUIRED)
+find_package(rmw_implementation REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
@@ -52,6 +54,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
+  src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/typesupport_helpers.cpp
@@ -64,6 +67,8 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   rcpputils
   rcutils
+  rmw
+  rmw_implementation
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
@@ -99,6 +104,8 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(pluginlib
+  rmw
+  rmw_implementation
   rosbag2_storage
   rosidl_runtime_c
   rosidl_runtime_cpp
