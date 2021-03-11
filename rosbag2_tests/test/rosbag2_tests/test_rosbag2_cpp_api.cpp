@@ -67,8 +67,10 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
     writer.write(bag_message);
 
-
     // alternative way of writing a message
+    // if there's a topic mismatch, we throw
+    EXPECT_ANY_THROW(writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes"));
+
     bag_message->topic_name = "/my/other/topic";
     writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
 
