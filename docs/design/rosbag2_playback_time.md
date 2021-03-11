@@ -38,7 +38,7 @@ public:
    * playback_rate must be positive, 1.0 means real-time
    * starting_time provides an offset for all future times
    * clock_topic_publish_frequency:
-   *   - if > 0 - publishes `now()` to /clock at the specified frequency (in Hz)
+   *   - if > 0 - publishes `now()` to /clock at the specified frequency in Hz, rate determined by a system steady clock
    *   - if <= 0 - does not publish the /clock topic
    */
   Clock(float playback_rate, rclcpp::Time starting_time, float clock_topic_publish_frequency);
@@ -100,3 +100,16 @@ The `Player` must register a `JumpHandler` with the `Clock` - so that when a jum
 ## Open questions
 
 * Should time interpolation in the ROS clock be used for external time driver? If the publish rate is too slow, playback cannot reach any close fidelity if there is none. E.g. a topic publishing at 200Hz would need at least a 200Hz `/clock`, unless the `Clock` can interpolate between samples.
+
+## Implementation Staging
+
+This should not be implemented monolithically. Implementation should focus on small incremental PRs with solid testing that are easy to review.
+This is a proposed order of operations.
+
+* Implement `rclcpp::Clock::sleep_until` - which will allow us to handle all external time drivers (e.g. Gazebo)
+* Create `rosbag2_transport::PlayerClock` with unit tests, with rate setting - but without pause and jump
+* Expose "rosbag2 publishes to `/clock`" (the most requested feature), passing the `PlayerClock` to `Player`
+* Add pause/resume to the `PlayerClock`, controllable by Service on the Rosbag2 Node
+* Add time jump to the `PlayerClock` (and handlers to the `Player`), controllable by a Service on the Rosbag2 Node
+
+^ Note that the provided Services will allow for building GUI and CLI/keyboard controllers for this functionality, without having to build against rosbag2 directly
