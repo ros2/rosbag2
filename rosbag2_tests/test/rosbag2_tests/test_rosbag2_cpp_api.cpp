@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
@@ -65,14 +66,22 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
       &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
 
     writer.write(bag_message);
+
+
+    // alternative way of writing a message
+    bag_message->topic_name = "/my/other/topic";
+    writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
+
     // close on scope exit
   }
 
   {
     rosbag2_cpp::Reader reader;
     reader.open(rosbag_directory.string());
+    std::vector<std::string> topics;
     while (reader.has_next()) {
       auto bag_message = reader.read_next();
+      topics.push_back(bag_message->topic_name);
 
       TestMsgT extracted_test_msg;
       rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
@@ -81,6 +90,10 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
       EXPECT_EQ(test_msg, extracted_test_msg);
     }
+    ASSERT_EQ(2u, topics.size());
+    EXPECT_EQ("/my/test/topic", topics[0]);
+    EXPECT_EQ("/my/other/topic", topics[1]);
+
     // close on scope exit
   }
 
