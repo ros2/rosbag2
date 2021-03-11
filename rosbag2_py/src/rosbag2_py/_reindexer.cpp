@@ -32,7 +32,7 @@
 namespace rosbag2_py
 {
 
-template <typename T>
+template<typename T>
 class Reindexer
 {
 public:
@@ -45,7 +45,7 @@ public:
   {
     reindexer_->reindex(storage_options);
   }
-  
+
 protected:
   std::unique_ptr<rosbag2_cpp::Reindexer> reindexer_;
 };
