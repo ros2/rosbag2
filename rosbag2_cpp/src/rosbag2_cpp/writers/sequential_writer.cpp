@@ -165,36 +165,39 @@ void SequentialWriter::reset()
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  if (topics_names_to_info_.find(topic_with_type.name) !=
+    topics_names_to_info_.end())
+  {
+    // nothing to do, topic already created
+    return;
+  }
+
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  if (converter_) {
-    converter_->add_topic(topic_with_type.name, topic_with_type.type);
+  rosbag2_storage::TopicInformation info{};
+  info.topic_metadata = topic_with_type;
+
+  bool insert_succeded = false;
+  {
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    const auto insert_res = topics_names_to_info_.insert(
+      std::make_pair(topic_with_type.name, info));
+    insert_succeded = insert_res.second;
   }
 
-  if (topics_names_to_info_.find(topic_with_type.name) ==
-    topics_names_to_info_.end())
-  {
-    rosbag2_storage::TopicInformation info{};
-    info.topic_metadata = topic_with_type;
+  if (!insert_succeded) {
+    std::stringstream errmsg;
+    errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
 
-    bool insert_succeded = false;
-    {
-      std::lock_guard<std::mutex> lock(topics_info_mutex_);
-      const auto insert_res = topics_names_to_info_.insert(
-        std::make_pair(topic_with_type.name, info));
-      insert_succeded = insert_res.second;
-    }
+    throw std::runtime_error(errmsg.str());
+  }
 
-    if (!insert_succeded) {
-      std::stringstream errmsg;
-      errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
+  storage_->create_topic(topic_with_type);
 
-      throw std::runtime_error(errmsg.str());
-    }
-
-    storage_->create_topic(topic_with_type);
+  if (converter_) {
+    converter_->add_topic(topic_with_type.name, topic_with_type.type);
   }
 }
 
