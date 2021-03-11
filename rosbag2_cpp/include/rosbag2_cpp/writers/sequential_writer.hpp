@@ -134,6 +134,13 @@ private:
 
   // Record TopicInformation into metadata
   void finalize_metadata();
+
+  // Helper method used by write to get the message in a format that is ready to be written.
+  // Common use cases include converting the message using the converter or
+  // performing other operations like compression on it
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  get_writeable_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 };
 
 }  // namespace writers
