@@ -158,6 +158,9 @@ No special allowance needs to be made in the `Player` - time will be provided at
 
 The `Player` must register a `JumpHandler` with the `Clock` - so that when a jump occurs, the current message playback queue can be invalidated and re-enqueued according to the new starting time.
 
+### Synchronizing rosbag2 playback
+
+As a consequence of this design, it is possible to synchronize the playback of multiple rosbags, by setting one to publish with `--clock`, and the others to listen with `--use-sim-time`. This feature is useful if for example bags were recorded for different topic selections, in the same time range.
 
 ## Implementation Staging
 
