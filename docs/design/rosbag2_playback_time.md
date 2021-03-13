@@ -52,7 +52,7 @@ public:
    * :param use_sim_time: if true, subscribe to /clock to provide time
    *   When use_sim_time is true, all time control is disabled.
    *   starting_time, playback_rate, pause/resume, jump will all be ignored - and the /clock publisher will be disabled
-   * :param starting_time: provides a "first time" to publish, which
+   * :param starting_time: provides a "first time"
    *    This should probably be the timestamp of the first message in the bag, but is a required argument because it cannot be guessed
    * :param playback_rate: must be positive, 1.0 means real-time
    * :param clock_topic_publish_frequency:
@@ -67,8 +67,10 @@ public:
 
   // rclcpp::Clock interface
   /**
+   * Provides the current time according to the clock's internal model.
    *  if use_sim_time: provides current ROS Time (with optional extrapolation - see "Clock Rate and Time Extrapolation" section)
-   *  if !use_sim_time: calculates current "Player Time" based on starting time, playback rate, pause state
+   *  if !use_sim_time: calculates current "Player Time" based on starting time, playback rate, pause state.
+   *    this means that /clock time will match with the recorded messages time, as if we are fully reliving the recorded session
    */
   rclcpp::Time now() override;
 
