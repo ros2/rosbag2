@@ -238,6 +238,7 @@ void Reindexer::aggregate_metadata(
  */
 void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 {
+  base_folder_ = storage_options.uri;
   ROSBAG2_CPP_LOG_INFO_STREAM("Beginning reindexing bag in directory: " << base_folder_);
 
   auto metadata_io_default = std::make_unique<rosbag2_storage::MetadataIo>();
@@ -246,7 +247,6 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
 
   // Identify all bag files
   std::vector<rcpputils::fs::path> files;
-  base_folder_ = storage_options.uri;
   get_bag_files(base_folder_, files);
   if (files.empty()) {
     throw std::runtime_error("No database files found for reindexing. Abort");
