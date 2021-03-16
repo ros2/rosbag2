@@ -24,6 +24,7 @@
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
+#include "rosbag2_transport/player.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -41,13 +42,15 @@ public:
     primitive_message1->string_value = "Hello World 1";
     auto primitive_message2 = get_messages_strings()[0];
     primitive_message2->string_value = "Hello World 2";
+    auto primitive_message3 = get_messages_strings()[0];
+    primitive_message2->string_value = "Hello World 3";
 
     auto topics_and_types =
       std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
     {serialize_test_message("topic1", 0, primitive_message1),
       serialize_test_message("topic1", 0, primitive_message2),
-      serialize_test_message("topic1", 0, primitive_message2)};
+      serialize_test_message("topic1", 0, primitive_message3)};
 
     messages[0]->time_stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     messages[1]->time_stamp = messages[0]->time_stamp + message_time_difference_.count();
@@ -94,7 +97,12 @@ TEST_F(Rosbag2PlayTestTimingFixture, playing_respects_rate)
   rosbag2_transport.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
-  EXPECT_THAT(replay_time, Gt(0.5 * original_playback_time_ + delay_after_playback_));
+  auto expected_lower_bound_time =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(
+    (1 / play_options_.rate) *
+    original_playback_time_) + delay_after_playback_;
+
+  EXPECT_THAT(replay_time, Gt(expected_lower_bound_time));
   EXPECT_THAT(replay_time, Lt(original_playback_time_ + delay_after_playback_));
 
   // Play at 1x speed
@@ -131,5 +139,67 @@ TEST_F(Rosbag2PlayTestTimingFixture, playing_respects_rate)
   rosbag2_transport.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;
 
+  EXPECT_THAT(replay_time, Gt(original_playback_time_ + delay_after_playback_));
+}
+
+TEST_F(Rosbag2PlayTestTimingFixture, play_pause_resume_respect_play_time) {
+  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+  auto transport_node = std::make_shared<Rosbag2Node>(play_options_.node_prefix + "_rosbag2");
+
+  Player player(reader_, transport_node);
+  EXPECT_FALSE(player.play_next());
+
+  player.pause_resume();  // Put player in pause mode before starting
+
+  EXPECT_FALSE(player.play_next());
+
+  // Run play asynchronously in separate thread
+  std::future<std::chrono::nanoseconds> play_future_result =
+    std::async(
+    std::launch::async, [&]() {
+      auto start = std::chrono::steady_clock::now();
+      player.play(play_options_);
+      return std::chrono::steady_clock::now() - start;
+    });
+
+  std::this_thread::sleep_for(35ms);  // Tolerance for lower bound
+  auto start_in_pause = std::chrono::steady_clock::now();
+
+  // Play first two messages in pause mode.
+  EXPECT_TRUE(player.play_next());
+  EXPECT_TRUE(player.play_next());
+  // After that, expected playback time without pause is going to be "original_playback_time_ / 2".
+  // Player shall take in to account messages played in pause mode and adjust playback timeouts
+  // for following messages.
+
+  std::this_thread::sleep_for(35ms);
+
+  player.set_playback_rate(2.0f);
+  EXPECT_FLOAT_EQ(2.0f, player.get_playback_rate());
+  player.pause_resume();  // Resume playing with 2x speed
+
+  auto time_elapsed_in_pause = std::chrono::steady_clock::now() - start_in_pause;
+
+  play_future_result.wait();
+  auto replay_time = play_future_result.get();
+
+  EXPECT_FALSE(player.play_next());
+  EXPECT_FLOAT_EQ(2.0f, player.get_playback_rate());
+
+  auto expected_lower_bound_time =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(
+    (1 / player.get_playback_rate()) *
+    original_playback_time_ / 2) + time_elapsed_in_pause + delay_after_playback_;
+
+  EXPECT_THAT(replay_time, Gt(expected_lower_bound_time));
+  EXPECT_THAT(replay_time, Lt(original_playback_time_ + delay_after_playback_));
+
+  // Make sure that we can replay one more time with the same player object after resetting reader.
+  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+  // Replaying the same messages with 1x speed without pause
+  play_options_.rate = 1.0f;
+  auto start = std::chrono::steady_clock::now();
+  player.play(play_options_);
+  replay_time = std::chrono::steady_clock::now() - start;
   EXPECT_THAT(replay_time, Gt(original_playback_time_ + delay_after_playback_));
 }
