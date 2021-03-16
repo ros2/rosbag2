@@ -34,7 +34,7 @@
 
 #include "qos.hpp"
 #include "recorder.hpp"
-#include "rosbag2_node.hpp"
+#include "rosbag2_transport/rosbag2_node.hpp"
 
 #include "mock_sequential_writer.hpp"
 

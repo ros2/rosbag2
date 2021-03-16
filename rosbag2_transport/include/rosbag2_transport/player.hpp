@@ -26,10 +26,10 @@
 #include "moodycamel/readerwriterqueue.h"
 
 #include "rclcpp/qos.hpp"
-
 #include "rosbag2_transport/play_options.hpp"
-
 #include "replayable_message.hpp"
+#include "rosbag2_node.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
 
 using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
@@ -42,20 +42,28 @@ namespace rosbag2_transport
 {
 
 class GenericPublisher;
-class Rosbag2Node;
 
 class Player
 {
 public:
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     std::shared_ptr<rosbag2_cpp::Reader> reader,
     std::shared_ptr<Rosbag2Node> rosbag2_transport);
 
+  ROSBAG2_TRANSPORT_PUBLIC
   void play(const PlayOptions & options);
 
+  ROSBAG2_TRANSPORT_PUBLIC
   void set_playback_rate(float rate);
+
+  ROSBAG2_TRANSPORT_PUBLIC
   float get_playback_rate();
+
+  ROSBAG2_TRANSPORT_PUBLIC
   void pause_resume();
+
+  ROSBAG2_TRANSPORT_PUBLIC
   void play_next();
 
 private:

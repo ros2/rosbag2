@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "player.hpp"
+#include "rosbag2_transport/player.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -35,8 +35,6 @@
 #include "rosbag2_transport/logging.hpp"
 
 #include "qos.hpp"
-#include "rosbag2_node.hpp"
-#include "replayable_message.hpp"
 
 namespace
 {

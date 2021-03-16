@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "generic_publisher.hpp"
+#include "rosbag2_transport/generic_publisher.hpp"
 
 #include <memory>
 #include <string>

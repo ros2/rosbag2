@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_node.hpp"
+#include "rosbag2_transport/rosbag2_node.hpp"
 
 #include <algorithm>
 #include <map>

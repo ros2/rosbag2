@@ -36,9 +36,9 @@
 
 #include "rosbag2_transport/logging.hpp"
 
-#include "player.hpp"
+#include "rosbag2_transport/player.hpp"
 #include "recorder.hpp"
-#include "rosbag2_node.hpp"
+#include "rosbag2_transport/rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
