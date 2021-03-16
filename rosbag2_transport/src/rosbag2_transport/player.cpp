@@ -94,6 +94,7 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
+  set_playback_rate(options.rate);
   topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
   prepare_publishers(options);
 
@@ -103,7 +104,20 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
-  play_messages_from_queue(options);
+  play_messages_from_queue();
+}
+
+void Player::set_playback_rate(float rate)
+{
+  // Use rate if in valid range
+  if (rate > 0.0) {
+    playback_rate_ = rate;
+  }
+}
+
+float Player::get_playback_rate()
+{
+  return playback_rate_;
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
@@ -156,11 +170,11 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::play_messages_from_queue(const PlayOptions & options)
+void Player::play_messages_from_queue()
 {
   start_time_ = std::chrono::system_clock::now();
   do {
-    play_messages_until_queue_empty(options);
+    play_messages_until_queue_empty();
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -169,20 +183,14 @@ void Player::play_messages_from_queue(const PlayOptions & options)
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty(const PlayOptions & options)
+void Player::play_messages_until_queue_empty()
 {
   ReplayableMessage message;
-
-  float rate = 1.0;
-  // Use rate if in valid range
-  if (options.rate > 0.0) {
-    rate = options.rate;
-  }
 
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     std::this_thread::sleep_until(
       start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / rate * message.time_since_start));
+        1.0 / playback_rate_ * message.time_since_start));
     if (rclcpp::ok()) {
       auto publisher_iter = publishers_.find(message.message->topic_name);
       if (publisher_iter != publishers_.end()) {
