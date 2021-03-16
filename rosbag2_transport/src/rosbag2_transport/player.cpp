@@ -174,10 +174,8 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 
 void Player::pause_resume()
 {
-  paused_ = !paused_;
-  play_next_ = false;  // Reset play_next, since it's uses and should be triggered only when in
-  // pause mode.
   std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
+  paused_ = !paused_;
   if (paused_) {
     pause_begin_time_ = std::chrono::system_clock::now();
     ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
@@ -187,10 +185,23 @@ void Player::pause_resume()
   }
 }
 
-void Player::play_next()
+bool Player::play_next()
 {
   ReplayableMessage message;
-  play_next_ = true;
+  std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
+  if (paused_ && have_more_messages_to_play()) {
+    ReplayableMessage message;
+    if (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+      playback_time_in_pause_ += message.time_since_start - prev_msg_time_since_start_;
+      play_message(message);
+      return true;
+    } else {
+      if (rclcpp::ok()) {
+        ROSBAG2_TRANSPORT_LOG_WARN("Failed to play next message. Message queue empty.");
+      }
+    }
+  }
+  return false;
 }
 
 void Player::play_message(const ReplayableMessage & message)
@@ -241,22 +252,7 @@ void Player::play_messages_from_queue()
 
   do {
     if (paused_) {
-      if (play_next_) {
-        ReplayableMessage message;
-        if (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-          playback_time_in_pause_ += message.time_since_start - prev_msg_time_since_start_;
-          play_message(message);
-          play_next_ = false;
-        } else {
-          if (!paused_ && !is_storage_completely_loaded() && rclcpp::ok()) {
-            ROSBAG2_TRANSPORT_LOG_WARN(
-              "Message queue starved. Messages will be delayed. Consider "
-              "increasing the --read-ahead-queue-size option.");
-          }
-        }
-      } else {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
     } else {
       play_messages_until_queue_empty();
       if (!paused_ && !is_storage_completely_loaded() && rclcpp::ok()) {

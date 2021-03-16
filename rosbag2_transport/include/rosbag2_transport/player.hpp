@@ -64,7 +64,7 @@ public:
   void pause_resume();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void play_next();
+  bool play_next();
 
 private:
   void load_storage_content(const PlayOptions & options);
@@ -83,7 +83,6 @@ private:
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic<float> playback_rate_{1.0};
   bool paused_ = false;
-  bool play_next_ = false;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
