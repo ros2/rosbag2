@@ -90,7 +90,7 @@ private:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
   rosbag2_storage::BagMetadata metadata_;
   std::vector<rosbag2_storage::TopicMetadata> topics_;
-  size_t num_read_;
+  size_t num_read_ = 0;
   rosbag2_storage::StorageFilter filter_;
 };
 

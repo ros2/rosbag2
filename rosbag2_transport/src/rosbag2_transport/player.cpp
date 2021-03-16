@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -30,7 +29,6 @@
 #include "rcutils/time.h"
 
 #include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "rosbag2_storage/storage_filter.hpp"
 
@@ -74,12 +72,11 @@ rclcpp::QoS publisher_qos_for_topic(
 namespace rosbag2_transport
 {
 
-const std::chrono::milliseconds
-Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
+const std::chrono::milliseconds Player::queue_read_wait_period_ = std::chrono::milliseconds(30);
 
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
-: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
+: reader_(reader), rosbag2_transport_(rosbag2_transport)
 {
   prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
   total_time_in_pause_ = std::chrono::nanoseconds(0);
