@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "rclcpp/clock.hpp"
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 
@@ -74,6 +75,12 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     bag_message->topic_name = "/my/other/topic";
     writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
 
+    // yet another alternative, writing the rclcpp::SerializedMessage directly
+    writer.write(serialized_msg, "/yet/another/topic", "test_msgs/msg/BasicTypes", rclcpp::Clock().now());
+
+    // writing a non-serialized message
+    writer.write(test_msg, "/a/ros2/message", rclcpp::Clock().now());
+
     // close on scope exit
   }
 
@@ -92,9 +99,11 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
       EXPECT_EQ(test_msg, extracted_test_msg);
     }
-    ASSERT_EQ(2u, topics.size());
+    ASSERT_EQ(4u, topics.size());
     EXPECT_EQ("/my/test/topic", topics[0]);
     EXPECT_EQ("/my/other/topic", topics[1]);
+    EXPECT_EQ("/yet/another/topic", topics[2]);
+    EXPECT_EQ("/a/ros2/message", topics[3]);
 
     // close on scope exit
   }
