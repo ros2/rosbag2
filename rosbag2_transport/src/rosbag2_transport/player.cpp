@@ -179,6 +179,7 @@ void Player::pause_resume()
   if (paused_) {
     pause_begin_time_ = std::chrono::steady_clock::now();
     ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
+    pause_begin_time_ = std::chrono::steady_clock::now();
   } else {
     total_time_in_pause_ += std::chrono::steady_clock::now() - pause_begin_time_;
     ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
@@ -273,6 +274,12 @@ void Player::play_messages_until_queue_empty()
   ReplayableMessage message;
   while (!paused_ && message_queue_.try_dequeue(message) && rclcpp::ok()) {
     play_message_in_time(message);
+  }
+  if (paused_) {
+    // Do correction for time when pause started, since pause occurred when we were in sleep or
+    // during playback of last message.
+    std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
+    pause_begin_time_ = std::chrono::steady_clock::now();
   }
 }
 
