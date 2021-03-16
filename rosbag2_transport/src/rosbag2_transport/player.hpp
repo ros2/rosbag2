@@ -69,6 +69,7 @@ private:
   void play_message_in_time(const ReplayableMessage & message);
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
+  const size_t delay_after_playback_ms_ = 50;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic<float> playback_rate_{1.0};
   bool paused_ = false;

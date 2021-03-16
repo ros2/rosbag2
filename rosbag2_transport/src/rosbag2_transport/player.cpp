@@ -105,6 +105,9 @@ void Player::play(const PlayOptions & options)
   wait_for_filled_queue(options);
 
   play_messages_from_queue();
+  // Workaround! Sleep for some reasonable amount of time to make sure that publishers will not be
+  // destroyed before they will sent last message on wire.
+  std::this_thread::sleep_for(std::chrono::milliseconds(delay_after_playback_ms_));
 }
 
 void Player::set_playback_rate(float rate)
