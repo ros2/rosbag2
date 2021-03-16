@@ -86,8 +86,8 @@ private:
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
-  std::chrono::time_point<std::chrono::system_clock> start_time_;
-  std::chrono::time_point<std::chrono::system_clock> pause_begin_time_;
+  std::chrono::time_point<std::chrono::steady_clock> start_time_;
+  std::chrono::time_point<std::chrono::steady_clock> pause_begin_time_;
   std::mutex time_in_pause_mutex_;
   std::chrono::nanoseconds prev_msg_time_since_start_;
   std::chrono::nanoseconds total_time_in_pause_;

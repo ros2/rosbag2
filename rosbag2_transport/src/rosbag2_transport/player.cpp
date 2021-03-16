@@ -177,10 +177,10 @@ void Player::pause_resume()
   std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
   paused_ = !paused_;
   if (paused_) {
-    pause_begin_time_ = std::chrono::system_clock::now();
+    pause_begin_time_ = std::chrono::steady_clock::now();
     ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
   } else {
-    total_time_in_pause_ += std::chrono::system_clock::now() - pause_begin_time_;
+    total_time_in_pause_ += std::chrono::steady_clock::now() - pause_begin_time_;
     ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
   }
 }
@@ -240,7 +240,7 @@ bool Player::have_more_messages_to_play()
 
 void Player::play_messages_from_queue()
 {
-  start_time_ = std::chrono::system_clock::now();
+  start_time_ = std::chrono::steady_clock::now();
   {
     std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
     pause_begin_time_ = start_time_;
@@ -262,6 +262,10 @@ void Player::play_messages_from_queue()
       }
     }
   } while (have_more_messages_to_play() && rclcpp::ok());
+
+  if (!have_more_messages_to_play()) {
+    ROSBAG2_TRANSPORT_LOG_INFO("Reached end of the bag");
+  }
 }
 
 void Player::play_messages_until_queue_empty()
