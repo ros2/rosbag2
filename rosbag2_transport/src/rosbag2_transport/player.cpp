@@ -80,7 +80,11 @@ Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 Player::Player(
   std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
 : reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
-{}
+{
+  prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
+  total_time_in_pause_ = std::chrono::nanoseconds(0);
+  playback_time_in_pause_ = std::chrono::nanoseconds(0);
+}
 
 bool Player::is_storage_completely_loaded() const
 {
@@ -176,10 +180,14 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 void Player::pause_resume()
 {
   paused_ = !paused_;
-  play_next_ = false;
+  play_next_ = false;  // Reset play_next, since it's uses and should be triggered only when in
+  // pause mode.
+  std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
   if (paused_) {
+    pause_begin_time_ = std::chrono::system_clock::now();
     ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
   } else {
+    total_time_in_pause_ += std::chrono::system_clock::now() - pause_begin_time_;
     ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
   }
 }
@@ -190,15 +198,36 @@ void Player::play_next()
   play_next_ = true;
 }
 
-void Player::play_message_in_time(const ReplayableMessage & message)
+void Player::play_message(const ReplayableMessage & message)
 {
-  std::this_thread::sleep_until(
-    start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-      1.0 / playback_rate_ * message.time_since_start));
   if (rclcpp::ok()) {
     auto publisher_iter = publishers_.find(message.message->topic_name);
     if (publisher_iter != publishers_.end()) {
       publisher_iter->second->publish(message.message->serialized_data);
+    }
+    prev_msg_time_since_start_ = message.time_since_start;
+  }
+}
+
+void Player::play_message_in_time(const ReplayableMessage & message)
+{
+  using namespace std::chrono;  // NOLINT
+  std::this_thread::sleep_until(
+    start_time_ + duration_cast<nanoseconds>(total_time_in_pause_) +
+    duration_cast<nanoseconds>(
+      1.0 / playback_rate_ * (message.time_since_start - playback_time_in_pause_)));
+  play_message(message);
+}
+
+bool Player::have_more_messages_to_play()
+{
+  if (!is_storage_completely_loaded()) {
+    return true;
+  } else {
+    if (message_queue_.peek() != nullptr) {
+      return true;
+    } else {
+      return false;
     }
   }
 }
@@ -206,13 +235,22 @@ void Player::play_message_in_time(const ReplayableMessage & message)
 void Player::play_messages_from_queue()
 {
   start_time_ = std::chrono::system_clock::now();
+  {
+    std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
+    pause_begin_time_ = start_time_;
+    total_time_in_pause_ = std::chrono::nanoseconds(0);
+  }
+  prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
+  playback_time_in_pause_ = std::chrono::nanoseconds(0);
   ROSBAG2_TRANSPORT_LOG_INFO("Start playing messages from bag..");
+
   do {
     if (paused_) {
       if (play_next_) {
         ReplayableMessage message;
         if (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-          play_message_in_time(message);
+          playback_time_in_pause_ += message.time_since_start - prev_msg_time_since_start_;
+          play_message(message);
           play_next_ = false;
         } else {
           if (!paused_ && !is_storage_completely_loaded() && rclcpp::ok()) {
@@ -232,7 +270,7 @@ void Player::play_messages_from_queue()
           "increasing the --read-ahead-queue-size option.");
       }
     }
-  } while (!is_storage_completely_loaded() && rclcpp::ok());
+  } while (have_more_messages_to_play() && rclcpp::ok());
 }
 
 void Player::play_messages_until_queue_empty()
