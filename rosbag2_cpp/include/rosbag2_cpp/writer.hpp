@@ -132,7 +132,7 @@ public:
 
   /**
    * Write a serialized message to a bagfile.
-   * The topic needs to have been created before writing is possible.
+   * Opposing a call to \sa write without topic metadata, the topic will be created.
    *
    * \param message rclcpp::SerializedMessage The serialized message to be written to the bagfile
    * \param topic_name the string of the topic this messages belongs to
@@ -146,6 +146,16 @@ public:
     const std::string & type_name,
     const rclcpp::Time & time);
 
+  /**
+   * Write a non-serialized message to a bagfile.
+   * Opposing a call to \sa write without topic metadata, the topic will be created.
+   *
+   * \param message MessageT The serialized message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param time The time stamp of the message
+   * \throws runtime_error if the Writer is not open.
+   */
   template<class MessageT>
   void write(
     const MessageT & message,

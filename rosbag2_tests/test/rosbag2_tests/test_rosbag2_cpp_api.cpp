@@ -76,7 +76,9 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
 
     // yet another alternative, writing the rclcpp::SerializedMessage directly
-    writer.write(serialized_msg, "/yet/another/topic", "test_msgs/msg/BasicTypes", rclcpp::Clock().now());
+    writer.write(
+      serialized_msg, "/yet/another/topic", "test_msgs/msg/BasicTypes",
+      rclcpp::Clock().now());
 
     // writing a non-serialized message
     writer.write(test_msg, "/a/ros2/message", rclcpp::Clock().now());
@@ -104,6 +106,18 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     EXPECT_EQ("/my/other/topic", topics[1]);
     EXPECT_EQ("/yet/another/topic", topics[2]);
     EXPECT_EQ("/a/ros2/message", topics[3]);
+
+    // close on scope exit
+  }
+
+  // alternative reader
+  {
+    rosbag2_cpp::Reader reader;
+    reader.open(rosbag_directory.string());
+    while (reader.has_next()) {
+      TestMsgT extracted_test_msg = reader.read_next<TestMsgT>();
+      EXPECT_EQ(test_msg, extracted_test_msg);
+    }
 
     // close on scope exit
   }
