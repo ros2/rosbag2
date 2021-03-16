@@ -77,8 +77,8 @@ Player::Player(
 : reader_(reader), rosbag2_transport_(rosbag2_transport)
 {
   prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
+  adjusted_prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
   total_time_in_pause_ = std::chrono::nanoseconds(0);
-  playback_time_in_pause_ = std::chrono::nanoseconds(0);
 }
 
 bool Player::is_storage_completely_loaded() const
@@ -174,15 +174,20 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 
 void Player::pause_resume()
 {
-  std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
-  paused_ = !paused_;
-  if (paused_) {
-    pause_begin_time_ = std::chrono::steady_clock::now();
+  std::unique_lock<std::mutex> lk(time_in_pause_mutex_);
+  if (!paused_) {
+    paused_ = true;
+    if (playback_started_) {
+      // Wait until currently played message will be finished to avoid undefined behaviour and
+      // race conditions
+      cv_pause_confirmed_.wait(lk);
+    }
     ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
     pause_begin_time_ = std::chrono::steady_clock::now();
   } else {
     total_time_in_pause_ += std::chrono::steady_clock::now() - pause_begin_time_;
     ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
+    paused_ = false;
   }
 }
 
@@ -193,7 +198,6 @@ bool Player::play_next()
   if (paused_ && have_more_messages_to_play()) {
     ReplayableMessage message;
     if (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-      playback_time_in_pause_ += message.time_since_start - prev_msg_time_since_start_;
       play_message(message);
       return true;
     } else {
@@ -219,11 +223,19 @@ void Player::play_message(const ReplayableMessage & message)
 void Player::play_message_in_time(const ReplayableMessage & message)
 {
   using namespace std::chrono;  // NOLINT
+
+  auto scaled_delay_between_msgs = duration_cast<nanoseconds>(
+    1.0 / playback_rate_ *
+    (message.time_since_start - prev_msg_time_since_start_));
+
+  auto adjusted_msg_time_since_start = adjusted_prev_msg_time_since_start_ +
+    scaled_delay_between_msgs;
+
   std::this_thread::sleep_until(
     start_time_ + duration_cast<nanoseconds>(total_time_in_pause_) +
-    duration_cast<nanoseconds>(
-      1.0 / playback_rate_ * (message.time_since_start - playback_time_in_pause_)));
+    adjusted_msg_time_since_start);
   play_message(message);
+  adjusted_prev_msg_time_since_start_ = adjusted_msg_time_since_start;
 }
 
 bool Player::have_more_messages_to_play()
@@ -246,13 +258,16 @@ void Player::play_messages_from_queue()
     std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
     pause_begin_time_ = start_time_;
     total_time_in_pause_ = std::chrono::nanoseconds(0);
+
+    prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
+    adjusted_prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
+    ROSBAG2_TRANSPORT_LOG_INFO("Start playing messages from bag..");
+    playback_started_ = true;
   }
-  prev_msg_time_since_start_ = std::chrono::nanoseconds(0);
-  playback_time_in_pause_ = std::chrono::nanoseconds(0);
-  ROSBAG2_TRANSPORT_LOG_INFO("Start playing messages from bag..");
 
   do {
     if (paused_) {
+      cv_pause_confirmed_.notify_all();
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
     } else {
       play_messages_until_queue_empty();
@@ -264,6 +279,8 @@ void Player::play_messages_from_queue()
     }
   } while (have_more_messages_to_play() && rclcpp::ok());
 
+  cv_pause_confirmed_.notify_all();  // Unlock thread initiated pause in case of last message or
+  // closed context.
   if (!have_more_messages_to_play()) {
     ROSBAG2_TRANSPORT_LOG_INFO("Reached end of the bag");
   }
@@ -274,12 +291,6 @@ void Player::play_messages_until_queue_empty()
   ReplayableMessage message;
   while (!paused_ && message_queue_.try_dequeue(message) && rclcpp::ok()) {
     play_message_in_time(message);
-  }
-  if (paused_) {
-    // Do correction for time when pause started, since pause occurred when we were in sleep or
-    // during playback of last message.
-    std::lock_guard<std::mutex> lk(time_in_pause_mutex_);
-    pause_begin_time_ = std::chrono::steady_clock::now();
   }
 }
 
