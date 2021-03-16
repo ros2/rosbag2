@@ -196,7 +196,6 @@ void Player::prepare_publishers(const PlayOptions & options)
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
-    
     // don't create publishers for topics that are not going to be used
     if (!options.topics_to_filter.empty())
     {
