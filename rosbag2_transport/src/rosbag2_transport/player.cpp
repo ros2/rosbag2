@@ -170,15 +170,64 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
+void Player::pause_resume()
+{
+  paused_ = !paused_;
+  play_next_ = false;
+  if (paused_) {
+    ROSBAG2_TRANSPORT_LOG_INFO("Pause playing messages from bag..");
+  } else {
+    ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
+  }
+}
+
+void Player::play_next()
+{
+  ReplayableMessage message;
+  play_next_ = true;
+}
+
+void Player::play_message_in_time(const ReplayableMessage & message)
+{
+  std::this_thread::sleep_until(
+    start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
+      1.0 / playback_rate_ * message.time_since_start));
+  if (rclcpp::ok()) {
+    auto publisher_iter = publishers_.find(message.message->topic_name);
+    if (publisher_iter != publishers_.end()) {
+      publisher_iter->second->publish(message.message->serialized_data);
+    }
+  }
+}
+
 void Player::play_messages_from_queue()
 {
   start_time_ = std::chrono::system_clock::now();
+  ROSBAG2_TRANSPORT_LOG_INFO("Start playing messages from bag..");
   do {
-    play_messages_until_queue_empty();
-    if (!is_storage_completely_loaded() && rclcpp::ok()) {
-      ROSBAG2_TRANSPORT_LOG_WARN(
-        "Message queue starved. Messages will be delayed. Consider "
-        "increasing the --read-ahead-queue-size option.");
+    if (paused_) {
+      if (play_next_) {
+        ReplayableMessage message;
+        if (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+          play_message_in_time(message);
+          play_next_ = false;
+        } else {
+          if (!paused_ && !is_storage_completely_loaded() && rclcpp::ok()) {
+            ROSBAG2_TRANSPORT_LOG_WARN(
+              "Message queue starved. Messages will be delayed. Consider "
+              "increasing the --read-ahead-queue-size option.");
+          }
+        }
+      } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    } else {
+      play_messages_until_queue_empty();
+      if (!paused_ && !is_storage_completely_loaded() && rclcpp::ok()) {
+        ROSBAG2_TRANSPORT_LOG_WARN(
+          "Message queue starved. Messages will be delayed. Consider "
+          "increasing the --read-ahead-queue-size option.");
+      }
     }
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
@@ -186,17 +235,8 @@ void Player::play_messages_from_queue()
 void Player::play_messages_until_queue_empty()
 {
   ReplayableMessage message;
-
-  while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(
-      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / playback_rate_ * message.time_since_start));
-    if (rclcpp::ok()) {
-      auto publisher_iter = publishers_.find(message.message->topic_name);
-      if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message.message->serialized_data);
-      }
-    }
+  while (!paused_ && message_queue_.try_dequeue(message) && rclcpp::ok()) {
+    play_message_in_time(message);
   }
 }
 

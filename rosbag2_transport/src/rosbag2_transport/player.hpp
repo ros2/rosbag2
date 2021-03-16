@@ -55,6 +55,8 @@ public:
 
   void set_playback_rate(float rate);
   float get_playback_rate();
+  void pause_resume();
+  void play_next();
 
 private:
   void load_storage_content(const PlayOptions & options);
@@ -64,9 +66,13 @@ private:
   void play_messages_from_queue();
   void play_messages_until_queue_empty();
   void prepare_publishers(const PlayOptions & options);
+  void play_message_in_time(const ReplayableMessage & message);
+
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic<float> playback_rate_{1.0};
+  bool paused_ = false;
+  bool play_next_ = false;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
