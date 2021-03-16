@@ -172,7 +172,7 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
   }
 }
 
-void Player::pause_resume()
+bool Player::pause_resume()
 {
   std::unique_lock<std::mutex> lk(time_in_pause_mutex_);
   if (!paused_) {
@@ -189,6 +189,7 @@ void Player::pause_resume()
     ROSBAG2_TRANSPORT_LOG_INFO("Resume playing messages from bag..");
     paused_ = false;
   }
+  return paused_;
 }
 
 bool Player::play_next()

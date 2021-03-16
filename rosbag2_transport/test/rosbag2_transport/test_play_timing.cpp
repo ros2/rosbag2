@@ -147,7 +147,7 @@ TEST_F(Rosbag2PlayTestTimingFixture, play_pause_resume_respect_play_time) {
   Player player(reader_, transport_node);
   EXPECT_FALSE(player.play_next());
 
-  player.pause_resume();  // Put player in pause mode before starting
+  EXPECT_TRUE(player.pause_resume());  // Put player in pause mode before starting
 
   EXPECT_FALSE(player.play_next());
 
@@ -174,7 +174,7 @@ TEST_F(Rosbag2PlayTestTimingFixture, play_pause_resume_respect_play_time) {
 
   player.set_playback_rate(2.0f);
   EXPECT_FLOAT_EQ(2.0f, player.get_playback_rate());
-  player.pause_resume();  // Resume playing with 2x speed
+  EXPECT_FALSE(player.pause_resume());  // Resume playing with 2x speed
 
   auto time_elapsed_in_pause = std::chrono::steady_clock::now() - start_in_pause;
 

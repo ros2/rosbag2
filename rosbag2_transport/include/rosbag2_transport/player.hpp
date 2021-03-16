@@ -61,7 +61,7 @@ public:
   float get_playback_rate();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void pause_resume();
+  bool pause_resume();
 
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
