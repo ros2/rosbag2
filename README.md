@@ -4,6 +4,15 @@
 
 Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md).
 
+## Foxy Backport Release
+
+NOTE: this branch will contain the sources for the package `ros-foxy-rosbag2-future`, an updated package containing new performance improvements and features that could not be safely backported to `ros-foxy-rosbag2` in the Foxy Fitzroy distribution without breaking API/ABI. This branch is NOT YET STABLE and will be force-pushed during the release process.
+
+This to-do list will be removed as the updates are made to this branch:
+* [ ] Rename all `package.xml`s with `-future` package name suffix and `<conflicts>` tag
+* [ ] Update this README to ensure correct installation and usage instructions
+* [ ] Finalize the `master` commit that this will be based on
+
 ## Installation instructions
 
 ## Debian packages
