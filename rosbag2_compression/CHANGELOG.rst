@@ -2,16 +2,33 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.3.5 (2020-08-31)
+0.6.0 (2021-02-01)
 ------------------
+* Make compressor implementations into a plugin via pluginlib (`#624 <https://github.com/ros2/rosbag2/issues/624>`_)
+* Use ZSTD's streaming interface for [de]compressing files (`#543 <https://github.com/ros2/rosbag2/issues/543>`_)
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Fix relative metadata paths in SequentialCompressionWriter (`#613 <https://github.com/ros2/rosbag2/issues/613>`_)
+* Fix deadlock race condition on compression shutdown (`#616 <https://github.com/ros2/rosbag2/issues/616>`_)
+* Deduplicate SequentialCompressionReader business logic, add fallback to find bagfiles in incorrectly-written metadata (`#612 <https://github.com/ros2/rosbag2/issues/612>`_)
+* Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
+* Contributors: Emerson Knapp, P. J. Reed
 
-0.3.4 (2020-08-05)
+0.5.0 (2020-12-02)
 ------------------
-* Fix exception thrown given invalid arguments with compression enabled (`#488 <https://github.com/ros2/rosbag2/issues/488>`_) (`#489 <https://github.com/ros2/rosbag2/issues/489>`_)
-* Contributors: Devin Bonnie
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski
 
-0.3.3 (2020-06-23)
+0.4.0 (2020-11-19)
 ------------------
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* Do not expect empty StorageOptions URI to work in CompressionWriterTest (`#526 <https://github.com/ros2/rosbag2/issues/526>`_)
+* Remove some code duplication between SequentialWriter and SequentialCompressionWriter (`#527 <https://github.com/ros2/rosbag2/issues/527>`_)
+* Fix exception thrown given invalid arguments with compression enabled (`#488 <https://github.com/ros2/rosbag2/issues/488>`_)
+* Adding db directory creation to rosbag2_cpp (`#450 <https://github.com/ros2/rosbag2/issues/450>`_)
+* Consolidate ZSTD utility functions (`#459 <https://github.com/ros2/rosbag2/issues/459>`_)
+* Add per-message ZSTD compression (`#418 <https://github.com/ros2/rosbag2/issues/418>`_)
+* Contributors: Christophe Bedard, Devin Bonnie, Jaison Titus, Karsten Knese, Marwan Taher, Michael Jeronimo, P. J. Reed
 
 0.3.2 (2020-06-03)
 ------------------

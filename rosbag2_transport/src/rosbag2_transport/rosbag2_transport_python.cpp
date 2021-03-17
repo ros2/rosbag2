@@ -26,15 +26,14 @@
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
-#include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 #include "rmw/rmw.h"
 
 namespace
@@ -84,7 +83,7 @@ std::unordered_map<std::string, rclcpp::QoS> PyObject_AsTopicQoSMap(PyObject * o
 static PyObject *
 rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
   rosbag2_transport::RecordOptions record_options{};
 
   static const char * kwlist[] = {
@@ -94,6 +93,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "node_prefix",
     "compression_mode",
     "compression_format",
+    "compression_queue_size",
+    "compression_threads",
     "all",
     "no_discovery",
     "polling_interval",
@@ -101,8 +102,12 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     "max_bagfile_duration",
     "max_cache_size",
     "topics",
+    "regex",
+    "exclude",
     "include_hidden_topics",
     "qos_profile_overrides",
+    "storage_preset_profile",
+    "storage_config_file",
     nullptr};
 
   char * uri = nullptr;
@@ -111,6 +116,8 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   char * node_prefix = nullptr;
   char * compression_mode = nullptr;
   char * compression_format = nullptr;
+  uint64_t compression_queue_size = 1;
+  uint64_t compression_threads = 0;
   PyObject * qos_profile_overrides = nullptr;
   bool all = false;
   bool no_discovery = false;
@@ -119,16 +126,22 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   unsigned long long max_bagfile_duration = 0;  // NOLINT
   uint64_t max_cache_size = 0u;
   PyObject * topics = nullptr;
+  char * regex = nullptr;
+  char * exclude = nullptr;
   bool include_hidden_topics = false;
+  char * storage_preset_profile = nullptr;
+  char * storage_config_file = nullptr;
   if (
     !PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ssssss|bbKKKKObO", const_cast<char **>(kwlist),
+      args, kwargs, "ssssss|KKbbKKKKOssbOss", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &serilization_format,
       &node_prefix,
       &compression_mode,
       &compression_format,
+      &compression_queue_size,
+      &compression_threads,
       &all,
       &no_discovery,
       &polling_interval_ms,
@@ -136,8 +149,12 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       &max_bagfile_duration,
       &max_cache_size,
       &topics,
+      &regex,
+      &exclude,
       &include_hidden_topics,
-      &qos_profile_overrides
+      &qos_profile_overrides,
+      &storage_preset_profile,
+      &storage_config_file
   ))
   {
     return nullptr;
@@ -145,20 +162,31 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
   storage_options.max_bagfile_size = (uint64_t) max_bagfile_size;
   storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration);
   storage_options.max_cache_size = max_cache_size;
+  storage_options.storage_preset_profile = storage_preset_profile;
   record_options.all = all;
+  record_options.regex = regex;
+  record_options.exclude = exclude;
   record_options.is_discovery_disabled = no_discovery;
   record_options.topic_polling_interval = std::chrono::milliseconds(polling_interval_ms);
   record_options.node_prefix = std::string(node_prefix);
   record_options.compression_mode = std::string(compression_mode);
   record_options.compression_format = compression_format;
+  record_options.compression_queue_size = compression_queue_size;
+  if (compression_threads < 1) {
+    compression_threads = std::thread::hardware_concurrency();
+  }
+  record_options.compression_threads = compression_threads;
   record_options.include_hidden_topics = include_hidden_topics;
 
   rosbag2_compression::CompressionOptions compression_options{
     record_options.compression_format,
-    rosbag2_compression::compression_mode_from_string(record_options.compression_mode)
+    rosbag2_compression::compression_mode_from_string(record_options.compression_mode),
+    record_options.compression_queue_size,
+    record_options.compression_threads
   };
 
   auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
@@ -181,7 +209,6 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
     serilization_format;
 
   // Specify defaults
-  auto info = std::make_shared<rosbag2_cpp::Info>();
   auto reader = std::make_shared<rosbag2_cpp::Reader>(
     std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   std::shared_ptr<rosbag2_cpp::Writer> writer;
@@ -194,7 +221,7 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer);
   transport.init();
   transport.record(storage_options, record_options);
   transport.shutdown();
@@ -225,7 +252,7 @@ static PyObject *
 rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
 {
   rosbag2_transport::PlayOptions play_options{};
-  rosbag2_transport::StorageOptions storage_options{};
+  rosbag2_storage::StorageOptions storage_options{};
 
   static const char * kwlist[] = {
     "uri",
@@ -238,6 +265,7 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
     "loop",
     "paused",
     "topic_remapping",
+    "storage_config_file",
     nullptr
   };
 
@@ -251,8 +279,9 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   bool loop = false;
   bool paused = false;
   PyObject * topic_remapping = nullptr;
+  char * storage_config_file = nullptr;
   if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObbO", const_cast<char **>(kwlist),
+      args, kwargs, "sss|kfOObOs", const_cast<char **>(kwlist),
       &uri,
       &storage_id,
       &node_prefix,
@@ -262,13 +291,15 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       &qos_profile_overrides,
       &loop,
       &paused,
-      &topic_remapping))
+      &topic_remapping,
+      &storage_config_file))
   {
     return nullptr;
   }
 
   storage_options.uri = std::string(uri);
   storage_options.storage_id = std::string(storage_id);
+  storage_options.storage_config_uri = std::string(storage_config_file);
 
   play_options.node_prefix = std::string(node_prefix);
   play_options.read_ahead_queue_size = read_ahead_queue_size;
@@ -297,7 +328,6 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
   rosbag2_storage::MetadataIo metadata_io{};
   rosbag2_storage::BagMetadata metadata{};
   // Specify defaults
-  auto info = std::make_shared<rosbag2_cpp::Info>();
   std::shared_ptr<rosbag2_cpp::Reader> reader;
   auto writer = std::make_shared<rosbag2_cpp::Writer>(
     std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
@@ -316,32 +346,10 @@ rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * k
       std::make_unique<rosbag2_cpp::readers::SequentialReader>());
   }
 
-  rosbag2_transport::Rosbag2Transport transport(reader, writer, info);
+  rosbag2_transport::Rosbag2Transport transport(reader, writer);
   transport.init();
   transport.play(storage_options, play_options);
   transport.shutdown();
-
-  Py_RETURN_NONE;
-}
-
-static PyObject *
-rosbag2_transport_info(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
-{
-  static const char * kwlist[] = {"uri", "storage_id", nullptr};
-
-  char * char_uri;
-  char * char_storage_id;
-  if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "ss", const_cast<char **>(kwlist), &char_uri, &char_storage_id))
-  {
-    return nullptr;
-  }
-
-  std::string uri = std::string(char_uri);
-  std::string storage_id = std::string(char_storage_id);
-
-  rosbag2_transport::Rosbag2Transport transport;
-  transport.print_bag_info(uri, storage_id);
 
   Py_RETURN_NONE;
 }
@@ -359,10 +367,6 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "play", reinterpret_cast<PyCFunction>(rosbag2_transport_play), METH_VARARGS | METH_KEYWORDS,
     "Play bag"
-  },
-  {
-    "info", reinterpret_cast<PyCFunction>(rosbag2_transport_info), METH_VARARGS | METH_KEYWORDS,
-    "Print bag info"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };

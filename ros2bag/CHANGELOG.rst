@@ -2,19 +2,90 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.3.5 (2020-08-31)
+0.6.0 (2021-02-01)
 ------------------
-* Add pytest.ini so local tests don't display warning. (`#446 <https://github.com/ros2/rosbag2/issues/446>`_) (`#514 <https://github.com/ros2/rosbag2/issues/514>`_)
-* Contributors: Emerson Knapp
+* Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
+* Fix the tests on cyclonedds by translating qos duration values (`#606 <https://github.com/ros2/rosbag2/issues/606>`_)
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+* Fix a bug on parsing wrong description in plugin xml file (`#578 <https://github.com/ros2/rosbag2/issues/578>`_)
+* Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
+* Contributors: Adam Dąbrowski, Barry Xu, Emerson Knapp, P. J. Reed
 
-0.3.4 (2020-08-05)
+0.5.0 (2020-12-02)
 ------------------
-* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_) (`#490 <https://github.com/ros2/rosbag2/issues/490>`_)
-  Co-authored-by: Jesse Ikawa <64169356+jikawa-az@users.noreply.github.com>
-* Contributors: Devin Bonnie
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+  * Double buffers
+  * Circular queue and FLUSH option as define
+  * Minor naming and lexical fixes.
+  * Removed FLUSH_BUFFERS define check.
+  * Sqlite3 storage logging fixes.
+  * Sqlite3 storage circular buffer with pre allocated memory.
+  * Sqlite3 storage buffers moved to shared_ptrs.
+  * Uncrustify
+  * Moved double buffers to writer
+  * Buffer layer reset in seq compression writer in rosbag2 cpp
+  * Buffer layer for rosbag2 writer refactor
+  * Changed buffers in BufferLayer to std vectors.
+  * BufferLayer uncrustify
+  * Removed non-applicable test for writer cache.
+  * BufferLayer review fixes
+  * Rosbag metadata msgs count fixed for BufferLayer
+  * Condition variable for buffer layer sync.
+  * Fixed buffer locks
+  * Buffers in BufferLayer refactored, moved into new class
+  * Buffer layer split bags fixed.
+  * Storage options include fix in buffer layer header.
+  * Mutex around swapping buffers in buffer layer.
+  * Fixed cache 0 bug in buffer layer.
+  * Minor buffer layer refactor.
+  * Counting messages in writer refactored.
+  * Changed default cache size to 100Mb and updated parameter description
+  * Applied review remarks:
+  - significant refactoring: separation of cache classes
+  - applied suggested improvements
+  - some renaming
+  - reduce code duplication that would otherwise increase with cache refactor, between compression and plain writers
+  * Applied review comments
+  - cache consumer now takes a callback and is independent of storage
+  - namespace changes, renaming, cleaning
+  - counting and logging messages by topic
+  * linter
+  * Changes after review: fixing flushing, topic counts, and more
+  * Fix for splitting - flushing state now correctly turns off
+  * cache classes documentation
+  * simplified signature
+  * a couple of tests for cache
+  * address review: explicit constructor and doxygen styling
+  * Windows warnings fix
+  * fixed type mismatch warning on Windows
+  * added minor comment
+  Co-authored-by: Piotr Jaroszek <piotr.jaroszek@robotec.ai>
+* Contributors: Adam Dąbrowski
 
-0.3.3 (2020-06-23)
+0.4.0 (2020-11-19)
 ------------------
+* read yaml config file (`#497 <https://github.com/ros2/rosbag2/issues/497>`_)
+* List all storage plugins in plugin xml file (`#554 <https://github.com/ros2/rosbag2/issues/554>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update deprecated qos policy value names (`#548 <https://github.com/ros2/rosbag2/issues/548>`_)
+* Add record test for ros2bag (`#523 <https://github.com/ros2/rosbag2/issues/523>`_)
+* Removed duplicated code in record (`#534 <https://github.com/ros2/rosbag2/issues/534>`_)
+* Change default cache size for sequential_writer to a non zero value (`#533 <https://github.com/ros2/rosbag2/issues/533>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* [ros2bag test_record] Gets rid of time.sleep and move to using command.wait_for_output (`#525 <https://github.com/ros2/rosbag2/issues/525>`_)
+* Add pytest.ini back to ros2bag. (`#492 <https://github.com/ros2/rosbag2/issues/492>`_)
+* performance testing packages (`#442 <https://github.com/ros2/rosbag2/issues/442>`_)
+* Validate QoS profile values are not negative. (`#483 <https://github.com/ros2/rosbag2/issues/483>`_)
+* catch parent exception (`#472 <https://github.com/ros2/rosbag2/issues/472>`_)
+* add wait for closed file handles on Windows (`#470 <https://github.com/ros2/rosbag2/issues/470>`_)
+* introduce ros2 bag list <plugins> (`#468 <https://github.com/ros2/rosbag2/issues/468>`_)
+* move wait_for_shutdown() call out of the context manager (`#466 <https://github.com/ros2/rosbag2/issues/466>`_)
+* Adding db directory creation to rosbag2_cpp (`#450 <https://github.com/ros2/rosbag2/issues/450>`_)
+* use a single temp dir for the test class (`#462 <https://github.com/ros2/rosbag2/issues/462>`_)
+* Add per-message ZSTD compression (`#418 <https://github.com/ros2/rosbag2/issues/418>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* Add pytest.ini so local tests don't display warning (`#446 <https://github.com/ros2/rosbag2/issues/446>`_)
+* Contributors: Adam Dąbrowski, Barry Xu, Chris Lalancette, Dirk Thomas, Ivan Santiago Paunovic, Jacob Perron, Jaison Titus, Jesse Ikawa, Karsten Knese, Marwan Taher, Michael Jeronimo, P. J. Reed, jhdcs
 
 0.3.2 (2020-06-03)
 ------------------

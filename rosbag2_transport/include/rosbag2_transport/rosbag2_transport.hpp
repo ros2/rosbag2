@@ -20,14 +20,14 @@
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {
-class Info;
 class Reader;
 class Writer;
 }  // namespace rosbag2_cpp
@@ -48,8 +48,7 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   Rosbag2Transport(
     std::shared_ptr<rosbag2_cpp::Reader> reader,
-    std::shared_ptr<rosbag2_cpp::Writer> writer,
-    std::shared_ptr<rosbag2_cpp::Info> info);
+    std::shared_ptr<rosbag2_cpp::Writer> writer);
 
   ROSBAG2_TRANSPORT_PUBLIC
   void init();
@@ -65,7 +64,9 @@ public:
    * \param record_options Options regarding the recording (e.g. the topics to record)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void record(const StorageOptions & storage_options, const RecordOptions & record_options);
+  void record(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const RecordOptions & record_options);
 
   /**
    * Replay all topics in a bagfile.
@@ -74,15 +75,9 @@ public:
    * \param play_options Options regarding the playback (e.g. queue size)
    */
   ROSBAG2_TRANSPORT_PUBLIC
-  void play(const StorageOptions & storage_options, const PlayOptions & play_options);
-
-  /**
-   * Print the bag info contained in the metadata yaml file.
-   *
-   * \param uri path to the metadata yaml file.
-   */
-  ROSBAG2_TRANSPORT_PUBLIC
-  void print_bag_info(const std::string & uri, const std::string & storage_id);
+  void play(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const PlayOptions & play_options);
 
   /**
    * Resume playback.
@@ -103,7 +98,6 @@ private:
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  std::shared_ptr<rosbag2_cpp::Info> info_;
 
   std::shared_ptr<Rosbag2Node> transport_node_;
 };

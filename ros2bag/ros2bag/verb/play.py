@@ -21,6 +21,7 @@ from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import get_registered_readers
 import yaml
 
 
@@ -28,11 +29,14 @@ class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        reader_choices = get_registered_readers()
+        default_reader = 'sqlite3' if 'sqlite3' in reader_choices else reader_choices[0]
+
         parser.add_argument(
             'bag_file', type=check_path_exists, help='bag file to replay')
         parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help="storage identifier to be used, defaults to 'sqlite3'")
+            '-s', '--storage', default=default_reader, choices=reader_choices,
+            help=f"storage identifier to be used, defaults to '{default_reader}'")
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -59,6 +63,14 @@ class PlayVerb(VerbExtension):
             '--remap', '-m', default='', nargs='+',
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
+        parser.add_argument(
+            '--storage-config-file', type=FileType('r'),
+            help='Path to a yaml file defining storage specific configurations. '
+                 'For the default storage plugin settings are specified through syntax:'
+                 'read:'
+                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
+                 'Note that applicable settings are limited to read-only for ros2 bag play.'
+                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -69,6 +81,10 @@ class PlayVerb(VerbExtension):
                     qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
+
+        storage_config_file = ''
+        if args.storage_config_file:
+            storage_config_file = args.storage_config_file.name
 
         # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
         #               combined with constrained environments (as imposed by colcon test)
@@ -85,5 +101,6 @@ class PlayVerb(VerbExtension):
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,
+            topic_remapping=args.remap,
             paused=args.paused,
-            topic_remapping=args.remap)
+            storage_config_file=storage_config_file)

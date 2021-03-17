@@ -2,7 +2,11 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>ros2bag</name>
+<<<<<<< HEAD
   <version>0.3.5</version>
+=======
+  <version>0.6.0</version>
+>>>>>>> github/master
   <description>
     Entry point for rosbag in ROS 2
   </description>
@@ -12,6 +16,7 @@
   <license>Apache License 2.0</license>
 
   <depend>ros2cli</depend>
+  <depend>rosbag2_py</depend>
   <depend>rosbag2_transport</depend>
 
   <test_depend>ament_copyright</test_depend>

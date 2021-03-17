@@ -1,0 +1,17 @@
+<library path="fake_plugin">
+  <class
+    name="fake_comp"
+    type="FakeCompressor"
+    base_class_type="rosbag2_compression::BaseCompressorInterface"
+  >
+    <description>This is a test compressor plugin.</description>
+  </class>
+
+  <class
+    name="fake_comp"
+    type="FakeDecompressor"
+    base_class_type="rosbag2_compression::BaseDecompressorInterface"
+  >
+    <description>This is a test decompressor plugin.</description>
+  </class>
+</library>

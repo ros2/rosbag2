@@ -39,11 +39,17 @@ macro(build_zstd)
       -DZSTD_BUILD_STATIC=OFF
       -DZSTD_BUILD_SHARED=ON
       -DZSTD_BUILD_PROGRAMS=OFF
-      ${extra_cmake_args})
+      ${extra_cmake_args}
+    # Note: zstd v1.4.6 will include the following fix. When that is released, upgrade and remove this patch.
+    PATCH_COMMAND
+      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
+      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
+  )
 
   install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install/
-    DESTINATION ${CMAKE_INSTALL_PREFIX})
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    USE_SOURCE_PERMISSIONS)
 endmacro()
 
 if (NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)

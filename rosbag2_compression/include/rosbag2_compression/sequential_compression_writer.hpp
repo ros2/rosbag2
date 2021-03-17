@@ -15,21 +15,28 @@
 #ifndef ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 #define ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_
 
+#include <atomic>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
+
+#include "rcpputils/thread_safety_annotations.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
-#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
@@ -48,7 +55,7 @@ namespace rosbag2_compression
 {
 
 class ROSBAG2_COMPRESSION_PUBLIC SequentialCompressionWriter
-  : public rosbag2_cpp::writer_interfaces::BaseWriterInterface
+  : public rosbag2_cpp::writers::SequentialWriter
 {
 public:
   explicit SequentialCompressionWriter(
@@ -63,23 +70,6 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io);
 
   ~SequentialCompressionWriter() override;
-
-  /**
-   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
-   * This must be called before any other function is used.
-   *
-   * \param storage_options Options to configure the storage
-   * \param converter_options options to define in which format incoming messages are stored
-   **/
-  void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
-    const rosbag2_cpp::ConverterOptions & converter_options) override;
-
-  /**
-   * Attempt to compress the last open file and reset the storage and storage factory.
-   * This method must be exception safe because it is called by the destructor.
-   */
-  void reset() override;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -101,69 +91,113 @@ public:
   void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
 
   /**
-   * Write a message to a bagfile. The topic needs to have been created before writing is possible.
+   * If the compression mode is FILE, write a message to a bagfile.
+   * If the compression mode is MESSAGE, pushes the message into a queue that will be processed
+   * by the compression threads.
+   *
+   * The topic needs to have been created before writing is possible.
    *
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
+  /**
+   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * This must be called before any other function is used.
+   *
+   * \param storage_options Options to configure the storage
+   * \param converter_options options to define in which format incoming messages are stored
+   **/
+  void open(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_cpp::ConverterOptions & converter_options) override;
+
+  /**
+   * Attempt to compress the last open file and reset the storage and storage factory.
+   * This method must be exception safe because it is called by the destructor.
+   */
+  void reset() override;
+
 protected:
   /**
-   * Compress the most recent file and update the metadata file path.
+   * Compress a file and update the metadata file path.
+   *
+   * Note: this may log an error without raising an exception in the case that the input file
+   * could not be deleted after compressing. This is an error and should never happen, but given
+   * that the desired output is created, execution will not be halted.
+   *
+   * \param compressor An initialized compression context.
+   * \param file_relative_to_bag Relative path of the file to compress, as stored in metadata -
+   *   meaning the path is relative to the bag base folder.
    */
-  virtual void compress_last_file();
+  virtual void compress_file(
+    BaseCompressorInterface & compressor,
+    const std::string & file_relative_to_bag);
 
   /**
    * Checks if the compression by message option is specified and a compressor exists.
    *
    * If the above conditions are satisfied, compresses the serialized bag message.
    *
+   * \param compressor An initialized compression context.
    * \param message The message to compress.
-   * \return True if compression occurred, false otherwise.
    */
-  virtual void compress_message(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+  virtual void compress_message(
+    BaseCompressorInterface & compressor,
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 
   /**
    * Initializes the compressor if a compression mode is specified.
    *
    * \throws std::invalid_argument if compression_options isn't supported.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
    */
   virtual void setup_compression();
 
+  /**
+   * Initializes a number of threads to do file or message compression equal to the
+   * value of the compression_threads parameter.
+   * \throws rcpputils::IllegalStateException if compressor could not be created
+   */
+  virtual void setup_compressor_threads();
+
+  /**
+   * Signals all compressor threads to stop working and then waits for them to exit.
+   */
+  virtual void stop_compressor_threads();
+
 private:
-  std::string base_folder_;
-  std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
-  std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory_{};
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_{};
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
-  std::unique_ptr<rosbag2_cpp::Converter> converter_{};
-  std::unique_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
-
-  // Used in bagfile splitting; specifies the best-effort maximum sub-section of a bagfile in bytes.
-  uint64_t max_bagfile_size_{rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT};
-
-  // Used to track topic -> message count
-  std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_{};
-
-  rosbag2_storage::BagMetadata metadata_{};
+  std::mutex compressor_queue_mutex_;
+  std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  compressor_message_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
+  std::queue<std::string> compressor_file_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
+  std::vector<std::thread> compression_threads_;
+  /* *INDENT-OFF* */  // uncrustify doesn't understand the macro + brace initializer
+  std::atomic_bool compression_is_running_
+    RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_) {false};
+  /* *INDENT-ON* */
+  std::recursive_mutex storage_mutex_;
+  std::condition_variable compressor_condition_;
 
   rosbag2_compression::CompressionOptions compression_options_{};
 
   bool should_compress_last_file_{true};
 
+  // Runs a while loop that pulls data from the compression queue until
+  // compression_is_running_ is false; should be run in a separate thread
+  void compression_thread_fn();
+
   // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile();
+  void split_bagfile() override;
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile() const;
+  bool should_split_bagfile();
 
   // Prepares the metadata by setting initial values.
-  void init_metadata();
-
-  // Record TopicInformation into metadata
-  void finalize_metadata();
+  void init_metadata() override;
 };
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_

@@ -15,31 +15,13 @@
 #ifndef ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 #define ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 
-#include <string>
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
 
-struct StorageOptions
-{
-public:
-  std::string uri;
-  std::string storage_id;
-
-  // The maximum size a bagfile can be, in bytes, before it is split.
-  // A value of 0 indicates that bagfile splitting will not be used.
-  uint64_t max_bagfile_size = 0;
-
-  // The maximum duration a bagfile can be, in seconds, before it is split.
-  // A value of 0 indicates that bagfile splitting will not be used.
-  uint64_t max_bagfile_duration = 0;
-
-  // The cache size indiciates how many messages can maximally be hold in cache
-  // before these being written to disk.
-  // Defaults to 0, and effectively disables the caching.
-  uint64_t max_cache_size = 0;
-};
+using StorageOptions [[deprecated("use rosbag2_storage::StorageOptions instead")]] =
+  rosbag2_storage::StorageOptions;
 
 }  // namespace rosbag2_cpp
-
 #endif  // ROSBAG2_CPP__STORAGE_OPTIONS_HPP_

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
@@ -27,14 +28,17 @@
 class MockStorageFactory : public rosbag2_storage::StorageFactoryInterface
 {
 public:
-  MOCK_METHOD2(
+  MOCK_METHOD1(
     open_read_only,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(
-      const std::string &, const std::string &));
-  MOCK_METHOD2(
+      const rosbag2_storage::StorageOptions &));
+  MOCK_METHOD1(
     open_read_write,
     std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
-      const std::string &, const std::string &));
+      const rosbag2_storage::StorageOptions &));
+
+  std::vector<std::string> get_declared_read_only_plugins() const {return {};}
+  std::vector<std::string> get_declared_read_write_plugins() const {return {};}
 };
 
 #endif  // ROSBAG2_COMPRESSION__MOCK_STORAGE_FACTORY_HPP_

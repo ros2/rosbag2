@@ -1,6 +1,6 @@
 name: Test rosbag2
 on:
-  # pull_request:
+  pull_request:
   push:
     branches:
       - master
@@ -13,16 +13,13 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-latest
     steps:
-    # TODO(setup-ros-docker#7): calling chown is necessary for now
-    - run: sudo chown -R rosbuild:rosbuild "$HOME" .
-    - uses: ros-tooling/action-ros-ci@0.0.16
+    - uses: ros-tooling/action-ros-ci@0.1.0
       with:
         package-name: |
           ros2bag
           rosbag2_compression
-          rosbag2_converter_default_plugins
           rosbag2_cpp
           rosbag2_storage
           rosbag2_storage_default_plugins
@@ -31,6 +28,7 @@ jobs:
           sqlite3_vendor
           rosbag2_test_common
           rosbag2_tests
+        target-ros2-distro: rolling
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs

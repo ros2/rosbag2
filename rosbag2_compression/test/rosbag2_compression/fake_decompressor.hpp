@@ -18,11 +18,9 @@
 #include <string>
 
 #include "rosbag2_compression/base_decompressor_interface.hpp"
-#include "rosbag2_compression/visibility_control.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
-class ROSBAG2_COMPRESSION_PUBLIC FakeDecompressor : public
-  rosbag2_compression::BaseDecompressorInterface
+class FakeDecompressor : public rosbag2_compression::BaseDecompressorInterface
 {
 public:
   FakeDecompressor() = default;

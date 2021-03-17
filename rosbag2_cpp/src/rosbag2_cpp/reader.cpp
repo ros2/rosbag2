@@ -37,18 +37,16 @@ Reader::~Reader()
 
 void Reader::open(const std::string & uri)
 {
-  rosbag2_cpp::StorageOptions storage_options;
+  rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
   storage_options.storage_id = "sqlite3";
-  storage_options.max_bagfile_size = 0;  // default
-  storage_options.max_cache_size = 0;  // default
 
   rosbag2_cpp::ConverterOptions converter_options{};
   return open(storage_options, converter_options);
 }
 
 void Reader::open(
-  const StorageOptions & storage_options,
+  const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
   reader_impl_->open(storage_options, converter_options);

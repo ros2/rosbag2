@@ -3,22 +3,32 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-0.3.5 (2020-08-31)
+0.6.0 (2021-02-01)
 ------------------
-* resolve memory leak for serialized message (`#502 <https://github.com/ros2/rosbag2/issues/502>`_) (`#518 <https://github.com/ros2/rosbag2/issues/518>`_)
-* Use shared logic for importing the rosbag2_transport_py library in Python (`#482 <https://github.com/ros2/rosbag2/issues/482>`_) (`#494 <https://github.com/ros2/rosbag2/issues/494>`_)
-* Contributors: Emerson Knapp, Karsten Knese
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Regex and exclude fix for rosbag recorder (`#620 <https://github.com/ros2/rosbag2/issues/620>`_)
+* Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)
+* SQLite storage optimized by default (`#568 <https://github.com/ros2/rosbag2/issues/568>`_)
+* Fixed playing if unknown message types exist (`#592 <https://github.com/ros2/rosbag2/issues/592>`_)
+* Compress bag files in separate threads (`#506 <https://github.com/ros2/rosbag2/issues/506>`_)
+* Stabilize test_record by reducing copies of executors and messages (`#576 <https://github.com/ros2/rosbag2/issues/576>`_)
+* Contributors: Adam Dąbrowski, Chen Lihui, Emerson Knapp, P. J. Reed, Piotr Jaroszek
 
-0.3.4 (2020-08-05)
+0.5.0 (2020-12-02)
 ------------------
-* fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_) (`#481 <https://github.com/ros2/rosbag2/issues/481>`_)
-  Co-authored-by: Dirk Thomas <dirk-thomas@users.noreply.github.com>
-* Contributors: Karsten Knese
 
-0.3.3 (2020-06-23)
+0.4.0 (2020-11-19)
 ------------------
-* export shared_queues_vendor for modern cmake support (`#434 <https://github.com/ros2/rosbag2/issues/434>`_) (`#438 <https://github.com/ros2/rosbag2/issues/438>`_)
-* Contributors: Karsten Knese
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* resolve memory leak for serialized message (`#502 <https://github.com/ros2/rosbag2/issues/502>`_)
+* Use shared logic for importing the rosbag2_transport_py library in Python (`#482 <https://github.com/ros2/rosbag2/issues/482>`_)
+* fix missing target dependencies (`#479 <https://github.com/ros2/rosbag2/issues/479>`_)
+* reenable cppcheck for rosbag2_transport (`#461 <https://github.com/ros2/rosbag2/issues/461>`_)
+* More reliable topic remapping test (`#456 <https://github.com/ros2/rosbag2/issues/456>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* export shared_queues_vendor (`#434 <https://github.com/ros2/rosbag2/issues/434>`_)
+* Contributors: Dirk Thomas, Emerson Knapp, Karsten Knese, Michael Jeronimo, jhdcs
 
 0.3.2 (2020-06-03)
 ------------------

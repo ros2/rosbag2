@@ -32,9 +32,13 @@ public:
   std::vector<std::string> topics;
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval;
+  std::string regex = "";
+  std::string exclude = "";
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";
+  uint64_t compression_queue_size = 1;
+  uint64_t compression_threads = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
 };

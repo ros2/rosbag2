@@ -28,14 +28,16 @@ TestReadOnlyPlugin::~TestReadOnlyPlugin()
 }
 
 void TestReadOnlyPlugin::open(
-  const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag flag)
+  const rosbag2_storage::StorageOptions & storage_options,
+  rosbag2_storage::storage_interfaces::IOFlag flag)
 {
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";
   } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
     std::cout << "opening testplugin read write: ";
   }
-  std::cout << uri << ".\n";
+  std::cout << "storage uri: " << storage_options.uri << ".\n";
+  std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
 bool TestReadOnlyPlugin::has_next()

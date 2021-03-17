@@ -3,14 +3,38 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-0.3.5 (2020-08-31)
+0.6.0 (2021-02-01)
 ------------------
+* Fix build issues when rosbag2_storage is binary installed (`#585 <https://github.com/ros2/rosbag2/issues/585>`_)
+* Deduplicate SequentialCompressionReader business logic, add fallback to find bagfiles in incorrectly-written metadata (`#612 <https://github.com/ros2/rosbag2/issues/612>`_)
+* include what you use (`#600 <https://github.com/ros2/rosbag2/issues/600>`_)
+* Only dereference the data pointer if it is valid. (`#581 <https://github.com/ros2/rosbag2/issues/581>`_)
+* Contributors: Chris Lalancette, Emerson Knapp, Ivan Santiago Paunovic, P. J. Reed
 
-0.3.4 (2020-08-05)
+0.5.0 (2020-12-02)
 ------------------
+* Add back rosbag2_cpp::StorageOptions as deprecated (`#563 <https://github.com/ros2/rosbag2/issues/563>`_)
+* Sqlite storage double buffering (`#546 <https://github.com/ros2/rosbag2/issues/546>`_)
+* Contributors: Adam Dąbrowski, Jacob Perron
 
-0.3.3 (2020-06-23)
+0.4.0 (2020-11-19)
 ------------------
+* correct master build (`#552 <https://github.com/ros2/rosbag2/issues/552>`_)
+* add storage_config_uri (`#493 <https://github.com/ros2/rosbag2/issues/493>`_)
+* Mutex around writer access in recorder (`#491 <https://github.com/ros2/rosbag2/issues/491>`_)
+* if cache data exists, it needs to flush the data into the storage before shutdown (`#541 <https://github.com/ros2/rosbag2/issues/541>`_)
+* Change default cache size for sequential_writer to a non zero value (`#533 <https://github.com/ros2/rosbag2/issues/533>`_)
+* SequentialWriter to cache by message size instead of message count (`#530 <https://github.com/ros2/rosbag2/issues/530>`_)
+* Update the package.xml files with the latest Open Robotics maintainers (`#535 <https://github.com/ros2/rosbag2/issues/535>`_)
+* Remove some code duplication between SequentialWriter and SequentialCompressionWriter (`#527 <https://github.com/ros2/rosbag2/issues/527>`_)
+* disable sanitizer by default (`#517 <https://github.com/ros2/rosbag2/issues/517>`_)
+* Fix typo in error message (`#475 <https://github.com/ros2/rosbag2/issues/475>`_)
+* introduce defaults for the C++ API (`#452 <https://github.com/ros2/rosbag2/issues/452>`_)
+* Adding db directory creation to rosbag2_cpp (`#450 <https://github.com/ros2/rosbag2/issues/450>`_)
+* comment out unused variable (`#460 <https://github.com/ros2/rosbag2/issues/460>`_)
+* minimal c++ API test (`#451 <https://github.com/ros2/rosbag2/issues/451>`_)
+* Add split by time to recording (`#409 <https://github.com/ros2/rosbag2/issues/409>`_)
+* Contributors: Dirk Thomas, Jacob Perron, Jaison Titus, Karsten Knese, Marwan Taher, Michael Jeronimo, Patrick Spieler, jhdcs, Tomoya Fujita
 
 0.3.2 (2020-06-03)
 ------------------

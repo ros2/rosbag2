@@ -35,7 +35,6 @@
 
 #include "compression_factory.hpp"
 #include "visibility_control.hpp"
-#include "zstd_decompressor.hpp"
 
 
 #ifdef _WIN32
@@ -63,33 +62,34 @@ public:
   virtual ~SequentialCompressionReader();
 
   void open(
-    const rosbag2_cpp::StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
 protected:
   /**
-   * Increment the current file iterator to point to the next file in the list of relative file
-   * paths.
-   *
-   * Expected usage:
-   * if (has_next_file()) load_next_file();
+   * Decompress the current bagfile so that it can be opened by the storage implementation.
    */
-  void load_next_file() override;
+  void preprocess_current_file() override;
 
+private:
   /**
    * Initializes the decompressor if a compression mode is specified in the metadata.
    *
-   * \throws std::invalid_argument If compression format doesn't exist.
+   * \throw std::invalid_argument If compression mode is NONE
+   * \throw std::invalid_argument If compression format could not be found
+   * \throw rcpputils::IllegalStateException if the decompressor could not be initialized for
+   *        any other reason
    */
-  virtual void setup_decompression();
+  void setup_decompression();
 
-private:
-  std::unique_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
+  std::shared_ptr<rosbag2_compression::BaseDecompressorInterface> decompressor_{};
   rosbag2_compression::CompressionMode compression_mode_{
     rosbag2_compression::CompressionMode::NONE};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+
+  rosbag2_storage::StorageOptions storage_options_;
 };
 
 }  // namespace rosbag2_compression

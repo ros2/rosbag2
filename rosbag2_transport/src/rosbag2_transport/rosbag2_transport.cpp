@@ -25,7 +25,6 @@
 
 #include "rcutils/time.h"
 
-#include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
@@ -34,7 +33,6 @@
 
 #include "rosbag2_transport/logging.hpp"
 
-#include "formatter.hpp"
 #include "player.hpp"
 #include "recorder.hpp"
 #include "rosbag2_node.hpp"
@@ -46,15 +44,13 @@ Rosbag2Transport::Rosbag2Transport()
 : reader_(std::make_shared<rosbag2_cpp::Reader>(
       std::make_unique<rosbag2_cpp::readers::SequentialReader>())),
   writer_(std::make_shared<rosbag2_cpp::Writer>(
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>())),
-  info_(std::make_shared<rosbag2_cpp::Info>())
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>()))
 {}
 
 Rosbag2Transport::Rosbag2Transport(
   std::shared_ptr<rosbag2_cpp::Reader> reader,
-  std::shared_ptr<rosbag2_cpp::Writer> writer,
-  std::shared_ptr<rosbag2_cpp::Info> info)
-: reader_(std::move(reader)), writer_(std::move(writer)), info_(std::move(info)) {}
+  std::shared_ptr<rosbag2_cpp::Writer> writer)
+: reader_(std::move(reader)), writer_(std::move(writer)) {}
 
 void Rosbag2Transport::init()
 {
@@ -67,7 +63,7 @@ void Rosbag2Transport::shutdown()
 }
 
 void Rosbag2Transport::record(
-  const StorageOptions & storage_options, const RecordOptions & record_options)
+  const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
     writer_->open(
@@ -94,7 +90,7 @@ std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
 }
 
 void Rosbag2Transport::play(
-  const StorageOptions & storage_options, const PlayOptions & play_options)
+  const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
   try {
     auto transport_node =

@@ -232,7 +232,12 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
     YAML::Node yaml_file = YAML::LoadFile(get_metadata_file_name(uri));
     auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
     rcutils_allocator_t allocator = rcutils_get_default_allocator();
-    metadata.bag_size = rcutils_calculate_directory_size(uri.c_str(), allocator);
+    if (RCUTILS_RET_OK !=
+      rcutils_calculate_directory_size(uri.c_str(), &metadata.bag_size, allocator))
+    {
+      throw std::runtime_error(
+              std::string("Exception on calculating the size of directory :") + uri);
+    }
     return metadata;
   } catch (const YAML::Exception & ex) {
     throw std::runtime_error(std::string("Exception on parsing info file: ") + ex.what());
@@ -248,7 +253,7 @@ std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 
 bool MetadataIo::metadata_file_exists(const std::string & uri)
 {
-  return rcpputils::fs::path(get_metadata_file_name(uri)).exists();
+  return rcpputils::fs::exists(rcpputils::fs::path(get_metadata_file_name(uri)));
 }
 
 }  // namespace rosbag2_storage

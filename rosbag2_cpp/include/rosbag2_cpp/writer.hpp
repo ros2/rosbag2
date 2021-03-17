@@ -22,11 +22,11 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/storage_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -80,7 +80,7 @@ public:
    * \param converter_options options to define in which format incoming messages are stored
    **/
   void open(
-    const StorageOptions & storage_options,
+    const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options = ConverterOptions());
 
   /**
@@ -109,6 +109,22 @@ public:
    * \throws runtime_error if the Writer is not open.
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
+  /**
+   * Write a message to a bagfile.
+   * Opposing a call to \sa write without topic metadata, the topic will be created.
+   *
+   * \param message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param serialization_format the format in which this message is serialized
+   * \throws runtime_error if the Writer is not open.
+   */
+  void write(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
+    const std::string & topic_name,
+    const std::string & type_name,
+    const std::string & serialization_format = "cdr");
 
   writer_interfaces::BaseWriterInterface & get_implementation_handle() const
   {

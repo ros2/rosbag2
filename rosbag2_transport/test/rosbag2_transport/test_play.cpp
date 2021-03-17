@@ -75,7 +75,76 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
+  EXPECT_THAT(
+    replayed_test_primitives,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 42))));
+
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::bool_values,
+          ElementsAre(true, false, true)))));
+  EXPECT_THAT(
+    replayed_test_arrays,
+    Each(
+      Pointee(
+        Field(
+          &test_msgs::msg::Arrays::float32_values,
+          ElementsAre(40.0f, 2.0f, 0.0f)))));
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_unknown_type)
+{
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
+
+  auto complex_message1 = get_messages_arrays()[0];
+  complex_message1->float32_values = {{40.0f, 2.0f, 0.0f}};
+  complex_message1->bool_values = {{true, false, true}};
+
+  auto unknown_message1 = get_messages_basic_types()[0];
+  unknown_message1->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "test_msgs/Arrays", "", ""},
+    {"topic3", "unknown_msgs/UnknownType", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic2", 550, complex_message1),
+    serialize_test_message("topic2", 750, complex_message1),
+    serialize_test_message("topic2", 950, complex_message1),
+    serialize_test_message("topic3", 900, unknown_message1)};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 2);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -144,7 +213,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -167,7 +236,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -188,7 +257,113 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
+
+  replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_with_unknown_type)
+{
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
+
+  auto complex_message1 = get_messages_arrays()[0];
+  complex_message1->float32_values = {{40.0f, 2.0f, 0.0f}};
+  complex_message1->bool_values = {{true, false, true}};
+
+  auto unknown_message1 = get_messages_basic_types()[0];
+  unknown_message1->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+    {"topic2", "test_msgs/Arrays", "", ""},
+    {"topic3", "unknown_msgs/UnknownType", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1),
+    serialize_test_message("topic1", 900, primitive_message1),
+    serialize_test_message("topic2", 550, complex_message1),
+    serialize_test_message("topic2", 750, complex_message1),
+    serialize_test_message("topic2", 950, complex_message1),
+    serialize_test_message("topic3", 900, unknown_message1)};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
+  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
+
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 2);
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  play_options_.topics_to_filter = {"topic2"};
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(0u)));
+
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
+
+  // Set new filter
+  auto prepared_mock_reader2 = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader2->prepare(messages, topic_types);
+  reader_.reset();
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader2));
+
+  sub_.reset();
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+
+  await_received_messages = sub_->spin_subscriptions();
+
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
+  play_options_.topics_to_filter = {"topic1"};
+  rosbag2_transport.play(storage_options_, play_options_);
+
+  await_received_messages.get();
+
+  replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(2u)));
+
+  replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    "/topic2");
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(0u)));
+
+  // Reset filter
+  auto prepared_mock_reader3 = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader3->prepare(messages, topic_types);
+  reader_.reset();
+  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader3));
+
+  sub_.reset();
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/topic2", 2);
+
+  await_received_messages = sub_->spin_subscriptions();
+
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
+  play_options_.topics_to_filter = {"topic1", "topic2"};
   rosbag2_transport.play(storage_options_, play_options_);
 
   await_received_messages.get();
@@ -318,7 +493,7 @@ public:
   void play_and_wait(Duration timeout, bool expect_timeout = false)
   {
     auto await_received_messages = sub_->spin_subscriptions();
-    Rosbag2Transport transport{reader_, writer_, info_};
+    Rosbag2Transport transport{reader_, writer_};
     transport.play(storage_options_, play_options_);
     const auto result = await_received_messages.wait_for(timeout);
     // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out

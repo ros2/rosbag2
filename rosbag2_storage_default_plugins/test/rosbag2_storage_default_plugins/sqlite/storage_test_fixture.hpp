@@ -19,6 +19,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -99,7 +100,7 @@ public:
 
     auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
-    writable_storage->open(db_file);
+    writable_storage->open({db_file, plugin_id_});
 
     for (auto msg : messages) {
       std::string topic_name = std::get<2>(msg);
@@ -125,7 +126,8 @@ public:
     auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
 
     readable_storage->open(
-      db_file, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+      {db_file, plugin_id_},
+      rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
 
     while (readable_storage->has_next()) {
@@ -133,6 +135,24 @@ public:
     }
 
     return read_messages;
+  }
+
+  rosbag2_storage::StorageOptions make_storage_options_with_config(
+    const std::string & config_yaml,
+    const std::string & plugin_id)
+  {
+    auto temp_dir = rcpputils::fs::path(temporary_dir_path_);
+    const auto storage_uri = (temp_dir / "rosbag").string();
+    const auto yaml_config = (temp_dir / "sqlite_config.yaml").string();
+
+    { // populate temporary config file
+      std::ofstream out(yaml_config);
+      out << config_yaml;
+    }
+
+    rosbag2_storage::StorageOptions storage_options{storage_uri, plugin_id, 0, 0, 0,
+      "", yaml_config};
+    return storage_options;
   }
 
 protected:
@@ -156,6 +176,8 @@ protected:
 
   rcutils_allocator_t allocator_;
   rosbag2_storage::MetadataIo metadata_io_;
+
+  const std::string plugin_id_ = "sqlite3";
 };
 
 #endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_

@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -37,14 +38,24 @@ StorageFactory::StorageFactory()
 StorageFactory::~StorageFactory() {}
 
 std::shared_ptr<ReadOnlyInterface> StorageFactory::open_read_only(
-  const std::string & uri, const std::string & storage_id)
+  const StorageOptions & storage_options)
 {
-  return impl_->open_read_only(uri, storage_id);
+  return impl_->open_read_only(storage_options);
 }
 
 std::shared_ptr<ReadWriteInterface> StorageFactory::open_read_write(
-  const std::string & uri, const std::string & storage_id)
+  const StorageOptions & storage_options)
 {
-  return impl_->open_read_write(uri, storage_id);
+  return impl_->open_read_write(storage_options);
+}
+
+std::vector<std::string> StorageFactory::get_declared_read_only_plugins() const
+{
+  return impl_->get_declared_read_only_plugins();
+}
+
+std::vector<std::string> StorageFactory::get_declared_read_write_plugins() const
+{
+  return impl_->get_declared_read_write_plugins();
 }
 }  // namespace rosbag2_storage
