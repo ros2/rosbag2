@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* use rosbag2_py for ros2 bag info (`#673 <https://github.com/ros2/rosbag2/issues/673>`_)
+* CLI query rosbag2_py for available storage implementations (`#659 <https://github.com/ros2/rosbag2/issues/659>`_)
+* Contributors: Emerson Knapp, Karsten Knese
+
 0.6.0 (2021-02-01)
 ------------------
 * Recorder --regex and --exclude options (`#604 <https://github.com/ros2/rosbag2/issues/604>`_)

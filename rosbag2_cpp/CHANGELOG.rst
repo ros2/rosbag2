@@ -2,6 +2,14 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* alternative write api (`#676 <https://github.com/ros2/rosbag2/issues/676>`_)
+* RMW-implementation-searcher converter in rosbag2_cpp (`#670 <https://github.com/ros2/rosbag2/issues/670>`_)
+* CLI query rosbag2_py for available storage implementations (`#659 <https://github.com/ros2/rosbag2/issues/659>`_)
+* Fix --topics flag for ros2 bag play being ignored for all bags after the first one. (`#619 <https://github.com/ros2/rosbag2/issues/619>`_)
+* Fix a crash in test_message_cache. (`#635 <https://github.com/ros2/rosbag2/issues/635>`_)
+* Contributors: Alexander, Chris Lalancette, Emerson Knapp, Karsten Knese
 
 0.6.0 (2021-02-01)
 ------------------
