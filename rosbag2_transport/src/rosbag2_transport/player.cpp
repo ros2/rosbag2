@@ -38,7 +38,6 @@
 
 #include "qos.hpp"
 #include "rosbag2_node.hpp"
-#include "replayable_message.hpp"
 
 namespace
 {
@@ -94,6 +93,26 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
+  // Initialize Clock
+  {
+    rosbag2_cpp::PlayerClock::PlayerTimePoint time_first_message;
+    float rate = 1.0;
+
+    if (options.rate > 0.0) {
+      rate = options.rate;
+    }
+    if (reader_->has_next()) {
+      auto message = reader_->read_next();
+      time_first_message = message->time_stamp;
+      // Could not peek, so need to enqueue this popped first message to be played.
+      message_queue_.enqueue(message);
+    } else {
+      // There are no messages in the storage at all
+      return;
+    }
+    clock_ = std::make_unique<rosbag2_cpp::PlayerClock>(time_first_message, rate);
+  }
+
   topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
   prepare_publishers(options);
 
@@ -103,7 +122,7 @@ void Player::play(const PlayOptions & options)
 
   wait_for_filled_queue(options);
 
-  play_messages_from_queue(options);
+  play_messages_from_queue();
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
@@ -118,49 +137,35 @@ void Player::wait_for_filled_queue(const PlayOptions & options) const
 
 void Player::load_storage_content(const PlayOptions & options)
 {
-  TimePoint time_first_message;
-
-  ReplayableMessage message;
-  if (reader_->has_next()) {
-    message.message = reader_->read_next();
-    message.time_since_start = std::chrono::nanoseconds(0);
-    time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
-    message_queue_.enqueue(message);
-  }
-
   auto queue_lower_boundary =
     static_cast<size_t>(options.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = options.read_ahead_queue_size;
 
   while (reader_->has_next() && rclcpp::ok()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
-      enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
+      enqueue_up_to_boundary(queue_upper_boundary);
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }
 
-void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary)
+void Player::enqueue_up_to_boundary(uint64_t boundary)
 {
-  ReplayableMessage message;
+  rosbag2_storage::SerializedBagMessagePtr message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
     if (!reader_->has_next()) {
       break;
     }
-    message.message = reader_->read_next();
-    message.time_since_start =
-      TimePoint(std::chrono::nanoseconds(message.message->time_stamp)) - time_first_message;
-
+    message = reader_->read_next();
     message_queue_.enqueue(message);
   }
 }
 
-void Player::play_messages_from_queue(const PlayOptions & options)
+void Player::play_messages_from_queue()
 {
-  start_time_ = std::chrono::system_clock::now();
   do {
-    play_messages_until_queue_empty(options);
+    play_messages_until_queue_empty();
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -169,24 +174,15 @@ void Player::play_messages_from_queue(const PlayOptions & options)
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty(const PlayOptions & options)
+void Player::play_messages_until_queue_empty()
 {
-  ReplayableMessage message;
-
-  float rate = 1.0;
-  // Use rate if in valid range
-  if (options.rate > 0.0) {
-    rate = options.rate;
-  }
-
+  rosbag2_storage::SerializedBagMessagePtr message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(
-      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / rate * message.time_since_start));
+    clock_->sleep_until(message->time_stamp);
     if (rclcpp::ok()) {
-      auto publisher_iter = publishers_.find(message.message->topic_name);
+      auto publisher_iter = publishers_.find(message->topic_name);
       if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message.message->serialized_data);
+        publisher_iter->second->publish(message->serialized_data);
       }
     }
   }
