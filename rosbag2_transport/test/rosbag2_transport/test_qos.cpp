@@ -62,16 +62,16 @@ TEST(TestQoS, supports_version_4)
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
-  rmw_time_t zerotime{0, 0};
   // Explicitly set up the same QoS profile in case defaults change
   auto expected_qos = rosbag2_transport::Rosbag2QoS{}
   .default_history()
   .reliable()
   .durability_volatile()
-  .deadline(zerotime)
-  .lifespan(zerotime)
+  .deadline((rmw_time_t)RMW_QOS_DEADLINE_DEFAULT)
+  .lifespan((rmw_time_t)RMW_QOS_LIFESPAN_DEFAULT)
   .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
-  .liveliness_lease_duration(zerotime).get_rmw_qos_profile();
+  .liveliness_lease_duration((rmw_time_t)RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT)
+  .get_rmw_qos_profile();
 
   EXPECT_EQ(actual_qos.reliability, expected_qos.reliability);
   EXPECT_EQ(actual_qos.durability, expected_qos.durability);
@@ -81,21 +81,66 @@ TEST(TestQoS, detect_new_qos_fields)
 {
   // By trying to construct a profile explicitly by fields, the build fails if policies are added
   // This build failure indicates that we need to update QoS serialization in rosbag2_transport
-  rmw_time_t notime{0, 0};
   rmw_qos_profile_t profile{
     RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT,
     10,
     RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT,
     RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT,
-    notime,
-    notime,
+    RMW_QOS_DEADLINE_DEFAULT,
+    RMW_QOS_LIFESPAN_DEFAULT,
     RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-    notime,
+    RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
     false,
   };
-  EXPECT_EQ(profile.history, RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT);  // fix "unused variable"
+  (void)profile;
 }
 
+TEST(TestQoS, translates_bad_infinity_values)
+{
+  // Copied from hidden symbols in qos.cpp
+  const rmw_time_t bad_infinities[3] {
+    rmw_time_from_nsec(0x7FFFFFFFFFFFFFFFll),  // cyclone
+    {0x7FFFFFFFll, 0xFFFFFFFFll},  // fastrtps
+    {0x7FFFFFFFll, 0x7FFFFFFFll}  // connext
+  };
+  const auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  .default_history()
+  .reliable()
+  .durability_volatile()
+  .deadline((rmw_time_t)RMW_DURATION_INFINITE)
+  .lifespan((rmw_time_t)RMW_DURATION_INFINITE)
+  .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
+  .liveliness_lease_duration((rmw_time_t)RMW_DURATION_INFINITE)
+  .get_rmw_qos_profile();
+
+  for (const auto & infinity : bad_infinities) {
+    std::ostringstream serialized_profile;
+    serialized_profile <<
+      "history: 1\n"
+      "depth: 10\n"
+      "reliability: 1\n"
+      "durability: 2\n"
+      "deadline:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "lifespan:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "liveliness: 0\n"
+      "liveliness_lease_duration:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "avoid_ros_namespace_conventions: false\n";
+    const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
+    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS>();
+    const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
+    EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
+    EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));
+    EXPECT_TRUE(
+      rmw_time_equal(
+        actual_qos.liveliness_lease_duration, expected_qos.liveliness_lease_duration));
+  }
+}
 
 using rosbag2_transport::Rosbag2QoS;  // NOLINT
 class AdaptiveQoSTest : public ::testing::Test

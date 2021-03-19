@@ -34,7 +34,7 @@ namespace
  * With those values, if a bag is played back in a different implementation than it was recorded,
  * the publishers will fail to be created with an error indicating an invalid QoS value..
  */
-static const rmw_time_t RMW_CYCLONEDDS_FOXY_INFINITE = rmw_time_from_nsec(0x7FFFFFFFFFFFFFFFLL);
+static const rmw_time_t RMW_CYCLONEDDS_FOXY_INFINITE = rmw_time_from_nsec(0x7FFFFFFFFFFFFFFFll);
 static const rmw_time_t RMW_FASTRTPS_FOXY_INFINITE {0x7FFFFFFFll, 0xFFFFFFFFll};
 static const rmw_time_t RMW_CONNEXT_FOXY_INFINITE  {0x7FFFFFFFll, 0x7FFFFFFFll};
 }  // namespace
