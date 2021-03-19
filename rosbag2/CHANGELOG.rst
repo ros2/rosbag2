@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* RMW-implementation-searcher converter in rosbag2_cpp (`#670 <https://github.com/ros2/rosbag2/issues/670>`_)
+* Move zstd compressor to its own package (`#636 <https://github.com/ros2/rosbag2/issues/636>`_)
+* Contributors: Emerson Knapp
+
 0.6.0 (2021-02-01)
 ------------------
 

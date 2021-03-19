@@ -2,6 +2,13 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* CLI query rosbag2_py for available storage implementations (`#659 <https://github.com/ros2/rosbag2/issues/659>`_)
+* Move zstd compressor to its own package (`#636 <https://github.com/ros2/rosbag2/issues/636>`_)
+* Remove rosbag2_compression test dependencies on zstd implementation in prep for moving it into a separate package (`#637 <https://github.com/ros2/rosbag2/issues/637>`_)
+* Contributors: Emerson Knapp
+
 0.6.0 (2021-02-01)
 ------------------
 * Make compressor implementations into a plugin via pluginlib (`#624 <https://github.com/ros2/rosbag2/issues/624>`_)

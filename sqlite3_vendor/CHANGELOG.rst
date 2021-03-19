@@ -2,6 +2,10 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* Always preserve source permissions in vendor packages (`#645 <https://github.com/ros2/rosbag2/issues/645>`_)
+* Contributors: Scott K Logan
 
 0.6.0 (2021-02-01)
 ------------------
