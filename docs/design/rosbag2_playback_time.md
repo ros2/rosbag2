@@ -45,25 +45,29 @@ Pass a `PlayerClock` instance to `rosbag2_transport::Player`
   * If we are not able to contribute this feature into `rclcpp` in time for the Galactic API freeze - it may need to temporarily go into a rosbag2-based subclass for the Galactic release.
 
 ```
-class PlayerClock : public rclcpp::Clock
+/**
+ * Used to control the timing of bag playback.
+ * This clock should be used to query times and sleep between message playing,
+ * so that the complexity involved around time control and time sources
+ * is encapsulated in this one place.
+ * Internally, it may own an rclcpp::Clock, but does not override the class in order to implement
+ * a slightly different API.
+ */
+class PlayerClock
 {
 public:
   /**
-   * :param use_sim_time: if true, subscribe to /clock to provide time
-   *   When use_sim_time is true, all time control is disabled.
-   *   starting_time, playback_rate, pause/resume, jump will all be ignored - and the /clock publisher will be disabled
-   * :param starting_time: provides a "first time"
-   *    This should probably be the timestamp of the first message in the bag, but is a required argument because it cannot be guessed
-   * :param playback_rate: must be positive, 1.0 means real-time
-   * :param clock_topic_publish_frequency:
-   *    - if > 0 - publishes `now()` to /clock at the specified frequency in Hz, rate determined by a system steady clock
-   *    - if <= 0 - does not publish the /clock topic
+   * Constructor.
+   *
+   * \param use_sim_time
+   *   If false, starts paused.
+   *     Use member functions to configure before calling set_paused(false)
+   *   If true, subscribe to /clock to provide time
+   *     All time control (rate, pause, jump) is disabled, and will not publish to /clock
    */
-  Clock(
-    bool use_sim_time,
-    rclcpp::Time starting_time,
-    float playback_rate = 1.0,
-    float clock_topic_publish_frequency = 40.0);
+  explicit PlayerClock(bool use_sim_time);
+
+  virtual ~PlayerClock();
 
   // rclcpp::Clock interface
   /**
@@ -72,7 +76,7 @@ public:
    *  if !use_sim_time: calculates current "Player Time" based on starting time, playback rate, pause state.
    *    this means that /clock time will match with the recorded messages time, as if we are fully reliving the recorded session
    */
-  rclcpp::Time now() override;
+  rclcpp::Time now();
 
   /**
    * Sleeps (non-busy wait) the current thread until the provided time is reached - according to this Clock
@@ -82,31 +86,48 @@ public:
    * If jump() is called, return false, allowing the caller to handle the new time
    * Return true if the time has been reached
    */
-  bool sleep_until(rclcpp::Time until, rclcpp::Duration real_time_timeout) override;
+  bool sleep_until(rclcpp::Time until, rclcpp::Duration real_time_timeout);
 
   // Time Control interface
 
   /**
-   * Pauses/resumes time.
+   * Pauses/resumes time. Defaults to true (paused)
    * While paused, `now()` will repeatedly return the same time, until resumed
    *
    * Note: this could have been implemented as `set_rate(0)`, but this interface allows this clock to maintain the
    * clock's rate internally, so that the caller does not have to save it in order to resume.
    */
   void set_paused(bool paused);
+  bool get_paused() const;
 
   /**
-    * Changes the rate of playback. Must be positive (nonzero)
+    * Changes the rate of playback. Defaults to 1.0
+    * \param rate: must be nonzero positive. To pause playback, use \sa set_paused instead
+    * \throws std::invalid_argument if rate is <= 0.0
     */
   void set_rate(float rate);
+  float get_rate() const;
 
   /**
-    * Changes the current internally maintained offset so that next published time is different.
-    * This should trigger any JumpHandler callbacks that are registered with the clock (see "Time Jumps" section)
+   * Set the rate that the clock will be published. Defaults to 0.
+   * \param frequency If this is set to <= 0, then the clock will not be published
+   */
+  void set_clock_publish_frequency(float frequency);
+  float get_clock_publish_frequency() const;
+
+  /**
+    * Change the current internally maintained offset so that next published time is different.
+    *
+    * This will trigger any registered JumpHandler callbacks.
+    * Call this with the first message timestamp for a bag before starting playback (otherwise this will return current wall time)
     */
   void jump(rclcpp::Time time);
 
-}
+  rclcpp::JumpHandler::SharedPtr
+  create_jump_callback(
+    rclcpp::JumpHandler::pre_callback_t pre_callback,
+    rclcpp::JumpHandler::post_callback_t post_callback,
+    const rcl_jump_threshold_t & threshold);
 ```
 
 ### Clock Rate and Time Extrapolation
@@ -169,10 +190,11 @@ As a consequence of this design, it is possible to synchronize the playback of m
 This should not be implemented monolithically. Implementation should focus on small incremental PRs with solid testing that are easy to review.
 This is a proposed order of operations.
 
-* Implement `rclcpp::Clock::sleep_until` - which will allow us to handle all external time drivers (e.g. Gazebo)
-* Create `rosbag2_transport::PlayerClock` with unit tests, with rate setting - but without pause and jump
-* Expose "rosbag2 publishes to `/clock`" (the most requested feature), passing the `PlayerClock` to `Player`
-* Add pause/resume to the `PlayerClock`, controllable by Service on the Rosbag2 Node
-* Add time jump to the `PlayerClock` (and handlers to the `Player`), controllable by a Service on the Rosbag2 Node
-
-^ Note that the provided Services will allow for building GUI and CLI/keyboard controllers for this functionality, without having to build against rosbag2 directly
+* Create a mostly-unimplemented `PlayerClock` class, and have `Player` use it to maintain current functionality. This accomplishes the entire API change without taking very much implementation or review.
+* Move playback rate handling out of `Player` to be handled by `PlayerClock`
+* Implement `/clock` publisher
+* Implement pause/resume to the `PlayerClock`
+* Implement time jump to the `PlayerClock` (and handlers to the `Player`)
+* Expose rate, pause/resume, and time jump as Services to enable CLI/keyboard/GUI controls
+* Implement `use_sim_time` (`/clock` subscription) - without extrapolation
+* Implement sim time extrapolation
