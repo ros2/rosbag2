@@ -414,7 +414,7 @@ TEST_F(RosBag2PlayTestFixture, starting_paused_can_resume)
   // Start playback paused
   play_options_.paused = true;
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
 
   std::future<void> future_handle = std::async(
     std::launch::async, [&rosbag2_transport]() mutable {

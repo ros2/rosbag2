@@ -185,7 +185,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
   play_options_.paused = false;
 
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport(reader_, writer_, info_);
+  Rosbag2Transport rosbag2_transport(reader_, writer_);
   rosbag2_transport.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
@@ -199,7 +199,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
   play_options_.paused = true;
 
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
 
   auto pause_time = std::chrono::seconds(1);
 
@@ -233,7 +233,7 @@ TEST_F(Rosbag2TransportTestFixture, playing_starts_paused)
   play_options_.paused = false;
 
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_, info_);
+  rosbag2_transport = Rosbag2Transport(reader_, writer_);
 
   // Pass node by reference so that it is initialized by play().
   future_handle = std::async(

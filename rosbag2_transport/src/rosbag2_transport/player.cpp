@@ -214,9 +214,9 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
     }
 
     if (rclcpp::ok()) {
-      auto publisher_iter = publishers_.find(message.message->topic_name);
+      auto publisher_iter = publishers_.find(message->topic_name);
       if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message.message->serialized_data);
+        publisher_iter->second->publish(message->serialized_data);
       }
     }
   }

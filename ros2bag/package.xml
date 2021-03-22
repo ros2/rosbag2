@@ -2,11 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>ros2bag</name>
-<<<<<<< HEAD
-  <version>0.3.5</version>
-=======
   <version>0.6.0</version>
->>>>>>> github/master
   <description>
     Entry point for rosbag in ROS 2
   </description>
