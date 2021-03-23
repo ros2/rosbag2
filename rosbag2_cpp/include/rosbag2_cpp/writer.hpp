@@ -132,7 +132,7 @@ public:
 
   /**
    * Write a serialized message to a bagfile.
-   * Opposing a call to \sa write without topic metadata, the topic will be created.
+   * The topic will be created if it has not been created already 
    *
    * \param message rclcpp::SerializedMessage The serialized message to be written to the bagfile
    * \param topic_name the string of the topic this messages belongs to
