@@ -233,7 +233,7 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
     auto metadata = yaml_file["rosbag2_bagfile_information"].as<rosbag2_storage::BagMetadata>();
     rcutils_allocator_t allocator = rcutils_get_default_allocator();
     if (RCUTILS_RET_OK !=
-      rcutils_calculate_directory_size(uri.c_str(), allocator))
+      rcutils_calculate_directory_size(uri.c_str(), &metadata.bag_size, allocator))
     {
       throw std::runtime_error(
               std::string("Exception on calculating the size of directory :") + uri);
