@@ -12,6 +12,7 @@
 
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
   <depend>rcutils</depend>
   <depend>rcpputils</depend>
   <depend>rmw</depend>

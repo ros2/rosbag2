@@ -20,6 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -109,6 +112,28 @@ public:
    * \throws runtime_error if the Reader is not open.
    */
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next();
+
+  /**
+   * Read next message from storage. Will throw if no more messages are available.
+   * The message will be serialized in the format given to `open`.
+   *
+   * Expected usage:
+   * if (writer.has_next()) message = writer.read_next();
+   *
+   * \return next message in non-serialized form
+   * \throws runtime_error if the Reader is not open.
+   */
+  template<class MessageT>
+  MessageT read_next()
+  {
+    MessageT msg;
+    auto bag_message = read_next();
+    rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+    rclcpp::Serialization<MessageT> serialization;
+    serialization.deserialize_message(&extracted_serialized_msg, &msg);
+
+    return msg;
+  }
 
   /**
     * Ask bagfile for its full metadata.

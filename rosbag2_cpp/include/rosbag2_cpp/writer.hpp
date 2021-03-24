@@ -21,6 +21,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/time.hpp"
+
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
@@ -112,7 +116,7 @@ public:
 
   /**
    * Write a message to a bagfile.
-   * Opposing a call to \sa write without topic metadata, the topic will be created.
+   * The topic will be created if it has not been created already.
    *
    * \param message to be written to the bagfile
    * \param topic_name the string of the topic this messages belongs to
@@ -125,6 +129,45 @@ public:
     const std::string & topic_name,
     const std::string & type_name,
     const std::string & serialization_format = "cdr");
+
+  /**
+   * Write a serialized message to a bagfile.
+   * The topic will be created if it has not been created already.
+   *
+   * \param message rclcpp::SerializedMessage The serialized message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param time The time stamp of the message
+   * \throws runtime_error if the Writer is not open.
+   */
+  void write(
+    const rclcpp::SerializedMessage & message,
+    const std::string & topic_name,
+    const std::string & type_name,
+    const rclcpp::Time & time);
+
+  /**
+   * Write a non-serialized message to a bagfile.
+   * The topic will be created if it has not been created already.
+   *
+   * \param message MessageT The serialized message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param time The time stamp of the message
+   * \throws runtime_error if the Writer is not open.
+   */
+  template<class MessageT>
+  void write(
+    const MessageT & message,
+    const std::string & topic_name,
+    const rclcpp::Time & time)
+  {
+    rclcpp::SerializedMessage serialized_msg;
+
+    rclcpp::Serialization<MessageT> serialization;
+    serialization.serialize_message(&message, &serialized_msg);
+    return write(serialized_msg, topic_name, rosidl_generator_traits::name<MessageT>(), time);
+  }
 
   writer_interfaces::BaseWriterInterface & get_implementation_handle() const
   {

@@ -36,6 +36,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
@@ -65,6 +66,7 @@ add_library(${PROJECT_NAME} SHARED
 ament_target_dependencies(${PROJECT_NAME}
   ament_index_cpp
   pluginlib
+  rclcpp
   rcpputils
   rcutils
   rmw
@@ -103,7 +105,9 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(pluginlib
+ament_export_dependencies(
+  pluginlib
+  rclcpp
   rmw
   rmw_implementation
   rosbag2_storage
