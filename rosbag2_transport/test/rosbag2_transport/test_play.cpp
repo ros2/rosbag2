@@ -199,9 +199,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   // Filter allows /topic2, blocks /topic1
   {
-    rosbag2_storage::StorageFilter storage_filter;
     play_options_.topics_to_filter = {"topic2"};
-    storage_filter.topics.push_back("topic2");
 
     // SubscriptionManager has to be recreated for every unique test
     // If it isn't, message counts accumulate
@@ -213,7 +211,6 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topic_types);
     reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    reader_->set_filter(storage_filter);
 
     auto await_received_messages = sub_->spin_subscriptions();
 
@@ -231,8 +228,6 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
   // Filter allows /topic1, blocks /topic2
   {
-    rosbag2_storage::StorageFilter storage_filter;
-    storage_filter.topics.push_back("topic1");
     play_options_.topics_to_filter = {"topic1"};
 
     // SubscriptionManager has to be recreated for every unique test
