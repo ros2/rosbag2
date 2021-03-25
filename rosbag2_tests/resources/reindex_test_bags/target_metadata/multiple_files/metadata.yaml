@@ -5,30 +5,17 @@ rosbag2_bagfile_information:
     - multiple_files_0.db3
     - multiple_files_1.db3
     - multiple_files_2.db3
-    - multiple_files_3.db3
   duration:
-    nanoseconds: 59997863418
+    nanoseconds: 1616630880179528024
   starting_time:
-    nanoseconds_since_epoch: 1604356847420232242
-  message_count: 766
+    nanoseconds_since_epoch: 22460796745086
+  message_count: 3177
   topics_with_message_count:
     - topic_metadata:
-        name: /topic
+        name: /chatter
         type: std_msgs/msg/String
         serialization_format: cdr
-        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 2147483647\n    nsec: 4294967295\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
-      message_count: 378
-    - topic_metadata:
-        name: /parameter_events
-        type: rcl_interfaces/msg/ParameterEvent
-        serialization_format: cdr
-        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 2147483647\n    nsec: 4294967295\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
-      message_count: 0
-    - topic_metadata:
-        name: /rosout
-        type: rcl_interfaces/msg/Log
-        serialization_format: cdr
-        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 1\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 10\n    nsec: 0\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
-      message_count: 388
+        offered_qos_profiles: "- history: 1\n  depth: 1\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+      message_count: 3177
   compression_format: ""
   compression_mode: ""

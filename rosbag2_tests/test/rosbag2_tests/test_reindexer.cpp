@@ -45,31 +45,31 @@ class ReindexTestFixture : public Test
 public:
   ReindexTestFixture()
   {
-    database_path = std::string(_SRC_RESOURCES_DIR_PATH) + std::string("/reindex_test_bags");
-    target_dir = database_path + "/target_metadata";
+    database_path = rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / "reindex_test_bags";
+    target_dir = database_path / "target_metadata";
   }
 
-  std::string database_path;
-  std::string target_dir;
+  rcpputils::fs::path database_path;
+  rcpputils::fs::path target_dir;
 };
 
 TEST_F(ReindexTestFixture, test_multiple_files) {
-  auto bag_dir = database_path + "/multiple_files";
+  auto bag_dir = database_path / "multiple_files";
   std::unique_ptr<rosbag2_cpp::Reindexer> reindexer =
     std::make_unique<rosbag2_cpp::Reindexer>();
 
   rosbag2_storage::StorageOptions so = rosbag2_storage::StorageOptions();
-  so.uri = bag_dir;
+  so.uri = bag_dir.string();
   so.storage_id = "sqlite3";
 
   reindexer->reindex(so);
 
-  auto generated_file = rcpputils::fs::path(bag_dir + "/metadata.yaml");
+  auto generated_file = rcpputils::fs::path(bag_dir) / "metadata.yaml";
   EXPECT_TRUE(generated_file.exists());
 
   auto metadata_io = std::make_unique<rosbag2_storage::MetadataIo>();
-  auto generated_metadata = metadata_io->read_metadata(bag_dir);
-  auto target_metadata = metadata_io->read_metadata(target_dir + "/multiple_files");
+  auto generated_metadata = metadata_io->read_metadata(bag_dir.string());
+  auto target_metadata = metadata_io->read_metadata((target_dir / "multiple_files").string());
 
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
 
