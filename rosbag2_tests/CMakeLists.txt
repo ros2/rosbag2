@@ -97,8 +97,7 @@ if(BUILD_TESTING)
       rosbag2_cpp
       rosbag2_storage
       rosbag2_storage_default_plugins
-      rosbag2_test_common
-    )
+      rosbag2_test_common)
   endif()
 
 
