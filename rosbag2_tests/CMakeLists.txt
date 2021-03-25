@@ -97,6 +97,18 @@ if(BUILD_TESTING)
       rosbag2_storage)
   endif()
 
+  ament_add_gmock(test_reindex
+    test/rosbag2_tests/test_reindexer.cpp)
+  if(TARGET test_reindex)
+    ament_target_dependencies(test_reindex
+      rclcpp
+      rosbag2_cpp
+      rosbag2_storage
+      rosbag2_storage_default_plugins
+      rosbag2_test_common)
+  endif()
+
+
   ament_add_gmock(test_rosbag2_cpp_api
     test/rosbag2_tests/test_rosbag2_cpp_api.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

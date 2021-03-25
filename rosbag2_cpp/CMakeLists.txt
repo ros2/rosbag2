@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_cpp)
 
+add_definitions(-D_SRC_REINDEX_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/rosbag2_cpp/reindex_test_bags")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -61,9 +63,11 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
-  src/rosbag2_cpp/writers/sequential_writer.cpp)
+  src/rosbag2_cpp/writers/sequential_writer.cpp
+  src/rosbag2_cpp/reindexer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
+  PUBLIC
   ament_index_cpp
   pluginlib
   rclcpp
@@ -187,6 +191,7 @@ if(BUILD_TESTING)
     # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_message_cache rosbag2_storage)
   endif()
+
 
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
