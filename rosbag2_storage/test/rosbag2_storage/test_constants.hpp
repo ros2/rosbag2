@@ -18,6 +18,8 @@
 
 namespace test_constants
 {
+constexpr const char * const READ_WRITE_PLUGIN_EXTENSION = ".rwplugin";
+constexpr const char * const READ_ONLY_PLUGIN_EXTENSION = ".roplugin";
 constexpr const char * const READ_WRITE_PLUGIN_IDENTIFIER = "ReadWritePlugin";
 constexpr const char * const READ_ONLY_PLUGIN_IDENTIFIER = "ReadOnlyPlugin";
 constexpr const char * const DUMMY_FILEPATH = "/path/to/storage";
