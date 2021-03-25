@@ -217,7 +217,8 @@ void Player::prepare_publishers(const PlayOptions & options)
 void Player::prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time)
 {
   double rate = options.rate > 0.0 ? options.rate : 1.0;
-  clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
+  std::chrono::nanoseconds sleep_timeout{RCUTILS_S_TO_NS(1)};  // default 1Hz spin on paused
+  clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, sleep_timeout, rate);
 }
 
 }  // namespace rosbag2_transport

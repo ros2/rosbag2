@@ -36,6 +36,10 @@ public:
    *
    * \param starting_time: provides an initial offset for managing time
    *    This will likely be the timestamp of the first message in the bag
+   * \param sleep_timeout: maximum amount of time to sleep even if time is not reached
+   *    This helps dictate spin rate when clock is paused, as well as allowing periodic return
+   *    of control even if messages are far apart.
+   *    Value must be greater than 0.
    * \param rate: Rate of playback, a unit-free ratio. 1.0 is real-time
    * \param now_fn: Function used to get the current steady time
    *   defaults to std::chrono::steady_clock::now
@@ -45,6 +49,7 @@ public:
   ROSBAG2_CPP_PUBLIC
   TimeControllerClock(
     rcutils_time_point_value_t starting_time,
+    std::chrono::nanoseconds sleep_timeout,
     double rate = 1.0,
     NowFunction now_fn = std::chrono::steady_clock::now);
 
@@ -60,9 +65,10 @@ public:
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
    *
-   * Return true if the time has been reached, false if it was not successfully reached after sleeping
-   * for the appropriate duration.
    * The user should not take action based on this sleep until it returns true.
+   *
+   * \param until: The ROS time to sleep until
+   * \return true if the `until` has been reached, false if timeout or awakened early.
    */
   ROSBAG2_CPP_PUBLIC
   bool sleep_until(rcutils_time_point_value_t until) override;

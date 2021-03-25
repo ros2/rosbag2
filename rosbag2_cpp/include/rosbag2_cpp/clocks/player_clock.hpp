@@ -52,9 +52,10 @@ public:
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
    *
-   * Return true if the time has been reached, false if it was not successfully reached after sleeping
-   * for the appropriate duration.
    * The user should not take action based on this sleep until it returns true.
+   *
+   * \param until: The ROS time to sleep until
+   * \return true if the `until` has been reached, false if timeout or awakened early.
    */
   ROSBAG2_CPP_PUBLIC
   virtual bool sleep_until(rcutils_time_point_value_t until) = 0;

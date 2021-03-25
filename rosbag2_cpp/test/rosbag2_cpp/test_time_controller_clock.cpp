@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include "rcutils/time.h"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
@@ -30,20 +31,34 @@ public:
       };
   }
 
+  template<typename Duration>
+  rcutils_time_point_value_t as_nanos(Duration d)
+  {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
+  }
+
   rcutils_time_point_value_t as_nanos(const SteadyTimePoint & time)
   {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
+    return as_nanos(time.time_since_epoch());
+  }
+
+  template<typename Duration1, typename Duration2>
+  rcutils_duration_value_t abs_diff(Duration1 a, Duration2 b)
+  {
+    return std::abs(as_nanos(a) - as_nanos(b));
   }
 
   NowFunction now_fn;
+  double playback_rate = 1.0;
   SteadyTimePoint return_time;  // defaults to 0
+  std::chrono::nanoseconds sleep_timeout{25000000};  // 40Hz
   rcutils_time_point_value_t ros_start_time = 0;
 };
 
 TEST_F(TimeControllerClockTest, steadytime_precision)
 {
   const double playback_rate = 1.0;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, sleep_timeout, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -75,7 +90,7 @@ TEST_F(TimeControllerClockTest, nonzero_start_time)
 {
   ros_start_time = 1234567890LL;
   const double playback_rate = 1.0;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, sleep_timeout, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -88,7 +103,7 @@ TEST_F(TimeControllerClockTest, nonzero_start_time)
 TEST_F(TimeControllerClockTest, fast_rate)
 {
   const double playback_rate = 2.5;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, sleep_timeout, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -102,7 +117,7 @@ TEST_F(TimeControllerClockTest, fast_rate)
 TEST_F(TimeControllerClockTest, slow_rate)
 {
   const double playback_rate = 0.4;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, sleep_timeout, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -111,4 +126,41 @@ TEST_F(TimeControllerClockTest, slow_rate)
   const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+}
+
+TEST_F(TimeControllerClockTest, sleep_rate_checking)
+{
+  sleep_timeout = std::chrono::nanoseconds{0};
+  EXPECT_THROW(
+    rosbag2_cpp::TimeControllerClock(
+      ros_start_time, sleep_timeout, playback_rate, now_fn), std::runtime_error);
+
+  sleep_timeout = std::chrono::nanoseconds{-5};
+  EXPECT_THROW(
+    rosbag2_cpp::TimeControllerClock(
+      ros_start_time, sleep_timeout, playback_rate, now_fn), std::runtime_error);
+}
+
+TEST_F(TimeControllerClockTest, sleep_rate_control)
+{
+  const rcutils_time_point_value_t one_second = RCUTILS_S_TO_NS(1);
+  const unsigned int call_count_goal = 10;
+  sleep_timeout = std::chrono::nanoseconds{RCUTILS_S_TO_NS(1) / 40};  // 40Hz
+  const auto expected_elapsed = sleep_timeout * call_count_goal;
+  // Giving 10% error tolerance because sleeping is not exact.
+  // An incorrect result would be orders of magnitude off (free loop with no wait).
+  const auto error_tolerance = static_cast<rcutils_duration_value_t>(
+    as_nanos(expected_elapsed) * 0.1);
+
+  // Don't override now_fn, we need to use the real clock in order to have sleep work
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, sleep_timeout);
+
+  const auto start_time = std::chrono::steady_clock::now();
+  for (unsigned int call_count = 0; call_count < call_count_goal; call_count++) {
+    EXPECT_FALSE(clock.sleep_until(one_second));
+  }
+  const auto elapsed_time = std::chrono::steady_clock::now() - start_time;
+
+  const auto time_error = abs_diff(elapsed_time, expected_elapsed);
+  EXPECT_LE(time_error, error_tolerance);
 }

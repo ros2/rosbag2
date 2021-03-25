@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -55,8 +56,11 @@ public:
     std::chrono::steady_clock::time_point steady;
   };
 
-  explicit TimeControllerClockImpl(PlayerClock::NowFunction now_fn)
-  : now_fn(now_fn)
+  explicit TimeControllerClockImpl(
+    PlayerClock::NowFunction now_fn,
+    std::chrono::nanoseconds sleep_timeout)
+  : now_fn(now_fn),
+    sleep_timeout(sleep_timeout)
   {}
   virtual ~TimeControllerClockImpl() = default;
 
@@ -82,6 +86,7 @@ public:
   }
 
   const PlayerClock::NowFunction now_fn;
+  const std::chrono::nanoseconds sleep_timeout;
 
   std::mutex state_mutex;
   std::condition_variable cv RCPPUTILS_TSA_GUARDED_BY(state_mutex);
@@ -91,11 +96,15 @@ public:
 
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
+  std::chrono::nanoseconds sleep_timeout,
   double rate,
   NowFunction now_fn)
-: impl_(std::make_unique<TimeControllerClockImpl>(now_fn))
+: impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_timeout))
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  if (sleep_timeout <= std::chrono::nanoseconds{0}) {
+    throw std::runtime_error("Sleep timeout cannot be negative or 0");
+  }
   impl_->reference.ros = starting_time;
   impl_->reference.steady = impl_->now_fn();
   impl_->rate = rate;
@@ -112,9 +121,10 @@ rcutils_time_point_value_t TimeControllerClock::now() const
 
 bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
+  const auto until_timeout = impl_->now_fn() + impl_->sleep_timeout;
   {
     TSAUniqueLock lock(impl_->state_mutex);
-    const auto steady_until = impl_->ros_to_steady(until);
+    const auto steady_until = std::min(impl_->ros_to_steady(until), until_timeout);
     impl_->cv.wait_until(lock, steady_until);
   }
   return now() >= until;
