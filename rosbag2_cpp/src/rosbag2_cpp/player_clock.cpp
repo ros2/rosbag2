@@ -91,7 +91,7 @@ bool PlayerClock::sleep_until(PlayerTimePoint until)
   return now() >= until;
 }
 
-float PlayerClock::get_rate() const
+double PlayerClock::get_rate() const
 {
   return impl_->rate;
 }

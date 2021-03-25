@@ -73,7 +73,7 @@ public:
   /**
    * Return the current playback rate.
    */
-  float get_rate() const;
+  double get_rate() const;
 
 private:
   std::unique_ptr<PlayerClockImpl> impl_;
