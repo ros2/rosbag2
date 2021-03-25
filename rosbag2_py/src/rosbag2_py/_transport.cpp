@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
@@ -107,9 +112,8 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
   ;
 
-  pybind11::class_<rosbag2_py::Transport>(m , "Transport")
+  pybind11::class_<rosbag2_py::Transport>(m, "Transport")
   .def(pybind11::init())
   .def("play", &rosbag2_py::Transport::play)
   ;
-
 }
