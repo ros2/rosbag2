@@ -39,6 +39,10 @@ with add_dll_directories_from_env('PATH'):
     from rosbag2_py._info import (
         Info,
     )
+    from rosbag2_py._transport import (
+        PlayOptions,
+        Transport,
+    )
 
 __all__ = [
     'ConverterOptions',
@@ -54,4 +58,6 @@ __all__ = [
     'TopicInformation',
     'BagMetadata',
     'Info',
+    'PlayOptions',
+    'Transport',
 ]

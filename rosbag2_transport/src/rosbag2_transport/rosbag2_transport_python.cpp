@@ -229,127 +229,6 @@ rosbag2_transport_record(PyObject * Py_UNUSED(self), PyObject * args, PyObject *
   Py_RETURN_NONE;
 }
 
-std::vector<std::string> get_topic_remapping_options(PyObject * topic_remapping)
-{
-  std::vector<std::string> topic_remapping_options = {"--ros-args"};
-  if (topic_remapping) {
-    PyObject * topic_remapping_iterator = PyObject_GetIter(topic_remapping);
-    if (topic_remapping_iterator) {
-      PyObject * topic;
-      while ((topic = PyIter_Next(topic_remapping_iterator))) {
-        topic_remapping_options.emplace_back("--remap");
-        topic_remapping_options.emplace_back(PyUnicode_AsUTF8(topic));
-
-        Py_DECREF(topic);
-      }
-      Py_DECREF(topic_remapping_iterator);
-    }
-  }
-  return topic_remapping_options;
-}
-
-static PyObject *
-rosbag2_transport_play(PyObject * Py_UNUSED(self), PyObject * args, PyObject * kwargs)
-{
-  rosbag2_transport::PlayOptions play_options{};
-  rosbag2_storage::StorageOptions storage_options{};
-
-  static const char * kwlist[] = {
-    "uri",
-    "storage_id",
-    "node_prefix",
-    "read_ahead_queue_size",
-    "rate",
-    "topics",
-    "qos_profile_overrides",
-    "loop",
-    "topic_remapping",
-    "storage_config_file",
-    nullptr
-  };
-
-  char * uri;
-  char * storage_id;
-  char * node_prefix;
-  size_t read_ahead_queue_size;
-  float rate;
-  PyObject * topics = nullptr;
-  PyObject * qos_profile_overrides{nullptr};
-  bool loop = false;
-  PyObject * topic_remapping = nullptr;
-  char * storage_config_file = nullptr;
-  if (!PyArg_ParseTupleAndKeywords(
-      args, kwargs, "sss|kfOObOs", const_cast<char **>(kwlist),
-      &uri,
-      &storage_id,
-      &node_prefix,
-      &read_ahead_queue_size,
-      &rate,
-      &topics,
-      &qos_profile_overrides,
-      &loop,
-      &topic_remapping,
-      &storage_config_file))
-  {
-    return nullptr;
-  }
-
-  storage_options.uri = std::string(uri);
-  storage_options.storage_id = std::string(storage_id);
-  storage_options.storage_config_uri = std::string(storage_config_file);
-
-  play_options.node_prefix = std::string(node_prefix);
-  play_options.read_ahead_queue_size = read_ahead_queue_size;
-  play_options.rate = rate;
-  play_options.loop = loop;
-
-  if (topics) {
-    PyObject * topic_iterator = PyObject_GetIter(topics);
-    if (topic_iterator != nullptr) {
-      PyObject * topic = nullptr;
-      while ((topic = PyIter_Next(topic_iterator))) {
-        play_options.topics_to_filter.emplace_back(PyUnicode_AsUTF8(topic));
-
-        Py_DECREF(topic);
-      }
-      Py_DECREF(topic_iterator);
-    }
-  }
-
-  auto topic_qos_overrides = PyObject_AsTopicQoSMap(qos_profile_overrides);
-  play_options.topic_qos_profile_overrides = topic_qos_overrides;
-
-  play_options.topic_remapping_options = get_topic_remapping_options(topic_remapping);
-
-  rosbag2_storage::MetadataIo metadata_io{};
-  rosbag2_storage::BagMetadata metadata{};
-  // Specify defaults
-  std::shared_ptr<rosbag2_cpp::Reader> reader;
-  auto writer = std::make_shared<rosbag2_cpp::Writer>(
-    std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
-  // Change reader based on metadata options
-  if (metadata_io.metadata_file_exists(storage_options.uri)) {
-    metadata = metadata_io.read_metadata(storage_options.uri);
-    if (metadata.compression_format == "zstd") {
-      reader = std::make_shared<rosbag2_cpp::Reader>(
-        std::make_unique<rosbag2_compression::SequentialCompressionReader>());
-    } else {
-      reader = std::make_shared<rosbag2_cpp::Reader>(
-        std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-    }
-  } else {
-    reader = std::make_shared<rosbag2_cpp::Reader>(
-      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-  }
-
-  rosbag2_transport::Rosbag2Transport transport(reader, writer);
-  transport.init();
-  transport.play(storage_options, play_options);
-  transport.shutdown();
-
-  Py_RETURN_NONE;
-}
-
 /// Define the public methods of this module
 #if __GNUC__ >= 8
 # pragma GCC diagnostic push
@@ -359,10 +238,6 @@ static PyMethodDef rosbag2_transport_methods[] = {
   {
     "record", reinterpret_cast<PyCFunction>(rosbag2_transport_record), METH_VARARGS | METH_KEYWORDS,
     "Record to bag"
-  },
-  {
-    "play", reinterpret_cast<PyCFunction>(rosbag2_transport_play), METH_VARARGS | METH_KEYWORDS,
-    "Play bag"
   },
   {nullptr, nullptr, 0, nullptr}  /* sentinel */
 };
