@@ -31,78 +31,74 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   find_package(rmw_fastrtps_cpp QUIET)
-  # disable tests that depends on rosbag2_converter_default_plugins at runtime
-  if(rmw_fastrtps_cpp_FOUND)
-    find_package(rclcpp REQUIRED)
-    find_package(rcpputils REQUIRED)
-    find_package(rosbag2_compression REQUIRED)
-    find_package(rosbag2_cpp REQUIRED)
-    find_package(rosbag2_storage REQUIRED)
-    find_package(rosbag2_storage_default_plugins REQUIRED)
-    find_package(rosbag2_test_common REQUIRED)
-    find_package(std_msgs REQUIRED)
-    find_package(test_msgs REQUIRED)
+  find_package(rclcpp REQUIRED)
+  find_package(rcpputils REQUIRED)
+  find_package(rosbag2_compression REQUIRED)
+  find_package(rosbag2_cpp REQUIRED)
+  find_package(rosbag2_storage REQUIRED)
+  find_package(rosbag2_storage_default_plugins REQUIRED)
+  find_package(rosbag2_test_common REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(test_msgs REQUIRED)
 
-    ament_add_gmock(test_rosbag2_record_end_to_end
-      test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_record_end_to_end)
-      ament_target_dependencies(test_rosbag2_record_end_to_end
-        rclcpp
-        rosbag2_compression
-        rosbag2_compression_zstd
-        rosbag2_storage
-        rosbag2_storage_default_plugins
-        rosbag2_test_common
-        test_msgs)
-      ament_add_test_label(test_rosbag2_record_end_to_end xfail)
-    endif()
+  ament_add_gmock(test_rosbag2_record_end_to_end
+    test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_rosbag2_record_end_to_end)
+    ament_target_dependencies(test_rosbag2_record_end_to_end
+      rclcpp
+      rosbag2_compression
+      rosbag2_compression_zstd
+      rosbag2_storage
+      rosbag2_storage_default_plugins
+      rosbag2_test_common
+      test_msgs)
+    ament_add_test_label(test_rosbag2_record_end_to_end xfail)
+  endif()
 
-    ament_add_gmock(test_rosbag2_play_end_to_end
-      test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_play_end_to_end)
-      ament_target_dependencies(test_rosbag2_play_end_to_end
-        rclcpp
-        rosbag2_storage
-        rosbag2_storage_default_plugins
-        rosbag2_test_common
-        test_msgs)
-      ament_add_test_label(test_rosbag2_play_end_to_end xfail)
-    endif()
+  ament_add_gmock(test_rosbag2_play_end_to_end
+    test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_rosbag2_play_end_to_end)
+    ament_target_dependencies(test_rosbag2_play_end_to_end
+      rclcpp
+      rosbag2_storage
+      rosbag2_storage_default_plugins
+      rosbag2_test_common
+      test_msgs)
+    ament_add_test_label(test_rosbag2_play_end_to_end xfail)
+  endif()
 
-    ament_add_gmock(test_rosbag2_info_end_to_end
-      test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_rosbag2_info_end_to_end)
-      ament_target_dependencies(test_rosbag2_info_end_to_end
-        rosbag2_storage
-        rosbag2_test_common)
-      ament_add_test_label(test_rosbag2_info_end_to_end xfail)
-    endif()
+  ament_add_gmock(test_rosbag2_info_end_to_end
+    test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_rosbag2_info_end_to_end)
+    ament_target_dependencies(test_rosbag2_info_end_to_end
+      rosbag2_storage
+      rosbag2_test_common)
+    ament_add_test_label(test_rosbag2_info_end_to_end xfail)
+  endif()
 
-    ament_add_gmock(test_converter
-      test/rosbag2_tests/test_converter.cpp
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    if(TARGET test_converter)
-      ament_target_dependencies(test_converter
-        rosbag2_cpp
-        rosbag2_test_common
-        test_msgs)
-    endif()
+  ament_add_gmock(test_converter
+    test/rosbag2_tests/test_converter.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_converter)
+    ament_target_dependencies(test_converter
+      rosbag2_cpp
+      rosbag2_test_common
+      test_msgs)
+  endif()
 
-    ament_add_gmock(test_reindex
-      test/rosbag2_tests/test_reindexer.cpp)
-    if(TARGET test_reindex)
-      ament_target_dependencies(test_reindex
-        rclcpp
-        rosbag2_cpp
-        rosbag2_storage
-        rosbag2_storage_default_plugins
-        rosbag2_test_common
-      )
-      # target_link_libraries(test_reindex ${PROJECT_NAME})
-    endif()
+  ament_add_gmock(test_reindex
+    test/rosbag2_tests/test_reindexer.cpp)
+  if(TARGET test_reindex)
+    ament_target_dependencies(test_reindex
+      rclcpp
+      rosbag2_cpp
+      rosbag2_storage
+      rosbag2_storage_default_plugins
+      rosbag2_test_common
+    )
   endif()
 
 

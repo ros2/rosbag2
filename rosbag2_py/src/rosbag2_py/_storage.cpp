@@ -16,9 +16,12 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+
+#include "./format_bag_metadata.hpp"
 
 #include "./pybind11.hpp"
 
@@ -79,4 +82,52 @@ PYBIND11_MODULE(_storage, m) {
     "offered_qos_profiles",
     &rosbag2_storage::TopicMetadata::offered_qos_profiles)
   .def("equals", &rosbag2_storage::TopicMetadata::operator==);
+
+  pybind11::class_<rosbag2_storage::TopicInformation>(m, "TopicInformation")
+  .def(
+    pybind11::init<rosbag2_storage::TopicMetadata, size_t>(),
+    pybind11::arg("topic_metadata"),
+    pybind11::arg("message_count"))
+  .def_readwrite("topic_metadata", &rosbag2_storage::TopicInformation::topic_metadata)
+  .def_readwrite("message_count", &rosbag2_storage::TopicInformation::message_count);
+
+  pybind11::class_<rosbag2_storage::BagMetadata>(m, "BagMetadata")
+  .def(
+    pybind11::init<
+      int,
+      uint64_t,
+      std::string,
+      std::vector<std::string>,
+      std::chrono::nanoseconds,
+      std::chrono::time_point<std::chrono::high_resolution_clock>,
+      uint64_t,
+      std::vector<rosbag2_storage::TopicInformation>,
+      std::string,
+      std::string>(),
+    pybind11::arg("version"),
+    pybind11::arg("bag_size"),
+    pybind11::arg("storage_identifier"),
+    pybind11::arg("relative_file_paths"),
+    pybind11::arg("duration"),
+    pybind11::arg("starting_time"),
+    pybind11::arg("message_count"),
+    pybind11::arg("topics_with_message_count"),
+    pybind11::arg("compression_format"),
+    pybind11::arg("compression_mode"))
+  .def_readwrite("version", &rosbag2_storage::BagMetadata::version)
+  .def_readwrite("bag_size", &rosbag2_storage::BagMetadata::bag_size)
+  .def_readwrite("storage_identifier", &rosbag2_storage::BagMetadata::storage_identifier)
+  .def_readwrite("relative_file_paths", &rosbag2_storage::BagMetadata::relative_file_paths)
+  .def_readwrite("duration", &rosbag2_storage::BagMetadata::duration)
+  .def_readwrite("starting_time", &rosbag2_storage::BagMetadata::starting_time)
+  .def_readwrite("message_count", &rosbag2_storage::BagMetadata::message_count)
+  .def_readwrite(
+    "topics_with_message_count",
+    &rosbag2_storage::BagMetadata::topics_with_message_count)
+  .def_readwrite("compression_format", &rosbag2_storage::BagMetadata::compression_format)
+  .def_readwrite("compression_mode", &rosbag2_storage::BagMetadata::compression_mode)
+  .def(
+    "__repr__", [](const rosbag2_storage::BagMetadata & metadata) {
+      return format_bag_meta_data(metadata);
+    });
 }

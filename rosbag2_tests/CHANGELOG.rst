@@ -2,6 +2,15 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* Alternative write api (`#676 <https://github.com/ros2/rosbag2/issues/676>`_)
+* RMW-implementation-searcher converter in rosbag2_cpp (`#670 <https://github.com/ros2/rosbag2/issues/670>`_)
+* Use rosbag2_py for ros2 bag info (`#673 <https://github.com/ros2/rosbag2/issues/673>`_)
+* Remove temporary directory platform-specific logic from test fixture (`#660 <https://github.com/ros2/rosbag2/issues/660>`_)
+* Fix --topics flag for ros2 bag play being ignored for all bags after the first one. (`#619 <https://github.com/ros2/rosbag2/issues/619>`_)
+* Move zstd compressor to its own package (`#636 <https://github.com/ros2/rosbag2/issues/636>`_)
+* Contributors: Alexander, Emerson Knapp, Karsten Knese
 
 0.6.0 (2021-02-01)
 ------------------

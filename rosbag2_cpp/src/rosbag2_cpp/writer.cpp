@@ -77,4 +77,24 @@ void Writer::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> messag
   writer_impl_->write(message);
 }
 
+void Writer::write(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
+  const std::string & topic_name,
+  const std::string & type_name,
+  const std::string & serialization_format)
+{
+  if (message->topic_name != topic_name) {
+    auto err = std::string("trying to write a message with mismatching topic information: ");
+    err += "(" + message->topic_name + ") vs (" + topic_name + ")";
+    throw std::runtime_error(err);
+  }
+
+  rosbag2_storage::TopicMetadata tm;
+  tm.name = topic_name;
+  tm.type = type_name;
+  tm.serialization_format = serialization_format;
+  create_topic(tm);
+  write(message);
+}
+
 }  // namespace rosbag2_cpp

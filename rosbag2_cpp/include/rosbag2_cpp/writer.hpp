@@ -110,6 +110,22 @@ public:
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
 
+  /**
+   * Write a message to a bagfile.
+   * Opposing a call to \sa write without topic metadata, the topic will be created.
+   *
+   * \param message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param serialization_format the format in which this message is serialized
+   * \throws runtime_error if the Writer is not open.
+   */
+  void write(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message,
+    const std::string & topic_name,
+    const std::string & type_name,
+    const std::string & serialization_format = "cdr");
+
   writer_interfaces::BaseWriterInterface & get_implementation_handle() const
   {
     return *writer_impl_;

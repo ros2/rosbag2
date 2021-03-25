@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* Remove outdated pluginlib cmake script from rosbag2_storage (`#661 <https://github.com/ros2/rosbag2/issues/661>`_)
+* CLI query rosbag2_py for available storage implementations (`#659 <https://github.com/ros2/rosbag2/issues/659>`_)
+* Shorten some excessively long lines of CMake (`#648 <https://github.com/ros2/rosbag2/issues/648>`_)
+* Contributors: Emerson Knapp, Scott K Logan
 
 0.6.0 (2021-02-01)
 ------------------
