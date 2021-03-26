@@ -17,44 +17,44 @@
 #include "rosbag2_cpp/player_clock.hpp"
 
 using namespace testing;  // NOLINT
-using RealTimePoint = rosbag2_cpp::PlayerClock::RealTimePoint;
+using SteadyTimePoint = rosbag2_cpp::PlayerClock::SteadyTimePoint;
 using PlayerTimePoint = rosbag2_cpp::PlayerClock::PlayerTimePoint;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
-PlayerTimePoint as_nanos(const RealTimePoint & time)
+PlayerTimePoint as_nanos(const SteadyTimePoint & time)
 {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
 }
 
-TEST(PlayerClock, realtime_precision)
+TEST(PlayerClock, steadytime_precision)
 {
-  RealTimePoint return_time;
+  SteadyTimePoint return_time;
   NowFunction now_fn = [&return_time]() {
       return return_time;
     };
   rosbag2_cpp::PlayerClock pclock(0, 1.0, now_fn);
 
-  const RealTimePoint begin_time(std::chrono::seconds(0));
+  const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
   EXPECT_EQ(pclock.now(), as_nanos(begin_time));
 
-  const RealTimePoint ten_seconds(std::chrono::seconds(10));
+  const SteadyTimePoint ten_seconds(std::chrono::seconds(10));
   return_time = ten_seconds;
   EXPECT_EQ(pclock.now(), as_nanos(ten_seconds));
 
   // NOTE: this would have already lost precision at 100 seconds if we were multiplying by float
-  const RealTimePoint hundred_seconds(std::chrono::seconds(100));
+  const SteadyTimePoint hundred_seconds(std::chrono::seconds(100));
   return_time = hundred_seconds;
   EXPECT_EQ(pclock.now(), as_nanos(hundred_seconds));
 
   const int64_t near_limit_nanos = 1LL << 61;
-  const auto near_limit_time = RealTimePoint(std::chrono::nanoseconds(near_limit_nanos));
+  const auto near_limit_time = SteadyTimePoint(std::chrono::nanoseconds(near_limit_nanos));
   return_time = near_limit_time;
   EXPECT_EQ(pclock.now(), near_limit_nanos);
 
   // Expect to lose exact equality at this point due to precision limit of double*int mult
   const int64_t over_limit_nanos = (1LL << 61) + 1LL;
-  const auto over_limit_time = RealTimePoint(std::chrono::nanoseconds(over_limit_nanos));
+  const auto over_limit_time = SteadyTimePoint(std::chrono::nanoseconds(over_limit_nanos));
   return_time = over_limit_time;
   EXPECT_NE(pclock.now(), over_limit_nanos);
   EXPECT_LT(std::abs(pclock.now() - over_limit_nanos), 10LL);
@@ -62,7 +62,7 @@ TEST(PlayerClock, realtime_precision)
 
 TEST(PlayerClock, nonzero_start_time)
 {
-  RealTimePoint return_time;
+  SteadyTimePoint return_time;
   NowFunction now_fn = [&return_time]() {
       return return_time;
     };
@@ -71,40 +71,40 @@ TEST(PlayerClock, nonzero_start_time)
 
   EXPECT_EQ(pclock.now(), start_time);
 
-  return_time = RealTimePoint(std::chrono::seconds(1));
+  return_time = SteadyTimePoint(std::chrono::seconds(1));
   EXPECT_EQ(pclock.now(), start_time + as_nanos(return_time));
 }
 
 TEST(PlayerClock, fast_rate)
 {
-  RealTimePoint return_time;
+  SteadyTimePoint return_time;
   NowFunction now_fn = [&return_time]() {
       return return_time;
     };
   rosbag2_cpp::PlayerClock pclock(0, 2.5, now_fn);
 
-  const RealTimePoint begin_time(std::chrono::seconds(0));
+  const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
   EXPECT_EQ(pclock.now(), as_nanos(begin_time));
 
-  const RealTimePoint some_time(std::chrono::seconds(3));
+  const SteadyTimePoint some_time(std::chrono::seconds(3));
   return_time = some_time;
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * 2.5);
 }
 
 TEST(PlayerClock, slow_rate)
 {
-  RealTimePoint return_time;
+  SteadyTimePoint return_time;
   NowFunction now_fn = [&return_time]() {
       return return_time;
     };
   rosbag2_cpp::PlayerClock pclock(0, 0.4, now_fn);
 
-  const RealTimePoint begin_time(std::chrono::seconds(0));
+  const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
   EXPECT_EQ(pclock.now(), as_nanos(begin_time));
 
-  const RealTimePoint some_time(std::chrono::seconds(12));
+  const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * 0.4);
 }

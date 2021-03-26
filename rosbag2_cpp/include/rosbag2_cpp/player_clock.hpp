@@ -34,9 +34,15 @@ class PlayerClockImpl;
 class PlayerClock
 {
 public:
+  // Type representing the current time as according to the playback
   typedef rcutils_time_point_value_t PlayerTimePoint;
-  typedef std::chrono::time_point<std::chrono::steady_clock> RealTimePoint;
-  typedef std::function<RealTimePoint()> NowFunction;
+  /**
+   * Type representing an arbitrary steady time, used to measure real-time durations
+   * This type is never exposed by the PlayerClock - it is only used as input for internal
+   * tracking.
+   */
+  typedef std::chrono::time_point<std::chrono::steady_clock> SteadyTimePoint;
+  typedef std::function<SteadyTimePoint()> NowFunction;
 
   /**
    * Constructor.

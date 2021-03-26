@@ -30,7 +30,7 @@ namespace
 struct TimeSync
 {
   rosbag2_cpp::PlayerClock::PlayerTimePoint player_time;
-  rosbag2_cpp::PlayerClock::RealTimePoint real_time;
+  rosbag2_cpp::PlayerClock::SteadyTimePoint steady_time;
 };
 
 template<typename T>
@@ -61,7 +61,7 @@ PlayerClock::PlayerClock(PlayerTimePoint starting_time, double rate, NowFunction
   std::lock_guard<std::mutex> lock(impl_->mutex);
   impl_->now_fn = now_fn;
   impl_->reference.player_time = starting_time;
-  impl_->reference.real_time = impl_->now_fn();
+  impl_->reference.steady_time = impl_->now_fn();
   impl_->rate = rate;
 }
 
@@ -71,23 +71,23 @@ PlayerClock::~PlayerClock()
 PlayerClock::PlayerTimePoint PlayerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
-  const auto real_diff = impl_->now_fn() - impl_->reference.real_time;
-  const int64_t player_diff = duration_nanos(real_diff) * impl_->rate;
+  const auto steady_diff = impl_->now_fn() - impl_->reference.steady_time;
+  const int64_t player_diff = duration_nanos(steady_diff) * impl_->rate;
   return impl_->reference.player_time + player_diff;
 }
 
 bool PlayerClock::sleep_until(PlayerTimePoint until)
 {
-  RealTimePoint real_until;
+  SteadyTimePoint steady_until;
   {
     std::lock_guard<std::mutex> lock(impl_->mutex);
     const rcutils_duration_value_t diff_nanos =
       (until - impl_->reference.player_time) / impl_->rate;
-    real_until = impl_->reference.real_time + std::chrono::nanoseconds(diff_nanos);
+    steady_until = impl_->reference.steady_time + std::chrono::nanoseconds(diff_nanos);
   }
   // TODO(emersonknapp) - when we have methods that can change timeflow during a sleep,
   // it will probably be better to use a condition_variable::wait_until
-  std::this_thread::sleep_until(real_until);
+  std::this_thread::sleep_until(steady_until);
   return now() >= until;
 }
 
