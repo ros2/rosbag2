@@ -23,6 +23,7 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_registered_readers
 import yaml
+import sys
 
 
 class PlayVerb(VerbExtension):
@@ -45,6 +46,12 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
+        parser.add_argument(
+            '--start_time', type=int, default=1,
+            help='start timestamp from which to start playing the bag')
+        parser.add_argument(
+            '--stop_time', type=int, default=sys.maxsize,
+            help='stop timestamp after which to stop playing the bag')
         parser.add_argument(
             '--topics', type=str, default='', nargs='+',
             help='topics to replay, separated by space. If none specified, all topics will be '
@@ -95,6 +102,8 @@ class PlayVerb(VerbExtension):
             node_prefix=NODE_NAME_PREFIX,
             read_ahead_queue_size=args.read_ahead_queue_size,
             rate=args.rate,
+            start_time=args.start_time,
+            stop_time=args.stop_time,
             topics=args.topics,
             qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,

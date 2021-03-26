@@ -14,7 +14,6 @@
 
 #include "player.hpp"
 
-#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <queue>
@@ -121,11 +120,24 @@ void Player::load_storage_content(const PlayOptions & options)
   TimePoint time_first_message;
 
   ReplayableMessage message;
-  if (reader_->has_next()) {
-    message.message = reader_->read_next();
-    message.time_since_start = std::chrono::nanoseconds(0);
-    time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
-    message_queue_.enqueue(message);
+  if(options.start_time != 1){
+      while (reader_->has_next() && rclcpp::ok()) {
+          message.message = reader_->read_next();
+          if(options.start_time < message.message->time_stamp){
+              message.time_since_start = std::chrono::nanoseconds(0);
+              time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
+              message_queue_.enqueue(message);
+              break;
+          }
+      }
+  }
+  else {
+      if (reader_->has_next()) {
+          message.message = reader_->read_next();
+          message.time_since_start = std::chrono::nanoseconds(0);
+          time_first_message = TimePoint(std::chrono::nanoseconds(message.message->time_stamp));
+          message_queue_.enqueue(message);
+      }
   }
 
   auto queue_lower_boundary =
@@ -134,7 +146,7 @@ void Player::load_storage_content(const PlayOptions & options)
 
   while (reader_->has_next() && rclcpp::ok()) {
     if (message_queue_.size_approx() < queue_lower_boundary) {
-      enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
+        enqueue_up_to_boundary(time_first_message, queue_upper_boundary);
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -159,8 +171,13 @@ void Player::enqueue_up_to_boundary(const TimePoint & time_first_message, uint64
 void Player::play_messages_from_queue(const PlayOptions & options)
 {
   start_time_ = std::chrono::system_clock::now();
+  int result_code;
   do {
-    play_messages_until_queue_empty(options);
+    result_code = play_messages_until_queue_empty(options);
+    if(result_code == -1){
+        rclcpp::shutdown();
+        break;
+    }
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
       ROSBAG2_TRANSPORT_LOG_WARN(
         "Message queue starved. Messages will be delayed. Consider "
@@ -169,7 +186,7 @@ void Player::play_messages_from_queue(const PlayOptions & options)
   } while (!is_storage_completely_loaded() && rclcpp::ok());
 }
 
-void Player::play_messages_until_queue_empty(const PlayOptions & options)
+int Player::play_messages_until_queue_empty(const PlayOptions & options)
 {
   ReplayableMessage message;
 
@@ -180,16 +197,21 @@ void Player::play_messages_until_queue_empty(const PlayOptions & options)
   }
 
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    std::this_thread::sleep_until(
-      start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
-        1.0 / rate * message.time_since_start));
-    if (rclcpp::ok()) {
-      auto publisher_iter = publishers_.find(message.message->topic_name);
-      if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message.message->serialized_data);
-      }
+    if(options.start_time < message.message->time_stamp) {
+        if(message.message->time_stamp < options.stop_time){
+            std::this_thread::sleep_until(
+              start_time_ + std::chrono::duration_cast<std::chrono::nanoseconds>(
+                1.0 / rate * message.time_since_start));
+            if (rclcpp::ok()) {
+              publishers_[message.message->topic_name]->publish(message.message->serialized_data);
+            }
+        }
+        else{
+            return -1;
+        }
     }
   }
+  return 0;
 }
 
 void Player::prepare_publishers(const PlayOptions & options)
