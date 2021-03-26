@@ -32,12 +32,11 @@
 namespace rosbag2_py
 {
 
-template<typename T>
 class Reindexer
 {
 public:
   Reindexer()
-  : reindexer_(std::make_unique<rosbag2_cpp::Reindexer>(std::make_unique<T>()))
+  : reindexer_(std::make_unique<rosbag2_cpp::Reindexer>())
   {
   }
 
@@ -54,8 +53,8 @@ protected:
 PYBIND11_MODULE(_reindexer, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp reindexer API";
 
-  pybind11::class_<rosbag2_py::Reindexer<rosbag2_cpp::Reindexer>>(
+  pybind11::class_<rosbag2_py::Reindexer>(
     m, "Reindexer")
   .def(pybind11::init())
-  .def("reindex", &rosbag2_py::Reindexer<rosbag2_cpp::Reindexer>::reindex);
+  .def("reindex", &rosbag2_py::Reindexer::reindex);
 }

@@ -24,11 +24,6 @@ import os
 from pathlib import Path
 import sys
 
-# from rcl_interfaces.msg import Log
-# from rclpy.serialization import deserialize_message
-# from rosidl_runtime_py.utilities import get_message
-# from std_msgs.msg import String
-
 if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
     # This is needed on Linux when compiling with clang/libc++.
     # TL;DR This makes class_loader work when using a python extension compiled with libc++.
@@ -42,49 +37,15 @@ import rosbag2_py  # noqa
 
 def test_reindexer_multiple_files():
     bag_path = str(Path(__file__).parent.parent
-                   / 'resources' / 'reindex_test_bags', 'multiple_files')
+                   / 'resources' / 'reindex_test_bags' / 'multiple_files')
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     reindexer = rosbag2_py.Reindexer()
-    # reader = rosbag2_py.SequentialReader()
-    # reader.open(storage_options, converter_options)
+    reindexer.reindex(storage_options)
 
-    # topic_types = reader.get_all_topics_and_types()
+    result_path = Path(__file__).parent.parent / 'resources' / 'reindex_test_bags' \
+        / 'multiple_files' / 'metadata.yaml'
 
-    # # Create a map for quicker lookup
-    # type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+    assert(result_path.exists())
 
-    # # Set filter for topic of string type
-    # storage_filter = rosbag2_py.StorageFilter(topics=['/topic'])
-    # reader.set_filter(storage_filter)
-
-    # msg_counter = 0
-
-    # while reader.has_next():
-    #     (topic, data, t) = reader.read_next()
-    #     msg_type = get_message(type_map[topic])
-    #     msg = deserialize_message(data, msg_type)
-
-    #     assert isinstance(msg, String)
-    #     assert msg.data == f'Hello, world! {msg_counter}'
-
-    #     msg_counter += 1
-
-    # # No filter
-    # reader.reset_filter()
-
-    # reader = rosbag2_py.SequentialReader()
-    # reader.open(storage_options, converter_options)
-
-    # msg_counter = 0
-
-    # while reader.has_next():
-    #     (topic, data, t) = reader.read_next()
-    #     msg_type = get_message(type_map[topic])
-    #     msg = deserialize_message(data, msg_type)
-
-    #     assert isinstance(msg, Log) or isinstance(msg, String)
-
-    #     if isinstance(msg, String):
-    #         assert msg.data == f'Hello, world! {msg_counter}'
-    #         msg_counter += 1
+    result_path.unlink(missing_ok=True)
