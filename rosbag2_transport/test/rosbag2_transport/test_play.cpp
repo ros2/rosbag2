@@ -220,10 +220,12 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    // No messages are allowed to have arrived
     EXPECT_THAT(replayed_topic1, SizeIs(0u));
 
     auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
-    EXPECT_THAT(replayed_topic2, SizeIs(Ge(2u)));
+    // All we care is that any messages arrived
+    EXPECT_THAT(replayed_topic2, SizeIs(Ge(1u)));
   }
 
   // Filter allows /topic1, blocks /topic2
@@ -249,9 +251,11 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-    EXPECT_THAT(replayed_topic1, SizeIs(Ge(2u)));
+    // All we care is that any messages arrived
+    EXPECT_THAT(replayed_topic1, SizeIs(Ge(1u)));
 
     auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
+    // No messages are allowed to have arrived
     EXPECT_THAT(replayed_topic2, SizeIs(0u));
   }
 
@@ -278,10 +282,12 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-    EXPECT_THAT(replayed_topic1, SizeIs(Ge(2u)));
+    // All we care is that any messages arrived
+    EXPECT_THAT(replayed_topic1, SizeIs(Ge(1u)));
 
     auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
-    EXPECT_THAT(replayed_topic2, SizeIs(Ge(2u)));
+    // All we care is that any messages arrived
+    EXPECT_THAT(replayed_topic2, SizeIs(Ge(1u)));
   }
 }
 
