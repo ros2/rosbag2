@@ -55,6 +55,7 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override
   {
+    // filter_ was considered when incrementing num_read_ in has_next()
     return messages_[num_read_++];
   }
 
