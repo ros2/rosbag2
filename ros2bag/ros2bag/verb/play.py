@@ -22,9 +22,9 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_registered_readers
+from rosbag2_py import Player
 from rosbag2_py import PlayOptions
 from rosbag2_py import StorageOptions
-from rosbag2_py import Transport
 import yaml
 
 
@@ -106,5 +106,5 @@ class PlayVerb(VerbExtension):
             topic_remapping_options=topic_remapping,
         )
 
-        transport = Transport()
-        transport.play(storage_options, play_options)
+        player = Player()
+        player.play(storage_options, play_options)

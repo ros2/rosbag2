@@ -40,8 +40,8 @@ with add_dll_directories_from_env('PATH'):
         Info,
     )
     from rosbag2_py._transport import (
+        Player,
         PlayOptions,
-        Transport,
     )
 
 __all__ = [
@@ -58,6 +58,6 @@ __all__ = [
     'TopicInformation',
     'BagMetadata',
     'Info',
+    'Player',
     'PlayOptions',
-    'Transport',
 ]

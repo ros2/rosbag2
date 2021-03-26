@@ -36,12 +36,11 @@ using Rosbag2Transport = rosbag2_transport::Rosbag2Transport;
 namespace rosbag2_py
 {
 
-class Transport
+class Player
 {
 public:
-  Transport() {}
-
-  virtual ~Transport() = default;
+  Player() = default;
+  virtual ~Player() = default;
 
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
@@ -107,8 +106,8 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
   ;
 
-  pybind11::class_<rosbag2_py::Transport>(m, "Transport")
+  pybind11::class_<rosbag2_py::Player>(m, "Player")
   .def(pybind11::init())
-  .def("play", &rosbag2_py::Transport::play)
+  .def("play", &rosbag2_py::Player::play)
   ;
 }
