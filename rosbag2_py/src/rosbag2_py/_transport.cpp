@@ -47,7 +47,6 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options)
   {
-    printf("Entered rosbag2_py::Transport::play\n");
     auto writer = std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
     std::shared_ptr<rosbag2_cpp::Reader> reader = nullptr;
@@ -63,18 +62,14 @@ public:
         }
       }
       if (reader == nullptr) {
-        printf("Creating regular player\n");
         reader = std::make_shared<rosbag2_cpp::Reader>(
           std::make_unique<rosbag2_cpp::readers::SequentialReader>());
       }
     }
 
-    printf("Creating Rosbag2Transport\n");
     Rosbag2Transport impl(reader, writer);
     impl.init();
-    printf("Calling play\n");
     impl.play(storage_options, play_options);
-    printf("Done playing\n");
     impl.shutdown();
   }
 };
