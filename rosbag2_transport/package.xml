@@ -12,13 +12,11 @@
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
-  <depend>python_cmake_module</depend>
   <depend>rclcpp</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_storage</depend>
   <depend>rmw</depend>
-  <depend>rpyutils</depend>
   <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
 
