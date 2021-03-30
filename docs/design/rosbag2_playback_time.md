@@ -204,12 +204,14 @@ In this diagram you can see `rate` changes, `pause`, and `jump`, with arrows sho
 The bag we are playing starts at R0 and goes on forward in time (we do not show the end of the bag).
 The user is performing actions in `S`, the timeline that they experience.
 
-In the first timeline "Rate Change":
+The lines and numbered references indicate "events" where a time control operation has been performed, such as changing the rate, pausing, or jumping.
+
+Events in the first timeline "Rate Change":
 1. At `S_0`: start playback at rate `0.5`
 1. At `S_1`: change rate to `2.0`
 1. At `S_2`: change rate to `1.0`
 
-In the second timeline "Pause / Jump":
+Events in the second timeline "Pause / Jump":
 1. At `S_0`: start playback at regular speed
 1. At `S_1`: call `pause`
 1. At `S_2`: call `resume`
@@ -218,8 +220,7 @@ In the second timeline "Pause / Jump":
 
 ![diagram showing two timelines with rate change pause and jump](time_control_timelines.png "Timelines")
 
-In this diagram, the lines and numbered references indicate "events" where a time control operation has been performed, such as changing the rate, pausing, or jumping.
-In between those events, there are arbitrary points `R_x / S_x`, `R_y / S_y`, and `R_z \ S_z` that we can to convert between.
+In between the time control events, there are arbitrary points `R_x / S_x`, `R_y / S_y`, and `R_z \ S_z` that we need to convert between.
 We do that using the following equations:
 
 ![equations for converting letter-subscripted time points](time_control_intermediate_equations.png "Intermediate Equations")
