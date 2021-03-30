@@ -202,7 +202,19 @@ Likewise, when `sleep_until(R_n)` is called, the `PlayerClock` which uses steady
 
 In this diagram you can see `rate` changes, `pause`, and `jump`, with arrows showing matched points.
 The bag we are playing starts at R0 and goes on forward in time (we do not show the end of the bag).
-We start playback rate at 0.5, and we change the rate twice over the course of the playback.
+The user is performing actions in `S`, the timeline that they experience.
+
+In the first timeline "Rate Change":
+1. At `S_0`: start playback at rate `0.5`
+1. At `S_1`: change rate to `2.0`
+1. At `S_2`: change rate to `1.0`
+
+In the second timeline "Pause / Jump":
+1. At `S_0`: start playback at regular speed
+1. At `S_1`: call `pause`
+1. At `S_2`: call `resume`
+1. At `S_3`: call `jump` to `R_4`
+  * We could also jump backwards on the ROS Timeline just as simply (however that diagram has crossing lines)
 
 ![diagram showing two timelines with rate change pause and jump](time_control_timelines.png "Timelines")
 
