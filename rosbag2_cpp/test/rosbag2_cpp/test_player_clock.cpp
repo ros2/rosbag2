@@ -18,10 +18,10 @@
 
 using namespace testing;  // NOLINT
 using SteadyTimePoint = rosbag2_cpp::PlayerClock::SteadyTimePoint;
-using PlayerTimePoint = rosbag2_cpp::PlayerClock::PlayerTimePoint;
+using ROSTimePoint = rosbag2_cpp::PlayerClock::ROSTimePoint;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
-PlayerTimePoint as_nanos(const SteadyTimePoint & time)
+ROSTimePoint as_nanos(const SteadyTimePoint & time)
 {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
 }
@@ -66,7 +66,7 @@ TEST(PlayerClock, nonzero_start_time)
   NowFunction now_fn = [&return_time]() {
       return return_time;
     };
-  const PlayerTimePoint start_time = 1234567890LL;
+  const ROSTimePoint start_time = 1234567890LL;
   rosbag2_cpp::PlayerClock pclock(start_time, 1.0, now_fn);
 
   EXPECT_EQ(pclock.now(), start_time);

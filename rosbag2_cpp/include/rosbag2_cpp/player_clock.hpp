@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "rcutils/time.h"
+#include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {
@@ -35,7 +36,7 @@ class PlayerClock
 {
 public:
   // Type representing the current time as according to the playback
-  typedef rcutils_time_point_value_t PlayerTimePoint;
+  typedef rcutils_time_point_value_t ROSTimePoint;
   /**
    * Type representing an arbitrary steady time, used to measure real-time durations
    * This type is never exposed by the PlayerClock - it is only used as input for internal
@@ -55,17 +56,20 @@ public:
    *   Used to control for unit testing, or for specialized needs
    * \throws std::runtime_error if rate is <= 0
    */
+  ROSBAG2_CPP_PUBLIC
   PlayerClock(
-    PlayerTimePoint starting_time,
+    ROSTimePoint starting_time,
     double rate = 1.0,
     NowFunction now_fn = std::chrono::steady_clock::now);
 
+  ROSBAG2_CPP_PUBLIC
   virtual ~PlayerClock();
 
   /**
-   * Calculate and return current PlayerTimePoint based on starting time, playback rate, pause state.
+   * Calculate and return current ROSTimePoint based on starting time, playback rate, pause state.
    */
-  PlayerTimePoint now() const;
+  ROSBAG2_CPP_PUBLIC
+  ROSTimePoint now() const;
 
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
@@ -74,11 +78,13 @@ public:
    * for the appropriate duration.
    * The user should not take action based on this sleep until it returns true.
    */
-  bool sleep_until(PlayerTimePoint until);
+  ROSBAG2_CPP_PUBLIC
+  bool sleep_until(ROSTimePoint until);
 
   /**
    * Return the current playback rate.
    */
+  ROSBAG2_CPP_PUBLIC
   double get_rate() const;
 
 private:

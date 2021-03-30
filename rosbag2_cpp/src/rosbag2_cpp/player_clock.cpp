@@ -16,30 +16,9 @@
 #include <mutex>
 #include <thread>
 
+#include "rcpputils/thread_safety_annotations.hpp"
 #include "rosbag2_cpp/player_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
-
-namespace
-{
-
-/**
- * Stores an exact time match between a system steady clock and the semantic play clock.
- * This is created whenever a factor changes such that a new base reference is needed
- * such as pause, resume, rate change, or jump
- */
-struct TimeSync
-{
-  rosbag2_cpp::PlayerClock::PlayerTimePoint player_time;
-  rosbag2_cpp::PlayerClock::SteadyTimePoint steady_time;
-};
-
-template<typename T>
-rcutils_duration_value_t duration_nanos(const T & duration)
-{
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-}
-
-}  // namespace
 
 namespace rosbag2_cpp
 {
@@ -47,43 +26,68 @@ namespace rosbag2_cpp
 class PlayerClockImpl
 {
 public:
-  PlayerClockImpl() = default;
+  /**
+   * Stores an exact time match between a system steady clock and the playback ROS clock.
+   * This snapshot is taken whenever a factor changes such that a new reference is needed,
+   * such as pause, resume, rate change, or jump
+   */
+  struct TimeReference
+  {
+    PlayerClock::ROSTimePoint ros;
+    PlayerClock::SteadyTimePoint steady;
+  };
 
-  TimeSync reference;
+  PlayerClockImpl() = default;
+  virtual ~PlayerClockImpl() = default;
+
+  template<typename T>
+  rcutils_duration_value_t duration_nanos(const T & duration)
+  {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  }
+
+  PlayerClock::ROSTimePoint steady_to_ros(PlayerClock::SteadyTimePoint steady_time)
+  {
+    return reference.ros + (rate * duration_nanos(steady_time - reference.steady));
+  }
+
+  PlayerClock::SteadyTimePoint ros_to_steady(PlayerClock::ROSTimePoint ros_time)
+  {
+    const rcutils_duration_value_t diff_nanos = (ros_time - reference.ros) / rate;
+    return reference.steady + std::chrono::nanoseconds(diff_nanos);
+  }
+
   double rate = 1.0;
   PlayerClock::NowFunction now_fn;
   std::mutex mutex;
+  TimeReference reference RCPPUTILS_TSA_GUARDED_BY(mutex);
 };
 
-PlayerClock::PlayerClock(PlayerTimePoint starting_time, double rate, NowFunction now_fn)
+PlayerClock::PlayerClock(ROSTimePoint starting_time, double rate, NowFunction now_fn)
 : impl_(std::make_unique<PlayerClockImpl>())
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
   impl_->now_fn = now_fn;
-  impl_->reference.player_time = starting_time;
-  impl_->reference.steady_time = impl_->now_fn();
+  impl_->reference.ros = starting_time;
+  impl_->reference.steady = impl_->now_fn();
   impl_->rate = rate;
 }
 
 PlayerClock::~PlayerClock()
 {}
 
-PlayerClock::PlayerTimePoint PlayerClock::now() const
+PlayerClock::ROSTimePoint PlayerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
-  const auto steady_diff = impl_->now_fn() - impl_->reference.steady_time;
-  const int64_t player_diff = duration_nanos(steady_diff) * impl_->rate;
-  return impl_->reference.player_time + player_diff;
+  return impl_->steady_to_ros(impl_->now_fn());
 }
 
-bool PlayerClock::sleep_until(PlayerTimePoint until)
+bool PlayerClock::sleep_until(ROSTimePoint until)
 {
   SteadyTimePoint steady_until;
   {
     std::lock_guard<std::mutex> lock(impl_->mutex);
-    const rcutils_duration_value_t diff_nanos =
-      (until - impl_->reference.player_time) / impl_->rate;
-    steady_until = impl_->reference.steady_time + std::chrono::nanoseconds(diff_nanos);
+    steady_until = impl_->ros_to_steady(until);
   }
   // TODO(emersonknapp) - when we have methods that can change timeflow during a sleep,
   // it will probably be better to use a condition_variable::wait_until
@@ -93,6 +97,7 @@ bool PlayerClock::sleep_until(PlayerTimePoint until)
 
 double PlayerClock::get_rate() const
 {
+  std::lock_guard<std::mutex> lock(impl_->mutex);
   return impl_->rate;
 }
 

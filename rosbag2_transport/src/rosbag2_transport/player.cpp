@@ -95,7 +95,7 @@ void Player::play(const PlayOptions & options)
 {
   // Initialize Clock
   {
-    rosbag2_cpp::PlayerClock::PlayerTimePoint time_first_message;
+    rosbag2_cpp::PlayerClock::ROSTimePoint time_first_message;
     float rate = 1.0;
 
     if (options.rate > 0.0) {
