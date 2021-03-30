@@ -20,17 +20,18 @@
 #
 # This notice must appear in all copies of this file and its derivatives.
 
-from argparse import FileType
+# from argparse import FileType
+import os
 
-from rclpy.qos import InvalidQoSProfileException
+# from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import check_path_exists
-from ros2bag.api import check_positive_float
-from ros2bag.api import convert_yaml_to_qos_profile
+# from ros2bag.api import check_positive_float
+# from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
-from ros2cli.node import NODE_NAME_PREFIX
-from rosbag2_py import get_registered_readers
-import yaml
+# from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import Reindexer, get_registered_readers, StorageOptions
+# import yaml
 
 class ReindexVerb(VerbExtension):
     """Reconstruct metadata file for a bag"""
@@ -43,3 +44,15 @@ class ReindexVerb(VerbExtension):
         parser.add_argument(
             'storage_id', default=default_storage, choices=storage_choices,
             help=f"storage identifier to be used, defaults to '{default_storage}'")
+
+    def main(self, *, args):
+        if not os.path.isdir(args.bag_directory):
+            return print_error('Must specify a bag directory')
+
+        storage_options = StorageOptions(
+            uri=args.bag_directory,
+            storage_id=args.storage_id,
+        )
+
+        reindexer = Reindexer()
+        reindexer.reindex(storage_options)

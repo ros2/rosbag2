@@ -42,6 +42,7 @@ The package provides the rosbag command for the ROS 2 command line tools.""",
             'list = ros2bag.verb.list:ListVerb',
             'play = ros2bag.verb.play:PlayVerb',
             'record = ros2bag.verb.record:RecordVerb',
+            'reindex = ros2bag.verb.reindex:ReindexVerb'
         ],
     }
 )
