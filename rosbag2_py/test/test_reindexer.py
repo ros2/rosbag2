@@ -38,12 +38,12 @@ import rosbag2_py  # noqa
 def test_reindexer_multiple_files():
     bag_path = str(Path(__file__).parent.parent
                    / 'resources' / 'reindex_test_bags' / 'multiple_files')
+    result_path = bag_path / 'metadata.yaml'
+
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     reindexer = rosbag2_py.Reindexer()
     reindexer.reindex(storage_options)
-
-    result_path = bag_path / 'metadata.yaml'
 
     assert(result_path.exists())
 
