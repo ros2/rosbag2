@@ -43,8 +43,7 @@ def test_reindexer_multiple_files():
     reindexer = rosbag2_py.Reindexer()
     reindexer.reindex(storage_options)
 
-    result_path = Path(__file__).parent.parent / 'resources' / 'reindex_test_bags' \
-        / 'multiple_files' / 'metadata.yaml'
+    result_path = bag_path / 'metadata.yaml'
 
     assert(result_path.exists())
 
