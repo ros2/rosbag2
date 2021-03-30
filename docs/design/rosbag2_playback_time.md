@@ -220,7 +220,7 @@ Events in the second timeline "Pause / Jump":
 
 ![diagram showing two timelines with rate change pause and jump](time_control_timelines.png "Timelines")
 
-In between the time control events, there are arbitrary points `R_x / S_x`, `R_y / S_y`, and `R_z \ S_z` that we need to convert between.
+In between the time control events, there are arbitrary points `R_x / S_x`, `R_y / S_y`, and `R_z / S_z` that we need to convert between.
 We do that using the following equations:
 
 ![equations for converting letter-subscripted time points](time_control_intermediate_equations.png "Intermediate Equations")
