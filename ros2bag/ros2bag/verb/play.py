@@ -22,6 +22,9 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_registered_readers
+from rosbag2_py import Player
+from rosbag2_py import PlayOptions
+from rosbag2_py import StorageOptions
 import yaml
 
 
@@ -46,7 +49,7 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
-            '--topics', type=str, default='', nargs='+',
+            '--topics', type=str, default=[], nargs='+',
             help='topics to replay, separated by space. If none specified, all topics will be '
                  'replayed.')
         parser.add_argument(
@@ -83,20 +86,25 @@ class PlayVerb(VerbExtension):
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
 
-        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-        #               combined with constrained environments (as imposed by colcon test)
-        #               may result in DLL loading failures when attempting to import a C
-        #               extension. Therefore, do not import rosbag2_transport at the module
-        #               level but on demand, right before first use.
-        from rosbag2_transport import rosbag2_transport_py
-        rosbag2_transport_py.play(
+        topic_remapping = ['--ros-args']
+        for remap_rule in args.remap:
+            topic_remapping.append('--remap')
+            topic_remapping.append(remap_rule)
+
+        storage_options = StorageOptions(
             uri=args.bag_file,
             storage_id=args.storage,
-            node_prefix=NODE_NAME_PREFIX,
+            storage_config_uri=storage_config_file,
+        )
+        play_options = PlayOptions(
             read_ahead_queue_size=args.read_ahead_queue_size,
+            node_prefix=NODE_NAME_PREFIX,
             rate=args.rate,
-            topics=args.topics,
-            qos_profile_overrides=qos_profile_overrides,
+            topics_to_filter=args.topics,
+            topic_qos_profile_overrides=qos_profile_overrides,
             loop=args.loop,
-            topic_remapping=args.remap,
-            storage_config_file=storage_config_file)
+            topic_remapping_options=topic_remapping,
+        )
+
+        player = Player()
+        player.play(storage_options, play_options)

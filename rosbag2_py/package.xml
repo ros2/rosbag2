@@ -21,6 +21,7 @@
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_storage</depend>
+  <depend>rosbag2_transport</depend>
 
   <exec_depend>rpyutils</exec_depend>
 
