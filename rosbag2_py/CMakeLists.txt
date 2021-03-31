@@ -155,6 +155,11 @@ if(BUILD_TESTING)
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
     APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
+  ament_add_pytest_test(test_transport_py
+    "test/test_transport.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
+  )
 endif()
 
 ament_package()

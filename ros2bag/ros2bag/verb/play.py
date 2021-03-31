@@ -96,15 +96,14 @@ class PlayVerb(VerbExtension):
             storage_id=args.storage,
             storage_config_uri=storage_config_file,
         )
-        play_options = PlayOptions(
-            read_ahead_queue_size=args.read_ahead_queue_size,
-            node_prefix=NODE_NAME_PREFIX,
-            rate=args.rate,
-            topics_to_filter=args.topics,
-            topic_qos_profile_overrides=qos_profile_overrides,
-            loop=args.loop,
-            topic_remapping_options=topic_remapping,
-        )
+        play_options = PlayOptions()
+        play_options.read_ahead_queue_size = args.read_ahead_queue_size
+        play_options.node_prefix = NODE_NAME_PREFIX
+        play_options.rate = args.rate
+        play_options.topics_to_filter = args.topics
+        play_options.topic_qos_profile_overrides = qos_profile_overrides
+        play_options.loop = args.loop
+        play_options.topic_remapping_options = topic_remapping
 
         player = Player()
         player.play(storage_options, play_options)

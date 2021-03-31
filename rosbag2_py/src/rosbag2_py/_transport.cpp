@@ -57,15 +57,17 @@ QoSMap qos_map_from_py_dict(const py::dict & dict)
   return value;
 }
 
+/**
+ * Simple wrapper subclass to provide nontrivial type conversions for python properties.
+ */
 template<class T>
 struct OptionsWrapper : public T
 {
 public:
-  OptionsWrapper(T base) : T(base) {}
-
   void setTopicQoSProfileOverrides(
     const py::dict & overrides)
   {
+    py_dict = overrides;
     this->topic_qos_profile_overrides = qos_map_from_py_dict(overrides);
   }
 
@@ -168,38 +170,16 @@ public:
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_transport, m) {
-
   m.doc() = "Python wrapper of the rosbag2_transport API";
 
+  // NOTE: it is non-trivial to add a constructor for PlayOptions and RecordOptions
+  // because the rclcpp::QoS <-> rclpy.qos.QoS Profile conversion cannot be done by builtins.
+  // It is possible, but the code is much longer and harder to maintain, requiring duplicating
+  // the names of the members multiple times, as well as the default values from the struct
+  // definitions.
+
   py::class_<PlayOptions>(m, "PlayOptions")
-  .def(
-    py::init([](
-      size_t read_ahead_queue_size,
-      std::string node_prefix,
-      float rate,
-      std::vector<std::string> topics_to_filter,
-      py::dict topic_qos_profile_overrides,
-      bool loop,
-      std::vector<std::string> topic_remapping_options
-    ){
-      return new PlayOptions({
-        read_ahead_queue_size,
-        node_prefix,
-        rate,
-        topics_to_filter,
-        qos_map_from_py_dict(topic_qos_profile_overrides),
-        loop,
-        topic_remapping_options
-      });
-    }),
-    py::arg("read_ahead_queue_size"),
-    py::arg("node_prefix") = "",
-    py::arg("rate") = 1.0,
-    py::arg("topics_to_filter") = std::vector<std::string>{},
-    py::arg("topic_qos_profile_overrides") = py::dict{},
-    py::arg("loop") = false,
-    py::arg("topic_remapping_options") = std::vector<std::string>{}
-  )
+  .def(py::init<>())
   .def_readwrite("read_ahead_queue_size", &PlayOptions::read_ahead_queue_size)
   .def_readwrite("node_prefix", &PlayOptions::node_prefix)
   .def_readwrite("rate", &PlayOptions::rate)
@@ -213,55 +193,7 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
-  .def(
-    py::init([](
-      bool all,
-      bool is_discovery_disabled,
-      std::vector<std::string> topics,
-      std::string rmw_serialization_format,
-      std::chrono::milliseconds topic_polling_interval,
-      std::string regex,
-      std::string exclude,
-      std::string node_prefix,
-      std::string compression_mode,
-      std::string compression_format,
-      uint64_t compression_queue_size,
-      uint64_t compression_threads,
-      py::dict topic_qos_profile_overrides,
-      bool include_hidden_topics
-    ) {
-      return new RecordOptions({
-        all,
-        is_discovery_disabled,
-        topics,
-        rmw_serialization_format,
-        topic_polling_interval,
-        regex,
-        exclude,
-        node_prefix,
-        compression_mode,
-        compression_format,
-        compression_queue_size,
-        compression_threads,
-        qos_map_from_py_dict(topic_qos_profile_overrides),
-        include_hidden_topics
-      });
-    }),
-    py::arg("all") = false,
-    py::arg("is_discovery_disabled") = true,
-    py::arg("topics") = std::vector<std::string>{},
-    py::arg("rmw_serialization_format") = "",
-    py::arg("topic_polling_interval") = std::chrono::milliseconds(100),
-    py::arg("regex") = "",
-    py::arg("exclude") = "",
-    py::arg("node_prefix") = "",
-    py::arg("compression_mode") = "",
-    py::arg("compression_format") = "",
-    py::arg("compression_queue_size") = 1,
-    py::arg("compression_threads") = 0,
-    py::arg("topic_qos_profile_overrides") = py::dict{},
-    py::arg("include_hidden_topics") = false
-  )
+  .def(py::init<>())
   .def_readwrite("all", &RecordOptions::all)
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)
