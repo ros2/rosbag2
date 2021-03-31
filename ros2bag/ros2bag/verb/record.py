@@ -191,7 +191,8 @@ class RecordVerb(VerbExtension):
         record_options.is_discovery_disabled = args.no_discovery
         record_options.topics = args.topics
         record_options.rmw_serialization_format = args.serialization_format
-        record_options.topic_polling_interval = datetime.timedelta(milliseconds=args.polling_interval)
+        record_options.topic_polling_interval = datetime.timedelta(
+            milliseconds=args.polling_interval)
         record_options.regex = args.regex
         record_options.exclude = args.exclude
         record_options.node_prefix = NODE_NAME_PREFIX
