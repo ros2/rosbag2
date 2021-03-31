@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -26,12 +27,61 @@
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "./pybind11.hpp"
 
-using PlayOptions = rosbag2_transport::PlayOptions;
-using Rosbag2Transport = rosbag2_transport::Rosbag2Transport;
+namespace py = pybind11;
+typedef std::unordered_map<std::string, rclcpp::QoS> QoSMap;
+
+namespace
+{
+
+rclcpp::QoS qos_from_handle(const py::handle source)
+{
+  auto py_capsule = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
+  const auto rmw_qos_profile = reinterpret_cast<rmw_qos_profile_t *>(
+    PyCapsule_GetPointer(py_capsule, "rmw_qos_profile_t"));
+  const auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
+  return rclcpp::QoS{qos_init, *rmw_qos_profile};
+}
+
+QoSMap qos_map_from_py_dict(const py::dict & dict)
+{
+  QoSMap value;
+  for (const auto & item : dict) {
+    auto key = std::string(py::str(item.first));
+    value.insert({key, qos_from_handle(item.second)});
+  }
+  return value;
+}
+
+/**
+ * Simple wrapper subclass to provide nontrivial type conversions for python properties.
+ */
+template<class T>
+struct OptionsWrapper : public T
+{
+public:
+  void setTopicQoSProfileOverrides(
+    const py::dict & overrides)
+  {
+    py_dict = overrides;
+    this->topic_qos_profile_overrides = qos_map_from_py_dict(overrides);
+  }
+
+  const py::dict & getTopicQoSProfileOverrides()
+  {
+    return py_dict;
+  }
+
+  py::dict py_dict;
+};
+typedef OptionsWrapper<rosbag2_transport::PlayOptions> PlayOptions;
+typedef OptionsWrapper<rosbag2_transport::RecordOptions> RecordOptions;
+
+}  // namespace
 
 namespace rosbag2_py
 {
@@ -44,7 +94,7 @@ public:
 
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
-    const rosbag2_transport::PlayOptions & play_options)
+    PlayOptions & play_options)
   {
     auto writer = std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
@@ -66,9 +116,53 @@ public:
       }
     }
 
-    Rosbag2Transport impl(reader, writer);
+    rosbag2_transport::Rosbag2Transport impl(reader, writer);
     impl.init();
     impl.play(storage_options, play_options);
+    impl.shutdown();
+  }
+};
+
+class Recorder
+{
+public:
+  Recorder() = default;
+  virtual ~Recorder() = default;
+
+  void record(
+    const rosbag2_storage::StorageOptions & storage_options,
+    RecordOptions & record_options)
+  {
+    rosbag2_compression::CompressionOptions compression_options {
+      record_options.compression_format,
+      rosbag2_compression::compression_mode_from_string(record_options.compression_mode),
+      record_options.compression_queue_size,
+      record_options.compression_threads
+    };
+    if (compression_options.compression_threads < 1) {
+      compression_options.compression_threads = std::thread::hardware_concurrency();
+    }
+
+    if (record_options.rmw_serialization_format.empty()) {
+      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
+    }
+
+
+    auto reader = std::make_shared<rosbag2_cpp::Reader>(
+      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
+    std::shared_ptr<rosbag2_cpp::Writer> writer;
+    // Change writer based on recording options
+    if (!record_options.compression_format.empty()) {
+      writer = std::make_shared<rosbag2_cpp::Writer>(
+        std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
+    } else {
+      writer = std::make_shared<rosbag2_cpp::Writer>(
+        std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+    }
+
+    rosbag2_transport::Rosbag2Transport impl(reader, writer);
+    impl.init();
+    impl.record(storage_options, record_options);
     impl.shutdown();
   }
 };
@@ -78,36 +172,54 @@ public:
 PYBIND11_MODULE(_transport, m) {
   m.doc() = "Python wrapper of the rosbag2_transport API";
 
-  pybind11::class_<PlayOptions>(m, "PlayOptions")
-  .def(
-    pybind11::init<
-      size_t,
-      std::string,
-      float,
-      std::vector<std::string>,
-      std::unordered_map<std::string, rclcpp::QoS>,
-      bool,
-      std::vector<std::string>
-    >(),
-    pybind11::arg("read_ahead_queue_size"),
-    pybind11::arg("node_prefix") = "",
-    pybind11::arg("rate") = 1.0,
-    pybind11::arg("topics_to_filter") = std::vector<std::string>{},
-    pybind11::arg("topic_qos_profile_overrides") = std::unordered_map<std::string, rclcpp::QoS>{},
-    pybind11::arg("loop") = false,
-    pybind11::arg("topic_remapping_options") = std::vector<std::string>{}
-  )
+  // NOTE: it is non-trivial to add a constructor for PlayOptions and RecordOptions
+  // because the rclcpp::QoS <-> rclpy.qos.QoS Profile conversion cannot be done by builtins.
+  // It is possible, but the code is much longer and harder to maintain, requiring duplicating
+  // the names of the members multiple times, as well as the default values from the struct
+  // definitions.
+
+  py::class_<PlayOptions>(m, "PlayOptions")
+  .def(py::init<>())
   .def_readwrite("read_ahead_queue_size", &PlayOptions::read_ahead_queue_size)
   .def_readwrite("node_prefix", &PlayOptions::node_prefix)
   .def_readwrite("rate", &PlayOptions::rate)
   .def_readwrite("topics_to_filter", &PlayOptions::topics_to_filter)
-  .def_readwrite("topic_qos_profile_overrides", &PlayOptions::topic_qos_profile_overrides)
+  .def_property(
+    "topic_qos_profile_overrides",
+    &PlayOptions::getTopicQoSProfileOverrides,
+    &PlayOptions::setTopicQoSProfileOverrides)
   .def_readwrite("loop", &PlayOptions::loop)
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
   ;
 
-  pybind11::class_<rosbag2_py::Player>(m, "Player")
-  .def(pybind11::init())
+  py::class_<RecordOptions>(m, "RecordOptions")
+  .def(py::init<>())
+  .def_readwrite("all", &RecordOptions::all)
+  .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
+  .def_readwrite("topics", &RecordOptions::topics)
+  .def_readwrite("rmw_serialization_format", &RecordOptions::rmw_serialization_format)
+  .def_readwrite("topic_polling_interval", &RecordOptions::topic_polling_interval)
+  .def_readwrite("regex", &RecordOptions::regex)
+  .def_readwrite("exclude", &RecordOptions::exclude)
+  .def_readwrite("node_prefix", &RecordOptions::node_prefix)
+  .def_readwrite("compression_mode", &RecordOptions::compression_mode)
+  .def_readwrite("compression_format", &RecordOptions::compression_format)
+  .def_readwrite("compression_queue_size", &RecordOptions::compression_queue_size)
+  .def_readwrite("compression_threads", &RecordOptions::compression_threads)
+  .def_property(
+    "topic_qos_profile_overrides",
+    &RecordOptions::getTopicQoSProfileOverrides,
+    &RecordOptions::setTopicQoSProfileOverrides)
+  .def_readwrite("include_hidden_topics", &RecordOptions::include_hidden_topics)
+  ;
+
+  py::class_<rosbag2_py::Player>(m, "Player")
+  .def(py::init())
   .def("play", &rosbag2_py::Player::play)
+  ;
+
+  py::class_<rosbag2_py::Recorder>(m, "Recorder")
+  .def(py::init())
+  .def("record", &rosbag2_py::Recorder::record)
   ;
 }
