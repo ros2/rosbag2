@@ -188,19 +188,19 @@ class RecordVerb(VerbExtension):
         )
         record_options = RecordOptions(
             all=args.all,
+            is_discovery_disabled=args.no_discovery,
+            topics=args.topics,
+            rmw_serialization_format=args.serialization_format,
+            topic_polling_interval=datetime.timedelta(milliseconds=args.polling_interval),
             regex=args.regex,
             exclude=args.exclude,
-            is_discovery_disabled=args.no_discovery,
-            topic_polling_interval=args.polling_interval,
             node_prefix=NODE_NAME_PREFIX,
             compression_mode=args.compression_mode,
             compression_format=args.compression_format,
             compression_queue_size=args.compression_queue_size,
             compression_threads=args.compression_threads,
-            include_hidden_topics=args.include_hidden_topics,
             topic_qos_profile_overrides=qos_profile_overrides,
-            topics=args.topics,
-            rmw_serialization_format=args.serialization_format,
+            include_hidden_topics=args.include_hidden_topics,
         )
 
         recorder = Recorder()
