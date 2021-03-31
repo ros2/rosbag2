@@ -8,13 +8,13 @@ jobs:
     name: ament_copyright
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: copyright
-        distribution: foxy
+        distribution: rolling
         package-name: |
             ros2bag
             rosbag2_compression
@@ -29,13 +29,13 @@ jobs:
     name: ament_xmllint
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: xmllint
-        distribution: foxy
+        distribution: rolling
         package-name: |
             ros2bag
             rosbag2
@@ -56,13 +56,13 @@ jobs:
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: foxy
+        distribution: rolling
         package-name: |
             rosbag2_compression
             rosbag2_compression_zstd
@@ -76,16 +76,16 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [pep257, flake8]
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: foxy
+        distribution: rolling
         package-name: |
             ros2bag
