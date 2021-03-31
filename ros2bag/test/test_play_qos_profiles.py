@@ -69,7 +69,7 @@ class TestRos2BagPlay(unittest.TestCase):
             bag_command.wait_for_shutdown(timeout=5)
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
-        assert not matches, print('ros2bag CLI did not produce the expected output')
+        assert not matches, 'ros2bag CLI did not produce the expected output'
 
     def test_qos_incomplete(self):
         """Test a partially filled QoS profile for a single topic."""
@@ -81,4 +81,4 @@ class TestRos2BagPlay(unittest.TestCase):
             bag_command.wait_for_shutdown(timeout=5)
         expected_string_regex = re.compile(ERROR_STRING)
         matches = expected_string_regex.search(bag_command.output)
-        assert not matches, print('ros2bag CLI did not produce the expected output')
+        assert not matches, 'ros2bag CLI did not produce the expected output'

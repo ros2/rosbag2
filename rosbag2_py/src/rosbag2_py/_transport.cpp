@@ -32,12 +32,92 @@
 
 #include "./pybind11.hpp"
 
-using PlayOptions = rosbag2_transport::PlayOptions;
-using RecordOptions = rosbag2_transport::RecordOptions;
-using Rosbag2Transport = rosbag2_transport::Rosbag2Transport;
+namespace py = pybind11;
+
+// namespace
+// {
+//
+// class QoSWrapper : public rclcpp::QoS
+// {
+// public:
+//   // pybind type-castable objects need to have a default constructor
+//   QoSWrapper() : rclcpp::QoS(rclcpp::SystemDefaultsQoS()) {}
+// };
+//
+// }  // namespace
+
+
+
+// namespace pybind11 { namespace detail
+// {
+//
+// template <> struct
+// type_caster<QoSWrapper> {
+// public:
+//   /**
+//    * This macro establishes the name 'inty' in
+//    * function signatures and declares a local variable
+//    * 'value' of type inty
+//    */
+//   PYBIND11_TYPE_CASTER(QoSWrapper, _("rclpy.qos.QoS"));
+//
+//   bool load(handle src, bool /* apply_implicit_conversions */) {
+//     PyObject * source = src.ptr();
+//     auto py_capsule = PyObject_CallMethod(source, "get_c_qos_profile", "");
+//     const auto rmw_qos_profile = reinterpret_cast<rmw_qos_profile_t *>(
+//       PyCapsule_GetPointer(py_capsule, "rmw_qos_profile_t"));
+//     const auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
+//     value = rclcpp::QoS{qos_init, *rmw_qos_profile};
+//     return true;
+//   }
+//
+//   static handle cast(rclcpp::QoS /* src */, return_value_policy /* policy */, handle /* parent */) {
+//     return nullptr;
+//   }
+// };
+//
+// } }  // namespace pybind11::detail
+
+// typedef std::unordered_map<std::string, py::object> QoSMap;
+typedef py::dict QoSMap;
 
 namespace rosbag2_py
 {
+
+struct RecordOptions : public rosbag2_transport::RecordOptions
+{
+public:
+
+  void setOne(const std::string & topic, const py::handle source)
+  {
+    auto capsule = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
+    const auto rmw_qos_profile = reinterpret_cast<rmw_qos_profile_t *>(
+      PyCapsule_GetPointer(capsule, "rmw_qos_profile_t"));
+
+    rclcpp::QoS qos_profile{
+      rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile), *rmw_qos_profile};
+    topic_qos_profile_overrides.insert({topic, qos_profile});
+  }
+
+  void setTopicQoSProfileOverrides(
+    const QoSMap & overrides)
+  {
+    rosbag2_transport::RecordOptions::topic_qos_profile_overrides.clear();
+
+    for (const auto & item : overrides) {
+      auto key = std::string(py::str(item.first));
+      setOne(key, item.second);
+    }
+  }
+
+  const QoSMap & getTopicQoSProfileOverrides()
+  {
+    return qos_map;
+  }
+
+  QoSMap qos_map;
+};
+
 
 class Player
 {
@@ -69,7 +149,7 @@ public:
       }
     }
 
-    Rosbag2Transport impl(reader, writer);
+    rosbag2_transport::Rosbag2Transport impl(reader, writer);
     impl.init();
     impl.play(storage_options, play_options);
     impl.shutdown();
@@ -84,7 +164,7 @@ public:
 
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
-    rosbag2_transport::RecordOptions & record_options)
+    rosbag2_py::RecordOptions & record_options)
   {
     rosbag2_compression::CompressionOptions compression_options {
       record_options.compression_format,
@@ -123,6 +203,9 @@ public:
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_transport, m) {
+  using PlayOptions = rosbag2_transport::PlayOptions;
+  using RecordOptions = rosbag2_py::RecordOptions;
+
   m.doc() = "Python wrapper of the rosbag2_transport API";
 
   pybind11::class_<PlayOptions>(m, "PlayOptions")
@@ -154,38 +237,11 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   pybind11::class_<RecordOptions>(m, "RecordOptions")
-  .def(
-    pybind11::init<
-      bool,
-      bool,
-      std::vector<std::string>,
-      std::string,
-      std::chrono::milliseconds,
-      std::string,
-      std::string,
-      std::string,
-      std::string,
-      std::string,
-      uint64_t,
-      uint64_t,
-      std::unordered_map<std::string, rclcpp::QoS>,
-      bool
-    >(),
-    pybind11::arg("all") = false,
-    pybind11::arg("is_discovery_disabled") = true,
-    pybind11::arg("topics") = std::vector<std::string>{},
-    pybind11::arg("rmw_serialization_format") = "",
-    pybind11::arg("topic_polling_interval") = std::chrono::milliseconds(100),
-    pybind11::arg("regex") = "",
-    pybind11::arg("exclude") = "",
-    pybind11::arg("node_prefix") = "",
-    pybind11::arg("compression_mode") = "",
-    pybind11::arg("compression_format") = "",
-    pybind11::arg("compression_queue_size") = 1,
-    pybind11::arg("compression_threads") = 0,
-    pybind11::arg("topic_qos_profile_overrides") = std::unordered_map<std::string, rclcpp::QoS>{},
-    pybind11::arg("include_hidden_topics") = false
-  )
+  // RecordOptions does not get a constructor with named fields,
+  // because rclpy.qos.QoSProfile (from topic_qos_profile_overrides) is not trivially-convertible
+  // to rclcpp::QoS. Since we can't include this option in the init constructor, it's better
+  // to leave them all out for consistency
+  .def(pybind11::init<>())
   .def_readwrite("all", &RecordOptions::all)
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)
@@ -198,7 +254,10 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("compression_format", &RecordOptions::compression_format)
   .def_readwrite("compression_queue_size", &RecordOptions::compression_queue_size)
   .def_readwrite("compression_threads", &RecordOptions::compression_threads)
-  .def_readwrite("topic_qos_profile_overrides", &RecordOptions::topic_qos_profile_overrides)
+  .def_property(
+    "topic_qos_profile_overrides",
+    &RecordOptions::getTopicQoSProfileOverrides,
+    &RecordOptions::setTopicQoSProfileOverrides)
   .def_readwrite("include_hidden_topics", &RecordOptions::include_hidden_topics)
   ;
 

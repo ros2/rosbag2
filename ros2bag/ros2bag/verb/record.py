@@ -186,22 +186,21 @@ class RecordVerb(VerbExtension):
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
         )
-        record_options = RecordOptions(
-            all=args.all,
-            is_discovery_disabled=args.no_discovery,
-            topics=args.topics,
-            rmw_serialization_format=args.serialization_format,
-            topic_polling_interval=datetime.timedelta(milliseconds=args.polling_interval),
-            regex=args.regex,
-            exclude=args.exclude,
-            node_prefix=NODE_NAME_PREFIX,
-            compression_mode=args.compression_mode,
-            compression_format=args.compression_format,
-            compression_queue_size=args.compression_queue_size,
-            compression_threads=args.compression_threads,
-            topic_qos_profile_overrides=qos_profile_overrides,
-            include_hidden_topics=args.include_hidden_topics,
-        )
+        record_options = RecordOptions()
+        record_options.all = args.all
+        record_options.is_discovery_disabled = args.no_discovery
+        record_options.topics = args.topics
+        record_options.rmw_serialization_format = args.serialization_format
+        record_options.topic_polling_interval = datetime.timedelta(milliseconds=args.polling_interval)
+        record_options.regex = args.regex
+        record_options.exclude = args.exclude
+        record_options.node_prefix = NODE_NAME_PREFIX
+        record_options.compression_mode = args.compression_mode
+        record_options.compression_format = args.compression_format
+        record_options.compression_queue_size = args.compression_queue_size
+        record_options.compression_threads = args.compression_threads
+        record_options.topic_qos_profile_overrides = qos_profile_overrides
+        record_options.include_hidden_topics = args.include_hidden_topics
 
         recorder = Recorder()
         recorder.record(storage_options, record_options)
