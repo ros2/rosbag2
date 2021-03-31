@@ -180,11 +180,11 @@ class RecordVerb(VerbExtension):
         storage_options = StorageOptions(
             uri=uri,
             storage_id=args.storage,
-            storage_config_uri=storage_config_file,
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
+            storage_config_uri=storage_config_file,
         )
         record_options = RecordOptions(
             all=args.all,
