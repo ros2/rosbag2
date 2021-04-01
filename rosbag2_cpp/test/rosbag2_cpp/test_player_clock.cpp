@@ -22,12 +22,12 @@ using ROSTimePoint = rosbag2_cpp::PlayerClock::ROSTimePoint;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
 
-class PlayerClockTest : public Test
+class TimeControllerClockTest : public Test
 {
 public:
-  PlayerClockTest()
+  TimeControllerClockTest()
   {
-    NowFunction now_fn = [this]() {
+    now_fn = [this]() {
         return return_time;
       };
   }
@@ -42,10 +42,10 @@ public:
   ROSTimePoint ros_start_time = 0;
 };
 
-TEST_F(PlayerClockTest, steadytime_precision)
+TEST_F(TimeControllerClockTest, steadytime_precision)
 {
   const double playback_rate = 1.0;
-  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -73,11 +73,11 @@ TEST_F(PlayerClockTest, steadytime_precision)
   EXPECT_LT(std::abs(pclock.now() - over_limit_nanos), 10LL);
 }
 
-TEST_F(PlayerClockTest, nonzero_start_time)
+TEST_F(TimeControllerClockTest, nonzero_start_time)
 {
   ros_start_time = 1234567890LL;
   const double playback_rate = 1.0;
-  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -87,10 +87,10 @@ TEST_F(PlayerClockTest, nonzero_start_time)
   EXPECT_EQ(pclock.now(), ros_start_time + as_nanos(return_time));
 }
 
-TEST_F(PlayerClockTest, fast_rate)
+TEST_F(TimeControllerClockTest, fast_rate)
 {
   const double playback_rate = 2.5;
-  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -101,10 +101,10 @@ TEST_F(PlayerClockTest, fast_rate)
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
 }
 
-TEST_F(PlayerClockTest, slow_rate)
+TEST_F(TimeControllerClockTest, slow_rate)
 {
   const double playback_rate = 0.4;
-  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;

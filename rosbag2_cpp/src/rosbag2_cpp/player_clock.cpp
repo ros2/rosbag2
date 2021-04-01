@@ -23,7 +23,7 @@
 namespace rosbag2_cpp
 {
 
-class PlayerClockImpl
+class TimeControllerClockImpl
 {
 public:
   /**
@@ -37,8 +37,8 @@ public:
     PlayerClock::SteadyTimePoint steady;
   };
 
-  PlayerClockImpl() = default;
-  virtual ~PlayerClockImpl() = default;
+  TimeControllerClockImpl() = default;
+  virtual ~TimeControllerClockImpl() = default;
 
   template<typename T>
   rcutils_duration_value_t duration_nanos(const T & duration)
@@ -63,8 +63,11 @@ public:
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(mutex);
 };
 
-PlayerClock::PlayerClock(ROSTimePoint starting_time, double rate, NowFunction now_fn)
-: impl_(std::make_unique<PlayerClockImpl>())
+TimeControllerClock::TimeControllerClock(
+  ROSTimePoint starting_time,
+  double rate,
+  NowFunction now_fn)
+: impl_(std::make_unique<TimeControllerClockImpl>())
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
   impl_->now_fn = now_fn;
@@ -73,16 +76,16 @@ PlayerClock::PlayerClock(ROSTimePoint starting_time, double rate, NowFunction no
   impl_->rate = rate;
 }
 
-PlayerClock::~PlayerClock()
+TimeControllerClock::~TimeControllerClock()
 {}
 
-PlayerClock::ROSTimePoint PlayerClock::now() const
+PlayerClock::ROSTimePoint TimeControllerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
   return impl_->steady_to_ros(impl_->now_fn());
 }
 
-bool PlayerClock::sleep_until(ROSTimePoint until)
+bool TimeControllerClock::sleep_until(ROSTimePoint until)
 {
   SteadyTimePoint steady_until;
   {
@@ -95,7 +98,7 @@ bool PlayerClock::sleep_until(ROSTimePoint until)
   return now() >= until;
 }
 
-double PlayerClock::get_rate() const
+double TimeControllerClock::get_rate() const
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
   return impl_->rate;

@@ -24,10 +24,9 @@
 
 namespace rosbag2_cpp
 {
-class PlayerClockImpl;
 
 /**
- * Used to control the timing of bag playback.
+ * Virtual interface used to drive the timing of bag playback.
  * This clock should be used to query times and sleep between message playing,
  * so that the complexity involved around time control and time sources
  * is encapsulated in this one place.
@@ -39,12 +38,45 @@ public:
   typedef rcutils_time_point_value_t ROSTimePoint;
   /**
    * Type representing an arbitrary steady time, used to measure real-time durations
-   * This type is never exposed by the PlayerClock - it is only used as input for internal
-   * tracking.
+   * This type is never exposed by the PlayerClock - it is only used as input to the PlayerClock.
    */
   typedef std::chrono::time_point<std::chrono::steady_clock> SteadyTimePoint;
   typedef std::function<SteadyTimePoint()> NowFunction;
 
+  ROSBAG2_CPP_PUBLIC
+  virtual ~PlayerClock() = default;
+
+  /**
+   * Calculate and return current ROSTimePoint based on starting time, playback rate, pause state.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual ROSTimePoint now() const = 0;
+
+  /**
+   * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
+   *
+   * Return true if the time has been reached, false if it was not successfully reached after sleeping
+   * for the appropriate duration.
+   * The user should not take action based on this sleep until it returns true.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual bool sleep_until(ROSTimePoint until) = 0;
+
+  /**
+   * Return the current playback rate.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual double get_rate() const = 0;
+};
+
+/**
+ * Version of the PlayerClock interface that has control over time.
+ * It does not listen to any external ROS Time Source and can optionally publish /clock
+ */
+class TimeControllerClockImpl;
+class TimeControllerClock : public PlayerClock
+{
+public:
   /**
    * Constructor.
    *
@@ -57,19 +89,19 @@ public:
    * \throws std::runtime_error if rate is <= 0
    */
   ROSBAG2_CPP_PUBLIC
-  PlayerClock(
+  TimeControllerClock(
     ROSTimePoint starting_time,
     double rate = 1.0,
     NowFunction now_fn = std::chrono::steady_clock::now);
 
   ROSBAG2_CPP_PUBLIC
-  virtual ~PlayerClock();
+  virtual ~TimeControllerClock();
 
   /**
    * Calculate and return current ROSTimePoint based on starting time, playback rate, pause state.
    */
   ROSBAG2_CPP_PUBLIC
-  ROSTimePoint now() const;
+  ROSTimePoint now() const override;
 
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
@@ -79,16 +111,16 @@ public:
    * The user should not take action based on this sleep until it returns true.
    */
   ROSBAG2_CPP_PUBLIC
-  bool sleep_until(ROSTimePoint until);
+  bool sleep_until(ROSTimePoint until) override;
 
   /**
    * Return the current playback rate.
    */
   ROSBAG2_CPP_PUBLIC
-  double get_rate() const;
+  double get_rate() const override;
 
 private:
-  std::unique_ptr<PlayerClockImpl> impl_;
+  std::unique_ptr<TimeControllerClockImpl> impl_;
 };
 
 }  // namespace rosbag2_cpp
