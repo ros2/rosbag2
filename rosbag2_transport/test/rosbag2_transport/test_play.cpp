@@ -446,6 +446,7 @@ public:
     } else {
       EXPECT_NE(result, std::future_status::timeout);
     }
+    // Have to rclcpp::shutdown here to make the spin_subscriptions async thread exit
     transport.shutdown();
   }
 

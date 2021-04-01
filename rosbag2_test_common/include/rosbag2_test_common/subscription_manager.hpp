@@ -79,8 +79,9 @@ public:
   {
     return async(
       std::launch::async, [this]() {
-        while (continue_spinning(expected_topics_with_size_)) {
-          rclcpp::spin_some(subscriber_node_);
+        rclcpp::executors::SingleThreadedExecutor exec;
+        while (rclcpp::ok() && continue_spinning(expected_topics_with_size_)) {
+          exec.spin_node_some(subscriber_node_);
         }
       });
   }
