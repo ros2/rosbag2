@@ -187,6 +187,53 @@ No special allowance needs to be made in the `Player` - time will be provided at
 
 The `Player` must register a `JumpHandler` with the `Clock` - so that when a jump occurs, the current message playback queue can be invalidated and re-enqueued according to the new starting time.
 
+## Time Synchronization and Conversion
+
+When implementing this time control, there are two separate time streams to consider:
+1. "ROS time": this is the time that is related to the messages in the bag - this time may speed up, slow down, pause, or jump based on rosbag playback controls (or external Time Sources)
+2. "Steady time": this time always moves forward, and always moves at the same rate; it is the real time that the user watching a playback experiences
+
+To implement `now() -> ROSTime` and `sleep_until(ROSTime until)`, we need to perform arbitrary conversion between "ROS Time" and "Steady Time".
+
+We use the following diagrams to visualize the derivation for these conversion equations.
+Steady Time is marked as timeline `S`, and ROS Time as timeline `R`.
+Any `R_n` and `S_n` are matched time points, they coincide with each other: at Steady Time `S_n`, `now()` will return `R_n`.
+Likewise, when `sleep_until(R_n)` is called, the `PlayerClock` which uses steady time for sleeping, will sleep until `S_n`.
+
+In this diagram you can see `rate` changes, `pause`, and `jump`, with arrows showing matched points.
+The bag we are playing starts at R0 and goes on forward in time (we do not show the end of the bag).
+The user is performing actions in `S`, the timeline that they experience.
+
+The lines and numbered references indicate "events" where a time control operation has been performed, such as changing the rate, pausing, or jumping.
+
+Events in the first timeline "Rate Change":
+1. At `S_0`: start playback at rate `0.5`
+1. At `S_1`: change rate to `2.0`
+1. At `S_2`: change rate to `1.0`
+
+Events in the second timeline "Pause / Jump":
+1. At `S_0`: start playback at regular speed
+1. At `S_1`: call `pause`
+1. At `S_2`: call `resume`
+1. At `S_3`: call `jump` to `R_4`
+  * We could also jump backwards on the ROS Timeline just as simply (however that diagram has crossing lines)
+
+![diagram showing two timelines with rate change pause and jump](time_control_timelines.png "Timelines")
+
+In between the time control events, there are arbitrary points `R_x / S_x`, `R_y / S_y`, and `R_z / S_z` that we need to convert between.
+We do that using the following equations:
+
+![equations for converting letter-subscripted time points](time_control_intermediate_equations.png "Intermediate Equations")
+
+The above equations are clearly of a general form, as follows
+
+![final equations for converting time points](time_control_final_equations.png "General Equation")
+
+
+Based on this, the implementation will need to take a "snapshot" of `R_ref` and `S_ref` whenever a time control operation is performed, so that future conversions can be accurately calculated.
+
+## Other notable results
+
 ### Synchronizing rosbag2 playback
 
 As a consequence of this design, it is possible to synchronize the playback of multiple rosbags, by setting one to publish with `--clock`, and the others to listen with `--use-sim-time`. This feature is useful if for example bags were recorded for different topic selections, in the same time range.
