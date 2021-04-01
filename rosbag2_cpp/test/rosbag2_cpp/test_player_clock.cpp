@@ -21,18 +21,31 @@ using SteadyTimePoint = rosbag2_cpp::PlayerClock::SteadyTimePoint;
 using ROSTimePoint = rosbag2_cpp::PlayerClock::ROSTimePoint;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
-ROSTimePoint as_nanos(const SteadyTimePoint & time)
-{
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
-}
 
-TEST(PlayerClock, steadytime_precision)
+class PlayerClockTest : public Test
 {
-  SteadyTimePoint return_time;
-  NowFunction now_fn = [&return_time]() {
-      return return_time;
-    };
-  rosbag2_cpp::PlayerClock pclock(0, 1.0, now_fn);
+public:
+  PlayerClockTest()
+  {
+    NowFunction now_fn = [this]() {
+        return return_time;
+      };
+  }
+
+  ROSTimePoint as_nanos(const SteadyTimePoint & time)
+  {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
+  }
+
+  NowFunction now_fn;
+  SteadyTimePoint return_time;  // defaults to 0
+  ROSTimePoint ros_start_time = 0;
+};
+
+TEST_F(PlayerClockTest, steadytime_precision)
+{
+  const double playback_rate = 1.0;
+  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -60,28 +73,24 @@ TEST(PlayerClock, steadytime_precision)
   EXPECT_LT(std::abs(pclock.now() - over_limit_nanos), 10LL);
 }
 
-TEST(PlayerClock, nonzero_start_time)
+TEST_F(PlayerClockTest, nonzero_start_time)
 {
-  SteadyTimePoint return_time;
-  NowFunction now_fn = [&return_time]() {
-      return return_time;
-    };
-  const ROSTimePoint start_time = 1234567890LL;
-  rosbag2_cpp::PlayerClock pclock(start_time, 1.0, now_fn);
+  ros_start_time = 1234567890LL;
+  const double playback_rate = 1.0;
+  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
 
-  EXPECT_EQ(pclock.now(), start_time);
+  const SteadyTimePoint begin_time(std::chrono::seconds(0));
+  return_time = begin_time;
+  EXPECT_EQ(pclock.now(), ros_start_time);
 
   return_time = SteadyTimePoint(std::chrono::seconds(1));
-  EXPECT_EQ(pclock.now(), start_time + as_nanos(return_time));
+  EXPECT_EQ(pclock.now(), ros_start_time + as_nanos(return_time));
 }
 
-TEST(PlayerClock, fast_rate)
+TEST_F(PlayerClockTest, fast_rate)
 {
-  SteadyTimePoint return_time;
-  NowFunction now_fn = [&return_time]() {
-      return return_time;
-    };
-  rosbag2_cpp::PlayerClock pclock(0, 2.5, now_fn);
+  const double playback_rate = 2.5;
+  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -89,16 +98,13 @@ TEST(PlayerClock, fast_rate)
 
   const SteadyTimePoint some_time(std::chrono::seconds(3));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * 2.5);
+  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
 }
 
-TEST(PlayerClock, slow_rate)
+TEST_F(PlayerClockTest, slow_rate)
 {
-  SteadyTimePoint return_time;
-  NowFunction now_fn = [&return_time]() {
-      return return_time;
-    };
-  rosbag2_cpp::PlayerClock pclock(0, 0.4, now_fn);
+  const double playback_rate = 0.4;
+  rosbag2_cpp::PlayerClock pclock(ros_start_time, playback_rate, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
@@ -106,5 +112,5 @@ TEST(PlayerClock, slow_rate)
 
   const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * 0.4);
+  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
 }

@@ -58,6 +58,7 @@ private:
   void play_messages_from_queue();
   void play_messages_until_queue_empty();
   void prepare_publishers(const PlayOptions & options);
+  void prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 

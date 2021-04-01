@@ -93,24 +93,15 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
-  // Initialize Clock
-  {
-    rosbag2_cpp::PlayerClock::ROSTimePoint time_first_message;
-    float rate = 1.0;
-
-    if (options.rate > 0.0) {
-      rate = options.rate;
-    }
-    if (reader_->has_next()) {
-      auto message = reader_->read_next();
-      time_first_message = message->time_stamp;
-      // Could not peek, so need to enqueue this popped first message to be played.
-      message_queue_.enqueue(message);
-    } else {
-      // There are no messages in the storage at all
-      return;
-    }
-    clock_ = std::make_unique<rosbag2_cpp::PlayerClock>(time_first_message, rate);
+  if (reader_->has_next()) {
+    // Reader does not have "peek", so we must "pop" the first message to see its timestamp
+    auto message = reader_->read_next();
+    prepare_clock(options, message->time_stamp);
+    // Make sure that first message gets played by putting it into the play queue
+    message_queue_.enqueue(message);
+  } else {
+    // The bag contains no messages - there is nothing to play
+    return;
   }
 
   topic_qos_profile_overrides_ = options.topic_qos_profile_overrides;
@@ -218,6 +209,15 @@ void Player::prepare_publishers(const PlayOptions & options)
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }
+}
+
+void Player::prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time)
+{
+  float rate = 1.0;
+  if (options.rate > 0.0) {
+    rate = options.rate;
+  }
+  clock_ = std::make_unique<rosbag2_cpp::PlayerClock>(starting_time, rate);
 }
 
 }  // namespace rosbag2_transport
