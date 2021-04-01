@@ -50,6 +50,7 @@ public:
     publisher_node_ = std::make_shared<rclcpp::Node>(
       "publisher_node",
       rclcpp::NodeOptions().start_parameter_event_publisher(false));
+    executor_.add_node(node_);
   }
 
   static void SetUpTestCase()
@@ -84,7 +85,7 @@ public:
       });
 
     while (counter < expected_messages_number) {
-      rclcpp::spin_some(node_);
+      executor_.spin_some();
     }
     return messages;
   }
@@ -111,13 +112,14 @@ public:
       if ((clock::now() - start) > timeout) {
         return false;
       }
-      rclcpp::spin_some(node_);
+      executor_.spin_some();
     }
     return true;
   }
 
   MemoryManagement memory_management_;
   std::shared_ptr<rosbag2_transport::Rosbag2Node> node_;
+  rclcpp::executors::SingleThreadedExecutor executor_;
   rclcpp::Node::SharedPtr publisher_node_;
   std::vector<std::shared_ptr<rclcpp::PublisherBase>> publishers_;
 };
