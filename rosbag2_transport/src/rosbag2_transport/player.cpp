@@ -171,7 +171,7 @@ void Player::play_messages_until_queue_empty()
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
-    while (!clock_->sleep_until(message->time_stamp)) {}
+    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
     if (rclcpp::ok()) {
       auto publisher_iter = publishers_.find(message->topic_name);
       if (publisher_iter != publishers_.end()) {
