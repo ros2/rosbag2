@@ -40,11 +40,11 @@ namespace
 
 rclcpp::QoS qos_from_handle(const py::handle source)
 {
-  auto py_capsule = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
-  const auto rmw_qos_profile = reinterpret_cast<rmw_qos_profile_t *>(
-    PyCapsule_GetPointer(py_capsule, "rmw_qos_profile_t"));
-  const auto qos_init = rclcpp::QoSInitialization::from_rmw(*rmw_qos_profile);
-  return rclcpp::QoS{qos_init, *rmw_qos_profile};
+  PyObject * obj = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
+  auto o = py::cast<py::object>(obj);
+  auto rmw_qos_profile = o.cast<rmw_qos_profile_t>();
+  const auto qos_init = rclcpp::QoSInitialization::from_rmw(rmw_qos_profile);
+  return rclcpp::QoS{qos_init, rmw_qos_profile};
 }
 
 QoSMap qos_map_from_py_dict(const py::dict & dict)
