@@ -40,9 +40,9 @@ namespace
 
 rclcpp::QoS qos_from_handle(const py::handle source)
 {
-  PyObject * obj = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
-  auto o = py::cast<py::object>(obj);
-  auto rmw_qos_profile = o.cast<rmw_qos_profile_t>();
+  PyObject * raw_obj = PyObject_CallMethod(source.ptr(), "get_c_qos_profile", "");
+  const auto py_obj = py::cast<py::object>(raw_obj);
+  const auto rmw_qos_profile = py_obj.cast<rmw_qos_profile_t>();
   const auto qos_init = rclcpp::QoSInitialization::from_rmw(rmw_qos_profile);
   return rclcpp::QoS{qos_init, rmw_qos_profile};
 }
