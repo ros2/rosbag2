@@ -125,6 +125,15 @@ reorder_pybind_include_directories(_info
 )
 clean_windows_flags(_info)
 
+pybind11_add_module(_reindexer SHARED
+  src/rosbag2_py/_reindexer.cpp
+)
+ament_target_dependencies(_reindexer PUBLIC
+  "rosbag2_cpp"
+  "rosbag2_storage"
+)
+clean_windows_flags(_reindexer)
+
 # Install cython modules as sub-modules of the project
 install(
   TARGETS
@@ -132,6 +141,7 @@ install(
     _storage
     _writer
     _info
+    _reindexer
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
@@ -158,6 +168,11 @@ if(BUILD_TESTING)
   )
   ament_add_pytest_test(test_sequential_writer_py
     "test/test_sequential_writer.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
+  )
+  ament_add_pytest_test(test_reindexer_py
+    "test/test_reindexer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
     APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
