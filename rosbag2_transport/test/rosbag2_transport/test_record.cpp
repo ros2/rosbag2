@@ -151,9 +151,14 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   // Publish messages before starting recording
   test_msgs::msg::Strings msg;
   msg.string_value = "Hello";
-  for (size_t i = 0; i < num_latched_messages; i++) {
-    publisher_transient_local->publish(msg);
-    rclcpp::spin_some(publisher_node);
+  {
+    // Scope the executor so that the node is removed from it before `spin_and_wait_for`
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(publisher_node);
+    for (size_t i = 0; i < num_latched_messages; i++) {
+      publisher_transient_local->publish(msg);
+      exec.spin_some();
+    }
   }
   start_recording({false, false, {topic}, "rmw_format", 100ms});
   auto & writer = static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
