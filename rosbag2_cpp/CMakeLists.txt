@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_cpp)
 
+add_definitions(-D_SRC_REINDEX_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/rosbag2_cpp/reindex_test_bags")
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -36,6 +38,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
@@ -60,11 +63,14 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
-  src/rosbag2_cpp/writers/sequential_writer.cpp)
+  src/rosbag2_cpp/writers/sequential_writer.cpp
+  src/rosbag2_cpp/reindexer.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}
+  PUBLIC
   ament_index_cpp
   pluginlib
+  rclcpp
   rcpputils
   rcutils
   rmw
@@ -103,7 +109,9 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(pluginlib
+ament_export_dependencies(
+  pluginlib
+  rclcpp
   rmw
   rmw_implementation
   rosbag2_storage
@@ -174,6 +182,7 @@ if(BUILD_TESTING)
   if(TARGET test_message_cache)
     target_link_libraries(test_message_cache ${PROJECT_NAME})
   endif()
+
 
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message

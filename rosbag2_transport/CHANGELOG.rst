@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* Add support for rmw_connextdds (`#671 <https://github.com/ros2/rosbag2/issues/671>`_)
+* Use rosbag2_py for ros2 bag info (`#673 <https://github.com/ros2/rosbag2/issues/673>`_)
+* Contributors: Andrea Sorbini, Karsten Knese
 
 0.6.0 (2021-02-01)
 ------------------

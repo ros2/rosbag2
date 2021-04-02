@@ -2,6 +2,12 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2021-03-18)
+------------------
+* Always preserve source permissions in vendor packages (`#645 <https://github.com/ros2/rosbag2/issues/645>`_)
+* Zstd should not install internal headers - some of them try include others that aren't installed. We don't use them. Avoid the situation (`#631 <https://github.com/ros2/rosbag2/issues/631>`_)
+* Contributors: Emerson Knapp, Scott K Logan
+
 0.6.0 (2021-02-01)
 ------------------
 * Patch zstd 1.4.4 to include cmake_minimum_version bump to 2.8.12 (`#579 <https://github.com/ros2/rosbag2/issues/579>`_)

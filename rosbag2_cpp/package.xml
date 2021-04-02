@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_cpp</name>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <description>C++ ROSBag2 client library</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
+  <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
@@ -12,6 +13,7 @@
 
   <depend>ament_index_cpp</depend>
   <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
   <depend>rcutils</depend>
   <depend>rcpputils</depend>
   <depend>rmw</depend>

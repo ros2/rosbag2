@@ -21,6 +21,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(rosbag2_transport REQUIRED)
 
 # Find python before pybind11
 find_package(python_cmake_module REQUIRED)
@@ -106,6 +107,17 @@ ament_target_dependencies(_info PUBLIC
 )
 clean_windows_flags(_info)
 
+pybind11_add_module(_transport SHARED
+  src/rosbag2_py/_transport.cpp
+)
+ament_target_dependencies(_transport PUBLIC
+  "rosbag2_compression"
+  "rosbag2_cpp"
+  "rosbag2_storage"
+  "rosbag2_transport"
+)
+clean_windows_flags(_transport)
+
 # Install cython modules as sub-modules of the project
 install(
   TARGETS
@@ -113,6 +125,7 @@ install(
     _storage
     _writer
     _info
+    _transport
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
 
@@ -139,6 +152,11 @@ if(BUILD_TESTING)
   )
   ament_add_pytest_test(test_sequential_writer_py
     "test/test_sequential_writer.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
+  )
+  ament_add_pytest_test(test_transport_py
+    "test/test_transport.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
     APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )

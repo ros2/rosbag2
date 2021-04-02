@@ -21,12 +21,17 @@
 #include <string>
 #include <utility>
 
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/time.hpp"
+
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+
+#include "rmw/rmw.h"
 
 namespace rosbag2_cpp
 {
@@ -95,6 +100,26 @@ void Writer::write(
   tm.serialization_format = serialization_format;
   create_topic(tm);
   write(message);
+}
+
+void Writer::write(
+  const rclcpp::SerializedMessage & message,
+  const std::string & topic_name,
+  const std::string & type_name,
+  const rclcpp::Time & time)
+{
+  auto serialized_bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  serialized_bag_message->topic_name = topic_name;
+  serialized_bag_message->time_stamp = time.nanoseconds();
+
+  // temporary store the payload in a shared_ptr.
+  // add custom no-op deleter to avoid deep copying data.
+  serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+    const_cast<rcutils_uint8_array_t *>(&message.get_rcl_serialized_message()),
+    [](rcutils_uint8_array_t * /* data */) {});
+
+  return write(
+    serialized_bag_message, topic_name, type_name, rmw_get_serialization_format());
 }
 
 }  // namespace rosbag2_cpp

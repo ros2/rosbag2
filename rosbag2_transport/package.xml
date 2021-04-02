@@ -2,22 +2,21 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>rosbag2_transport</name>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <description>Layer encapsulating ROS middleware to allow rosbag2 to be used with or without middleware</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
+  <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
-  <depend>python_cmake_module</depend>
   <depend>rclcpp</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_storage</depend>
   <depend>rmw</depend>
-  <depend>rpyutils</depend>
   <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
 
