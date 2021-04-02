@@ -63,7 +63,7 @@ private:
   static const std::chrono::milliseconds queue_read_wait_period_;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
-  moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessagePtr> message_queue_;
+  moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;

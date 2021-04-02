@@ -34,23 +34,20 @@ namespace rosbag2_cpp
 class PlayerClock
 {
 public:
-  // Type representing the current time as according to the playback
-  typedef rcutils_time_point_value_t ROSTimePoint;
   /**
    * Type representing an arbitrary steady time, used to measure real-time durations
    * This type is never exposed by the PlayerClock - it is only used as input to the PlayerClock.
    */
-  typedef std::chrono::time_point<std::chrono::steady_clock> SteadyTimePoint;
-  typedef std::function<SteadyTimePoint()> NowFunction;
+  typedef std::function<std::chrono::steady_clock::time_point()> NowFunction;
 
   ROSBAG2_CPP_PUBLIC
   virtual ~PlayerClock() = default;
 
   /**
-   * Calculate and return current ROSTimePoint based on starting time, playback rate, pause state.
+   * Calculate and return current rcutils_time_point_value_t based on starting time, playback rate, pause state.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual ROSTimePoint now() const = 0;
+  virtual rcutils_time_point_value_t now() const = 0;
 
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
@@ -60,7 +57,7 @@ public:
    * The user should not take action based on this sleep until it returns true.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual bool sleep_until(ROSTimePoint until) = 0;
+  virtual bool sleep_until(rcutils_time_point_value_t until) = 0;
 
   /**
    * Return the current playback rate.

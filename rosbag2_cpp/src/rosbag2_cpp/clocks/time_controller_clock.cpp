@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -33,8 +34,8 @@ public:
    */
   struct TimeReference
   {
-    PlayerClock::ROSTimePoint ros;
-    PlayerClock::SteadyTimePoint steady;
+    rcutils_time_point_value_t ros;
+    std::chrono::steady_clock::time_point steady;
   };
 
   TimeControllerClockImpl() = default;
@@ -46,27 +47,28 @@ public:
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
   }
 
-  PlayerClock::ROSTimePoint steady_to_ros(PlayerClock::SteadyTimePoint steady_time)
+  rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time)
   {
     return reference.ros + static_cast<rcutils_duration_value_t>(
       rate * duration_nanos(steady_time - reference.steady));
   }
 
-  PlayerClock::SteadyTimePoint ros_to_steady(PlayerClock::ROSTimePoint ros_time)
+  std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time)
   {
-    const rcutils_duration_value_t diff_nanos = static_cast<rcutils_duration_value_t>(
+    const auto diff_nanos = static_cast<rcutils_duration_value_t>(
       (ros_time - reference.ros) / rate);
     return reference.steady + std::chrono::nanoseconds(diff_nanos);
   }
 
-  double rate = 1.0;
-  PlayerClock::NowFunction now_fn;
   std::mutex mutex;
+  std::condition_variable cv;
+  PlayerClock::NowFunction now_fn RCPPUTILS_TSA_GUARDED_BY(mutex);
+  double rate RCPPUTILS_TSA_GUARDED_BY(mutex) = 1.0;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(mutex);
 };
 
 TimeControllerClock::TimeControllerClock(
-  ROSTimePoint starting_time,
+  rcutils_time_point_value_t starting_time,
   double rate,
   NowFunction now_fn)
 : impl_(std::make_unique<TimeControllerClockImpl>())
@@ -81,22 +83,19 @@ TimeControllerClock::TimeControllerClock(
 TimeControllerClock::~TimeControllerClock()
 {}
 
-PlayerClock::ROSTimePoint TimeControllerClock::now() const
+rcutils_time_point_value_t TimeControllerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->mutex);
   return impl_->steady_to_ros(impl_->now_fn());
 }
 
-bool TimeControllerClock::sleep_until(ROSTimePoint until)
+bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
-  SteadyTimePoint steady_until;
   {
-    std::lock_guard<std::mutex> lock(impl_->mutex);
-    steady_until = impl_->ros_to_steady(until);
+    std::unique_lock<std::mutex> lock(impl_->mutex);
+    const auto steady_until = impl_->ros_to_steady(until);
+    impl_->cv.wait_until(lock, steady_until);
   }
-  // TODO(emersonknapp) - when we have methods that can change timeflow during a sleep,
-  // it will probably be better to use a condition_variable::wait_until
-  std::this_thread::sleep_until(steady_until);
   return now() >= until;
 }
 

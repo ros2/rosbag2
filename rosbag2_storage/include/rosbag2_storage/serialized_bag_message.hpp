@@ -31,7 +31,7 @@ struct SerializedBagMessage
   std::string topic_name;
 };
 
-typedef std::shared_ptr<SerializedBagMessage> SerializedBagMessagePtr;
+typedef std::shared_ptr<SerializedBagMessage> SerializedBagMessageSharedPtr;
 
 }  // namespace rosbag2_storage
 

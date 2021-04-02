@@ -144,7 +144,7 @@ void Player::load_storage_content(const PlayOptions & options)
 
 void Player::enqueue_up_to_boundary(uint64_t boundary)
 {
-  rosbag2_storage::SerializedBagMessagePtr message;
+  rosbag2_storage::SerializedBagMessageSharedPtr message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
     if (!reader_->has_next()) {
       break;
@@ -168,7 +168,7 @@ void Player::play_messages_from_queue()
 
 void Player::play_messages_until_queue_empty()
 {
-  rosbag2_storage::SerializedBagMessagePtr message;
+  rosbag2_storage::SerializedBagMessageSharedPtr message;
   while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
@@ -216,10 +216,7 @@ void Player::prepare_publishers(const PlayOptions & options)
 
 void Player::prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time)
 {
-  float rate = 1.0;
-  if (options.rate > 0.0) {
-    rate = options.rate;
-  }
+  float rate = options.rate > 0.0 ? options.rate : 1.0;
   clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
 }
 

@@ -44,7 +44,7 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   TimeControllerClock(
-    ROSTimePoint starting_time,
+    rcutils_time_point_value_t starting_time,
     double rate = 1.0,
     NowFunction now_fn = std::chrono::steady_clock::now);
 
@@ -52,10 +52,10 @@ public:
   virtual ~TimeControllerClock();
 
   /**
-   * Calculate and return current ROSTimePoint based on starting time, playback rate, pause state.
+   * Calculate and return current rcutils_time_point_value_t based on starting time, playback rate, pause state.
    */
   ROSBAG2_CPP_PUBLIC
-  ROSTimePoint now() const override;
+  rcutils_time_point_value_t now() const override;
 
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
@@ -65,7 +65,7 @@ public:
    * The user should not take action based on this sleep until it returns true.
    */
   ROSBAG2_CPP_PUBLIC
-  bool sleep_until(ROSTimePoint until) override;
+  bool sleep_until(rcutils_time_point_value_t until) override;
 
   /**
    * Return the current playback rate.

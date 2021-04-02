@@ -227,7 +227,6 @@ if(BUILD_TESTING)
   ament_add_gmock(test_time_controller_clock
     test/rosbag2_cpp/test_time_controller_clock.cpp)
   if(TARGET test_time_controller_clock)
-    # ament_target_dependencies(test_player_clock rosbag2_cpp)
     target_link_libraries(test_time_controller_clock ${PROJECT_NAME})
   endif()
 endif()

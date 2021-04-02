@@ -17,10 +17,8 @@
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
-using SteadyTimePoint = rosbag2_cpp::PlayerClock::SteadyTimePoint;
-using ROSTimePoint = rosbag2_cpp::PlayerClock::ROSTimePoint;
+using SteadyTimePoint = std::chrono::steady_clock::time_point;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
-
 
 class TimeControllerClockTest : public Test
 {
@@ -32,14 +30,14 @@ public:
       };
   }
 
-  ROSTimePoint as_nanos(const SteadyTimePoint & time)
+  rcutils_time_point_value_t as_nanos(const SteadyTimePoint & time)
   {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
   }
 
   NowFunction now_fn;
   SteadyTimePoint return_time;  // defaults to 0
-  ROSTimePoint ros_start_time = 0;
+  rcutils_time_point_value_t ros_start_time = 0;
 };
 
 TEST_F(TimeControllerClockTest, steadytime_precision)
