@@ -20,6 +20,11 @@ For playback we want to support the following "time-control" features:
   * This is already implemented as of this writing, but this design proposes a change in the implementation
 * Jump back or forward to an arbitrary point in time
   * This is called "jump" in the time interface, but will likely be exposed in the player interface as "seek"
+* Play next message in pause mode
+  * This is new functionality allowing to playback next message immediately without delay when 
+    in pause. This is might be useful for debug purposes to iterate step by step in pause by 
+    pressing appropriate keyboard key. Also could be used for deterministic data driven replay by 
+    third-party applications.    
 
 These are the time situations to handle:
 1. Steady Time - Rosbag2 keeps time internally with reference to a monotonic system clock, and neither publishes or subscribes to `/clock`
@@ -117,6 +122,14 @@ class PlayerClock
     rclcpp::JumpHandler::pre_callback_t pre_callback,
     rclcpp::JumpHandler::post_callback_t post_callback,
     const rcl_jump_threshold_t & threshold);
+    
+  /*
+    Forcing to play next message immediately when in pause.
+    Proposed implementation via calling jump to the timestamp corresponding to the next message in 
+    queue.       
+  */  
+  void play_next();
+    
 };  // end of PlayerClock API
 
 // Construct a clock that subscribes to /clock and cannot control time.
@@ -248,6 +261,7 @@ This is a proposed order of operations.
 * Implement `/clock` publisher
 * Implement pause/resume to the `PlayerClock`
 * Implement time jump to the `PlayerClock` (and handlers to the `Player`)
+* Implement play_next to the `PlayerClock`
 * Expose rate, pause/resume, and time jump as Services to enable CLI/keyboard/GUI controls
 * Implement `use_sim_time` (`/clock` subscription) - without extrapolation
 * Implement sim time extrapolation
