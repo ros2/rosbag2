@@ -29,6 +29,7 @@
 
 #include "rcutils/time.h"
 
+#include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 

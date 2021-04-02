@@ -26,7 +26,7 @@
 
 #include "rclcpp/qos.hpp"
 
-#include "rosbag2_cpp/player_clock.hpp"
+#include "rosbag2_cpp/clocks/player_clock.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_transport/play_options.hpp"
 

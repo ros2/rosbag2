@@ -14,7 +14,7 @@
 
 #include <gmock/gmock.h>
 
-#include "rosbag2_cpp/player_clock.hpp"
+#include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
 using SteadyTimePoint = rosbag2_cpp::PlayerClock::SteadyTimePoint;
