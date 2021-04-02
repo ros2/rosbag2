@@ -48,12 +48,14 @@ public:
 
   PlayerClock::ROSTimePoint steady_to_ros(PlayerClock::SteadyTimePoint steady_time)
   {
-    return reference.ros + (rate * duration_nanos(steady_time - reference.steady));
+    return reference.ros + static_cast<rcutils_duration_value_t>(
+      rate * duration_nanos(steady_time - reference.steady));
   }
 
   PlayerClock::SteadyTimePoint ros_to_steady(PlayerClock::ROSTimePoint ros_time)
   {
-    const rcutils_duration_value_t diff_nanos = (ros_time - reference.ros) / rate;
+    const rcutils_duration_value_t diff_nanos = static_cast<rcutils_duration_value_t>(
+      (ros_time - reference.ros) / rate);
     return reference.steady + std::chrono::nanoseconds(diff_nanos);
   }
 
