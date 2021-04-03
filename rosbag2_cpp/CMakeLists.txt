@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/cache_consumer.cpp
   src/rosbag2_cpp/cache/message_cache_buffer.cpp
   src/rosbag2_cpp/cache/message_cache.cpp
+  src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
@@ -221,6 +222,12 @@ if(BUILD_TESTING)
   if(TARGET test_multifile_reader)
     ament_target_dependencies(test_multifile_reader rosbag2_storage)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_time_controller_clock
+    test/rosbag2_cpp/test_time_controller_clock.cpp)
+  if(TARGET test_time_controller_clock)
+    target_link_libraries(test_time_controller_clock ${PROJECT_NAME})
   endif()
 endif()
 

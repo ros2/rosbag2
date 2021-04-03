@@ -26,11 +26,9 @@
 
 #include "rclcpp/qos.hpp"
 
+#include "rosbag2_cpp/clocks/player_clock.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_transport/play_options.hpp"
-
-#include "replayable_message.hpp"
-
-using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
 namespace rosbag2_cpp
 {
@@ -55,21 +53,22 @@ public:
 private:
   void load_storage_content(const PlayOptions & options);
   bool is_storage_completely_loaded() const;
-  void enqueue_up_to_boundary(const TimePoint & time_first_message, uint64_t boundary);
+  void enqueue_up_to_boundary(uint64_t boundary);
   void wait_for_filled_queue(const PlayOptions & options) const;
-  void play_messages_from_queue(const PlayOptions & options);
-  void play_messages_until_queue_empty(const PlayOptions & options);
+  void play_messages_from_queue();
+  void play_messages_until_queue_empty();
   void prepare_publishers(const PlayOptions & options);
+  void prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
-  moodycamel::ReaderWriterQueue<ReplayableMessage> message_queue_;
-  std::chrono::time_point<std::chrono::system_clock> start_time_;
+  moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::shared_ptr<Rosbag2Node> rosbag2_transport_;
   std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
+  std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
 };
 
 }  // namespace rosbag2_transport
