@@ -58,6 +58,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
+  src/rosbag2_cpp/reshapers/stitcher.cpp
   src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
   src/rosbag2_cpp/types/introspection_message.cpp

@@ -72,6 +72,26 @@ public:
   void open(const std::vector<std::string> & storage_uris, const std::string & output_uri);
 
   /**
+   * Opens the list of URIs and prepares it for stitching.
+   * Each URI in this vector must be a bagfile that exists.
+   * This must be called before any other function is used.
+   * 
+   * \note This will step through the directory with the default storage options
+   * * using sqlite3 storage backend
+   * * using no converter options, storing messages with the incoming serialization format
+   * \sa rmw_get_serialization_format.
+   * For specifications, please see \sa open, which let's you specify
+   * more storage and converter options.
+   * 
+   * \param storage_uris A vector of URI of the storage to open.
+   * \param output_uri The uri of the storage to write to.
+   * \param writer_storage_options custom storage options. The storage for the writer must match the reader.
+   **/
+  void open(const std::vector<std::string> & storage_uris,
+    const rosbag2_storage::StorageOptions & writer_storage_options,
+    const ConverterOptions & converter_options);
+
+  /**
    * Ask whether the stitcher has at least one more URI to stitch.
    * 
    * \return true if there remains at least one more unstitched bag
@@ -89,7 +109,7 @@ public:
   void stitch_next();
 
   /**
-   * Set filters to adhere to during stitching.
+   * Set filters to adhere to during stitching. This only works for the CURRENT reader.
    *
    * \param storage_filter Filter to apply to stitching
    * \throws runtime_error if the Stitcher is not open.
@@ -97,7 +117,7 @@ public:
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter);
 
   /**
-   * Reset all filters for stitching.
+   * Reset all filters for stitching. This only works for the CURRENT reader.
    */
   void reset_filter();
 
@@ -114,6 +134,12 @@ public:
 private:
   std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl_;
   std::unique_ptr<writer_interfaces::BaseWriterInterface> writer_impl_;
+
+  std::string storage_id_;
+  ConverterOptions converter_options_;
+
+  std::vector<std::string> storage_uris_;
+  std::vector<std::string>::iterator current_iter_;
 };
 
 }  // namespace rosbag2_cpp
