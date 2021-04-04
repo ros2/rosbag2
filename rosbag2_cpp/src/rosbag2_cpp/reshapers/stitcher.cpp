@@ -78,10 +78,22 @@ bool Stitcher::has_next()
 void Stitcher::stitch_next()
 {
   // read bag from current iterator
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = *current_iter_;
+  storage_options.storage_id = storage_id_;
+  reader_impl_->open(storage_options, converter_options_);
 
-  // write contents of bag to output uri
+  // write contents of bag to output writer
+  while (reader_impl_->has_next()) {
+    auto bag_message = reader_impl_->read_next();
+    writer_impl_->write(bag_message);
+  }
 
   // advance iterator
+  current_iter_++;
+
+  // clear reader impl to get ready for next iteration
+  reader_impl_->reset();
 }
 
 void Stitcher::set_filter(const rosbag2_storage::StorageFilter & storage_filter)
