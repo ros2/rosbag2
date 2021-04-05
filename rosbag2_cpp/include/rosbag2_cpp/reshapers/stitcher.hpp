@@ -45,6 +45,7 @@ class BaseWriterInterface;
 
 class ROSBAG2_CPP_PUBLIC Stitcher final
 {
+static constexpr char const * kDefaultStorageID = "sqlite3";
 public:
   explicit Stitcher(
     std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl =
@@ -140,6 +141,8 @@ private:
 
   std::vector<std::string> storage_uris_;
   std::vector<std::string>::iterator current_iter_;
+
+  bool has_been_opened_ = false;
 };
 
 }  // namespace rosbag2_cpp

@@ -225,6 +225,13 @@ if(BUILD_TESTING)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
   endif()
 
+  ament_add_gmock(test_reshaper_stitcher
+    test/rosbag2_cpp/test_reshaper_stitcher.cpp)
+  if(TARGET test_reshaper_stitcher)
+    ament_target_dependencies(test_reshaper_stitcher rosbag2_storage)
+    target_link_libraries(test_reshaper_stitcher ${PROJECT_NAME})
+  endif()
+
   ament_add_gmock(test_time_controller_clock
     test/rosbag2_cpp/test_time_controller_clock.cpp)
   if(TARGET test_time_controller_clock)

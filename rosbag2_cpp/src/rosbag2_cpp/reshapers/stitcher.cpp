@@ -27,8 +27,6 @@
 namespace rosbag2_cpp
 {
 
-static constexpr char const * kDefaultStorageID = "sqlite3";
-
 Stitcher::Stitcher(
 std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl,
 std::unique_ptr<writer_interfaces::BaseWriterInterface> writer_impl)
@@ -68,15 +66,23 @@ void Stitcher::open(
   // store uris to read for later use
   storage_uris_ = std::move(storage_uris);
   current_iter_ = storage_uris_.begin();
+
+  has_been_opened_ = true;
 }
 
 bool Stitcher::has_next()
 {
+  if (!has_been_opened_) {
+    throw std::runtime_error("stitcher has not been opened yet");
+  }
   return std::distance(storage_uris_.end(), current_iter_) != 0;
 }
 
 void Stitcher::stitch_next()
 {
+  if (!has_been_opened_) {
+    throw std::runtime_error("stitcher has not been opened yet");
+  }
   // read bag from current iterator
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = *current_iter_;
