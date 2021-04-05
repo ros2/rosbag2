@@ -23,11 +23,10 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/reshapers/stitcher.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 
-#include "mock_converter_factory.hpp"
-#include "mock_metadata_io.hpp"
+#include "mock_converter.hpp"
 #include "mock_storage.hpp"
-#include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
 
@@ -36,28 +35,37 @@ class StitcherTest : public Test
 public:
   StitcherTest()
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
-    converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
-    output_uri_(rcpputils::fs::temp_directory_path().string()),
+    output_uri_(rcpputils::fs::temp_directory_path().string() + "/stitched"),
     relative_path_1_("some_relative_path_1"),
     relative_path_2_("some_relative_path_2"),
     relative_path_3_("some_relative_path_3"),
     absolute_path_1_((rcpputils::fs::path(output_uri_) / "some/folder").string()),
-    default_storage_options_({output_uri_, ""})
+    writer_storage_options_({output_uri_, "sqlite3"})
   {}
 
   virtual void init()
   {
-    auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
-    auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
-
     stitcher_ = std::make_unique<rosbag2_cpp::Stitcher>();
+    writer_storage_options_.uri = output_uri_;
+    output_filenames_ = {relative_path_1_, relative_path_2_, relative_path_3_};
+    converter_options_.input_serialization_format = storage_serialization_format_;
+    converter_options_.output_serialization_format = storage_serialization_format_;
+  }
+
+  virtual void open()
+  {
+    stitcher_->open(
+      output_filenames_,
+      writer_storage_options_,
+      converter_options_
+    );
   }
 
   virtual ~StitcherTest() = default;
 
   std::shared_ptr<NiceMock<MockStorage>> storage_;
-  std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
+  rosbag2_cpp::ConverterOptions converter_options_;
   std::unique_ptr<rosbag2_cpp::Stitcher> stitcher_;
   std::string storage_serialization_format_;
   std::string output_uri_;
@@ -65,8 +73,23 @@ public:
   std::string relative_path_2_;
   std::string relative_path_3_;
   std::string absolute_path_1_;
-  rosbag2_storage::StorageOptions default_storage_options_;
+  std::vector<std::string> output_filenames_;
+  rosbag2_storage::StorageOptions writer_storage_options_;
 };
+
+TEST_F(StitcherTest, has_next_stitches_next_file)
+{
+  init();
+  open();
+
+// TODO(vinny) finish up this test, figure out how to mock this
+//   stitcher_->has_next();
+//   stitcher_->stitch_next();
+//   stitcher_->has_next();
+//   stitcher_->stitch_next();
+//   stitcher_->has_next();
+//   stitcher_->stitch_next();
+}
 
 TEST_F(StitcherTest, has_next_throws_if_no_storage)
 {
