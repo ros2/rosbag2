@@ -45,28 +45,29 @@ class BaseWriterInterface;
 
 class ROSBAG2_CPP_PUBLIC Stitcher final
 {
-static constexpr char const * kDefaultStorageID = "sqlite3";
+  static constexpr char const * kDefaultStorageID = "sqlite3";
+
 public:
   explicit Stitcher(
     std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl =
     std::make_unique<readers::SequentialReader>(),
     std::unique_ptr<writer_interfaces::BaseWriterInterface> writer_impl =
     std::make_unique<writers::SequentialWriter>());
-  
+
   ~Stitcher();
 
   /**
    * Opens the list of URIs and prepares it for stitching.
    * Each URI in this vector must be a bagfile that exists.
    * This must be called before any other function is used.
-   * 
+   *
    * \note This will step through the directory with the default storage options
    * * using sqlite3 storage backend
    * * using no converter options, storing messages with the incoming serialization format
    * \sa rmw_get_serialization_format.
    * For specifications, please see \sa open, which let's you specify
    * more storage and converter options.
-   * 
+   *
    * \param storage_uris A vector of URI of the storage to open.
    * \param output_uri The uri of the storage to write to.
    **/
@@ -76,25 +77,26 @@ public:
    * Opens the list of URIs and prepares it for stitching.
    * Each URI in this vector must be a bagfile that exists.
    * This must be called before any other function is used.
-   * 
+   *
    * \note This will step through the directory with the default storage options
    * * using sqlite3 storage backend
    * * using no converter options, storing messages with the incoming serialization format
    * \sa rmw_get_serialization_format.
    * For specifications, please see \sa open, which let's you specify
    * more storage and converter options.
-   * 
+   *
    * \param storage_uris A vector of URI of the storage to open.
    * \param output_uri The uri of the storage to write to.
    * \param writer_storage_options custom storage options. The storage for the writer must match the reader.
    **/
-  void open(const std::vector<std::string> & storage_uris,
+  void open(
+    const std::vector<std::string> & storage_uris,
     const rosbag2_storage::StorageOptions & writer_storage_options,
     const ConverterOptions & converter_options);
 
   /**
    * Ask whether the stitcher has at least one more URI to stitch.
-   * 
+   *
    * \return true if there remains at least one more unstitched bag
    * \throws runtime_error if Stitcher is not open.
    */
@@ -103,7 +105,7 @@ public:
   /**
    * Process next message from list of storage. Will throw if no more storage URI
    * to stitch.
-   * 
+   *
    * Expected usage:
    * if (stitcher.has_next()) {stitcher.stitch_next();}
    */

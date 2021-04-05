@@ -44,7 +44,7 @@ public:
     relative_path_3_("some_relative_path_3"),
     absolute_path_1_((rcpputils::fs::path(output_uri_) / "some/folder").string()),
     default_storage_options_({output_uri_, ""})
-    {}
+  {}
 
   virtual void init()
   {
@@ -55,7 +55,7 @@ public:
   }
 
   virtual ~StitcherTest() = default;
-  
+
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<rosbag2_cpp::Stitcher> stitcher_;

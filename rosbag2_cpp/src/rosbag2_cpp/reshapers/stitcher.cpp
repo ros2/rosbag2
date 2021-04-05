@@ -28,8 +28,8 @@ namespace rosbag2_cpp
 {
 
 Stitcher::Stitcher(
-std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl,
-std::unique_ptr<writer_interfaces::BaseWriterInterface> writer_impl)
+  std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl,
+  std::unique_ptr<writer_interfaces::BaseWriterInterface> writer_impl)
 : reader_impl_(std::move(reader_impl)), writer_impl_(std::move(writer_impl))
 {}
 
@@ -47,7 +47,7 @@ void Stitcher::open(
   writer_storage_options.uri = output_uri;
   writer_storage_options.storage_id = kDefaultStorageID;
   rosbag2_cpp::ConverterOptions converter_options{};
-  
+
   return open(storage_uris, writer_storage_options, converter_options);
 }
 
