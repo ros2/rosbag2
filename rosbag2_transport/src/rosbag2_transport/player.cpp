@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "player.hpp"
+#include "rosbag2_transport/player.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -78,22 +78,53 @@ const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
-  std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<rclcpp::Node> transport_node)
-: reader_(std::move(reader)), transport_node_(transport_node)
+  std::shared_ptr<rosbag2_cpp::Reader> reader,
+  const rosbag2_storage::StorageOptions & storage_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
+: Player(reader, storage_options, std::make_shared<rclcpp::Node>(node_name, node_options), false)
 {}
 
-bool Player::is_storage_completely_loaded() const
+Player::Player(
+  std::shared_ptr<rosbag2_cpp::Reader> reader,
+  const rosbag2_storage::StorageOptions & storage_options,
+  std::shared_ptr<rclcpp::Node> transport_node)
+: Player(reader, storage_options, transport_node, false)
+{}
+
+Player::Player(
+  std::shared_ptr<rosbag2_cpp::Reader> reader,
+  const rosbag2_storage::StorageOptions & storage_options,
+  std::shared_ptr<rclcpp::Node> transport_node,
+  bool is_standalone)
+: is_standalone_(is_standalone),
+  reader_(std::move(reader)),
+  storage_options_(storage_options),
+  transport_node_(transport_node)
 {
-  if (storage_loading_future_.valid() &&
-    storage_loading_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-  {
-    storage_loading_future_.get();
+  if (is_standalone_) {
+    rclcpp::init(0, nullptr);
   }
-  return !storage_loading_future_.valid();
+}
+
+Player::~Player()
+{
+  if (is_standalone_) {
+    rclcpp::shutdown();
+  }
 }
 
 void Player::play(const PlayOptions & options)
 {
+  do {
+    play_once(options);
+  } while (rclcpp::ok() && options.loop);
+}
+
+void Player::play_once(const PlayOptions & options)
+{
+  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+  reader_->open(
   if (reader_->has_next()) {
     // Reader does not have "peek", so we must "pop" the first message to see its timestamp
     auto message = reader_->read_next();
@@ -115,6 +146,16 @@ void Player::play(const PlayOptions & options)
   wait_for_filled_queue(options);
 
   play_messages_from_queue();
+}
+
+bool Player::is_storage_completely_loaded() const
+{
+  if (storage_loading_future_.valid() &&
+    storage_loading_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+  {
+    storage_loading_future_.get();
+  }
+  return !storage_loading_future_.valid();
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const

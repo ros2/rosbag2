@@ -47,9 +47,27 @@ class Player
 public:
   Player(
     std::shared_ptr<rosbag2_cpp::Reader> reader,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const std::string & node_name = "rosbag2_transport",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  Player(
+    std::shared_ptr<rosbag2_cpp::Reader> reader,
+    const rosbag2_storage::StorageOptions & storage_options,
     std::shared_ptr<rclcpp::Node> transport_node);
 
+  virtual ~Player();
+
   void play(const PlayOptions & options);
+
+  void play_once(const PlayOptions & options);
+
+protected:
+  Player(
+    std::shared_ptr<rosbag2_cpp::Reader> reader,
+    const rosbag2_storage::StorageOptions & storage_options,
+    std::shared_ptr<rclcpp::Node> transport_node,
+    bool is_standalone);
 
 private:
   void load_storage_content(const PlayOptions & options);
@@ -63,10 +81,12 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
+  bool is_standalone_;
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
+  rosbag2_storage::StorageOptions storage_options_;
+  std::shared_ptr<rclcpp::Node> transport_node_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
-  std::shared_ptr<rclcpp::Node> transport_node_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;

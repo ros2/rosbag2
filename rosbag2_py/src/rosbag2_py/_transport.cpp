@@ -96,8 +96,8 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    auto writer = std::make_shared<rosbag2_cpp::Writer>(
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+//    auto writer = std::make_shared<rosbag2_cpp::Writer>(
+//      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
     std::shared_ptr<rosbag2_cpp::Reader> reader = nullptr;
     // Determine whether to build compression or regular reader
     {
