@@ -96,9 +96,10 @@ void Player::play(const PlayOptions & options)
 {
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(transport_node_);
-  auto spin_thread = std::thread([&exec]() {
-    exec.spin();
-  });
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
 
   if (reader_->has_next()) {
     // Reader does not have "peek", so we must "pop" the first message to see its timestamp

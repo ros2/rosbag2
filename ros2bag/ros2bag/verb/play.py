@@ -27,6 +27,7 @@ from rosbag2_py import PlayOptions
 from rosbag2_py import StorageOptions
 import yaml
 
+
 def positive_float(arg: str) -> float:
     value = float(arg)
     if value <= 0:

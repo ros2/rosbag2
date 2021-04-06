@@ -14,6 +14,10 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "rosbag2_transport/rosbag2_transport.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "test_msgs/message_fixtures.hpp"
