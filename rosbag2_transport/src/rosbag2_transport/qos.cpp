@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_transport/logging.hpp"
+#include "rclcpp/logging.hpp"
 
 #include "qos.hpp"
 
@@ -122,6 +122,8 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     }
   }
 
+  auto logger = rclcpp::get_logger("rosbag2_transport");
+
   // We set policies in order as defined in rmw_qos_profile_t
   Rosbag2QoS request_qos{};
   // Policy: history, depth
@@ -132,7 +134,8 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     request_qos.reliable();
   } else {
     if (reliability_reliable_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      RCLCPP_WARN_STREAM(
+        logger,
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
           "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
           "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
@@ -148,7 +151,8 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     request_qos.transient_local();
   } else {
     if (durability_transient_local_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      RCLCPP_WARN_STREAM(
+        logger,
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
           "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
           "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
@@ -218,7 +222,8 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
     return result.default_history();
   }
 
-  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+  RCLCPP_WARN_STREAM(
+    rclcpp::get_logger("rosbag2_transport"),
     "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
       "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
       "Falling back to the rosbag2_transport default publisher offer.");

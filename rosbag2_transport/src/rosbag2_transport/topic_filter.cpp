@@ -19,7 +19,6 @@
 #include <unordered_map>
 
 #include "rclcpp/logging.hpp"
-#include "rosbag2_transport/logging.hpp"
 
 #include "rcpputils/split.hpp"
 
@@ -57,9 +56,13 @@ std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_ty
   bool include_hidden_topics)
 {
   std::unordered_map<std::string, std::string> filtered_topics_and_types;
+
+  auto logger = rclcpp::get_logger("rosbag2_transport");
+
   for (const auto & topic_and_type : topics_and_types) {
     if (topic_and_type.second.size() > 1) {
-      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+      RCLCPP_ERROR_STREAM(
+        logger,
         "Topic '" << topic_and_type.first <<
           "' has several types associated. Only topics with one type are supported");
       continue;
@@ -75,7 +78,7 @@ std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_ty
         });
       if (is_hidden != tokens.end()) {
         RCLCPP_WARN_ONCE(
-          rclcpp::get_logger("rosbag2_transport"),
+          logger,
           "Hidden topics are not recorded. Enable them with --include-hidden-topics");
         continue;
       }
