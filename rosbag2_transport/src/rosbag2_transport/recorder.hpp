@@ -45,7 +45,9 @@ class Rosbag2Node;
 class Recorder
 {
 public:
-  explicit Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node);
+  Recorder(
+    std::shared_ptr<rosbag2_cpp::Writer> writer,
+    std::shared_ptr<rclcpp::Node> transport_node);
 
   void record(const RecordOptions & record_options);
 
@@ -55,7 +57,7 @@ public:
     return topics_warned_about_incompatibility_;
   }
 
-  const std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> &
+  const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
   subscriptions() const
   {
     return subscriptions_;
@@ -75,7 +77,7 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
-  std::shared_ptr<GenericSubscription> create_subscription(
+  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   void record_messages() const;
@@ -97,8 +99,8 @@ private:
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  std::shared_ptr<Rosbag2Node> node_;
-  std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
+  std::shared_ptr<rclcpp::Node> transport_node_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;

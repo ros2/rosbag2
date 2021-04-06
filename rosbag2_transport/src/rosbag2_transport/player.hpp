@@ -24,6 +24,7 @@
 
 #include "moodycamel/readerwriterqueue.h"
 
+#include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
@@ -44,9 +45,9 @@ class Rosbag2Node;
 class Player
 {
 public:
-  explicit Player(
+  Player(
     std::shared_ptr<rosbag2_cpp::Reader> reader,
-    std::shared_ptr<Rosbag2Node> rosbag2_transport);
+    std::shared_ptr<rclcpp::Node> transport_node);
 
   void play(const PlayOptions & options);
 
@@ -65,8 +66,8 @@ private:
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
-  std::shared_ptr<Rosbag2Node> rosbag2_transport_;
-  std::unordered_map<std::string, std::shared_ptr<GenericPublisher>> publishers_;
+  std::shared_ptr<rclcpp::Node> transport_node_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
 };

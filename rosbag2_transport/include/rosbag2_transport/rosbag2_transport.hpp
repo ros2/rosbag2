@@ -80,14 +80,14 @@ public:
     const PlayOptions & play_options);
 
 private:
-  std::shared_ptr<Rosbag2Node> setup_node(
+  std::shared_ptr<rclcpp::Node> setup_node(
     std::string node_prefix = "",
     const std::vector<std::string> & topic_remapping_options = {});
 
   std::shared_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
 
-  std::shared_ptr<Rosbag2Node> transport_node_;
+  std::shared_ptr<rclcpp::Node> transport_node_;
 };
 
 }  // namespace rosbag2_transport

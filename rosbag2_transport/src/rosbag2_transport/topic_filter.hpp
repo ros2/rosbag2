@@ -12,31 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_
-#define ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_
+#ifndef ROSBAG2_TRANSPORT__TOPIC_FILTER_HPP_
+#define ROSBAG2_TRANSPORT__TOPIC_FILTER_HPP_
 
-#include <memory>
+#include <map>
 #include <string>
-
-#include "rclcpp/rclcpp.hpp"
+#include <unordered_map>
+#include <vector>
 
 namespace rosbag2_transport
 {
 
-class GenericPublisher : public rclcpp::PublisherBase
+class TopicFilter
 {
 public:
-  GenericPublisher(
-    rclcpp::node_interfaces::NodeBaseInterface * node_base,
-    const rosidl_message_type_support_t & type_support,
-    const std::string & topic_name,
-    const rclcpp::QoS & qos);
+  static
+  std::unordered_map<std::string, std::string>
+  filter_topics(
+    const std::vector<std::string> & selected_topic_names,
+    const std::unordered_map<std::string, std::string> & all_topic_names_and_types);
 
-  virtual ~GenericPublisher() = default;
-
-  void publish(std::shared_ptr<rmw_serialized_message_t> message);
+  static
+  std::unordered_map<std::string, std::string>
+  filter_topics_with_more_than_one_type(
+    const std::map<std::string, std::vector<std::string>> & topics_and_types,
+    bool include_hidden_topics = false);
 };
 
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__GENERIC_PUBLISHER_HPP_
+#endif  // ROSBAG2_TRANSPORT__TOPIC_FILTER_HPP_
