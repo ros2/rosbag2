@@ -31,8 +31,6 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-#include "rosbag2_transport/logging.hpp"
-
 #include "player.hpp"
 #include "recorder.hpp"
 
@@ -73,7 +71,7 @@ void Rosbag2Transport::record(
     Recorder recorder(writer_, transport_node);
     recorder.record(record_options);
   } catch (std::runtime_error & e) {
-    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to record: %s", e.what());
+    RCLCPP_ERROR(rclcpp::get_logger("rosbag2_transport"), "Failed to record: %s", e.what());
   }
 }
 
@@ -100,7 +98,7 @@ void Rosbag2Transport::play(
       player.play(play_options);
     } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
-    ROSBAG2_TRANSPORT_LOG_ERROR("Failed to play: %s", e.what());
+    RCLCPP_ERROR(transport_node_->get_logger(), "Failed to play: %s", e.what());
   }
 }
 

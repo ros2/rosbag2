@@ -35,8 +35,6 @@
 
 #include "rosbag2_storage/storage_filter.hpp"
 
-#include "rosbag2_transport/logging.hpp"
-
 #include "qos.hpp"
 
 namespace
@@ -53,12 +51,15 @@ namespace
  */
 rclcpp::QoS publisher_qos_for_topic(
   const rosbag2_storage::TopicMetadata & topic,
-  const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides)
+  const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides,
+  const rclcpp::Logger & logger)
 {
   using rosbag2_transport::Rosbag2QoS;
   auto qos_it = topic_qos_profile_overrides.find(topic.name);
   if (qos_it != topic_qos_profile_overrides.end()) {
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding QoS profile for topic " << topic.name);
+    RCLCPP_INFO_STREAM(
+      logger,
+      "Overriding QoS profile for topic " << topic.name);
     return Rosbag2QoS{qos_it->second};
   } else if (topic.offered_qos_profiles.empty()) {
     return Rosbag2QoS{};
@@ -158,7 +159,8 @@ void Player::play_messages_from_queue()
   do {
     play_messages_until_queue_empty();
     if (!is_storage_completely_loaded() && rclcpp::ok()) {
-      ROSBAG2_TRANSPORT_LOG_WARN(
+      RCLCPP_WARN(
+        transport_node_->get_logger(),
         "Message queue starved. Messages will be delayed. Consider "
         "increasing the --read-ahead-queue-size option.");
     }
@@ -198,7 +200,9 @@ void Player::prepare_publishers(const PlayOptions & options)
       }
     }
 
-    auto topic_qos = publisher_qos_for_topic(topic, topic_qos_profile_overrides_);
+    auto topic_qos = publisher_qos_for_topic(
+      topic, topic_qos_profile_overrides_,
+      transport_node_->get_logger());
     try {
       publishers_.insert(
         std::make_pair(
@@ -207,7 +211,8 @@ void Player::prepare_publishers(const PlayOptions & options)
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
-      ROSBAG2_TRANSPORT_LOG_WARN(
+      RCLCPP_WARN(
+        transport_node_->get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }

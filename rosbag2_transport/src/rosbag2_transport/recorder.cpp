@@ -24,9 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_cpp/writer.hpp"
+#include "rclcpp/logging.hpp"
 
-#include "rosbag2_transport/logging.hpp"
+#include "rosbag2_cpp/writer.hpp"
 
 #include "qos.hpp"
 #include "topic_filter.hpp"
@@ -58,7 +58,7 @@ void Recorder::record(const RecordOptions & record_options)
     throw std::runtime_error("No serialization format specified!");
   }
   serialization_format_ = record_options.rmw_serialization_format;
-  ROSBAG2_TRANSPORT_LOG_INFO("Listening for topics...");
+  RCLCPP_INFO(transport_node_->get_logger(), "Listening for topics...");
   subscribe_topics(get_requested_or_available_topics(record_options));
 
   std::future<void> discovery_future;
@@ -90,7 +90,9 @@ void Recorder::topics_discovery(const RecordOptions & record_options)
     subscribe_topics(missing_topics);
 
     if (!record_options.topics.empty() && subscriptions_.size() == record_options.topics.size()) {
-      ROSBAG2_TRANSPORT_LOG_INFO("All requested topics are subscribed. Stopping discovery...");
+      RCLCPP_INFO(
+        transport_node_->get_logger(),
+        "All requested topics are subscribed. Stopping discovery...");
       return;
     }
     std::this_thread::sleep_for(record_options.topic_polling_interval);
@@ -180,7 +182,9 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Subscribed to topic '" << topic.name << "'");
+    RCLCPP_INFO_STREAM(
+      transport_node_->get_logger(),
+      "Subscribed to topic '" << topic.name << "'");
   } else {
     writer_->remove_topic(topic);
     subscriptions_.erase(topic.name);
@@ -205,7 +209,8 @@ Recorder::create_subscription(
           auto fini_return = rcutils_uint8_array_fini(msg);
           delete msg;
           if (fini_return != RCUTILS_RET_OK) {
-            ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+            RCLCPP_ERROR_STREAM(
+              rclcpp::get_logger("rosbag2_transport"),
               "Failed to destroy serialized message: " << rcutils_get_error_string().str);
           }
         });
@@ -214,7 +219,8 @@ Recorder::create_subscription(
       rcutils_time_point_value_t time_stamp;
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
-        ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+        RCLCPP_ERROR_STREAM(
+          transport_node_->get_logger(),
           "Error getting current time. Error:" << rcutils_get_error_string().str);
       }
       bag_message->time_stamp = time_stamp;
@@ -242,7 +248,9 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
 rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name) const
 {
   if (topic_qos_profile_overrides_.count(topic_name)) {
-    ROSBAG2_TRANSPORT_LOG_INFO_STREAM("Overriding subscription profile for " << topic_name);
+    RCLCPP_INFO_STREAM(
+      transport_node_->get_logger(),
+      "Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
   }
   return Rosbag2QoS::adapt_request_to_offers(
@@ -272,14 +280,16 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
       used_profile.durability != RMW_QOS_POLICY_DURABILITY_VOLATILE;
 
     if (incompatible_reliability) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      RCLCPP_WARN_STREAM(
+        transport_node_->get_logger(),
         "A new publisher for subscribed topic " << topic_name << " "
           "was found offering RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, "
           "but rosbag already subscribed requesting RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
           "Messages from this new publisher will not be recorded.");
       topics_warned_about_incompatibility_.insert(topic_name);
     } else if (incompatible_durability) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      RCLCPP_WARN_STREAM(
+        transport_node_->get_logger(),
         "A new publisher for susbcribed topic " << topic_name << " "
           "was found offering RMW_QOS_POLICY_DURABILITY_VOLATILE, "
           "but rosbag2 already subscribed requesting RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
