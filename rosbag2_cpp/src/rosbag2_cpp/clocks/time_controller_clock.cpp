@@ -21,6 +21,23 @@
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
 
+namespace
+{
+/**
+ * Trivial std::unique_lock wrapper providing constructor that allows Clang Thread Safety Analysis.
+ * The std::unique_lock does not have these annotations.
+ */
+class RCPPUTILS_TSA_SCOPED_CAPABILITY TSAUniqueLock : public std::unique_lock<std::mutex>
+{
+public:
+  explicit TSAUniqueLock(std::mutex & mu) RCPPUTILS_TSA_ACQUIRE(mu)
+  : std::unique_lock<std::mutex>(mu)
+  {}
+
+  ~TSAUniqueLock() RCPPUTILS_TSA_RELEASE() {}
+};
+}  // namespace
+
 namespace rosbag2_cpp
 {
 
@@ -38,7 +55,9 @@ public:
     std::chrono::steady_clock::time_point steady;
   };
 
-  TimeControllerClockImpl() = default;
+  explicit TimeControllerClockImpl(PlayerClock::NowFunction now_fn)
+  : now_fn(now_fn)
+  {}
   virtual ~TimeControllerClockImpl() = default;
 
   template<typename T>
@@ -48,33 +67,35 @@ public:
   }
 
   rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time)
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
     return reference.ros + static_cast<rcutils_duration_value_t>(
       rate * duration_nanos(steady_time - reference.steady));
   }
 
   std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time)
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
     const auto diff_nanos = static_cast<rcutils_duration_value_t>(
       (ros_time - reference.ros) / rate);
     return reference.steady + std::chrono::nanoseconds(diff_nanos);
   }
 
-  std::mutex mutex;
-  std::condition_variable cv;
-  PlayerClock::NowFunction now_fn RCPPUTILS_TSA_GUARDED_BY(mutex);
-  double rate RCPPUTILS_TSA_GUARDED_BY(mutex) = 1.0;
-  TimeReference reference RCPPUTILS_TSA_GUARDED_BY(mutex);
+  const PlayerClock::NowFunction now_fn;
+
+  std::mutex state_mutex;
+  std::condition_variable cv RCPPUTILS_TSA_GUARDED_BY(state_mutex);
+  double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
+  TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
 };
 
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
   double rate,
   NowFunction now_fn)
-: impl_(std::make_unique<TimeControllerClockImpl>())
+: impl_(std::make_unique<TimeControllerClockImpl>(now_fn))
 {
-  std::lock_guard<std::mutex> lock(impl_->mutex);
-  impl_->now_fn = now_fn;
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->reference.ros = starting_time;
   impl_->reference.steady = impl_->now_fn();
   impl_->rate = rate;
@@ -85,14 +106,14 @@ TimeControllerClock::~TimeControllerClock()
 
 rcutils_time_point_value_t TimeControllerClock::now() const
 {
-  std::lock_guard<std::mutex> lock(impl_->mutex);
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
   return impl_->steady_to_ros(impl_->now_fn());
 }
 
 bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
   {
-    std::unique_lock<std::mutex> lock(impl_->mutex);
+    TSAUniqueLock lock(impl_->state_mutex);
     const auto steady_until = impl_->ros_to_steady(until);
     impl_->cv.wait_until(lock, steady_until);
   }
@@ -101,7 +122,7 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 
 double TimeControllerClock::get_rate() const
 {
-  std::lock_guard<std::mutex> lock(impl_->mutex);
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
   return impl_->rate;
 }
 
