@@ -147,6 +147,12 @@ function(create_tests_for_rmw_implementation)
     ${SKIP_TEST}
     LINK_LIBS rosbag2_transport
     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_play_publish_clock
+    test/rosbag2_transport/test_play_publish_clock.cpp
+    ${SKIP_TEST}
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
 endfunction()
 
 if(BUILD_TESTING)

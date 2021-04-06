@@ -43,7 +43,7 @@ public:
 
   // Rate in Hz at which to publish to /clock.
   // 0 (or negative) means that no publisher will be created
-  float clock_publish_frequency = 0.f;
+  double clock_publish_frequency = 0.f;
 };
 
 }  // namespace rosbag2_transport

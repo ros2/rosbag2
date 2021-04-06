@@ -96,7 +96,7 @@ void Player::play(const PlayOptions & options)
 {
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(transport_node_);
-  auto node_spin_thread = std::thread([&exec]() {
+  auto spin_thread = std::thread([&exec]() {
     exec.spin();
   });
 
@@ -121,6 +121,8 @@ void Player::play(const PlayOptions & options)
   wait_for_filled_queue(options);
 
   play_messages_from_queue();
+  exec.cancel();
+  spin_thread.join();
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
