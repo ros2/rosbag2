@@ -35,7 +35,6 @@
 
 #include "player.hpp"
 #include "recorder.hpp"
-#include "rosbag2_node.hpp"
 
 namespace rosbag2_transport
 {
@@ -78,13 +77,13 @@ void Rosbag2Transport::record(
   }
 }
 
-std::shared_ptr<Rosbag2Node> Rosbag2Transport::setup_node(
+std::shared_ptr<rclcpp::Node> Rosbag2Transport::setup_node(
   std::string node_prefix,
   const std::vector<std::string> & topic_remapping_options)
 {
   if (!transport_node_) {
     auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
-    transport_node_ = std::make_shared<Rosbag2Node>(node_prefix + "_rosbag2", node_options);
+    transport_node_ = std::make_shared<rclcpp::Node>(node_prefix + "_rosbag2", node_options);
   }
   return transport_node_;
 }

@@ -38,7 +38,6 @@
 #include "rosbag2_transport/logging.hpp"
 
 #include "qos.hpp"
-#include "rosbag2_node.hpp"
 
 namespace
 {
@@ -78,8 +77,8 @@ const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
 Player::Player(
-  std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<Rosbag2Node> rosbag2_transport)
-: reader_(std::move(reader)), rosbag2_transport_(rosbag2_transport)
+  std::shared_ptr<rosbag2_cpp::Reader> reader, std::shared_ptr<rclcpp::Node> transport_node)
+: reader_(std::move(reader)), transport_node_(transport_node)
 {}
 
 bool Player::is_storage_completely_loaded() const
@@ -176,7 +175,7 @@ void Player::play_messages_until_queue_empty()
     if (rclcpp::ok()) {
       auto publisher_iter = publishers_.find(message->topic_name);
       if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(message->serialized_data);
+        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data.get()));
       }
     }
   }
@@ -203,7 +202,7 @@ void Player::prepare_publishers(const PlayOptions & options)
     try {
       publishers_.insert(
         std::make_pair(
-          topic.name, rosbag2_transport_->create_generic_publisher(
+          topic.name, transport_node_->create_generic_publisher(
             topic.name, topic.type, topic_qos)));
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option

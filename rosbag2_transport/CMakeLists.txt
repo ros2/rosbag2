@@ -35,12 +35,10 @@ find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
-  src/rosbag2_transport/generic_publisher.cpp
-  src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
-  src/rosbag2_transport/rosbag2_node.cpp
-  src/rosbag2_transport/rosbag2_transport.cpp)
+  src/rosbag2_transport/rosbag2_transport.cpp
+  src/rosbag2_transport/topic_filter.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -93,27 +91,6 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_rosbag2_node
-    src/rosbag2_transport/generic_publisher.cpp
-    src/rosbag2_transport/generic_subscription.cpp
-    src/rosbag2_transport/qos.cpp
-    src/rosbag2_transport/recorder.cpp
-    src/rosbag2_transport/rosbag2_node.cpp
-    test/rosbag2_transport/test_rosbag2_node.cpp
-    INCLUDE_DIRS
-      PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
-      $<INSTALL_INTERFACE:include>
-    AMENT_DEPS
-      ament_index_cpp
-      rclcpp
-      rosbag2_cpp
-      rosbag2_storage
-      rosbag2_test_common
-      test_msgs
-      yaml_cpp_vendor)
-
   rosbag2_transport_add_gmock(test_qos
     src/rosbag2_transport/qos.cpp
     test/rosbag2_transport/test_qos.cpp
@@ -124,6 +101,12 @@ function(create_tests_for_rmw_implementation)
       rclcpp
       rosbag2_test_common
       yaml_cpp_vendor)
+
+  rosbag2_transport_add_gmock(test_topic_filter
+    test/rosbag2_transport/test_topic_filter.cpp
+    INCLUDE_DIRS
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    LINK_LIBS rosbag2_transport)
 
   # disable the following tests for connext
   # due to slower discovery of nodes
