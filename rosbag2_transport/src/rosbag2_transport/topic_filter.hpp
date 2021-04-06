@@ -20,16 +20,20 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rosbag2_transport/visibility_control.hpp"
+
 namespace rosbag2_transport
 {
 namespace topic_filter
 {
 
+ROSBAG2_TRANSPORT_PUBLIC
 std::unordered_map<std::string, std::string>
 filter_topics(
   const std::vector<std::string> & selected_topic_names,
   const std::unordered_map<std::string, std::string> & all_topic_names_and_types);
 
+ROSBAG2_TRANSPORT_PUBLIC
 std::unordered_map<std::string, std::string>
 filter_topics_with_more_than_one_type(
   const std::map<std::string, std::vector<std::string>> & topics_and_types,
