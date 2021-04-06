@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2021, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   topic_with_type.insert({"topic/b", {"type_b"}});
   topic_with_type.insert({"topic/c", {"type_c"}});
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, true);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, true /* include hidden topics */);
     ASSERT_EQ(topic_with_type.size(), filtered_topics.size());
   }
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, false);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, false /* include hidden topics */);
     ASSERT_EQ(topic_with_type.size(), filtered_topics.size());
   }
 
@@ -45,13 +45,13 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   topic_with_type.insert({"_/topic/b", {"type_b"}});
   topic_with_type.insert({"_/topic/c", {"type_c"}});
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, true);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, true /* include hidden topics */);
     ASSERT_EQ(topic_with_type.size(), filtered_topics.size());
   }
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, false);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, false);
     ASSERT_EQ(topic_with_type.size() - 3, filtered_topics.size());
   }
 
@@ -59,8 +59,8 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   topic_with_type.insert({"_/topic/bbb", {"type_b", "type_b", "type_b"}});
   topic_with_type.insert({"_/topic/ccc", {"type_c", "type_c", "type_c"}});
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, true);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, true /* include hidden topics */);
     ASSERT_EQ(topic_with_type.size() - 3, filtered_topics.size());
     for (const auto & topic :
       {"topic/a", "topic/b", "topic/c", "_/topic/a", "_/topic/b", "_/topic/c"})
@@ -69,8 +69,8 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
     }
   }
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics_with_more_than_one_type(
-      topic_with_type, false);  // include hidden topics
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_more_than_one_type(
+      topic_with_type, false);
     ASSERT_EQ(topic_with_type.size() - 2 * 3, filtered_topics.size());
     for (const auto & topic : {"topic/a", "topic/b", "topic/c"}) {
       EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
@@ -85,7 +85,7 @@ TEST(TestTopicFilter, filter_topics) {
   topic_with_type.insert({"topic/c", "type_c"});
 
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics(
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics(
       {"topic/a"},
       topic_with_type);
     ASSERT_EQ(1u, filtered_topics.size());
@@ -93,7 +93,7 @@ TEST(TestTopicFilter, filter_topics) {
   }
 
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics(
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics(
       {"topic/a", "topic/b",
         "topic/c"},
       topic_with_type);
@@ -104,7 +104,7 @@ TEST(TestTopicFilter, filter_topics) {
   }
 
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics(
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics(
       {"topic/d", "topic/e",
         "topic/f"},
       topic_with_type);
@@ -112,7 +112,7 @@ TEST(TestTopicFilter, filter_topics) {
   }
 
   {
-    auto filtered_topics = rosbag2_transport::TopicFilter::filter_topics(
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics(
       {"topic/a", "topic/b",
         "topic/d"},
       topic_with_type);

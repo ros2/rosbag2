@@ -1,4 +1,4 @@
-// Copyright 2018, Bosch Software Innovations GmbH.
+// Copyright 2021, Bosch Software Innovations GmbH.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@
 
 namespace rosbag2_transport
 {
+namespace topic_filter
+{
 
-std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
+std::unordered_map<std::string, std::string> filter_topics(
   const std::vector<std::string> & selected_topic_names,
   const std::unordered_map<std::string, std::string> & all_topic_names_and_types)
 {
@@ -50,7 +52,7 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   return filtered_topics_and_types;
 }
 
-std::unordered_map<std::string, std::string> TopicFilter::filter_topics_with_more_than_one_type(
+std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_type(
   const std::map<std::string, std::vector<std::string>> & topics_and_types,
   bool include_hidden_topics)
 {
@@ -84,4 +86,5 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics_with_mor
   return filtered_topics_and_types;
 }
 
+}  // namespace topic_filter
 }  // namespace rosbag2_transport

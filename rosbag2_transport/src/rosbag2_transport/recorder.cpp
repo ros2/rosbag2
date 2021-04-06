@@ -101,7 +101,7 @@ std::unordered_map<std::string, std::string>
 Recorder::get_requested_or_available_topics(const RecordOptions & record_options)
 {
   auto all_topics_and_types = transport_node_->get_topic_names_and_types();
-  auto filtered_topics_and_types = TopicFilter::filter_topics_with_more_than_one_type(
+  auto filtered_topics_and_types = topic_filter::filter_topics_with_more_than_one_type(
     all_topics_and_types, record_options.include_hidden_topics);
 
   if (!record_options.topics.empty()) {
@@ -113,7 +113,7 @@ Recorder::get_requested_or_available_topics(const RecordOptions & record_options
         rclcpp::expand_topic_or_service_name(
           topic, transport_node_->get_name(), transport_node_->get_namespace(), false));
     }
-    filtered_topics_and_types = TopicFilter::filter_topics(
+    filtered_topics_and_types = topic_filter::filter_topics(
       expanded_topics, filtered_topics_and_types);
   }
 
