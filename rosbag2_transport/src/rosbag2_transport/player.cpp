@@ -102,7 +102,9 @@ Player::Player(
   const rosbag2_transport::PlayOptions & play_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options),
+: rclcpp::Node(
+    node_name,
+    rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
   reader_(std::move(reader)),
   storage_options_(storage_options),
   play_options_(play_options)
@@ -226,6 +228,7 @@ void Player::play_messages_until_queue_empty()
   }
 }
 
+// TODO(karsten1987): This should be done in the constructor
 void Player::prepare_publishers()
 {
   rosbag2_storage::StorageFilter storage_filter;
@@ -234,6 +237,12 @@ void Player::prepare_publishers()
 
   auto topics = reader_.get_all_topics_and_types();
   for (const auto & topic : topics) {
+    // publisher is already prepared (e.g. in case of play loop)
+    if (publishers_.find(topic.name) != publishers_.end())
+    {
+      continue;
+    }
+
     // filter topics to add publishers if necessary
     auto & filter_topics = storage_filter.topics;
     if (!filter_topics.empty()) {
