@@ -64,6 +64,11 @@ void Writer::open(
   writer_impl_->open(storage_options, converter_options);
 }
 
+void Writer::reset()
+{
+  writer_impl_->reset();
+}
+
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);

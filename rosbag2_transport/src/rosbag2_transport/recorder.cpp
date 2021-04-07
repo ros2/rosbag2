@@ -46,92 +46,129 @@
 
 namespace rosbag2_transport
 {
-Recorder::Recorder(
-  std::shared_ptr<rosbag2_cpp::Writer> writer,
-  std::shared_ptr<rclcpp::Node> transport_node)
-: writer_(std::move(writer)), transport_node_(std::move(transport_node)) {}
 
-void Recorder::record(const RecordOptions & record_options)
+Recorder::Recorder(
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
+: rclcpp::Node(node_name, node_options)
 {
-  topic_qos_profile_overrides_ = record_options.topic_qos_profile_overrides;
-  if (record_options.rmw_serialization_format.empty()) {
+  // TODO(karsten1987): Use this constructor later with parameter parsing.
+  // The reader, storage_options as well as record_options can be loaded via parameter.
+  // That way, the recorder can be used as a simple component in a component manager.
+  throw rclcpp::exceptions::UnimplementedError();
+}
+
+Recorder::Recorder(
+  std::unique_ptr<rosbag2_cpp::Writer> writer,
+  const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::RecordOptions & record_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
+: rclcpp::Node(node_name, node_options),
+  writer_(std::move(writer)),
+  storage_options_(storage_options),
+  record_options_(record_options)
+//: Recorder(std::move(*writer.release()), storage_options, record_options, node_name, node_options)
+{
+}
+
+// Recorder::Recorder(
+//   rosbag2_cpp::Writer && writer,
+//   const rosbag2_storage::StorageOptions & storage_options,
+//   const rosbag2_transport::RecordOptions & record_options,
+//   const std::string & node_name,
+//   const rclcpp::NodeOptions & node_options)
+// : rclcpp::Node(node_name, node_options),
+//   writer_(std::move(writer)),
+//   storage_options_(storage_options),
+//   record_options_(record_options)
+// {
+// }
+
+Recorder::~Recorder()
+{
+  writer_->reset();
+}
+
+void Recorder::record()
+{
+  topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
+  if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
-  serialization_format_ = record_options.rmw_serialization_format;
-  RCLCPP_INFO(transport_node_->get_logger(), "Listening for topics...");
-  subscribe_topics(get_requested_or_available_topics(record_options));
+  serialization_format_ = record_options_.rmw_serialization_format;
+  RCLCPP_INFO(this->get_logger(), "Listening for topics...");
+  subscribe_topics(get_requested_or_available_topics());
 
   std::future<void> discovery_future;
-  if (!record_options.is_discovery_disabled) {
-    auto discovery = std::bind(
-      &Recorder::topics_discovery, this,
-      record_options);
+  if (!record_options_.is_discovery_disabled) {
+    auto discovery = std::bind(&Recorder::topics_discovery, this);
     discovery_future = std::async(std::launch::async, discovery);
   }
 
-  record_messages();
+  // record_messages();
 
   if (discovery_future.valid()) {
     discovery_future.wait();
   }
 
+  // call clear in a separate thread?
   subscriptions_.clear();
 }
 
-void Recorder::topics_discovery(const RecordOptions & record_options)
+void Recorder::topics_discovery()
 {
   while (rclcpp::ok()) {
-    auto topics_to_subscribe =
-      get_requested_or_available_topics(record_options);
+    auto topics_to_subscribe = get_requested_or_available_topics();
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
     auto missing_topics = get_missing_topics(topics_to_subscribe);
     subscribe_topics(missing_topics);
 
-    if (!record_options.topics.empty() && subscriptions_.size() == record_options.topics.size()) {
+    if (!record_options_.topics.empty() && subscriptions_.size() == record_options_.topics.size()) {
       RCLCPP_INFO(
-        transport_node_->get_logger(),
+        this->get_logger(),
         "All requested topics are subscribed. Stopping discovery...");
       return;
     }
-    std::this_thread::sleep_for(record_options.topic_polling_interval);
+    std::this_thread::sleep_for(record_options_.topic_polling_interval);
   }
 }
 
 std::unordered_map<std::string, std::string>
-Recorder::get_requested_or_available_topics(const RecordOptions & record_options)
+Recorder::get_requested_or_available_topics()
 {
-  auto all_topics_and_types = transport_node_->get_topic_names_and_types();
+  auto all_topics_and_types = this->get_topic_names_and_types();
   auto filtered_topics_and_types = topic_filter::filter_topics_with_more_than_one_type(
-    all_topics_and_types, record_options.include_hidden_topics);
+    all_topics_and_types, record_options_.include_hidden_topics);
 
-  if (!record_options.topics.empty()) {
+  if (!record_options_.topics.empty()) {
     // expand specified topics
     std::vector<std::string> expanded_topics;
-    expanded_topics.reserve(record_options.topics.size());
-    for (const auto & topic : record_options.topics) {
+    expanded_topics.reserve(record_options_.topics.size());
+    for (const auto & topic : record_options_.topics) {
       expanded_topics.push_back(
         rclcpp::expand_topic_or_service_name(
-          topic, transport_node_->get_name(), transport_node_->get_namespace(), false));
+          topic, this->get_name(), this->get_namespace(), false));
     }
     filtered_topics_and_types = topic_filter::filter_topics(
       expanded_topics, filtered_topics_and_types);
   }
 
-  if (record_options.regex.empty() && record_options.exclude.empty()) {
+  if (record_options_.regex.empty() && record_options_.exclude.empty()) {
     return filtered_topics_and_types;
   }
 
   std::unordered_map<std::string, std::string> filtered_by_regex;
 
-  std::regex topic_regex(record_options.regex);
-  std::regex exclude_regex(record_options.exclude);
-  bool take = record_options.all;
+  std::regex topic_regex(record_options_.regex);
+  std::regex exclude_regex(record_options_.exclude);
+  bool take = record_options_.all;
   // for (const auto & kv : all_topics_and_types) {
   for (const auto & kv : filtered_topics_and_types) {
     // regex_match returns false for 'empty' regex
-    if (!record_options.regex.empty()) {
+    if (!record_options_.regex.empty()) {
       take = std::regex_match(kv.first, topic_regex);
     }
     if (take) {
@@ -183,7 +220,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
     RCLCPP_INFO_STREAM(
-      transport_node_->get_logger(),
+      this->get_logger(),
       "Subscribed to topic '" << topic.name << "'");
   } else {
     writer_->remove_topic(topic);
@@ -195,7 +232,7 @@ std::shared_ptr<rclcpp::GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
-  auto subscription = transport_node_->create_generic_subscription(
+  auto subscription = this->create_generic_subscription(
     topic_name,
     topic_type,
     qos,
@@ -220,7 +257,7 @@ Recorder::create_subscription(
       int error = rcutils_system_time_now(&time_stamp);
       if (error != RCUTILS_RET_OK) {
         RCLCPP_ERROR_STREAM(
-          transport_node_->get_logger(),
+          this->get_logger(),
           "Error getting current time. Error:" << rcutils_get_error_string().str);
       }
       bag_message->time_stamp = time_stamp;
@@ -230,15 +267,15 @@ Recorder::create_subscription(
   return subscription;
 }
 
-void Recorder::record_messages() const
-{
-  spin(transport_node_);
-}
+// void Recorder::record_messages() const
+// {
+//   spin(transport_node_);
+// }
 
 std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)
 {
   YAML::Node offered_qos_profiles;
-  auto endpoints = transport_node_->get_publishers_info_by_topic(topic_name);
+  auto endpoints = this->get_publishers_info_by_topic(topic_name);
   for (const auto & info : endpoints) {
     offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
   }
@@ -249,12 +286,12 @@ rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name)
 {
   if (topic_qos_profile_overrides_.count(topic_name)) {
     RCLCPP_INFO_STREAM(
-      transport_node_->get_logger(),
+      this->get_logger(),
       "Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
   }
   return Rosbag2QoS::adapt_request_to_offers(
-    topic_name, transport_node_->get_publishers_info_by_topic(topic_name));
+    topic_name, this->get_publishers_info_by_topic(topic_name));
 }
 
 void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
@@ -269,7 +306,7 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     return;
   }
   const auto & used_profile = existing_subscription->second->get_actual_qos().get_rmw_qos_profile();
-  auto publishers_info = transport_node_->get_publishers_info_by_topic(topic_name);
+  auto publishers_info = this->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
     auto new_profile = info.qos_profile().get_rmw_qos_profile();
     bool incompatible_reliability =
@@ -281,7 +318,7 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
 
     if (incompatible_reliability) {
       RCLCPP_WARN_STREAM(
-        transport_node_->get_logger(),
+        this->get_logger(),
         "A new publisher for subscribed topic " << topic_name << " "
           "was found offering RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT, "
           "but rosbag already subscribed requesting RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
@@ -289,7 +326,7 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
       topics_warned_about_incompatibility_.insert(topic_name);
     } else if (incompatible_durability) {
       RCLCPP_WARN_STREAM(
-        transport_node_->get_logger(),
+        this->get_logger(),
         "A new publisher for susbcribed topic " << topic_name << " "
           "was found offering RMW_QOS_POLICY_DURABILITY_VOLATILE, "
           "but rosbag2 already subscribed requesting RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "

@@ -38,9 +38,6 @@
 namespace rosbag2_transport
 {
 
-class GenericPublisher;
-class Rosbag2Node;
-
 class Player : public rclcpp::Node
 {
 public:
@@ -61,6 +58,7 @@ public:
     const rosbag2_transport::PlayOptions & play_options,
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
   virtual ~Player();
 
   void play();
@@ -69,16 +67,23 @@ public:
 
 private:
   void load_storage_content();
+
   bool is_storage_completely_loaded() const;
+
   void enqueue_up_to_boundary(uint64_t boundary);
+
   void wait_for_filled_queue() const;
+
   void play_messages_from_queue();
+
   void play_messages_until_queue_empty();
+
   void prepare_publishers();
+
   void prepare_clock(rcutils_time_point_value_t starting_time);
+
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
-
   rosbag2_cpp::Reader reader_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;

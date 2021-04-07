@@ -59,6 +59,10 @@ public:
     std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl =
     std::make_unique<writers::SequentialWriter>());
 
+  // TODO(karsten1987) verify if we still need the top-level mutex here
+  // given that we have a double buffer implementation.
+  // Writer(Writer &&) = default;
+
   ~Writer();
 
   /**
@@ -86,6 +90,13 @@ public:
   void open(
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options = ConverterOptions());
+
+  /**
+   * Resets the current writer instance.
+   *
+   * The storage has to be opened again before usage.
+   */
+  void reset();
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within

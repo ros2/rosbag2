@@ -76,11 +76,11 @@ ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(rosbag2_cpp rosbag2_compression shared_queues_vendor yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
-  #   rosbag2_transport_add_gmock(test_record_all
-  #     test/rosbag2_transport/test_record_all.cpp
-  #     LINK_LIBS rosbag2_transport
-  #     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
-  #
+   rosbag2_transport_add_gmock(test_record_all
+     test/rosbag2_transport/test_record_all.cpp
+     LINK_LIBS rosbag2_transport
+     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+
   #   rosbag2_transport_add_gmock(test_record_all_no_discovery
   #     test/rosbag2_transport/test_record_all_no_discovery.cpp
   #     LINK_LIBS rosbag2_transport
