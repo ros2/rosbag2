@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "recorder.hpp"
+#include "rosbag2_transport/recorder.hpp"
 
 #include <algorithm>
 #include <future>

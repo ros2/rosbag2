@@ -59,7 +59,7 @@ class Rosbag2TransportTestFixture : public Test
 public:
   Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id", 0, 100}), play_options_({1000}),
-    reader_(std::make_shared<rosbag2_cpp::Reader>(std::make_unique<MockSequentialReader>())),
+    reader_(std::make_unique<rosbag2_cpp::Reader>(std::make_unique<MockSequentialReader>())),
     writer_(std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>())) {}
 
   template<typename MessageT>
@@ -82,7 +82,7 @@ public:
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
 
-  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
 };
 

@@ -58,6 +58,8 @@ public:
     std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl =
     std::make_unique<readers::SequentialReader>());
 
+  Reader(Reader &&) = default;
+
   ~Reader();
 
   /**
@@ -92,6 +94,13 @@ public:
   void open(
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options = ConverterOptions());
+
+  /**
+   * Resets the current reader instance.
+   *
+   * The storage has to be opened again before usage.
+   */
+  void reset();
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

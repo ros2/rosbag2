@@ -28,13 +28,12 @@
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
-#include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_cpp/reader.hpp"
 
-namespace rosbag2_cpp
-{
-class Reader;
-}  // namespace rosbag2_cpp
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
+#include "rosbag2_transport/play_options.hpp"
 
 namespace rosbag2_transport
 {
@@ -42,52 +41,49 @@ namespace rosbag2_transport
 class GenericPublisher;
 class Rosbag2Node;
 
-class Player
+class Player : public rclcpp::Node
 {
 public:
-  Player(
-    std::shared_ptr<rosbag2_cpp::Reader> reader,
-    const rosbag2_storage::StorageOptions & storage_options,
-    const std::string & node_name = "rosbag2_transport",
+  explicit Player(
+    const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
   Player(
-    std::shared_ptr<rosbag2_cpp::Reader> reader,
+    std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
-    std::shared_ptr<rclcpp::Node> transport_node);
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  Player(
+    rosbag2_cpp::Reader && reader,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
   virtual ~Player();
 
-  void play(const PlayOptions & options);
+  void play();
 
-  void play_once(const PlayOptions & options);
-
-protected:
-  Player(
-    std::shared_ptr<rosbag2_cpp::Reader> reader,
-    const rosbag2_storage::StorageOptions & storage_options,
-    std::shared_ptr<rclcpp::Node> transport_node,
-    bool is_standalone);
+  void play_once();
 
 private:
-  void load_storage_content(const PlayOptions & options);
+  void load_storage_content();
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(uint64_t boundary);
-  void wait_for_filled_queue(const PlayOptions & options) const;
+  void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void play_messages_until_queue_empty();
-  void prepare_publishers(const PlayOptions & options);
-  void prepare_clock(const PlayOptions & options, rcutils_time_point_value_t starting_time);
+  void prepare_publishers();
+  void prepare_clock(rcutils_time_point_value_t starting_time);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
-  bool is_standalone_;
-  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+  rosbag2_cpp::Reader reader_;
   rosbag2_storage::StorageOptions storage_options_;
-  std::shared_ptr<rclcpp::Node> transport_node_;
+  rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
-  std::shared_ptr<rclcpp::Node> transport_node_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
