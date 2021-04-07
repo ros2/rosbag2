@@ -40,8 +40,6 @@ public:
   ClockPublishFixture()
   : RosBag2PlayTestFixture()
   {
-    const auto milliseconds_between_messages = 200;
-
     // Fake bag setup
     auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
       {"topic1", "test_msgs/BasicTypes", "", ""},
@@ -52,7 +50,7 @@ public:
       auto message = get_messages_basic_types()[0];
       message->int32_value = static_cast<int32_t>(i);
       messages.push_back(
-        serialize_test_message("topic1", milliseconds_between_messages * i, message));
+        serialize_test_message("topic1", milliseconds_between_messages_ * i, message));
     }
 
     // Player setup
@@ -79,21 +77,22 @@ public:
     const auto expect_clock_delta =
       period_for_frequency(play_options_.clock_publish_frequency) * play_options_.rate;
     const auto allowed_error = static_cast<rcutils_duration_value_t>(
-      expect_clock_delta * error_tolerance);
+      expect_clock_delta * error_tolerance_);
     for (size_t i = 0; i < expected_clock_messages_ - 1; i++) {
       auto current = rclcpp::Time(received_clock[i]->clock).nanoseconds();
       auto next = rclcpp::Time(received_clock[i + 1]->clock).nanoseconds();
       auto delta = next - current;
       auto error = std::abs(delta - expect_clock_delta);
-      EXPECT_LE(error, allowed_error);
+      EXPECT_LE(error, allowed_error) << "Message was too far from next: " << i;
     }
   }
 
   // Number of bag messages to publish
   size_t messages_to_play_ = 10;
+  const int64_t milliseconds_between_messages_ = 50;
 
   // Amount of error allowed between expected and actual clock deltas (expected to be much smaller)
-  const double error_tolerance = 0.1;
+  const double error_tolerance_ = 0.15;
 
   // Wait for just a few clock messages, we're checking the time between them, not the total count
   size_t expected_clock_messages_ = 4;
