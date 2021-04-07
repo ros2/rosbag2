@@ -23,6 +23,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rcpputils/scope_exit.hpp"
 #include "rcutils/time.h"
 
 #include "rosbag2_cpp/reader.hpp"
@@ -89,9 +90,20 @@ std::shared_ptr<rclcpp::Node> Rosbag2Transport::setup_node(
 void Rosbag2Transport::play(
   const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
+  auto transport_node =
+    setup_node(play_options.node_prefix, play_options.topic_remapping_options);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(transport_node);
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+  auto exit = rcpputils::scope_exit(
+    [&exec, &spin_thread]() {
+      exec.cancel();
+      spin_thread.join();
+    });
   try {
-    auto transport_node =
-      setup_node(play_options.node_prefix, play_options.topic_remapping_options);
     Player player(reader_, transport_node);
     do {
       reader_->open(storage_options, {"", rmw_get_serialization_format()});

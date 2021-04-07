@@ -94,13 +94,6 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const PlayOptions & options)
 {
-  rclcpp::executors::SingleThreadedExecutor exec;
-  exec.add_node(transport_node_);
-  auto spin_thread = std::thread(
-    [&exec]() {
-      exec.spin();
-    });
-
   if (reader_->has_next()) {
     // Reader does not have "peek", so we must "pop" the first message to see its timestamp
     auto message = reader_->read_next();
@@ -122,8 +115,6 @@ void Player::play(const PlayOptions & options)
   wait_for_filled_queue(options);
 
   play_messages_from_queue();
-  exec.cancel();
-  spin_thread.join();
 }
 
 void Player::wait_for_filled_queue(const PlayOptions & options) const
