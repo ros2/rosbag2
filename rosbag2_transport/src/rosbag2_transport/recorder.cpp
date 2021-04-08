@@ -64,10 +64,11 @@ Recorder::Recorder(
   const rosbag2_transport::RecordOptions & record_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options),
+: rclcpp::Node(node_name, rclcpp::NodeOptions(node_options).start_parameter_event_publisher(false)),
   writer_(std::move(writer)),
   storage_options_(storage_options),
-  record_options_(record_options)
+  record_options_(record_options),
+  stop_discovery_(record_options_.is_discovery_disabled)
 //: Recorder(std::move(*writer.release()), storage_options, record_options, node_name, node_options)
 {
 }
@@ -87,7 +88,17 @@ Recorder::Recorder(
 
 Recorder::~Recorder()
 {
-  writer_->reset();
+  // might have been released
+  if (writer_) {
+    writer_->reset();
+  }
+
+  stop_discovery_ = true;
+  if (discovery_future_.valid()) {
+    discovery_future_.wait();
+  }
+
+  subscriptions_.clear();
 }
 
 void Recorder::record()
@@ -100,25 +111,15 @@ void Recorder::record()
   RCLCPP_INFO(this->get_logger(), "Listening for topics...");
   subscribe_topics(get_requested_or_available_topics());
 
-  std::future<void> discovery_future;
   if (!record_options_.is_discovery_disabled) {
-    auto discovery = std::bind(&Recorder::topics_discovery, this);
-    discovery_future = std::async(std::launch::async, discovery);
+    discovery_future_ =
+      std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
-
-  // record_messages();
-
-  if (discovery_future.valid()) {
-    discovery_future.wait();
-  }
-
-  // call clear in a separate thread?
-  subscriptions_.clear();
 }
 
 void Recorder::topics_discovery()
 {
-  while (rclcpp::ok()) {
+  while (rclcpp::ok() && stop_discovery_ == false) {
     auto topics_to_subscribe = get_requested_or_available_topics();
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);

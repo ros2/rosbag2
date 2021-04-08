@@ -72,6 +72,16 @@ public:
     return subscriptions_;
   }
 
+  const rosbag2_cpp::Writer & get_writer_handle() const
+  {
+    return *writer_;
+  }
+
+  std::unique_ptr<rosbag2_cpp::Writer> release_writer()
+  {
+    return std::move(writer_);
+  }
+
 private:
   void topics_discovery();
 
@@ -88,8 +98,6 @@ private:
 
   std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
-
-//  void record_messages() const;
 
   /**
    * Find the QoS profile that should be used for subscribing.
@@ -111,6 +119,8 @@ private:
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
+  std::atomic<bool> stop_discovery_;
+  std::future<void> discovery_future_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;

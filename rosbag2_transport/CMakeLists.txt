@@ -37,7 +37,6 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
-  #  src/rosbag2_transport/rosbag2_transport.cpp
   src/rosbag2_transport/topic_filter.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -81,10 +80,10 @@ function(create_tests_for_rmw_implementation)
      LINK_LIBS rosbag2_transport
      AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
 
-  #   rosbag2_transport_add_gmock(test_record_all_no_discovery
-  #     test/rosbag2_transport/test_record_all_no_discovery.cpp
-  #     LINK_LIBS rosbag2_transport
-  #     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+   rosbag2_transport_add_gmock(test_record_all_no_discovery
+     test/rosbag2_transport/test_record_all_no_discovery.cpp
+     LINK_LIBS rosbag2_transport
+     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
 
    rosbag2_transport_add_gmock(test_play_timing
      test/rosbag2_transport/test_play_timing.cpp
@@ -111,7 +110,6 @@ function(create_tests_for_rmw_implementation)
      rosbag2_transport_add_gmock(test_player
        test/rosbag2_transport/test_player.cpp
        LINK_LIBS rosbag2_transport)
-     #AMENT_DEPS rclcpp rosbag2_cpp)
 
    # disable the following tests for connext
    # due to slower discovery of nodes
@@ -120,19 +118,19 @@ function(create_tests_for_rmw_implementation)
      set(SKIP_TEST "SKIP_TEST")
    endif()
 
-   #   rosbag2_transport_add_gmock(test_record
-   #     test/rosbag2_transport/test_record.cpp
-   #     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common
-   #     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
-   #     LINK_LIBS rosbag2_transport
-   #     ${SKIP_TEST})
-   #
-   #   rosbag2_transport_add_gmock(test_record_regex
-   #     test/rosbag2_transport/test_record_regex.cpp
-   #     LINK_LIBS rosbag2_transport
-   #     AMENT_DEPS test_msgs rosbag2_test_common
-   #     ${SKIP_TEST})
-   #
+   rosbag2_transport_add_gmock(test_record
+     test/rosbag2_transport/test_record.cpp
+     AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common
+     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+     LINK_LIBS rosbag2_transport
+     ${SKIP_TEST})
+
+   rosbag2_transport_add_gmock(test_record_regex
+     test/rosbag2_transport/test_record_regex.cpp
+     LINK_LIBS rosbag2_transport
+     AMENT_DEPS test_msgs rosbag2_test_common
+     ${SKIP_TEST})
+
    rosbag2_transport_add_gmock(test_play
      src/rosbag2_transport/qos.cpp
      test/rosbag2_transport/test_play.cpp

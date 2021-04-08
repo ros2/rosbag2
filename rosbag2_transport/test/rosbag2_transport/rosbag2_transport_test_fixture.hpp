@@ -60,7 +60,7 @@ public:
   Rosbag2TransportTestFixture()
   : storage_options_({"uri", "storage_id", 0, 100}), play_options_({1000}),
     reader_(std::make_unique<rosbag2_cpp::Reader>(std::make_unique<MockSequentialReader>())),
-    writer_(std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>())) {}
+    writer_(std::make_unique<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>())) {}
 
   template<typename MessageT>
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
@@ -83,7 +83,7 @@ public:
   rosbag2_transport::PlayOptions play_options_;
 
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
-  std::shared_ptr<rosbag2_cpp::Writer> writer_;
+  std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__ROSBAG2_TRANSPORT_TEST_FIXTURE_HPP_

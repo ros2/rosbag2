@@ -36,6 +36,22 @@ bool spin_and_wait_for(Timeout timeout, const Node & node, Condition condition)
   }
   return true;
 }
+
+template<typename Timeout, typename Condition>
+bool wait_until_shutdown(Timeout timeout, Condition condition)
+{
+  using clock = std::chrono::system_clock;
+  auto start = clock::now();
+  while (!condition()) {
+    if ((clock::now() - start) > timeout) {
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  rclcpp::shutdown();
+  return true;
+}
+
 }  // namespace rosbag2_test_common
 
 #endif  // ROSBAG2_TEST_COMMON__WAIT_FOR_HPP_

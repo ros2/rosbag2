@@ -18,6 +18,12 @@
 #include <string>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_test_common/wait_for.hpp"
+
+#include "rosbag2_transport/recorder.hpp"
+
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
@@ -29,22 +35,35 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   auto string_message = get_messages_strings()[0];
   string_message->string_value = "Hello World";
 
+  rosbag2_transport::RecordOptions record_options = {true, true, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+
   auto publisher_node = std::make_shared<rclcpp::Node>(
-    "publisher_for_test",
+    "rosbag2_record_all_no_discovery",
     rclcpp::NodeOptions().start_parameter_event_publisher(false));
-
-  start_recording({true, true, {}, "rmw_format", 1ms});
-
-  std::this_thread::sleep_for(100ms);
   auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>(topic, 10);
+
   for (int i = 0; i < 5; ++i) {
     std::this_thread::sleep_for(20ms);
     publisher->publish(*string_message);
   }
-  stop_recording();
 
-  MockSequentialWriter & writer =
-    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-  auto recorded_topics = writer.get_topics();
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  size_t expected_messages = 0;
+  rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(2),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() > expected_messages;
+    });
+  (void) expected_messages;  // we can't say anything here, there might be some rosout
+
+  auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(0u, recorded_topics.count(topic));
 }
