@@ -71,6 +71,12 @@ public:
   bool sleep_until(rcutils_time_point_value_t until) override;
 
   /**
+   * Change the rate of the flow of time for the clock
+   */
+  ROSBAG2_CPP_PUBLIC
+  void set_rate(double rate) override;
+
+  /**
    * Return the current playback rate.
    */
   ROSBAG2_CPP_PUBLIC

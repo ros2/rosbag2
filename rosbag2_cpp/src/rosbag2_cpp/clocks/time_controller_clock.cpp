@@ -154,6 +154,17 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
   return now() >= until;
 }
 
+void TimeControllerClock::set_rate(double rate)
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  if (impl_->rate == rate) {
+    return;
+  }
+  impl_->snapshot();
+  impl_->rate = rate;
+  impl_->cv.notify_all();
+}
+
 double TimeControllerClock::get_rate() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
