@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <gmock/gmock.h>
+#include <memory>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 

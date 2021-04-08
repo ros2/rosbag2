@@ -23,7 +23,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
-//#include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"
@@ -54,7 +53,7 @@ public:
   void start_async_spin(T node)
   {
     future_ = std::async(
-      std::launch::async, [&node]() -> void { rclcpp::spin(node); });
+      std::launch::async, [&node]() -> void {rclcpp::spin(node);});
   }
 
   void stop_spinning()
@@ -64,22 +63,6 @@ public:
       future_.wait();
     }
   }
-
-  // void start_recording(const RecordOptions & options)
-  // {
-  //   // the future object returned from std::async needs to be stored not to block the execution
-  //   future_ = std::async(
-  //     std::launch::async, [this, options]() {
-  //       rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
-  //       rosbag2_transport.record(storage_options_, options);
-  //     });
-  // }
-
-  // void stop_recording()
-  // {
-  //   rclcpp::shutdown();
-  //   future_.get();
-  // }
 
   void run_publishers()
   {

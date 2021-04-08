@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -43,7 +44,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   start_async_spin(recorder);
 
   auto publisher_node = std::make_shared<rclcpp::Node>(
-    "rosbag2_record_all_no_discovery",
+    "rosbag2_test_record_all_no_discovery_1",
     rclcpp::NodeOptions().start_parameter_event_publisher(false));
   auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>(topic, 10);
 

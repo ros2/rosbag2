@@ -14,8 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
 #include <string>
-#include<utility>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -41,7 +42,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   std::string string_topic = "/string_topic";
 
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_record_all_test_node");
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_all_1");
   auto array_pub = pub_node->create_publisher<test_msgs::msg::Arrays>(
     array_topic, rclcpp::QoS{rclcpp::KeepAll()});
   auto string_pub = pub_node->create_publisher<test_msgs::msg::Strings>(

@@ -238,8 +238,7 @@ void Player::prepare_publishers()
   auto topics = reader_.get_all_topics_and_types();
   for (const auto & topic : topics) {
     // publisher is already prepared (e.g. in case of play loop)
-    if (publishers_.find(topic.name) != publishers_.end())
-    {
+    if (publishers_.find(topic.name) != publishers_.end()) {
       continue;
     }
 

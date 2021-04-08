@@ -14,8 +14,10 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
 #include <regex>
 #include <string>
+#include <utility>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -56,7 +58,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   record_options.regex = regex;
 
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_record_all_test_node");
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_regex_1");
   auto pub_v1 = pub_node->create_publisher<test_msgs::msg::Strings>(
     v1, rclcpp::QoS{rclcpp::KeepAll()});
   auto pub_b1 = pub_node->create_publisher<test_msgs::msg::Strings>(
@@ -137,7 +139,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   record_options.exclude = regex_exclude;
 
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_record_all_test_node");
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_regex_2");
   auto pub_v1 = pub_node->create_publisher<test_msgs::msg::Strings>(
     v1, rclcpp::QoS{rclcpp::KeepAll()});
   auto pub_v2 = pub_node->create_publisher<test_msgs::msg::Strings>(

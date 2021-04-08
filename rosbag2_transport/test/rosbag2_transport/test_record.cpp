@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -47,7 +48,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     string_topic, rclcpp::QoS{rclcpp::KeepAll()});
 
   rosbag2_transport::RecordOptions record_options =
-    {false, false, {string_topic, array_topic}, "rmw_format", 100ms};
+  {false, false, {string_topic, array_topic}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -101,7 +102,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
     topic, rclcpp::QoS{rclcpp::KeepAll()});
 
   rosbag2_transport::RecordOptions record_options =
-    {false, false, {topic}, "rmw_format", 100ms};
+  {false, false, {topic}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -162,7 +163,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
     topic, rclcpp::SensorDataQoS());
 
   rosbag2_transport::RecordOptions record_options =
-    {false, false, {topic}, "rmw_format", 100ms};
+  {false, false, {topic}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -197,7 +198,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   std::string topic = "/chatter";
 
   size_t num_latched_messages = 3;
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_3");
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_4");
   auto profile_transient_local = rclcpp::QoS(num_latched_messages).transient_local();
   auto string_pub = pub_node->create_publisher<test_msgs::msg::Strings>(
     topic, profile_transient_local);
@@ -208,7 +209,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   }
 
   rosbag2_transport::RecordOptions record_options =
-    {false, false, {topic}, "rmw_format", 100ms};
+  {false, false, {topic}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -244,7 +245,7 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
   auto profile_volatile = rclcpp::QoS(arbitrary_history).reliable().durability_volatile();
   auto profile_transient_local = rclcpp::QoS(arbitrary_history).reliable().transient_local();
 
-  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_4");
+  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_5");
   auto publisher_volatile = publisher_node->create_publisher<test_msgs::msg::Strings>(
     topic, profile_volatile);
   auto publisher_transient_local = publisher_node->create_publisher<test_msgs::msg::Strings>(
@@ -278,7 +279,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   const auto liveliness = RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC;
   const rmw_time_t liveliness_lease_duration{0, 5000000};
 
-  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_4");
+  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_6");
   auto create_pub = [publisher_node, topic](auto qos) {
       return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
     };
@@ -326,7 +327,7 @@ TEST_F(RecordIntegrationTestFixture, topic_qos_overrides)
   auto profile1 = rosbag2_transport::Rosbag2QoS{}.best_effort().durability_volatile();
   auto profile2 = rosbag2_transport::Rosbag2QoS{}.best_effort().transient_local();
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_record_all_test_node");
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_7");
   auto pub_profile1 = pub_node->create_publisher<test_msgs::msg::Strings>(
     strict_topic, profile1);
   auto pub_profile2 = pub_node->create_publisher<test_msgs::msg::Strings>(
