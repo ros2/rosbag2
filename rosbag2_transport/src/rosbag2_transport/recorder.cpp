@@ -268,11 +268,6 @@ Recorder::create_subscription(
   return subscription;
 }
 
-// void Recorder::record_messages() const
-// {
-//   spin(transport_node_);
-// }
-
 std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)
 {
   YAML::Node offered_qos_profiles;
