@@ -35,26 +35,44 @@ class Writer;
 namespace rosbag2_transport
 {
 
-class Rosbag2Node;
-
-class Rosbag2Transport
+class Player
 {
 public:
-  /// Default constructor
   ROSBAG2_TRANSPORT_PUBLIC
-  Rosbag2Transport();
-
-  /// Constructor for testing, allows to set the reader and writer to use
-  ROSBAG2_TRANSPORT_PUBLIC
-  Rosbag2Transport(
-    std::shared_ptr<rosbag2_cpp::Reader> reader,
-    std::shared_ptr<rosbag2_cpp::Writer> writer);
+  Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void init();
+  explicit Player(std::shared_ptr<rosbag2_cpp::Reader> reader);
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void shutdown();
+  virtual ~Player();
+
+  /**
+   * Replay a bagfile.
+   *
+   * \param storage_options Option regarding the storage (e.g. bag file name)
+   * \param play_options Options regarding the playback (e.g. queue size)
+   */
+  ROSBAG2_TRANSPORT_PUBLIC
+  void play(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const PlayOptions & play_options);
+
+protected:
+  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+};
+
+class Recorder
+{
+public:
+  ROSBAG2_TRANSPORT_PUBLIC
+  Recorder();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  explicit Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer);
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  virtual ~Recorder();
 
   /**
    * Records topics to a bagfile. Subscription happens at startup time, hence the topics must
@@ -68,26 +86,8 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const RecordOptions & record_options);
 
-  /**
-   * Replay all topics in a bagfile.
-   *
-   * \param storage_options Option regarding the storage (e.g. bag file name)
-   * \param play_options Options regarding the playback (e.g. queue size)
-   */
-  ROSBAG2_TRANSPORT_PUBLIC
-  void play(
-    const rosbag2_storage::StorageOptions & storage_options,
-    const PlayOptions & play_options);
-
-private:
-  std::shared_ptr<rclcpp::Node> setup_node(
-    std::string node_prefix = "",
-    const std::vector<std::string> & topic_remapping_options = {});
-
-  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+protected:
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-
-  std::shared_ptr<rclcpp::Node> transport_node_;
 };
 
 }  // namespace rosbag2_transport

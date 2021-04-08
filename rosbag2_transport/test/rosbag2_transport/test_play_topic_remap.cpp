@@ -63,9 +63,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
     remapped_topic, 1u);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
+  rosbag2_transport::Player player(reader_);
 
-  rosbag2_transport.play(storage_options_, play_options_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 

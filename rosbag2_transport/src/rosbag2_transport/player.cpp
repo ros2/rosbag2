@@ -73,6 +73,8 @@ rclcpp::QoS publisher_qos_for_topic(
 
 namespace rosbag2_transport
 {
+namespace impl
+{
 
 const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
@@ -240,4 +242,5 @@ void Player::prepare_clock(const PlayOptions & options, rcutils_time_point_value
   }
 }
 
+}  // namespace impl
 }  // namespace rosbag2_transport

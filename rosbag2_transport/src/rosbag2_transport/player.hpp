@@ -40,9 +40,8 @@ class Reader;
 
 namespace rosbag2_transport
 {
-
-class GenericPublisher;
-class Rosbag2Node;
+namespace impl
+{
 
 class Player
 {
@@ -76,6 +75,7 @@ private:
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
 };
 
+}  // namespace impl
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__PLAYER_HPP_

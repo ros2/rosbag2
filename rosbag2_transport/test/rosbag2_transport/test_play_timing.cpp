@@ -60,8 +60,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_relative_timing_of_stored_m
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  Player player(reader_);
+  player.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));
@@ -95,8 +95,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
 
   play_options_.rate = 2.0;
   auto start = std::chrono::steady_clock::now();
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  Player player(reader_);
+  player.play(storage_options_, play_options_);
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(0.5 * message_time_difference));
@@ -109,8 +109,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
 
   play_options_.rate = 1.0;
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  player = Player(reader_);
+  player.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));
@@ -122,8 +122,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
 
   play_options_.rate = 0.5;
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  player = Player(reader_);
+  player.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(2 * message_time_difference));
@@ -135,8 +135,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
 
   play_options_.rate = 0.0;
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  player = Player(reader_);
+  player.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));
@@ -148,8 +148,8 @@ TEST_F(Rosbag2TransportTestFixture, playing_respects_rate)
 
   play_options_.rate = -1.23f;
   start = std::chrono::steady_clock::now();
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  player = Player(reader_);
+  player.play(storage_options_, play_options_);
   replay_time = std::chrono::steady_clock::now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference));

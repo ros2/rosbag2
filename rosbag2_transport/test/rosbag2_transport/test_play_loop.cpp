@@ -64,10 +64,8 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto rosbag2_transport_ptr = std::make_shared<rosbag2_transport::Rosbag2Transport>(
-    reader_,
-    writer_);
-  std::thread loop_thread(&rosbag2_transport::Rosbag2Transport::play, rosbag2_transport_ptr,
+  auto player = std::make_shared<rosbag2_transport::Player>(reader_);
+  std::thread loop_thread(&rosbag2_transport::Player::play, player,
     storage_options_,
     rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}});
 

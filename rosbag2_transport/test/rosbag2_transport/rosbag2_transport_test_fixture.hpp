@@ -45,15 +45,6 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common; // NOLINT
 
-inline char separator()
-{
-#ifdef _WIN32
-  return '\\';
-#else
-  return '/';
-#endif
-}
-
 class Rosbag2TransportTestFixture : public Test
 {
 public:

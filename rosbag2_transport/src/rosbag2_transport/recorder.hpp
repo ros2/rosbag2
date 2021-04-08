@@ -38,9 +38,8 @@ class Writer;
 
 namespace rosbag2_transport
 {
-
-class GenericSubscription;
-class Rosbag2Node;
+namespace impl
+{
 
 class Recorder
 {
@@ -106,6 +105,7 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
+}  // namespace impl
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__RECORDER_HPP_
