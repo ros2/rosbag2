@@ -65,8 +65,8 @@ public:
   void run_test()
   {
     auto await_received_messages = sub_->spin_subscriptions();
-    rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
-    rosbag2_transport.play(storage_options_, play_options_);
+    rosbag2_transport::Player player(reader_);
+    player.play(storage_options_, play_options_);
     await_received_messages.get();
 
     // Check that we got enough messages

@@ -75,8 +75,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  Player player(reader_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
@@ -144,8 +144,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
-  rosbag2_transport.play(storage_options_, play_options_);
+  Player player(reader_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
@@ -214,8 +214,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
     auto await_received_messages = sub_->spin_subscriptions();
 
-    Rosbag2Transport rosbag2_transport(reader_, writer_);
-    rosbag2_transport.play(storage_options_, play_options_);
+    Player player(reader_);
+    player.play(storage_options_, play_options_);
 
     await_received_messages.get();
 
@@ -245,8 +245,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
     auto await_received_messages = sub_->spin_subscriptions();
 
-    Rosbag2Transport rosbag2_transport(reader_, writer_);
-    rosbag2_transport.play(storage_options_, play_options_);
+    Player player(reader_);
+    player.play(storage_options_, play_options_);
 
     await_received_messages.get();
 
@@ -276,8 +276,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
     auto await_received_messages = sub_->spin_subscriptions();
 
-    auto rosbag2_transport = Rosbag2Transport(reader_, writer_);
-    rosbag2_transport.play(storage_options_, play_options_);
+    auto player = Player(reader_);
+    player.play(storage_options_, play_options_);
 
     await_received_messages.get();
 
@@ -329,9 +329,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  Rosbag2Transport rosbag2_transport(reader_, writer_);
+  Player player(reader_);
   play_options_.topics_to_filter = {"topic2"};
-  rosbag2_transport.play(storage_options_, play_options_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
@@ -355,9 +355,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
+  player = Player(reader_);
   play_options_.topics_to_filter = {"topic1"};
-  rosbag2_transport.play(storage_options_, play_options_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
@@ -382,9 +382,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport = Rosbag2Transport(reader_, writer_);
+  player = Player(reader_);
   play_options_.topics_to_filter = {"topic1", "topic2"};
-  rosbag2_transport.play(storage_options_, play_options_);
+  player.play(storage_options_, play_options_);
 
   await_received_messages.get();
 
@@ -437,8 +437,8 @@ public:
   void play_and_wait(Duration timeout, bool expect_timeout = false)
   {
     auto await_received_messages = sub_->spin_subscriptions();
-    Rosbag2Transport transport{reader_, writer_};
-    transport.play(storage_options_, play_options_);
+    Player player{reader_};
+    player.play(storage_options_, play_options_);
     const auto result = await_received_messages.wait_for(timeout);
     // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out
     if (expect_timeout) {
@@ -446,8 +446,8 @@ public:
     } else {
       EXPECT_NE(result, std::future_status::timeout);
     }
-    // Have to rclcpp::shutdown here to make the spin_subscriptions async thread exit
-    transport.shutdown();
+    // Have to shutdown here to make the spin_subscriptions async thread exit
+    rclcpp::shutdown();
   }
 
   const std::string topic_name_{"/test_topic"};

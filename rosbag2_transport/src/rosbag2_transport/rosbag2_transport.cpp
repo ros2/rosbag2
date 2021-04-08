@@ -35,32 +35,45 @@
 #include "player.hpp"
 #include "recorder.hpp"
 
+namespace
+{
+std::shared_ptr<rclcpp::Node> setup_node(
+  std::string node_prefix = "",
+  const std::vector<std::string> & topic_remapping_options = {})
+{
+  auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
+  return std::make_shared<rclcpp::Node>(node_prefix + "_rosbag2", node_options);
+}
+}  // namespace
+
 namespace rosbag2_transport
 {
 
-Rosbag2Transport::Rosbag2Transport()
-: reader_(std::make_shared<rosbag2_cpp::Reader>(
-      std::make_unique<rosbag2_cpp::readers::SequentialReader>())),
-  writer_(std::make_shared<rosbag2_cpp::Writer>(
+Player::Player(std::shared_ptr<rosbag2_cpp::Reader> reader)
+: reader_(std::move(reader))
+{}
+
+Player::Player()
+: Player(std::make_shared<rosbag2_cpp::Reader>(
+      std::make_unique<rosbag2_cpp::readers::SequentialReader>()))
+{}
+
+Player::~Player()
+{}
+
+Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer)
+: writer_(std::move(writer))
+{}
+
+Recorder::Recorder()
+: Recorder(std::make_shared<rosbag2_cpp::Writer>(
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>()))
 {}
 
-Rosbag2Transport::Rosbag2Transport(
-  std::shared_ptr<rosbag2_cpp::Reader> reader,
-  std::shared_ptr<rosbag2_cpp::Writer> writer)
-: reader_(std::move(reader)), writer_(std::move(writer)) {}
+Recorder::~Recorder()
+{}
 
-void Rosbag2Transport::init()
-{
-  rclcpp::init(0, nullptr);
-}
-
-void Rosbag2Transport::shutdown()
-{
-  rclcpp::shutdown();
-}
-
-void Rosbag2Transport::record(
+void Recorder::record(
   const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
   try {
@@ -69,25 +82,14 @@ void Rosbag2Transport::record(
 
     auto transport_node = setup_node(record_options.node_prefix);
 
-    Recorder recorder(writer_, transport_node);
+    impl::Recorder recorder(writer_, transport_node);
     recorder.record(record_options);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(rclcpp::get_logger("rosbag2_transport"), "Failed to record: %s", e.what());
   }
 }
 
-std::shared_ptr<rclcpp::Node> Rosbag2Transport::setup_node(
-  std::string node_prefix,
-  const std::vector<std::string> & topic_remapping_options)
-{
-  if (!transport_node_) {
-    auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
-    transport_node_ = std::make_shared<rclcpp::Node>(node_prefix + "_rosbag2", node_options);
-  }
-  return transport_node_;
-}
-
-void Rosbag2Transport::play(
+void Player::play(
   const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
   auto transport_node =
@@ -104,13 +106,13 @@ void Rosbag2Transport::play(
       spin_thread.join();
     });
   try {
-    Player player(reader_, transport_node);
+    impl::Player player(reader_, transport_node);
     do {
       reader_->open(storage_options, {"", rmw_get_serialization_format()});
       player.play(play_options);
     } while (rclcpp::ok() && play_options.loop);
   } catch (std::runtime_error & e) {
-    RCLCPP_ERROR(transport_node_->get_logger(), "Failed to play: %s", e.what());
+    RCLCPP_ERROR(transport_node->get_logger(), "Failed to play: %s", e.what());
   }
 }
 
