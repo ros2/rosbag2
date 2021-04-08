@@ -28,6 +28,13 @@ from rosbag2_py import StorageOptions
 import yaml
 
 
+def positive_float(arg: str) -> float:
+    value = float(arg)
+    if value <= 0:
+        raise ValueError(f'Value {value} is less than or equal to zero.')
+    return value
+
+
 class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
@@ -71,6 +78,10 @@ class PlayVerb(VerbExtension):
                  '  pragmas: [\"<setting_name>\" = <setting_value>]'
                  'Note that applicable settings are limited to read-only for ros2 bag play.'
                  'For a list of sqlite3 settings, refer to sqlite3 documentation')
+        parser.add_argument(
+            '--clock', type=positive_float, nargs='?', const=40, default=0,
+            help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
+                 'Value must be positive. Defaults to not publishing.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -104,6 +115,7 @@ class PlayVerb(VerbExtension):
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
+        play_options.clock_publish_frequency = args.clock
 
         player = Player()
         player.play(storage_options, play_options)

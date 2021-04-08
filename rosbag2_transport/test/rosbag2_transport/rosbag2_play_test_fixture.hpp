@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 
 class RosBag2PlayTestFixture : public Rosbag2TransportTestFixture

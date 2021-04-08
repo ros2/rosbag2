@@ -222,6 +222,22 @@ void Player::prepare_clock(const PlayOptions & options, rcutils_time_point_value
 {
   double rate = options.rate > 0.0 ? options.rate : 1.0;
   clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
+
+  // Create /clock publisher
+  if (options.clock_publish_frequency > 0.f) {
+    const auto publish_period = std::chrono::nanoseconds(
+      static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / options.clock_publish_frequency));
+    // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
+    // should not own transport-based functionality
+    clock_publisher_ = transport_node_->create_publisher<rosgraph_msgs::msg::Clock>(
+      "/clock", rclcpp::ClockQoS());
+    clock_publish_timer_ = transport_node_->create_wall_timer(
+      publish_period, [this]() {
+        auto msg = rosgraph_msgs::msg::Clock();
+        msg.clock = rclcpp::Time(clock_->now());
+        clock_publisher_->publish(msg);
+      });
+  }
 }
 
 }  // namespace rosbag2_transport

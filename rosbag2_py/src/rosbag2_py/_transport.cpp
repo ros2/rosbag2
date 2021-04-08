@@ -190,6 +190,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::setTopicQoSProfileOverrides)
   .def_readwrite("loop", &PlayOptions::loop)
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
+  .def_readwrite("clock_publish_frequency", &PlayOptions::clock_publish_frequency)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
