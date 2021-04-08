@@ -167,7 +167,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   bool succeeded = rosbag2_test_common::spin_and_wait_for(
     std::chrono::seconds(5), publisher_node,
     // The = is necessary due to an implementation difference between clang and windows
-    // Clang claims capture is unecessary (and we use -Werror), but windows needs it
+    // Clang claims capture is unecessary, but windows needs it
     [&writer, num_latched_messages = num_latched_messages]() {
       return writer.get_messages().size() == num_latched_messages;
     });
