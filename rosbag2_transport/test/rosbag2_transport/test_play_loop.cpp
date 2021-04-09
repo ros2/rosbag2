@@ -56,7 +56,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
-  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   sub_->add_subscription<test_msgs::msg::BasicTypes>(
     "/loop_test_topic",
@@ -64,7 +64,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::Player>(reader_);
+  auto player = std::make_shared<rosbag2_transport::Player>(std::move(reader));
   std::thread loop_thread(&rosbag2_transport::Player::play, player,
     storage_options_,
     rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}});

@@ -52,7 +52,7 @@ public:
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
   Player(
-    std::shared_ptr<rosbag2_cpp::Reader> reader,
+    std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options,
     const std::string & node_name = "rosbag2_player",
@@ -74,7 +74,7 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
-  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
