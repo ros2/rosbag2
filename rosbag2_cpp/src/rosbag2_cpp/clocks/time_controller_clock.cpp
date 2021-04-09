@@ -16,6 +16,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <list>
 
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
@@ -90,6 +91,12 @@ public:
     reference.steady = now_fn();
   }
 
+  void jump(rcutils_time_point_value_t time_point);
+
+  void add_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler);
+
+  void remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler);
+
   const PlayerClock::NowFunction now_fn;
   const std::chrono::milliseconds sleep_time_while_paused;
 
@@ -98,7 +105,105 @@ public:
   double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
   bool paused RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
+
+private:
+  std::mutex callback_list_mutex_;
+  std::list<PlayerClock::JumpHandler::SharedPtr> callback_list_
+    RCPPUTILS_TSA_GUARDED_BY(callback_list_mutex_);
+
+  void process_callbacks_before_jump(const rcl_time_jump_t & time_jump);
+  void process_callbacks_after_jump(const rcl_time_jump_t & time_jump);
+  static void process_callback(
+    PlayerClock::JumpHandler::SharedPtr handler, const rcl_time_jump_t & time_jump,
+    bool before_jump) RCPPUTILS_TSA_REQUIRES(callback_list_mutex_);
 };
+
+void TimeControllerClockImpl::jump(rcutils_time_point_value_t time_point)
+{
+  rcl_duration_t time_jump_delta;
+  {
+    std::lock_guard<std::mutex> lock(state_mutex);
+
+    time_jump_delta.nanoseconds = time_point - steady_to_ros(now_fn());
+  }
+
+  rcl_time_jump_t time_jump{};
+  time_jump.clock_change = RCL_ROS_TIME_NO_CHANGE;
+  time_jump.delta = time_jump_delta;
+
+  process_callbacks_before_jump(time_jump);
+  {
+    std::lock_guard<std::mutex> lock(state_mutex);
+    snapshot(time_point);
+  }
+  process_callbacks_after_jump(time_jump);
+  cv.notify_all();
+}
+
+void TimeControllerClockImpl::process_callbacks_before_jump(const rcl_time_jump_t & time_jump)
+{
+  std::lock_guard<std::mutex> lock(callback_list_mutex_);
+  for (auto const & handler : callback_list_) {
+    process_callback(handler, time_jump, true);
+  }
+}
+
+void TimeControllerClockImpl::process_callbacks_after_jump(const rcl_time_jump_t & time_jump)
+{
+  std::lock_guard<std::mutex> lock(callback_list_mutex_);
+  for (auto const & handler : callback_list_) {
+    process_callback(handler, time_jump, false);
+  }
+}
+
+void TimeControllerClockImpl::process_callback(
+  PlayerClock::JumpHandler::SharedPtr handler, const rcl_time_jump_t & time_jump,
+  bool before_jump) RCPPUTILS_TSA_REQUIRES(callback_list_mutex_)
+{
+  bool is_clock_change = time_jump.clock_change == RCL_ROS_TIME_ACTIVATED ||
+    time_jump.clock_change == RCL_ROS_TIME_DEACTIVATED;
+  if ((is_clock_change && handler->notice_threshold.on_clock_change) ||
+    (time_jump.delta.nanoseconds < 0 &&
+    time_jump.delta.nanoseconds <= handler->notice_threshold.min_backward.nanoseconds) ||
+    (time_jump.delta.nanoseconds > 0 &&
+    time_jump.delta.nanoseconds >= handler->notice_threshold.min_forward.nanoseconds))
+  {
+    if (before_jump && handler->pre_callback) {
+      handler->pre_callback();
+    } else if (!before_jump && handler->post_callback) {
+      handler->post_callback(time_jump);
+    }
+  }
+}
+
+void TimeControllerClockImpl::add_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler)
+{
+  if (handler->notice_threshold.min_forward.nanoseconds < 0) {
+    throw std::invalid_argument("forward jump threshold must be positive or zero");
+  }
+  if (handler->notice_threshold.min_backward.nanoseconds > 0) {
+    throw std::invalid_argument("backward jump threshold must be negative or zero");
+  }
+
+  std::lock_guard<std::mutex> lock(callback_list_mutex_);
+  for (auto const & registered_handler : callback_list_) {
+    if (*registered_handler == *handler) {
+      return;  // Already have this callback in the list.
+    }
+  }
+  callback_list_.push_back(handler);
+}
+
+void TimeControllerClockImpl::remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler)
+{
+  std::lock_guard<std::mutex> lock(callback_list_mutex_);
+  for (auto it = callback_list_.begin(); it != callback_list_.end(); ++it) {
+    if (**it == *handler) {
+      callback_list_.erase(it);
+      return;
+    }
+  }
+}
 
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
@@ -134,6 +239,35 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
     }
   }
   return now() >= until;
+}
+
+void TimeControllerClock::jump(rcutils_time_point_value_t time_point)
+{
+  impl_->jump(time_point);
+}
+
+PlayerClock::JumpHandler::SharedPtr TimeControllerClock::create_jump_handler(
+  const JumpHandler::pre_callback_t & pre_callback,
+  const JumpHandler::post_callback_t & post_callback,
+  const rcl_jump_threshold_t & threshold)
+{
+  // Allocate a new jump handler
+  JumpHandler::SharedPtr handler(new JumpHandler(
+      pre_callback, post_callback, threshold));
+  if (nullptr == handler) {
+    throw std::bad_alloc{};
+  }
+  return handler;
+}
+
+void TimeControllerClock::add_jump_calbacks(PlayerClock::JumpHandler::SharedPtr handler)
+{
+  impl_->add_jump_callbacks(handler);
+}
+
+void TimeControllerClock::remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler)
+{
+  impl_->remove_jump_callbacks(handler);
 }
 
 double TimeControllerClock::get_rate() const

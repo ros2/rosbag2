@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "rcutils/time.h"
+#include "rclcpp/clock.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
@@ -40,6 +41,8 @@ public:
    */
   typedef std::function<std::chrono::steady_clock::time_point()> NowFunction;
 
+  using JumpHandler = rclcpp::JumpHandler;
+
   ROSBAG2_CPP_PUBLIC
   virtual ~PlayerClock() = default;
 
@@ -58,6 +61,47 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   virtual bool sleep_until(rcutils_time_point_value_t until) = 0;
+
+  /// \brief Adjust internal clock to the specified timestamp
+  /// \details It will change the current internally maintained offset so that next published time
+  /// is different.
+  /// \note Will trigger any registered JumpHandler callbacks.
+  /// \param time_point Time point in ROS playback timeline.
+  ROSBAG2_CPP_PUBLIC
+  virtual void jump(rcutils_time_point_value_t time_point) = 0;
+
+  /// \brief Creates JumpHandler object with callbacks for jump operation.
+  /// \param pre_callback Pre-time jump callback. Must be non-throwing.
+  /// \param post_callback Post-time jump callback. Must be non-throwing.
+  /// \param threshold Callbacks will be triggered if the time jump is greater then the threshold.
+  /// \note These callback functions must remain valid as long as the returned shared pointer is
+  /// valid.
+  /// \return Shared pointer to the newly created JumpHandler object.
+  /// \throws std::bad_alloc if the allocation of the JumpHandler fails.
+  /// \warning If data members of the JumpHandler object will be changed out of PlayerClock class,
+  /// it will cause undefined behaviour.
+  ROSBAG2_CPP_PUBLIC
+  virtual PlayerClock::JumpHandler::SharedPtr create_jump_handler(
+    const JumpHandler::pre_callback_t & pre_callback,
+    const JumpHandler::post_callback_t & post_callback,
+    const rcl_jump_threshold_t & threshold) = 0;
+
+  /// \brief Add callbacks to be called when a time jump exceeds a threshold.
+  /// \details Callbacks specified in JumpHandler object will be called in two cases:
+  ///    1. use_sim_time is true: if the external time source jumps back in time, or forward
+  /// farther than the threshold.
+  ///    2. use_sim_time is false: if jump(time_point) is called and time jumps back or forward
+  /// farther than the threshold.
+  /// \param handler Shared pointer to the JumpHandler object returned from create_jump_handler()
+  /// \throws std::invalid argument if jump threshold has invalid value.
+  /// \note Pair of pre_callback and post_callback shall be unique for each JumpHandler object.
+  ROSBAG2_CPP_PUBLIC
+  virtual void add_jump_calbacks(PlayerClock::JumpHandler::SharedPtr handler) = 0;
+
+  /// \brief remove jump callbacks from processing list.
+  /// \param handler Shared pointer to the JumpHandler object returned from create_jump_handler()
+  ROSBAG2_CPP_PUBLIC
+  virtual void remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler) = 0;
 
   /**
    * Return the current playback rate.
@@ -85,6 +129,23 @@ public:
   ROSBAG2_CPP_PUBLIC
   virtual bool is_paused() const = 0;
 };
+
+/// \brief Equal operator for PlayerClock::JumpHandler class.
+/// \param left Left side operand for equal comparison operation.
+/// \param right Right side operand for equal comparison operation.
+/// \return true if corresponding object's callbacks pointing to the same functions,
+/// otherwise false.
+ROSBAG2_CPP_PUBLIC
+bool operator==(const PlayerClock::JumpHandler & left, const PlayerClock::JumpHandler & right)
+{
+  if (&(left.pre_callback) == &(right.pre_callback) &&
+    &(left.post_callback) == &(right.post_callback))
+  {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 }  // namespace rosbag2_cpp
 
