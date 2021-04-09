@@ -61,6 +61,30 @@ Player::Player()
 Player::~Player()
 {}
 
+void Player::play(
+  const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
+{
+  auto player = std::make_shared<impl::Player>(reader_, storage_options, play_options);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+  auto exit = rcpputils::scope_exit(
+    [&exec, &spin_thread]() {
+      exec.cancel();
+      spin_thread.join();
+    });
+  try {
+    do {
+      player->play();
+    } while (rclcpp::ok() && play_options.loop);
+  } catch (std::runtime_error & e) {
+    RCLCPP_ERROR(player->get_logger(), "Failed to play: %s", e.what());
+  }
+}
+
 Recorder::Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer)
 : writer_(std::move(writer))
 {}
@@ -86,33 +110,6 @@ void Recorder::record(
     recorder.record(record_options);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(rclcpp::get_logger("rosbag2_transport"), "Failed to record: %s", e.what());
-  }
-}
-
-void Player::play(
-  const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
-{
-  auto transport_node =
-    setup_node(play_options.node_prefix, play_options.topic_remapping_options);
-  rclcpp::executors::SingleThreadedExecutor exec;
-  exec.add_node(transport_node);
-  auto spin_thread = std::thread(
-    [&exec]() {
-      exec.spin();
-    });
-  auto exit = rcpputils::scope_exit(
-    [&exec, &spin_thread]() {
-      exec.cancel();
-      spin_thread.join();
-    });
-  try {
-    impl::Player player(reader_, transport_node);
-    do {
-      reader_->open(storage_options, {"", rmw_get_serialization_format()});
-      player.play(play_options);
-    } while (rclcpp::ok() && play_options.loop);
-  } catch (std::runtime_error & e) {
-    RCLCPP_ERROR(transport_node->get_logger(), "Failed to play: %s", e.what());
   }
 }
 
