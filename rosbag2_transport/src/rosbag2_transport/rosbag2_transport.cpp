@@ -35,17 +35,6 @@
 #include "player.hpp"
 #include "recorder.hpp"
 
-namespace
-{
-std::shared_ptr<rclcpp::Node> setup_node(
-  std::string node_prefix = "",
-  const std::vector<std::string> & topic_remapping_options = {})
-{
-  auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
-  return std::make_shared<rclcpp::Node>(node_prefix + "_rosbag2", node_options);
-}
-}  // namespace
-
 namespace rosbag2_transport
 {
 
