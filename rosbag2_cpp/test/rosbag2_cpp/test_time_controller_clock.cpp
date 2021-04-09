@@ -18,12 +18,14 @@
 
 using namespace testing;  // NOLINT
 using SteadyTimePoint = std::chrono::steady_clock::time_point;
+using SteadyTimeDurationSecT = std::chrono::duration<int>;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
 class TimeControllerClockTest : public Test
 {
 public:
   TimeControllerClockTest()
+  : return_time(std::chrono::nanoseconds(0))
   {
     now_fn = [this]() {
         return return_time;
@@ -96,7 +98,8 @@ TEST_F(TimeControllerClockTest, fast_rate)
 
   const SteadyTimePoint some_time(std::chrono::seconds(3));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+  rcutils_time_point_value_t expected_value = as_nanos(some_time) * playback_rate;
+  EXPECT_EQ(pclock.now(), expected_value);
 }
 
 TEST_F(TimeControllerClockTest, slow_rate)
@@ -110,5 +113,50 @@ TEST_F(TimeControllerClockTest, slow_rate)
 
   const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+  rcutils_time_point_value_t expected_value = as_nanos(some_time) * playback_rate;
+  EXPECT_EQ(pclock.now(), expected_value);
+}
+
+TEST_F(TimeControllerClockTest, jump_forward_const_playback_rate_no_callbacks)
+{
+  ros_start_time = 1234567890LL;
+  const SteadyTimePoint wall_time_begin(std::chrono::seconds(2));
+  return_time = wall_time_begin;
+  const double playback_rate = 1.5;
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+
+  rcutils_time_point_value_t ros_time_point_for_jump =
+    ros_start_time + as_nanos(SteadyTimePoint(std::chrono::seconds(3)));
+
+  pclock.jump(ros_time_point_for_jump);
+
+  const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
+  return_time = current_wall_time;
+
+  rcutils_time_point_value_t expected_value = ros_time_point_for_jump +
+    playback_rate * (as_nanos(current_wall_time) - as_nanos(wall_time_begin));
+
+  EXPECT_EQ(pclock.now(), expected_value);
+}
+
+TEST_F(TimeControllerClockTest, jump_backward_const_playback_rate_no_callbacks)
+{
+  ros_start_time = 1234567890LL;
+  const SteadyTimePoint wall_time_begin(std::chrono::seconds(2));
+  return_time = wall_time_begin;
+  const double playback_rate = 1.5;
+  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+
+  rcutils_time_point_value_t ros_time_point_for_jump =
+    ros_start_time - as_nanos(SteadyTimePoint(std::chrono::seconds(3)));
+
+  pclock.jump(ros_time_point_for_jump);
+
+  const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
+  return_time = current_wall_time;
+
+  rcutils_time_point_value_t expected_value = ros_time_point_for_jump +
+    playback_rate * (as_nanos(current_wall_time) - as_nanos(wall_time_begin));
+
+  EXPECT_EQ(pclock.now(), expected_value);
 }
