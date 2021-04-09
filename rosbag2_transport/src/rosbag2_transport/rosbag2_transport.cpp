@@ -35,17 +35,6 @@
 #include "player.hpp"
 #include "recorder.hpp"
 
-namespace
-{
-std::shared_ptr<rclcpp::Node> setup_node(
-  std::string node_prefix = "",
-  const std::vector<std::string> & topic_remapping_options = {})
-{
-  auto node_options = rclcpp::NodeOptions().arguments(topic_remapping_options);
-  return std::make_shared<rclcpp::Node>(node_prefix + "_rosbag2", node_options);
-}
-}  // namespace
-
 namespace rosbag2_transport
 {
 
@@ -100,16 +89,22 @@ Recorder::~Recorder()
 void Recorder::record(
   const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
+  auto recorder = std::make_shared<impl::Recorder>(writer_, storage_options, record_options);
   try {
-    writer_->open(
-      storage_options, {rmw_get_serialization_format(), record_options.rmw_serialization_format});
-
-    auto transport_node = setup_node(record_options.node_prefix);
-
-    impl::Recorder recorder(writer_, transport_node);
-    recorder.record(record_options);
+    recorder->record();
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(recorder);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+    auto exit = rcpputils::scope_exit(
+      [&exec, &spin_thread]() {
+        exec.cancel();
+        spin_thread.join();
+      });
   } catch (std::runtime_error & e) {
-    RCLCPP_ERROR(rclcpp::get_logger("rosbag2_transport"), "Failed to record: %s", e.what());
+    RCLCPP_ERROR(recorder->get_logger(), "Failed to record: %s", e.what());
   }
 }
 

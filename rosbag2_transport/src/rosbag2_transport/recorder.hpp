@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
@@ -41,14 +42,23 @@ namespace rosbag2_transport
 namespace impl
 {
 
-class Recorder
+class Recorder : public rclcpp::Node
 {
 public:
+  explicit Recorder(
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
   Recorder(
     std::shared_ptr<rosbag2_cpp::Writer> writer,
-    std::shared_ptr<rclcpp::Node> transport_node);
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::RecordOptions & record_options,
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
-  void record(const RecordOptions & record_options);
+  virtual ~Recorder();
+
+  void record();
 
   const std::unordered_set<std::string> &
   topics_using_fallback_qos() const
@@ -63,10 +73,10 @@ public:
   }
 
 private:
-  void topics_discovery(const RecordOptions & record_options);
+  void topics_discovery();
 
   std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics(const RecordOptions & record_options);
+  get_requested_or_available_topics();
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
@@ -78,8 +88,6 @@ private:
 
   std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
-
-  void record_messages() const;
 
   /**
    * Find the QoS profile that should be used for subscribing.
@@ -98,7 +106,10 @@ private:
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  std::shared_ptr<rclcpp::Node> transport_node_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::RecordOptions record_options_;
+  std::atomic<bool> stop_discovery_;
+  std::future<void> discovery_future_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
