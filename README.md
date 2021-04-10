@@ -2,7 +2,7 @@
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
-Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md).
+Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md).
 
 ## Installation instructions
 
@@ -278,5 +278,5 @@ This also allows to record data in a native format to optimize for speed, but to
 
 By default, rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
 
-[qos-override-tutorial]: https://index.ros.org/doc/ros2/Tutorials/Ros2bag/Overriding-QoS-Policies-For-Recording-And-Playback/
-[about-qos-settings]: https://index.ros.org/doc/ros2/Concepts/About-Quality-of-Service-Settings/
+[qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
+[about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html

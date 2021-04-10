@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
@@ -38,16 +39,26 @@ class Writer;
 
 namespace rosbag2_transport
 {
+namespace impl
+{
 
-class GenericSubscription;
-class Rosbag2Node;
-
-class Recorder
+class Recorder : public rclcpp::Node
 {
 public:
-  explicit Recorder(std::shared_ptr<rosbag2_cpp::Writer> writer, std::shared_ptr<Rosbag2Node> node);
+  explicit Recorder(
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
-  void record(const RecordOptions & record_options);
+  Recorder(
+    std::shared_ptr<rosbag2_cpp::Writer> writer,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::RecordOptions & record_options,
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  virtual ~Recorder();
+
+  void record();
 
   const std::unordered_set<std::string> &
   topics_using_fallback_qos() const
@@ -55,17 +66,17 @@ public:
     return topics_warned_about_incompatibility_;
   }
 
-  const std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> &
+  const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
   subscriptions() const
   {
     return subscriptions_;
   }
 
 private:
-  void topics_discovery(const RecordOptions & record_options);
+  void topics_discovery();
 
   std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics(const RecordOptions & record_options);
+  get_requested_or_available_topics();
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
@@ -75,10 +86,8 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
-  std::shared_ptr<GenericSubscription> create_subscription(
+  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
-
-  void record_messages() const;
 
   /**
    * Find the QoS profile that should be used for subscribing.
@@ -97,13 +106,17 @@ private:
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  std::shared_ptr<Rosbag2Node> node_;
-  std::unordered_map<std::string, std::shared_ptr<GenericSubscription>> subscriptions_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::RecordOptions record_options_;
+  std::atomic<bool> stop_discovery_;
+  std::future<void> discovery_future_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
 };
 
+}  // namespace impl
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__RECORDER_HPP_

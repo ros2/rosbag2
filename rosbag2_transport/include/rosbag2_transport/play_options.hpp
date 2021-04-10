@@ -40,6 +40,10 @@ public:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
   bool loop = false;
   std::vector<std::string> topic_remapping_options = {};
+
+  // Rate in Hz at which to publish to /clock.
+  // 0 (or negative) means that no publisher will be created
+  double clock_publish_frequency = 0.0;
 };
 
 }  // namespace rosbag2_transport

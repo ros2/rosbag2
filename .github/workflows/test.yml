@@ -29,6 +29,15 @@ jobs:
           rosbag2_test_common
           rosbag2_tests
         target-ros2-distro: rolling
+        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
+        colcon-defaults: |
+          {
+            "build": {
+              "cmake-args": [
+                "-DCMAKE_CXX_FLAGS=\"-Werror\""
+              ]
+            }
+          }
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs

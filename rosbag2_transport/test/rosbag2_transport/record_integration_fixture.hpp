@@ -51,8 +51,8 @@ public:
     // the future object returned from std::async needs to be stored not to block the execution
     future_ = std::async(
       std::launch::async, [this, options]() {
-        rosbag2_transport::Rosbag2Transport rosbag2_transport(reader_, writer_);
-        rosbag2_transport.record(storage_options_, options);
+        rosbag2_transport::Recorder recorder(writer_);
+        recorder.record(storage_options_, options);
       });
   }
 

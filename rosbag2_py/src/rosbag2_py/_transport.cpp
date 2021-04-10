@@ -89,15 +89,19 @@ namespace rosbag2_py
 class Player
 {
 public:
-  Player() = default;
-  virtual ~Player() = default;
+  Player()
+  {
+    rclcpp::init(0, nullptr);
+  }
+  virtual ~Player()
+  {
+    rclcpp::shutdown();
+  }
 
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    auto writer = std::make_shared<rosbag2_cpp::Writer>(
-      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
     std::shared_ptr<rosbag2_cpp::Reader> reader = nullptr;
     // Determine whether to build compression or regular reader
     {
@@ -116,18 +120,22 @@ public:
       }
     }
 
-    rosbag2_transport::Rosbag2Transport impl(reader, writer);
-    impl.init();
+    rosbag2_transport::Player impl(reader);
     impl.play(storage_options, play_options);
-    impl.shutdown();
   }
 };
 
 class Recorder
 {
 public:
-  Recorder() = default;
-  virtual ~Recorder() = default;
+  Recorder()
+  {
+    rclcpp::init(0, nullptr);
+  }
+  virtual ~Recorder()
+  {
+    rclcpp::shutdown();
+  }
 
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
@@ -160,10 +168,8 @@ public:
         std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
     }
 
-    rosbag2_transport::Rosbag2Transport impl(reader, writer);
-    impl.init();
+    rosbag2_transport::Recorder impl(writer);
     impl.record(storage_options, record_options);
-    impl.shutdown();
   }
 };
 
@@ -190,6 +196,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::setTopicQoSProfileOverrides)
   .def_readwrite("loop", &PlayOptions::loop)
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
+  .def_readwrite("clock_publish_frequency", &PlayOptions::clock_publish_frequency)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
