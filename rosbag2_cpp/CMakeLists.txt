@@ -61,7 +61,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/info.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
-  src/rosbag2_cpp/reshapers/stitcher.cpp
+  src/rosbag2_cpp/rewriter.cpp
   src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
@@ -226,13 +226,6 @@ if(BUILD_TESTING)
   if(TARGET test_multifile_reader)
     ament_target_dependencies(test_multifile_reader rosbag2_storage)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
-  endif()
-
-  ament_add_gmock(test_reshaper_stitcher
-    test/rosbag2_cpp/test_reshaper_stitcher.cpp)
-  if(TARGET test_reshaper_stitcher)
-    ament_target_dependencies(test_reshaper_stitcher rosbag2_storage)
-    target_link_libraries(test_reshaper_stitcher ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_time_controller_clock
