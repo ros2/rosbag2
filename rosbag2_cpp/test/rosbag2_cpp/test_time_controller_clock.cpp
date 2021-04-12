@@ -144,7 +144,6 @@ TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
   EXPECT_FALSE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10)));
 }
 
-
 TEST_F(TimeControllerClockTest, paused_now_always_same)
 {
   rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
@@ -170,4 +169,26 @@ TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
   clock.pause();  // Interrupts the long sleep, causing it to return false
   sleep_long_thread.join();
   EXPECT_FALSE(thread_sleep_result);
+}
+
+TEST_F(TimeControllerClockTest, resumes_at_correct_ros_time)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0, now_fn);
+
+  // Time passes while paused, no ROS time passes
+  clock.pause();
+  // reference at pause is R(0) / S(0)
+  return_time = SteadyTimePoint(std::chrono::seconds(1));
+  clock.resume();
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(0));
+
+  // time passes while running, equal ROS time should pass
+  return_time = SteadyTimePoint(std::chrono::seconds(2));
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(1));
+
+  // Lots of time passes while paused, still no ROS time passes
+  clock.pause();
+  return_time = SteadyTimePoint(std::chrono::seconds(10));
+  clock.resume();
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(1));
 }
