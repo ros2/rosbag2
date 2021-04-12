@@ -92,11 +92,17 @@ public:
     return steady_to_ros(now_fn());
   }
 
+  void snapshot(rcutils_time_point_value_t ros_time)
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
+  {
+    reference.ros = ros_time;
+    reference.steady = now_fn();
+  }
+
   void snapshot()
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    reference.ros = ros_now();
-    reference.steady = now_fn();
+    snapshot(ros_now());
   }
 
   const PlayerClock::NowFunction now_fn;
