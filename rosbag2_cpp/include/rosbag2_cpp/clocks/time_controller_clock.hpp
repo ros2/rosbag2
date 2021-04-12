@@ -40,13 +40,16 @@ public:
    * \param now_fn: Function used to get the current steady time
    *   defaults to std::chrono::steady_clock::now
    *   Used to control for unit testing, or for specialized needs
+   * \param sleep_time_while_paused: Amount of time to sleep in `sleep_until` when the clock
+   *   is paused. Allows the caller to spin at a defined rate while receiving `false`
    * \throws std::runtime_error if rate is <= 0
    */
   ROSBAG2_CPP_PUBLIC
   TimeControllerClock(
     rcutils_time_point_value_t starting_time,
     double rate = 1.0,
-    NowFunction now_fn = std::chrono::steady_clock::now);
+    NowFunction now_fn = std::chrono::steady_clock::now,
+    std::chrono::milliseconds sleep_time_while_paused = std::chrono::milliseconds{100});
 
   ROSBAG2_CPP_PUBLIC
   virtual ~TimeControllerClock();
@@ -72,6 +75,26 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   double get_rate() const override;
+
+  /**
+   * Stop the flow of time of the clock.
+   * If this changes the pause state, this will wake any waiting `sleep_until`
+   */
+  ROSBAG2_CPP_PUBLIC
+  void pause() override;
+
+  /**
+   * Start the flow of time of the clock
+   * If this changes the pause state, this will wake any waiting `sleep_until`
+   */
+  ROSBAG2_CPP_PUBLIC
+  void resume() override;
+
+  /**
+   * Return whether the clock is currently paused.
+   */
+  ROSBAG2_CPP_PUBLIC
+  bool is_paused() const override;
 
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;

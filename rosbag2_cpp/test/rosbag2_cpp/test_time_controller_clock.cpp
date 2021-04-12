@@ -14,6 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <thread>
+
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
@@ -111,4 +114,60 @@ TEST_F(TimeControllerClockTest, slow_rate)
   const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+}
+
+TEST_F(TimeControllerClockTest, is_paused)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  EXPECT_FALSE(clock.is_paused());
+  clock.pause();
+  EXPECT_TRUE(clock.is_paused());
+  clock.resume();
+  EXPECT_FALSE(clock.is_paused());
+}
+
+TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  clock.resume();
+  EXPECT_TRUE(clock.sleep_until(clock.now() + 100));
+
+  clock.pause();
+  clock.resume();
+  EXPECT_TRUE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1)));
+}
+
+TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  clock.pause();
+  EXPECT_FALSE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10)));
+}
+
+
+TEST_F(TimeControllerClockTest, paused_now_always_same)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  clock.pause();
+  auto now_start = clock.now();
+  EXPECT_EQ(now_start, clock.now());
+  clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1));
+  EXPECT_EQ(now_start, clock.now());
+
+  clock.resume();
+  EXPECT_NE(now_start, clock.now());
+}
+
+TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  std::atomic_bool thread_sleep_result{true};
+  auto sleep_long_thread = std::thread(
+    [&clock, &thread_sleep_result]() {
+      bool sleep_result = clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10));
+      thread_sleep_result.store(sleep_result);
+    });
+  clock.pause();  // Interrupts the long sleep, causing it to return false
+  sleep_long_thread.join();
+  EXPECT_FALSE(thread_sleep_result);
 }

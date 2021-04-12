@@ -64,6 +64,26 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   virtual double get_rate() const = 0;
+
+  /**
+   * Stop the flow of time of the clock.
+   * If this changes the pause state, this will wake any waiting `sleep_until`
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void pause() = 0;
+
+  /**
+   * Start the flow of time of the clock
+   * If this changes the pause state, this will wake any waiting `sleep_until`
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void resume() = 0;
+
+  /**
+   * Return whether the clock is currently paused.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual bool is_paused() const = 0;
 };
 
 }  // namespace rosbag2_cpp

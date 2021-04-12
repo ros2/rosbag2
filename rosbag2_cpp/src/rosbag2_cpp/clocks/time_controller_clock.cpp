@@ -55,25 +55,27 @@ public:
     std::chrono::steady_clock::time_point steady;
   };
 
-  explicit TimeControllerClockImpl(PlayerClock::NowFunction now_fn)
-  : now_fn(now_fn)
+  explicit TimeControllerClockImpl(
+    PlayerClock::NowFunction now_fn, std::chrono::milliseconds sleep_time_while_paused)
+  : now_fn(now_fn),
+    sleep_time_while_paused(sleep_time_while_paused)
   {}
   virtual ~TimeControllerClockImpl() = default;
 
   template<typename T>
-  rcutils_duration_value_t duration_nanos(const T & duration)
+  rcutils_duration_value_t duration_nanos(const T & duration) const
   {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
   }
 
-  rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time)
+  rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
     return reference.ros + static_cast<rcutils_duration_value_t>(
       rate * duration_nanos(steady_time - reference.steady));
   }
 
-  std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time)
+  std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
     const auto diff_nanos = static_cast<rcutils_duration_value_t>(
@@ -81,19 +83,44 @@ public:
     return reference.steady + std::chrono::nanoseconds(diff_nanos);
   }
 
+  rcutils_time_point_value_t ros_now() const
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
+  {
+    if (paused) {
+      return reference.ros;
+    }
+    return steady_to_ros(now_fn());
+  }
+
+  void snapshot(rcutils_time_point_value_t ros_time)
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
+  {
+    reference.ros = ros_time;
+    reference.steady = now_fn();
+  }
+
+  void snapshot()
+  RCPPUTILS_TSA_REQUIRES(state_mutex)
+  {
+    snapshot(ros_now());
+  }
+
   const PlayerClock::NowFunction now_fn;
+  const std::chrono::milliseconds sleep_time_while_paused;
 
   std::mutex state_mutex;
   std::condition_variable cv RCPPUTILS_TSA_GUARDED_BY(state_mutex);
   double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
+  bool paused RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
 };
 
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
   double rate,
-  NowFunction now_fn)
-: impl_(std::make_unique<TimeControllerClockImpl>(now_fn))
+  NowFunction now_fn,
+  std::chrono::milliseconds sleep_time_while_paused)
+: impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused))
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->reference.ros = starting_time;
@@ -107,15 +134,19 @@ TimeControllerClock::~TimeControllerClock()
 rcutils_time_point_value_t TimeControllerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
-  return impl_->steady_to_ros(impl_->now_fn());
+  return impl_->ros_now();
 }
 
 bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
   {
     TSAUniqueLock lock(impl_->state_mutex);
-    const auto steady_until = impl_->ros_to_steady(until);
-    impl_->cv.wait_until(lock, steady_until);
+    if (impl_->paused) {
+      impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
+    } else {
+      const auto steady_until = impl_->ros_to_steady(until);
+      impl_->cv.wait_until(lock, steady_until);
+    }
   }
   return now() >= until;
 }
@@ -124,6 +155,36 @@ double TimeControllerClock::get_rate() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   return impl_->rate;
+}
+
+void TimeControllerClock::pause()
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  if (impl_->paused) {
+    return;
+  }
+  // Note: needs to not be paused when taking snapshot, otherwise it will use last ros ref
+  impl_->snapshot();
+  impl_->paused = true;
+  impl_->cv.notify_all();
+}
+
+void TimeControllerClock::resume()
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  if (!impl_->paused) {
+    return;
+  }
+  // Note: needs to not be paused when taking snapshot, otherwise it will use last ros ref
+  impl_->paused = false;
+  impl_->snapshot();
+  impl_->cv.notify_all();
+}
+
+bool TimeControllerClock::is_paused() const
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  return impl_->paused;
 }
 
 }  // namespace rosbag2_cpp
