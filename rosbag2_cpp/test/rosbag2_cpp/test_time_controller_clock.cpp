@@ -43,6 +43,14 @@ public:
   rcutils_time_point_value_t ros_start_time = 0;
 };
 
+TEST_F(TimeControllerClockTest, must_provide_now_fn)
+{
+  NowFunction empty_now;
+  EXPECT_THROW(
+    rosbag2_cpp::TimeControllerClock(ros_start_time, 1.0, empty_now),
+    std::invalid_argument);
+}
+
 TEST_F(TimeControllerClockTest, steadytime_precision)
 {
   const double playback_rate = 1.0;
