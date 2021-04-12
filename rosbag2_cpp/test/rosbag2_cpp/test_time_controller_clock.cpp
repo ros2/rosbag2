@@ -116,48 +116,56 @@ TEST_F(TimeControllerClockTest, slow_rate)
   EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
 }
 
-TEST_F(TimeControllerClockTest, basic_pause_resume)
+TEST_F(TimeControllerClockTest, is_paused)
 {
-  bool sleep_result;
   rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
   EXPECT_FALSE(clock.is_paused());
   clock.pause();
   EXPECT_TRUE(clock.is_paused());
   clock.resume();
   EXPECT_FALSE(clock.is_paused());
+}
 
-  // Sleep 100 nanoseconds (basically nothing)
+TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
   clock.resume();
-  sleep_result = clock.sleep_until(clock.now() + 100);
-  EXPECT_TRUE(sleep_result);
+  EXPECT_TRUE(clock.sleep_until(clock.now() + 100));
 
-  // Try to sleep for a long time while paused, expect control to return quickly
   clock.pause();
-  sleep_result = clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10));
-  EXPECT_FALSE(sleep_result);
+  clock.resume();
+  EXPECT_TRUE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1)));
+}
 
-  // Expect now() to return the same value always, while paused.
+TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  clock.pause();
+  EXPECT_FALSE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10)));
+}
+
+
+TEST_F(TimeControllerClockTest, paused_now_always_same)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
   clock.pause();
   auto now_start = clock.now();
   EXPECT_EQ(now_start, clock.now());
   clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1));
   EXPECT_EQ(now_start, clock.now());
 
-  // Resume time, next now() should not be the same
   clock.resume();
   EXPECT_NE(now_start, clock.now());
+}
 
-  // While running, expect sleep to always make it to time (when not interrupted)
-  clock.resume();
-  sleep_result = clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1));
-  EXPECT_TRUE(sleep_result);
-
-  // Expect long sleep to be interrupted if we change pause state
-  clock.resume();
+TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
   std::atomic_bool thread_sleep_result{true};
   auto sleep_long_thread = std::thread(
     [&clock, &thread_sleep_result]() {
-      thread_sleep_result.store(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10)));
+      bool sleep_result = clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10));
+      thread_sleep_result.store(sleep_result);
     });
   clock.pause();  // Interrupts the long sleep, causing it to return false
   sleep_long_thread.join();
