@@ -163,7 +163,7 @@ void TimeControllerClock::pause()
   if (impl_->paused) {
     return;
   }
-  // Note: needs to not be paused when taking snapshot, otherwise it will use last ros ref
+  // Take snaphot before changing state
   impl_->snapshot();
   impl_->paused = true;
   impl_->cv.notify_all();
@@ -175,9 +175,9 @@ void TimeControllerClock::resume()
   if (!impl_->paused) {
     return;
   }
-  // Note: needs to not be paused when taking snapshot, otherwise it will use last ros ref
-  impl_->paused = false;
+  // Take snaphot before changing state
   impl_->snapshot();
+  impl_->paused = false;
   impl_->cv.notify_all();
 }
 
