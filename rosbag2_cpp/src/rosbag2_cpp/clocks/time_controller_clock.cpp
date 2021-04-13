@@ -122,6 +122,9 @@ TimeControllerClock::TimeControllerClock(
   std::chrono::milliseconds sleep_time_while_paused)
 : impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused))
 {
+  if (now_fn == nullptr) {
+    throw std::invalid_argument("TimeControllerClock now_fn must be non-empty.");
+  }
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->reference.ros = starting_time;
   impl_->reference.steady = impl_->now_fn();
