@@ -200,3 +200,31 @@ TEST_F(TimeControllerClockTest, resumes_at_correct_ros_time)
   clock.resume();
   EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(1));
 }
+
+TEST_F(TimeControllerClockTest, change_rate)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0, now_fn);
+  rcutils_time_point_value_t expected_ros_time = 0;
+
+  // 1 second passes for both
+  return_time += std::chrono::seconds(1);
+  expected_ros_time += RCUTILS_S_TO_NS(1);
+  EXPECT_EQ(clock.now(), expected_ros_time);
+
+  // 1 steady second passes, 2 ros seconds
+  clock.set_rate(2.0);
+  return_time += std::chrono::seconds(1);
+  expected_ros_time += RCUTILS_S_TO_NS(2);
+  EXPECT_EQ(clock.now(), expected_ros_time);
+
+  clock.pause();
+  clock.set_rate(0.5);
+  return_time += std::chrono::seconds(1);
+  // ROS time doesn't proceed while paused
+  EXPECT_EQ(clock.now(), expected_ros_time);
+
+  clock.resume();
+  return_time += std::chrono::seconds(2);
+  expected_ros_time += RCUTILS_S_TO_NS(1);
+  EXPECT_EQ(clock.now(), expected_ros_time);
+}
