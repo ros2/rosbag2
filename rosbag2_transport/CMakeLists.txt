@@ -28,6 +28,7 @@ find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_interfaces REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
@@ -48,6 +49,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rmw
   rosbag2_compression
   rosbag2_cpp
+  rosbag2_interfaces
   rosbag2_storage
   shared_queues_vendor
   yaml_cpp_vendor
@@ -72,7 +74,12 @@ install(
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(rosbag2_cpp rosbag2_compression shared_queues_vendor yaml_cpp_vendor)
+ament_export_dependencies(
+  rosbag2_cpp
+  rosbag2_compression
+  rosbag2_interfaces
+  shared_queues_vendor
+  yaml_cpp_vendor)
 
 function(create_tests_for_rmw_implementation)
   # disable the following tests for connext

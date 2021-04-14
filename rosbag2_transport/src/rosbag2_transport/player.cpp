@@ -95,7 +95,45 @@ Player::Player(
   reader_(std::move(reader)),
   storage_options_(storage_options),
   play_options_(play_options)
-{}
+{
+
+  srv_pause_ = create_service<rosbag2_interfaces::srv::Pause>(
+    "~/pause",
+    [this](
+      const std::shared_ptr<rmw_request_id_t> /* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Request> /* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Response> /* response */)
+    {
+      pause();
+    });
+  srv_resume_ = create_service<rosbag2_interfaces::srv::Resume>(
+    "~/resume",
+    [this](
+      const std::shared_ptr<rmw_request_id_t> /* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request> /* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response> /* response */)
+    {
+      resume();
+    });
+  srv_toggle_paused_ = create_service<rosbag2_interfaces::srv::TogglePaused>(
+    "~/toggle_paused",
+    [this](
+      const std::shared_ptr<rmw_request_id_t> /* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::TogglePaused::Request> /* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::TogglePaused::Response> /* response */)
+    {
+      toggle_paused();
+    });
+  srv_is_paused_ = create_service<rosbag2_interfaces::srv::IsPaused>(
+    "~/is_paused",
+    [this](
+      const std::shared_ptr<rmw_request_id_t> /* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Request> /* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Response> response)
+    {
+      response->paused = is_paused();
+    });
+}
 
 Player::~Player()
 {
@@ -155,6 +193,39 @@ void Player::play()
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
   }
+}
+
+void Player::pause()
+{
+  if (clock_) {
+    clock_->pause();
+  }
+}
+
+void Player::resume()
+{
+  if (clock_) {
+    clock_->resume();
+  }
+}
+
+void Player::toggle_paused()
+{
+  if (clock_) {
+    if (clock_->is_paused()) {
+      clock_->resume();
+    } else {
+      clock_->pause();
+    }
+  }
+}
+
+bool Player::is_paused()
+{
+  if (clock_) {
+    return clock_->is_paused();
+  }
+  return true;
 }
 
 void Player::wait_for_filled_queue() const
