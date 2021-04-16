@@ -132,6 +132,24 @@ Player::Player(
     {
       response->paused = is_paused();
     });
+  srv_get_rate_ = create_service<rosbag2_interfaces::srv::GetRate>(
+    "~/get_rate",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetRate::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetRate::Response> response)
+    {
+      response->rate = get_rate();
+    });
+  srv_set_rate_ = create_service<rosbag2_interfaces::srv::SetRate>(
+    "~/set_rate",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SetRate::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::SetRate::Response>/* response */)
+    {
+      set_rate(request->rate);
+    });
 }
 
 Player::~Player()
@@ -225,6 +243,24 @@ bool Player::is_paused() const
     return clock_->is_paused();
   }
   return true;
+}
+
+double Player::get_rate() const
+{
+  if (clock_) {
+    return clock_->get_rate();
+  }
+  return 0.;
+}
+
+void Player::set_rate(double rate)
+{
+  RCLCPP_WARN(
+    get_logger(),
+    "Setting rate to %lf", rate);
+  if (clock_) {
+    clock_->set_rate(rate);
+  }
 }
 
 void Player::wait_for_filled_queue() const
@@ -335,7 +371,16 @@ void Player::prepare_clock(rcutils_time_point_value_t starting_time)
 {
   // TODO(emersonknapp) move clock setup into the constructor
   double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
+  bool paused = false;
+  // Copy over important settings
+  if (clock_) {
+    rate = clock_->get_rate();
+    paused = clock_->is_paused();
+  }
   clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
+  if (paused) {
+    clock_->pause();
+  }
 
   // Create /clock publisher
   if (play_options_.clock_publish_frequency > 0.f) {
