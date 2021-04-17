@@ -66,13 +66,14 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
 
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(reader));
   rosbag2_transport::PlayOptions play_options =
-    {read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}};
+  {read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}};
 
-  auto loop_thread = std::async(std::launch::async, [&player, &play_options, this]() {
-    player->play(storage_options_, play_options);
-    // play again the same bag file
-    player->play(storage_options_, play_options);
-  });
+  auto loop_thread = std::async(
+    std::launch::async, [&player, &play_options, this]() {
+      player->play(storage_options_, play_options);
+      // play again the same bag file
+      player->play(storage_options_, play_options);
+    });
 
   await_received_messages.get();
   rclcpp::shutdown();
