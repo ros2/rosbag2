@@ -62,6 +62,8 @@ public:
 
   void play();
 
+  rosbag2_cpp::Reader * release_reader();
+
 private:
   void load_storage_content();
   bool is_storage_completely_loaded() const;

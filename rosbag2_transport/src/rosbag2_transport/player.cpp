@@ -101,7 +101,15 @@ Player::Player(
 
 Player::~Player()
 {
-  // reader_->reset();
+  if (reader_) {
+    reader_->reset();
+  }
+}
+
+rosbag2_cpp::Reader * Player::release_reader()
+{
+  reader_->reset();
+  return reader_.release();
 }
 
 const std::chrono::milliseconds
@@ -218,6 +226,9 @@ void Player::prepare_publishers()
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
+    if (publishers_.find(topic.name) != publishers_.end()) {
+      continue;
+    }
     // filter topics to add publishers if necessary
     auto & filter_topics = storage_filter.topics;
     if (!filter_topics.empty()) {

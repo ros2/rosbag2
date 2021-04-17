@@ -61,9 +61,10 @@ void Player::play(
       exec.spin();
     });
   auto exit = rcpputils::scope_exit(
-    [&exec, &spin_thread]() {
+    [&player, &exec, &spin_thread, this]() {
       exec.cancel();
       spin_thread.join();
+      reader_ = std::unique_ptr<rosbag2_cpp::Reader>(player->release_reader());
     });
   try {
     do {
