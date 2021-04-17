@@ -94,6 +94,11 @@ public:
     const ConverterOptions & converter_options = ConverterOptions());
 
   /**
+   * Closing the reader instance.
+   */
+  void reset();
+
+  /**
    * Ask whether the underlying bagfile contains at least one more message.
    *
    * \return true if storage contains at least one more message

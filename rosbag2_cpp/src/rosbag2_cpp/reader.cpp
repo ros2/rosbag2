@@ -52,6 +52,11 @@ void Reader::open(
   reader_impl_->open(storage_options, converter_options);
 }
 
+void Reader::reset()
+{
+  reader_impl_->reset();
+}
+
 bool Reader::has_next()
 {
   return reader_impl_->has_next();
