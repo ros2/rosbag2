@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rosbag2_keyboard_handler</name>
+  <version>0.0.1</version>
+  <description>Handler for input from keyboard</description>
+  <maintainer email="michael.orlov@apex.ai">michael</maintainer>
+  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
+  <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
