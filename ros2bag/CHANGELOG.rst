@@ -2,6 +2,15 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* /clock publisher in Player (`#695 <https://github.com/ros2/rosbag2/issues/695>`_)
+* Introducing Reindexer CLI (`#699 <https://github.com/ros2/rosbag2/issues/699>`_)
+* rosbag2_py pybind wrapper for "record" - remove rosbag2_transport_py (`#702 <https://github.com/ros2/rosbag2/issues/702>`_)
+* Add rosbag2_py::Player::play to replace rosbag2_transport_python version (`#693 <https://github.com/ros2/rosbag2/issues/693>`_)
+* Explicitly add emersonknapp as maintainer (`#692 <https://github.com/ros2/rosbag2/issues/692>`_)
+* Contributors: Emerson Knapp, jhdcs
+
 0.7.0 (2021-03-18)
 ------------------
 * use rosbag2_py for ros2 bag info (`#673 <https://github.com/ros2/rosbag2/issues/673>`_)

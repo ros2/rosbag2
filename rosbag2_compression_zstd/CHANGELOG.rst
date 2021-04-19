@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression_zstd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.0 (2021-03-18)
 ------------------
 * Add test_depend ament_cmake_gmock (`#639 <https://github.com/ros2/rosbag2/issues/639>`_)

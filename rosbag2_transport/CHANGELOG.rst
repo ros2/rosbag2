@@ -2,6 +2,25 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* cleanup cmakelists (`#726 <https://github.com/ros2/rosbag2/issues/726>`_)
+* turn recorder into a node (`#724 <https://github.com/ros2/rosbag2/issues/724>`_)
+* turn player into a node (`#723 <https://github.com/ros2/rosbag2/issues/723>`_)
+* Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)
+* Split Rosbag2Transport into Player and Recorder classes - first pass to enable further progress (`#721 <https://github.com/ros2/rosbag2/issues/721>`_)
+* /clock publisher in Player (`#695 <https://github.com/ros2/rosbag2/issues/695>`_)
+* use rclcpp logging macros (`#715 <https://github.com/ros2/rosbag2/issues/715>`_)
+* use rclcpp::Node for generic pub/sub (`#714 <https://github.com/ros2/rosbag2/issues/714>`_)
+* PlayerClock initial implementation - Player functionally unchanged (`#689 <https://github.com/ros2/rosbag2/issues/689>`_)
+* Fix bad_function_call by replacing rclcpp::spin_some with SingleThreadedExecutor (`#705 <https://github.com/ros2/rosbag2/issues/705>`_)
+* rosbag2_py pybind wrapper for "record" - remove rosbag2_transport_py (`#702 <https://github.com/ros2/rosbag2/issues/702>`_)
+* Add rosbag2_py::Player::play to replace rosbag2_transport_python version (`#693 <https://github.com/ros2/rosbag2/issues/693>`_)
+* Fix and clarify logic in test_play filter test (`#690 <https://github.com/ros2/rosbag2/issues/690>`_)
+* Explicitly add emersonknapp as maintainer (`#692 <https://github.com/ros2/rosbag2/issues/692>`_)
+* Add QoS decoding translation for infinite durations to RMW_DURATION_INFINITE (`#684 <https://github.com/ros2/rosbag2/issues/684>`_)
+* Contributors: Emerson Knapp, Karsten Knese
+
 0.7.0 (2021-03-18)
 ------------------
 * Add support for rmw_connextdds (`#671 <https://github.com/ros2/rosbag2/issues/671>`_)
