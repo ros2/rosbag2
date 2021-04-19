@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.0 (2021-04-19)
+------------------
 * Add set_rate to PlayerClock (`#727 <https://github.com/ros2/rosbag2/issues/727>`_)
 * Enforce non-null now_fn in TimeControllerClock (`#731 <https://github.com/ros2/rosbag2/issues/731>`_)
 * Fix pause snapshot behavior and add regression test (`#730 <https://github.com/ros2/rosbag2/issues/730>`_)

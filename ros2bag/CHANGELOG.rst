@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.0 (2021-04-19)
+------------------
 * /clock publisher in Player (`#695 <https://github.com/ros2/rosbag2/issues/695>`_)
 * Introducing Reindexer CLI (`#699 <https://github.com/ros2/rosbag2/issues/699>`_)
 * rosbag2_py pybind wrapper for "record" - remove rosbag2_transport_py (`#702 <https://github.com/ros2/rosbag2/issues/702>`_)

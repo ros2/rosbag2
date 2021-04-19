@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.0 (2021-04-19)
+------------------
 * cleanup cmakelists (`#726 <https://github.com/ros2/rosbag2/issues/726>`_)
 * turn recorder into a node (`#724 <https://github.com/ros2/rosbag2/issues/724>`_)
 * turn player into a node (`#723 <https://github.com/ros2/rosbag2/issues/723>`_)
