@@ -55,7 +55,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   }
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
-  reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   // We can't reliably test for an exact number of messages to arrive.
   // Therefore, we test that at least one message is being received over the remapped topic.
@@ -63,7 +63,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
     remapped_topic, 1u);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport::Player player(reader_);
+  rosbag2_transport::Player player(std::move(reader));
 
   player.play(storage_options_, play_options_);
 

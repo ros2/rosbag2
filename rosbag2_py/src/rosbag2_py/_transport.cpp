@@ -102,7 +102,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    std::shared_ptr<rosbag2_cpp::Reader> reader = nullptr;
+    std::unique_ptr<rosbag2_cpp::Reader> reader = nullptr;
     // Determine whether to build compression or regular reader
     {
       rosbag2_storage::MetadataIo metadata_io{};
@@ -110,17 +110,17 @@ public:
       if (metadata_io.metadata_file_exists(storage_options.uri)) {
         metadata = metadata_io.read_metadata(storage_options.uri);
         if (!metadata.compression_format.empty()) {
-          reader = std::make_shared<rosbag2_cpp::Reader>(
+          reader = std::make_unique<rosbag2_cpp::Reader>(
             std::make_unique<rosbag2_compression::SequentialCompressionReader>());
         }
       }
       if (reader == nullptr) {
-        reader = std::make_shared<rosbag2_cpp::Reader>(
+        reader = std::make_unique<rosbag2_cpp::Reader>(
           std::make_unique<rosbag2_cpp::readers::SequentialReader>());
       }
     }
 
-    rosbag2_transport::Player impl(reader);
+    rosbag2_transport::Player impl(std::move(reader));
     impl.play(storage_options, play_options);
   }
 };

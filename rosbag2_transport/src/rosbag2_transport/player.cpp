@@ -86,7 +86,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 }
 
 Player::Player(
-  std::shared_ptr<rosbag2_cpp::Reader> reader,
+  std::unique_ptr<rosbag2_cpp::Reader> reader,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::PlayOptions & play_options,
   const std::string & node_name,
@@ -94,14 +94,22 @@ Player::Player(
 : rclcpp::Node(
     node_name,
     rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
-  reader_(reader),
+  reader_(std::move(reader)),
   storage_options_(storage_options),
   play_options_(play_options)
 {}
 
 Player::~Player()
 {
-  // reader_->reset();
+  if (reader_) {
+    reader_->reset();
+  }
+}
+
+rosbag2_cpp::Reader * Player::release_reader()
+{
+  reader_->reset();
+  return reader_.release();
 }
 
 const std::chrono::milliseconds
@@ -218,6 +226,9 @@ void Player::prepare_publishers()
 
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
+    if (publishers_.find(topic.name) != publishers_.end()) {
+      continue;
+    }
     // filter topics to add publishers if necessary
     auto & filter_topics = storage_filter.topics;
     if (!filter_topics.empty()) {

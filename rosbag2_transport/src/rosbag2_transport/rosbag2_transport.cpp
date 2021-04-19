@@ -38,12 +38,12 @@
 namespace rosbag2_transport
 {
 
-Player::Player(std::shared_ptr<rosbag2_cpp::Reader> reader)
+Player::Player(std::unique_ptr<rosbag2_cpp::Reader> reader)
 : reader_(std::move(reader))
 {}
 
 Player::Player()
-: Player(std::make_shared<rosbag2_cpp::Reader>(
+: Player(std::make_unique<rosbag2_cpp::Reader>(
       std::make_unique<rosbag2_cpp::readers::SequentialReader>()))
 {}
 
@@ -53,7 +53,7 @@ Player::~Player()
 void Player::play(
   const rosbag2_storage::StorageOptions & storage_options, const PlayOptions & play_options)
 {
-  auto player = std::make_shared<impl::Player>(reader_, storage_options, play_options);
+  auto player = std::make_shared<impl::Player>(std::move(reader_), storage_options, play_options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(player);
   auto spin_thread = std::thread(
@@ -61,9 +61,10 @@ void Player::play(
       exec.spin();
     });
   auto exit = rcpputils::scope_exit(
-    [&exec, &spin_thread]() {
+    [&player, &exec, &spin_thread, this]() {
       exec.cancel();
       spin_thread.join();
+      reader_ = std::unique_ptr<rosbag2_cpp::Reader>(player->release_reader());
     });
   try {
     do {
@@ -89,7 +90,8 @@ Recorder::~Recorder()
 void Recorder::record(
   const rosbag2_storage::StorageOptions & storage_options, const RecordOptions & record_options)
 {
-  auto recorder = std::make_shared<impl::Recorder>(writer_, storage_options, record_options);
+  auto recorder = std::make_shared<impl::Recorder>(
+    writer_, storage_options, record_options);
   try {
     recorder->record();
     rclcpp::executors::SingleThreadedExecutor exec;

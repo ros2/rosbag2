@@ -40,6 +40,12 @@ public:
   ClockPublishFixture()
   : RosBag2PlayTestFixture()
   {
+    sub_->add_subscription<rosgraph_msgs::msg::Clock>(
+      "/clock", expected_clock_messages_, rclcpp::ClockQoS());
+  }
+
+  void run_test()
+  {
     // Fake bag setup
     auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
       {"topic1", "test_msgs/BasicTypes", "", ""},
@@ -56,16 +62,10 @@ public:
     // Player setup
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topic_types);
-    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-    sub_->add_subscription<rosgraph_msgs::msg::Clock>(
-      "/clock", expected_clock_messages_, rclcpp::ClockQoS());
-  }
-
-  void run_test()
-  {
     auto await_received_messages = sub_->spin_subscriptions();
-    rosbag2_transport::Player player(reader_);
+    rosbag2_transport::Player player(std::move(reader));
     player.play(storage_options_, play_options_);
     await_received_messages.get();
 

@@ -42,7 +42,7 @@ public:
   Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  explicit Player(std::shared_ptr<rosbag2_cpp::Reader> reader);
+  explicit Player(std::unique_ptr<rosbag2_cpp::Reader> reader);
 
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
@@ -59,7 +59,7 @@ public:
     const PlayOptions & play_options);
 
 protected:
-  std::shared_ptr<rosbag2_cpp::Reader> reader_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
 
 class Recorder
