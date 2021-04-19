@@ -2,6 +2,15 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2021-04-19)
+------------------
+* Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)
+* Explicitly add emersonknapp as maintainer (`#692 <https://github.com/ros2/rosbag2/issues/692>`_)
+* Reindexer core (`#641 <https://github.com/ros2/rosbag2/issues/641>`_)
+  Add a new C++ Reindexer class for reconstructing metadata from bags that are missing it.
+* use rclcpp serialized messages to write data (`#457 <https://github.com/ros2/rosbag2/issues/457>`_)
+* Contributors: Emerson Knapp, Karsten Knese, jhdcs
+
 0.7.0 (2021-03-18)
 ------------------
 * Alternative write api (`#676 <https://github.com/ros2/rosbag2/issues/676>`_)

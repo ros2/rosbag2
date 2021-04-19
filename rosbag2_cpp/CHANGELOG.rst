@@ -2,6 +2,21 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2021-04-19)
+------------------
+* Add set_rate to PlayerClock (`#727 <https://github.com/ros2/rosbag2/issues/727>`_)
+* Enforce non-null now_fn in TimeControllerClock (`#731 <https://github.com/ros2/rosbag2/issues/731>`_)
+* Fix pause snapshot behavior and add regression test (`#730 <https://github.com/ros2/rosbag2/issues/730>`_)
+* Pause/resume PlayerClock (`#704 <https://github.com/ros2/rosbag2/issues/704>`_)
+* Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)
+* Enable thread safety analysis for rosbag2_cpp and add annotations in TimeControllerClock (`#710 <https://github.com/ros2/rosbag2/issues/710>`_)
+* PlayerClock initial implementation - Player functionally unchanged (`#689 <https://github.com/ros2/rosbag2/issues/689>`_)
+* Explicitly add emersonknapp as maintainer (`#692 <https://github.com/ros2/rosbag2/issues/692>`_)
+* Reindexer core (`#641 <https://github.com/ros2/rosbag2/issues/641>`_)
+  Add a new C++ Reindexer class for reconstructing metadata from bags that are missing it.
+* use rclcpp serialized messages to write data (`#457 <https://github.com/ros2/rosbag2/issues/457>`_)
+* Contributors: Emerson Knapp, Karsten Knese, jhdcs
+
 0.7.0 (2021-03-18)
 ------------------
 * alternative write api (`#676 <https://github.com/ros2/rosbag2/issues/676>`_)

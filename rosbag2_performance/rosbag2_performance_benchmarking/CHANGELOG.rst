@@ -2,15 +2,14 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.8.0 (2021-04-19)
+------------------
+
 0.7.0 (2021-03-18)
 ------------------
 * fixed a memory leak in no-transport benchmark (`#674 <https://github.com/ros2/rosbag2/issues/674>`_)
 * report of performance improvements in rosbag2 (roughly since Foxy) (`#651 <https://github.com/ros2/rosbag2/issues/651>`_)
 * Performance benchmarking improvements (`#634 <https://github.com/ros2/rosbag2/issues/634>`_)
-  * Performance benchmarking improvements
-  * fixed durability qos in config
-  * Benchmark db files information in one file
-  Co-authored-by: Adam Dabrowski <adam.dabrowski@robotec.ai>
 * Contributors: Adam Dąbrowski, Piotr Jaroszek
 
 0.6.0 (2021-02-01)
