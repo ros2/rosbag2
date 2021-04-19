@@ -80,15 +80,23 @@ public:
     return async(
       std::launch::async, [this]() {
         rclcpp::executors::SingleThreadedExecutor exec;
-        while (rclcpp::ok() && continue_spinning(expected_topics_with_size_)) {
+        auto start = std::chrono::high_resolution_clock::now();
+        while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start)) {
           exec.spin_node_some(subscriber_node_);
         }
       });
   }
 
 private:
-  bool continue_spinning(std::unordered_map<std::string, size_t> expected_topics_with_sizes)
+  bool continue_spinning(
+    std::unordered_map<std::string, size_t> expected_topics_with_sizes,
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time)
   {
+    auto current = std::chrono::high_resolution_clock::now();
+    if (current - start_time > std::chrono::seconds(10)) {
+      return false;
+    }
+
     for (const auto & topic_expected : expected_topics_with_sizes) {
       if (subscribed_messages_[topic_expected.first].size() < topic_expected.second) {
         return true;
