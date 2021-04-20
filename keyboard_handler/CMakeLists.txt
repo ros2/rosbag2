@@ -16,6 +16,7 @@ endif()
 set(SOURCES
     src/keyboard_handler_base.cpp
     src/keyboard_handler_unix_impl.cpp
+    src/keyboard_handler_windows_impl.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -62,7 +63,9 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   set(keyboard_handler_test_sources
-      test/keyboard_handler_tests.cpp)
+      test/keyboard_handler_unix_tests.cpp
+      test/keyboard_handler_windows_tests.cpp
+  )
 
   ament_add_gmock(test_keyboard_handler ${keyboard_handler_test_sources})
   target_include_directories(test_keyboard_handler PUBLIC include)

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef _WIN32
 #include <string>
 #include <memory>
 #include <algorithm>
@@ -237,3 +238,4 @@ TEST_F(KeyboardHandlerUnixTest, KeyboardHandlerMockClassMemberTest) {
   EXPECT_TRUE(keyboard_handler.add_key_press_callback(callback, keycode_cursor_down_str));
   EXPECT_TRUE(keyboard_handler.add_key_press_callback(callback, keycode_cursor_up_str));
 }
+#endif  // #ifndef _WIN32

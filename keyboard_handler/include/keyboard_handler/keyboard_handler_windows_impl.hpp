@@ -12,29 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
-#define KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_WINDOWS_IMPL_HPP_
+#define KEYBOARD_HANDLER__KEYBOARD_HANDLER_WINDOWS_IMPL_HPP_
 
-#ifndef _WIN32
+#ifdef _WIN32
 #include <atomic>
 #include <thread>
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
-class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
+class KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
 {
 public:
   KEYBOARD_HANDLER_PUBLIC
-  KeyboardHandlerUnixImpl();
+  KeyboardHandlerWindowsImpl();
 
   KEYBOARD_HANDLER_PUBLIC
-  virtual ~KeyboardHandlerUnixImpl();
+  virtual ~KeyboardHandlerWindowsImpl();
 
 private:
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
-  const int stdin_fd_;
 };
-#endif  // #ifndef _WIN32
+#endif  // #ifdef _WIN32
 
-#endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_WINDOWS_IMPL_HPP_

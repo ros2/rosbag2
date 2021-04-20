@@ -12,15 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
-#define KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
-
 #ifdef _WIN32
-#include "keyboard_handler_windows_impl.hpp"
-using KeyboardHandler = KeyboardHandlerWindowsImpl;
-#else
-#include "keyboard_handler_unix_impl.hpp"
-using KeyboardHandler = KeyboardHandlerUnixImpl;
-#endif  // #ifdef _WIN32
+#include "keyboard_handler/keyboard_handler_windows_impl.hpp"
 
-#endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
+KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
+: exit_(false)
+{
+  is_init_succeed_ = false;
+
+  key_handler_thread_ = std::thread(
+    [&]() {
+      try {
+        do {
+          // TODO(morlov): Add windows specific implementation
+          std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        } while (!exit_.load());
+      } catch (...) {
+        throw;
+      }
+    });
+}
+
+KeyboardHandlerWindowsImpl::~KeyboardHandlerWindowsImpl()
+{
+  exit_ = true;
+  if (key_handler_thread_.joinable()) {
+    key_handler_thread_.join();
+  }
+}
+#endif  // #ifdef _WIN32

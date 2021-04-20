@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
 #include <algorithm>
@@ -110,3 +111,5 @@ KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
     key_handler_thread_.join();
   }
 }
+
+#endif  // #ifndef _WIN32
