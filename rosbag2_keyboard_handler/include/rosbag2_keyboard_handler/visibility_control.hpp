@@ -15,7 +15,35 @@
 #ifndef ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
 #define ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
 
-#define KEYBOARD_HANDLER_PUBLIC __attribute__((visibility("default")))
-#define KEYBOARD_HANDLER_LOCAL  __attribute__((visibility("hidden")))
+// This logic was borrowed (then namespaced) from the examples on the gcc wiki:
+//     https://gcc.gnu.org/wiki/Visibility
+
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef __GNUC__
+    #define KEYBOARD_HANDLER_EXPORT __attribute__ ((dllexport))
+    #define KEYBOARD_HANDLER_IMPORT __attribute__ ((dllimport))
+  #else
+    #define KEYBOARD_HANDLER_EXPORT __declspec(dllexport)
+    #define KEYBOARD_HANDLER_IMPORT __declspec(dllimport)
+  #endif
+  #ifdef KEYBOARD_HANDLER_BUILDING_LIBRARY
+    #define KEYBOARD_HANDLER_PUBLIC KEYBOARD_HANDLER_EXPORT
+  #else
+    #define KEYBOARD_HANDLER_PUBLIC KEYBOARD_HANDLER_IMPORT
+  #endif
+  #define KEYBOARD_HANDLER_PUBLIC_TYPE KEYBOARD_HANDLER_PUBLIC
+  #define KEYBOARD_HANDLER_LOCAL
+#else
+  #define KEYBOARD_HANDLER_EXPORT __attribute__ ((visibility("default")))
+  #define KEYBOARD_HANDLER_IMPORT
+  #if __GNUC__ >= 4
+    #define KEYBOARD_HANDLER_PUBLIC __attribute__ ((visibility("default")))
+    #define KEYBOARD_HANDLER_LOCAL  __attribute__ ((visibility("hidden")))
+  #else
+    #define KEYBOARD_HANDLER_PUBLIC
+    #define KEYBOARD_HANDLER_LOCAL
+  #endif
+  #define KEYBOARD_HANDLER_PUBLIC_TYPE
+#endif
 
 #endif  // ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
