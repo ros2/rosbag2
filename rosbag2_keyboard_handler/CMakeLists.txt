@@ -8,37 +8,35 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#  add_compile_options(-Wall -Wextra -Wpedantic)
-add_compile_options(-Wall)
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wthread-safety)
-endif()
-
 # Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
 set(SOURCES
-    include/rosbag2_keyboard_handler/visibility_control.hpp
-    include/rosbag2_keyboard_handler/KeyboardHandlerBase.hpp
-    include/rosbag2_keyboard_handler/IKeyboardHandler.hpp
-    include/rosbag2_keyboard_handler/KeyboardHandler.hpp
-    include/rosbag2_keyboard_handler/KeyboardHandlerUnixImpl.hpp
     src/IKeyboardHandler.cpp
     src/KeyboardHandlerUnixImpl.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wthread-safety)
+endif()
+
 target_include_directories(${PROJECT_NAME}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(${PROJECT_NAME} PRIVATE "KEYBOARD_HANDLER_BUILDING_LIBRARY")
 
 install(
     DIRECTORY include/
@@ -47,9 +45,11 @@ install(
 install(
     TARGETS ${PROJECT_NAME}
     EXPORT export_${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
@@ -62,8 +62,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   set(keyboard_handler_test_sources
-      test/FakePlayer.hpp
-      test/FakeRecorder.hpp
       test/KeyboardHandlerTests.cpp)
 
   ament_add_gmock(test_keyboard_handler ${keyboard_handler_test_sources})
