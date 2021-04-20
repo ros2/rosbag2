@@ -59,7 +59,7 @@ public:
   void start_async_spin(T node)
   {
     future_ = std::async(
-      std::launch::async, [&node]() -> void {rclcpp::spin(node);});
+      std::launch::async, [node]() -> void {rclcpp::spin(node);});
   }
 
   void stop_spinning()
