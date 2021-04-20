@@ -43,23 +43,31 @@ public:
   RecordIntegrationTestFixture()
   : Rosbag2TransportTestFixture()
   {
+  }
+
+  void SetUp() override
+  {
     rclcpp::init(0, nullptr);
   }
 
-  void start_recording(const RecordOptions & options)
-  {
-    // the future object returned from std::async needs to be stored not to block the execution
-    future_ = std::async(
-      std::launch::async, [this, options]() {
-        rosbag2_transport::Recorder recorder(writer_);
-        recorder.record(storage_options_, options);
-      });
-  }
-
-  void stop_recording()
+  void TearDown() override
   {
     rclcpp::shutdown();
-    future_.get();
+  }
+
+  template<class T>
+  void start_async_spin(T node)
+  {
+    future_ = std::async(
+      std::launch::async, [&node]() -> void {rclcpp::spin(node);});
+  }
+
+  void stop_spinning()
+  {
+    rclcpp::shutdown();
+    if (future_.valid()) {
+      future_.wait();
+    }
   }
 
   void run_publishers()

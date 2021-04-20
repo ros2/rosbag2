@@ -77,6 +77,9 @@ public:
     return subscriptions_;
   }
 
+  ROSBAG2_TRANSPORT_PUBLIC
+  const rosbag2_cpp::Writer & get_writer_handle();
+
 private:
   void topics_discovery();
 
