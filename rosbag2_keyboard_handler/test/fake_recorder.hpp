@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FAKERECORDER_HPP_
-#define FAKERECORDER_HPP_
+#ifndef FAKE_RECORDER_HPP_
+#define FAKE_RECORDER_HPP_
 
 
 #include <iostream>
 #include <memory>
 #include <string>
-#include "rosbag2_keyboard_handler/KeyboardHandler.hpp"
+#include "rosbag2_keyboard_handler/keyboard_handler.hpp"
 
 class FakeRecorder
 {
@@ -92,4 +92,4 @@ private:
   int counter_ = 0;
 };
 
-#endif  // FAKERECORDER_HPP_
+#endif  // FAKE_RECORDER_HPP_

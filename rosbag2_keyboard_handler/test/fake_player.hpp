@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FAKEPLAYER_HPP_
-#define FAKEPLAYER_HPP_
+#ifndef FAKE_PLAYER_HPP_
+#define FAKE_PLAYER_HPP_
 
 #include <iostream>
 #include <memory>
 #include <string>
-#include "rosbag2_keyboard_handler/KeyboardHandler.hpp"
+#include "rosbag2_keyboard_handler/keyboard_handler.hpp"
 
 class FakePlayer : public std::enable_shared_from_this<FakePlayer>
 {
@@ -83,4 +83,4 @@ private:
 };
 
 
-#endif  // FAKEPLAYER_HPP_
+#endif  // FAKE_PLAYER_HPP_

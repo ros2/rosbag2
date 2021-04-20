@@ -12,10 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_keyboard_handler/IKeyboardHandler.hpp"
+#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 
-constexpr char IKeyboardHandler::KEY_CODE_CURSOR_UP[];
-constexpr char IKeyboardHandler::KEY_CODE_CURSOR_DOWN[];
-constexpr char IKeyboardHandler::KEY_CODE_CURSOR_FORWARD[];
-constexpr char IKeyboardHandler::KEY_CODE_CURSOR_BACK[];
-constexpr char IKeyboardHandler::KEY_CODE_SPACE[];
+#include <atomic>
+#include <thread>
+#include "rosbag2_keyboard_handler/visibility_control.hpp"
+#include "keyboard_handler_base.hpp"
+
+class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
+{
+public:
+  KEYBOARD_HANDLER_PUBLIC
+  KeyboardHandlerUnixImpl();
+
+  KEYBOARD_HANDLER_PUBLIC
+  virtual ~KeyboardHandlerUnixImpl();
+
+private:
+  std::thread key_handler_thread_;
+  std::atomic_bool exit_;
+  const int stdin_fd_;
+};
+
+#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_

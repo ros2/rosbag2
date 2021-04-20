@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_KEYBOARD_HANDLER__IKEYBOARDHANDLER_HPP_
-#define ROSBAG2_KEYBOARD_HANDLER__IKEYBOARDHANDLER_HPP_
+#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
+#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
 
 #include <functional>
+#include <unordered_map>
+#include <mutex>
 #include <string>
+#include "rosbag2_keyboard_handler/visibility_control.hpp"
 
-class IKeyboardHandler
+class KeyboardHandlerBase
 {
 public:
   using callback_t = std::function<void (const std::string &)>;
@@ -29,11 +32,13 @@ public:
   static constexpr char KEY_CODE_CURSOR_BACK[] = {27, 91, 'D', '\0'};
   static constexpr char KEY_CODE_SPACE[] = " ";
 
-  virtual
-  ~IKeyboardHandler() = default;
+  KEYBOARD_HANDLER_PUBLIC
+  bool add_key_press_callback(const callback_t & callback, const std::string & key_code);
 
-  virtual
-  bool add_key_press_callback(const callback_t & callback, const std::string & key_code) = 0;
+protected:
+  bool is_init_succeed_ = false;
+  std::mutex callbacks_mutex_;
+  std::unordered_multimap<std::string, callback_t> callbacks_;
 };
 
-#endif  // ROSBAG2_KEYBOARD_HANDLER__IKEYBOARDHANDLER_HPP_
+#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARDHANDLER_HPP_
-#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARDHANDLER_HPP_
+#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
+#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
 
-#include "KeyboardHandlerUnixImpl.hpp"
+#include "keyboard_handler_unix_impl.hpp"
 
 using KeyboardHandler = KeyboardHandlerUnixImpl;
 
-#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARDHANDLER_HPP_
+#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_

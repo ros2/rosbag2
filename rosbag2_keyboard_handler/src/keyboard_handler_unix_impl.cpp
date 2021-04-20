@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <csignal>
 #include <iostream>
-#include "rosbag2_keyboard_handler/KeyboardHandlerUnixImpl.hpp"
+#include "rosbag2_keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 namespace
 {

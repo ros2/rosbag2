@@ -16,9 +16,9 @@
 #include <memory>
 #include <algorithm>
 #include "gmock/gmock.h"
-#include "FakeRecorder.hpp"
-#include "FakePlayer.hpp"
-#include "rosbag2_keyboard_handler/KeyboardHandlerUnixImpl.hpp"
+#include "fake_recorder.hpp"
+#include "fake_player.hpp"
+#include "rosbag2_keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 using ::testing::Return;
 using ::testing::Eq;
