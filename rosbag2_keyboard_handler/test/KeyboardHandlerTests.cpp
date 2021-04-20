@@ -81,7 +81,8 @@ extern "C"
 {
 #endif
 
-KEYBOARD_HANDLER_PUBLIC ssize_t read(int __fd, void * __buf, size_t __nbytes)
+KEYBOARD_HANDLER_PUBLIC
+ssize_t read(int __fd, void * __buf, size_t __nbytes)
 {
   std::this_thread::sleep_for(std::chrono::milliseconds(30));
   ssize_t ret = 0;
@@ -92,6 +93,25 @@ KEYBOARD_HANDLER_PUBLIC ssize_t read(int __fd, void * __buf, size_t __nbytes)
   }
   return ret;
 }
+
+KEYBOARD_HANDLER_PUBLIC
+int isatty(int __fd) __THROW
+{
+  return 1;
+}
+
+KEYBOARD_HANDLER_PUBLIC
+int tcgetattr(int __fd, struct termios * __termios_p) __THROW
+{
+  return 0;
+}
+
+KEYBOARD_HANDLER_PUBLIC
+int tcsetattr(int __fd, int __optional_actions, const struct termios * __termios_p) __THROW
+{
+  return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
