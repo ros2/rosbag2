@@ -19,15 +19,17 @@ jobs:
       with:
         package-name: |
           ros2bag
+          rosbag2
           rosbag2_compression
           rosbag2_cpp
+          rosbag2_interfaces
           rosbag2_storage
           rosbag2_storage_default_plugins
+          rosbag2_test_common
+          rosbag2_tests
           rosbag2_transport
           shared_queues_vendor
           sqlite3_vendor
-          rosbag2_test_common
-          rosbag2_tests
         target-ros2-distro: rolling
         vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
         colcon-defaults: |
