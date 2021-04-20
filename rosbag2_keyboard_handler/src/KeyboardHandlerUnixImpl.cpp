@@ -19,6 +19,8 @@
 #include <iostream>
 #include "rosbag2_keyboard_handler/KeyboardHandlerUnixImpl.hpp"
 
+namespace
+{
 struct termios old_term_settings {};
 
 void quit(int sig)
@@ -30,6 +32,7 @@ void quit(int sig)
   }
   exit(EXIT_SUCCESS);
 }
+}  // namespace
 
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : exit_(false), stdin_fd_(fileno(stdin))
