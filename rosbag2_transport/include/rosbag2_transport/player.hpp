@@ -29,9 +29,13 @@
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
+
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+
 #include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
+
 #include "rosgraph_msgs/msg/clock.hpp"
 
 namespace rosbag2_cpp
@@ -47,10 +51,12 @@ namespace impl
 class Player : public rclcpp::Node
 {
 public:
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  ROSBAG2_TRANSPORT_PUBLIC
   Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
@@ -58,10 +64,13 @@ public:
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
 
+  ROSBAG2_TRANSPORT_PUBLIC
   void play();
 
+  ROSBAG2_TRANSPORT_PUBLIC
   rosbag2_cpp::Reader * release_reader();
 
 private:

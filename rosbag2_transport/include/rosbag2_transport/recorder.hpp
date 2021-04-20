@@ -31,6 +31,7 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {
@@ -45,10 +46,12 @@ namespace impl
 class Recorder : public rclcpp::Node
 {
 public:
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Recorder(
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  ROSBAG2_TRANSPORT_PUBLIC
   Recorder(
     std::shared_ptr<rosbag2_cpp::Writer> writer,
     const rosbag2_storage::StorageOptions & storage_options,
@@ -56,8 +59,10 @@ public:
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
+  ROSBAG2_TRANSPORT_PUBLIC
   void record();
 
   const std::unordered_set<std::string> &

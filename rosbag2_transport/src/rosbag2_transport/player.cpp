@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "player.hpp"
+#include "rosbag2_transport/player.hpp"
 
 #include <algorithm>
 #include <chrono>

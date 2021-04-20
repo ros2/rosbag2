@@ -32,8 +32,8 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-#include "player.hpp"
-#include "recorder.hpp"
+#include "rosbag2_transport/player.hpp"
+#include "rosbag2_transport/recorder.hpp"
 
 namespace rosbag2_transport
 {
