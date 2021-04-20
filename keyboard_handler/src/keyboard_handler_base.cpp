@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <string>
-#include "rosbag2_keyboard_handler/keyboard_handler_base.hpp"
+#include "keyboard_handler/keyboard_handler_base.hpp"
 
 constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_UP[];
 constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_DOWN[];

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(rosbag2_keyboard_handler)
+project(keyboard_handler)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)

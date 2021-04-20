@@ -18,7 +18,7 @@
 #include "gmock/gmock.h"
 #include "fake_recorder.hpp"
 #include "fake_player.hpp"
-#include "rosbag2_keyboard_handler/keyboard_handler_unix_impl.hpp"
+#include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 using ::testing::Return;
 using ::testing::Eq;

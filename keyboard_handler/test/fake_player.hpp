@@ -18,7 +18,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "rosbag2_keyboard_handler/keyboard_handler.hpp"
+#include "keyboard_handler/keyboard_handler.hpp"
 
 class FakePlayer : public std::enable_shared_from_this<FakePlayer>
 {

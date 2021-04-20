@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
-#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
+#ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
+#define KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
 
 #include <functional>
 #include <unordered_map>
 #include <mutex>
 #include <string>
-#include "rosbag2_keyboard_handler/visibility_control.hpp"
+#include "keyboard_handler/visibility_control.hpp"
 
 class KeyboardHandlerBase
 {
@@ -41,4 +41,4 @@ protected:
   std::unordered_multimap<std::string, callback_t> callbacks_;
 };
 
-#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
+#endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_

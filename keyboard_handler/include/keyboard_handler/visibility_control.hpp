@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
-#define ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
+#ifndef KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
+#define KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
 
 // This logic was borrowed (then namespaced) from the examples on the gcc wiki:
 //     https://gcc.gnu.org/wiki/Visibility
@@ -46,4 +46,4 @@
   #define KEYBOARD_HANDLER_PUBLIC_TYPE
 #endif
 
-#endif  // ROSBAG2_KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_
+#endif  // KEYBOARD_HANDLER__VISIBILITY_CONTROL_HPP_

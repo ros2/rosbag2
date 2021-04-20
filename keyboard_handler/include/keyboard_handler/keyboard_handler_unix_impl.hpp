@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
-#define ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#define KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 
 #include <atomic>
 #include <thread>
-#include "rosbag2_keyboard_handler/visibility_control.hpp"
+#include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
 class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
@@ -35,4 +35,4 @@ private:
   const int stdin_fd_;
 };
 
-#endif  // ROSBAG2_KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
+#endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
