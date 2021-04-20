@@ -46,8 +46,7 @@
 
 namespace rosbag2_transport
 {
-namespace impl
-{
+
 Recorder::Recorder(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
@@ -323,5 +322,5 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     }
   }
 }
-}  // namespace impl
+
 }  // namespace rosbag2_transport

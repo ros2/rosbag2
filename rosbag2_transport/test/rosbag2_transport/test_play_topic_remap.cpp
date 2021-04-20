@@ -63,7 +63,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
     remapped_topic, 1u);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::impl::Player>(
+  auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options_);
   player->play();

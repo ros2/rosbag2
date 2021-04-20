@@ -23,7 +23,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/rosbag2_transport.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/publisher_manager.hpp"

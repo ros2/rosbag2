@@ -47,7 +47,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     string_topic, rclcpp::QoS{rclcpp::KeepAll()});
 
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<rosbag2_transport::impl::Recorder>(
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 

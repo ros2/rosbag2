@@ -37,7 +37,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   string_message->string_value = "Hello World";
 
   rosbag2_transport::RecordOptions record_options = {true, true, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<rosbag2_transport::impl::Recorder>(
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 

@@ -77,7 +77,7 @@ TEST_F(PlayerTestFixture, playing_respects_relative_timing_of_stored_messages)
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = std::chrono::steady_clock::now();
-  auto player = std::make_shared<rosbag2_transport::impl::Player>(
+  auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options_);
   player->play();
@@ -112,7 +112,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
@@ -130,7 +130,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
@@ -147,7 +147,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
@@ -164,7 +164,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
@@ -181,7 +181,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();

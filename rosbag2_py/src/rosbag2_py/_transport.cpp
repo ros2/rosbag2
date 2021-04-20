@@ -28,8 +28,9 @@
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/player.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/recorder.hpp"
 
 #include "./pybind11.hpp"
 
@@ -94,6 +95,7 @@ public:
   {
     rclcpp::init(0, nullptr);
   }
+
   virtual ~Player()
   {
     rclcpp::shutdown();
@@ -121,8 +123,19 @@ public:
       }
     }
 
-    rosbag2_transport::Player impl(std::move(reader));
-    impl.play(storage_options, play_options);
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options, play_options);
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+    player->play();
+
+    exec.cancel();
+    spin_thread.join();
   }
 };
 
@@ -133,6 +146,7 @@ public:
   {
     rclcpp::init(0, nullptr);
   }
+
   virtual ~Recorder()
   {
     rclcpp::shutdown();
@@ -157,20 +171,28 @@ public:
     }
 
 
-    auto reader = std::make_shared<rosbag2_cpp::Reader>(
-      std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-    std::shared_ptr<rosbag2_cpp::Writer> writer;
+    std::unique_ptr<rosbag2_cpp::Writer> writer = nullptr;
     // Change writer based on recording options
     if (!record_options.compression_format.empty()) {
-      writer = std::make_shared<rosbag2_cpp::Writer>(
+      writer = std::make_unique<rosbag2_cpp::Writer>(
         std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
     } else {
-      writer = std::make_shared<rosbag2_cpp::Writer>(
+      writer = std::make_unique<rosbag2_cpp::Writer>(
         std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
     }
 
-    rosbag2_transport::Recorder impl(writer);
-    impl.record(storage_options, record_options);
+    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+      std::move(writer), storage_options, record_options);
+    recorder->record();
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(recorder);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+
+    exec.cancel();
+    spin_thread.join();
   }
 };
 
