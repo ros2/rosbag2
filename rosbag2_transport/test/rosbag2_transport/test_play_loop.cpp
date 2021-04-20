@@ -27,7 +27,7 @@
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 
-#include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -64,15 +64,17 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::Player>(std::move(reader));
   rosbag2_transport::PlayOptions play_options =
   {read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}};
+  auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    std::move(
+      reader), storage_options_, play_options);
 
   auto loop_thread = std::async(
-    std::launch::async, [&player, &play_options, this]() {
-      player->play(storage_options_, play_options);
+    std::launch::async, [&player]() {
+      player->play();
       // play again the same bag file
-      player->play(storage_options_, play_options);
+      player->play();
     });
 
   await_received_messages.get();
@@ -119,10 +121,12 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::Player>(std::move(reader));
-  std::thread loop_thread(&rosbag2_transport::Player::play, player,
-    storage_options_,
-    rosbag2_transport::PlayOptions{read_ahead_queue_size, "", rate, {}, {}, loop_playback, {}});
+  rosbag2_transport::PlayOptions play_options{read_ahead_queue_size, "", rate, {}, {},
+    loop_playback, {}};
+  auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    std::move(
+      reader), storage_options_, play_options);
+  std::thread loop_thread(&rosbag2_transport::impl::Player::play, player);
 
   await_received_messages.get();
   rclcpp::shutdown();

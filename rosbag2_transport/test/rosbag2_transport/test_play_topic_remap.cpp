@@ -24,7 +24,7 @@
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 
-#include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -63,9 +63,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
     remapped_topic, 1u);
   auto await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport::Player player(std::move(reader));
-
-  player.play(storage_options_, play_options_);
+  auto player = std::make_shared<rosbag2_transport::impl::Player>(
+    std::move(
+      reader), storage_options_, play_options_);
+  player->play();
 
   await_received_messages.get();
 

@@ -127,29 +127,36 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
-  // TODO(karsten1987): Expose `Reader::reset` in rosbag2_cpp
-  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-  if (reader_->has_next()) {
-    // Reader does not have "peek", so we must "pop" the first message to see its timestamp
-    auto message = reader_->read_next();
-    prepare_clock(message->time_stamp);
-    // Make sure that first message gets played by putting it into the play queue
-    message_queue_.enqueue(message);
-  } else {
-    // The bag contains no messages - there is nothing to play
-    return;
+  try {
+    do {
+      reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+      if (reader_->has_next()) {
+        // Reader does not have "peek", so we must "pop" the first message to see its timestamp
+        auto message = reader_->read_next();
+        prepare_clock(message->time_stamp);
+        // Make sure that first message gets played by putting it into the play queue
+        message_queue_.enqueue(message);
+      } else {
+        // The bag contains no messages - there is nothing to play
+        return;
+      }
+
+      // TODO(karsten1987): Put this work into the constructor
+      topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
+      prepare_publishers();
+
+      storage_loading_future_ = std::async(
+        std::launch::async,
+        [this]() {load_storage_content();});
+
+      wait_for_filled_queue();
+
+      play_messages_from_queue();
+      reader_->reset();
+    } while (rclcpp::ok() && play_options_.loop);
+  } catch (std::runtime_error & e) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
   }
-
-  topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
-  prepare_publishers();
-
-  storage_loading_future_ = std::async(
-    std::launch::async,
-    [this]() {load_storage_content();});
-
-  wait_for_filled_queue();
-
-  play_messages_from_queue();
 }
 
 void Player::wait_for_filled_queue() const
