@@ -14,11 +14,17 @@
 
 #include <gmock/gmock.h>
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+
+#include "rosbag2_test_common/wait_for.hpp"
+
+#include "rosbag2_transport/recorder.hpp"
 
 #include "record_integration_fixture.hpp"
 
@@ -33,20 +39,43 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  pub_man_.add_publisher<test_msgs::msg::Strings>(string_topic, string_message, 2);
-  pub_man_.add_publisher<test_msgs::msg::Arrays>(array_topic, array_message, 2);
+  // TODO(karsten1987) Refactor this into publication manager
+  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_all_1");
+  auto array_pub = pub_node->create_publisher<test_msgs::msg::Arrays>(
+    array_topic, rclcpp::QoS{rclcpp::KeepAll()});
+  auto string_pub = pub_node->create_publisher<test_msgs::msg::Strings>(
+    string_topic, rclcpp::QoS{rclcpp::KeepAll()});
 
-  start_recording({true, false, {}, "rmw_format", 100ms});
-  run_publishers();
-  stop_recording();
+  rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<rosbag2_transport::impl::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
 
-  MockSequentialWriter & writer =
-    static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-  auto recorded_messages = writer.get_messages();
+  start_async_spin(recorder);
 
+  for (auto i = 0u; i < 2; ++i) {
+    array_pub->publish(*array_message);
+  }
+  for (auto i = 0u; i < 2; ++i) {
+    string_pub->publish(*string_message);
+  }
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  size_t expected_messages = 4;
+  auto ret = rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(5),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    });
+  auto recorded_messages = mock_writer.get_messages();
   // We may receive additional messages from rosout, it doesn't matter,
   // as long as we have received at least as many total messages as we expect
-  EXPECT_THAT(recorded_messages, SizeIs(Ge(4u)));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
+
   auto string_messages = filter_messages<test_msgs::msg::Strings>(
     recorded_messages, string_topic);
   auto array_messages = filter_messages<test_msgs::msg::Arrays>(

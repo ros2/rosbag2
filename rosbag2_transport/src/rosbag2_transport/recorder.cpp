@@ -104,6 +104,11 @@ void Recorder::record()
   }
 }
 
+const rosbag2_cpp::Writer & Recorder::get_writer_handle()
+{
+  return *writer_;
+}
+
 void Recorder::topics_discovery()
 {
   while (rclcpp::ok() && stop_discovery_ == false) {
