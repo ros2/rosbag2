@@ -79,7 +79,7 @@ function(create_tests_for_rmw_implementation)
   # disable the following tests for connext
   # due to slower discovery of nodes
   set(SKIP_TEST "")
-  if(${rmw_implementation} MATCHES "rmw_connext(.*)_cpp")
+  if(${rmw_implementation} MATCHES "rmw_connext(.*)")
     set(SKIP_TEST "SKIP_TEST")
   endif()
 
