@@ -70,7 +70,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   auto pub_b4 = pub_node->create_publisher<test_msgs::msg::Strings>(
     b4, rclcpp::QoS{rclcpp::KeepAll()});
 
-  auto recorder = std::make_shared<rosbag2_transport::impl::Recorder>(
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
@@ -151,7 +151,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   auto pub_e1 = pub_node->create_publisher<test_msgs::msg::Strings>(
     e1, rclcpp::QoS{rclcpp::KeepAll()});
 
-  auto recorder = std::make_shared<rosbag2_transport::impl::Recorder>(
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 

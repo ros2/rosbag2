@@ -73,8 +73,6 @@ rclcpp::QoS publisher_qos_for_topic(
 
 namespace rosbag2_transport
 {
-namespace impl
-{
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
@@ -285,5 +283,4 @@ void Player::prepare_clock(rcutils_time_point_value_t starting_time)
   }
 }
 
-}  // namespace impl
 }  // namespace rosbag2_transport
