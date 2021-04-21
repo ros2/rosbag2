@@ -219,7 +219,7 @@ void Player::toggle_paused()
   }
 }
 
-bool Player::is_paused()
+bool Player::is_paused() const
 {
   if (clock_) {
     return clock_->is_paused();

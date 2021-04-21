@@ -75,17 +75,21 @@ public:
   rosbag2_cpp::Reader * release_reader();
 
   // Playback control interface
+  /// Pause the flow of time for playback.
   ROSBAG2_TRANSPORT_PUBLIC
   void pause();
 
+  /// Start the flow of time for playback.
   ROSBAG2_TRANSPORT_PUBLIC
   void resume();
 
+  /// Pause if time running, resume if paused.
   ROSBAG2_TRANSPORT_PUBLIC
   void toggle_paused();
 
+  /// Return whether the playback is currently paused.
   ROSBAG2_TRANSPORT_PUBLIC
-  bool is_paused();
+  bool is_paused() const;
 
 private:
   void load_storage_content();
