@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_transport/rosbag2_transport.hpp"
+#include "rosbag2_transport/player.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
@@ -65,9 +65,21 @@ public:
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
     auto await_received_messages = sub_->spin_subscriptions();
-    rosbag2_transport::Player player(std::move(reader));
-    player.play(storage_options_, play_options_);
+
+    auto player = std::make_shared<rosbag2_transport::impl::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+    player->play();
+
     await_received_messages.get();
+    exec.cancel();
+    spin_thread.join();
 
     // Check that we got enough messages
     auto received_clock = sub_->get_received_messages<rosgraph_msgs::msg::Clock>("/clock");
