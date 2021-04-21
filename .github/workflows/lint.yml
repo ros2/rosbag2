@@ -4,37 +4,20 @@ on:
   pull_request:
 
 jobs:
-  ament_copyright:
-    name: ament_copyright
+  ament_lint_general: # tests applicable to all packages
+    name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
       image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          linter: [copyright, xmllint]
     steps:
     - uses: actions/checkout@v2
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
-        linter: copyright
-        distribution: rolling
-        package-name: |
-            ros2bag
-            rosbag2_compression
-            rosbag2_compression_zstd
-            rosbag2_cpp
-            rosbag2_test_common
-            rosbag2_tests
-            rosbag2_transport
-            shared_queues_vendor
-
-  ament_xmllint:
-    name: ament_xmllint
-    runs-on: ubuntu-latest
-    container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
-      with:
-        linter: xmllint
+        linter: ${{ matrix.linter }}
         distribution: rolling
         package-name: |
             ros2bag
@@ -42,21 +25,24 @@ jobs:
             rosbag2_compression
             rosbag2_compression_zstd
             rosbag2_cpp
+            rosbag2_interfaces
+            rosbag2_py
+            rosbag2_storage
+            rosbag2_storage_default_plugins
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
             shared_queues_vendor
-            sqlite3_vendor
 
   ament_lint_cpp: # Linters applicable to C++ packages
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
-    container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
     steps:
     - uses: actions/checkout@v2
     - uses: ros-tooling/action-ros-lint@v0.1
@@ -67,6 +53,9 @@ jobs:
             rosbag2_compression
             rosbag2_compression_zstd
             rosbag2_cpp
+            rosbag2_py
+            rosbag2_storage
+            rosbag2_storage_default_plugins
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
@@ -89,3 +78,4 @@ jobs:
         distribution: rolling
         package-name: |
             ros2bag
+            rosbag2_py
