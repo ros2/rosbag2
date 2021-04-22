@@ -24,8 +24,6 @@
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 #include "rclcpp/serialization.hpp"
 
-#include "memory_management.hpp"
-
 namespace rosbag2_test_common
 {
 
@@ -35,8 +33,8 @@ public:
   SubscriptionManager()
   {
     subscriber_node_ = std::make_shared<rclcpp::Node>(
-      "subscriber_node",
-      rclcpp::NodeOptions().start_parameter_event_publisher(false)
+      "subscription_manager_" + std::to_string(rclcpp::Clock().now().nanoseconds()),
+      rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false)
     );
   }
 
@@ -110,7 +108,6 @@ private:
     std::vector<std::shared_ptr<rclcpp::SerializedMessage>>> subscribed_messages_;
   std::unordered_map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
-  MemoryManagement memory_management_;
 };
 
 }  // namespace rosbag2_test_common
