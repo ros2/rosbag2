@@ -120,8 +120,8 @@ public:
     const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 10);
     std::unique_lock<std::mutex> lock(got_msg_mutex_, std::defer_lock);
     if (!messages_should_arrive) {
-      // Wait momentarily to let any messages that were published before our pause to get cleared
-      std::this_thread::sleep_for(condition_clear_time);
+      // Allow for a single unprocessed message to be handled before expecting nothing to arrive
+      got_msg_.wait_for(lock, condition_clear_time);
       EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::timeout);
     } else {
       EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::no_timeout);
