@@ -333,6 +333,7 @@ void Player::prepare_publishers()
 
 void Player::prepare_clock(rcutils_time_point_value_t starting_time)
 {
+  // TODO(emersonknapp) move clock setup into the constructor
   double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
   clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
 

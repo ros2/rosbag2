@@ -116,12 +116,12 @@ public:
   /// EXPECT to receive (or not receive) any messages for a period
   void expect_message(bool messages_should_arrive)
   {
-    const auto queue_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 2);
-    const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 5);
-    std::unique_lock<std::mutex> lock(got_msg_mutex_);
+    // Not too worried about the exact timing in this test, give a lot of leeway
+    const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 10);
+    std::unique_lock<std::mutex> lock(got_msg_mutex_, std::defer_lock);
     if (!messages_should_arrive) {
-      // first clear any messages that might have been sent after the last command
-      got_msg_.wait_for(lock, queue_clear_time);
+      // Wait momentarily to let any messages that were published before our pause to get cleared
+      std::this_thread::sleep_for(condition_clear_time);
       EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::timeout);
     } else {
       EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::no_timeout);
@@ -136,7 +136,7 @@ private:
     rosbag2_transport::PlayOptions play_options;
     play_options.loop = true;
 
-    const size_t num_msgs_to_publish = 20;
+    const size_t num_msgs_to_publish = 200;
     auto message = get_messages_basic_types()[0];
     message->int32_value = 42;
 
@@ -161,7 +161,6 @@ private:
 
   void topic_callback(const test_msgs::msg::BasicTypes::SharedPtr /* msg */)
   {
-    std::unique_lock<std::mutex> lock(got_msg_mutex_);
     got_msg_.notify_all();
   }
 
@@ -171,7 +170,8 @@ public:
   const std::chrono::seconds service_wait_timeout_ {2};
   const std::chrono::seconds service_call_timeout_ {1};
   const std::string test_topic_ = "/player_srvs_test_topic";
-  const size_t ms_between_msgs_ = 100;
+  // publishing at 50hz
+  const size_t ms_between_msgs_ = 20;
 
   // Orchestration
   std::thread spin_thread_;
