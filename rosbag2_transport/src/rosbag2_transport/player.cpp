@@ -271,11 +271,8 @@ void Player::prepare_publishers()
   }
 }
 
-/**
- * Set up the correct clock and pointer.
- * Prerequisite: reader_ must be open
- */
-void Player::prepare_clock() {
+void Player::prepare_clock()
+{
   double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
   const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
     reader_->get_metadata().starting_time.time_since_epoch()).count();
