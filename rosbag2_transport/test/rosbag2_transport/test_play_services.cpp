@@ -118,7 +118,7 @@ public:
   {
     // Not too worried about the exact timing in this test, give a lot of leeway
     const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 10);
-    std::unique_lock<std::mutex> lock(got_msg_mutex_, std::defer_lock);
+    std::unique_lock<std::mutex> lock(got_msg_mutex_);
     if (!messages_should_arrive) {
       // Allow for a single unprocessed message to be handled before expecting nothing to arrive
       got_msg_.wait_for(lock, condition_clear_time);
