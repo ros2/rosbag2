@@ -146,9 +146,9 @@ Player::Player(
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
       const std::shared_ptr<rosbag2_interfaces::srv::SetRate::Request> request,
-      const std::shared_ptr<rosbag2_interfaces::srv::SetRate::Response>/* response */)
+      const std::shared_ptr<rosbag2_interfaces::srv::SetRate::Response> response)
     {
-      set_rate(request->rate);
+      response->success = set_rate(request->rate);
     });
 }
 
@@ -253,14 +253,15 @@ double Player::get_rate() const
   return 0.;
 }
 
-void Player::set_rate(double rate)
+bool Player::set_rate(double rate)
 {
-  RCLCPP_WARN(
-    get_logger(),
-    "Setting rate to %lf", rate);
+  if (rate <= 0.0) {
+    return false;
+  }
   if (clock_) {
     clock_->set_rate(rate);
   }
+  return true;
 }
 
 void Player::wait_for_filled_queue() const

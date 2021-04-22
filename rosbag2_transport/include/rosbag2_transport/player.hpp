@@ -98,8 +98,12 @@ public:
   double get_rate() const;
 
   /// Set the playback rate.
+  /**
+   * Set the playback rate.
+   * \return false if an invalid value was provided (<= 0).
+   */
   ROSBAG2_TRANSPORT_PUBLIC
-  void set_rate(double);
+  bool set_rate(double);
 
 private:
   void load_storage_content();
