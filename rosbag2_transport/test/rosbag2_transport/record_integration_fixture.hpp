@@ -25,7 +25,6 @@
 #include "rosbag2_transport/record_options.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
-#include "rosbag2_test_common/publisher_manager.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
 
@@ -69,21 +68,6 @@ public:
     }
   }
 
-  void run_publishers()
-  {
-    pub_man_.run_publishers(
-      [this](const std::string & topic_name) -> size_t {
-        MockSequentialWriter & writer =
-        static_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-        const auto & messages = writer.messages_per_topic();
-        auto it = writer.messages_per_topic().find(topic_name);
-        if (it != messages.end()) {
-          return it->second;
-        }
-        return 0;
-      });
-  }
-
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> filter_messages(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
@@ -100,7 +84,6 @@ public:
   }
 
   MemoryManagement memory_;
-  PublisherManager pub_man_;
   std::future<void> future_;
 };
 

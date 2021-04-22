@@ -22,6 +22,7 @@
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
+#include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
@@ -39,12 +40,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   string_message->string_value = "Hello World";
   std::string string_topic = "/string_topic";
 
-  // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_all_1");
-  auto array_pub = pub_node->create_publisher<test_msgs::msg::Arrays>(
-    array_topic, rclcpp::QoS{rclcpp::KeepAll()});
-  auto string_pub = pub_node->create_publisher<test_msgs::msg::Strings>(
-    string_topic, rclcpp::QoS{rclcpp::KeepAll()});
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(array_topic, array_message, 2);
+  pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
@@ -53,12 +51,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   start_async_spin(recorder);
 
-  for (auto i = 0u; i < 2; ++i) {
-    array_pub->publish(*array_message);
-  }
-  for (auto i = 0u; i < 2; ++i) {
-    string_pub->publish(*string_message);
-  }
+  pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
