@@ -21,6 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
@@ -43,15 +44,9 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
 
   start_async_spin(recorder);
 
-  auto publisher_node = std::make_shared<rclcpp::Node>(
-    "rosbag2_test_record_all_no_discovery_1",
-    rclcpp::NodeOptions().start_parameter_event_publisher(false));
-  auto publisher = publisher_node->create_publisher<test_msgs::msg::Strings>(topic, 10);
-
-  for (int i = 0; i < 5; ++i) {
-    std::this_thread::sleep_for(20ms);
-    publisher->publish(*string_message);
-  }
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic, string_message, 5);
+  pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =

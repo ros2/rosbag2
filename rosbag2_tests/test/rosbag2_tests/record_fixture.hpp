@@ -29,7 +29,6 @@
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
-#include "rosbag2_test_common/publisher_manager.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -209,7 +208,6 @@ public:
   // relative path to the root of the bag file.
   rcpputils::fs::path root_bag_path_;
 
-  PublisherManager pub_man_;
   MemoryManagement memory_management_;
 };
 

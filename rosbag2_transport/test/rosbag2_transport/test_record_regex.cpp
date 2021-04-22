@@ -21,6 +21,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
@@ -58,17 +59,12 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   record_options.regex = regex;
 
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_regex_1");
-  auto pub_v1 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    v1, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b1 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b1, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b2 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b2, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b3 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b3, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b4 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b4, rclcpp::QoS{rclcpp::KeepAll()});
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(v1, test_string_messages[0], 3);
+  pub_manager.setup_publisher(b1, test_string_messages[0], 3);
+  pub_manager.setup_publisher(b2, test_string_messages[1], 3);
+  pub_manager.setup_publisher(b3, test_string_messages[0], 3);
+  pub_manager.setup_publisher(b4, test_string_messages[1], 3);
 
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
@@ -76,13 +72,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
 
   start_async_spin(recorder);
 
-  for (auto i = 0u; i < 3; ++i) {
-    pub_v1->publish(*test_string_messages[0]);
-    pub_b1->publish(*test_string_messages[0]);
-    pub_b2->publish(*test_string_messages[1]);
-    pub_b3->publish(*test_string_messages[0]);
-    pub_b4->publish(*test_string_messages[1]);
-  }
+  pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
@@ -138,18 +128,14 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   record_options.regex = regex;
   record_options.exclude = regex_exclude;
 
+
   // TODO(karsten1987) Refactor this into publication manager
-  auto pub_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_regex_2");
-  auto pub_v1 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    v1, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_v2 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    v2, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b1 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b1, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_b2 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    b2, rclcpp::QoS{rclcpp::KeepAll()});
-  auto pub_e1 = pub_node->create_publisher<test_msgs::msg::Strings>(
-    e1, rclcpp::QoS{rclcpp::KeepAll()});
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(v1, test_string_messages[0], 3);
+  pub_manager.setup_publisher(v2, test_string_messages[1], 3);
+  pub_manager.setup_publisher(b1, test_string_messages[0], 3);
+  pub_manager.setup_publisher(b2, test_string_messages[1], 3);
+  pub_manager.setup_publisher(e1, test_string_messages[0], 3);
 
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
@@ -157,13 +143,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
 
   start_async_spin(recorder);
 
-  for (auto i = 0u; i < 3; ++i) {
-    pub_v1->publish(*test_string_messages[0]);
-    pub_v2->publish(*test_string_messages[1]);
-    pub_b1->publish(*test_string_messages[0]);
-    pub_b2->publish(*test_string_messages[1]);
-    pub_e1->publish(*test_string_messages[0]);
-  }
+  pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
