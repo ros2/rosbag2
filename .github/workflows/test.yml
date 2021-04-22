@@ -41,6 +41,10 @@ jobs:
               "cmake-args": [
                 "-DCMAKE_CXX_FLAGS=\"-Werror\""
               ]
+            },
+            "test": {
+              "ctest-args": ["-LE", "xfail"],
+              "pytest-args": ["-m", "not xfail"]
             }
           }
     - uses: actions/upload-artifact@v1
