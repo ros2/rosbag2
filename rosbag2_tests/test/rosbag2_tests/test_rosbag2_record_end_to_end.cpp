@@ -584,7 +584,7 @@ TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_
     execute_and_wait_until_completion("ros2 bag record -a -f some_rmw", temporary_dir_path_);
   auto error_output = internal::GetCapturedStderr();
 
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
   EXPECT_THAT(
     error_output, HasSubstr("Could not find converter for format some_rmw"));
 }
