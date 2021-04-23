@@ -62,12 +62,14 @@ public:
   {}
   virtual ~TimeControllerClockImpl() = default;
 
+  /// Return the total nanoseconds of an arbitrary duration type.
   template<typename T>
   rcutils_duration_value_t duration_nanos(const T & duration) const
   {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
   }
 
+  /// Convert an arbitrary SteadyTime to a ROSTime, based on the current reference snapshot.
   rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
@@ -75,6 +77,7 @@ public:
       rate * duration_nanos(steady_time - reference.steady));
   }
 
+  /// Convert an arbitrary ROSTime to a SteadyTime, based on the current reference snapshot.
   std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
@@ -83,6 +86,7 @@ public:
     return reference.steady + std::chrono::nanoseconds(diff_nanos);
   }
 
+  /// Return the current ROS time right now, based on current settings.
   rcutils_time_point_value_t ros_now() const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
@@ -92,6 +96,7 @@ public:
     return steady_to_ros(now_fn());
   }
 
+  /// Take a new reference snapshot, matching `ros_time` to the current steady time
   void snapshot(rcutils_time_point_value_t ros_time)
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
@@ -99,6 +104,10 @@ public:
     reference.steady = now_fn();
   }
 
+  /**
+   * Take a new reference snaphot to match the current ROStime to the current SteadyTime
+   * This is needed when changing a setting such as pause or rate.
+   */
   void snapshot()
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
