@@ -40,6 +40,8 @@ public:
   using Resume = rosbag2_interfaces::srv::Resume;
   using TogglePaused = rosbag2_interfaces::srv::TogglePaused;
   using IsPaused = rosbag2_interfaces::srv::IsPaused;
+  using GetRate = rosbag2_interfaces::srv::GetRate;
+  using SetRate = rosbag2_interfaces::srv::SetRate;
 
   PlaySrvsTest()
   : RosBag2PlayTestFixture(),
@@ -64,6 +66,8 @@ public:
     cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
     cli_toggle_paused_ = client_node_->create_client<TogglePaused>(ns + "/toggle_paused");
     cli_is_paused_ = client_node_->create_client<IsPaused>(ns + "/is_paused");
+    cli_get_rate_ = client_node_->create_client<GetRate>(ns + "/get_rate");
+    cli_set_rate_ = client_node_->create_client<SetRate>(ns + "/set_rate");
     topic_sub_ = client_node_->create_subscription<test_msgs::msg::BasicTypes>(
       test_topic_, 10,
       std::bind(&PlaySrvsTest::topic_callback, this, std::placeholders::_1));
@@ -80,6 +84,8 @@ public:
     ASSERT_TRUE(cli_pause_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_is_paused_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_toggle_paused_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_get_rate_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_set_rate_->wait_for_service(service_wait_timeout_));
 
     // Wait for paused == false to know that playback has begun
     bool is_playing = false;
@@ -96,15 +102,23 @@ public:
   }
 
   /// Call a service client, and expect it to successfully return within a reasonable timeout
-  template<typename T>
-  typename T::Response::SharedPtr successful_call(typename rclcpp::Client<T>::SharedPtr cli)
+  template<typename Srv>
+  typename Srv::Response::SharedPtr successful_call(
+    typename rclcpp::Client<Srv>::SharedPtr cli,
+    typename Srv::Request::SharedPtr request)
   {
-    auto request = std::make_shared<typename T::Request>();
     auto future = cli->async_send_request(request);
     EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready);
     auto result = future.get();
     EXPECT_TRUE(result);
     return result;
+  }
+
+  template<typename Srv>
+  typename Srv::Response::SharedPtr successful_call(typename rclcpp::Client<Srv>::SharedPtr cli)
+  {
+    auto request = std::make_shared<typename Srv::Request>();
+    return successful_call<Srv>(cli, request);
   }
 
   bool is_paused()
@@ -185,6 +199,8 @@ public:
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
   rclcpp::Client<TogglePaused>::SharedPtr cli_toggle_paused_;
   rclcpp::Client<IsPaused>::SharedPtr cli_is_paused_;
+  rclcpp::Client<GetRate>::SharedPtr cli_get_rate_;
+  rclcpp::Client<SetRate>::SharedPtr cli_set_rate_;
 
   // Mechanism to check on playback status
   rclcpp::Subscription<test_msgs::msg::BasicTypes>::SharedPtr topic_sub_;
@@ -233,4 +249,37 @@ TEST_F(PlaySrvsTest, toggle_paused)
   successful_call<TogglePaused>(cli_toggle_paused_);
   ASSERT_FALSE(is_paused());
   expect_message(true);
+}
+
+TEST_F(PlaySrvsTest, set_rate_good_values)
+{
+  auto set_request = std::make_shared<SetRate::Request>();
+  SetRate::Response::SharedPtr set_response;
+  GetRate::Response::SharedPtr get_response;
+
+  set_request->rate = 2.0;
+  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  ASSERT_TRUE(set_response->success);
+  get_response = successful_call<GetRate>(cli_get_rate_);
+  ASSERT_EQ(get_response->rate, 2.0);
+
+  set_request->rate = 0.5;
+  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  ASSERT_TRUE(set_response->success);
+  get_response = successful_call<GetRate>(cli_get_rate_);
+  ASSERT_EQ(get_response->rate, 0.5);
+}
+
+TEST_F(PlaySrvsTest, set_rate_bad_values)
+{
+  auto set_request = std::make_shared<SetRate::Request>();
+  SetRate::Response::SharedPtr set_response;
+
+  set_request->rate = 0.0;
+  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  ASSERT_FALSE(set_response->success);
+
+  set_request->rate = -1.0;
+  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  ASSERT_FALSE(set_response->success);
 }
