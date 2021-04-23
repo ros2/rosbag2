@@ -102,6 +102,16 @@ public:
   ROSBAG2_CPP_PUBLIC
   bool is_paused() const override;
 
+  /**
+   * Change the current ROS time to an arbitrary time.
+   * This will wake any waiting `sleep_until`.
+   * Note: this initial implementation does not have any jump-callback handling,
+   * so it is not safe to use during playback, only for reconfiguration for clock reuse.
+   * \param ros_time: The new ROS time to use as the basis for "now()"
+   */
+  ROSBAG2_CPP_PUBLIC
+  void jump(rcutils_time_point_value_t ros_time) override;
+
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;
 };

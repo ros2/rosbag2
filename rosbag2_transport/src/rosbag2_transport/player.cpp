@@ -106,6 +106,20 @@ Player::Player(
   storage_options_(storage_options),
   play_options_(play_options)
 {
+  {
+    reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+    double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
+    const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      reader_->get_metadata().starting_time.time_since_epoch()).count();
+    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
+    clock_->pause();
+
+    topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
+    prepare_publishers();
+
+    reader_->reset();
+  }
+
   srv_pause_ = create_service<rosbag2_interfaces::srv::Pause>(
     "~/pause",
     [this](
@@ -193,20 +207,8 @@ void Player::play()
   try {
     do {
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-      if (reader_->has_next()) {
-        // Reader does not have "peek", so we must "pop" the first message to see its timestamp
-        auto message = reader_->read_next();
-        prepare_clock(message->time_stamp);
-        // Make sure that first message gets played by putting it into the play queue
-        message_queue_.enqueue(message);
-      } else {
-        // The bag contains no messages - there is nothing to play
-        return;
-      }
-
-      // TODO(karsten1987): Put this work into the constructor
-      topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
-      prepare_publishers();
+      const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        reader_->get_metadata().starting_time.time_since_epoch()).count();
 
       storage_loading_future_ = std::async(
         std::launch::async,
@@ -214,6 +216,8 @@ void Player::play()
 
       wait_for_filled_queue();
 
+      clock_->jump(starting_time);
+      clock_->resume();
       play_messages_from_queue();
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
@@ -224,43 +228,31 @@ void Player::play()
 
 void Player::pause()
 {
-  if (clock_) {
-    clock_->pause();
-  }
+  clock_->pause();
 }
 
 void Player::resume()
 {
-  if (clock_) {
-    clock_->resume();
-  }
+  clock_->resume();
 }
 
 void Player::toggle_paused()
 {
-  if (clock_) {
-    if (clock_->is_paused()) {
-      clock_->resume();
-    } else {
-      clock_->pause();
-    }
+  if (clock_->is_paused()) {
+    clock_->resume();
+  } else {
+    clock_->pause();
   }
 }
 
 bool Player::is_paused() const
 {
-  if (clock_) {
-    return clock_->is_paused();
-  }
-  return true;
+  return clock_->is_paused();
 }
 
 double Player::get_rate() const
 {
-  if (clock_) {
-    return clock_->get_rate();
-  }
-  return 1.0;
+  return clock_->get_rate();
 }
 
 bool Player::set_rate(double rate)
@@ -268,9 +260,7 @@ bool Player::set_rate(double rate)
   if (rate <= 0.0) {
     return false;
   }
-  if (clock_) {
-    clock_->set_rate(rate);
-  }
+  clock_->set_rate(rate);
   return true;
 }
 
@@ -346,6 +336,23 @@ void Player::prepare_publishers()
   storage_filter.topics = play_options_.topics_to_filter;
   reader_->set_filter(storage_filter);
 
+  // Create /clock publisher
+  if (play_options_.clock_publish_frequency > 0.f) {
+    const auto publish_period = std::chrono::nanoseconds(
+      static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
+    // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
+    // should not own transport-based functionality
+    clock_publisher_ = this->create_publisher<rosgraph_msgs::msg::Clock>(
+      "/clock", rclcpp::ClockQoS());
+    clock_publish_timer_ = this->create_wall_timer(
+      publish_period, [this]() {
+        auto msg = rosgraph_msgs::msg::Clock();
+        msg.clock = rclcpp::Time(clock_->now());
+        clock_publisher_->publish(msg);
+      });
+  }
+
+  // Create topic publishers
   auto topics = reader_->get_all_topics_and_types();
   for (const auto & topic : topics) {
     if (publishers_.find(topic.name) != publishers_.end()) {
@@ -375,38 +382,6 @@ void Player::prepare_publishers()
         this->get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
-  }
-}
-
-void Player::prepare_clock(rcutils_time_point_value_t starting_time)
-{
-  // TODO(emersonknapp) move clock setup into the constructor
-  double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
-  bool paused = false;
-  // Copy over important settings
-  if (clock_) {
-    rate = clock_->get_rate();
-    paused = clock_->is_paused();
-  }
-  clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
-  if (paused) {
-    clock_->pause();
-  }
-
-  // Create /clock publisher
-  if (play_options_.clock_publish_frequency > 0.f) {
-    const auto publish_period = std::chrono::nanoseconds(
-      static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
-    // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
-    // should not own transport-based functionality
-    clock_publisher_ = this->create_publisher<rosgraph_msgs::msg::Clock>(
-      "/clock", rclcpp::ClockQoS());
-    clock_publish_timer_ = this->create_wall_timer(
-      publish_period, [this]() {
-        auto msg = rosgraph_msgs::msg::Clock();
-        msg.clock = rclcpp::Time(clock_->now());
-        clock_publisher_->publish(msg);
-      });
   }
 }
 

@@ -90,6 +90,12 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   virtual bool is_paused() const = 0;
+
+  /**
+   * Change the current ROS time to an arbitrary time.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void jump(rcutils_time_point_value_t) = 0;
 };
 
 }  // namespace rosbag2_cpp

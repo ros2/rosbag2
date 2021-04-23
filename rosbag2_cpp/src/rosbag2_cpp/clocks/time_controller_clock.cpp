@@ -206,4 +206,11 @@ bool TimeControllerClock::is_paused() const
   return impl_->paused;
 }
 
+void TimeControllerClock::jump(rcutils_time_point_value_t ros_time)
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  impl_->snapshot(ros_time);
+  impl_->cv.notify_all();
+}
+
 }  // namespace rosbag2_cpp
