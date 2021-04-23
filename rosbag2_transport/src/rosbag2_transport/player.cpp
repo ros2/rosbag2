@@ -250,7 +250,7 @@ double Player::get_rate() const
   if (clock_) {
     return clock_->get_rate();
   }
-  return 0.;
+  return 1.0;
 }
 
 bool Player::set_rate(double rate)
