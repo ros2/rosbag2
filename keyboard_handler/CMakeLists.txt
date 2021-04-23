@@ -15,6 +15,8 @@ endif()
 
 set(SOURCES
     src/keyboard_handler_base.cpp
+    src/default_unix_key_map.cpp
+    src/default_windows_key_map.cpp
     src/keyboard_handler_unix_impl.cpp
     src/keyboard_handler_windows_impl.cpp
 )

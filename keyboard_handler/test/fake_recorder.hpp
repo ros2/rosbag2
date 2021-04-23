@@ -42,7 +42,7 @@ public:
 
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
-    auto callback = [recorder_weak_ptr = weak_self_](const std::string & key_code) {
+    auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code) {
         auto RecorderSharedPtr = recorder_weak_ptr.lock();
         if (RecorderSharedPtr) {
           RecorderSharedPtr->callback_func(key_code);
@@ -50,7 +50,7 @@ public:
           std::cout << "Object for assigned callback FakeRecorder() was deleted" << std::endl;
         }
       };
-    keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KEY_CODE_CURSOR_UP);
+    keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP);
   }
 
 private:
@@ -59,31 +59,26 @@ private:
 //    std::cout << "FakeRecorder() ctor" << std::endl;
   }
 
-  virtual void callback_func(const std::string & keycode)
+  virtual void callback_func(KeyboardHandler::KeyCode key_code)
   {
-    if (keycode.length() == 3 &&
-      keycode[0] == KeyboardHandler::KEY_CODE_CURSOR_UP[0] &&
-      keycode[1] == KeyboardHandler::KEY_CODE_CURSOR_UP[1])
-    {
-      switch (keycode[2]) {
-        case KeyboardHandler::KEY_CODE_CURSOR_UP[2]:
-          std::cout << "FakeRecorder callback with keycode = KEY_CODE_CURSOR_UP" << std::endl;
-          break;
-        case KeyboardHandler::KEY_CODE_CURSOR_DOWN[2]:
-          std::cout << "FakeRecorder callback with keycode = KEY_CODE_CURSOR_DOWN" << std::endl;
-          break;
-        case KeyboardHandler::KEY_CODE_CURSOR_FORWARD[2]:
-          std::cout << "FakeRecorder callback with keycode = KEY_CODE_CURSOR_FORWARD" << std::endl;
-          break;
-        case KeyboardHandler::KEY_CODE_CURSOR_BACK[2]:
-          std::cout << "FakeRecorder callback with keycode = KEY_CODE_CURSOR_BACK" << std::endl;
-          break;
-        default:
-          std::cout << "FakeRecorder callback with keycode = " << keycode << std::endl;
-          break;
-      }
-    } else {
-      std::cout << "FakeRecorder callback with keycode = " << keycode << std::endl;
+    using KeyCode = KeyboardHandler::KeyCode;
+    switch (key_code) {
+      case KeyCode::CURSOR_UP:
+        std::cout << "FakeRecorder callback with key code = CURSOR_UP" << std::endl;
+        break;
+      case KeyCode::CURSOR_DOWN:
+        std::cout << "FakeRecorder callback with key code = CURSOR_DOWN" << std::endl;
+        break;
+      case KeyCode::CURSOR_RIGHT:
+        std::cout << "FakeRecorder callback with key code = CURSOR_RIGHT" << std::endl;
+        break;
+      case KeyCode::CURSOR_LEFT:
+        std::cout << "FakeRecorder callback with key code = CURSOR_LEFT" << std::endl;
+        break;
+      default:
+        std::cout << "FakeRecorder callback with key code = " << static_cast<int32_t>(key_code) <<
+          std::endl;
+        break;
     }
     counter_++;
   }

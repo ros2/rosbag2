@@ -15,10 +15,24 @@
 #ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
+#include <string>
 #include <algorithm>
 #include <csignal>
 #include <iostream>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
+
+KEYBOARD_HANDLER_PUBLIC
+std::string
+KeyboardHandlerUnixImpl::get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code)
+{
+  std::string ret_str{};
+  for (const auto & it : key_codes_map_) {
+    if (it.second == key_code) {
+      return it.first;
+    }
+  }
+  return ret_str;
+}
 
 namespace
 {
@@ -38,6 +52,12 @@ void quit(int sig)
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : exit_(false), stdin_fd_(fileno(stdin))
 {
+  for (size_t i = 0; i < STATIC_KEY_MAP_LENGTH; i++) {
+    key_codes_map_.emplace(
+      DEFAULT_STATIC_KEY_MAP[i].terminal_sequence,
+      DEFAULT_STATIC_KEY_MAP[i].inner_code);
+  }
+
   // Check if we can handle key press from std input
   if (!isatty(stdin_fd_)) {
     // If stdin is not a real terminal (redirected to text file or pipe ) can't do much here
@@ -72,7 +92,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
         static constexpr size_t BUFF_LEN = 10;
         char buff[BUFF_LEN] = {0};
         do {
-          int read_bytes = read(stdin_fd_, buff, BUFF_LEN);
+          ssize_t read_bytes = read(stdin_fd_, buff, BUFF_LEN);
           if (read_bytes < 0 && errno != EAGAIN) {
             throw std::runtime_error("Error in read(). errno = " + std::to_string(errno));
           }
@@ -81,8 +101,14 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
             // Do nothing. 0 means read() returned by timeout.
           } else {  // read_bytes > 0
             buff[std::min(BUFF_LEN - 1, static_cast<size_t>(read_bytes))] = '\0';
+            KeyCode pressed_key_code = KeyCode::UNKNOWN;
             std::lock_guard<std::mutex> lk(callbacks_mutex_);
-            auto range = callbacks_.equal_range(buff);
+            auto key_map_it = key_codes_map_.find(buff);
+            if (key_map_it != key_codes_map_.end()) {
+              pressed_key_code = key_map_it->second;
+            }
+
+            auto range = callbacks_.equal_range(pressed_key_code);
             for (auto it = range.first; it != range.second; ++it) {
               it->second(it->first);
             }

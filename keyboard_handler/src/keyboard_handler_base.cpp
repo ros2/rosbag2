@@ -15,19 +15,25 @@
 #include <string>
 #include "keyboard_handler/keyboard_handler_base.hpp"
 
-constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_UP[];
-constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_DOWN[];
-constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_FORWARD[];
-constexpr char KeyboardHandlerBase::KEY_CODE_CURSOR_BACK[];
-constexpr char KeyboardHandlerBase::KEY_CODE_SPACE[];
-
+KEYBOARD_HANDLER_PUBLIC
 bool KeyboardHandlerBase::add_key_press_callback(
-  const callback_t & callback, const std::string & key_code)
+  const callback_t & callback, KeyboardHandlerBase::KeyCode key_code)
 {
-  if (callback == nullptr || key_code.empty() || !is_init_succeed_) {
+  if (callback == nullptr || !is_init_succeed_) {
     return false;
   }
   std::lock_guard<std::mutex> lk(callbacks_mutex_);
   callbacks_.emplace(key_code, callback);
   return true;
+}
+
+KEYBOARD_HANDLER_PUBLIC
+std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
+{
+  for (auto & it : ENUM_KEY_TO_STR_MAP) {
+    if (it.inner_code == key_code) {
+      return it.str;
+    }
+  }
+  return std::string();
 }

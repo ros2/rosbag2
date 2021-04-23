@@ -15,7 +15,8 @@
 #ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 #define KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 
-#ifndef _WIN32
+#include <string>
+#include <unordered_map>
 #include <atomic>
 #include <thread>
 #include "keyboard_handler/visibility_control.hpp"
@@ -30,11 +31,23 @@ public:
   KEYBOARD_HANDLER_PUBLIC
   virtual ~KeyboardHandlerUnixImpl();
 
+  KEYBOARD_HANDLER_PUBLIC
+  std::string get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code);
+
+protected:
+  struct KeyMap
+  {
+    KeyCode inner_code;
+    const char * terminal_sequence;
+  };
+  static const KeyMap DEFAULT_STATIC_KEY_MAP[];
+  static const size_t STATIC_KEY_MAP_LENGTH;
+
 private:
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
   const int stdin_fd_;
+  std::unordered_map<std::string, KeyCode> key_codes_map_;
 };
-#endif  // #ifndef _WIN32
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
