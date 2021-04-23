@@ -150,6 +150,11 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
       const auto steady_until = impl_->ros_to_steady(until);
       impl_->cv.wait_until(lock, steady_until);
     }
+    if (impl_->paused) {
+      // Don't allow publishing any messages while paused
+      // even if the time was technically reached by the time of wakeup
+      return false;
+    }
   }
   return now() >= until;
 }

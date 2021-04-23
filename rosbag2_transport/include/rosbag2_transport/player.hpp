@@ -29,7 +29,10 @@
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
-
+#include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/resume.hpp"
+#include "rosbag2_interfaces/srv/toggle_paused.hpp"
+#include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
@@ -71,6 +74,23 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   rosbag2_cpp::Reader * release_reader();
 
+  // Playback control interface
+  /// Pause the flow of time for playback.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void pause();
+
+  /// Start the flow of time for playback.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void resume();
+
+  /// Pause if time running, resume if paused.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void toggle_paused();
+
+  /// Return whether the playback is currently paused.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_paused() const;
+
 private:
   void load_storage_content();
   bool is_storage_completely_loaded() const;
@@ -93,6 +113,11 @@ private:
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
+
+  rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
+  rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
+  rclcpp::Service<rosbag2_interfaces::srv::TogglePaused>::SharedPtr srv_toggle_paused_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
 };
 
 }  // namespace rosbag2_transport
