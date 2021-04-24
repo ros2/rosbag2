@@ -141,11 +141,8 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksTest) {
 
   {
     MockKeyboardHandler keyboard_handler;
-    KeyboardHandlerWindowsImpl::WinKeyCode key_code =
+    system_calls_stub->win_key_code =
       keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP);
-
-    system_calls_stub->win_key_code = key_code;
-
     EXPECT_CALL(*system_calls_stub, _getch())
     .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
 
@@ -166,6 +163,40 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksTest) {
     test_output.find("FakePlayer callback with key code = CURSOR_UP") != std::string::npos);
   EXPECT_TRUE(
     test_output.find("FakeRecorder callback with key code = CURSOR_UP") != std::string::npos);
+}
+
+TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksAndDeletedObjectsTest) {
+  EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
+  ON_CALL(*system_calls_stub, _getch()).WillByDefault(Return(-1));
+  {
+    MockKeyboardHandler keyboard_handler;
+    system_calls_stub->win_key_code =
+      keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP);
+    EXPECT_CALL(*system_calls_stub, _getch())
+    .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
+
+    EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+    {
+      auto recorder = FakeRecorder::create();
+      std::shared_ptr<FakePlayer> player_shared_ptr(new FakePlayer());
+
+      // Capture std::cout to verify at the end of the test that callbacks for deleted objects
+      // was correctly processed
+      testing::internal::CaptureStdout();
+      recorder->register_callbacks(keyboard_handler);
+      EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
+
+      player_shared_ptr->register_callbacks(keyboard_handler);
+      EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
+    }
+  }
+  // Check that callbacks was called for deleted objects and processed properly
+  std::string test_output = testing::internal::GetCapturedStdout();
+  EXPECT_TRUE(
+    test_output.find("Object for assigned callback FakePlayer() was deleted") != std::string::npos);
+  EXPECT_TRUE(
+    test_output.find("Object for assigned callback FakeRecorder() was deleted") !=
+    std::string::npos);
 }
 
 TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerGlobalCallbackTest) {
@@ -190,7 +221,7 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerMockClassMemberTest) {
   EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
   EXPECT_CALL(*system_calls_stub, _getch()).WillRepeatedly(Return('Z'));
 
-  KeyboardHandler keyboard_handler;
+  MockKeyboardHandler keyboard_handler;
   std::shared_ptr<NiceMock<MockPlayer>> mock_player_sptr(new NiceMock<MockPlayer>());
   EXPECT_CALL(
     *mock_player_sptr,
@@ -201,6 +232,7 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerMockClassMemberTest) {
   EXPECT_TRUE(
     keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CAPITAL_Z));
   EXPECT_TRUE(keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::UNKNOWN));
+  EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
 }
 
 #endif  // #ifdef _WIN32

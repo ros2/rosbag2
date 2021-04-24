@@ -65,6 +65,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
     [&]() {
       do {
         if (_kbhit()) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
           WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
           int ch = _getch();
           win_key_code.first = ch;
@@ -85,7 +86,6 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
             it->second(it->first);
           }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
       } while (!exit_.load());
     });
 }
