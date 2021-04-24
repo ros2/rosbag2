@@ -95,19 +95,19 @@ ssize_t read(int __fd, void * __buf, size_t __nbytes)
 }
 
 KEYBOARD_HANDLER_PUBLIC
-int isatty(int __fd) __THROW
+int isatty(int __fd)
 {
   return 1;
 }
 
 KEYBOARD_HANDLER_PUBLIC
-int tcgetattr(int __fd, struct termios * __termios_p) __THROW
+int tcgetattr(int __fd, struct termios * __termios_p)
 {
   return 0;
 }
 
 KEYBOARD_HANDLER_PUBLIC
-int tcsetattr(int __fd, int __optional_actions, const struct termios * __termios_p) __THROW
+int tcsetattr(int __fd, int __optional_actions, const struct termios * __termios_p)
 {
   return 0;
 }

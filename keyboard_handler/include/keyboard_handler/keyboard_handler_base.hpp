@@ -256,6 +256,7 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
   {KeyboardHandlerBase::KeyCode::SHIFT_F12, "SHIFT_F12"},
 };
 
+KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code);
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_BASE_HPP_
