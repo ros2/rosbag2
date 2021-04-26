@@ -61,6 +61,13 @@ public:
 
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options,
