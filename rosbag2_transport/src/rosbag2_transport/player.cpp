@@ -165,13 +165,13 @@ Player::Player(
 Player::~Player()
 {
   if (reader_) {
-    reader_->reset();
+    reader_->close();
   }
 }
 
 rosbag2_cpp::Reader * Player::release_reader()
 {
-  reader_->reset();
+  reader_->close();
   return reader_.release();
 }
 
@@ -215,7 +215,7 @@ void Player::play()
       wait_for_filled_queue();
 
       play_messages_from_queue();
-      reader_->reset();
+      reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());

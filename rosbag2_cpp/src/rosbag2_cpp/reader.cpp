@@ -32,7 +32,7 @@ Reader::Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_im
 
 Reader::~Reader()
 {
-  reader_impl_->reset();
+  reader_impl_->close();
 }
 
 void Reader::open(const std::string & uri)
@@ -52,9 +52,9 @@ void Reader::open(
   reader_impl_->open(storage_options, converter_options);
 }
 
-void Reader::reset()
+void Reader::close()
 {
-  reader_impl_->reset();
+  reader_impl_->close();
 }
 
 bool Reader::has_next()

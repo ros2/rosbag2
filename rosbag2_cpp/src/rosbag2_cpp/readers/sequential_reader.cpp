@@ -69,10 +69,10 @@ SequentialReader::SequentialReader(
 
 SequentialReader::~SequentialReader()
 {
-  reset();
+  close();
 }
 
-void SequentialReader::reset()
+void SequentialReader::close()
 {
   if (storage_) {
     storage_.reset();

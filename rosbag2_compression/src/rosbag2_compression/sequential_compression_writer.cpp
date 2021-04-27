@@ -57,7 +57,7 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-  reset();
+  close();
 }
 
 void SequentialCompressionWriter::compression_thread_fn()
@@ -180,7 +180,7 @@ void SequentialCompressionWriter::open(
   setup_compression();
 }
 
-void SequentialCompressionWriter::reset()
+void SequentialCompressionWriter::close()
 {
   if (!base_folder_.empty()) {
     // Reset may be called before initializing the compressor (ex. bad options).
