@@ -84,16 +84,6 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 }
 
 Player::Player(
-  const rosbag2_storage::StorageOptions & storage_options,
-  const rosbag2_transport::PlayOptions & play_options,
-  const std::string & node_name,
-  const rclcpp::NodeOptions & node_options)
-: Player(std::make_unique<rosbag2_cpp::Reader>(),
-    storage_options, play_options,
-    node_name, node_options)
-{}
-
-Player::Player(
   std::unique_ptr<rosbag2_cpp::Reader> reader,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::PlayOptions & play_options,
@@ -108,16 +98,15 @@ Player::Player(
 {
   {
     reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-    double rate = play_options_.rate > 0.0 ? play_options_.rate : 1.0;
     const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
       reader_->get_metadata().starting_time.time_since_epoch()).count();
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time, rate);
-    clock_->pause();
+    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time);
+    set_rate(play_options_.rate);
 
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
 
-    reader_->reset();
+    reader_->close();
   }
 
   srv_pause_ = create_service<rosbag2_interfaces::srv::Pause>(
@@ -217,7 +206,6 @@ void Player::play()
       wait_for_filled_queue();
 
       clock_->jump(starting_time);
-      clock_->resume();
       play_messages_from_queue();
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
@@ -238,11 +226,7 @@ void Player::resume()
 
 void Player::toggle_paused()
 {
-  if (clock_->is_paused()) {
-    clock_->resume();
-  } else {
-    clock_->pause();
-  }
+  clock_->is_paused() ? clock_->resume() : clock_->pause();
 }
 
 bool Player::is_paused() const
@@ -257,11 +241,7 @@ double Player::get_rate() const
 
 bool Player::set_rate(double rate)
 {
-  if (rate <= 0.0) {
-    return false;
-  }
-  clock_->set_rate(rate);
-  return true;
+  return clock_->set_rate(rate);
 }
 
 void Player::wait_for_filled_queue() const

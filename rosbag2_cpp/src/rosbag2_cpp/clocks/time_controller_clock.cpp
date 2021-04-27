@@ -126,7 +126,6 @@ public:
 
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
-  double rate,
   NowFunction now_fn,
   std::chrono::milliseconds sleep_time_while_paused)
 : impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused))
@@ -137,7 +136,6 @@ TimeControllerClock::TimeControllerClock(
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->reference.ros = starting_time;
   impl_->reference.steady = impl_->now_fn();
-  impl_->rate = rate;
 }
 
 TimeControllerClock::~TimeControllerClock()
@@ -168,15 +166,24 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
   return now() >= until;
 }
 
-void TimeControllerClock::set_rate(double rate)
+bool TimeControllerClock::sleep_until(rclcpp::Time until)
 {
+  return sleep_until(until.nanoseconds());
+}
+
+bool TimeControllerClock::set_rate(double rate)
+{
+  if (rate <= 0) {
+    return false;
+  }
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   if (impl_->rate == rate) {
-    return;
+    return true;
   }
   impl_->snapshot();
   impl_->rate = rate;
   impl_->cv.notify_all();
+  return true;
 }
 
 double TimeControllerClock::get_rate() const
@@ -220,6 +227,11 @@ void TimeControllerClock::jump(rcutils_time_point_value_t ros_time)
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->snapshot(ros_time);
   impl_->cv.notify_all();
+}
+
+void TimeControllerClock::jump(rclcpp::Time ros_time)
+{
+  jump(ros_time.nanoseconds());
 }
 
 }  // namespace rosbag2_cpp
