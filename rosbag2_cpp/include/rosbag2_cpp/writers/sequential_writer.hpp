@@ -77,7 +77,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options) override;
 
-  void reset() override;
+  void close() override;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within

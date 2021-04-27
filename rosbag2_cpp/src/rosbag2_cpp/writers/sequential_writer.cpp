@@ -76,7 +76,7 @@ SequentialWriter::SequentialWriter(
 
 SequentialWriter::~SequentialWriter()
 {
-  reset();
+  close();
 }
 
 void SequentialWriter::init_metadata()
@@ -146,7 +146,7 @@ void SequentialWriter::open(
   init_metadata();
 }
 
-void SequentialWriter::reset()
+void SequentialWriter::close()
 {
   if (use_cache_) {
     // destructor will flush message cache

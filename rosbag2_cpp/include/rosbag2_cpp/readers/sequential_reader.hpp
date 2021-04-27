@@ -62,7 +62,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options) override;
 
-  void reset() override;
+  void close() override;
 
   bool has_next() override;
 

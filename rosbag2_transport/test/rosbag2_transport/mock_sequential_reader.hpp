@@ -34,7 +34,7 @@ public:
     num_read_ = 0;
   }
 
-  void reset() override {}
+  void close() override {}
 
   bool has_next() override
   {

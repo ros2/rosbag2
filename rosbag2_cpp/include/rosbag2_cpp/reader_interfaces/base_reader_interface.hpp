@@ -41,7 +41,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options) = 0;
 
-  virtual void reset() = 0;
+  virtual void close() = 0;
 
   virtual bool has_next() = 0;
 

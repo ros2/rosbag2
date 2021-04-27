@@ -96,7 +96,7 @@ public:
   /**
    * Closing the reader instance.
    */
-  void reset();
+  void close();
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

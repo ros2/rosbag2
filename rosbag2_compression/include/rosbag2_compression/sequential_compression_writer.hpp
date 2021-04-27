@@ -117,7 +117,7 @@ public:
    * Attempt to compress the last open file and reset the storage and storage factory.
    * This method must be exception safe because it is called by the destructor.
    */
-  void reset() override;
+  void close() override;
 
 protected:
   /**

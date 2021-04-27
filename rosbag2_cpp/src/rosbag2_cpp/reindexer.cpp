@@ -221,7 +221,7 @@ void Reindexer::aggregate_metadata(
       }
     }
 
-    bag_reader->reset();
+    bag_reader->close();
   }
 
   // Convert the topic map into topic metadata

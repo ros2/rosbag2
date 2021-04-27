@@ -33,7 +33,7 @@ public:
     (void) converter_options;
   }
 
-  void reset() override {}
+  void close() override {}
 
   void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
   {
