@@ -22,25 +22,39 @@
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
+/// \brief Unix (Posix) specific implementation of keyboard handler class.
 class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
 {
 public:
+  /// \brief Default constructor
   KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl();
 
+  /// \brief destructor
   KEYBOARD_HANDLER_PUBLIC
   virtual ~KeyboardHandlerUnixImpl();
 
+  /// \brief Translates specified key press combination to the corresponding registered sequence of
+  /// characters returning by terminal in response to the pressing keyboard keys.
+  /// \param key_code Value from enum which corresponds to some predefined key press combination.
+  /// \return Returns string with sequence of characters expecting to be returned by terminal.
   KEYBOARD_HANDLER_PUBLIC
   std::string get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code);
 
 protected:
+  /// \brief Data type for mapping KeyCode enum value to the expecting sequence of characters
+  /// returning by terminal.
   struct KeyMap
   {
     KeyCode inner_code;
     const char * terminal_sequence;
   };
+
+  /// \brief Default statically defined lookup table for corresponding KeyCode enum values and
+  /// expecting sequence of characters returning by terminal.
   static const KeyMap DEFAULT_STATIC_KEY_MAP[];
+
+  /// \brief Length of DEFAULT_STATIC_KEY_MAP  measured in number of elements.
   static const size_t STATIC_KEY_MAP_LENGTH;
 
 private:

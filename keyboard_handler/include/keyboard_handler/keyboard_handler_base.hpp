@@ -24,10 +24,17 @@
 class KeyboardHandlerBase
 {
 public:
+  /// \brief Enum for possible keys press combinations which keyboard handler capable to handle.
   enum class KeyCode : uint32_t;
 
+  /// \brief Type for callback functions
   using callback_t = std::function<void (KeyCode)>;
 
+  /// \brief Adding callable object as a handler for specified key press combination.
+  /// \param callback Callable which will be called when key_code will be recognized.
+  /// \param key_code Value from enum which corresponds to some predefined key press combination.
+  /// \return Return true if callback was successfully added to the keyboard handler, return
+  /// false if callback is null_ptr or keyboard handler wasn't successfully initialized.
   KEYBOARD_HANDLER_PUBLIC
   bool add_key_press_callback(const callback_t & callback, KeyboardHandlerBase::KeyCode key_code);
 
@@ -144,12 +151,14 @@ enum class KeyboardHandlerBase::KeyCode: uint32_t
   SHIFT_F12,
 };
 
+/// \brief Data type for mapping KeyCode enum value to it's string representation.
 struct KeyCodeToStrMap
 {
   KeyboardHandlerBase::KeyCode inner_code;
   const char * str;
 };
 
+/// \brief Lookup table for mapping KeyCode enum value to it's string representation.
 static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
   {KeyboardHandlerBase::KeyCode::UNKNOWN, "UNKNOWN"},
   {KeyboardHandlerBase::KeyCode::NUMBER_1, "NUMBER_1"},
@@ -256,6 +265,9 @@ static const KeyCodeToStrMap ENUM_KEY_TO_STR_MAP[] {
   {KeyboardHandlerBase::KeyCode::SHIFT_F12, "SHIFT_F12"},
 };
 
+/// \brief Translate KeyCode enum value to it's string representation.
+/// \param key_code Value from enum which corresponds to some predefined key press combination.
+/// \return String corresponding to the specified enum value in ENUM_KEY_TO_STR_MAP lookup table.
 KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code);
 

@@ -15,11 +15,14 @@
 #ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
 #define KEYBOARD_HANDLER__KEYBOARD_HANDLER_HPP_
 
+
 #ifdef _WIN32
 #include "keyboard_handler_windows_impl.hpp"
+/// \brief Alias for implementation specific keyboard handler
 using KeyboardHandler = KeyboardHandlerWindowsImpl;
 #else
 #include "keyboard_handler_unix_impl.hpp"
+/// \brief Alias for implementation specific keyboard handler
 using KeyboardHandler = KeyboardHandlerUnixImpl;
 #endif  // #ifdef _WIN32
 
