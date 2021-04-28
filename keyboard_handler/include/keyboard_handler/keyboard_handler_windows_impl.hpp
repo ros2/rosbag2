@@ -18,6 +18,7 @@
 #include <atomic>
 #include <thread>
 #include <unordered_map>
+#include <stdexcept>
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
@@ -112,9 +113,11 @@ protected:
   /// \brief Length of DEFAULT_STATIC_KEY_MAP measured in number of elements.
   static const size_t STATIC_KEY_MAP_LENGTH;
 
+private:
   std::thread key_handler_thread_;
   std::atomic_bool exit_;
   std::unordered_map<WinKeyCode, KeyCode, win_key_code_hash_fn> key_codes_map_;
+  std::exception_ptr thread_exception_ptr = nullptr;
 };
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_WINDOWS_IMPL_HPP_

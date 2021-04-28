@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <csignal>
 #include <iostream>
+#include <exception>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
@@ -115,17 +116,22 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
           }
         } while (!exit_.load());
       } catch (...) {
-        // Restore buffer mode for stdin
-        if (tcsetattr(stdin_fd_, TCSANOW, &old_term_settings) == -1) {
-          throw std::runtime_error(
-            "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno));
-        }
-        throw;
+        thread_exception_ptr = std::current_exception();
       }
+
       // Restore buffer mode for stdin
       if (tcsetattr(stdin_fd_, TCSANOW, &old_term_settings) == -1) {
-        throw std::runtime_error(
-          "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno));
+        if (thread_exception_ptr == nullptr) {
+          try {
+            throw std::runtime_error(
+              "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno));
+          } catch (...) {
+            thread_exception_ptr = std::current_exception();
+          }
+        } else {
+          std::cerr <<
+          "Error in tcsetattr old_term_settings. errno = " + std::to_string(errno) << std::endl;
+        }
       }
     });
 }
@@ -135,6 +141,16 @@ KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
   exit_ = true;
   if (key_handler_thread_.joinable()) {
     key_handler_thread_.join();
+  }
+
+  try {
+    if (thread_exception_ptr != nullptr) {
+      std::rethrow_exception(thread_exception_ptr);
+    }
+  } catch (const std::exception & e) {
+    std::cerr << "Caught exception: \"" << e.what() << "\"\n";
+  } catch (...) {
+    std::cerr << "Caught unknown exception" << std::endl;
   }
 }
 

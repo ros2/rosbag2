@@ -17,6 +17,7 @@
 #include <conio.h>
 #include <io.h>
 #include <iostream>
+#include <exception>
 #include "keyboard_handler/keyboard_handler_windows_impl.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
@@ -63,30 +64,41 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
 
   key_handler_thread_ = std::thread(
     [&]() {
-      do {
-        if (_kbhit()) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
-          int ch = _getch();
-          win_key_code.first = ch;
-          // When reading a function key or an arrow key, each function must be called twice;
-          // the first call returns 0 or 0xE0, and the second call returns the actual key code.
-          // https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/078sfkak(v=vs.110)
-          if (ch == 0 || ch == 0xE0) {  // 0xE0 == 224
-            // ch == 0 for F1 - F10 keys, ch == 0xE0 for all other control keys.
-            ch = _getch();
-            win_key_code.second = ch;
-          }
+      try {
+        do {
+          if (kbhit_fn()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
+            int ch = getch_fn();
+            win_key_code.first = ch;
+            // When reading a function key or an arrow key, each function must be called twice;
+            // the first call returns 0 or 0xE0, and the second call returns the actual key code.
+            // https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/078sfkak(v=vs.110)
+            if (ch == 0 || ch == 0xE0) {  // 0xE0 == 224
+              // ch == 0 for F1 - F10 keys, ch == 0xE0 for all other control keys.
+//              std::cout << "Pressed control key. First code = " << ch;
+              ch = getch_fn();
+              win_key_code.second = ch;
+//              std::cout << ". Second code = " << ch;
+            } else {
+//              std::cout << "Pressed first key code = " << ch << " key.";
+            }
 
-          KeyCode pressed_key_code = win_key_code_to_enum(win_key_code);
+            KeyCode pressed_key_code = win_key_code_to_enum(win_key_code);
 
-          std::lock_guard<std::mutex> lk(callbacks_mutex_);
-          auto range = callbacks_.equal_range(pressed_key_code);
-          for (auto it = range.first; it != range.second; ++it) {
-            it->second(it->first);
+//            std::cout << " Detected as : " << enum_key_code_to_str(pressed_key_code).c_str();
+//            std::cout << std::endl;
+
+            std::lock_guard<std::mutex> lk(callbacks_mutex_);
+            auto range = callbacks_.equal_range(pressed_key_code);
+            for (auto it = range.first; it != range.second; ++it) {
+              it->second(it->first);
+            }
           }
-        }
-      } while (!exit_.load());
+        } while (!exit_.load());
+      } catch (...) {
+        thread_exception_ptr = std::current_exception();
+      }
     });
 }
 
@@ -95,6 +107,16 @@ KeyboardHandlerWindowsImpl::~KeyboardHandlerWindowsImpl()
   exit_ = true;
   if (key_handler_thread_.joinable()) {
     key_handler_thread_.join();
+  }
+
+  try {
+    if (thread_exception_ptr != nullptr) {
+      std::rethrow_exception(thread_exception_ptr);
+    }
+  } catch (const std::exception & e) {
+    std::cerr << "Caught exception \"" << e.what() << "\"\n";
+  } catch (...) {
+    std::cerr << "Caught unknown exception" << std::endl;
   }
 }
 #endif  // #ifdef _WIN32

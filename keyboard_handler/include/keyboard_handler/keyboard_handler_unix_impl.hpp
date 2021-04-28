@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <thread>
+#include <stdexcept>
 #include "keyboard_handler/visibility_control.hpp"
 #include "keyboard_handler_base.hpp"
 
@@ -62,6 +63,7 @@ private:
   std::atomic_bool exit_;
   const int stdin_fd_;
   std::unordered_map<std::string, KeyCode> key_codes_map_;
+  std::exception_ptr thread_exception_ptr = nullptr;
 };
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
