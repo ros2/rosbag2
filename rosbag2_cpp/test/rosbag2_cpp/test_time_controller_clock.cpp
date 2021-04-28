@@ -47,86 +47,94 @@ TEST_F(TimeControllerClockTest, must_provide_now_fn)
 {
   NowFunction empty_now;
   EXPECT_THROW(
-    rosbag2_cpp::TimeControllerClock(ros_start_time, 1.0, empty_now),
+    rosbag2_cpp::TimeControllerClock(ros_start_time, empty_now),
     std::invalid_argument);
 }
 
 TEST_F(TimeControllerClockTest, steadytime_precision)
 {
-  const double playback_rate = 1.0;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
-  EXPECT_EQ(pclock.now(), as_nanos(begin_time));
+  EXPECT_EQ(clock.now(), as_nanos(begin_time));
 
   const SteadyTimePoint ten_seconds(std::chrono::seconds(10));
   return_time = ten_seconds;
-  EXPECT_EQ(pclock.now(), as_nanos(ten_seconds));
+  EXPECT_EQ(clock.now(), as_nanos(ten_seconds));
 
   // NOTE: this would have already lost precision at 100 seconds if we were multiplying by float
   const SteadyTimePoint hundred_seconds(std::chrono::seconds(100));
   return_time = hundred_seconds;
-  EXPECT_EQ(pclock.now(), as_nanos(hundred_seconds));
+  EXPECT_EQ(clock.now(), as_nanos(hundred_seconds));
 
   const int64_t near_limit_nanos = 1LL << 61;
   const auto near_limit_time = SteadyTimePoint(std::chrono::nanoseconds(near_limit_nanos));
   return_time = near_limit_time;
-  EXPECT_EQ(pclock.now(), near_limit_nanos);
+  EXPECT_EQ(clock.now(), near_limit_nanos);
 
   // Expect to lose exact equality at this point due to precision limit of double*int mult
   const int64_t over_limit_nanos = (1LL << 61) + 1LL;
   const auto over_limit_time = SteadyTimePoint(std::chrono::nanoseconds(over_limit_nanos));
   return_time = over_limit_time;
-  EXPECT_NE(pclock.now(), over_limit_nanos);
-  EXPECT_LT(std::abs(pclock.now() - over_limit_nanos), 10LL);
+  EXPECT_NE(clock.now(), over_limit_nanos);
+  EXPECT_LT(std::abs(clock.now() - over_limit_nanos), 10LL);
 }
 
 TEST_F(TimeControllerClockTest, nonzero_start_time)
 {
   ros_start_time = 1234567890LL;
-  const double playback_rate = 1.0;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+  clock.set_rate(1.0);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
-  EXPECT_EQ(pclock.now(), ros_start_time);
+  EXPECT_EQ(clock.now(), ros_start_time);
 
   return_time = SteadyTimePoint(std::chrono::seconds(1));
-  EXPECT_EQ(pclock.now(), ros_start_time + as_nanos(return_time));
+  EXPECT_EQ(clock.now(), ros_start_time + as_nanos(return_time));
 }
 
 TEST_F(TimeControllerClockTest, fast_rate)
 {
   const double playback_rate = 2.5;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+  clock.set_rate(playback_rate);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
-  EXPECT_EQ(pclock.now(), as_nanos(begin_time));
+  EXPECT_EQ(clock.now(), as_nanos(begin_time));
 
   const SteadyTimePoint some_time(std::chrono::seconds(3));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+  EXPECT_EQ(clock.now(), as_nanos(some_time) * playback_rate);
 }
 
 TEST_F(TimeControllerClockTest, slow_rate)
 {
   const double playback_rate = 0.4;
-  rosbag2_cpp::TimeControllerClock pclock(ros_start_time, playback_rate, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+  clock.set_rate(playback_rate);
 
   const SteadyTimePoint begin_time(std::chrono::seconds(0));
   return_time = begin_time;
-  EXPECT_EQ(pclock.now(), as_nanos(begin_time));
+  EXPECT_EQ(clock.now(), as_nanos(begin_time));
 
   const SteadyTimePoint some_time(std::chrono::seconds(12));
   return_time = some_time;
-  EXPECT_EQ(pclock.now(), as_nanos(some_time) * playback_rate);
+  EXPECT_EQ(clock.now(), as_nanos(some_time) * playback_rate);
+}
+
+TEST_F(TimeControllerClockTest, invalid_rate)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+  EXPECT_FALSE(clock.set_rate(-5));
+  EXPECT_FALSE(clock.set_rate(0));
 }
 
 TEST_F(TimeControllerClockTest, is_paused)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   EXPECT_FALSE(clock.is_paused());
   clock.pause();
   EXPECT_TRUE(clock.is_paused());
@@ -136,7 +144,7 @@ TEST_F(TimeControllerClockTest, is_paused)
 
 TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   clock.resume();
   EXPECT_TRUE(clock.sleep_until(clock.now() + 100));
 
@@ -147,14 +155,14 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 
 TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   clock.pause();
   EXPECT_FALSE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10)));
 }
 
 TEST_F(TimeControllerClockTest, paused_now_always_same)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   clock.pause();
   auto now_start = clock.now();
   EXPECT_EQ(now_start, clock.now());
@@ -167,7 +175,7 @@ TEST_F(TimeControllerClockTest, paused_now_always_same)
 
 TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   std::atomic_bool thread_sleep_result{true};
   auto sleep_long_thread = std::thread(
     [&clock, &thread_sleep_result]() {
@@ -181,7 +189,7 @@ TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
 
 TEST_F(TimeControllerClockTest, resumes_at_correct_ros_time)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
 
   // Time passes while paused, no ROS time passes
   clock.pause();
@@ -203,7 +211,7 @@ TEST_F(TimeControllerClockTest, resumes_at_correct_ros_time)
 
 TEST_F(TimeControllerClockTest, change_rate)
 {
-  rosbag2_cpp::TimeControllerClock clock(ros_start_time, 1.0, now_fn);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
   rcutils_time_point_value_t expected_ros_time = 0;
 
   // 1 second passes for both
@@ -227,4 +235,26 @@ TEST_F(TimeControllerClockTest, change_rate)
   return_time += std::chrono::seconds(2);
   expected_ros_time += RCUTILS_S_TO_NS(1);
   EXPECT_EQ(clock.now(), expected_ros_time);
+}
+
+TEST_F(TimeControllerClockTest, jump)
+{
+  rcutils_time_point_value_t expected_ros_time = RCUTILS_S_TO_NS(10);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+
+  clock.jump(expected_ros_time);
+  EXPECT_EQ(clock.now(), expected_ros_time);
+
+  return_time += std::chrono::seconds(10);
+  expected_ros_time += RCUTILS_S_TO_NS(10);
+  EXPECT_EQ(clock.now(), expected_ros_time);
+
+  clock.jump(rclcpp::Time(100, 0));
+  return_time += std::chrono::seconds(1);
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(101));
+
+  // Jump backward
+  clock.jump(rclcpp::Time(50, 0));
+  return_time += std::chrono::seconds(2);
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(52));
 }

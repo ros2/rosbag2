@@ -36,18 +36,15 @@ public:
    *
    * \param starting_time: provides an initial offset for managing time
    *    This will likely be the timestamp of the first message in the bag
-   * \param rate: Rate of playback, a unit-free ratio. 1.0 is real-time
    * \param now_fn: Function used to get the current steady time
    *   defaults to std::chrono::steady_clock::now
    *   Used to control for unit testing, or for specialized needs
    * \param sleep_time_while_paused: Amount of time to sleep in `sleep_until` when the clock
    *   is paused. Allows the caller to spin at a defined rate while receiving `false`
-   * \throws std::runtime_error if rate is <= 0
    */
   ROSBAG2_CPP_PUBLIC
   TimeControllerClock(
     rcutils_time_point_value_t starting_time,
-    double rate = 1.0,
     NowFunction now_fn = std::chrono::steady_clock::now,
     std::chrono::milliseconds sleep_time_while_paused = std::chrono::milliseconds{100});
 
@@ -70,11 +67,19 @@ public:
   ROSBAG2_CPP_PUBLIC
   bool sleep_until(rcutils_time_point_value_t until) override;
 
+  ROSBAG2_CPP_PUBLIC
+  bool sleep_until(rclcpp::Time until) override;
+
   /**
-   * Change the rate of the flow of time for the clock
+   * Change the rate of the flow of time for the clock.
+   *
+   * To stop time, \sa pause.
+   * It is not currently valid behavior to move time backwards.
+   * \param rate The new rate of time
+   * \return false if rate <= 0, true otherwise.
    */
   ROSBAG2_CPP_PUBLIC
-  void set_rate(double rate) override;
+  bool set_rate(double rate) override;
 
   /**
    * Return the current playback rate.
@@ -101,6 +106,23 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   bool is_paused() const override;
+
+  /**
+   * Change the current ROS time to an arbitrary time.
+   * This will wake any waiting `sleep_until`.
+   * Note: this initial implementation does not have any jump-callback handling.
+   * The Player should not use this method while its queues are active ("during playback")
+   * as an arbitrary time jump can make those queues, and the state of the Reader/Storage, invalid
+   * The current Player implementation should only use this method in between calls to `play`,
+   * to reset the initial time of the clock.
+   *
+   * \param ros_time: The new ROS time to use as the basis for "now()"
+   */
+  ROSBAG2_CPP_PUBLIC
+  void jump(rcutils_time_point_value_t ros_time) override;
+
+  ROSBAG2_CPP_PUBLIC
+  void jump(rclcpp::Time ros_time) override;
 
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;

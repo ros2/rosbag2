@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 
+#include "rclcpp/time.hpp"
 #include "rcutils/time.h"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -60,13 +61,21 @@ public:
   virtual bool sleep_until(rcutils_time_point_value_t until) = 0;
 
   /**
-   * Change the rate of the flow of time for the clock
+   * \sa sleep_until
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void set_rate(double rate) = 0;
+  virtual bool sleep_until(rclcpp::Time time) = 0;
 
   /**
-   * Return the current playback rate.
+   * Change the rate of the flow of time for the clock.
+   * \param rate new rate of clock playback
+   * \bool false if rate is invalid for the clock implementation
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual bool set_rate(double rate) = 0;
+
+  /**
+   * \return the current playback rate.
    */
   ROSBAG2_CPP_PUBLIC
   virtual double get_rate() const = 0;
@@ -90,6 +99,18 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   virtual bool is_paused() const = 0;
+
+  /**
+   * Change the current ROS time to an arbitrary time.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void jump(rcutils_time_point_value_t) = 0;
+
+  /**
+   * \sa jump
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void jump(rclcpp::Time time) = 0;
 };
 
 }  // namespace rosbag2_cpp
