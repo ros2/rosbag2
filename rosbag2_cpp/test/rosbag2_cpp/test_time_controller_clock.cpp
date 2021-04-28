@@ -125,6 +125,13 @@ TEST_F(TimeControllerClockTest, slow_rate)
   EXPECT_EQ(clock.now(), as_nanos(some_time) * playback_rate);
 }
 
+TEST_F(TimeControllerClockTest, invalid_rate)
+{
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
+  EXPECT_FALSE(clock.set_rate(-5));
+  EXPECT_FALSE(clock.set_rate(0));
+}
+
 TEST_F(TimeControllerClockTest, is_paused)
 {
   rosbag2_cpp::TimeControllerClock clock(ros_start_time);
