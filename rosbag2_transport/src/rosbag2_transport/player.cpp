@@ -84,6 +84,16 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 }
 
 Player::Player(
+  const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::PlayOptions & play_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
+: Player(std::make_unique<rosbag2_cpp::Reader>(),
+    storage_options, play_options,
+    node_name, node_options)
+{}
+
+Player::Player(
   std::unique_ptr<rosbag2_cpp::Reader> reader,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::PlayOptions & play_options,

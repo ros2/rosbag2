@@ -73,10 +73,10 @@ public:
   /**
    * Change the rate of the flow of time for the clock.
    *
-   * \param rate tTe new rate of time
+   * To stop time, \sa pause.
+   * It is not currently valid behavior to move time backwards.
+   * \param rate The new rate of time
    * \return false if rate <= 0, true otherwise.
-   *   It is not currently valid behavior to move time backwards.
-   *   To stop time, \sa pause.
    */
   ROSBAG2_CPP_PUBLIC
   bool set_rate(double rate) override;

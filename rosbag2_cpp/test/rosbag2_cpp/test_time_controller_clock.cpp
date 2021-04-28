@@ -252,4 +252,9 @@ TEST_F(TimeControllerClockTest, jump)
   clock.jump(rclcpp::Time(100, 0));
   return_time += std::chrono::seconds(1);
   EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(101));
+
+  // Jump backward
+  clock.jump(rclcpp::Time(50, 0));
+  return_time += std::chrono::seconds(2);
+  EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(52));
 }
