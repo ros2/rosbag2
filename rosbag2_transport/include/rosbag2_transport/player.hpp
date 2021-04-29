@@ -113,9 +113,15 @@ public:
   bool set_rate(double);
 
   /// \brief Playing next message from queue when in pause.
+  /// \details This is blocking call and it will wait until next available message will be
+  /// published or rclcpp context shut down.
   /// \note If internal player queue is starving and storage has not been completely loaded,
   /// this method will wait until new element will be pushed to the queue.
-  /// \return true if player in pause mode and have message to play, otherwise false.
+  /// It will be undefined behaviour if playback will be resumed from another thread during
+  /// play_next() operation.
+  /// Also it will be undefined behaviour if bag will have multiple messages with the same
+  /// timestamp going in the sequence.
+  /// \return true if player in pause mode and successfully played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
 
@@ -140,6 +146,9 @@ private:
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
+  std::condition_variable play_next_message_cv;
+  std::mutex play_next_message_mutex;
+  std::atomic<bool> is_next_message_played = false;
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;

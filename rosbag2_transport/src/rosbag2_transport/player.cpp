@@ -263,6 +263,7 @@ bool Player::play_next()
 
   bool ret_value = false;
   if (message_ptr != nullptr) {
+    is_next_message_played = false;
     clock_->jump((*message_ptr)->time_stamp);
     ret_value = true;
   } else {
@@ -272,16 +273,25 @@ bool Player::play_next()
         "Message queue starved. Messages will be delayed. Consider "
         "increasing the --read-ahead-queue-size option.");
       while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(queue_read_wait_period_));
+        std::this_thread::sleep_for(queue_read_wait_period_);
         message_ptr = message_queue_.peek();
       }
       if (message_ptr != nullptr) {
+        is_next_message_played = false;
         clock_->jump((*message_ptr)->time_stamp);
         ret_value = true;
       }
     }
   }
-  return ret_value;
+
+  if (ret_value) {
+    // Wait for next message to be published
+    std::unique_lock<std::mutex> lk(play_next_message_mutex);
+    while (!is_next_message_played && rclcpp::ok()) {
+      play_next_message_cv.wait_for(lk, std::chrono::milliseconds(1));
+    }
+  }
+  return ret_value && is_next_message_played;
 }
 
 void Player::wait_for_filled_queue() const
@@ -336,6 +346,8 @@ void Player::play_messages_from_queue()
 
 void Player::play_messages_until_queue_empty()
 {
+  // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
+  // for play_next() API logic support.
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
   while (message_ptr != nullptr && rclcpp::ok()) {
     rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
@@ -347,9 +359,18 @@ void Player::play_messages_until_queue_empty()
       if (publisher_iter != publishers_.end()) {
         publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       }
+      message_queue_.pop();
+      message_ptr = message_queue_.peek();
+
+      // Notify play_next()
+      // For the sake of the performance we can avoid locking mutex here. Since
+      // is_next_message_played is atomic and we assume in play_next() that we were in pause and
+      // blocked on while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) loop before
+      // we reset is_next_message_played to false and adjusted clock in play_next().
+      // std::lock_guard<std::mutex> lk(play_next_message_mutex);
+      is_next_message_played = true;
     }
-    message_queue_.pop();
-    message_ptr = message_queue_.peek();
+    play_next_message_cv.notify_all();
   }
 }
 
