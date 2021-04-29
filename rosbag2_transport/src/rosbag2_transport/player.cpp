@@ -259,14 +259,9 @@ bool Player::play_next()
   if (!clock_->is_paused()) {
     return false;
   }
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
 
-  bool ret_value = false;
-  if (message_ptr != nullptr) {
-    is_next_message_played = false;
-    clock_->jump((*message_ptr)->time_stamp);
-    ret_value = true;
-  } else {
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
+  if (message_ptr == nullptr) {
     if (!is_storage_completely_loaded()) {
       RCLCPP_WARN(
         this->get_logger(),
@@ -276,22 +271,19 @@ bool Player::play_next()
         std::this_thread::sleep_for(queue_read_wait_period_);
         message_ptr = message_queue_.peek();
       }
-      if (message_ptr != nullptr) {
-        is_next_message_played = false;
-        clock_->jump((*message_ptr)->time_stamp);
-        ret_value = true;
-      }
     }
   }
 
-  if (ret_value) {
+  is_next_message_published = false;
+  if (message_ptr != nullptr) {
+    clock_->jump((*message_ptr)->time_stamp);
     // Wait for next message to be published
     std::unique_lock<std::mutex> lk(play_next_message_mutex);
-    while (!is_next_message_played && rclcpp::ok()) {
+    while (!is_next_message_published && rclcpp::ok()) {
       play_next_message_cv.wait_for(lk, std::chrono::milliseconds(1));
     }
   }
-  return ret_value && is_next_message_played;
+  return is_next_message_published;
 }
 
 void Player::wait_for_filled_queue() const
@@ -364,11 +356,11 @@ void Player::play_messages_until_queue_empty()
 
       // Notify play_next()
       // For the sake of the performance we can avoid locking mutex here. Since
-      // is_next_message_played is atomic and we assume in play_next() that we were in pause and
+      // is_next_message_published is atomic and we assume in play_next() that we were in pause and
       // blocked on while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) loop before
-      // we reset is_next_message_played to false and adjusted clock in play_next().
+      // we reset is_next_message_published to false and adjusted clock in play_next().
       // std::lock_guard<std::mutex> lk(play_next_message_mutex);
-      is_next_message_played = true;
+      is_next_message_published = true;
     }
     play_next_message_cv.notify_all();
   }

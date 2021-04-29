@@ -148,7 +148,7 @@ private:
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::condition_variable play_next_message_cv;
   std::mutex play_next_message_mutex;
-  std::atomic<bool> is_next_message_played = false;
+  std::atomic<bool> is_next_message_published = false;
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
