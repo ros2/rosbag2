@@ -112,6 +112,13 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool set_rate(double);
 
+  /// \brief Playing next message from queue when in pause.
+  /// \note If internal player queue is starving and storage has not been completely loaded,
+  /// this method will wait until new element will be pushed to the queue.
+  /// \return true if player in pause mode and have message to play, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool play_next();
+
 private:
   void load_storage_content();
   bool is_storage_completely_loaded() const;

@@ -254,6 +254,36 @@ bool Player::set_rate(double rate)
   return clock_->set_rate(rate);
 }
 
+bool Player::play_next()
+{
+  if (!clock_->is_paused()) {
+    return false;
+  }
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
+
+  bool ret_value = false;
+  if (message_ptr != nullptr) {
+    clock_->jump((*message_ptr)->time_stamp);
+    ret_value = true;
+  } else {
+    if (!is_storage_completely_loaded()) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Message queue starved. Messages will be delayed. Consider "
+        "increasing the --read-ahead-queue-size option.");
+      while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(queue_read_wait_period_));
+        message_ptr = message_queue_.peek();
+      }
+      if (message_ptr != nullptr) {
+        clock_->jump((*message_ptr)->time_stamp);
+        ret_value = true;
+      }
+    }
+  }
+  return ret_value;
+}
+
 void Player::wait_for_filled_queue() const
 {
   while (
@@ -306,17 +336,20 @@ void Player::play_messages_from_queue()
 
 void Player::play_messages_until_queue_empty()
 {
-  rosbag2_storage::SerializedBagMessageSharedPtr message;
-  while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
+  while (message_ptr != nullptr && rclcpp::ok()) {
+    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
     if (rclcpp::ok()) {
       auto publisher_iter = publishers_.find(message->topic_name);
       if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data.get()));
+        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       }
     }
+    message_queue_.pop();
+    message_ptr = message_queue_.peek();
   }
 }
 
