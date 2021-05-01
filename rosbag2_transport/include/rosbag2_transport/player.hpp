@@ -119,8 +119,8 @@ public:
   /// this method will wait until new element will be pushed to the queue.
   /// It will be undefined behaviour if playback will be resumed from another thread during
   /// play_next() operation.
-  /// There are no guarantee that only one message will be played if bag will have multiple
-  /// messages with the same timestamp going in the sequence.
+  /// Player::play() should be called in a separate thread to start filling queue with messages,
+  /// otherwise play_next() will be blocked forever.
   /// \return true if player in pause mode and successfully played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
@@ -131,7 +131,7 @@ private:
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(uint64_t boundary);
   void wait_for_filled_queue() const;
-  void play_messages_until_queue_empty();
+  void play_messages_from_queue();
   void prepare_publishers();
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
@@ -146,8 +146,9 @@ private:
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
-  std::mutex skip_messages_in_main_play_loop_mutex;
-  std::atomic_bool skip_message_in_main_play_loop = ATOMIC_VAR_INIT(false);
+  std::mutex skip_messages_in_main_play_loop_mutex_;
+  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
+    (skip_messages_in_main_play_loop_mutex_) = false;
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;

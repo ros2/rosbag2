@@ -214,9 +214,7 @@ void Player::play()
         [this]() {load_storage_content();});
 
       wait_for_filled_queue();
-
-      clock_->jump(starting_time);
-      play_messages_until_queue_empty();
+      play_messages_from_queue();
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
@@ -275,9 +273,9 @@ bool Player::play_next()
   if (!clock_->is_paused()) {
     return false;
   }
-  // Temporary take over messages playback from play_messages_until_queue_empty()
-  std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex);
-  skip_message_in_main_play_loop = true;
+  // Temporary take over playback from play_messages_from_queue()
+  std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex_);
+  skip_message_in_main_play_loop_ = true;
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
@@ -333,7 +331,7 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
   }
 }
 
-void Player::play_messages_until_queue_empty()
+void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -346,9 +344,9 @@ void Player::play_messages_until_queue_empty()
       while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
       if (rclcpp::ok()) {
         {
-          std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex);
-          if (skip_message_in_main_play_loop) {
-            skip_message_in_main_play_loop = false;
+          std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex_);
+          if (skip_message_in_main_play_loop_) {
+            skip_message_in_main_play_loop_ = false;
             message_ptr = peek_next_message_from_queue();
             continue;
           }
@@ -409,8 +407,7 @@ void Player::prepare_publishers()
     try {
       publishers_.insert(
         std::make_pair(
-          topic.name, this->create_generic_publisher(
-            topic.name, topic.type, topic_qos)));
+          topic.name, this->create_generic_publisher(topic.name, topic.type, topic_qos)));
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
