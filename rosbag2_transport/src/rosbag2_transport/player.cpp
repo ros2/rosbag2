@@ -280,16 +280,17 @@ bool Player::play_next()
 
   bool next_message_published = false;
   while (message_ptr != nullptr && !next_message_published) {
-    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
-
-    auto publisher_iter = publishers_.find(message->topic_name);
-    if (publisher_iter != publishers_.end()) {
-      publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-      next_message_published = true;
+    {
+      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+      auto publisher_iter = publishers_.find(message->topic_name);
+      if (publisher_iter != publishers_.end()) {
+        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+        next_message_published = true;
+      }
+      clock_->jump(message->time_stamp);
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
-    clock_->jump(message->time_stamp);
   }
   return next_message_published;
 }
