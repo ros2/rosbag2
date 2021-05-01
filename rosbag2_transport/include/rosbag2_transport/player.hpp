@@ -125,6 +125,11 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
 
+protected:
+  std::atomic<bool> playing_messages_from_queue_{false};
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
+
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
   void load_storage_content();
@@ -141,10 +146,8 @@ private:
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
-  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::mutex skip_messages_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY

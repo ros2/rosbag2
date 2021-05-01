@@ -208,6 +208,7 @@ void Player::play()
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
       const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         reader_->get_metadata().starting_time.time_since_epoch()).count();
+      clock_->jump(starting_time);
 
       storage_loading_future_ = std::async(
         std::launch::async,
@@ -334,6 +335,7 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 
 void Player::play_messages_from_queue()
 {
+  playing_messages_from_queue_ = true;
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
@@ -363,6 +365,7 @@ void Player::play_messages_from_queue()
       message_ptr = peek_next_message_from_queue();
     }
   }
+  playing_messages_from_queue_ = false;
 }
 
 void Player::prepare_publishers()
