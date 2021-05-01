@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+#include <list>
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 #include "rclcpp/serialization.hpp"
 
@@ -73,6 +73,50 @@ public:
     return received_messages_on_topic;
   }
 
+  /// \brief Wait until publishers will be connected to the subscribers or timeout occur.
+  /// \tparam Timeout Data type for timeout duration from std::chrono:: namespace
+  /// \param publishers List of raw pointers to the publishers
+  /// \param timeout Maximum time duration during which discovery should happen.
+  /// \param n_subscribers_to_match Number of subscribers each publisher should have for match.
+  /// \return true if publishers have specified number of subscribers, otherwise false.
+  template<typename Timeout>
+  bool spin_and_wait_for_matched(
+    const std::list<rclcpp::PublisherBase *> & publishers,
+    Timeout timeout, size_t n_subscribers_to_match = 1)
+  {
+    // Sanity check that we have valid input
+    for (const auto publisher_ptr : publishers) {
+      if (publisher_ptr == nullptr) {
+        throw std::invalid_argument("Null pointer in publisher list");
+      }
+      std::string topic_name{publisher_ptr->get_topic_name()};
+      if (expected_topics_with_size_.find(topic_name) == expected_topics_with_size_.end()) {
+        throw std::invalid_argument(
+                "Publisher's topic name = `" + topic_name + "` not found in expected topics list");
+      }
+    }
+
+    using clock = std::chrono::system_clock;
+    auto start = clock::now();
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    bool matched = false;
+    while (!matched && ((clock::now() - start) < timeout)) {
+      exec.spin_node_some(subscriber_node_);
+
+      matched = true;
+      for (const auto publisher_ptr : publishers) {
+        if (publisher_ptr->get_subscription_count() +
+          publisher_ptr->get_intra_process_subscription_count() < n_subscribers_to_match)
+        {
+          matched = false;
+          break;
+        }
+      }
+    }
+    return matched;
+  }
+
   std::future<void> spin_subscriptions()
   {
     return async(
@@ -87,7 +131,7 @@ public:
 
 private:
   bool continue_spinning(
-    std::unordered_map<std::string, size_t> expected_topics_with_sizes,
+    const std::unordered_map<std::string, size_t> & expected_topics_with_sizes,
     std::chrono::time_point<std::chrono::high_resolution_clock> start_time)
   {
     auto current = std::chrono::high_resolution_clock::now();
