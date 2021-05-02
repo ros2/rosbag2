@@ -181,8 +181,9 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message("topic1", 1500, primitive_message),
-    serialize_test_message("topic1", 1700, primitive_message),
-    serialize_test_message("topic1", 1800, primitive_message)
+    serialize_test_message("topic1", 2500, primitive_message),
+    serialize_test_message("topic1", 2700, primitive_message),
+    serialize_test_message("topic1", 2800, primitive_message)
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -210,6 +211,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
+  ASSERT_TRUE(player->play_next());
   ASSERT_TRUE(player->is_paused());
   player->resume();
   auto start = std::chrono::steady_clock::now();
@@ -217,7 +219,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   auto expected_replay_time =
-    std::chrono::nanoseconds(messages.back()->time_stamp - messages.front()->time_stamp);
+    std::chrono::nanoseconds(messages.back()->time_stamp - messages[1]->time_stamp);
   // Check for lower bound with some tolerance
   ASSERT_THAT(replay_time, Gt(expected_replay_time - std::chrono::milliseconds(50)));
   // Check for upper bound with some tolerance
