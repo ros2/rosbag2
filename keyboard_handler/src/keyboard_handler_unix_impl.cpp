@@ -50,9 +50,30 @@ void quit(int sig)
 }
 }  // namespace
 
+KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
+: KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
+
+KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
+  const readFunction & read_fn,
+  const isattyFunction & isatty_fn,
+  const tcgetattrFunction & tcgetattr_fn,
+  const tcsetattrFunction & tcsetattr_fn)
 : exit_(false), stdin_fd_(fileno(stdin))
 {
+  if (read_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerUnixImpl read_fn must be non-empty.");
+  }
+  if (isatty_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerUnixImpl isatty_fn must be non-empty.");
+  }
+  if (tcgetattr_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerUnixImpl tcgetattr_fn must be non-empty.");
+  }
+  if (tcsetattr_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerUnixImpl tcsetattr_fn must be non-empty.");
+  }
+
   for (size_t i = 0; i < STATIC_KEY_MAP_LENGTH; i++) {
     key_codes_map_.emplace(
       DEFAULT_STATIC_KEY_MAP[i].terminal_sequence,
@@ -60,7 +81,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
   }
 
   // Check if we can handle key press from std input
-  if (!isatty(stdin_fd_)) {
+  if (!isatty_fn(stdin_fd_)) {
     // If stdin is not a real terminal (redirected to text file or pipe ) can't do much here
     // with keyboard handling.
     std::cerr << "stdin is not a terminal device. Keyboard handling disabled.";
@@ -68,7 +89,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
   }
 
   struct termios new_term_settings;
-  if (tcgetattr(stdin_fd_, &old_term_settings) == -1) {
+  if (tcgetattr_fn(stdin_fd_, &old_term_settings) == -1) {
     throw std::runtime_error("Error in tcgetattr(). errno = " + std::to_string(errno));
   }
 
@@ -82,18 +103,18 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
   new_term_settings.c_cc[VMIN] = 0;   // 0 means purely timeout driven readout
   new_term_settings.c_cc[VTIME] = 1;  // Wait maximum for 0.1 sec since start of the read() call.
 
-  if (tcsetattr(stdin_fd_, TCSANOW, &new_term_settings) == -1) {
+  if (tcsetattr_fn(stdin_fd_, TCSANOW, &new_term_settings) == -1) {
     throw std::runtime_error("Error in tcsetattr(). errno = " + std::to_string(errno));
   }
   is_init_succeed_ = true;
 
   key_handler_thread_ = std::thread(
-    [&]() {
+    [ = ]() {
       try {
         static constexpr size_t BUFF_LEN = 10;
         char buff[BUFF_LEN] = {0};
         do {
-          ssize_t read_bytes = read(stdin_fd_, buff, BUFF_LEN);
+          ssize_t read_bytes = read_fn(stdin_fd_, buff, BUFF_LEN);
           if (read_bytes < 0 && errno != EAGAIN) {
             throw std::runtime_error("Error in read(). errno = " + std::to_string(errno));
           }
@@ -120,7 +141,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
       }
 
       // Restore buffer mode for stdin
-      if (tcsetattr(stdin_fd_, TCSANOW, &old_term_settings) == -1) {
+      if (tcsetattr_fn(stdin_fd_, TCSANOW, &old_term_settings) == -1) {
         if (thread_exception_ptr == nullptr) {
           try {
             throw std::runtime_error(

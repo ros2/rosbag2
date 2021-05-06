@@ -27,6 +27,11 @@
 class KeyboardHandlerUnixImpl : public KeyboardHandlerBase
 {
 public:
+  using isattyFunction = std::function<int (int)>;
+  using tcgetattrFunction = std::function<int (int, struct termios *)>;
+  using tcsetattrFunction = std::function<int (int, int, const struct termios *)>;
+  using readFunction = std::function<ssize_t(int, void *, size_t)>;
+
   /// \brief Default constructor
   KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl();
@@ -43,6 +48,18 @@ public:
   std::string get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code);
 
 protected:
+  /// \brief Constructor with references to the system functions. Required for unit tests.
+  /// \param read_fn Reference to the system read(int, void *, size_t) function
+  /// \param isatty_fn Reference to the system isatty(int) function
+  /// \param tcgetattr_fn Reference to the system tcgetattr(int, struct termios *) function
+  /// \param tcsetattr_fn Reference to the system tcsetattr(int, int, const struct termios *)
+  /// function
+  KeyboardHandlerUnixImpl(
+    const readFunction & read_fn,
+    const isattyFunction & isatty_fn,
+    const tcgetattrFunction & tcgetattr_fn,
+    const tcsetattrFunction & tcsetattr_fn);
+
   /// \brief Data type for mapping KeyCode enum value to the expecting sequence of characters
   /// returning by terminal.
   struct KeyMap
@@ -63,7 +80,7 @@ private:
   std::atomic_bool exit_;
   const int stdin_fd_;
   std::unordered_map<std::string, KeyCode> key_codes_map_;
-  std::exception_ptr thread_exception_ptr = nullptr;
+  std::exception_ptr thread_exception_ptr{nullptr};
 };
 
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
