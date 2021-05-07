@@ -43,9 +43,28 @@ KeyboardHandlerWindowsImpl::enum_key_code_to_win_code(KeyboardHandlerBase::KeyCo
   return {WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
 }
 
+KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
+: KeyboardHandlerWindowsImpl(_isatty, _kbhit, _getch)
+{
+}
+
+KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
+  const isattyFunction & isatty_fn,
+  const kbhitFunction & kbhit_fn,
+  const getchFunction & getch_fn)
 : exit_(false)
 {
+  if (isatty_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerWindowsImpl isatty_fn must be non-empty.");
+  }
+  if (kbhit_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerWindowsImpl kbhit_fn must be non-empty.");
+  }
+  if (getch_fn == nullptr) {
+    throw std::invalid_argument("KeyboardHandlerWindowsImpl getch_fn must be non-empty.");
+  }
+
   for (size_t i = 0; i < STATIC_KEY_MAP_LENGTH; i++) {
     key_codes_map_.emplace(
       DEFAULT_STATIC_KEY_MAP[i].win_key_code,
@@ -53,7 +72,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
   }
 
   // Check if we can handle key press from std input
-  if (!_isatty(_fileno(stdin))) {
+  if (!isatty_fn(_fileno(stdin))) {
     // If stdin is not a real terminal or console (redirected to file or pipe ) can't do much here
     // with keyboard handling.
     std::cerr << "stdin is not a terminal or console device. Keyboard handling disabled.";
@@ -63,7 +82,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
   is_init_succeed_ = true;
 
   key_handler_thread_ = std::thread(
-    [&]() {
+    [ = ]() {
       try {
         do {
           if (kbhit_fn()) {

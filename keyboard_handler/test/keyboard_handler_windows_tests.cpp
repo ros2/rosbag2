@@ -16,6 +16,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <mutex>
 #include "gmock/gmock.h"
 #include "fake_recorder.hpp"
 #include "fake_player.hpp"
@@ -27,20 +28,7 @@ using ::testing::AtLeast;
 using ::testing::_;
 using ::testing::NiceMock;
 
-class MockKeyboardHandler : public KeyboardHandlerWindowsImpl
-{
-public:
-  size_t get_number_of_registered_callbacks() const
-  {
-    return callbacks_.size();
-  }
-
-  void unregister_callbacks()
-  {
-    std::lock_guard<std::mutex> lk(callbacks_mutex_);
-    callbacks_.clear();
-  }
-};
+using namespace std::chrono_literals;
 
 class MockPlayer : public FakePlayer
 {
@@ -53,18 +41,33 @@ class MockSystemCalls
 {
 public:
   using WinKeyCode = KeyboardHandlerWindowsImpl::WinKeyCode;
-  WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
+
+  void set_returning_getch_code(WinKeyCode key_code)
+  {
+    std::lock_guard<std::mutex> lk(win_key_code_mutex);
+    win_key_code_ = key_code;
+  }
+
+  MockSystemCalls()
+  {
+    ON_CALL(*this, kbhit).WillByDefault(Return(0));
+    ON_CALL(*this, getch).WillByDefault(Return(-1));
+  }
 
   int getch_win_code()
   {
     static size_t counter_ = 0;
-    int ret_value = (counter_ % 2) ? win_key_code.second : win_key_code.first;
+    std::lock_guard<std::mutex> lk(win_key_code_mutex);
+    int ret_value = (counter_ % 2) ? win_key_code_.second : win_key_code_.first;
     counter_++;
     return ret_value;
   }
-  MOCK_METHOD(int, _kbhit, ());
-  MOCK_METHOD(int, _isatty, (int __fd));
-  MOCK_METHOD(int, _getch, ());
+  MOCK_METHOD(int, kbhit, ());
+  MOCK_METHOD(int, getch, ());
+
+private:
+  std::mutex win_key_code_mutex;
+  WinKeyCode win_key_code_{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
 };
 
 std::unique_ptr<NiceMock<MockSystemCalls>> system_calls_stub;
@@ -83,79 +86,81 @@ public:
   }
 };
 
-#ifdef __cplusplus
-extern "C"
+namespace
 {
-#endif
-
-KEYBOARD_HANDLER_PUBLIC
-int __cdecl _isatty(int _FileHandle)
+int isatty_mock(int file_handle)
 {
   return 1;
 }
 
-KEYBOARD_HANDLER_PUBLIC
-int __cdecl _kbhit(void)
+int kbhit_mock(void)
 {
-  ssize_t ret = 0;
+  int ret = 0;
   if (system_calls_stub != nullptr) {
-    ret = system_calls_stub->_kbhit();
+    ret = system_calls_stub->kbhit();
   } else {
     std::cerr << "Call to '_kbhit()' for non existing unique_ptr" << std::endl;
   }
   return ret;
 }
 
-KEYBOARD_HANDLER_PUBLIC
-int __cdecl _getch(void)
+int getch_mock(void)
 {
-  ssize_t ret = 0;
+  int ret = -1;
   if (system_calls_stub != nullptr) {
-    ret = system_calls_stub->_getch();
+    ret = system_calls_stub->getch();
   } else {
     std::cerr << "Call to '_getch()' for non existing unique_ptr" << std::endl;
   }
   return ret;
 }
-#ifdef __cplusplus
-}
-#endif
+}  // namespace
 
-TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithNullCallbackTest) {
+class MockKeyboardHandler : public KeyboardHandlerWindowsImpl
+{
+public:
+  MockKeyboardHandler()
+  : KeyboardHandlerWindowsImpl(isatty_mock, kbhit_mock, getch_mock) {}
+
+  size_t get_number_of_registered_callbacks() const
+  {
+    return callbacks_.size();
+  }
+};
+
+TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_null_callback) {
   testing::MockFunction<void(KeyboardHandler::KeyCode keycode)> mock_global_callback;
   EXPECT_CALL(mock_global_callback, Call(Eq(KeyboardHandler::KeyCode::UNKNOWN))).Times(0);
 
   MockKeyboardHandler keyboard_handler;
-  EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+  ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
   EXPECT_FALSE(
     keyboard_handler.add_key_press_callback(nullptr, KeyboardHandler::KeyCode::CAPITAL_A));
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 }
 
-TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksTest) {
-  EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
-  ON_CALL(*system_calls_stub, _getch()).WillByDefault(Return(-1));
+TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks) {
+  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
 
   auto recorder = FakeRecorder::create();
   std::shared_ptr<FakePlayer> player_shared_ptr(new FakePlayer());
-
   {
     MockKeyboardHandler keyboard_handler;
-    system_calls_stub->win_key_code =
-      keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP);
-    EXPECT_CALL(*system_calls_stub, _getch())
+    system_calls_stub->set_returning_getch_code(
+      keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP));
+    EXPECT_CALL(*system_calls_stub, getch())
     .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
 
-    EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+    ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 
     // Capture std::cout to verify at the end of the test that callbacks was correctly processed
     testing::internal::CaptureStdout();
 
     recorder->register_callbacks(keyboard_handler);
-    EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
+    ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
 
     player_shared_ptr->register_callbacks(keyboard_handler);
-    EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
+    ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
   }
   // Check that callbacks was called with proper key code.
   std::string test_output = testing::internal::GetCapturedStdout();
@@ -165,17 +170,16 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksTest) {
     test_output.find("FakeRecorder callback with key code = CURSOR_UP") != std::string::npos);
 }
 
-TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksAndDeletedObjectsTest) {
-  EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
-  ON_CALL(*system_calls_stub, _getch()).WillByDefault(Return(-1));
+TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks_and_deleted_objects) {
+  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
   {
     MockKeyboardHandler keyboard_handler;
-    system_calls_stub->win_key_code =
-      keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP);
-    EXPECT_CALL(*system_calls_stub, _getch())
+    system_calls_stub->set_returning_getch_code(
+      keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP));
+    EXPECT_CALL(*system_calls_stub, getch())
     .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
 
-    EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+    ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
     {
       auto recorder = FakeRecorder::create();
       std::shared_ptr<FakePlayer> player_shared_ptr(new FakePlayer());
@@ -184,11 +188,13 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksAndDelete
       // was correctly processed
       testing::internal::CaptureStdout();
       recorder->register_callbacks(keyboard_handler);
-      EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
+      ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
 
       player_shared_ptr->register_callbacks(keyboard_handler);
-      EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
+      ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
     }
+    // Yield CPU resources to give keyboard_handler a chance to process deleted callbacks.
+    std::this_thread::sleep_for(1ms);
   }
   // Check that callbacks was called for deleted objects and processed properly
   std::string test_output = testing::internal::GetCapturedStdout();
@@ -199,17 +205,17 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerWithLambdaAsCallbacksAndDelete
     std::string::npos);
 }
 
-TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerGlobalCallbackTest) {
+TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_global_callback) {
   testing::MockFunction<void(KeyboardHandler::KeyCode key_code)> mock_global_callback;
   EXPECT_CALL(
     mock_global_callback,
     Call(Eq(KeyboardHandler::KeyCode::CAPITAL_E))).Times(AtLeast(1));
 
-  EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
-  EXPECT_CALL(*system_calls_stub, _getch()).WillRepeatedly(Return('E'));
+  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
+  EXPECT_CALL(*system_calls_stub, getch()).WillRepeatedly(Return('E'));
 
   MockKeyboardHandler keyboard_handler;
-  EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+  ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
   EXPECT_TRUE(
     keyboard_handler.add_key_press_callback(
       mock_global_callback.AsStdFunction(),
@@ -217,18 +223,22 @@ TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerGlobalCallbackTest) {
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 1U);
 }
 
-TEST_F(KeyboardHandlerWindowsTest, KeyboardHandlerMockClassMemberTest) {
-  EXPECT_CALL(*system_calls_stub, _kbhit()).WillRepeatedly(Return(1));
-  EXPECT_CALL(*system_calls_stub, _getch()).WillRepeatedly(Return('Z'));
+TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_class_member_in_callback) {
+  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
+  EXPECT_CALL(*system_calls_stub, getch()).WillRepeatedly(Return('Z'));
 
   MockKeyboardHandler keyboard_handler;
-  std::shared_ptr<NiceMock<MockPlayer>> mock_player_sptr(new NiceMock<MockPlayer>());
+  std::shared_ptr<NiceMock<MockPlayer>> mock_player_shared_ptr(new NiceMock<MockPlayer>());
   EXPECT_CALL(
-    *mock_player_sptr,
+    *mock_player_shared_ptr,
     callback_func(Eq(KeyboardHandler::KeyCode::CAPITAL_Z))).Times(AtLeast(1));
-  EXPECT_CALL(*mock_player_sptr, callback_func(Eq(KeyboardHandler::KeyCode::UNKNOWN))).Times(0);
+  EXPECT_CALL(
+    *mock_player_shared_ptr,
+    callback_func(Eq(KeyboardHandler::KeyCode::UNKNOWN))).Times(0);
 
-  auto callback = std::bind(&MockPlayer::callback_func, mock_player_sptr, std::placeholders::_1);
+  auto callback = std::bind(
+    &MockPlayer::callback_func, mock_player_shared_ptr,
+    std::placeholders::_1);
   EXPECT_TRUE(
     keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CAPITAL_Z));
   EXPECT_TRUE(keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::UNKNOWN));

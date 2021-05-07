@@ -26,6 +26,10 @@
 class KeyboardHandlerWindowsImpl : public KeyboardHandlerBase
 {
 public:
+  using isattyFunction = std::function<int (int)>;
+  using kbhitFunction = std::function<int (void)>;
+  using getchFunction = std::function<int (void)>;
+
   /// \brief Data type for representing key codes returning by _getch() function in response to
   /// the pressing keyboard keys.
   /// \details Windows OS could return up to two integer values in response to the pressing
@@ -88,6 +92,15 @@ public:
   WinKeyCode enum_key_code_to_win_code(KeyboardHandlerBase::KeyCode key_code) const;
 
 protected:
+  /// \brief Constructor with references to the system functions. Required for unit tests.
+  /// \param isatty_fn Reference to the system _isatty(int) function
+  /// \param kbhit_fn Reference to the system _kbhit(void) function
+  /// \param getch_fn Reference to the system _getch(void) function
+  KeyboardHandlerWindowsImpl(
+    const isattyFunction & isatty_fn,
+    const kbhitFunction & kbhit_fn,
+    const getchFunction & getch_fn);
+
   /// \brief Specialized hash function for `unordered_map` with WinKeyCode keys
   struct win_key_code_hash_fn
   {
