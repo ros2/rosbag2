@@ -15,6 +15,7 @@
 #ifndef KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 #define KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
 
+#ifndef _WIN32
 #include <string>
 #include <unordered_map>
 #include <atomic>
@@ -83,4 +84,5 @@ private:
   std::exception_ptr thread_exception_ptr{nullptr};
 };
 
+#endif  // #ifndef _WIN32
 #endif  // KEYBOARD_HANDLER__KEYBOARD_HANDLER_UNIX_IMPL_HPP_
