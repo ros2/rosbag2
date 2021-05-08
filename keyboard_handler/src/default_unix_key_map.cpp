@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#ifndef _WIN32
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 /// Note that key code sequences translated by the terminal could be differ for different terminal
@@ -183,3 +183,5 @@ const KeyboardHandlerUnixImpl::KeyMap KeyboardHandlerUnixImpl::DEFAULT_STATIC_KE
 
 const size_t KeyboardHandlerUnixImpl::STATIC_KEY_MAP_LENGTH =
   sizeof(KeyboardHandlerUnixImpl::DEFAULT_STATIC_KEY_MAP) / sizeof(KeyboardHandlerUnixImpl::KeyMap);
+
+#endif  // #ifndef _WIN32

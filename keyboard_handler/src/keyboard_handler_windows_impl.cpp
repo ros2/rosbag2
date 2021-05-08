@@ -86,7 +86,6 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
       try {
         do {
           if (kbhit_fn()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             WinKeyCode win_key_code{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
             int ch = getch_fn();
             win_key_code.first = ch;
@@ -95,24 +94,18 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
             // https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/078sfkak(v=vs.110)
             if (ch == 0 || ch == 0xE0) {  // 0xE0 == 224
               // ch == 0 for F1 - F10 keys, ch == 0xE0 for all other control keys.
-//              std::cout << "Pressed control key. First code = " << ch;
               ch = getch_fn();
               win_key_code.second = ch;
-//              std::cout << ". Second code = " << ch;
-            } else {
-//              std::cout << "Pressed first key code = " << ch << " key.";
             }
-
             KeyCode pressed_key_code = win_key_code_to_enum(win_key_code);
-
-//            std::cout << " Detected as : " << enum_key_code_to_str(pressed_key_code).c_str();
-//            std::cout << std::endl;
 
             std::lock_guard<std::mutex> lk(callbacks_mutex_);
             auto range = callbacks_.equal_range(pressed_key_code);
             for (auto it = range.first; it != range.second; ++it) {
               it->second(it->first);
             }
+            // Wait for 0.1 sec to yield processor resources for another threads
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
           }
         } while (!exit_.load());
       } catch (...) {

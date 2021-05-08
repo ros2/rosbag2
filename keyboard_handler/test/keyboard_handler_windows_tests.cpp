@@ -17,6 +17,8 @@
 #include <memory>
 #include <algorithm>
 #include <mutex>
+#include <condition_variable>
+#include <utility>
 #include "gmock/gmock.h"
 #include "fake_recorder.hpp"
 #include "fake_player.hpp"
@@ -27,8 +29,6 @@ using ::testing::Eq;
 using ::testing::AtLeast;
 using ::testing::_;
 using ::testing::NiceMock;
-
-using namespace std::chrono_literals;
 
 class MockPlayer : public FakePlayer
 {
@@ -50,8 +50,49 @@ public:
 
   MockSystemCalls()
   {
-    ON_CALL(*this, kbhit).WillByDefault(Return(0));
     ON_CALL(*this, getch).WillByDefault(Return(-1));
+  }
+
+  int kbhit()
+  {
+    std::unique_lock<std::mutex> lk(kbhit_mutex_);
+    if (wait_on_kbhit_) {
+      cv_kbhit.wait(lk, [this]() {return unblock_kbhit_;});
+      unblock_kbhit_ = false;
+    }
+    return kbhit_return_value_;
+  }
+
+  void kbhit_will_return_once(int ret_value)
+  {
+    {
+      std::lock_guard<std::mutex> lk(kbhit_mutex_);
+      kbhit_return_value_ = ret_value;
+      wait_on_kbhit_ = true;
+      unblock_kbhit_ = true;
+    }
+    cv_kbhit.notify_all();
+  }
+
+  void kbhit_will_repeatedly_return(int ret_value)
+  {
+    {
+      std::lock_guard<std::mutex> lk(kbhit_mutex_);
+      kbhit_return_value_ = ret_value;
+      wait_on_kbhit_ = false;
+      unblock_kbhit_ = true;
+    }
+    cv_kbhit.notify_all();
+  }
+
+  void unblock_kbhit()
+  {
+    {
+      std::lock_guard<std::mutex> lk(kbhit_mutex_);
+      wait_on_kbhit_ = false;
+      unblock_kbhit_ = true;
+    }
+    cv_kbhit.notify_all();
   }
 
   int getch_win_code()
@@ -62,27 +103,31 @@ public:
     counter_++;
     return ret_value;
   }
-  MOCK_METHOD(int, kbhit, ());
   MOCK_METHOD(int, getch, ());
 
 private:
+  std::mutex kbhit_mutex_;
+  std::condition_variable cv_kbhit;
+  bool wait_on_kbhit_ = true;
+  bool unblock_kbhit_ = false;
+  int kbhit_return_value_ = 0;
   std::mutex win_key_code_mutex;
   WinKeyCode win_key_code_{WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
 };
 
-std::unique_ptr<NiceMock<MockSystemCalls>> system_calls_stub;
+std::shared_ptr<NiceMock<MockSystemCalls>> g_system_calls_stub;
 
 class KeyboardHandlerWindowsTest : public ::testing::Test
 {
 public:
   KeyboardHandlerWindowsTest()
   {
-    system_calls_stub = std::make_unique<NiceMock<MockSystemCalls>>();
+    g_system_calls_stub = std::make_shared<NiceMock<MockSystemCalls>>();
   }
 
   ~KeyboardHandlerWindowsTest() override
   {
-    system_calls_stub.reset();
+    g_system_calls_stub.reset();
   }
 };
 
@@ -96,8 +141,8 @@ int isatty_mock(int file_handle)
 int kbhit_mock(void)
 {
   int ret = 0;
-  if (system_calls_stub != nullptr) {
-    ret = system_calls_stub->kbhit();
+  if (g_system_calls_stub != nullptr) {
+    ret = g_system_calls_stub->kbhit();
   } else {
     std::cerr << "Call to '_kbhit()' for non existing unique_ptr" << std::endl;
   }
@@ -107,8 +152,8 @@ int kbhit_mock(void)
 int getch_mock(void)
 {
   int ret = -1;
-  if (system_calls_stub != nullptr) {
-    ret = system_calls_stub->getch();
+  if (g_system_calls_stub != nullptr) {
+    ret = g_system_calls_stub->getch();
   } else {
     std::cerr << "Call to '_getch()' for non existing unique_ptr" << std::endl;
   }
@@ -119,13 +164,27 @@ int getch_mock(void)
 class MockKeyboardHandler : public KeyboardHandlerWindowsImpl
 {
 public:
-  MockKeyboardHandler()
-  : KeyboardHandlerWindowsImpl(isatty_mock, kbhit_mock, getch_mock) {}
+  explicit MockKeyboardHandler(
+    std::weak_ptr<NiceMock<MockSystemCalls>> system_calls_stub = g_system_calls_stub)
+  : KeyboardHandlerWindowsImpl(isatty_mock, kbhit_mock, getch_mock),
+    system_calls_stub_(std::move(system_calls_stub)) {}
+
+  ~MockKeyboardHandler() override
+  {
+    auto system_calls_stub = system_calls_stub_.lock();
+    if (system_calls_stub) {
+      // unlock kbhit to let inner worker thread to finish
+      system_calls_stub->unblock_kbhit();
+    }
+  }
 
   size_t get_number_of_registered_callbacks() const
   {
     return callbacks_.size();
   }
+
+private:
+  std::weak_ptr<NiceMock<MockSystemCalls>> system_calls_stub_;
 };
 
 TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_null_callback) {
@@ -140,16 +199,14 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_null_callback) {
 }
 
 TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks) {
-  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
-
   auto recorder = FakeRecorder::create();
   std::shared_ptr<FakePlayer> player_shared_ptr(new FakePlayer());
   {
     MockKeyboardHandler keyboard_handler;
-    system_calls_stub->set_returning_getch_code(
+    g_system_calls_stub->set_returning_getch_code(
       keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP));
-    EXPECT_CALL(*system_calls_stub, getch())
-    .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
+    EXPECT_CALL(*g_system_calls_stub, getch())
+    .WillRepeatedly(::testing::Invoke(g_system_calls_stub.get(), &MockSystemCalls::getch_win_code));
 
     ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 
@@ -161,6 +218,7 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks) {
 
     player_shared_ptr->register_callbacks(keyboard_handler);
     ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
+    g_system_calls_stub->kbhit_will_return_once(1);
   }
   // Check that callbacks was called with proper key code.
   std::string test_output = testing::internal::GetCapturedStdout();
@@ -171,13 +229,12 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks) {
 }
 
 TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks_and_deleted_objects) {
-  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
   {
     MockKeyboardHandler keyboard_handler;
-    system_calls_stub->set_returning_getch_code(
+    g_system_calls_stub->set_returning_getch_code(
       keyboard_handler.enum_key_code_to_win_code(KeyboardHandler::KeyCode::CURSOR_UP));
-    EXPECT_CALL(*system_calls_stub, getch())
-    .WillRepeatedly(::testing::Invoke(system_calls_stub.get(), &MockSystemCalls::getch_win_code));
+    EXPECT_CALL(*g_system_calls_stub, getch())
+    .WillRepeatedly(::testing::Invoke(g_system_calls_stub.get(), &MockSystemCalls::getch_win_code));
 
     ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
     {
@@ -193,8 +250,7 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_lambdas_in_callbacks_an
       player_shared_ptr->register_callbacks(keyboard_handler);
       ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 2U);
     }
-    // Yield CPU resources to give keyboard_handler a chance to process deleted callbacks.
-    std::this_thread::sleep_for(1ms);
+    g_system_calls_stub->kbhit_will_return_once(1);
   }
   // Check that callbacks was called for deleted objects and processed properly
   std::string test_output = testing::internal::GetCapturedStdout();
@@ -211,8 +267,8 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_global_callback) {
     mock_global_callback,
     Call(Eq(KeyboardHandler::KeyCode::CAPITAL_E))).Times(AtLeast(1));
 
-  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
-  EXPECT_CALL(*system_calls_stub, getch()).WillRepeatedly(Return('E'));
+  EXPECT_CALL(*g_system_calls_stub, getch()).WillRepeatedly(Return('E'));
+  g_system_calls_stub->kbhit_will_repeatedly_return(1);
 
   MockKeyboardHandler keyboard_handler;
   ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
@@ -224,8 +280,8 @@ TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_global_callback) {
 }
 
 TEST_F(KeyboardHandlerWindowsTest, keyboard_handler_with_class_member_in_callback) {
-  EXPECT_CALL(*system_calls_stub, kbhit()).WillRepeatedly(Return(1));
-  EXPECT_CALL(*system_calls_stub, getch()).WillRepeatedly(Return('Z'));
+  EXPECT_CALL(*g_system_calls_stub, getch()).WillRepeatedly(Return('Z'));
+  g_system_calls_stub->kbhit_will_repeatedly_return(1);
 
   MockKeyboardHandler keyboard_handler;
   std::shared_ptr<NiceMock<MockPlayer>> mock_player_shared_ptr(new NiceMock<MockPlayer>());
