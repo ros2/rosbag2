@@ -54,6 +54,7 @@ KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl()
 : KeyboardHandlerUnixImpl(read, isatty, tcgetattr, tcsetattr) {}
 
+KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
   const readFunction & read_fn,
   const isattyFunction & isatty_fn,

@@ -55,6 +55,7 @@ protected:
   /// \param tcgetattr_fn Reference to the system tcgetattr(int, struct termios *) function
   /// \param tcsetattr_fn Reference to the system tcsetattr(int, int, const struct termios *)
   /// function
+  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerUnixImpl(
     const readFunction & read_fn,
     const isattyFunction & isatty_fn,

@@ -49,6 +49,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
 {
 }
 
+KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
   const isattyFunction & isatty_fn,
   const kbhitFunction & kbhit_fn,

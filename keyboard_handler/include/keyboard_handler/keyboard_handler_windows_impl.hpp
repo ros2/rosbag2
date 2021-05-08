@@ -96,6 +96,7 @@ protected:
   /// \param isatty_fn Reference to the system _isatty(int) function
   /// \param kbhit_fn Reference to the system _kbhit(void) function
   /// \param getch_fn Reference to the system _getch(void) function
+  KEYBOARD_HANDLER_PUBLIC
   KeyboardHandlerWindowsImpl(
     const isattyFunction & isatty_fn,
     const kbhitFunction & kbhit_fn,
