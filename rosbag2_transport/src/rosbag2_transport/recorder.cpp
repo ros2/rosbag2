@@ -157,8 +157,8 @@ Recorder::get_requested_or_available_topics()
 
   std::regex topic_regex(record_options_.regex);
   std::regex exclude_regex(record_options_.exclude);
-  bool take = record_options_.all;
   for (const auto & kv : filtered_topics_and_types) {
+    bool take = record_options_.all;
     // regex_match returns false for 'empty' regex
     if (!record_options_.regex.empty()) {
       take = std::regex_match(kv.first, topic_regex);
