@@ -277,7 +277,7 @@ bool Player::play_next()
     return false;
   }
   // Temporary take over playback from play_messages_from_queue()
-  std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex_);
+  std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
   skip_message_in_main_play_loop_ = true;
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 
@@ -285,11 +285,7 @@ bool Player::play_next()
   while (message_ptr != nullptr && !next_message_published) {
     {
       rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
-      auto publisher_iter = publishers_.find(message->topic_name);
-      if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-        next_message_published = true;
-      }
+      next_message_published = publish_message(message);
       clock_->jump(message->time_stamp);
     }
     message_queue_.pop();
@@ -349,19 +345,14 @@ void Player::play_messages_from_queue()
       while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
       if (rclcpp::ok()) {
         {
-          std::lock_guard<std::mutex> lk(skip_messages_in_main_play_loop_mutex_);
+          std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
           if (skip_message_in_main_play_loop_) {
             skip_message_in_main_play_loop_ = false;
             message_ptr = peek_next_message_from_queue();
             continue;
           }
         }
-
-        auto publisher_iter = publishers_.find(message->topic_name);
-        if (publisher_iter != publishers_.end()) {
-          publisher_iter->second->publish(
-            rclcpp::SerializedMessage(*message->serialized_data.get()));
-        }
+        publish_message(message);
       }
       message_queue_.pop();
       message_ptr = peek_next_message_from_queue();
@@ -422,6 +413,17 @@ void Player::prepare_publishers()
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }
+}
+
+bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  bool message_published = false;
+  auto publisher_iter = publishers_.find(message->topic_name);
+  if (publisher_iter != publishers_.end()) {
+    publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+    message_published = true;
+  }
+  return message_published;
 }
 
 }  // namespace rosbag2_transport

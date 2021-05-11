@@ -137,6 +137,7 @@ private:
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void prepare_publishers();
+  bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
@@ -148,9 +149,9 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
-  std::mutex skip_messages_in_main_play_loop_mutex_;
+  std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
-    (skip_messages_in_main_play_loop_mutex_) = false;
+    (skip_message_in_main_play_loop_mutex_) = false;
   std::atomic_bool is_in_play_{false};
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
