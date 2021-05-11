@@ -57,6 +57,29 @@ public:
   }
 };
 
+TEST_F(RosBag2PlayTestFixture, play_next_with_false_preconditions) {
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 2100, primitive_message)};
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  ASSERT_FALSE(player->is_paused());
+  ASSERT_FALSE(player->play_next());
+
+  player->pause();
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_FALSE(player->play_next());
+}
+
 TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
   auto primitive_message = get_messages_basic_types()[0];
   primitive_message->int32_value = 42;
@@ -85,9 +108,6 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
     sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
 
   auto await_received_messages = sub_->spin_subscriptions();
-
-  ASSERT_FALSE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
 
   player->pause();
   ASSERT_TRUE(player->is_paused());
@@ -143,9 +163,6 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  ASSERT_FALSE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
-
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
@@ -199,9 +216,6 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
     sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
 
   auto await_received_messages = sub_->spin_subscriptions();
-
-  ASSERT_FALSE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
 
   player->pause();
   ASSERT_TRUE(player->is_paused());
@@ -257,9 +271,6 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_play_next) {
     sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
 
   auto await_received_messages = sub_->spin_subscriptions();
-
-  ASSERT_FALSE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
 
   player->pause();
   ASSERT_TRUE(player->is_paused());
@@ -317,9 +328,6 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
     sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
 
   auto await_received_messages = sub_->spin_subscriptions();
-
-  ASSERT_FALSE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
 
   player->pause();
   ASSERT_TRUE(player->is_paused());

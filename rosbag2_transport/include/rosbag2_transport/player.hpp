@@ -119,9 +119,8 @@ public:
   /// this method will wait until new element will be pushed to the queue.
   /// It will be undefined behaviour if playback will be resumed from another thread during
   /// play_next() operation.
-  /// Player::play() should be called in a separate thread to start filling queue with messages,
-  /// otherwise play_next() will be blocked forever.
-  /// \return true if player in pause mode and successfully played next message, otherwise false.
+  /// \return true if Player::play() has been started, player in pause mode and successfully
+  /// played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
 
@@ -152,6 +151,7 @@ private:
   std::mutex skip_messages_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
     (skip_messages_in_main_play_loop_mutex_) = false;
+  std::atomic_bool is_in_play_{false};
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;

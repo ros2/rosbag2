@@ -203,6 +203,7 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
+  is_in_play_ = true;
   try {
     do {
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
@@ -221,6 +222,7 @@ void Player::play()
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
   }
+  is_in_play_ = false;
 }
 
 void Player::pause()
@@ -271,7 +273,7 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
 
 bool Player::play_next()
 {
-  if (!clock_->is_paused()) {
+  if (!clock_->is_paused() || !is_in_play_) {
     return false;
   }
   // Temporary take over playback from play_messages_from_queue()
