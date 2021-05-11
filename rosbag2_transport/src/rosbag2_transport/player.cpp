@@ -173,6 +173,15 @@ Player::Player(
     {
       response->success = set_rate(request->rate);
     });
+  srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
+    "~/play_next",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayNext::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayNext::Response> response)
+    {
+      response->success = play_next();
+    });
 }
 
 Player::~Player()
