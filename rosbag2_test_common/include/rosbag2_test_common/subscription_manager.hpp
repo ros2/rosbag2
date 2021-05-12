@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <list>
+
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 #include "rclcpp/serialization.hpp"
 
@@ -81,7 +81,7 @@ public:
   /// \return true if publishers have specified number of subscribers, otherwise false.
   template<typename Timeout>
   bool spin_and_wait_for_matched(
-    const std::list<rclcpp::PublisherBase *> & publishers,
+    const std::vector<rclcpp::PublisherBase *> & publishers,
     Timeout timeout, size_t n_subscribers_to_match = 1)
   {
     // Sanity check that we have valid input
@@ -96,7 +96,7 @@ public:
       }
     }
 
-    using clock = std::chrono::system_clock;
+    using clock = std::chrono::steady_clock;
     auto start = clock::now();
 
     rclcpp::executors::SingleThreadedExecutor exec;

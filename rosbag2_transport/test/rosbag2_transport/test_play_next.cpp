@@ -17,14 +17,14 @@
 #include <chrono>
 #include <future>
 #include <memory>
-#include <vector>
-#include <list>
 #include <utility>
+#include <vector>
+
+#include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport/player.hpp"
+#include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/message_fixtures.hpp"
-#include "rosbag2_play_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -40,9 +40,9 @@ public:
   : Player(std::move(reader), storage_options, play_options)
   {}
 
-  std::list<rclcpp::PublisherBase *> get_list_of_publishers()
+  std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
   {
-    std::list<rclcpp::PublisherBase *> pub_list;
+    std::vector<rclcpp::PublisherBase *> pub_list;
     for (const auto & publisher : publishers_) {
       pub_list.push_back(static_cast<rclcpp::PublisherBase *>(publisher.second.get()));
     }
