@@ -273,11 +273,13 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
 
 bool Player::play_next()
 {
+  // Temporary take over playback from play_messages_from_queue()
+  std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+
   if (!clock_->is_paused() || !is_in_play_) {
     return false;
   }
-  // Temporary take over playback from play_messages_from_queue()
-  std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+
   skip_message_in_main_play_loop_ = true;
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 

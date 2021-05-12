@@ -117,8 +117,6 @@ public:
   /// published or rclcpp context shut down.
   /// \note If internal player queue is starving and storage has not been completely loaded,
   /// this method will wait until new element will be pushed to the queue.
-  /// It will be undefined behaviour if playback will be resumed from another thread during
-  /// play_next() operation.
   /// \return true if Player::play() has been started, player in pause mode and successfully
   /// played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
