@@ -42,6 +42,7 @@ public:
   using IsPaused = rosbag2_interfaces::srv::IsPaused;
   using GetRate = rosbag2_interfaces::srv::GetRate;
   using SetRate = rosbag2_interfaces::srv::SetRate;
+  using PlayNext = rosbag2_interfaces::srv::PlayNext;
 
   PlaySrvsTest()
   : RosBag2PlayTestFixture(),
@@ -68,6 +69,7 @@ public:
     cli_is_paused_ = client_node_->create_client<IsPaused>(ns + "/is_paused");
     cli_get_rate_ = client_node_->create_client<GetRate>(ns + "/get_rate");
     cli_set_rate_ = client_node_->create_client<SetRate>(ns + "/set_rate");
+    cli_play_next_ = client_node_->create_client<PlayNext>(ns + "/play_next");
     topic_sub_ = client_node_->create_subscription<test_msgs::msg::BasicTypes>(
       test_topic_, 10,
       std::bind(&PlaySrvsTest::topic_callback, this, std::placeholders::_1));
@@ -86,19 +88,7 @@ public:
     ASSERT_TRUE(cli_toggle_paused_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_get_rate_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_set_rate_->wait_for_service(service_wait_timeout_));
-
-    // Wait for paused == false to know that playback has begun
-    bool is_playing = false;
-    IsPaused::Response::SharedPtr is_paused_result;
-    for (size_t retry = 0; retry < 3 && rclcpp::ok(); retry++) {
-      is_paused_result = successful_call<IsPaused>(cli_is_paused_);
-      if (is_paused_result->paused == false) {
-        is_playing = true;
-        break;
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    ASSERT_TRUE(is_playing);
+    ASSERT_TRUE(cli_play_next_->wait_for_service(service_wait_timeout_));
   }
 
   /// Call a service client, and expect it to successfully return within a reasonable timeout
@@ -128,17 +118,24 @@ public:
   }
 
   /// EXPECT to receive (or not receive) any messages for a period
-  void expect_message(bool messages_should_arrive)
+  void expect_messages(bool messages_should_arrive, bool reset_message_counter = true)
   {
     // Not too worried about the exact timing in this test, give a lot of leeway
     const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 10);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
+    if (reset_message_counter) {
+      message_counter_ = 0;
+    }
     if (!messages_should_arrive) {
-      // Allow for a single unprocessed message to be handled before expecting nothing to arrive
-      got_msg_.wait_for(lock, condition_clear_time);
-      EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::timeout);
+      EXPECT_EQ(
+        got_msg_.wait_for(
+          lock, condition_clear_time,
+          [this]() {return message_counter_ > 0;}), false);
     } else {
-      EXPECT_EQ(got_msg_.wait_for(lock, condition_clear_time), std::cv_status::no_timeout);
+      EXPECT_EQ(
+        got_msg_.wait_for(
+          lock, condition_clear_time,
+          [this]() {return message_counter_ > 0;}), true);
     }
   }
 
@@ -150,7 +147,6 @@ private:
     rosbag2_transport::PlayOptions play_options;
     play_options.loop = true;
 
-    const size_t num_msgs_to_publish = 200;
     auto message = get_messages_basic_types()[0];
     message->int32_value = 42;
 
@@ -158,7 +154,7 @@ private:
       {test_topic_, "test_msgs/BasicTypes", "", ""},
     };
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
-    for (size_t i = 0; i < num_msgs_to_publish; i++) {
+    for (size_t i = 0; i < num_msgs_to_publish_; i++) {
       messages.push_back(serialize_test_message(test_topic_, i * ms_between_msgs_, message));
     }
 
@@ -167,6 +163,8 @@ private:
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     player_ = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options, play_options, player_name_);
+    player_->pause();  // Start playing in pause mode. Require for play_next test. For all other
+    // tests we will resume playback via explicit call to start_playback().
     play_thread_ = std::thread(
       [this]() {
         player_->play();
@@ -175,7 +173,27 @@ private:
 
   void topic_callback(const test_msgs::msg::BasicTypes::SharedPtr /* msg */)
   {
+    {
+      std::lock_guard<std::mutex> lk(got_msg_mutex_);
+      message_counter_++;
+    }
     got_msg_.notify_all();
+  }
+
+protected:
+/// \brief  Wait for paused == false to know that playback has begun
+  void start_playback()
+  {
+    player_->resume();
+    bool is_playing = false;
+    for (size_t retry = 0; retry < 3 && rclcpp::ok(); retry++) {
+      if (!player_->is_paused()) {
+        is_playing = true;
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    ASSERT_TRUE(is_playing);
   }
 
 public:
@@ -186,6 +204,7 @@ public:
   const std::string test_topic_ = "/player_srvs_test_topic";
   // publishing at 50hz
   const size_t ms_between_msgs_ = 20;
+  const size_t num_msgs_to_publish_ = 200;
 
   // Orchestration
   std::thread spin_thread_;
@@ -201,58 +220,63 @@ public:
   rclcpp::Client<IsPaused>::SharedPtr cli_is_paused_;
   rclcpp::Client<GetRate>::SharedPtr cli_get_rate_;
   rclcpp::Client<SetRate>::SharedPtr cli_set_rate_;
+  rclcpp::Client<PlayNext>::SharedPtr cli_play_next_;
 
   // Mechanism to check on playback status
   rclcpp::Subscription<test_msgs::msg::BasicTypes>::SharedPtr topic_sub_;
   std::mutex got_msg_mutex_;
   std::condition_variable got_msg_;
+  size_t message_counter_ = 0;
 };
 
 TEST_F(PlaySrvsTest, pause_resume)
 {
+  start_playback();
   // No matter how many times we call pause, it's paused
   for (size_t i = 0; i < 3; i++) {
     successful_call<Pause>(cli_pause_);
     ASSERT_TRUE(is_paused());
   }
-  expect_message(false);
+  expect_messages(false);
 
   // No matter how many times we call resume, it's resumed
   for (size_t i = 0; i < 3; i++) {
     successful_call<Resume>(cli_resume_);
     ASSERT_FALSE(is_paused());
   }
-  expect_message(true);
+  expect_messages(true);
 
   // Let's do pause again to make sure back-and-forth works
   for (size_t i = 0; i < 3; i++) {
     successful_call<Pause>(cli_pause_);
     ASSERT_TRUE(is_paused());
   }
-  expect_message(false);
+  expect_messages(false);
 }
 
 TEST_F(PlaySrvsTest, toggle_paused)
 {
+  start_playback();
   successful_call<TogglePaused>(cli_toggle_paused_);
   ASSERT_TRUE(is_paused());
-  expect_message(false);
+  expect_messages(false);
 
   successful_call<TogglePaused>(cli_toggle_paused_);
   ASSERT_FALSE(is_paused());
-  expect_message(true);
+  expect_messages(true);
 
   successful_call<TogglePaused>(cli_toggle_paused_);
   ASSERT_TRUE(is_paused());
-  expect_message(false);
+  expect_messages(false);
 
   successful_call<TogglePaused>(cli_toggle_paused_);
   ASSERT_FALSE(is_paused());
-  expect_message(true);
+  expect_messages(true);
 }
 
 TEST_F(PlaySrvsTest, set_rate_good_values)
 {
+  start_playback();
   auto set_request = std::make_shared<SetRate::Request>();
   SetRate::Response::SharedPtr set_response;
   GetRate::Response::SharedPtr get_response;
@@ -272,6 +296,7 @@ TEST_F(PlaySrvsTest, set_rate_good_values)
 
 TEST_F(PlaySrvsTest, set_rate_bad_values)
 {
+  start_playback();
   auto set_request = std::make_shared<SetRate::Request>();
   SetRate::Response::SharedPtr set_response;
 
@@ -282,4 +307,35 @@ TEST_F(PlaySrvsTest, set_rate_bad_values)
   set_request->rate = -1.0;
   set_response = successful_call<SetRate>(cli_set_rate_, set_request);
   ASSERT_FALSE(set_response->success);
+}
+
+TEST_F(PlaySrvsTest, play_next) {
+  ASSERT_TRUE(player_->is_paused());
+  PlayNext::Response::SharedPtr play_next_response;
+  // Check that we will be able to play all messages via play_next
+  for (size_t i = 0; i < num_msgs_to_publish_; i++) {
+    {
+      std::lock_guard<std::mutex> lk(got_msg_mutex_);
+      message_counter_ = 0;
+    }
+    play_next_response = successful_call<PlayNext>(cli_play_next_);
+    ASSERT_TRUE(play_next_response->success);
+    expect_messages(true, false);
+  }
+
+  // Check that when no more messages to play, play_next will return false
+  {
+    std::lock_guard<std::mutex> lk(got_msg_mutex_);
+    message_counter_ = 0;
+  }
+  play_next_response = successful_call<PlayNext>(cli_play_next_);
+  ASSERT_FALSE(play_next_response->success);
+  expect_messages(false, false);
+
+  // Check that play_next will return false when player not in pause mode.
+  start_playback();
+  ASSERT_FALSE(player_->is_paused());
+  play_next_response = successful_call<PlayNext>(cli_play_next_);
+  ASSERT_FALSE(play_next_response->success);
+  expect_messages(true);
 }

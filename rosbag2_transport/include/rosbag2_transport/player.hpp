@@ -32,6 +32,7 @@
 #include "rosbag2_interfaces/srv/get_rate.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/play_next.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/set_rate.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
@@ -158,6 +159,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::GetRate>::SharedPtr srv_get_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
+  rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
 };
 
 }  // namespace rosbag2_transport
