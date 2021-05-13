@@ -112,14 +112,30 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool set_rate(double);
 
+  /// \brief Playing next message from queue when in pause.
+  /// \details This is blocking call and it will wait until next available message will be
+  /// published or rclcpp context shut down.
+  /// \note If internal player queue is starving and storage has not been completely loaded,
+  /// this method will wait until new element will be pushed to the queue.
+  /// \return true if Player::play() has been started, player in pause mode and successfully
+  /// played next message, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool play_next();
+
+protected:
+  std::atomic<bool> playing_messages_from_queue_{false};
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
+
 private:
+  rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
   void load_storage_content();
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(uint64_t boundary);
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
-  void play_messages_until_queue_empty();
   void prepare_publishers();
+  bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
@@ -128,11 +144,13 @@ private:
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
-  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
+  std::mutex skip_message_in_main_play_loop_mutex_;
+  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
+    (skip_message_in_main_play_loop_mutex_) = false;
+  std::atomic_bool is_in_play_{false};
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;

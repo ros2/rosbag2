@@ -203,25 +203,26 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
+  is_in_play_ = true;
   try {
     do {
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
       const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         reader_->get_metadata().starting_time.time_since_epoch()).count();
+      clock_->jump(starting_time);
 
       storage_loading_future_ = std::async(
         std::launch::async,
         [this]() {load_storage_content();});
 
       wait_for_filled_queue();
-
-      clock_->jump(starting_time);
       play_messages_from_queue();
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
   }
+  is_in_play_ = false;
 }
 
 void Player::pause()
@@ -252,6 +253,47 @@ double Player::get_rate() const
 bool Player::set_rate(double rate)
 {
   return clock_->set_rate(rate);
+}
+
+rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_queue()
+{
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
+  if (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Message queue starved. Messages will be delayed. Consider "
+      "increasing the --read-ahead-queue-size option.");
+    while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      message_ptr = message_queue_.peek();
+    }
+  }
+  return message_ptr;
+}
+
+bool Player::play_next()
+{
+  // Temporary take over playback from play_messages_from_queue()
+  std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+
+  if (!clock_->is_paused() || !is_in_play_) {
+    return false;
+  }
+
+  skip_message_in_main_play_loop_ = true;
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+
+  bool next_message_published = false;
+  while (message_ptr != nullptr && !next_message_published) {
+    {
+      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+      next_message_published = publish_message(message);
+      clock_->jump(message->time_stamp);
+    }
+    message_queue_.pop();
+    message_ptr = peek_next_message_from_queue();
+  }
+  return next_message_published;
 }
 
 void Player::wait_for_filled_queue() const
@@ -293,31 +335,32 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 
 void Player::play_messages_from_queue()
 {
-  do {
-    play_messages_until_queue_empty();
-    if (!is_storage_completely_loaded() && rclcpp::ok()) {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Message queue starved. Messages will be delayed. Consider "
-        "increasing the --read-ahead-queue-size option.");
-    }
-  } while (!is_storage_completely_loaded() && rclcpp::ok());
-}
-
-void Player::play_messages_until_queue_empty()
-{
-  rosbag2_storage::SerializedBagMessageSharedPtr message;
-  while (message_queue_.try_dequeue(message) && rclcpp::ok()) {
-    // Do not move on until sleep_until returns true
-    // It will always sleep, so this is not a tight busy loop on pause
-    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
-    if (rclcpp::ok()) {
-      auto publisher_iter = publishers_.find(message->topic_name);
-      if (publisher_iter != publishers_.end()) {
-        publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data.get()));
+  playing_messages_from_queue_ = true;
+  // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
+  // to support play_next() API logic.
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  while (message_ptr != nullptr && rclcpp::ok()) {
+    {
+      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+      // Do not move on until sleep_until returns true
+      // It will always sleep, so this is not a tight busy loop on pause
+      while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
+      if (rclcpp::ok()) {
+        {
+          std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+          if (skip_message_in_main_play_loop_) {
+            skip_message_in_main_play_loop_ = false;
+            message_ptr = peek_next_message_from_queue();
+            continue;
+          }
+        }
+        publish_message(message);
       }
+      message_queue_.pop();
+      message_ptr = peek_next_message_from_queue();
     }
   }
+  playing_messages_from_queue_ = false;
 }
 
 void Player::prepare_publishers()
@@ -363,8 +406,7 @@ void Player::prepare_publishers()
     try {
       publishers_.insert(
         std::make_pair(
-          topic.name, this->create_generic_publisher(
-            topic.name, topic.type, topic_qos)));
+          topic.name, this->create_generic_publisher(topic.name, topic.type, topic_qos)));
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
@@ -373,6 +415,17 @@ void Player::prepare_publishers()
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }
+}
+
+bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  bool message_published = false;
+  auto publisher_iter = publishers_.find(message->topic_name);
+  if (publisher_iter != publishers_.end()) {
+    publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+    message_published = true;
+  }
+  return message_published;
 }
 
 }  // namespace rosbag2_transport
