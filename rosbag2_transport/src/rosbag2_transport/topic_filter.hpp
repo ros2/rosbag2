@@ -39,6 +39,15 @@ filter_topics_with_more_than_one_type(
   const std::map<std::string, std::vector<std::string>> & topics_and_types,
   bool include_hidden_topics = false);
 
+ROSBAG2_TRANSPORT_PUBLIC
+std::unordered_map<std::string, std::string>
+filter_topics_using_regex(
+  const std::unordered_map<std::string, std::string> & topics_and_types,
+  const std::string & filter_regex_string,
+  const std::string & exclude_regex_string,
+  const bool & all_flag
+);
+
 }  // namespace topic_filter
 }  // namespace rosbag2_transport
 

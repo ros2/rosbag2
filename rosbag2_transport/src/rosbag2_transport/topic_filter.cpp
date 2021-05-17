@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <map>
+#include <regex>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -87,6 +88,35 @@ std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_ty
     filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
   }
   return filtered_topics_and_types;
+}
+
+std::unordered_map<std::string, std::string>
+filter_topics_using_regex(
+  const std::unordered_map<std::string, std::string> & topics_and_types,
+  const std::string & filter_regex_string,
+  const std::string & exclude_regex_string,
+  const bool & all_flag
+)
+{
+  std::unordered_map<std::string, std::string> filtered_by_regex;
+
+  std::regex filter_regex(filter_regex_string);
+  std::regex exclude_regex(exclude_regex_string);
+
+  for (const auto & kv : topics_and_types) {
+    bool take = all_flag;
+    // regex_match returns false for 'empty' regex
+    if (!all_flag && !filter_regex_string.empty()) {
+      take = std::regex_match(kv.first, filter_regex);
+    }
+    if (take) {
+      take = !std::regex_match(kv.first, exclude_regex);
+    }
+    if (take) {
+      filtered_by_regex.insert(kv);
+    }
+  }
+  return filtered_by_regex;
 }
 
 }  // namespace topic_filter
