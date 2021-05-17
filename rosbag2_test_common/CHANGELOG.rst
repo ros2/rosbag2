@@ -2,6 +2,15 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.0 (2021-05-17)
+------------------
+* Add play_next() API to the player class (`#762 <https://github.com/ros2/rosbag2/issues/762>`_)
+* use rclcpp::SerializedMessage in MemoryManagement (`#750 <https://github.com/ros2/rosbag2/issues/750>`_)
+* remodel publication manager (`#749 <https://github.com/ros2/rosbag2/issues/749>`_)
+* use public recorder api in tests (`#741 <https://github.com/ros2/rosbag2/issues/741>`_)
+* player owns the reader (`#725 <https://github.com/ros2/rosbag2/issues/725>`_)
+* Contributors: Karsten Knese, Michael Orlov
+
 0.8.0 (2021-04-19)
 ------------------
 * Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)

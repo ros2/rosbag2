@@ -2,6 +2,13 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.0 (2021-05-17)
+------------------
+* remove rosbag2_transport header (`#742 <https://github.com/ros2/rosbag2/issues/742>`_)
+* Include utility to quiet cpplint. (`#744 <https://github.com/ros2/rosbag2/issues/744>`_)
+* player owns the reader (`#725 <https://github.com/ros2/rosbag2/issues/725>`_)
+* Contributors: Chris Lalancette, Karsten Knese
+
 0.8.0 (2021-04-19)
 ------------------
 * Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)

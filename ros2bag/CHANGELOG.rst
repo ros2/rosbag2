@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.0 (2021-05-17)
+------------------
+
 0.8.0 (2021-04-19)
 ------------------
 * /clock publisher in Player (`#695 <https://github.com/ros2/rosbag2/issues/695>`_)
