@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.0 (2021-05-17)
+------------------
 * Expose play_next service (`#767 <https://github.com/ros2/rosbag2/issues/767>`_)
 * Add play_next() API to the player class (`#762 <https://github.com/ros2/rosbag2/issues/762>`_)
 * Naive clock jump implementation - allows for clock reuse and simplified Player setup (`#754 <https://github.com/ros2/rosbag2/issues/754>`_)

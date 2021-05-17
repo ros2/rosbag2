@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.0 (2021-05-17)
+------------------
 * Correct expectation for exit code in play_end_to_end test since after redesign we are getting exception in constructor. (`#763 <https://github.com/ros2/rosbag2/issues/763>`_)
 * remodel publication manager (`#749 <https://github.com/ros2/rosbag2/issues/749>`_)
 * correct exit code assertion (`#747 <https://github.com/ros2/rosbag2/issues/747>`_)

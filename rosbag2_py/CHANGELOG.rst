@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.0 (2021-05-17)
+------------------
 * remove rosbag2_transport header (`#742 <https://github.com/ros2/rosbag2/issues/742>`_)
 * Include utility to quiet cpplint. (`#744 <https://github.com/ros2/rosbag2/issues/744>`_)
 * player owns the reader (`#725 <https://github.com/ros2/rosbag2/issues/725>`_)
