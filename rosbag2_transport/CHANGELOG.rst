@@ -2,6 +2,23 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Expose play_next service (`#767 <https://github.com/ros2/rosbag2/issues/767>`_)
+* Add play_next() API to the player class (`#762 <https://github.com/ros2/rosbag2/issues/762>`_)
+* Naive clock jump implementation - allows for clock reuse and simplified Player setup (`#754 <https://github.com/ros2/rosbag2/issues/754>`_)
+* Rename Reader/Writer 'reset' to 'close' (`#760 <https://github.com/ros2/rosbag2/issues/760>`_)
+* simply constructor for rosbag2_transport::Player (`#757 <https://github.com/ros2/rosbag2/issues/757>`_)
+* Expose GetRate/SetRate services for playback (`#753 <https://github.com/ros2/rosbag2/issues/753>`_)
+* Expose pause/resume related services on the Player (`#729 <https://github.com/ros2/rosbag2/issues/729>`_)
+* remodel publication manager (`#749 <https://github.com/ros2/rosbag2/issues/749>`_)
+* remove rosbag2_transport header (`#742 <https://github.com/ros2/rosbag2/issues/742>`_)
+* use public recorder api in tests (`#741 <https://github.com/ros2/rosbag2/issues/741>`_)
+* Use public player API in tests (`#740 <https://github.com/ros2/rosbag2/issues/740>`_)
+* public recorder and player (`#739 <https://github.com/ros2/rosbag2/issues/739>`_)
+* player owns the reader (`#725 <https://github.com/ros2/rosbag2/issues/725>`_)
+* Contributors: Emerson Knapp, Karsten Knese, Michael Orlov
+
 0.8.0 (2021-04-19)
 ------------------
 * cleanup cmakelists (`#726 <https://github.com/ros2/rosbag2/issues/726>`_)

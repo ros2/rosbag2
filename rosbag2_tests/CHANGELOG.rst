@@ -2,6 +2,13 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Correct expectation for exit code in play_end_to_end test since after redesign we are getting exception in constructor. (`#763 <https://github.com/ros2/rosbag2/issues/763>`_)
+* remodel publication manager (`#749 <https://github.com/ros2/rosbag2/issues/749>`_)
+* correct exit code assertion (`#747 <https://github.com/ros2/rosbag2/issues/747>`_)
+* Contributors: Karsten Knese, Michael Orlov
+
 0.8.0 (2021-04-19)
 ------------------
 * Remove -Werror from builds, enable it in Action CI (`#722 <https://github.com/ros2/rosbag2/issues/722>`_)
