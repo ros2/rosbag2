@@ -45,7 +45,7 @@ filter_topics_using_regex(
   const std::unordered_map<std::string, std::string> & topics_and_types,
   const std::string & filter_regex_string,
   const std::string & exclude_regex_string,
-  const bool & all_flag
+  bool all_flag
 );
 
 }  // namespace topic_filter
