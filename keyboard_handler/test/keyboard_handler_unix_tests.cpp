@@ -101,8 +101,9 @@ class MockKeyboardHandler : public KeyboardHandlerUnixImpl
 public:
   explicit MockKeyboardHandler(
     const readFunction & read_fn,
+    const isattyFunction & isatty_fn = isatty_mock,
     std::weak_ptr<MockSystemCalls> system_calls_stub = g_system_calls_stub)
-  : KeyboardHandlerUnixImpl(read_fn, isatty_mock, tcgetattr_mock, tcsetattr_mock),
+  : KeyboardHandlerUnixImpl(read_fn, isatty_fn, tcgetattr_mock, tcsetattr_mock),
     system_calls_stub_(std::move(system_calls_stub)) {}
 
   ~MockKeyboardHandler() override
@@ -183,6 +184,19 @@ TEST_F(KeyboardHandlerUnixTest, unregister_callback) {
   keyboard_handler.delete_key_press_callback(callback_handle);
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
   g_system_calls_stub->read_will_repeatedly_return(terminal_seq);
+}
+
+TEST_F(KeyboardHandlerUnixTest, stdin_is_not_a_terminal_device) {
+  auto isatty_fail = [](int fd) -> int {return 0;};
+  MockKeyboardHandler keyboard_handler(read_fn_, isatty_fail);
+  ASSERT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
+
+  auto callback = [](KeyboardHandler::KeyCode key_code) {
+      ASSERT_FALSE(true) << "This code should not be called \n";
+    };
+  auto callback_handle = keyboard_handler.add_key_press_callback(
+    callback, KeyboardHandler::KeyCode::CAPITAL_E);
+  EXPECT_EQ(callback_handle, KeyboardHandler::invalid_handle);
 }
 
 TEST_F(KeyboardHandlerUnixTest, weak_ptr_in_callbacks) {
