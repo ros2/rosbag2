@@ -29,19 +29,40 @@ public:
 
   /// \brief Type for callback functions
   using callback_t = std::function<void (KeyCode)>;
+  using callback_handle_t = uint64_t;
+
+  KEYBOARD_HANDLER_PUBLIC
+  static constexpr callback_handle_t invalid_handle = 0;
 
   /// \brief Adding callable object as a handler for specified key press combination.
   /// \param callback Callable which will be called when key_code will be recognized.
   /// \param key_code Value from enum which corresponds to some predefined key press combination.
-  /// \return Return true if callback was successfully added to the keyboard handler, return
-  /// false if callback is null_ptr or keyboard handler wasn't successfully initialized.
+  /// \return Return Newly created callback handle if callback was successfully added to the
+  /// keyboard handler, returns invalid_handle if callback is nullptr or keyboard handler wasn't
+  /// successfully initialized.
   KEYBOARD_HANDLER_PUBLIC
-  bool add_key_press_callback(const callback_t & callback, KeyboardHandlerBase::KeyCode key_code);
+  callback_handle_t add_key_press_callback(
+    const callback_t & callback,
+    KeyboardHandlerBase::KeyCode key_code);
+
+  /// \brief Delete callback from keyboard handler callback's list
+  /// \param handle Callback's handle returned from #add_key_press_callback
+  KEYBOARD_HANDLER_PUBLIC
+  void delete_key_press_callback(const callback_handle_t & handle);
 
 protected:
+  struct callback_data
+  {
+    callback_handle_t handle;
+    callback_t callback;
+  };
   bool is_init_succeed_ = false;
   std::mutex callbacks_mutex_;
-  std::unordered_multimap<KeyCode, callback_t> callbacks_;
+  std::unordered_multimap<KeyCode, callback_data> callbacks_;
+
+private:
+  callback_handle_t get_new_handle();
+  callback_handle_t last_handle_ = 0;
 };
 
 enum class KeyboardHandlerBase::KeyCode: uint32_t

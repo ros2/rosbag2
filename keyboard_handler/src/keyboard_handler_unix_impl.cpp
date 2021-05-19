@@ -133,7 +133,7 @@ KeyboardHandlerUnixImpl::KeyboardHandlerUnixImpl(
 
             auto range = callbacks_.equal_range(pressed_key_code);
             for (auto it = range.first; it != range.second; ++it) {
-              it->second(it->first);
+              it->second.callback(it->first);
             }
           }
         } while (!exit_.load());

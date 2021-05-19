@@ -16,15 +16,18 @@
 #include "keyboard_handler/keyboard_handler_base.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
-bool KeyboardHandlerBase::add_key_press_callback(
+constexpr KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::invalid_handle;
+
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callback(
   const callback_t & callback, KeyboardHandlerBase::KeyCode key_code)
 {
   if (callback == nullptr || !is_init_succeed_) {
-    return false;
+    return invalid_handle;
   }
   std::lock_guard<std::mutex> lk(callbacks_mutex_);
-  callbacks_.emplace(key_code, callback);
-  return true;
+  callbacks_.emplace(key_code, callback_data{get_new_handle(), callback});
+  return last_handle_;
 }
 
 KEYBOARD_HANDLER_PUBLIC
@@ -36,4 +39,20 @@ std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
     }
   }
   return std::string();
+}
+
+KEYBOARD_HANDLER_PUBLIC
+void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & handle)
+{
+  for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+    if (it->second.handle == handle) {
+      callbacks_.erase(it);
+      return;
+    }
+  }
+}
+
+KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::get_new_handle()
+{
+  return ++last_handle_;
 }

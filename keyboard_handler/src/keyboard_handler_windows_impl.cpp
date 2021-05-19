@@ -103,7 +103,7 @@ KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl(
             std::lock_guard<std::mutex> lk(callbacks_mutex_);
             auto range = callbacks_.equal_range(pressed_key_code);
             for (auto it = range.first; it != range.second; ++it) {
-              it->second(it->first);
+              it->second.callback(it->first);
             }
             // Wait for 0.1 sec to yield processor resources for another threads
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
