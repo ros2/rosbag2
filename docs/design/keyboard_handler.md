@@ -60,7 +60,8 @@ not better than C or C++ for this case. And here is the rational for that:
    enough and have low quality.
 2. Most of the ROS2 code written in C++ and it will be much easy to support and use solution
    written on the same language.
-3. Some of the POSIX compatible OSes doesn't have Python interpreter. For instance [QNX for safety](https://blackberry.qnx.com/en/software-solutions/embedded-software/qnx-os-for-safety) 
+3. Some of the POSIX compatible OSes doesn't have Python interpreter. For instance 
+   [QNX for safety](https://blackberry.qnx.com/en/software-solutions/embedded-software/qnx-os-for-safety) 
 
 ## Specific of handling input from keyboard on different platforms
 Processing of the keyboard handling is differ for different operating systems.
@@ -68,7 +69,7 @@ There are two major different approaches:
 1. Unix/MacOS aka POSIX "compatible" OSes
 2. Windows family OSes
 
-Posix compatible OSes approach based on readout from standard input linked to the terminal.
+POSIX compatible OSes approach based on readout from standard input linked to the terminal.
 Pressed key combination represented as sequence of 8 bit values. Number of the 8 bit values in sequence
 could vary from pressed key combination and usually in range of 1-8 chars. Note: There are no
 '\0' value representing null terminator in providing sequence of bytes. i.e. those byte
@@ -82,6 +83,27 @@ integer values. Simple alphanumerical keys represented as single integer. Contro
 function keys represented as two integer values. Note: for some key combinations first integer 
 value could contain '\0' value representing null terminator in regular strings. 
 i.e it is not possible to treat such sequence of bytes as regular strings.
+
+###Specific of handling input from keyboard on POSIX compatible platforms
+POSIX systems support two basic modes of input: canonical and noncanonical. In canonical input 
+processing mode, terminal input is processed in lines terminated by newline '\n', EOF, or 
+EOL characters. No input can be read until an entire line has been typed by the user. Most 
+programs use canonical input mode, because this gives the user a way to edit input line by line 
+and this is what many of users accustom to see when typing commands in terminal window. \
+However to be able to handle single key press, terminal input need to be switched to the 
+noncanonical mode. By design keyboard handler will switch current terminal session to the 
+noncanonical mode during construction and return it to the canonical mode in destructor.
+
+##Handling abnormal program termination via Ctrl+C
+By design keyboard handler not providing ability to transfer `Ctrl+C` key press event to its 
+clients via callbacks. It could be considered as current design limitation.  
+On POSIX compatible platforms when user pressing `Ctrl+C` OS generates specific `SIGINT` signal 
+and if this signal became unhandled current process will be terminated. \
+On POSIX compatible platforms keyboard handler will register it's own signal handler for the 
+`SIGINT` to be able to return terminal input in canonical mode after abnormal program termination 
+via pressing `Ctrl+C`. This signal handling could overlap with registered specific `SIGINT` 
+handler on upper level or inside keyboard handler's clients. It could cause side effects and 
+considering as current design and implementation limitations. 
 
 ## Handling cases when client's code subscribed to the key press event got destructed before keyboard handler.
 There are two options to properly handle this case:
@@ -132,6 +154,7 @@ There are two options to properly handle this case:
         void callback_func(KeyboardHandler::KeyCode key_code);
       }
       ```
+      
    2. Using [`shared_from_this()`](https://en.cppreference.com/w/cpp/memory/enable_shared_from_this/enable_shared_from_this). 
       Note in this case client class should be inherited from 
       [`std::enable_shared_from_this`](https://en.cppreference.com/w/cpp/memory/enable_shared_from_this/enable_shared_from_this) 
@@ -155,10 +178,10 @@ There are two options to properly handle this case:
           keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP);
         }
       ```
+      
       `Player` class could be instantiated as 
       `std::shared_ptr<Player> player_shared_ptr(new Player());`
-   
-   
+      
 ## Handling cases when standard input from terminal or console redirected to the file or stream.
 By design keyboard handler rely on the assumption that it will poll on keypress event and then 
 readout pressed keys from standard input. When standard input redirected to be read from the 
@@ -186,6 +209,7 @@ skipped during unit test. For instance:
     // Handle exceptions
   }
 ```
+
 As you can see it will be impossible to separate exception handling for the case if keyboard 
 handler will throw exception when it's running under the `gtest`.
 
