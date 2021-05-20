@@ -159,3 +159,41 @@ There are two options to properly handle this case:
       `std::shared_ptr<Player> player_shared_ptr(new Player());`
    
    
+## Handling cases when standard input from terminal or console redirected to the file or stream.
+By design keyboard handler rely on the assumption that it will poll on keypress event and then 
+readout pressed keys from standard input. When standard input redirected to be read from the 
+file or stream, keypress even will not happened and logic inside keyboard handler will be 
+ill-formed and could lead to the deadlock. To avoid this scenario keyboard handler perform check 
+in constructor if current terminal or console input bind to the real HW and was not redirected to 
+be read from file or stream.
+
+Note. Code executing under the `gtest` framework using redirection of the standard input.
+
+From first glance it would be obvious if keyboard handler would throw exception if detected 
+that standard input doesn't bind to the real HW. However it will require special handling inside 
+client code which will use it. Especially when it will be running under the gtest. It would be 
+ok if keyboard handler creating after it's clients. But in cases if for some reason keyboard 
+handler should be created before it's clients, whole code which is depend on it is going to be 
+skipped during unit test. For instance:
+```cpp
+  try {
+    KeyboardHandler keyboard_handler;
+    // .. Some other complicated logic maybe instantiating client in a separate thread 
+    std::shared_ptr<Client> client = Client::create();
+    client->register_callbacks(keyboard_handler);
+    // Use client to test it's internal functionality
+  catch (...) {
+    // Handle exceptions
+  }
+```
+As you can see it will be impossible to separate exception handling for the case if keyboard 
+handler will throw exception when it's running under the `gtest`.
+
+To be able smoothly use keyboard handler and it's dependent clients code under the `gtest` it 
+was chosen design approach when keyboard handler not throwing exception on construction if 
+standard input doesn't bind to the real HW. Instead of throwing exception keyboard handler will 
+go in to the special safe state where he will aware about this situation and keyboard handling 
+will be disabled.
+
+Note: By design `KeyboardHandler::add_key_press_callback(..)` API call will return `false` in 
+this case to indicate that handling keypress is not possible in this case.   
