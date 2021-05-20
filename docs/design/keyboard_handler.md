@@ -83,5 +83,79 @@ function keys represented as two integer values. Note: for some key combinations
 value could contain '\0' value representing null terminator in regular strings. 
 i.e it is not possible to treat such sequence of bytes as regular strings.
 
-## Considerations of how to handle cases when client code subscribed to the key press event got destructed before keyboard handler.
-TBD.
+## Handling cases when client's code subscribed to the key press event got destructed before keyboard handler.
+There are two options to properly handle this case:
+1. Keep callback handle returning from `KeyboardHandler::add_key_press_callback(..)` and use it 
+   in client destructor to delete callback via explicit call to the 
+   `KeyboardHandler::delete_key_press_callback(const callback_handle_t & handle)`
+2. Use lambda with `weak_ptr` to the client instance as callback. This approach have assumption 
+   that client will be instantiated as shared pointer and this shared pointer will be available 
+   during callback registration. \
+   Here are two different approaches for this option:
+   1. Using factory design pattern to create instance of client:
+      ```cpp
+      KeyboardHandler keyboard_handler;
+      std::shared_ptr<Recorder> recorder = Recorder::create();
+      recorder->register_callbacks(keyboard_handler);
+      ``` 
+      where `Recorder` class could be defined as:
+      ```cpp
+      class Recorder
+      {
+      public:
+        const Recorder & operator=(const Recorder &) = delete;
+        Recorder(const Recorder &) = delete;
+      
+        static std::shared_ptr<Recorder> create()
+        {
+          auto recorder_shared_ptr = std::shared_ptr<Recorder>(new Recorder);
+          recorder_shared_ptr->weak_self_ = recorder_shared_ptr;
+          return recorder_shared_ptr;
+        }
+      
+        void register_callbacks(KeyboardHandler & keyboard_handler)
+        {
+          auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code) {
+            auto recorder_shared_ptr = recorder_weak_ptr.lock();
+            if (recorder_shared_ptr) {
+              recorder_shared_ptr->callback_func(key_code);
+            } else {
+              std::cout << "Object for assigned callback was deleted" << std::endl;
+            }
+          };
+          keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP);
+        }
+      
+      private:
+        std::weak_ptr<Recorder> weak_self_;
+        Recorder();
+        void callback_func(KeyboardHandler::KeyCode key_code);
+      }
+      ```
+   2. Using [`shared_from_this()`](https://en.cppreference.com/w/cpp/memory/enable_shared_from_this/enable_shared_from_this). 
+      Note in this case client class should be inherited from 
+      [`std::enable_shared_from_this`](https://en.cppreference.com/w/cpp/memory/enable_shared_from_this/enable_shared_from_this) 
+      e.g.
+      ```cpp
+      class Player : public std::enable_shared_from_this<Player>
+      {
+      public:
+        Player();
+        void register_callbacks(KeyboardHandler & keyboard_handler)
+        {
+          std::weak_ptr<Player> player_weak_ptr(shared_from_this());
+          auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code) {
+            auto player_shared_ptr = player_weak_ptr.lock();
+            if (player_shared_ptr) {
+              player_shared_ptr->callback_func(key_code);
+            } else {
+              std::cout << "Object for assigned callback was deleted" << std::endl;
+            }
+          };
+          keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP);
+        }
+      ```
+      `Player` class could be instantiated as 
+      `std::shared_ptr<Player> player_shared_ptr(new Player());`
+   
+   
