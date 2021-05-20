@@ -4,12 +4,12 @@ Package providing ability to handle keyboard input via simple interface with cal
 ## Goal
 We need to be able to handle keyboard input in unified way with cross-platform implementation.
 
-## Design Proposal
-It would be great to have some simple interface to be able to subscribe to the specific key 
-press event using callbacks. Also it would useful to have ability to handle events for 
-combination of keys pressed in one callback as well as have possibility to subscribe to the 
-same event from multiple clients.
+##Design requirements:
+* Subscribe to keyboard events via callbacks
+* Subscriptions work with key modifiers (e.g. Shift+F1)
+* Multiple clients can subscribe to the same event
 
+## Design Proposal
 The following pseudocode suggests the high level API for aforementioned design proposal.
 ```cpp
     ClientClass1 client1;
