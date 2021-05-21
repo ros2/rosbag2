@@ -67,7 +67,7 @@ private:
 
 enum class KeyboardHandlerBase::KeyCode: uint32_t
 {
-  UNKNOWN,
+  UNKNOWN = 0,
   NUMBER_1,
   NUMBER_2,
   NUMBER_3,
@@ -170,7 +170,12 @@ enum class KeyboardHandlerBase::KeyCode: uint32_t
   SHIFT_F10,
   SHIFT_F11,
   SHIFT_F12,
+  END_OF_KEY_CODE_ENUM
 };
+
+/// \brief Prefix increment operator for KeyCode enum values
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyCode & operator++(KeyboardHandlerBase::KeyCode & key_code);
 
 /// \brief Data type for mapping KeyCode enum value to it's string representation.
 struct KeyCodeToStrMap

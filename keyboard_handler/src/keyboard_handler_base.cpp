@@ -31,6 +31,16 @@ KeyboardHandlerBase::callback_handle_t KeyboardHandlerBase::add_key_press_callba
 }
 
 KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyCode & operator++(KeyboardHandlerBase::KeyCode & key_code)
+{
+  using KeyCode = KeyboardHandlerBase::KeyCode;
+/* *INDENT-OFF* */
+  key_code = static_cast<KeyCode>(static_cast<std::underlying_type_t<KeyCode>>(key_code) + 1);
+/* *INDENT-ON* */
+  return key_code;
+}
+
+KEYBOARD_HANDLER_PUBLIC
 std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
 {
   for (auto & it : ENUM_KEY_TO_STR_MAP) {

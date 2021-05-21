@@ -163,6 +163,17 @@ TEST_F(KeyboardHandlerUnixTest, nullptr_as_callback) {
   EXPECT_EQ(keyboard_handler.get_number_of_registered_callbacks(), 0U);
 }
 
+TEST_F(KeyboardHandlerUnixTest, enum_key_code_to_str) {
+  using KeyCode = KeyboardHandler::KeyCode;
+  for (auto key_code = KeyCode::UNKNOWN; key_code != KeyCode::END_OF_KEY_CODE_ENUM; ++key_code) {
+    /* *INDENT-OFF* */
+    EXPECT_FALSE(enum_key_code_to_str(key_code).empty()) <<
+      "No string representation for KeyCode enum value = " <<
+       static_cast<std::underlying_type_t<KeyCode>>(key_code);
+    /* *INDENT-ON* */
+  }
+}
+
 TEST_F(KeyboardHandlerUnixTest, unregister_callback) {
   MockKeyboardHandler keyboard_handler(read_fn_);
   const std::string terminal_seq =
