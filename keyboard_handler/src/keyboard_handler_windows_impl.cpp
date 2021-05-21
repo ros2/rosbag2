@@ -21,29 +21,6 @@
 #include "keyboard_handler/keyboard_handler_windows_impl.hpp"
 
 KEYBOARD_HANDLER_PUBLIC
-KeyboardHandlerBase::KeyCode
-KeyboardHandlerWindowsImpl::win_key_code_to_enum(const WinKeyCode & win_key_code) const
-{
-  auto key_map_it = key_codes_map_.find(win_key_code);
-  if (key_map_it != key_codes_map_.end()) {
-    return key_map_it->second;
-  }
-  return KeyboardHandlerBase::KeyCode::UNKNOWN;
-}
-
-KEYBOARD_HANDLER_PUBLIC
-KeyboardHandlerWindowsImpl::WinKeyCode
-KeyboardHandlerWindowsImpl::enum_key_code_to_win_code(KeyboardHandlerBase::KeyCode key_code) const
-{
-  for (const auto & it : key_codes_map_) {
-    if (it.second == key_code) {
-      return it.first;
-    }
-  }
-  return {WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
-}
-
-KEYBOARD_HANDLER_PUBLIC
 KeyboardHandlerWindowsImpl::KeyboardHandlerWindowsImpl()
 : KeyboardHandlerWindowsImpl(_isatty, _kbhit, _getch)
 {
@@ -132,4 +109,28 @@ KeyboardHandlerWindowsImpl::~KeyboardHandlerWindowsImpl()
     std::cerr << "Caught unknown exception" << std::endl;
   }
 }
+
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerBase::KeyCode
+KeyboardHandlerWindowsImpl::win_key_code_to_enum(const WinKeyCode & win_key_code) const
+{
+  auto key_map_it = key_codes_map_.find(win_key_code);
+  if (key_map_it != key_codes_map_.end()) {
+    return key_map_it->second;
+  }
+  return KeyboardHandlerBase::KeyCode::UNKNOWN;
+}
+
+KEYBOARD_HANDLER_PUBLIC
+KeyboardHandlerWindowsImpl::WinKeyCode
+KeyboardHandlerWindowsImpl::enum_key_code_to_win_code(KeyboardHandlerBase::KeyCode key_code) const
+{
+  for (const auto & it : key_codes_map_) {
+    if (it.second == key_code) {
+      return it.first;
+    }
+  }
+  return {WinKeyCode::NOT_A_KEY, WinKeyCode::NOT_A_KEY};
+}
+
 #endif  // #ifdef _WIN32

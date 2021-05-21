@@ -52,7 +52,7 @@ std::string enum_key_code_to_str(KeyboardHandlerBase::KeyCode key_code)
 }
 
 KEYBOARD_HANDLER_PUBLIC
-void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & handle)
+void KeyboardHandlerBase::delete_key_press_callback(const callback_handle_t & handle) noexcept
 {
   for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
     if (it->second.handle == handle) {

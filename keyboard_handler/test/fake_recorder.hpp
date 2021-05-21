@@ -15,7 +15,6 @@
 #ifndef FAKE_RECORDER_HPP_
 #define FAKE_RECORDER_HPP_
 
-
 #include <iostream>
 #include <memory>
 #include <string>
@@ -25,13 +24,8 @@ class FakeRecorder
 {
 public:
   const FakeRecorder & operator=(const FakeRecorder &) = delete;
-
   FakeRecorder(const FakeRecorder &) = delete;
-
-  virtual ~FakeRecorder()
-  {
-//    std::cout << "FakeRecorder() dtor" << std::endl;
-  }
+  virtual ~FakeRecorder() = default;
 
   static std::shared_ptr<FakeRecorder> create()
   {
@@ -43,9 +37,9 @@ public:
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
     auto callback = [recorder_weak_ptr = weak_self_](KeyboardHandler::KeyCode key_code) {
-        auto RecorderSharedPtr = recorder_weak_ptr.lock();
-        if (RecorderSharedPtr) {
-          RecorderSharedPtr->callback_func(key_code);
+        auto recorder_shared_ptr = recorder_weak_ptr.lock();
+        if (recorder_shared_ptr) {
+          recorder_shared_ptr->callback_func(key_code);
         } else {
           std::cout << "Object for assigned callback FakeRecorder() was deleted" << std::endl;
         }
@@ -54,10 +48,7 @@ public:
   }
 
 private:
-  FakeRecorder()
-  {
-//    std::cout << "FakeRecorder() ctor" << std::endl;
-  }
+  FakeRecorder() = default;
 
   virtual void callback_func(KeyboardHandler::KeyCode key_code)
   {

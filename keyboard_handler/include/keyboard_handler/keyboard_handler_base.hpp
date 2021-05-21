@@ -48,7 +48,7 @@ public:
   /// \brief Delete callback from keyboard handler callback's list
   /// \param handle Callback's handle returned from #add_key_press_callback
   KEYBOARD_HANDLER_PUBLIC
-  void delete_key_press_callback(const callback_handle_t & handle);
+  void delete_key_press_callback(const callback_handle_t & handle) noexcept;
 
 protected:
   struct callback_data

@@ -23,14 +23,10 @@
 class FakePlayer : public std::enable_shared_from_this<FakePlayer>
 {
 public:
-  FakePlayer()
-  {
-//    std::cout << "FakePlayer() ctor" << std::endl;
-  }
+  FakePlayer() = default;
 
   void register_callbacks(KeyboardHandler & keyboard_handler)
   {
-//    std::cout << "FakePlayer() register_callbacks" << std::endl;
     std::weak_ptr<FakePlayer> player_weak_ptr(shared_from_this());
     auto callback = [player_weak_ptr](KeyboardHandler::KeyCode key_code) {
         auto player_shared_ptr = player_weak_ptr.lock();
@@ -40,14 +36,10 @@ public:
           std::cout << "Object for assigned callback FakePlayer() was deleted" << std::endl;
         }
       };
-
     keyboard_handler.add_key_press_callback(callback, KeyboardHandler::KeyCode::CURSOR_UP);
   }
 
-  virtual ~FakePlayer()
-  {
-//    std::cout << "FakePlayer() dtor" << std::endl;
-  }
+  virtual ~FakePlayer() = default;
 
 private:
   void callback_func(KeyboardHandler::KeyCode key_code)
@@ -76,6 +68,5 @@ private:
 
   int counter_ = 0;
 };
-
 
 #endif  // FAKE_PLAYER_HPP_

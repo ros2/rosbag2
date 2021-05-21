@@ -22,19 +22,6 @@
 #include <exception>
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
-KEYBOARD_HANDLER_PUBLIC
-std::string
-KeyboardHandlerUnixImpl::get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code)
-{
-  std::string ret_str{};
-  for (const auto & it : key_codes_map_) {
-    if (it.second == key_code) {
-      return it.first;
-    }
-  }
-  return ret_str;
-}
-
 namespace
 {
 struct termios old_term_settings {};
@@ -174,6 +161,19 @@ KeyboardHandlerUnixImpl::~KeyboardHandlerUnixImpl()
   } catch (...) {
     std::cerr << "Caught unknown exception" << std::endl;
   }
+}
+
+KEYBOARD_HANDLER_PUBLIC
+std::string
+KeyboardHandlerUnixImpl::get_terminal_sequence(KeyboardHandlerUnixImpl::KeyCode key_code)
+{
+  std::string ret_str{};
+  for (const auto & it : key_codes_map_) {
+    if (it.second == key_code) {
+      return it.first;
+    }
+  }
+  return ret_str;
 }
 
 #endif  // #ifndef _WIN32
