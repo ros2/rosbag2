@@ -15,7 +15,8 @@
 #include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 /// Note that key code sequences translated by the terminal could be differ for different terminal
-/// emulators. Please refer to the ftp://ftp.x.org/pub/X11R6.8.0/PDF/ctlseqs.pdf. Also according
+/// emulators. Please refer to the
+/// https://ftp.metu.edu.tr/pub/mirrors/ftp.x.org/pub/X11R6.8.0/PDF/ctlseqs.pdf. Also according
 /// to the https://man7.org/linux/man-pages/man5/terminfo.5.html application could reassign some
 /// some key code sequences.
 
@@ -25,7 +26,7 @@ static constexpr char CURSOR_UP[]              = {27, 91, 65, '\0'};
 static constexpr char CURSOR_DOWN[]            = {27, 91, 66, '\0'};
 static constexpr char CURSOR_ONE_STEP_RIGHT[]  = {27, 91, 67, '\0'};
 static constexpr char CURSOR_ONE_STEP_LEFT[]   = {27, 91, 68, '\0'};
-static constexpr char SPACE[]                  = " ";  // {32, '\0'};
+static constexpr char SPACE[]                  = {32, '\0'};
 static constexpr char ESC[]                    = {27, '\0'};
 static constexpr char ENTER[]                  = {10, '\0'};
 static constexpr char BACK_SPACE[]             = {127, '\0'};
@@ -47,11 +48,8 @@ static constexpr char F7[]  = {27, 91, 49, 56, 126, '\0'};
 static constexpr char F8[]  = {27, 91, 49, 57, 126, '\0'};
 static constexpr char F9[]  = {27, 91, 50, 48, 126, '\0'};
 static constexpr char F10[] = {27, 91, 50, 49, 126, '\0'};
-
 static constexpr char F11[] = {27, 91, 50, 51, 126, '\0'};
-// static constexpr char F11[] = {27, 91, 50, 51, 126, 27, '\0'};  // Alternative value
 static constexpr char F12[] = {27, 91, 50, 52, 126, '\0'};
-// static constexpr char F12[] = {27, 91, 50, 52, 126, 8, '\0'};   // Alternative value
 
 static constexpr char SHIFT_F1[]  = {27, 91, 49, 59, 50, 80, '\0'};
 static constexpr char SHIFT_F2[]  = {27, 91, 49, 59, 50, 81, '\0'};
