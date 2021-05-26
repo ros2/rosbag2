@@ -62,15 +62,33 @@ ros2 service call /rosbag2_recorder/snapshot/pause rosbag2_interfaces/srv/Pause 
 ros2 service call /rosbag2_recorder/snapshot/resume rosbag2_interfaces/srv/Resume "{ }"
 ```
 
+## Design
+
+### Main assumptions
+
+* Snapshot functionality makes use of producer-consumer cache patter which must be always turned on.
+* Main idea is to use `split_bag()` functionality in `SequentialWriter` for creating snapshots. In current implementation storage `open()` must be called first before any other function. This design manipulates start_time and duration metadata in `SnapshotWriter::write` just to match the state of buffered mesages.
+* Additionally this design forces that before `Recorder` node shut down, snapshot is getting saved to disk anyway.
+* During arguments parsing it should be checked if snapshot argument is true. If it's true one of arguments must be positive. In case both config artuments are invalid (non positive values) an exception should be thrown. In case config arguments are set but snapshot mode is not triggered, both config arguments should be set to invalid values (non positive) and adequate log should be displayed.
+* This project blocks the possibility to split the bag during runtime because disk save happens once per some amount of time and it is already out of the SequentialWriter scope to interfere.
+* For now implementation assumes that disk save is being done by flush. It may cause that during save some messages from the system can get dropped and ~~it should be fixed.~~ (**Fix proposal in `Flushing fix proposal` section**)
+* It should be considered that when buffer doesn't contain any messages to write, rosbag folder should be **deleted** but for now **it is not designed**.
+
+### Pros
+
+* Reuses vast part of `SequentialWriter` class code
+* Accidental `Recorder` node (in snapshot mode) shutdown creates snapshot
+* Producer-consumer patter reusage grants good performance
+
+
+### Cons
+
+* Prevents bag splitting
+* Problematic configuration, pausing and resuming feature (no direct way to change behavior during runtime)
+* Problematic messages counting and rosbag start timestamping
+* (see `TODO` section)
+
 ## In-depth structure changes
-
-Snapshot functionality makes use of producer-consumer cache patter which must be always turned on. Main idea is to use `split_bag()` functionality in `SequentialWriter` for creating snapshots. In current implementation storage `open()` must be called first before any other function. This design manipulates start_time and duration metadata in `SnapshotWriter::write` just to match the state of buffered mesages. Additionally this design forces that after `Recorder` node shut down, snapshot is getting saved to disk anyway.
-
-This project blocks the possibility to split the bag during runtime because disk save happens once per some amount of time and it is already out of the SequentialWriter scope to interfere.
-
-For now implementation assumes that disk save is being done by flush. It may cause that during save some messages from the system can get dropped and I suppose it should be fixed.
-
-It should be considered that when buffer doesn't contain any messages to write, rosbag folder should be deleted but for the sake of design simplicity it is not taken into account at this time.
 
 ```diff
 
@@ -89,11 +107,16 @@ namespace rosbag2_storage
 struct StorageOptions
 {
 + /// New attributes for snapshot
-+ double max_buffer_duration;
-+ uint64_t max_buffer_memory;
++ double max_snapshot_duration;
++ uint64_t max_snapshot_memory;
 }
 }
 
+
+namespace rosbag2_cpp
+{
+namespace cache
+{
  /// Extract main functionality from MessageCacheBuffer and make it an interface
 + class CacheBufferInterface
 + {
@@ -111,7 +134,6 @@ struct StorageOptions
 +   virtual const std::vector<buffer_element_t> & data() = 0;
 + }
 
-
 + class MessageCacheBuffer : public CacheBufferInterface
 {
   /// Implementation stays as it was, few overrides needs to be added
@@ -121,6 +143,10 @@ struct StorageOptions
 + class MessageSnapshotBuffer : public CacheBufferInterface
 {
 public:
++ explicit MessageSnapshotBuffer(const uint64_t max_cache_size, const double max_duration) :
++ max_bytes_size_(max_cache_size),
++ max_duration_(max_duration) {};
+
   (...)
   /**
   * At first it is checked if last added message fits (now() - max_duration) period of time. If it doesn't it is being removed from buffer.
@@ -138,12 +164,70 @@ private:
 - std::atomic_bool drop_messages_ {false};
   /// Max buffer data size in bytes
   const uint64_t max_bytes_size_;
-
++  /// Max duration in past to accept new message
++  const double max_duration_;
 -   /// This is irrelevant in this implementation.
 - std::atomic_bool drop_messages_ {false};
 }
 }
-}
+
+
+/// Add factory to create CacheBufferInterface derivative type instances
++ class CacheBufferFactoryImpl
++ {
++ public:
++   CacheBufferFactoryImpl() {};
++   virtual ~CacheBufferFactoryImpl() = default;
++
++   std::shared_ptr<cache::CacheBufferInterface>
++   create_cache_buffer(uint64_t max_buffer_size, uint64_t max_snapshot_memory, double max_snapshot_duration)
++   {
++     std::shared_ptr<cache::CacheBufferInterface> instance = nullptr;
++
++     /// Snapshot has priority than normal bag recording
++     if (max_snapshot_duration > 0.0 || max_snapshot_memory > 0u)
++     {
++       instance = std::shared_ptr<cache::MessageSnapshotBuffer>(max_snapshot_memory, max_snapshot_duration);
++     }
++
++     if (max_buffer_size > 0u)
++     {
++       instance = std::shared_ptr<cache::MessageCacheBuffer>(max_buffer_size);
++     }
++
++     if (instance == nullptr)
++     {
++       /// Log/Throw exception, this situation should never happen at this point of program initialization
++     }
++     return instance;
++   }
++
++ }
++
++ class CacheBufferFactoryInterface
++ {
++ public:
++   virtual ~CacheBufferFactory() = default;
++   virtual std::shared_ptr<cache::CacheBufferInterface>
++    create_cache_buffer(uint64_t max_buffer_size, uint64_t max_snapshot_memory, double max_snapshot_duration) = 0;
++ }
++
++ class CacheBufferFactory : CacheBufferFactoryInterface
++ {
++ public:
++   ~CacheBufferFactory() override; /// unique_ptr destruction
++   CacheBufferFactory() : impl_(new CacheBufferFactoryImpl()) {};
++   virtual std::shared_ptr<cache::CacheBufferInterface>
++   create_cache_buffer(uint64_t max_buffer_size, uint64_t max_snapshot_memory, double max_snapshot_duration) override
++   {
++     impl_->create_cache_buffer(uint64_t max_buffer_size, uint64_t max_snapshot_memory, double max_snapshot_duration);
++   }
++
++ private:
++   std::unique_ptr<CacheBufferFactoryImpl> impl_;
++ }
++
++ }
 
 
 namespace rosbag2_cpp
@@ -155,25 +239,22 @@ class MessageCache
 {
 public:
    /// Add parameter deciding which CacheBufferInterface derivative class should be instantiated
-+  explicit MessageCache(uint64_t max_buffer_size, bool is_snapshot)
++  explicit MessageCache
++  (uint64_t max_buffer_size, uint64_t max_snapshot_memory, double max_snapshot_duration,
++   std::unique_ptr<CacheBufferFactoryInterface> message_buffer_factory =
++    std::make_shared<CacheBufferFactory>()):
++    message_buffer_factory_(std::move(message_buffer_factory))
 +  {
-+    snapshot_mode_ = is_snapshot;
-+    if (snapshot_mode_)
-+    {
-+       primary_buffer_ = std::make_shared<MessageSnapshotBuffer>(max_buffer_size);
-+       secondary_buffer_ = std::make_shared<MessageSnapshotBuffer>(max_buffer_size);
-+    }
-+    else
-+    {
-      primary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
-      secondary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
-+    }
++    snapshot_mode_ = (max_snapshot_memory > 0u || max_snapshot_duration > 0.0);
++    primary_buffer_ = message_buffer_factory_->create_cache_buffer(max_buffer_size, max_snapshot_memory, max_snapshot_duration);
++    secondary_buffer_ = message_buffer_factory_->create_cache_buffer(max_buffer_size, max_snapshot_memory, max_snapshot_duration);
 +  }
 
   /// Puts msg into buffer. Doesn't end with notifying cache consumer, since it needs to be triggered with snapshot()
   /// Doesn't need to log dropped messages
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
   {
+    (...)
 +    if (!snapshot_mode_)
 +    {
        notify_buffer_consumer();
@@ -184,6 +265,7 @@ public:
   /// Works for sequential write() function call which is assured by Writer and SequentialWriter classes
 + std::chrono::time_point<std::chrono::high_resolution_clock> get_buffer_start_timestamp()
 + {
++   std::lock_guard<std::mutex> cache_lock(cache_mutex_);
 +   std::vector<buffer_element_t> primary_buffer_data = primary_buffer_->data();
 +   if (primary_buffer_data.size() != 0)
 +   {
@@ -193,8 +275,15 @@ public:
 + }
 
 private:
-+  /// Keep information if node is running in snapshot mode
+  /// Keep information if node is running in snapshot mode
 +  bool snapshot_mode_ {false};
+  /// Add message buffer factory
++  std::unique_ptr<rosbag2_cpp::cache::CacheBufferFactoryInterface> message_buffer_factory_;
+ /// Type change
++ /// Double buffers
++ std::shared_ptr<CacheBufferInterface> primary_buffer_;
++ std::shared_ptr<CacheBufferInterface> secondary_buffer_;
+
 }
 
 
@@ -207,11 +296,6 @@ class BaseWriterInterface
 {
 public:
   (...)
-+ /// Add RecordOptions option to access RecordOptions::snapshot argument
-  virtual void open(
-    const rosbag2_storage::StorageOptions & storage_options,
-+   const rosbag2_transport::RecordOptions & record_options,
-    const ConverterOptions & converter_options) = 0;
 
 +  /// Add non-pure virtual function for snapshot to easily call it from rosbag2_cpp::Writer
 +  virtual snapshot() { };
@@ -227,12 +311,21 @@ public:
   /// Force to use cache in snapshot mode
   void open(
     const rosbag2_storage::StorageOptions & storage_options,
-+   const rosbag2_transport::RecordOptions & record_options,
     const ConverterOptions & converter_options)
   {
-+   record_options_ = record_options;
     (...)
-+    use_cache_ = (storage_options.max_cache_size > 0u || record_options_.snapshot);
++    snapshot_ = (storage_options.max_snapshot_duration > 0.0 || storage_options.max_snapshot_memory > 0u);
++    use_cache_ = (storage_options.max_cache_size > 0u || snapshot_);
+    if (use_cache_) {
+        message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
++          storage_options.max_cache_size, storage_options.max_snapshot_memory, storage_options.max_snapshot_duration);
+        cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
+          message_cache_,
+          make_callback(
+            storage_,
+            topics_names_to_info_,
+            topics_info_mutex_));
+      }
     (...)
   }
 
@@ -240,26 +333,26 @@ public:
   {
     (...)
     /// Prevent splitting bag in snapshot mode
-+   if (!record_options_.snapshot && should_split_bagfile())
++   if (!snapshot_ && should_split_bagfile())
     {
       split_bagfile();
 
       // Update bagfile starting time
       metadata_.starting_time = std::chrono::high_resolution_clock::now();
     }
-+   if (record_options_.snapshot)
++   if (snapshot_)
 +   {
 +     /// Update bagfile starting time (first received message from message_cache) - something like
 +     auto buffer_start_timestamp = message_cache_->get_buffer_start_timestamp();
 +     if (buffer_start_timestamp != std::chrono::time_point<std::chrono::high_resolution_clock>::min())
 +     {
 +       metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-+         std::chrono::nanoseconds(message_cache_->get_buffer_start_timestamp()));
++         std::chrono::nanoseconds(buffer_start_timestamp));
 +     }
 +   }
     (...)
     /// Force using message cache in snapshot mode
-+   if (storage_options_.max_cache_size == 0u && !record_options_.snapshot) {
++   if (storage_options_.max_cache_size == 0u && !snapshot_) {
       // If cache size is set to zero, we write to storage directly
       storage_->write(converted_msg);
       ++topic_information->message_count;
@@ -278,8 +371,8 @@ public:
 + }
 
 private:
-+ /// Add rosbag2_transport::RecordOptions field
-+ rosbag2_transport::RecordOptions record_options_;
++ /// Add snapshot_ field
++ bool snapshot_;
 }
 }
 }
@@ -290,14 +383,6 @@ namespace rosbag2_cpp
 class Writer
 {
 public:
-+ /// Implement RecordOptions argument
-  virtual void open(
-    const rosbag2_storage::StorageOptions & storage_options,
-+   const rosbag2_transport::RecordOptions & record_options,
-    const ConverterOptions & converter_options)
-  {
-+   writer_impl_->open(storage_options, record_options, converter_options);
-  }
 +  /// Add function to create snapshot instantly. It should take care of saving messages to disk, closing bagfile and opening new one
 +  void snapshot()
 +  {
@@ -315,17 +400,6 @@ namespace impl
 class Recorder : public rclcpp::Node
 {
 public:
-+  /// Add record_options_ argument in calling writer->open
-   void record()
-   {
-     (...)
-       writer_->open(
-        storage_options_,
-+       record_options_,
-        {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
-     (...)
-   }
-
 +  /// Add callback to handle snapshot functionality
 +  snapshot(const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Request> request,
 +          std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Response> response)
@@ -347,6 +421,43 @@ private:
 
 
 ```
+
+### Flushing fix proposal
+
+New idea to improve snapshotting is to create separate `CacheConsumer` and `MessageCache` classes (with different names but sharing same interfaces/deriving most functionality). It all comes to the fact that flushing prevents `MessageCache` from pushing messages to `MessageCacheBuffer` while bag splitting. Moreover every push ends with `notify_buffer_consumer()` which triggers buffer swap, but when snapshotting we want to switch buffers only when saving bagfile to disk. That is why I would opt for changing `CacheConsumer::close()` and `CacheConsumer::~CacheConsumer` action to more suitable for snapshotting.
+
+```diff
+CacheConsumer::~CacheConsumer()
+{
++ message_cache_->finalize();
+  close();
++ message_cache_->notify_flushing_done();
+}
+
+void CacheConsumer::close()
+{
+- message_cache_->finalize();
+  is_stop_issued_ = true;
+
+  ROSBAG2_CPP_LOG_INFO_STREAM(
+    "Writing remaining messages from cache to the bag. It may take a while");
+
+  if (consumer_thread_.joinable()) {
+    consumer_thread_.join();
+  }
+- message_cache_->notify_flushing_done();
+}
+
+void MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+{
+  (...)
+-  notify_buffer_consumer();
+}
+```
+
+This change would distinguish calling `SequentialWriter::switch_to_next_storage()` (as snapshot) and `SequentialWriter::reset()` (which is called only in destructor).Additionally we would acquire data the whole time during closing one and opening another storage. It would require some more work to apply classes deriviation, unify interfaces and develop mechanism for objects creation.
+
+Presented idea won't work in normal bag recording (and snapshotting) due to writing closed storage object inside consumer thread during bag split. In snapshot mode even program close (Ctrl-C) won't break the program behavior due to `MessageCache::flushing_` flag set when closing program and proper mutex locking during pushing and waiting for buffer swap.
 
 ### New Services
 
@@ -380,20 +491,16 @@ rosbag2_interfaces/srv/ClearBuffer
 
 rosbag2_interfaces/srv/Pause and rosbag2_interfaces/srv/Resume are shared with `Player` node.
 
-## Implementation Staging
+### Feature implementation tests
 
-* Add new attributes to `RecordOptions` and `StorageOptions` structs
-* Add `--snapshot`, `--max-buffer-size` and `--max-buffer-duration` arguments in `ros2bag/ros2bag/verb/record.py` file.
-* Implement `Snapshot` service msg in `rosbag2_interfaces`
-* Implement dummy service in `Recorder` node
-* Add `snapshot()` function to `BaseWriterInterface`
-* Implement changes in `rosbag2_cpp::Writer` class. Fill service body in `Recorder` node.
-* Extract `CacheBufferInterface` from `MessageCacheBuffer` class. Implement `MessageCacheBuffer` and `MessageSnapshotBuffer`.
-* Implement changes to `MessageCache` and apply changes to `SequentialWriter` class. (SequentialCompressionWriter needs to be done too)
+* `CacheBufferFactory` check if returns good `CacheBufferInterface` type instances, dependent on passed arguments
+* `MessageSnapshotBuffer` check pushing behavior
+* `MessageCache` check synchronization and start timestamp calculation
+* `SequentialWriter` test if snapshot forces using cache, starting timestamp change in snapshot mode and bag split when calling snapshot
+* `Recorder` service call check
 
 #### TODO
 
-* Redesign flushing
 * Deleting empty rosbag after node closure
 * Resolve how to implement pause/resume functionality
 * Think about configuration change during runtime
@@ -464,7 +571,7 @@ class SequentialWriter
 }
 ######################################################################################################################
 rosbag2_transport::RecordOptions new values: bool snapshot;
-rosbag2_storage::StorageOptions new values: double max_buffer_duration, uint64_t max_buffer_memory;
+rosbag2_storage::StorageOptions new values: double max_snapshot_duration, uint64_t max_snapshot_memory;
 
 rosbag2_transport::Recorder new values:
 # +  set_snapshot_duration(const std::shared_ptr<rosbag2_interfaces::srv::SetDuration::Request> request,
