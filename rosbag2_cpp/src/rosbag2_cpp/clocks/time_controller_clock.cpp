@@ -125,7 +125,6 @@ public:
     rcl_duration_t time_jump_delta;
     {
       std::lock_guard<std::mutex> lock(state_mutex);
-
       time_jump_delta.nanoseconds = ros_time - steady_to_ros(now_fn());
     }
 
@@ -134,7 +133,6 @@ public:
     time_jump.delta = time_jump_delta;
 
     process_callbacks_before_jump(time_jump);
-
     {
       std::lock_guard<std::mutex> lock(state_mutex);
       snapshot(ros_time);

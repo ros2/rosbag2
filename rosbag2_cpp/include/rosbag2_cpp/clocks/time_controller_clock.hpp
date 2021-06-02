@@ -132,7 +132,6 @@ public:
   /// farther than the threshold.
   /// \param handler Shared pointer to the JumpHandler object returned from create_jump_handler()
   /// \throws std::invalid argument if jump threshold has invalid value.
-  /// \note Pair of pre_callback and post_callback shall be unique for each JumpHandler object.
   ROSBAG2_CPP_PUBLIC
   void add_jump_calbacks(PlayerClock::JumpHandler::SharedPtr handler) override;
 
