@@ -30,7 +30,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  find_package(rmw_fastrtps_cpp QUIET)
   find_package(rclcpp REQUIRED)
   find_package(rcpputils REQUIRED)
   find_package(rosbag2_compression REQUIRED)
