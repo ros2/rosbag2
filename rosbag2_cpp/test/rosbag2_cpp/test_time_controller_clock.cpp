@@ -316,11 +316,12 @@ TEST_F(TimeControllerClockTest, jump_handler_basic)
   auto post_callback = [&](const rcl_time_jump_t &) {};
   rcl_jump_threshold_t threshold{};
   EXPECT_THROW(
-    rosbag2_cpp::TimeControllerClock::JumpHandler::create(nullptr, post_callback, threshold),
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(nullptr, nullptr, threshold),
     std::invalid_argument);
-  EXPECT_THROW(
-    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, nullptr, threshold),
-    std::invalid_argument);
+  EXPECT_NO_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(nullptr, post_callback, threshold));
+  EXPECT_NO_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, nullptr, threshold));
   EXPECT_NO_THROW(
     rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold));
 }

@@ -93,8 +93,8 @@ private:
       const rcl_jump_threshold_t & threshold)
     : pre_callback(pre_callback), post_callback(post_callback), notice_threshold(threshold)
     {
-      if (pre_callback == nullptr || post_callback == nullptr) {
-        throw std::invalid_argument("Callbacks for JumpHandler shouldn't be nullptr");
+      if (pre_callback == nullptr && post_callback == nullptr) {
+        throw std::invalid_argument("At least one callback for JumpHandler should be not nullptr");
       }
       id = create_id();
     }
