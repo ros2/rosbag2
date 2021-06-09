@@ -115,11 +115,13 @@ public:
     snapshot(ros_now());
   }
 
-  /// \brief Adjust internal clock to the specified timestamp
-  /// \details It will change the current internally maintained offset so that next published time
-  /// is different.
-  /// \note Will trigger any registered JumpHandler callbacks.
-  /// \param time_point Time point in ROS playback timeline.
+  /**
+   * \brief Adjust internal clock to the specified timestamp.
+   * \details It will change the current internally maintained offset so that next published time
+   * is different.
+   * \note Will trigger any registered JumpHandler callbacks.
+   * \param ros_time Time point in ROS playback timeline.
+   */
   void jump(rcutils_time_point_value_t ros_time)
   {
     rcl_duration_t time_jump_delta;
@@ -141,9 +143,11 @@ public:
     cv.notify_all();
   }
 
-  /// \brief Add callbacks to be called when a time jump exceeds a threshold.
-  /// \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
-  /// \throws std::invalid argument if jump threshold has invalid value.
+  /**
+   * \brief Add callbacks to be called when a time jump exceeds a threshold.
+   * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
+   * \throws std::invalid argument if jump threshold has invalid value.
+   */
   void add_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler)
   {
     if (handler->notice_threshold.min_forward.nanoseconds < 0) {
@@ -162,8 +166,10 @@ public:
     callback_list_.push_back(handler);
   }
 
-  /// \brief remove jump callbacks from processing list.
-  /// \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
+  /**
+   * \brief remove jump callbacks from processing list.
+   * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
+   */
   void remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler)
   {
     std::lock_guard<std::mutex> lock(callback_list_mutex_);
