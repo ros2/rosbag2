@@ -31,7 +31,18 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
+    // Foxy compatibility. Adapt for lack of https://github.com/ros2/rcpputils/pull/126
+    char template_char[] = "tmp_test_dir.XXXXXX";
+    #ifdef _WIN32
+    char temp_path[255];
+    GetTempPathA(255, temp_path);
+    _mktemp_s(template_char, strnlen(template_char, 20) + 1);
+    temporary_dir_path_ = std::string(temp_path) + std::string(template_char);
+    _mkdir(temporary_dir_path_.c_str());
+    #else
+    char * dir_name = mkdtemp(template_char);
+    temporary_dir_path_ = dir_name;
+    #endif
   }
 
   ~TemporaryDirectoryFixture() override

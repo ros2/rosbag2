@@ -67,7 +67,8 @@ void SequentialCompressionReader::preprocess_current_file()
      * Because we have no way to check whether the bag was written correctly,
      * check for the existence of the prefixed file as a fallback.
      */
-    const rcpputils::fs::path base{base_folder_};
+    // Foxy compatibility. Adapts for https://github.com/ros2/rcpputils/pull/119
+    rcpputils::fs::path base{base_folder_};
     const rcpputils::fs::path relative{get_current_file()};
     const auto resolved = base / relative;
     if (!resolved.exists()) {
