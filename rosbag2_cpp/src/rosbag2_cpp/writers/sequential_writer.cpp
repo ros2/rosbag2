@@ -110,6 +110,8 @@ void SequentialWriter::open(
   }
 
   bool dir_created = rcpputils::fs::create_directories(db_path);
+  // Foxy compatibility. Adapts for https://github.com/ros2/rcpputils/pull/98
+  dir_created &= db_path.is_directory();
   if (!dir_created) {
     std::stringstream error;
     error << "Failed to create database directory (" << db_path.string() << ").";
