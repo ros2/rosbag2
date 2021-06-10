@@ -25,6 +25,7 @@
 namespace
 {
 // Foxy compatibility - copied from Galactic version of rmw/time.c
+// Introuced in https://github.com/ros2/rmw/pull/301
 typedef rcutils_duration_value_t rmw_duration_t;
 // we can't use the Galactic version of this constant because Foxy RMWs won't understand it
 static const rmw_time_t RMW_DURATION_INFINITE {0LL, 0LL};
