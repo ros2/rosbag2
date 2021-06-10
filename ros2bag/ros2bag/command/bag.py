@@ -19,7 +19,7 @@ from ros2cli.command import CommandExtension
 class BagCommand(CommandExtension):
     """Various rosbag related sub-commands."""
 
-    FUTURE_NOTICE = 'NOTE: Running rosbag2 "futurized" source release, not the official Foxy binary version.'  # NOQA
+    FUTURE_NOTICE = 'Running rosbag2 "futurized" source release, not the official Foxy binary version.'  # NOQA
 
     def add_arguments(self, parser, cli_name):
         self._subparser = parser

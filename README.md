@@ -6,7 +6,7 @@ It contains performance improvements and new features from Galactic development 
 
 The popularly-requested improvements in this branch were not possible to backport to Foxy in an API/ABI-maintaining way. Instead, this "Foxy Future" branch is provided for users to build from source and get the performance benefits from nearly a year of development after Foxy.
 
-For more context on this conversation, see https://discourse.ros.org/t/fast-forward-merging-rosbag2-master-api-to-foxy/18927
+For more context on this conversation, see https://discourse.ros.org/t/fast-forward-merging-rosbag2-master-api-to-foxy/18927 or reach out to the ros-tooling Working Group.
 
 ## Usage instructions
 
