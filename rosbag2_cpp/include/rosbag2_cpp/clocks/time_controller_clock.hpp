@@ -109,9 +109,9 @@ public:
 
   /**
    * Change the current ROS time to an arbitrary time.
-   * \note This will wake any waiting `sleep_until` and trigger any registered JumpHandler
-   * callbacks.
-   * \note The Player should not use this method while its queues are active ("during playback")
+   * This will wake any waiting `sleep_until`.
+   * Note: this initial implementation does not have any jump-callback handling.
+   * The Player should not use this method while its queues are active ("during playback")
    * as an arbitrary time jump can make those queues, and the state of the Reader/Storage, invalid
    * The current Player implementation should only use this method in between calls to `play`,
    * to reset the initial time of the clock.
@@ -123,26 +123,6 @@ public:
 
   ROSBAG2_CPP_PUBLIC
   void jump(rclcpp::Time ros_time) override;
-
-  /**
-  * \brief Add callbacks to be called when a time jump exceeds a threshold.
-  * \details Callbacks specified in JumpHandler object will be called in two cases:
-  *   1. use_sim_time is true: if the external time source jumps back in time, or forward
-  * farther than the threshold.
-  *   2. use_sim_time is false: if jump(time_point) is called and time jumps back or forward
-  * farther than the threshold.
-  * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
-  * \throws std::invalid argument if jump threshold has invalid value.
-  */
-  ROSBAG2_CPP_PUBLIC
-  void add_jump_calbacks(PlayerClock::JumpHandler::SharedPtr handler) override;
-
-  /**
-   * \brief remove jump callbacks from processing list.
-   * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
-   */
-  ROSBAG2_CPP_PUBLIC
-  void remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler) override;
 
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;
