@@ -38,7 +38,10 @@ target_include_directories(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
   rcpputils
   rosbag2_compression
-  zstd)
+  zstd
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+  rosbag2_cpp
+  rosbag2_storage)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_ZSTD_BUILDING_DLL)
 pluginlib_export_plugin_description_file(rosbag2_compression plugin_description.xml)
 
@@ -69,9 +72,11 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_zstd_compressor
     test/rosbag2_compression_zstd/test_zstd_compressor.cpp)
-  target_include_directories(test_zstd_compressor PUBLIC include)
   target_link_libraries(test_zstd_compressor ${PROJECT_NAME})
-  ament_target_dependencies(test_zstd_compressor rclcpp rosbag2_test_common)
+
+  ament_target_dependencies(test_zstd_compressor rclcpp rosbag2_test_common
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    rosbag2_cpp rosbag2_storage zstd rosbag2_compression)
 endif()
 
 ament_package()
