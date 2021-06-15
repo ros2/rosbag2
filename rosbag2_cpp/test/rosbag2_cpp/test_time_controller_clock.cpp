@@ -16,17 +16,18 @@
 
 #include <atomic>
 #include <thread>
-
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
 using SteadyTimePoint = std::chrono::steady_clock::time_point;
+using SteadyTimeDurationSecT = std::chrono::duration<int>;
 using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
 class TimeControllerClockTest : public Test
 {
 public:
   TimeControllerClockTest()
+  : return_time(std::chrono::nanoseconds(0))
   {
     now_fn = [this]() {
         return return_time;
@@ -257,4 +258,264 @@ TEST_F(TimeControllerClockTest, jump)
   clock.jump(rclcpp::Time(50, 0));
   return_time += std::chrono::seconds(2);
   EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(52));
+}
+
+TEST_F(TimeControllerClockTest, jump_forward_with_playback_rate)
+{
+  // Use non zero start time along side with payback rate differ than 1.0
+  ros_start_time = RCUTILS_S_TO_NS(1);
+  const SteadyTimePoint wall_time_begin(std::chrono::seconds(2));
+  return_time = wall_time_begin;  // Init now_fn() to some non zero wall_time_begin
+  const double playback_rate = 1.5;
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+  testing_clock.set_rate(playback_rate);
+
+  const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time + RCUTILS_S_TO_NS(3);
+  testing_clock.jump(ros_time_point_for_jump);
+
+  // Emulate wall clock ticks
+  const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
+  return_time = current_wall_time;  // now_fn() will return wall_time_begin + 5 sec
+
+  // Jump shouldn't take in to account playback rate when jumping in time,
+  // although TimeControllerClock::now() should respect playback rate after jump.
+  rcutils_time_point_value_t expected_ros_time = ros_time_point_for_jump +
+    static_cast<rcutils_time_point_value_t>(playback_rate * (as_nanos(current_wall_time) -
+    as_nanos(wall_time_begin)));
+
+  EXPECT_EQ(testing_clock.now(), expected_ros_time);
+}
+
+TEST_F(TimeControllerClockTest, jump_backward_with_playback_rate)
+{
+  // Use non zero start time along side with payback rate differ than 1.0
+  ros_start_time = RCUTILS_S_TO_NS(5);
+  const SteadyTimePoint wall_time_begin(std::chrono::seconds(2));
+  return_time = wall_time_begin;  // Init now_fn() to some non zero wall_time_begin
+  const double playback_rate = 1.5;
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+  testing_clock.set_rate(playback_rate);
+
+  const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time - RCUTILS_S_TO_NS(3);
+  testing_clock.jump(ros_time_point_for_jump);
+
+  // Emulate wall clock ticks
+  const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
+  return_time = current_wall_time;  // now_fn() will return wall_time_begin + 5 sec
+
+  // Jump shouldn't take in to account playback rate when jumping in time,
+  // although TimeControllerClock::now() should respect playback rate after jump.
+  rcutils_time_point_value_t expected_ros_time = ros_time_point_for_jump +
+    static_cast<rcutils_time_point_value_t>(playback_rate * (as_nanos(current_wall_time) -
+    as_nanos(wall_time_begin)));
+
+  EXPECT_EQ(testing_clock.now(), expected_ros_time);
+}
+
+TEST_F(TimeControllerClockTest, jump_handler_basic)
+{
+  auto pre_callback = [&]() {};
+  auto post_callback = [&](const rcl_time_jump_t &) {};
+  rcl_jump_threshold_t threshold{};
+  EXPECT_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(nullptr, nullptr, threshold),
+    std::invalid_argument);
+  EXPECT_NO_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(nullptr, post_callback, threshold));
+  EXPECT_NO_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, nullptr, threshold));
+  EXPECT_NO_THROW(
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold));
+}
+
+TEST_F(TimeControllerClockTest, add_jump_callbacks)
+{
+  auto pre_callback = [&]() {};
+  auto post_callback = [&](const rcl_time_jump_t &) {};
+
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+
+  rcl_jump_threshold_t threshold{};
+  threshold.min_backward.nanoseconds = 10;
+  threshold.min_forward.nanoseconds = 10;
+  auto callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  EXPECT_THROW(testing_clock.add_jump_calbacks(callback_handler), std::invalid_argument);
+
+  threshold.min_backward.nanoseconds = -10;
+  threshold.min_forward.nanoseconds = -10;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  EXPECT_THROW(testing_clock.add_jump_calbacks(callback_handler), std::invalid_argument);
+
+  threshold.min_backward.nanoseconds = -10;
+  threshold.min_forward.nanoseconds = 10;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  EXPECT_NO_THROW(testing_clock.add_jump_calbacks(callback_handler));
+}
+
+TEST_F(TimeControllerClockTest, jump_forward_with_callbacks_called)
+{
+  ros_start_time = RCUTILS_S_TO_NS(5);
+  const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time + RCUTILS_S_TO_NS(10);
+  const rcutils_duration_value_t time_jump_delta_ns = ros_time_point_for_jump - ros_start_time;
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+
+  int pre_callback_called_times = 0;
+  int post_callback_called_times = 0;
+
+  auto pre_callback = [&]() {
+      pre_callback_called_times++;
+      // Check that clock hasn't been adjusted yet
+      EXPECT_EQ(testing_clock.now(), ros_start_time);
+    };
+
+  auto post_callback = [&](const rcl_time_jump_t & jump_time) {
+      post_callback_called_times++;
+      // Check that clock already adjusted
+      EXPECT_EQ(testing_clock.now(), ros_time_point_for_jump);
+      EXPECT_EQ(jump_time.delta.nanoseconds, time_jump_delta_ns);
+      EXPECT_EQ(jump_time.clock_change, RCL_ROS_TIME_NO_CHANGE);
+    };
+
+  rcl_jump_threshold_t threshold{};
+  threshold.min_forward.nanoseconds = time_jump_delta_ns - 1;
+  threshold.min_backward.nanoseconds = 0;
+  auto callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_time_point_for_jump);
+  EXPECT_EQ(testing_clock.now(), ros_time_point_for_jump);
+  EXPECT_EQ(pre_callback_called_times, 1);
+  EXPECT_EQ(post_callback_called_times, 1);
+  testing_clock.remove_jump_callbacks(callback_handler);
+}
+
+TEST_F(TimeControllerClockTest, jump_backward_with_callbacks_called)
+{
+  ros_start_time = RCUTILS_S_TO_NS(10);
+  const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time - RCUTILS_S_TO_NS(3);
+  const rcutils_duration_value_t time_jump_delta_ns = ros_time_point_for_jump - ros_start_time;
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+
+  int pre_callback_called_times = 0;
+  int post_callback_called_times = 0;
+
+  auto pre_callback = [&]() {
+      pre_callback_called_times++;
+      // Check that clock hasn't been adjusted yet
+      EXPECT_EQ(testing_clock.now(), ros_start_time);
+    };
+
+  auto post_callback = [&](const rcl_time_jump_t & jump_time) {
+      post_callback_called_times++;
+      // Check that clock already adjusted
+      EXPECT_EQ(testing_clock.now(), ros_time_point_for_jump);
+      EXPECT_EQ(jump_time.delta.nanoseconds, time_jump_delta_ns);
+      EXPECT_EQ(jump_time.clock_change, RCL_ROS_TIME_NO_CHANGE);
+    };
+
+  rcl_jump_threshold_t threshold{};
+  threshold.min_forward.nanoseconds = 0;
+  threshold.min_backward.nanoseconds = time_jump_delta_ns + 1;
+  auto callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_time_point_for_jump);
+  ASSERT_EQ(testing_clock.now(), ros_time_point_for_jump);
+  EXPECT_EQ(pre_callback_called_times, 1);
+  EXPECT_EQ(post_callback_called_times, 1);
+  testing_clock.remove_jump_callbacks(callback_handler);
+}
+
+TEST_F(TimeControllerClockTest, jump_callbacks_threshold_boundary_check)
+{
+  ros_start_time = RCUTILS_S_TO_NS(5);
+  const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time + RCUTILS_S_TO_NS(10);
+  const rcutils_duration_value_t time_jump_delta_ns = ros_time_point_for_jump - ros_start_time;
+  rosbag2_cpp::TimeControllerClock testing_clock(ros_start_time, now_fn);
+
+  int pre_callback_called_times = 0;
+  int post_callback_called_times = 0;
+  auto pre_callback = [&]() {pre_callback_called_times++;};
+  auto post_callback = [&](const rcl_time_jump_t &) {post_callback_called_times++;};
+
+  rcl_jump_threshold_t threshold{};
+  threshold.min_forward.nanoseconds = 0;
+  threshold.min_backward.nanoseconds = -1 * (time_jump_delta_ns - RCUTILS_S_TO_NS(2));
+
+  auto callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_time_point_for_jump);
+  ASSERT_EQ(testing_clock.now(), ros_time_point_for_jump);
+  EXPECT_EQ(pre_callback_called_times, 0);
+  EXPECT_EQ(post_callback_called_times, 0);
+  testing_clock.remove_jump_callbacks(callback_handler);
+
+  pre_callback_called_times = 0;
+  post_callback_called_times = 0;
+  threshold.min_forward.nanoseconds = time_jump_delta_ns - RCUTILS_S_TO_NS(2);
+  threshold.min_backward.nanoseconds = 0;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_start_time);
+  ASSERT_EQ(testing_clock.now(), ros_start_time);
+  EXPECT_EQ(pre_callback_called_times, 0);
+  EXPECT_EQ(post_callback_called_times, 0);
+  testing_clock.remove_jump_callbacks(callback_handler);
+
+  pre_callback_called_times = 0;
+  post_callback_called_times = 0;
+  threshold.min_forward.nanoseconds = time_jump_delta_ns + 1;
+  threshold.min_backward.nanoseconds = 0;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_time_point_for_jump);
+  ASSERT_EQ(testing_clock.now(), ros_time_point_for_jump);
+  EXPECT_EQ(pre_callback_called_times, 0);
+  EXPECT_EQ(post_callback_called_times, 0);
+  testing_clock.remove_jump_callbacks(callback_handler);
+
+  pre_callback_called_times = 0;
+  post_callback_called_times = 0;
+  threshold.min_forward.nanoseconds = 0;
+  threshold.min_backward.nanoseconds = -1 * (time_jump_delta_ns + 1);
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_start_time);
+  ASSERT_EQ(testing_clock.now(), ros_start_time);
+  EXPECT_EQ(pre_callback_called_times, 0);
+  EXPECT_EQ(post_callback_called_times, 0);
+  testing_clock.remove_jump_callbacks(callback_handler);
+
+  pre_callback_called_times = 0;
+  post_callback_called_times = 0;
+  threshold.min_forward.nanoseconds = time_jump_delta_ns;
+  threshold.min_backward.nanoseconds = 0;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_time_point_for_jump);
+  ASSERT_EQ(testing_clock.now(), ros_time_point_for_jump);
+  EXPECT_EQ(pre_callback_called_times, 1);
+  EXPECT_EQ(post_callback_called_times, 1);
+  testing_clock.remove_jump_callbacks(callback_handler);
+
+  pre_callback_called_times = 0;
+  post_callback_called_times = 0;
+  threshold.min_forward.nanoseconds = 0;
+  threshold.min_backward.nanoseconds = -1 * time_jump_delta_ns;
+  callback_handler =
+    rosbag2_cpp::TimeControllerClock::JumpHandler::create(pre_callback, post_callback, threshold);
+  testing_clock.add_jump_calbacks(callback_handler);
+  testing_clock.jump(ros_start_time);
+  ASSERT_EQ(testing_clock.now(), ros_start_time);
+  EXPECT_EQ(pre_callback_called_times, 1);
+  EXPECT_EQ(post_callback_called_times, 1);
+  testing_clock.remove_jump_callbacks(callback_handler);
 }
