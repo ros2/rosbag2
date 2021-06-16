@@ -40,19 +40,23 @@ if(BUILD_TESTING)
   find_package(rosbag2_test_common REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(zstd_vendor REQUIRED)
 
   ament_add_gmock(test_rosbag2_record_end_to_end
     test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_record_end_to_end)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_rosbag2_record_end_to_end
       rclcpp
+      rosbag2_cpp
       rosbag2_compression
       rosbag2_compression_zstd
       rosbag2_storage
       rosbag2_storage_default_plugins
       rosbag2_test_common
-      test_msgs)
+      test_msgs
+      zstd_vendor)
     ament_add_test_label(test_rosbag2_record_end_to_end xfail)
   endif()
 
@@ -60,6 +64,7 @@ if(BUILD_TESTING)
     test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_play_end_to_end)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_rosbag2_play_end_to_end
       rclcpp
       rosbag2_storage
@@ -73,6 +78,7 @@ if(BUILD_TESTING)
     test/rosbag2_tests/test_rosbag2_info_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_info_end_to_end)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_rosbag2_info_end_to_end
       rosbag2_storage
       rosbag2_test_common)
@@ -83,16 +89,19 @@ if(BUILD_TESTING)
     test/rosbag2_tests/test_converter.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_converter)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_converter
       rosbag2_cpp
       rosbag2_test_common
-      test_msgs)
+      test_msgs
+      rosbag2_storage)
   endif()
 
   ament_add_gmock(test_rosbag2_cpp_api
     test/rosbag2_tests/test_rosbag2_cpp_api.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_cpp_api)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     ament_target_dependencies(test_rosbag2_cpp_api
       rclcpp
       rosbag2_cpp
