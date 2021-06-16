@@ -3,19 +3,21 @@ on:
   pull_request:
   push:
     branches:
-      - master
-  schedule:
-    # Run every hour. This helps detect flakiness,
-    # and broken external dependencies.
-    - cron:  '0 * * * *'
+      - foxy-future
+  # NOTE: build schedules are only supported for the default branch - this wouldn't work anyways
+  # schedule:
+  #   # Run every hour. This helps detect flakiness,
+  #   # and broken external dependencies.
+  #   - cron:  '0 * * * *'
 
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-latest
+      # Use the ros-base container, so that the rosbag2 binaries are already installed
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
     steps:
-    - uses: ros-tooling/action-ros-ci@v0.1
+    - uses: ros-tooling/action-ros-ci@v0.2
       with:
         package-name: |
           ros2bag
@@ -31,7 +33,6 @@ jobs:
           sqlite3_vendor
           zstd_vendor
         target-ros2-distro: foxy
-        vcs-repo-file-url: ""
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs

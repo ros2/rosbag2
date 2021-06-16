@@ -11,7 +11,7 @@ jobs:
       image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: copyright
         distribution: foxy
@@ -32,7 +32,7 @@ jobs:
       image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: xmllint
         distribution: foxy
@@ -59,7 +59,7 @@ jobs:
       image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-testing-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         distribution: foxy
@@ -83,7 +83,7 @@ jobs:
           linter: [pep257, flake8]
     steps:
     - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@0.0.6
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         distribution: foxy
