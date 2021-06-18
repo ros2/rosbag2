@@ -1,17 +1,27 @@
+# Foxy Improvement Backport Branch
+
+This branch contains a special-purpose version of rosbag2 that is intended to be used in a Foxy application.
+
+It contains performance improvements and new features from Galactic development up to March 23, 2021 - with minor tweaks to maintain build and test compatibility against the stable Foxy distribution.
+
+The popularly-requested improvements in this branch were not possible to backport to Foxy in an API/ABI-maintaining way. Instead, this "Foxy Future" branch is provided for users to build from source and get the performance benefits from nearly a year of development after Foxy.
+
+For more context on this conversation, see https://discourse.ros.org/t/fast-forward-merging-rosbag2-master-api-to-foxy/18927 or reach out to the ros-tooling Working Group.
+
+## Usage instructions
+
+* Check out this branch `foxy-future` from the repository `github.com/ros2/rosbag2` into your ROS workspace (or an overlay workspace)
+* Build like the other ROS packages you use
+
+This branch of rosbag2 will mask the binary-released version, allowing to you to enjoy this very improved version.
+
+NOTE: Any code that built against the rosbag2 C++ API may not build out of the box against this version, the main reason for the branch is that the APIs changed in some ways that could not be fixed into a backport.
+
 # rosbag2
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
 Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md).
-
-## Foxy Backport Release
-
-NOTE: this branch will contain the sources for the package `ros-foxy-rosbag2-future`, an updated package containing new performance improvements and features that could not be safely backported to `ros-foxy-rosbag2` in the Foxy Fitzroy distribution without breaking API/ABI. This branch is NOT YET STABLE and will be force-pushed during the release process.
-
-This to-do list will be removed as the updates are made to this branch:
-* [ ] Rename all `package.xml`s with `-future` package name suffix and `<conflicts>` tag
-* [ ] Update this README to ensure correct installation and usage instructions
-* [ ] Finalize the `master` commit that this will be based on
 
 ## Installation instructions
 

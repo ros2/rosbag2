@@ -140,8 +140,9 @@ if(BUILD_TESTING)
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)
   if(TARGET test_converter_factory)
-    target_include_directories(test_converter_factory PRIVATE include)
     target_link_libraries(test_converter_factory ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_converter_factory rosbag2_storage)
   endif()
 
   ament_add_gmock(test_typesupport_helpers
@@ -149,6 +150,8 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_typesupport_helpers)
     target_link_libraries(test_typesupport_helpers ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_typesupport_helpers rosbag2_storage rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_info
@@ -156,27 +159,33 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
     target_link_libraries(test_info ${PROJECT_NAME})
-    ament_target_dependencies(test_info rosbag2_test_common)
+    ament_target_dependencies(test_info rosbag2_test_common
+      # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+      rosbag2_storage)
   endif()
 
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp)
   if(TARGET test_sequential_reader)
-    ament_target_dependencies(test_sequential_reader rosbag2_storage)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_sequential_reader rosbag2_storage)
   endif()
 
   ament_add_gmock(test_storage_without_metadata_file
     test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
   if(TARGET test_storage_without_metadata_file)
-    ament_target_dependencies(test_storage_without_metadata_file rosbag2_storage)
     target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_storage_without_metadata_file rosbag2_storage)
   endif()
 
   ament_add_gmock(test_message_cache
     test/rosbag2_cpp/test_message_cache.cpp)
   if(TARGET test_message_cache)
     target_link_libraries(test_message_cache ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_message_cache rosbag2_storage)
   endif()
 
   # If compiling with gcc, run this test with sanitizers enabled
@@ -207,15 +216,17 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_writer
     test/rosbag2_cpp/test_sequential_writer.cpp)
   if(TARGET test_sequential_writer)
-    ament_target_dependencies(test_sequential_writer rosbag2_storage)
     target_link_libraries(test_sequential_writer ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_sequential_writer rosbag2_storage)
   endif()
 
   ament_add_gmock(test_multifile_reader
     test/rosbag2_cpp/test_multifile_reader.cpp)
   if(TARGET test_multifile_reader)
-    ament_target_dependencies(test_multifile_reader rosbag2_storage)
     target_link_libraries(test_multifile_reader ${PROJECT_NAME})
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    ament_target_dependencies(test_multifile_reader rosbag2_storage)
   endif()
 endif()
 

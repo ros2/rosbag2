@@ -21,6 +21,55 @@
 
 #include "qos.hpp"
 
+
+namespace
+{
+// Foxy compatibility - copied from Galactic version of rmw/time.c
+// Introuced in https://github.com/ros2/rmw/pull/301
+using rmw_duration_t = rcutils_duration_value_t;
+// we can't use the Galactic version of this constant because Foxy RMWs won't understand it
+const rmw_time_t RMW_DURATION_INFINITE {0LL, 0LL};
+
+
+rmw_duration_t
+rmw_time_total_nsec(const rmw_time_t time)
+{
+  static const uint64_t max_sec = INT64_MAX / RCUTILS_S_TO_NS(1);
+  if (time.sec > max_sec) {
+    // Seconds not representable in nanoseconds
+    return INT64_MAX;
+  }
+
+  const int64_t sec_as_nsec = RCUTILS_S_TO_NS(time.sec);
+  if (time.nsec > (uint64_t)(INT64_MAX - sec_as_nsec)) {
+    // overflow
+    return INT64_MAX;
+  }
+  return sec_as_nsec + time.nsec;
+}
+
+bool
+rmw_time_equal(const rmw_time_t left, const rmw_time_t right)
+{
+  return rmw_time_total_nsec(left) == rmw_time_total_nsec(right);
+}
+
+rmw_time_t
+rmw_time_from_nsec(const rmw_duration_t nanoseconds)
+{
+  if (nanoseconds < 0) {
+    return (rmw_time_t)RMW_DURATION_INFINITE;
+  }
+
+  // Avoid typing the 1 billion constant
+  rmw_time_t time;
+  time.sec = RCUTILS_NS_TO_S(nanoseconds);
+  time.nsec = nanoseconds % RCUTILS_S_TO_NS(1);
+  return time;
+}
+/// End Foxy compatibility section
+}  // namespace
+
 TEST(TestQoS, serialization)
 {
   rosbag2_transport::Rosbag2QoS expected_qos;

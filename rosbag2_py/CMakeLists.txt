@@ -65,42 +65,61 @@ function(clean_windows_flags target)
   endif()
 endfunction()
 
+function(reorder_pybind_include_directories _target)
+  # Hack to fix overlay workspace include directories order
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+  # Needs to be called instead of ament_target_dependencies for all targets created via pybind11_add_module
+  #
+  # Ros uses its own pybind11 library. It is installed to /opt/ros/foxy folder, so INCLUDE_DIRECTORIES property
+  # of target created via pybind11_add_module is polluted with /opt/ros/foxy/include
+  # All includes found in that directory are used instead of local workspace
+
+  # Get all values from INCLUDE_DIRECTORIES property
+  get_property(_pybind_include_directories TARGET ${_target} PROPERTY INCLUDE_DIRECTORIES)
+  # Clear all values from INCLUDE_DIRECTORIES property
+  set_property(TARGET ${_target} PROPERTY INCLUDE_DIRECTORIES "")
+  # Add ament dependencies
+  ament_target_dependencies(${_target} PUBLIC ${ARGN})
+  # Restore INCLUDE_DIRECTORIES property
+  set_property(TARGET ${_target} APPEND PROPERTY INCLUDE_DIRECTORIES ${_pybind_include_directories})
+endfunction()
+
 ament_python_install_package(${PROJECT_NAME})
 
-pybind11_add_module(_reader SHARED
+pybind11_add_module(_reader SHARED SYSTEM
   src/rosbag2_py/_reader.cpp
 )
-ament_target_dependencies(_reader PUBLIC
+reorder_pybind_include_directories(_reader
   "rosbag2_compression"
   "rosbag2_cpp"
   "rosbag2_storage"
 )
 clean_windows_flags(_reader)
 
-pybind11_add_module(_storage SHARED
+pybind11_add_module(_storage SHARED SYSTEM
   src/rosbag2_py/_storage.cpp
   src/rosbag2_py/format_bag_metadata.cpp
 )
-ament_target_dependencies(_storage PUBLIC
+reorder_pybind_include_directories(_storage
   "rosbag2_cpp"
   "rosbag2_storage"
 )
 clean_windows_flags(_storage)
 
-pybind11_add_module(_writer SHARED
+pybind11_add_module(_writer SHARED SYSTEM
   src/rosbag2_py/_writer.cpp
 )
-ament_target_dependencies(_writer PUBLIC
+reorder_pybind_include_directories(_writer
   "rosbag2_compression"
   "rosbag2_cpp"
   "rosbag2_storage"
 )
 clean_windows_flags(_writer)
 
-pybind11_add_module(_info SHARED
+pybind11_add_module(_info SHARED SYSTEM
   src/rosbag2_py/_info.cpp
 )
-ament_target_dependencies(_info PUBLIC
+reorder_pybind_include_directories(_info
   "rosbag2_cpp"
   "rosbag2_storage"
 )

@@ -68,6 +68,7 @@ ament_target_dependencies(rosbag2_transport_py
   rosbag2_cpp
   rosbag2_storage
   rmw
+  shared_queues_vendor
 )
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
@@ -94,17 +95,20 @@ function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_record_all
     test/rosbag2_transport/test_record_all.cpp
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor)
 
   rosbag2_transport_add_gmock(test_record_all_no_discovery
     test/rosbag2_transport/test_record_all_no_discovery.cpp
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor)
 
   rosbag2_transport_add_gmock(test_play_timing
     test/rosbag2_transport/test_play_timing.cpp
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor)
 
   rosbag2_transport_add_gmock(test_rosbag2_node
     src/rosbag2_transport/generic_publisher.cpp
@@ -118,6 +122,7 @@ function(create_tests_for_rmw_implementation)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
       $<INSTALL_INTERFACE:include>
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     AMENT_DEPS
       ament_index_cpp
       rclcpp
@@ -125,7 +130,9 @@ function(create_tests_for_rmw_implementation)
       rosbag2_storage
       rosbag2_test_common
       test_msgs
-      yaml_cpp_vendor)
+      yaml_cpp_vendor
+      rosbag2_compression
+      shared_queues_vendor)
 
   rosbag2_transport_add_gmock(test_qos
     src/rosbag2_transport/qos.cpp
@@ -133,6 +140,7 @@ function(create_tests_for_rmw_implementation)
     INCLUDE_DIRS
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
     AMENT_DEPS
       rclcpp
       rosbag2_test_common
@@ -147,7 +155,8 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_record
     test/rosbag2_transport/test_record.cpp
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor
     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     LINK_LIBS rosbag2_transport
     ${SKIP_TEST})
@@ -155,7 +164,8 @@ function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_record_regex
     test/rosbag2_transport/test_record_regex.cpp
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor rosbag2_cpp rosbag2_storage
     ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_play
@@ -163,20 +173,23 @@ function(create_tests_for_rmw_implementation)
     test/rosbag2_transport/test_play.cpp
     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor
     ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_play_loop
     test/rosbag2_transport/test_play_loop.cpp
     ${SKIP_TEST}
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor)
 
   rosbag2_transport_add_gmock(test_play_topic_remap
     test/rosbag2_transport/test_play_topic_remap.cpp
     ${SKIP_TEST}
     LINK_LIBS rosbag2_transport
-    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common)
+    # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+    AMENT_DEPS rosbag2_cpp rosbag2_storage test_msgs rosbag2_test_common rosbag2_compression shared_queues_vendor)
 endfunction()
 
 if(BUILD_TESTING)

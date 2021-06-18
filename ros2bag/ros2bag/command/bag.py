@@ -19,6 +19,8 @@ from ros2cli.command import CommandExtension
 class BagCommand(CommandExtension):
     """Various rosbag related sub-commands."""
 
+    FUTURE_NOTICE = 'Running rosbag2 "futurized" source release, not the official Foxy binary version.'  # NOQA
+
     def add_arguments(self, parser, cli_name):
         self._subparser = parser
 
@@ -27,6 +29,8 @@ class BagCommand(CommandExtension):
             parser, cli_name, '_verb', 'ros2bag.verb', required=False)
 
     def main(self, *, parser, args):
+        print(self.FUTURE_NOTICE)
+        print()
         if not hasattr(args, '_verb'):
             # in case no verb was passed
             self._subparser.print_help()

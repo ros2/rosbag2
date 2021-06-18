@@ -75,6 +75,8 @@ if(BUILD_TESTING)
     test/rosbag2_compression/fake_compressor.cpp
     test/rosbag2_compression/fake_decompressor.cpp)
   target_link_libraries(fake_plugin ${PROJECT_NAME})
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+  ament_target_dependencies(fake_plugin rosbag2_cpp rosbag2_storage)
   install(
     TARGETS fake_plugin
     ARCHIVE DESTINATION lib
@@ -86,22 +88,28 @@ if(BUILD_TESTING)
   ament_add_gmock(test_compression_factory
     test/rosbag2_compression/test_compression_factory.cpp)
   target_link_libraries(test_compression_factory ${PROJECT_NAME})
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+  ament_target_dependencies(test_compression_factory rosbag2_cpp rosbag2_storage)
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
   target_include_directories(test_compression_options PUBLIC include)
   target_link_libraries(test_compression_options ${PROJECT_NAME})
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
+  ament_target_dependencies(test_compression_options rosbag2_cpp rosbag2_storage)
 
   ament_add_gmock(test_sequential_compression_reader
     test/rosbag2_compression/test_sequential_compression_reader.cpp)
   target_include_directories(test_sequential_compression_reader PUBLIC include)
   target_link_libraries(test_sequential_compression_reader ${PROJECT_NAME})
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
   ament_target_dependencies(test_sequential_compression_reader rosbag2_cpp rosbag2_storage)
 
   ament_add_gmock(test_sequential_compression_writer
     test/rosbag2_compression/test_sequential_compression_writer.cpp)
   target_include_directories(test_sequential_compression_writer PUBLIC include)
   target_link_libraries(test_sequential_compression_writer ${PROJECT_NAME})
+  # Needs to be removed/revised after https://github.com/ros2/ros2/issues/1150 gets fixed
   ament_target_dependencies(test_sequential_compression_writer rosbag2_cpp rosbag2_storage)
 endif()
 
