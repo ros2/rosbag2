@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, uncrustify]
+          linter: [clang-tidy, cppcheck, cpplint, uncrustify]
     steps:
     - uses: actions/checkout@v2
     - uses: ros-tooling/action-ros-lint@v0.1
