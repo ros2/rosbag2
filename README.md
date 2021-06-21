@@ -4,6 +4,12 @@
 
 Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/f69fbbd11848e3dd6866b71a158a1902e31e92f1/articles/rosbags.md).
 
+**[Note]** This branch contains the official binary release of rosbag2 for ROS 2 Foxy.
+The code here is what you get from the APT repositories.
+
+There is an alternate supported branch [foxy-future](https://github.com/ros2/rosbag2/tree/foxy-future) that contains a version much closer to Galactic, including extensive performance improvements and some features, with modifications to build against the ROS 2 Foxy core.
+Not all of the improvements could be backported into the binary release without breaking API/ABI, so users who want these improvements can build that branch from source into their application - please see the `README` on the `foxy-future` branch for further information.
+
 ## Installation instructions
 
 ## Debian packages
@@ -38,7 +44,7 @@ Clone this repository into the source folder:
 ```
 $ git clone https://github.com/ros2/rosbag2.git
 ```
-**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution. 
+**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution.
 
 Then build all the packages with this command:
 
