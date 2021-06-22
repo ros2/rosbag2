@@ -14,10 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: rostooling/setup-ros-docker:ubuntu-focal-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        linter: [clang-tidy]
     steps:
     - uses: ros-tooling/action-ros-ci@v0.2
       with:
@@ -52,10 +48,6 @@ jobs:
               "pytest-args": ["-m", "not xfail"]
             }
           }
-    - uses: ros-tooling/action-ros-lint@v0.1
-      with:
-        linter: ${{ matrix.linter }}
-        package-name: libstatistics_collector
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
