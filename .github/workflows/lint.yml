@@ -100,7 +100,7 @@ jobs:
               ]
             }
           }
-    - uses: ros-tooling/checkout@v2
+    - uses: actions/checkout@v2
       with:
         linter: ${{ matrix.linter }}
         package-name: libstatistics_collector
