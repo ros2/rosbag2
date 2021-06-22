@@ -48,6 +48,22 @@ jobs:
               "pytest-args": ["-m", "not xfail"]
             }
           }
+    - name: Run Clang-Tidy
+      uses: ros-tooling/action-ros-lint@v0.1
+      with:
+        linter: [clang_tidy]
+        distribution: rolling
+        package-name: |
+            rosbag2_compression
+            rosbag2_compression_zstd
+            rosbag2_cpp
+            rosbag2_py
+            rosbag2_storage
+            rosbag2_storage_default_plugins
+            rosbag2_test_common
+            rosbag2_tests
+            rosbag2_transport
+            shared_queues_vendor
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
