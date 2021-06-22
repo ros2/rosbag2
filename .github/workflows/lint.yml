@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, uncrustify]
+          linter: [clang_tidy, cppcheck, cpplint, uncrustify]
     steps:
     - uses: actions/checkout@v2
     - uses: ros-tooling/action-ros-lint@v0.1
@@ -61,48 +61,41 @@ jobs:
             rosbag2_transport
             shared_queues_vendor
 
-  clang_tidy_cpp: # Runs Clang-Tidy on cpp files
-    name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-latest
-    container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        linter: [clang-tidy]
-    steps:
-    - uses: ros-tooling/action-ros-ci@v0.2
-      with:
-        package-name: |
-          ros2bag
-          rosbag2
-          rosbag2_compression
-          rosbag2_compression_zstd
-          rosbag2_cpp
-          rosbag2_interfaces
-          rosbag2_py
-          rosbag2_storage
-          rosbag2_storage_default_plugins
-          rosbag2_test_common
-          rosbag2_tests
-          rosbag2_transport
-          shared_queues_vendor
-          sqlite3_vendor
-          zstd_vendor
-        target-ros2-distro: rolling
-        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
-        colcon-defaults: |
-          {
-            "build": {
-              "cmake-args": [
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-              ]
-            }
-          }
-    - uses: actions/checkout@v2
-      with:
-        linter: ${{ matrix.linter }}
-        package-name: libstatistics_collector
+  # clang_tidy_cpp: # Runs Clang-Tidy on cpp files
+  #   name: ament_${{ matrix.linter }}
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       linter: [clang_tidy]
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: ros-tooling/action-ros-ci@v0.1
+  #     with:
+  #       package-name: |
+  #           rosbag2_compression
+  #           rosbag2_compression_zstd
+  #           rosbag2_cpp
+  #           rosbag2_py
+  #           rosbag2_storage
+  #           rosbag2_storage_default_plugins
+  #           rosbag2_test_common
+  #           rosbag2_tests
+  #           rosbag2_transport
+  #           shared_queues_vendor
+  #       target-ros2-distro: rolling
+  #       vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
+  #       colcon-defaults: |
+  #         {
+  #           "build": {
+  #             "cmake-args": [
+  #               "-DCMAKE_CXX_FLAGS=\"-Werror\"",
+  #               "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+  #             ]
+  #           }
+  #         }
 
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
