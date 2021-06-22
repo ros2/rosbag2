@@ -51,7 +51,7 @@ jobs:
     - name: Run Clang-Tidy
       uses: ros-tooling/action-ros-lint@v0.1
       with:
-        linter: [clang_tidy]
+        linter: clang_tidy
         distribution: rolling
         package-name: |
             rosbag2_compression
