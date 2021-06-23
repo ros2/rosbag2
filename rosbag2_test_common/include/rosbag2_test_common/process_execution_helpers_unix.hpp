@@ -66,7 +66,7 @@ void stop_execution(const ProcessHandle & handle)
   waitpid(handle, &child_return_code, 0);
   // this call will make sure that the process does execute without issues before it is killed by
   // the user in the test or, in case it runs until completion, that it has correctly executed.
-  EXPECT_THAT(WEXITSTATUS(child_return_code), Not(Eq(EXIT_FAILURE)));
+  EXPECT_THAT(WEXITSTATUS(child_return_code), EXIT_SUCCESS);
 }
 
 #endif  // ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_UNIX_HPP_
