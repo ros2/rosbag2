@@ -215,6 +215,13 @@ void Player::play()
   is_in_play_ = true;
   try {
     do {
+      float delay =
+          play_options_.delay > 0.0 ? play_options_.delay : 0.0;
+      if (delay > 0.0) {
+        RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay << " sec");
+        std::chrono::duration<float> duration(delay);
+        std::this_thread::sleep_for(duration);
+      }
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
       const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         reader_->get_metadata().starting_time.time_since_epoch()).count();
