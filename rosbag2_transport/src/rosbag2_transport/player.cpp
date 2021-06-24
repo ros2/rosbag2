@@ -213,10 +213,20 @@ bool Player::is_storage_completely_loaded() const
 void Player::play()
 {
   is_in_play_ = true;
+
+  float delay;
+  if (play_options_.delay > 0.0){
+    delay = play_options_.delay;
+  } else {
+    RCLCPP_WARN(this->get_logger(),
+                "Invalid delay value: %f. Delay is disabled.",
+                play_options_.delay);
+
+    delay = 0.0;
+  }
+
   try {
     do {
-      float delay =
-          play_options_.delay > 0.0 ? play_options_.delay : 0.0;
       if (delay > 0.0) {
         RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay << " sec");
         std::chrono::duration<float> duration(delay);
