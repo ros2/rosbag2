@@ -180,29 +180,31 @@ class RecordVerb(VerbExtension):
         #               extension. Therefore, do not import rosbag2_transport at the module
         #               level but on demand, right before first use.
         from rosbag2_transport import rosbag2_transport_py
-
-        rosbag2_transport_py.record(
-            uri=uri,
-            storage_id=args.storage,
-            serialization_format=args.serialization_format,
-            node_prefix=NODE_NAME_PREFIX,
-            compression_mode=args.compression_mode,
-            compression_format=args.compression_format,
-            compression_queue_size=args.compression_queue_size,
-            compression_threads=args.compression_threads,
-            all=args.all,
-            no_discovery=args.no_discovery,
-            polling_interval=args.polling_interval,
-            max_bagfile_size=args.max_bag_size,
-            max_bagfile_duration=args.max_bag_duration,
-            max_cache_size=args.max_cache_size,
-            topics=args.topics,
-            regex=args.regex,
-            exclude=args.exclude,
-            include_hidden_topics=args.include_hidden_topics,
-            qos_profile_overrides=qos_profile_overrides,
-            storage_preset_profile=args.storage_preset_profile,
-            storage_config_file=storage_config_file)
+        try:
+            rosbag2_transport_py.record(
+                uri=uri,
+                storage_id=args.storage,
+                serialization_format=args.serialization_format,
+                node_prefix=NODE_NAME_PREFIX,
+                compression_mode=args.compression_mode,
+                compression_format=args.compression_format,
+                compression_queue_size=args.compression_queue_size,
+                compression_threads=args.compression_threads,
+                all=args.all,
+                no_discovery=args.no_discovery,
+                polling_interval=args.polling_interval,
+                max_bagfile_size=args.max_bag_size,
+                max_bagfile_duration=args.max_bag_duration,
+                max_cache_size=args.max_cache_size,
+                topics=args.topics,
+                regex=args.regex,
+                exclude=args.exclude,
+                include_hidden_topics=args.include_hidden_topics,
+                qos_profile_overrides=qos_profile_overrides,
+                storage_preset_profile=args.storage_preset_profile,
+                storage_config_file=storage_config_file)
+        except KeyboardInterrupt:
+            pass
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)
