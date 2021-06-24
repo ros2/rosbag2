@@ -215,7 +215,7 @@ void Player::play()
   is_in_play_ = true;
 
   float delay;
-  if (play_options_.delay > 0.0) {
+  if (play_options_.delay >= 0.0) {
     delay = play_options_.delay;
   } else {
     RCLCPP_WARN(
