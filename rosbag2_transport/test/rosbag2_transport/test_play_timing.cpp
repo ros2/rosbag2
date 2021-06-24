@@ -190,4 +190,43 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
 
     ASSERT_THAT(replay_time, Gt(message_time_difference));
   }
+
+  // Sleep 5.0 seconds after play
+  {
+    play_options_.delay = 5.0;
+    std::chrono::duration<float> delay(play_options_.delay);
+    std::chrono::duration<float> delay_uppper(play_options_.delay + 0.1);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topics_and_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    auto start = std::chrono::steady_clock::now();
+    player->play();
+    auto replay_time = std::chrono::steady_clock::now() - start;
+
+    ASSERT_THAT(replay_time, Gt(message_time_difference + delay));
+    ASSERT_THAT(replay_time, Lt(message_time_difference + delay_uppper));
+  }
+
+  // Invalid value should result in playing at default delay 0.0
+  {
+    play_options_.delay = -5.0;
+    std::chrono::duration<float> delay_uppper(0.1);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topics_and_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    auto start = std::chrono::steady_clock::now();
+    player->play();
+    auto replay_time = std::chrono::steady_clock::now() - start;
+
+    ASSERT_THAT(replay_time, Gt(message_time_difference));
+    ASSERT_THAT(replay_time, Lt(message_time_difference + delay_uppper));
+  }
 }
