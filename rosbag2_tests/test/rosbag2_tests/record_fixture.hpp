@@ -122,14 +122,17 @@ public:
     const auto database_path = get_bag_file_path(0);
 
     while (true) {
-      std::this_thread::sleep_for(50ms);
-      if (database_path.exists()) {
-        break;
+      try {
+        std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
+        if (database_path.exists()) {
+          rosbag2_storage_plugins::SqliteWrapper db{
+            database_path.string(), rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
+          return;
+        }
+      } catch (const rosbag2_storage_plugins::SqliteException & ex) {
+        (void) ex;  // still waiting
       }
     }
-
-    // Wait a while for topic discovered to avoid missing published messages.
-    std::this_thread::sleep_for(200ms);
   }
 
   size_t count_stored_messages(
