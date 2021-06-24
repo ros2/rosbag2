@@ -204,7 +204,11 @@ class RecordVerb(VerbExtension):
         record_options.include_hidden_topics = args.include_hidden_topics
 
         recorder = Recorder()
-        recorder.record(storage_options, record_options)
+
+        try:
+            recorder.record(storage_options, record_options)
+        except KeyboardInterrupt:
+            pass
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)
