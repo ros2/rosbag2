@@ -215,13 +215,13 @@ void Player::play()
   is_in_play_ = true;
 
   float delay;
-  if (play_options_.delay > 0.0){
+  if (play_options_.delay > 0.0) {
     delay = play_options_.delay;
   } else {
-    RCLCPP_WARN(this->get_logger(),
-                "Invalid delay value: %f. Delay is disabled.",
-                play_options_.delay);
-
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Invalid delay value: %f. Delay is disabled.",
+      play_options_.delay);
     delay = 0.0;
   }
 
