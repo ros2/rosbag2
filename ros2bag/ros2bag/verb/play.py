@@ -119,7 +119,7 @@ class PlayVerb(VerbExtension):
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
-        play_options.delay=args.delay
+        play_options.delay = args.delay
 
         player = Player()
         player.play(storage_options, play_options)
