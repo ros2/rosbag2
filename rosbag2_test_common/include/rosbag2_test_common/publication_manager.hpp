@@ -129,7 +129,7 @@ public:
       return true;
     }
 
-    auto sleep_time = std::chrono::milliseconds(100);
+    auto sleep_time = std::chrono::milliseconds(10);
 
     if (timeout < std::chrono::seconds(1)) {
       sleep_time = timeout;
@@ -138,7 +138,6 @@ public:
     using clock = std::chrono::steady_clock;
     auto start = clock::now();
 
-    rclcpp::executors::SingleThreadedExecutor exec;
     do {
       std::this_thread::sleep_for(sleep_time);
 
