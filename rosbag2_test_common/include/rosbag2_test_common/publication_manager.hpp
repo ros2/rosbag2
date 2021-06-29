@@ -20,6 +20,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
@@ -59,10 +60,7 @@ public:
   {
     auto publisher = pub_node_->create_publisher<MsgT>(topic_name, qos);
 
-    publishers_.push_back(publisher);
-
-    publishers_fcn_.push_back(
-      [publisher, message, repetition, interval](bool verbose = false) {
+    auto publisher_fcn = [publisher, message, repetition, interval](bool verbose = false) {
         for (auto i = 0u; i < repetition; ++i) {
           if (rclcpp::ok()) {
             publisher->publish(message);
@@ -74,24 +72,23 @@ public:
             std::this_thread::sleep_for(interval);
           }
         }
-      });
+      };
+
+    publishers_.push_back(std::make_pair(publisher, publisher_fcn));
   }
 
   void run_publishers(bool verbose = false) const
   {
-    for (const auto & pub_fcn : publishers_fcn_) {
-      pub_fcn(verbose);
+    for (const auto & pub : publishers_) {
+      std::get<PublicationF>(pub)(verbose);
     }
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.spin_node_some(pub_node_);
-    std::this_thread::sleep_for(100ms);
   }
 
   void run_publishers_async(bool verbose = false) const
   {
     std::vector<std::future<void>> futures;
-    for (const auto & pub_fcn : publishers_fcn_) {
-      futures.push_back(std::async(std::launch::async, pub_fcn, verbose));
+    for (const auto & pub : publishers_) {
+      futures.push_back(std::async(std::launch::async, std::get<PublicationF>(pub), verbose));
     }
     for (auto & publisher_future : futures) {
       publisher_future.get();
@@ -113,8 +110,11 @@ public:
   {
     rclcpp::PublisherBase::SharedPtr publisher = nullptr;
     for (const auto pub : publishers_) {
-      if (!std::strcmp(pub->get_topic_name(), topic_name)) {
-        publisher = pub;
+      if (!std::strcmp(
+          std::get<rclcpp::PublisherBase::SharedPtr>(pub)->get_topic_name(),
+          topic_name))
+      {
+        publisher = std::get<rclcpp::PublisherBase::SharedPtr>(pub);
         break;
       }
     }
@@ -149,8 +149,7 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> pub_node_;
   using PublicationF = std::function<void (bool)>;
-  std::vector<PublicationF> publishers_fcn_;
-  std::vector<rclcpp::PublisherBase::SharedPtr> publishers_;
+  std::vector<std::pair<rclcpp::PublisherBase::SharedPtr, PublicationF>> publishers_;
 };
 
 }  // namespace rosbag2_test_common
