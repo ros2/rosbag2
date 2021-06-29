@@ -104,7 +104,7 @@ public:
   /// \return true if not find publisher by topic name or publisher has specified number of
   ///    subscribers, otherwise false.
   template<typename Timeout>
-  bool spin_and_wait_for_matched(
+  bool wait_for_matched(
     const char * topic_name,
     Timeout timeout, size_t n_subscribers_to_match = 1)
   {
@@ -129,12 +129,18 @@ public:
       return true;
     }
 
+    auto sleep_time = std::chrono::milliseconds(100);
+
+    if (timeout < std::chrono::seconds(1)) {
+      sleep_time = timeout;
+    }
+
     using clock = std::chrono::steady_clock;
     auto start = clock::now();
 
     rclcpp::executors::SingleThreadedExecutor exec;
     do {
-      exec.spin_node_some(pub_node_);
+      std::this_thread::sleep_for(sleep_time);
 
       if (publisher->get_subscription_count() +
         publisher->get_intra_process_subscription_count() >= n_subscribers_to_match)
