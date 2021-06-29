@@ -99,7 +99,9 @@ public:
   {
     auto future = cli->async_send_request(request);
     EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready);
-    auto result = future.get();
+    EXPECT_TRUE(future.valid());
+    auto result = std::make_shared<typename Srv::Response>();
+    EXPECT_NO_THROW({result = future.get();});
     EXPECT_TRUE(result);
     return result;
   }
