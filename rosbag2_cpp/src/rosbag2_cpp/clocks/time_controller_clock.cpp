@@ -138,9 +138,9 @@ public:
     {
       std::lock_guard<std::mutex> lock(state_mutex);
       snapshot(ros_time);
+      cv.notify_all();
     }
     process_callbacks_after_jump(time_jump);
-    cv.notify_all();
   }
 
   /**
@@ -211,9 +211,9 @@ private:
     }
   }
 
-  static void process_callback(
+  void process_callback(
     PlayerClock::JumpHandler::SharedPtr handler, const rcl_time_jump_t & time_jump,
-    bool before_jump) RCPPUTILS_TSA_REQUIRES(callback_list_mutex_)
+    bool before_jump) const RCPPUTILS_TSA_REQUIRES(callback_list_mutex_)
   {
     bool is_clock_change = time_jump.clock_change == RCL_ROS_TIME_ACTIVATED ||
       time_jump.clock_change == RCL_ROS_TIME_DEACTIVATED;
