@@ -51,7 +51,7 @@ jobs:
           }
     - name: Run xfail tests (not required to succeed)
       continue-on-error: true
-      run: colcon test --packages-select $(colcon list -n --base-paths $(colcon list -p --packages-select rosbag2)/..) --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
+      run: source /opt/ros/rolling/setup.sh && colcon test --packages-select $(colcon list -n --base-paths $(colcon list -p --packages-select rosbag2)/..) --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v1
