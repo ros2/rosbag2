@@ -15,10 +15,12 @@
 #ifndef ROSBAG2_TEST_COMMON__PUBLICATION_MANAGER_HPP_
 #define ROSBAG2_TEST_COMMON__PUBLICATION_MANAGER_HPP_
 
+#include <cstring>
 #include <functional>
 #include <future>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
@@ -58,8 +60,7 @@ public:
   {
     auto publisher = pub_node_->create_publisher<MsgT>(topic_name, qos);
 
-    publishers_.push_back(
-      [publisher, message, repetition, interval](bool verbose = false) {
+    auto publisher_fcn = [publisher, message, repetition, interval](bool verbose = false) {
         for (auto i = 0u; i < repetition; ++i) {
           if (rclcpp::ok()) {
             publisher->publish(message);
@@ -71,31 +72,89 @@ public:
             std::this_thread::sleep_for(interval);
           }
         }
-      });
+      };
+
+    publishers_.push_back(std::make_pair(publisher, publisher_fcn));
   }
 
   void run_publishers(bool verbose = false) const
   {
-    for (const auto & pub_fcn : publishers_) {
-      pub_fcn(verbose);
+    for (const auto & pub : publishers_) {
+      std::get<PublicationF>(pub)(verbose);
     }
   }
 
   void run_publishers_async(bool verbose = false) const
   {
     std::vector<std::future<void>> futures;
-    for (const auto & pub_fcn : publishers_) {
-      futures.push_back(std::async(std::launch::async, pub_fcn, verbose));
+    for (const auto & pub : publishers_) {
+      futures.push_back(std::async(std::launch::async, std::get<PublicationF>(pub), verbose));
     }
     for (auto & publisher_future : futures) {
       publisher_future.get();
     }
   }
 
+  /// \brief Wait until publisher with specified topic will be connected to the subscribers or
+  ///    timeout occur.
+  /// \tparam Timeout Data type for timeout duration from std::chrono:: namespace
+  /// \param topic_name topic name to find corresponding publisher
+  /// \param timeout Maximum time duration during which discovery should happen.
+  /// \param n_subscribers_to_match Number of subscribers publisher should have for match.
+  /// \return true if find publisher by specified topic_name and publisher has specified number of
+  ///   subscribers, otherwise false.
+  template<typename Timeout>
+  bool wait_for_matched(
+    const char * topic_name,
+    Timeout timeout, size_t n_subscribers_to_match = 1)
+  {
+    rclcpp::PublisherBase::SharedPtr publisher = nullptr;
+    for (const auto pub : publishers_) {
+      if (!std::strcmp(
+          std::get<rclcpp::PublisherBase::SharedPtr>(pub)->get_topic_name(),
+          topic_name))
+      {
+        publisher = std::get<rclcpp::PublisherBase::SharedPtr>(pub);
+        break;
+      }
+    }
+
+    if (publisher == nullptr) {
+      return false;
+    }
+
+    if (publisher->get_subscription_count() +
+      publisher->get_intra_process_subscription_count() >= n_subscribers_to_match)
+    {
+      return true;
+    }
+
+    auto sleep_time = std::chrono::milliseconds(10);
+
+    if (timeout < std::chrono::seconds(1)) {
+      sleep_time = timeout;
+    }
+
+    using clock = std::chrono::steady_clock;
+    auto start = clock::now();
+
+    do {
+      std::this_thread::sleep_for(sleep_time);
+
+      if (publisher->get_subscription_count() +
+        publisher->get_intra_process_subscription_count() >= n_subscribers_to_match)
+      {
+        return true;
+      }
+    } while ((clock::now() - start) < timeout);
+
+    return false;
+  }
+
 private:
   std::shared_ptr<rclcpp::Node> pub_node_;
   using PublicationF = std::function<void (bool)>;
-  std::vector<PublicationF> publishers_;
+  std::vector<std::pair<rclcpp::PublisherBase::SharedPtr, PublicationF>> publishers_;
 };
 
 }  // namespace rosbag2_test_common
