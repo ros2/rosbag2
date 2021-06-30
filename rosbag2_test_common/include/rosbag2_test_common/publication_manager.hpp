@@ -101,8 +101,8 @@ public:
   /// \param topic_name topic name to find corresponding publisher
   /// \param timeout Maximum time duration during which discovery should happen.
   /// \param n_subscribers_to_match Number of subscribers publisher should have for match.
-  /// \return true if not find publisher by topic name or publisher has specified number of
-  ///    subscribers, otherwise false.
+  /// \return true if find publisher by specified topic_name and publisher has specified number of
+  ///   subscribers, otherwise false.
   template<typename Timeout>
   bool wait_for_matched(
     const char * topic_name,
