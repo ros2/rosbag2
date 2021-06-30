@@ -23,11 +23,14 @@ jobs:
         colcon-defaults: |
           {
             "build": {
+              "packages-up-to": "rosbag2",
               "cmake-args": [
                 "-DCMAKE_CXX_FLAGS=\"-Werror\""
               ]
             },
             "test": {
+              "packages-select-regex": ["rosbag2", "ros2bag"],
+              "packages-skip": ["rosbag2_performance_benchmarking"],
               "ctest-args": ["-LE", "xfail"],
               "pytest-args": ["-m", "not xfail"]
             }
