@@ -190,6 +190,26 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
 
     ASSERT_THAT(replay_time, Gt(message_time_difference));
   }
+}
+
+TEST_F(PlayerTestFixture, playing_respects_delay)
+{
+  auto primitive_message1 = get_messages_strings()[0];
+  primitive_message1->string_value = "Hello World 1";
+
+  auto primitive_message2 = get_messages_strings()[0];
+  primitive_message2->string_value = "Hello World 2";
+
+  auto message_time_difference = std::chrono::seconds(1);
+  auto topics_and_types =
+    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("topic1", 0, primitive_message1),
+    serialize_test_message("topic1", 0, primitive_message2)};
+
+  messages[0]->time_stamp = 100;
+  messages[1]->time_stamp =
+    messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
 
   // Sleep 5.0 seconds after play
   {
