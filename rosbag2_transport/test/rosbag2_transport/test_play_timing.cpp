@@ -211,11 +211,13 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
   messages[1]->time_stamp =
     messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
 
+  float delay_margin = 1.0;
+
   // Sleep 5.0 seconds after play
   {
     play_options_.delay = 5.0;
     std::chrono::duration<float> delay(play_options_.delay);
-    std::chrono::duration<float> delay_uppper(play_options_.delay + 0.1);
+    std::chrono::duration<float> delay_uppper(play_options_.delay + delay_margin);
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
@@ -234,7 +236,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
   // Invalid value should result in playing at default delay 0.0
   {
     play_options_.delay = -5.0;
-    std::chrono::duration<float> delay_uppper(0.1);
+    std::chrono::duration<float> delay_uppper(delay_margin);
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
