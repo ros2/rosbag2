@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <memory>
 #include <regex>
 #include <string>
@@ -31,6 +32,8 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "record_integration_fixture.hpp"
+
+using namespace std::chrono_literals;  // NOLINT
 
 TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
 {
@@ -71,6 +74,8 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   recorder->record();
 
   start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str(), 30s, 1));
 
   pub_manager.run_publishers();
 
@@ -142,6 +147,9 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   recorder->record();
 
   start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str(), 30s, 1));
+  ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str(), 30s, 1));
 
   pub_manager.run_publishers();
 

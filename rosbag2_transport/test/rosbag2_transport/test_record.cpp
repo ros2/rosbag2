@@ -53,6 +53,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   start_async_spin(recorder);
 
+  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str(), 30s, 1));
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str(), 30s, 1));
+
   pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
@@ -100,6 +103,8 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   recorder->record();
 
   start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str(), 30s, 1));
 
   pub_manager.run_publishers();
 
@@ -159,6 +164,8 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 
   start_async_spin(recorder);
 
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str(), 30s, 1));
+
   pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
@@ -199,6 +206,8 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   recorder->record();
 
   start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str(), 30s, 1));
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
