@@ -54,7 +54,7 @@ jobs:
       run: |
         rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
         rosbag2_packages=$(colcon list -n --base-paths ${rosbag2_path})
-        source /opt/ros/rolling/setup.sh && colcon test --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
+        source /opt/ros/rolling/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
     - uses: actions/upload-artifact@v1
