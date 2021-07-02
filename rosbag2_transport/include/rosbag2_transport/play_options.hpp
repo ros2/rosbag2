@@ -45,7 +45,7 @@ public:
   // 0 (or negative) means that no publisher will be created
   double clock_publish_frequency = 0.0;
 
-  // Sleep SEC seconds after play. Valid range > 0.0.
+  // Sleep SEC seconds before play. Valid range > 0.0.
   float delay = 0.0;
 };
 

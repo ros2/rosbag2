@@ -213,7 +213,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
 
   float delay_margin = 1.0;
 
-  // Sleep 5.0 seconds after play
+  // Sleep 5.0 seconds before play
   {
     play_options_.delay = 5.0;
     std::chrono::duration<float> delay(play_options_.delay);

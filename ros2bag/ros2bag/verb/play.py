@@ -84,7 +84,7 @@ class PlayVerb(VerbExtension):
                  'Value must be positive. Defaults to not publishing.')
         parser.add_argument(
             '-d', '--delay', type=float, default=0.0,
-            help='Sleep SEC seconds after play. Valid range > 0.0')
+            help='Sleep SEC seconds before play. Valid range > 0.0')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
