@@ -45,6 +45,8 @@ jobs:
               ]
             },
             "test": {
+              "ctest-args": ["-LE", "xfail"],
+              "pytest-args": ["-m", "not xfail"]
             }
           }
     - name: Run xfail tests (not required to succeed)
