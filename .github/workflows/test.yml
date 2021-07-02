@@ -39,7 +39,8 @@ jobs:
           {
             "build": {
               "cmake-args": [
-                "-DCMAKE_CXX_FLAGS=\"-Werror\""
+                "-DCMAKE_CXX_FLAGS=\"-Werror\"",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
               ]
             },
             "test": {
@@ -47,6 +48,12 @@ jobs:
               "pytest-args": ["-m", "not xfail"]
             }
           }
+    - name: Run Clang-Tidy
+      uses: ros-tooling/action-ros-lint@v0.1
+      with:
+        linter: clang_tidy
+        distribution: rolling
+        workspace-directory: outputs.ros-workspace-directory-name
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
