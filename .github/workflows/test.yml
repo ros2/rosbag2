@@ -15,7 +15,9 @@ jobs:
     container:
       image: rostooling/setup-ros-docker:ubuntu-focal-latest
     steps:
-    - uses: ros-tooling/action-ros-ci@v0.2
+    - name: Build and run tests
+      id: action-ros-ci
+      uses: ros-tooling/action-ros-ci@v0.2
       with:
         package-name: |
           ros2bag
@@ -47,6 +49,14 @@ jobs:
               "pytest-args": ["-m", "not xfail"]
             }
           }
+    - name: Run xfail tests (not required to succeed)
+      continue-on-error: true
+      run: |
+        rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
+        rosbag2_packages=$(colcon list -n --base-paths ${rosbag2_path})
+        source /opt/ros/rolling/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
+      working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
+      shell: bash
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
