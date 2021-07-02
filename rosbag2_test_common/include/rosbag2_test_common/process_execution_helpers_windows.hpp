@@ -21,6 +21,7 @@
 #include <Windows.h>
 
 #include <chrono>
+#include <csignal>
 #include <cstdlib>
 #include <string>
 #include <thread>
