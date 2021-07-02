@@ -78,8 +78,7 @@ TEST_F(PlayerTestFixture, playing_respects_relative_timing_of_stored_messages)
   // messages
   auto start = std::chrono::steady_clock::now();
   auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
+    std::move(reader), storage_options_, play_options_);
   player->play();
   auto replay_time = std::chrono::steady_clock::now() - start;
 
@@ -113,8 +112,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -131,8 +129,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -148,8 +145,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -165,8 +161,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -182,8 +177,7 @@ TEST_F(PlayerTestFixture, playing_respects_rate)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -223,8 +217,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
@@ -242,8 +235,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
     prepared_mock_reader->prepare(messages, topics_and_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
     auto replay_time = std::chrono::steady_clock::now() - start;
