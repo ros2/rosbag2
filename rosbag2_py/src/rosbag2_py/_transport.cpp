@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <csignal>
 #include <chrono>
 #include <memory>
 #include <string>
@@ -145,6 +146,10 @@ public:
   Recorder()
   {
     rclcpp::init(0, nullptr);
+    std::signal(
+      SIGTERM, [](int /* signal */) {
+        rclcpp::shutdown();
+      });
   }
 
   virtual ~Recorder()
