@@ -54,8 +54,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str(), 30s, 1));
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str(), 30s, 1));
+  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   pub_manager.run_publishers();
 

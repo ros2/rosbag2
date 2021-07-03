@@ -75,7 +75,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str(), 30s, 1));
+  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
 
   pub_manager.run_publishers();
 
@@ -148,8 +148,8 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str(), 30s, 1));
-  ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str(), 30s, 1));
+  ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str()));
 
   pub_manager.run_publishers();
 

@@ -103,10 +103,11 @@ public:
   /// \param n_subscribers_to_match Number of subscribers publisher should have for match.
   /// \return true if find publisher by specified topic_name and publisher has specified number of
   ///   subscribers, otherwise false.
-  template<typename Timeout>
+  template<typename DurationRepT = int64_t, typename DurationT = std::milli>
   bool wait_for_matched(
     const char * topic_name,
-    Timeout timeout, size_t n_subscribers_to_match = 1)
+    std::chrono::duration<DurationRepT, DurationT> timeout = std::chrono::seconds(30),
+    size_t n_subscribers_to_match = 1)
   {
     rclcpp::PublisherBase::SharedPtr publisher = nullptr;
     for (const auto pub : publishers_) {
