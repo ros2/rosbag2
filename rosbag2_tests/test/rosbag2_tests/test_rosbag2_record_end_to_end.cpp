@@ -180,6 +180,20 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
 
+TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
+  const std::string topic_name = "/test_sigterm";
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, 10);
+  auto process_handle = start_execution(
+    "ros2 bag record --output " + root_bag_path_.string() + " " + topic_name);
+  wait_for_db();
+  pub_manager.run_publishers();
+  stop_execution(process_handle, SIGTERM);
+  wait_for_metadata();
+}
+
 // TODO(zmichaels11): Fix and enable this test on Windows.
 // This tests depends on the ability to read the metadata file.
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
