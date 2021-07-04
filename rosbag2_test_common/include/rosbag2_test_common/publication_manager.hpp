@@ -106,7 +106,7 @@ public:
   template<typename DurationRepT = int64_t, typename DurationT = std::milli>
   bool wait_for_matched(
     const char * topic_name,
-    std::chrono::duration<DurationRepT, DurationT> timeout = std::chrono::seconds(30),
+    std::chrono::duration<DurationRepT, DurationT> timeout = std::chrono::seconds(10),
     size_t n_subscribers_to_match = 1)
   {
     rclcpp::PublisherBase::SharedPtr publisher = nullptr;
