@@ -246,6 +246,16 @@ TimeControllerClock::TimeControllerClock(
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->reference.ros = starting_time;
   impl_->reference.steady = impl_->now_fn();
+
+    srv_jump_ = create_service<rosbag2_interfaces::srv::SetRate>(
+            "~/set_rate",
+            [this](
+                    const std::shared_ptr<rmw_request_id_t>/* request_header */,
+                    const std::shared_ptr<rosbag2_interfaces::srv::Seek::Request> request,
+                    const std::shared_ptr<rosbag2_interfaces::srv::Seek::Response> response)
+            {
+                response->success = jump(request->ros_time);
+            });
 }
 
 TimeControllerClock::~TimeControllerClock()

@@ -51,6 +51,7 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
+find_package(rosbag2_interfaces REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/cache_consumer.cpp
@@ -84,6 +85,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rosidl_runtime_cpp
   rosidl_typesupport_cpp
   rosidl_typesupport_introspection_cpp
+  rosbag2_interfaces
 )
 
 target_include_directories(${PROJECT_NAME}

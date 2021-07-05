@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
+#include "rosbag2_interfaces/srv/Seek.hpp"
 
 namespace rosbag2_cpp
 {
@@ -146,6 +147,7 @@ public:
 
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;
+  rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_jump_;
 };
 
 
