@@ -32,39 +32,19 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
 endif()
 
+# Quiet a warning from pybind11
+if(DEFINED PYTHON_VERSION)
+  set(PYBIND11_PYTHON_VERSION "${PYTHON_VERSION}")
+endif()
 find_package(pybind11 REQUIRED)
 
 if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # pybind11 logic for setting up a debug build when both a debug and release
   # python interpreter are present in the system seems to be pretty much broken.
   # This works around the issue.
+  set(PYTHON_IS_DEBUG TRUE)
   set(PYTHON_LIBRARIES "${PYTHON_DEBUG_LIBRARIES}")
 endif()
-
-function(clean_windows_flags target)
-  # Hack to avoid pybind11 issue.
-  #
-  # TODO(ivanpauno):
-  # This can be deleted when we update `pybind11_vendor` to a version including
-  # https://github.com/pybind/pybind11/pull/2590.
-  #
-  # They are enabling /LTCG on Windows to reduce binary size,
-  # but that doesn't play well with MSVC incremental linking (default for Debug/RelWithDebInfo).
-  #
-  # See:
-  # - https://docs.microsoft.com/en-us/cpp/build/reference/incremental-link-incrementally?view=vs-2019
-  # - https://docs.microsoft.com/en-us/cpp/build/reference/ltcg-link-time-code-generation?view=vs-2019
-
-  if(MSVC AND "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    get_target_property(target_link_libraries ${target} LINK_LIBRARIES)
-    list(REMOVE_ITEM target_link_libraries "$<$<NOT:$<CONFIG:Debug>>:-LTCG>")
-    set_target_properties(${target} PROPERTIES LINK_LIBRARIES "${target_link_libraries}")
-
-    get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
-    list(REMOVE_ITEM target_compile_options "$<$<NOT:$<CONFIG:Debug>>:/GL>")
-    set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
-  endif()
-endfunction()
 
 ament_python_install_package(${PROJECT_NAME})
 
@@ -76,7 +56,6 @@ ament_target_dependencies(_reader PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_reader)
 
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
@@ -86,7 +65,6 @@ ament_target_dependencies(_storage PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_storage)
 
 pybind11_add_module(_writer SHARED
   src/rosbag2_py/_writer.cpp
@@ -96,7 +74,6 @@ ament_target_dependencies(_writer PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_writer)
 
 pybind11_add_module(_info SHARED
   src/rosbag2_py/_info.cpp
