@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
@@ -28,6 +29,8 @@
 #include "rosbag2_transport/recorder.hpp"
 
 #include "record_integration_fixture.hpp"
+
+using namespace std::chrono_literals;  // NOLINT
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -50,6 +53,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   recorder->record();
 
   start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   pub_manager.run_publishers();
 

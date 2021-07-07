@@ -83,7 +83,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
   wait_for_db();
 
@@ -138,7 +138,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic", 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic")) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -224,9 +224,9 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic0", 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic0")) <<
     "Expected find rosbag subscription";
-  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic1", 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic1")) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -278,7 +278,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -352,7 +352,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -416,7 +416,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -487,7 +487,7 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -553,7 +553,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -667,7 +667,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
   wait_for_db();
@@ -723,9 +723,9 @@ TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
       stop_execution(process_handle);
     });
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(first_topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(first_topic_name)) <<
     "Expected find rosbag subscription";
-  ASSERT_TRUE(pub_manager.wait_for_matched(second_topic_name, 30s, 1)) <<
+  ASSERT_TRUE(pub_manager.wait_for_matched(second_topic_name)) <<
     "Expected find rosbag subscription";
   wait_for_db();
 
