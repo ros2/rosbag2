@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - foxy-future
-  # NOTE: build schedules are only supported for the default branch - this wouldn't work anyways
-  # schedule:
-  #   # Run every hour. This helps detect flakiness,
-  #   # and broken external dependencies.
-  #   - cron:  '0 * * * *'
 
 jobs:
   build_and_test:
@@ -19,20 +14,19 @@ jobs:
     steps:
     - uses: ros-tooling/action-ros-ci@v0.2
       with:
-        package-name: |
-          ros2bag
-          rosbag2_compression
-          rosbag2_compression_zstd
-          rosbag2_cpp
-          rosbag2_storage
-          rosbag2_storage_default_plugins
-          rosbag2_test_common
-          rosbag2_tests
-          rosbag2_transport
-          shared_queues_vendor
-          sqlite3_vendor
-          zstd_vendor
         target-ros2-distro: foxy
+        colcon-defaults: |
+          {
+            "build": {
+              "cmake-args": [
+                "-DCMAKE_CXX_FLAGS=\"-Werror\""
+              ]
+            },
+            "test": {
+              "ctest-args": ["-LE", "xfail"],
+              "pytest-args": ["-m", "not xfail"]
+            }
+          }
     - uses: actions/upload-artifact@v1
       with:
         name: colcon-logs
