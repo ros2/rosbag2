@@ -2,6 +2,16 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Handle SIGTERM gracefully in recording (`#792 <https://github.com/ros2/rosbag2/issues/792>`_) (`#807 <https://github.com/ros2/rosbag2/issues/807>`_)
+  Backport `#792 <https://github.com/ros2/rosbag2/issues/792>`_ to galactic
+  * Handle SIGTERM gracefully in recording
+* [backport galactic] Add delay option (`#789 <https://github.com/ros2/rosbag2/issues/789>`_) (`#812 <https://github.com/ros2/rosbag2/issues/812>`_)
+  Backport `#789 <https://github.com/ros2/rosbag2/issues/789>`_ to galactic
+  * Add delay option
+* Contributors: Emerson Knapp, Kosuke Takeuchi
+
 0.9.0 (2021-05-17)
 ------------------
 * remove rosbag2_transport header (`#742 <https://github.com/ros2/rosbag2/issues/742>`_)

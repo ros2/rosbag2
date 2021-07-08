@@ -2,6 +2,14 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Add delay option (`#789 <https://github.com/ros2/rosbag2/issues/789>`_) (`#812 <https://github.com/ros2/rosbag2/issues/812>`_)
+  Backport `#789 <https://github.com/ros2/rosbag2/issues/789>`_ to galactic
+  * Add delay option
+* Copy recorder QoS profile to local variable so that temporary value isn't cleared (`#803 <https://github.com/ros2/rosbag2/issues/803>`_) (`#805 <https://github.com/ros2/rosbag2/issues/805>`_)
+* Contributors: Emerson Knapp, Kosuke Takeuchi
+
 0.9.0 (2021-05-17)
 ------------------
 * Expose play_next service (`#767 <https://github.com/ros2/rosbag2/issues/767>`_)

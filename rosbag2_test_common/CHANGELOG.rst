@@ -2,6 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Handle SIGTERM gracefully in recording (`#792 <https://github.com/ros2/rosbag2/issues/792>`_) (`#807 <https://github.com/ros2/rosbag2/issues/807>`_)
+  Backport `#792 <https://github.com/ros2/rosbag2/issues/792>`_ to galactic
+  * Handle SIGTERM gracefully in recording
+* Contributors: Emerson Knapp
+
 0.9.0 (2021-05-17)
 ------------------
 * Add play_next() API to the player class (`#762 <https://github.com/ros2/rosbag2/issues/762>`_)

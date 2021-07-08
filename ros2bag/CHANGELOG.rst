@@ -2,6 +2,13 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Add delay option (`#789 <https://github.com/ros2/rosbag2/issues/789>`_) (`#812 <https://github.com/ros2/rosbag2/issues/812>`_)
+  Backport `#789 <https://github.com/ros2/rosbag2/issues/789>`_ to galactic
+  * Add delay option
+* Contributors: Kosuke Takeuchi
+
 0.9.0 (2021-05-17)
 ------------------
 

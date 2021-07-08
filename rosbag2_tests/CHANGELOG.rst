@@ -2,6 +2,13 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Handle SIGTERM gracefully in recording (`#792 <https://github.com/ros2/rosbag2/issues/792>`_) (`#807 <https://github.com/ros2/rosbag2/issues/807>`_)
+  Backport `#792 <https://github.com/ros2/rosbag2/issues/792>`_ to galactic
+  * Handle SIGTERM gracefully in recording
+* Contributors: Emerson Knapp
+
 0.9.0 (2021-05-17)
 ------------------
 * Correct expectation for exit code in play_end_to_end test since after redesign we are getting exception in constructor. (`#763 <https://github.com/ros2/rosbag2/issues/763>`_)
