@@ -59,9 +59,9 @@ ProcessHandle start_execution(const std::string & command)
   return process_id;
 }
 
-void stop_execution(const ProcessHandle & handle)
+void stop_execution(const ProcessHandle & handle, int signum = SIGINT)
 {
-  killpg(handle, SIGINT);
+  killpg(handle, signum);
   int child_return_code;
   waitpid(handle, &child_return_code, 0);
   // this call will make sure that the process does execute without issues before it is killed by
