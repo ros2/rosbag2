@@ -118,13 +118,14 @@ public:
   /// published or rclcpp context shut down.
   /// \note If internal player queue is starving and storage has not been completely loaded,
   /// this method will wait until new element will be pushed to the queue.
-  /// \return true if Player::play() has been started, player in pause mode and successfully
-  /// played next message, otherwise false.
+  /// \return true if player in pause mode and successfully played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
 
 protected:
-  std::atomic<bool> playing_messages_from_queue_{false};
+  bool is_ready_to_play_from_queue_{false};
+  std::mutex ready_to_play_from_queue_mutex_;
+  std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
 
@@ -151,7 +152,6 @@ private:
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
     (skip_message_in_main_play_loop_mutex_) = false;
-  std::atomic_bool is_in_play_{false};
 
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;

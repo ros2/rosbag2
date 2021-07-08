@@ -212,16 +212,12 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
-  is_in_play_ = true;
-
   float delay;
   if (play_options_.delay >= 0.0) {
     delay = play_options_.delay;
   } else {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Invalid delay value: %f. Delay is disabled.",
-      play_options_.delay);
+      this->get_logger(), "Invalid delay value: %f. Delay is disabled.", play_options_.delay);
     delay = 0.0;
   }
 
@@ -237,18 +233,28 @@ void Player::play()
         reader_->get_metadata().starting_time.time_since_epoch()).count();
       clock_->jump(starting_time);
 
-      storage_loading_future_ = std::async(
-        std::launch::async,
-        [this]() {load_storage_content();});
+      storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
 
       wait_for_filled_queue();
+      {  // Notify play_next() that we are ready for playback
+        std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+        is_ready_to_play_from_queue_ = true;
+        ready_to_play_from_queue_cv_.notify_all();
+      }
       play_messages_from_queue();
+      {
+        std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+        is_ready_to_play_from_queue_ = false;
+        ready_to_play_from_queue_cv_.notify_all();
+      }
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
   }
-  is_in_play_ = false;
+  std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+  is_ready_to_play_from_queue_ = false;
+  ready_to_play_from_queue_cv_.notify_all();
 }
 
 void Player::pause()
@@ -299,14 +305,19 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
 
 bool Player::play_next()
 {
-  // Temporary take over playback from play_messages_from_queue()
-  std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
-
-  if (!clock_->is_paused() || !is_in_play_) {
+  if (!clock_->is_paused()) {
     return false;
   }
 
+  // Temporary take over playback from play_messages_from_queue()
+  std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
   skip_message_in_main_play_loop_ = true;
+  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
+  // be called if not yet and queue to be filled with messages.
+  {
+    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  }
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
@@ -361,7 +372,6 @@ void Player::enqueue_up_to_boundary(uint64_t boundary)
 
 void Player::play_messages_from_queue()
 {
-  playing_messages_from_queue_ = true;
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
@@ -386,7 +396,6 @@ void Player::play_messages_from_queue()
       message_ptr = peek_next_message_from_queue();
     }
   }
-  playing_messages_from_queue_ = false;
 }
 
 void Player::prepare_publishers()

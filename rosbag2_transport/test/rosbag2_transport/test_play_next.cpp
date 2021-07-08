@@ -51,9 +51,8 @@ public:
 
   void wait_for_playback_to_start()
   {
-    while (!playing_messages_from_queue_) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
 };
 
@@ -74,10 +73,8 @@ TEST_F(RosBag2PlayTestFixture, play_next_with_false_preconditions) {
 
   ASSERT_FALSE(player->is_paused());
   ASSERT_FALSE(player->play_next());
-
   player->pause();
   ASSERT_TRUE(player->is_paused());
-  ASSERT_FALSE(player->play_next());
 }
 
 TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
@@ -167,7 +164,6 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
   ASSERT_TRUE(player->is_paused());
 
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
-  player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -221,7 +217,6 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   ASSERT_TRUE(player->is_paused());
 
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
-  player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -276,7 +271,6 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_play_next) {
   ASSERT_TRUE(player->is_paused());
 
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
-  player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -333,7 +327,6 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   ASSERT_TRUE(player->is_paused());
 
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
-  player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
