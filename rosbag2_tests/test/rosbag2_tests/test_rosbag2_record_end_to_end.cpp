@@ -164,6 +164,8 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(wrong_topic_messages, IsEmpty());
 }
 
+// Disable this test on Windows in Foxy. See TODO note on following metadata test for details.
+#ifndef _WIN32
 TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   const std::string topic_name = "/test_sigterm";
   auto message = get_messages_strings()[0];
@@ -177,6 +179,7 @@ TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   stop_execution(process_handle, SIGTERM);
   wait_for_metadata();
 }
+#endif
 
 // TODO(zmichaels11): Fix and enable this test on Windows.
 // This tests depends on the ability to read the metadata file.
