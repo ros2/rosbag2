@@ -124,6 +124,9 @@ public:
   bool play_next();
 
 protected:
+  bool is_ready_to_play_from_queue_{false};
+  std::mutex ready_to_play_from_queue_mutex_;
+  std::condition_variable ready_to_play_from_queue_cv_;
   std::atomic<bool> playing_messages_from_queue_{false};
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
@@ -140,7 +143,8 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
-  std::unique_ptr<rosbag2_cpp::Reader> reader_;
+  std::mutex reader_mutex_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
