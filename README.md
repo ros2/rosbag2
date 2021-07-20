@@ -164,6 +164,11 @@ For example, if we named the above XML launch script, `record_all.launch.xml`:
 $ ros2 launch record_all.launch.xml
 ```
 
+### Using the API
+
+rosbag2 offers a complete API for manipulating bag files.
+Code samples demonstrating how to do so can be found in the `rosbag2_samples` directory.
+
 ## Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field called `storage id:`.
