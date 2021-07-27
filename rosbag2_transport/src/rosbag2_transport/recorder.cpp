@@ -153,24 +153,12 @@ Recorder::get_requested_or_available_topics()
     return filtered_topics_and_types;
   }
 
-  std::unordered_map<std::string, std::string> filtered_by_regex;
-
-  std::regex topic_regex(record_options_.regex);
-  std::regex exclude_regex(record_options_.exclude);
-  bool take = record_options_.all;
-  for (const auto & kv : filtered_topics_and_types) {
-    // regex_match returns false for 'empty' regex
-    if (!record_options_.regex.empty()) {
-      take = std::regex_match(kv.first, topic_regex);
-    }
-    if (take) {
-      take = !std::regex_match(kv.first, exclude_regex);
-    }
-    if (take) {
-      filtered_by_regex.insert(kv);
-    }
-  }
-  return filtered_by_regex;
+  return topic_filter::filter_topics_using_regex(
+    filtered_topics_and_types,
+    record_options_.regex,
+    record_options_.exclude,
+    record_options_.all
+  );
 }
 
 std::unordered_map<std::string, std::string>

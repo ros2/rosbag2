@@ -25,6 +25,19 @@
 
 using namespace ::testing;  // NOLINT
 
+class RegexFixture : public Test
+{
+protected:
+  std::unordered_map<std::string, std::string> topics_and_types_ = {
+    {"/planning", "planning_topic_type"},
+    {"/invalid_topic", "invalid_topic_type"},
+    {"/invalidated_topic", "invalidated_topic_type"},
+    {"/localization", "localization_topic_type"},
+    {"/invisible", "invisible_topic_type"},
+    {"/status", "status_topic_type"}
+  };
+};
+
 TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   std::map<std::string, std::vector<std::string>> topic_with_type;
   topic_with_type.insert({"topic/a", {"type_a"}});
@@ -121,4 +134,75 @@ TEST(TestTopicFilter, filter_topics) {
       EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
     }
   }
+}
+
+TEST_F(RegexFixture, regex_all_and_exclude)
+{
+  std::string filter_regex_string = "";
+  std::string exclude_regex_string = "/inv.*";
+  bool all_flag = true;
+
+  auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_using_regex(
+    topics_and_types_,
+    filter_regex_string,
+    exclude_regex_string,
+    all_flag
+  );
+
+  EXPECT_THAT(filtered_topics, SizeIs(3));
+  for (const auto & topic : {"/planning", "/localization", "/status"}) {
+    EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
+  }
+}
+
+TEST_F(RegexFixture, regex_filter_exclude)
+{
+  std::string filter_regex_string = "/invalid.*";
+  std::string exclude_regex_string = ".invalidated.*";
+  bool all_flag = false;
+
+  auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_using_regex(
+    topics_and_types_,
+    filter_regex_string,
+    exclude_regex_string,
+    all_flag
+  );
+
+  EXPECT_THAT(filtered_topics, SizeIs(1));
+  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+}
+
+TEST_F(RegexFixture, regex_filter)
+{
+  std::string filter_regex_string = "/inval.*";
+  std::string exclude_regex_string = "";
+  bool all_flag = false;
+
+  auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_using_regex(
+    topics_and_types_,
+    filter_regex_string,
+    exclude_regex_string,
+    all_flag
+  );
+
+  EXPECT_THAT(filtered_topics, SizeIs(2));
+  for (const auto & topic : {"/invalid_topic", "/invalidated_topic"}) {
+    EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
+  }
+}
+
+TEST_F(RegexFixture, regex_all_and_filter)
+{
+  std::string filter_regex_string = "/status";
+  std::string exclude_regex_string = "";
+  bool all_flag = true;
+
+  auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_using_regex(
+    topics_and_types_,
+    filter_regex_string,
+    exclude_regex_string,
+    all_flag
+  );
+
+  EXPECT_THAT(filtered_topics, SizeIs(6));
 }
