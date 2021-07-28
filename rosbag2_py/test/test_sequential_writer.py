@@ -99,3 +99,13 @@ def test_sequential_writer(tmp_path):
 def test_plugin_list():
     writer_plugins = rosbag2_py.get_registered_writers()
     assert 'my_test_plugin' in writer_plugins
+
+
+def test_compression_plugin_list():
+    """
+    Testing retrieval of available compression format plugins.
+
+    :return:
+    """
+    compression_formats = rosbag2_py.get_registered_compressors()
+    assert 'zstd' in compression_formats
