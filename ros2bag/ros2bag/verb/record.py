@@ -23,6 +23,7 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_registered_writers
 from rosbag2_py import get_registered_compressors
+from rosbag2_py import get_registered_serializers
 from rosbag2_py import Recorder
 from rosbag2_py import RecordOptions
 from rosbag2_py import StorageOptions
@@ -37,6 +38,7 @@ class RecordVerb(VerbExtension):
         default_writer = 'sqlite3' if 'sqlite3' in writer_choices else writer_choices[0]
 
         compression_format_choices = get_registered_compressors()
+        serialization_choices = get_registered_serializers()
 
         parser.add_argument(
             '-a', '--all', action='store_true',
@@ -59,7 +61,7 @@ class RecordVerb(VerbExtension):
             '-s', '--storage', default=default_writer, choices=writer_choices,
             help=f"storage identifier to be used, defaults to '{default_writer}'")
         parser.add_argument(
-            '-f', '--serialization-format', default='',
+            '-f', '--serialization-format', default='', choices=serialization_choices,
             help='rmw serialization format in which the messages are saved, defaults to the'
                  ' rmw currently in use')
         parser.add_argument(
