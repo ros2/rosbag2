@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base_compressor_interface.hpp"
 #include "base_decompressor_interface.hpp"
@@ -65,6 +66,13 @@ public:
    */
   virtual std::shared_ptr<rosbag2_compression::BaseDecompressorInterface>
   create_decompressor(const std::string & compression_format);
+
+  /**
+   * Determine which compression plugins are available.
+   *
+   * \return A vector of all available compression plugins.
+   */
+  virtual std::vector<std::string> get_declared_compressor_plugins() const;
 
 private:
   std::unique_ptr<CompressionFactoryImpl> impl_;
