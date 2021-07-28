@@ -22,6 +22,7 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -92,6 +93,13 @@ std::unordered_set<std::string> get_registered_compressors()
   return std::unordered_set<std::string>(compressor_plugins.begin(), compressor_plugins.end());
 }
 
+std::unordered_set<std::string> get_registered_serializers()
+{
+  rosbag2_cpp::SerializationFormatConverterFactory serialization_factory;
+  const auto serialization_plugins = serialization_factory.get_declared_serialization_plugins();
+  return std::unordered_set<std::string>(serialization_plugins.begin(), serialization_plugins.end());
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_writer, m) {
@@ -126,4 +134,9 @@ PYBIND11_MODULE(_writer, m) {
     "get_registered_compressors",
     &rosbag2_py::get_registered_compressors,
     "Returns list of compression plugins available for rosbag2 recording");
+
+  m.def(
+    "get_registered_serializers",
+    &rosbag2_py::get_registered_serializers,
+    "Returns list of serialization format plugins available for rosbag2 recording");
 }
