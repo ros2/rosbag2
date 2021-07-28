@@ -40,6 +40,20 @@
 namespace
 {
 /**
+ * Trivial std::unique_lock wrapper providing constructor that allows Clang Thread Safety Analysis.
+ * The std::unique_lock does not have these annotations.
+ */
+class RCPPUTILS_TSA_SCOPED_CAPABILITY TSAUniqueLock : public std::unique_lock<std::mutex>
+{
+public:
+  explicit TSAUniqueLock(std::mutex & mu) RCPPUTILS_TSA_ACQUIRE(mu)
+  : std::unique_lock<std::mutex>(mu)
+  {}
+
+  ~TSAUniqueLock() RCPPUTILS_TSA_RELEASE() {}
+};
+
+/**
  * Determine which QoS to offer for a topic.
  * The priority of the profile selected is:
  *   1. The override specified in play_options (if one exists for the topic).
@@ -102,11 +116,12 @@ Player::Player(
 : rclcpp::Node(
     node_name,
     rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
-  reader_(std::move(reader)),
   storage_options_(storage_options),
   play_options_(play_options)
 {
   {
+    std::lock_guard<std::mutex> lk(reader_mutex_);
+    reader_ = std::move(reader);
     reader_->open(storage_options_, {"", rmw_get_serialization_format()});
     const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
       reader_->get_metadata().starting_time.time_since_epoch()).count();
@@ -186,6 +201,7 @@ Player::Player(
 
 Player::~Player()
 {
+  std::lock_guard<std::mutex> lk(reader_mutex_);
   if (reader_) {
     reader_->close();
   }
@@ -193,6 +209,7 @@ Player::~Player()
 
 rosbag2_cpp::Reader * Player::release_reader()
 {
+  std::lock_guard<std::mutex> lk(reader_mutex_);
   reader_->close();
   return reader_.release();
 }
@@ -228,9 +245,13 @@ void Player::play()
         std::chrono::duration<float> duration(delay);
         std::this_thread::sleep_for(duration);
       }
-      reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-      const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        reader_->get_metadata().starting_time.time_since_epoch()).count();
+      rcutils_time_point_value_t starting_time = 0;
+      {
+        std::lock_guard<std::mutex> lk(reader_mutex_);
+        reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+        starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          reader_->get_metadata().starting_time.time_since_epoch()).count();
+      }
       clock_->jump(starting_time);
 
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
@@ -242,6 +263,7 @@ void Player::play()
         is_ready_to_play_from_queue_ = false;
         ready_to_play_from_queue_cv_.notify_all();
       }
+      std::lock_guard<std::mutex> lk(reader_mutex_);
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
@@ -344,16 +366,20 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (reader_->has_next() && rclcpp::ok()) {
+  while (rclcpp::ok()) {
+    TSAUniqueLock lk(reader_mutex_);
+    if (!reader_->has_next()) {break;}
+
     if (message_queue_.size_approx() < queue_lower_boundary) {
       enqueue_up_to_boundary(queue_upper_boundary);
     } else {
+      lk.unlock();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }
 
-void Player::enqueue_up_to_boundary(uint64_t boundary)
+void Player::enqueue_up_to_boundary(size_t boundary)
 {
   rosbag2_storage::SerializedBagMessageSharedPtr message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {

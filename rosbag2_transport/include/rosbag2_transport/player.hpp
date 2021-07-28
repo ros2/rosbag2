@@ -133,7 +133,7 @@ private:
   rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
   void load_storage_content();
   bool is_storage_completely_loaded() const;
-  void enqueue_up_to_boundary(uint64_t boundary);
+  void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void prepare_publishers();
@@ -141,7 +141,8 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
 
-  std::unique_ptr<rosbag2_cpp::Reader> reader_;
+  std::mutex reader_mutex_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
