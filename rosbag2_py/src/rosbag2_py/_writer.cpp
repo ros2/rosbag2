@@ -17,6 +17,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/writer.hpp"
@@ -84,6 +85,13 @@ std::unordered_set<std::string> get_registered_writers()
   return std::unordered_set<std::string>(read_write.begin(), read_write.end());
 }
 
+std::unordered_set<std::string> get_registered_compressors()
+{
+  rosbag2_compression::CompressionFactory compression_factory;
+  const auto compressor_plugins = compression_factory.get_declared_compressor_plugins();
+  return std::unordered_set<std::string>(compressor_plugins.begin(), compressor_plugins.end());
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_writer, m) {
@@ -113,4 +121,9 @@ PYBIND11_MODULE(_writer, m) {
     "get_registered_writers",
     &rosbag2_py::get_registered_writers,
     "Returns list of discovered plugins that support rosbag2 recording");
+
+  m.def(
+    "get_registered_compressors",
+    &rosbag2_py::get_registered_compressors,
+    "Returns list of compression plugins available for rosbag2 recording");
 }

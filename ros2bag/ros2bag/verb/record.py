@@ -22,6 +22,7 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_registered_writers
+from rosbag2_py import get_registered_compressors
 from rosbag2_py import Recorder
 from rosbag2_py import RecordOptions
 from rosbag2_py import StorageOptions
@@ -34,6 +35,8 @@ class RecordVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         writer_choices = get_registered_writers()
         default_writer = 'sqlite3' if 'sqlite3' in writer_choices else writer_choices[0]
+
+        compression_format_choices = get_registered_compressors()
 
         parser.add_argument(
             '-a', '--all', action='store_true',
@@ -96,7 +99,7 @@ class RecordVerb(VerbExtension):
             help="Determine whether to compress by file or message. Default is 'none'."
         )
         parser.add_argument(
-            '--compression-format', type=str, default='', choices=['zstd'],
+            '--compression-format', type=str, default='', choices=compression_format_choices,
             help='Specify the compression format/algorithm. Default is none.'
         )
         parser.add_argument(
