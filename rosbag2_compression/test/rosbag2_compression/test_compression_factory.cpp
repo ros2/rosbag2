@@ -52,8 +52,6 @@ TEST_F(CompressionFactoryTest, throws_on_bad_decompressor_format) {
 
 TEST_F(CompressionFactoryTest, load_compression_plugins_test) {
   const auto compression_format = "fake_comp";
-  auto compressor = factory.create_compressor(compression_format);
-  ASSERT_TRUE(compressor != nullptr);
   std::vector<std::string> compressor_list = factory.get_declared_compressor_plugins();
   bool found_compressor = false;
 
