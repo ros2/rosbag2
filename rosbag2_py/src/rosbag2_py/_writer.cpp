@@ -97,7 +97,9 @@ std::unordered_set<std::string> get_registered_serializers()
 {
   rosbag2_cpp::SerializationFormatConverterFactory serialization_factory;
   const auto serialization_plugins = serialization_factory.get_declared_serialization_plugins();
-  return std::unordered_set<std::string>(serialization_plugins.begin(), serialization_plugins.end());
+  return std::unordered_set<std::string>(
+    serialization_plugins.begin(),
+    serialization_plugins.end());
 }
 
 }  // namespace rosbag2_py

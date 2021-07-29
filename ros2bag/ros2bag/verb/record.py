@@ -21,9 +21,9 @@ from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
-from rosbag2_py import get_registered_writers
 from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
+from rosbag2_py import get_registered_writers
 from rosbag2_py import Recorder
 from rosbag2_py import RecordOptions
 from rosbag2_py import StorageOptions
