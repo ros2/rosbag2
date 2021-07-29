@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 
@@ -34,6 +35,10 @@ public:
     load_deserializer,
     std::unique_ptr<rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer>(
       const std::string &));
+
+  MOCK_CONST_METHOD0(
+    get_declared_serialization_plugins,
+    std::vector<std::string>());
 };
 
 #endif  // ROSBAG2_COMPRESSION__MOCK_CONVERTER_FACTORY_HPP_

@@ -109,3 +109,13 @@ def test_compression_plugin_list():
     """
     compression_formats = rosbag2_py.get_registered_compressors()
     assert 'zstd' in compression_formats
+
+
+def test_serialization_plugin_list():
+    """
+    Testing retrieval of available serialization format plugins.
+
+    :return:
+    """
+    serialization_formats = rosbag2_py.get_registered_serializers()
+    assert 's_converter' in serialization_formats
