@@ -49,7 +49,7 @@ public:
   std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
   load_serializer(const std::string & format) override;
 
-  virtual std::vector<std::string> get_declared_serialization_plugins() const override;
+  std::vector<std::string> get_declared_serialization_plugins() const override;
 
 private:
   std::unique_ptr<SerializationFormatConverterFactoryImpl> impl_;
