@@ -17,8 +17,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "pluginlib/class_loader.hpp"
-
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_compression/compression_traits.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
@@ -34,6 +32,7 @@
 #include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
+#include "./py_utils.hpp"
 #include "./pybind11.hpp"
 
 namespace rosbag2_py
@@ -85,38 +84,29 @@ protected:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
 
-template<typename InterfaceT>
-std::unordered_set<std::string> get_class_plugins(std::string package_name, std::string base_class)
-{
-  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader =
-    std::make_shared<pluginlib::ClassLoader<InterfaceT>>(package_name, base_class);
-
-  std::vector<std::string> plugin_list = class_loader->getDeclaredClasses();
-  return std::unordered_set<std::string>(plugin_list.begin(), plugin_list.end());
-}
-
 std::unordered_set<std::string> get_registered_writers()
 {
   const auto lookup_name =
     rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadWriteInterface>::name;
-  return get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>
-    ("rosbag2_storage", lookup_name);
+  return get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
+    "rosbag2_storage", lookup_name);
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
   const auto lookup_name =
     rosbag2_compression::CompressionTraits<rosbag2_compression::BaseCompressorInterface>::name;
-  return get_class_plugins<rosbag2_compression::BaseCompressorInterface>
-    ("rosbag2_compression", lookup_name);
+  return get_class_plugins<rosbag2_compression::BaseCompressorInterface>(
+    "rosbag2_compression",
+    lookup_name);
 }
 
 std::unordered_set<std::string> get_registered_serializers()
 {
   const auto lookup_name = rosbag2_cpp::ConverterTraits
     <rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>::name;
-  return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>
-    ("rosbag2_cpp", lookup_name);
+  return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>(
+    "rosbag2_cpp", lookup_name);
 }
 
 }  // namespace rosbag2_py

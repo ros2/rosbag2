@@ -35,7 +35,6 @@ public:
 
   virtual std::shared_ptr<storage_interfaces::ReadWriteInterface>
   open_read_write(const StorageOptions & storage_options) = 0;
-
 };
 
 }  // namespace rosbag2_storage

@@ -21,30 +21,32 @@
 
 namespace rosbag2_cpp
 {
-  template<typename T>
-  struct ConverterTraits
-  {};
 
-  template<>
-  struct ConverterTraits<converter_interfaces::SerializationFormatConverter>
-  {
-  static constexpr const char * name =
-      "rosbag2_cpp::converter_interfaces::SerializationFormatConverter";
-  };
+template<typename T>
+struct ConverterTraits
+{};
 
-  template<>
-  struct ConverterTraits<converter_interfaces::SerializationFormatSerializer>
-  {
+template<>
+struct ConverterTraits<converter_interfaces::SerializationFormatConverter>
+{
   static constexpr const char * name =
-      "rosbag2_cpp::converter_interfaces::SerializationFormatSerializer";
-  };
+    "rosbag2_cpp::converter_interfaces::SerializationFormatConverter";
+};
 
-  template<>
-  struct ConverterTraits<converter_interfaces::SerializationFormatDeserializer>
-  {
+template<>
+struct ConverterTraits<converter_interfaces::SerializationFormatSerializer>
+{
   static constexpr const char * name =
-      "rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer";
-  };
+    "rosbag2_cpp::converter_interfaces::SerializationFormatSerializer";
+};
+
+template<>
+struct ConverterTraits<converter_interfaces::SerializationFormatDeserializer>
+{
+  static constexpr const char * name =
+    "rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer";
+};
+
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__CONVERTER_TRAITS_HPP_

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 

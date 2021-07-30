@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "./serialization_format_converter_factory_impl.hpp"
 

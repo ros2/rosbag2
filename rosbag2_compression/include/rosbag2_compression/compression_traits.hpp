@@ -19,20 +19,22 @@
 
 namespace rosbag2_compression
 {
-  template<typename T>
-  struct CompressionTraits
-  {};
 
-  template<>
-  struct CompressionTraits<BaseCompressorInterface>
-  {
+template<typename T>
+struct CompressionTraits
+{};
+
+template<>
+struct CompressionTraits<BaseCompressorInterface>
+{
   static constexpr const char * name = "rosbag2_compression::BaseCompressorInterface";
-  };
+};
 
-  template<>
-  struct CompressionTraits<BaseDecompressorInterface>
-  {
+template<>
+struct CompressionTraits<BaseDecompressorInterface>
+{
   static constexpr const char * name = "rosbag2_compression::BaseDecompressorInterface";
-  };
+};
+
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__COMPRESSION_TRAITS_HPP_
