@@ -108,7 +108,7 @@ def test_compression_plugin_list():
     :return:
     """
     compression_formats = rosbag2_py.get_registered_compressors()
-    assert 'zstd' in compression_formats
+    assert 'fake_comp' in compression_formats
 
 
 def test_serialization_plugin_list():
