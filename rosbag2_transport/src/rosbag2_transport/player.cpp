@@ -236,11 +236,6 @@ void Player::play()
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
 
       wait_for_filled_queue();
-      {  // Notify play_next() that we are ready for playback
-        std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
-        is_ready_to_play_from_queue_ = true;
-        ready_to_play_from_queue_cv_.notify_all();
-      }
       play_messages_from_queue();
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
@@ -375,6 +370,14 @@ void Player::play_messages_from_queue()
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  { // Notify play_next() that we are ready for playback
+    // Note: We should do notification that we are ready for playback after peeking pointer to
+    // the next message. message_queue_.peek() is not allowed to be called from more than one
+    // thread concurrently.
+    std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+    is_ready_to_play_from_queue_ = true;
+    ready_to_play_from_queue_cv_.notify_all();
+  }
   while (message_ptr != nullptr && rclcpp::ok()) {
     {
       rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
