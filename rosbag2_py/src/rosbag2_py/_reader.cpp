@@ -18,10 +18,15 @@
 #include <unordered_set>
 #include <vector>
 
+#include "pluginlib/class_loader.hpp"
+
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -84,17 +89,35 @@ protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
 
+template<typename InterfaceT>
+std::unordered_set<std::string> get_class_plugins(std::string package_name, std::string base_class)
+{
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader =
+    std::make_shared<pluginlib::ClassLoader<InterfaceT>>(package_name, base_class);
+
+  std::vector<std::string> plugin_list = class_loader->getDeclaredClasses();
+  return std::unordered_set<std::string>(plugin_list.begin(), plugin_list.end());
+}
+
 std::unordered_set<std::string> get_registered_readers()
 {
-  rosbag2_storage::StorageFactory storage_factory;
+  const auto rw_lookup_name =
+    rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadWriteInterface>::name;
+  std::unordered_set<std::string> combined_plugins =
+    get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>
+      ("rosbag2_storage", rw_lookup_name);
 
-  const auto read_only = storage_factory.get_declared_read_only_plugins();
-  std::unordered_set<std::string> all_readers(read_only.begin(), read_only.end());
+  const auto read_lookup_name =
+    rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadWriteInterface>::name;
+  std::unordered_set<std::string> read_only_plugins =
+    get_class_plugins<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
+      ("rosbag2_storage", read_lookup_name);
 
-  const auto read_write = storage_factory.get_declared_read_write_plugins();
-  std::copy(read_write.begin(), read_write.end(), std::inserter(all_readers, all_readers.end()));
 
-  return all_readers;
+  // Merge read/write and read-only plugin sets
+  combined_plugins.insert(read_only_plugins.begin(), read_only_plugins.end());
+
+  return combined_plugins;
 }
 
 }  // namespace rosbag2_py

@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "rosbag2_compression/compression_factory.hpp"
 
@@ -38,11 +37,6 @@ std::shared_ptr<rosbag2_compression::BaseDecompressorInterface>
 CompressionFactory::create_decompressor(const std::string & compression_format)
 {
   return impl_->create_decompressor(compression_format);
-}
-
-std::vector<std::string> CompressionFactory::get_declared_compressor_plugins() const
-{
-  return impl_->get_declared_compressor_plugins();
 }
 
 }  // namespace rosbag2_compression
