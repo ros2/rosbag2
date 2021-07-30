@@ -63,10 +63,12 @@ class ListVerb(VerbExtension):
                     # Compression and decompression plugins share the same resource index
                     # so they must be filtered using their base class
                     if args.plugin_type == 'compression' and \
-                            base_class_name.value != 'rosbag2_compression::BaseCompressorInterface':
+                            base_class_name.value != \
+                            'rosbag2_compression::BaseCompressorInterface':
                         continue
                     elif args.plugin_type == 'decompression' and \
-                            base_class_name.value != 'rosbag2_compression::BaseDecompressorInterface':
+                            base_class_name.value != \
+                            'rosbag2_compression::BaseDecompressorInterface':
                         continue
 
                     print('%s%s' % (('name: ' if args.verbose else ''), class_name.value))
