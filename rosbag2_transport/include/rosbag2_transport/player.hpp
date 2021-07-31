@@ -105,11 +105,8 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   double get_rate() const;
 
-  /// Set the playback rate.
-  /**
-   * Set the playback rate.
-   * \return false if an invalid value was provided (<= 0).
-   */
+  /// \brief Set the playback rate.
+  /// \return false if an invalid value was provided (<= 0).
   ROSBAG2_TRANSPORT_PUBLIC
   bool set_rate(double);
 
@@ -121,6 +118,16 @@ public:
   /// \return true if player in pause mode and successfully played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
   bool play_next();
+
+  /// \brief Advance player to the message with closest timestamp >= time_point.
+  /// \details This is blocking call and it will wait until current message will be published
+  /// and message queue will be refilled. Could take substantial amount of time to find
+  /// required message or return player to the original stage.
+  /// \param time_point Time point in ROS playback timeline.
+  /// \throw runtime_error if fail to restore message queue.
+  /// \return true if valid time in bag duration and successful seek operation, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool seek(rcutils_time_point_value_t time_point);
 
 protected:
   bool is_ready_to_play_from_queue_{false};
@@ -138,8 +145,12 @@ private:
   void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  void restore_message_queue_from_storage(
+    rosbag2_storage::SerializedBagMessageSharedPtr origin_message) RCPPUTILS_TSA_REQUIRES(
+    reader_mutex_);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
+  std::atomic_bool cancel_wait_for_next_message_{false};
 
   std::mutex reader_mutex_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
