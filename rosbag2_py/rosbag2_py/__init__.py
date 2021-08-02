@@ -35,6 +35,8 @@ with add_dll_directories_from_env('PATH'):
         SequentialCompressionWriter,
         SequentialWriter,
         get_registered_writers,
+        get_registered_compressors,
+        get_registered_serializers,
     )
     from rosbag2_py._info import (
         Info,
@@ -53,6 +55,8 @@ __all__ = [
     'ConverterOptions',
     'get_registered_readers',
     'get_registered_writers',
+    'get_registered_compressors',
+    'get_registered_serializers',
     'Reindexer',
     'SequentialCompressionReader',
     'SequentialCompressionWriter',

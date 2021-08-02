@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -34,6 +35,8 @@ public:
 
   virtual std::unique_ptr<converter_interfaces::SerializationFormatSerializer>
   load_serializer(const std::string & format) = 0;
+
+  virtual std::vector<std::string> get_declared_serialization_plugins() const = 0;
 };
 
 }  // namespace rosbag2_cpp

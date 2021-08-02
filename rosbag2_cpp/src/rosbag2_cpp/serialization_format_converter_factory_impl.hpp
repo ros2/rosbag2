@@ -73,6 +73,11 @@ public:
     return load_interface(format, serializer_class_loader_);
   }
 
+  std::vector<std::string> get_declared_serialization_plugins() const
+  {
+    return serializer_class_loader_->getDeclaredClasses();
+  }
+
 private:
   // Return true if a plugin is found with this ID
   bool is_plugin_registered(
