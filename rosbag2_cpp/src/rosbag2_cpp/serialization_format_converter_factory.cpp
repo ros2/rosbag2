@@ -41,4 +41,10 @@ SerializationFormatConverterFactory::load_serializer(const std::string & format)
   return impl_->load_serializer(format);
 }
 
+std::vector<std::string>
+SerializationFormatConverterFactory::get_declared_serialization_plugins() const
+{
+  return impl_->get_declared_serialization_plugins();
+}
+
 }  // namespace rosbag2_cpp

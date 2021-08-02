@@ -16,6 +16,7 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
 
 #include "rosbag2_compression/compression_factory.hpp"
 
@@ -47,4 +48,19 @@ TEST_F(CompressionFactoryTest, throws_on_bad_compressor_format) {
 TEST_F(CompressionFactoryTest, throws_on_bad_decompressor_format) {
   const auto compression_format = "bar";
   ASSERT_EQ(factory.create_decompressor(compression_format), nullptr);
+}
+
+TEST_F(CompressionFactoryTest, load_compression_plugins_test) {
+  const auto compression_format = "fake_comp";
+  std::vector<std::string> compressor_list = factory.get_declared_compressor_plugins();
+  bool found_compressor = false;
+
+  // Ensure the compressor plugin can be found
+  for (auto it = compressor_list.begin(); it != compressor_list.end(); it++) {
+    if (*it == compression_format) {
+      found_compressor = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(found_compressor);
 }
