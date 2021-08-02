@@ -51,3 +51,16 @@ TEST_F(ConverterFactoryTest, load_deserializer_cannot_load_serializer_plugin) {
   auto converter = factory.load_deserializer("s");
   EXPECT_THAT(converter, IsNull());
 }
+
+TEST_F(ConverterFactoryTest, load_serialization_plugins_test) {
+  auto serialization_plugins = factory.get_declared_serialization_plugins();
+  bool found = false;
+
+  for (auto it = serialization_plugins.begin(); it != serialization_plugins.end(); it++) {
+    if (*it == "s_converter") {
+      found = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(found);
+}

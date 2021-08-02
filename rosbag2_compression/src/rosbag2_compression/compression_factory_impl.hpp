@@ -19,6 +19,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "pluginlib/class_loader.hpp"
 
@@ -112,6 +113,12 @@ public:
         "Could not load/open plugin for compression format '" << compression_format << "'");
     }
     return instance;
+  }
+
+  /// See CompressionFactory::get_declared_compressor_plugins for documentation.
+  std::vector<std::string> get_declared_compressor_plugins() const
+  {
+    return compressor_class_loader_->getDeclaredClasses();
   }
 
 private:
