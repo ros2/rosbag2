@@ -123,13 +123,12 @@ TEST_F(MultifileReaderTest, has_next_reads_next_file)
 {
   init();
 
-  // storage::has_next() is called twice when reader::has_next() is called
-  EXPECT_CALL(*storage_, has_next()).Times(6)
-  .WillOnce(Return(true)).WillOnce(Return(true))  // We have a message
-  .WillOnce(Return(false))  // No message, load next file
-  .WillOnce(Return(true))  // True since we now have a message
-  .WillOnce(Return(false))  // No message, load next file
-  .WillOnce(Return(true));  // True since we now have a message
+  EXPECT_CALL(*storage_, has_next()).Times(5)
+  .WillOnce(Return(false))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false))
+  .WillOnce(Return(true))
+  .WillOnce(Return(true));
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format_)).Times(0);
   EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format_)).Times(0);
   reader_->open(default_storage_options_, {"", storage_serialization_format_});
@@ -144,12 +143,10 @@ TEST_F(MultifileReaderTest, has_next_reads_next_file)
   auto resolved_absolute_path_1 =
     rcpputils::fs::path(absolute_path_1_).string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
-  reader_->has_next();
-  reader_->read_next();
-  reader_->has_next();
+  reader_->read_next();  // calls has_next false then true
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
-  reader_->read_next();
-  reader_->has_next();
+  reader_->has_next();  // calls has_next false then true
+  reader_->read_next();  // calls has_next true
   EXPECT_EQ(sr.get_current_file(), resolved_absolute_path_1);
 }
 
@@ -157,13 +154,12 @@ TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
 {
   init();
 
-  // storage::has_next() is called twice when reader::has_next() is called
-  EXPECT_CALL(*storage_, has_next()).Times(6)
-  .WillOnce(Return(true)).WillOnce(Return(true))  // We have a message
-  .WillOnce(Return(false))  // No message, load next file
-  .WillOnce(Return(true))  // True since we now have a message
-  .WillOnce(Return(false))  // No message, load next file
-  .WillOnce(Return(true));  // True since we now have a message
+  EXPECT_CALL(*storage_, has_next()).Times(5)
+  .WillOnce(Return(false))
+  .WillOnce(Return(true))
+  .WillOnce(Return(false))
+  .WillOnce(Return(true))
+  .WillOnce(Return(true));
   EXPECT_CALL(*converter_factory_, load_deserializer(storage_serialization_format_)).Times(0);
   EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format_)).Times(0);
   reader_->open(default_storage_options_, {"", storage_serialization_format_});
@@ -179,12 +175,10 @@ TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
   auto resolved_absolute_path_1 =
     rcpputils::fs::path(absolute_path_1_).string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
-  reader_->has_next();
-  reader_->read_next();
-  reader_->has_next();
+  reader_->read_next();  // calls has_next false then true
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
-  reader_->read_next();
-  reader_->has_next();
+  reader_->has_next();  // calls has_next false then true
+  reader_->read_next();  // calls has_next true
   EXPECT_EQ(sr.get_current_file(), resolved_absolute_path_1);
 }
 
