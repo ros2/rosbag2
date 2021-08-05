@@ -139,15 +139,17 @@ bool SequentialReader::has_next()
   if (storage_) {
     // If there's no new message, check if there's at least another file to read and update storage
     // to read from there. Otherwise, check if there's another message.
-    if (!storage_->has_next() && has_next_file()) {
+    bool current_storage_has_next = storage_->has_next();
+    if (!current_storage_has_next && has_next_file()) {
       load_next_file();
       storage_options_.uri = get_current_file();
 
       storage_ = storage_factory_->open_read_only(storage_options_);
       storage_->set_filter(topics_filter_);
+      // recursively call has_next again after rollover
+      return has_next();
     }
-
-    return storage_->has_next();
+    return current_storage_has_next;
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
@@ -155,6 +157,8 @@ bool SequentialReader::has_next()
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
+    // performs rollover if necessary
+    has_next();
     auto message = storage_->read_next();
     return converter_ ? converter_->convert(message) : message;
   }

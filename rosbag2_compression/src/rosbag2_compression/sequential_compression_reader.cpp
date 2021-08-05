@@ -105,6 +105,8 @@ void SequentialCompressionReader::open(
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionReader::read_next()
 {
   if (storage_ && decompressor_) {
+    // roll over if necessary
+    has_next();
     auto message = storage_->read_next();
     if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
