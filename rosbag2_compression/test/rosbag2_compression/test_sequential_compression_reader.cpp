@@ -225,10 +225,10 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_loading_split_ba
   EXPECT_CALL(*compression_factory, create_decompressor(_)).Times(1);
   // open_read_only should be called twice when opening 2 split bags
   EXPECT_CALL(*storage_factory_, open_read_only(_)).Times(2);
-  // storage::has_next() is called twice when reader::has_next() is called
-  EXPECT_CALL(*storage_, has_next()).Times(2)
+  EXPECT_CALL(*storage_, has_next()).Times(3)
   .WillOnce(Return(false))  // Load the next file
-  .WillOnce(Return(true));  // We have a message from the new file
+  .WillOnce(Return(true))
+  .WillOnce(Return(true));
 
   auto compression_reader = std::make_unique<rosbag2_compression::SequentialCompressionReader>(
     std::move(compression_factory),
@@ -238,8 +238,8 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_loading_split_ba
 
   compression_reader->open(storage_options_, converter_options_);
   EXPECT_EQ(compression_reader->has_next_file(), true);
-  EXPECT_EQ(compression_reader->has_next(), true);
-  compression_reader->read_next();
+  EXPECT_EQ(compression_reader->has_next(), true);  // false then true
+  compression_reader->read_next();  // calls has_next true
 }
 
 TEST_F(SequentialCompressionReaderTest, can_find_v4_names)
