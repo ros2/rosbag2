@@ -3,6 +3,12 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.8 (2021-07-19)
+------------------
+* Disable SIGTERM test on Windows in Foxy due to shutdown behavior in tests on that platform. (`#818 <https://github.com/ros2/rosbag2/issues/818>`_)
+* Handle SIGTERM gracefully in recording (`#809 <https://github.com/ros2/rosbag2/issues/809>`_)
+* Contributors: Emerson Knapp
+
 0.3.7 (2021-02-15)
 ------------------
 * [foxy backport] Fix --topics flag for ros2 bag play being ignored for all bags after the first one (`#619 <https://github.com/ros2/rosbag2/issues/619>`_) (`#654 <https://github.com/ros2/rosbag2/issues/654>`_)
