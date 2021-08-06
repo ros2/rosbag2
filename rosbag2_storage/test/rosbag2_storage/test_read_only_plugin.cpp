@@ -92,4 +92,9 @@ void TestReadOnlyPlugin::reset_filter()
   std::cout << "\nresetting storage filter\n";
 }
 
+void TestReadOnlyPlugin::seek(const rcutils_time_point_value_t & /*timestamp*/)
+{
+  std::cout << "\nseeking\n";
+}
+
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)

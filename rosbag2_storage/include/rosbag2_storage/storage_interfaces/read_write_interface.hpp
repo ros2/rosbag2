@@ -56,6 +56,8 @@ public:
   {
     return StorageTraits<ReadWriteInterface>::name;
   }
+  
+  void seek(const rcutils_time_point_value_t & timestamp) override = 0;
 };
 
 }  // namespace storage_interfaces

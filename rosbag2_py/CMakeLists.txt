@@ -160,6 +160,12 @@ if(BUILD_TESTING)
       PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
       ${other_environment_vars}
   )
+  ament_add_pytest_test(test_sequential_reader_multiple_files_py "test/test_sequential_reader_multiple_files.py"
+    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
+    APPEND_ENV
+      PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+      ${other_environment_vars}
+  )
   ament_add_pytest_test(test_sequential_writer_py
     "test/test_sequential_writer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"

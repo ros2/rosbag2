@@ -301,6 +301,11 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   bag_message->time_stamp = std::get<1>(*current_message_row_);
   bag_message->topic_name = std::get<2>(*current_message_row_);
 
+  // set start time to current time
+  // and set seek_row_id to the new row id up
+  seek_time_ = bag_message->time_stamp;
+  seek_row_id_ = std::get<3>(*current_message_row_) + 1;
+
   ++current_message_row_;
   return bag_message;
 }
@@ -376,6 +381,10 @@ void SqliteStorage::prepare_for_writing()
 
 void SqliteStorage::prepare_for_reading()
 {
+  std::string statement_str = "SELECT data, timestamp, topics.name, messages.id "
+    "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
+
+  // add topic filter
   if (!storage_filter_.topics.empty()) {
     // Construct string for selected topics
     std::string topic_list{""};
@@ -385,20 +394,19 @@ void SqliteStorage::prepare_for_reading()
         topic_list += ",";
       }
     }
-
-    read_statement_ = database_->prepare_statement(
-      "SELECT data, timestamp, topics.name "
-      "FROM messages JOIN topics ON messages.topic_id = topics.id "
-      "WHERE topics.name IN (" + topic_list + ")"
-      "ORDER BY messages.timestamp;");
-  } else {
-    read_statement_ = database_->prepare_statement(
-      "SELECT data, timestamp, topics.name "
-      "FROM messages JOIN topics ON messages.topic_id = topics.id "
-      "ORDER BY messages.timestamp;");
+    statement_str += "(topics.name IN (" + topic_list + ")) AND ";
   }
+  // add start time filter
+  statement_str += "(((timestamp = " + std::to_string(seek_time_) + ") "
+    "AND (messages.id >= " + std::to_string(seek_row_id_) + ")) "
+    "OR (timestamp > " + std::to_string(seek_time_) + ")) ";
+
+  // add order by time then id
+  statement_str += "ORDER BY messages.timestamp, messages.id;";
+
+  read_statement_ = database_->prepare_statement(statement_str);
   message_result_ = read_statement_->execute_query<
-    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>();
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>();
   current_message_row_ = message_result_.begin();
 }
 
@@ -477,12 +485,24 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 void SqliteStorage::set_filter(
   const rosbag2_storage::StorageFilter & storage_filter)
 {
+  // keep current start time and start row_id
+  // set topic filter and reset read statement for re-read
   storage_filter_ = storage_filter;
+  read_statement_ = nullptr;
 }
 
 void SqliteStorage::reset_filter()
 {
-  storage_filter_ = rosbag2_storage::StorageFilter();
+  set_filter(rosbag2_storage::StorageFilter());
+}
+
+void SqliteStorage::seek(const rcutils_time_point_value_t & timestamp)
+{
+  // reset row id to 0 and set start time to input
+  // keep topic filter and reset read statement for re-read
+  seek_row_id_ = 0;
+  seek_time_ = timestamp;
+  read_statement_ = nullptr;
 }
 
 std::string SqliteStorage::get_storage_setting(const std::string & key)

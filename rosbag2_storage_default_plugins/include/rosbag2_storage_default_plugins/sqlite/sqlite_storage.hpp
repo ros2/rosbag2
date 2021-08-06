@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
-#include "rcutils/types.h"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
@@ -85,6 +84,8 @@ public:
 
   void reset_filter() override;
 
+  void seek(const rcutils_time_point_value_t & timestamp) override;
+
   std::string get_storage_setting(const std::string & key);
 
 private:
@@ -98,7 +99,7 @@ private:
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
-    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string>;
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
 
   std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
   SqliteStatement write_statement_ {};
@@ -110,6 +111,9 @@ private:
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
+
+  rcutils_time_point_value_t seek_time_ = 0;
+  int seek_row_id_ = 0;
   rosbag2_storage::StorageFilter storage_filter_ {};
 
   // This mutex is necessary to protect:

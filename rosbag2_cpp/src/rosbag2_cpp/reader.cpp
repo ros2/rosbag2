@@ -87,4 +87,9 @@ void Reader::reset_filter()
   reader_impl_->reset_filter();
 }
 
+void Reader::seek(const rcutils_time_point_value_t & timestamp)
+{
+  reader_impl_->seek(timestamp);
+}
+
 }  // namespace rosbag2_cpp

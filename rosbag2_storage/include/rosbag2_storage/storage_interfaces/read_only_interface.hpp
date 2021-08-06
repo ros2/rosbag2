@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include "rcutils/types.h"
+
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
@@ -43,8 +45,18 @@ public:
 
   std::string get_storage_identifier() const override = 0;
 
+  /**
+  Sets filters on messages. This occurs in place, meaning that messages satisfying
+  the filter that were already read before applying the filter will not be re-read
+  by read_next() unless seek(t) is also called to an earlier timestamp t.
+  */
   virtual void set_filter(const StorageFilter & storage_filter) = 0;
 
+  /**
+  Removes any previously set storage filter. This occurs in place, meaning that
+  after a reset, read_next() will not return either previously read or unread
+  messages that occur before the timestamp of the last-read message.
+  */
   virtual void reset_filter() = 0;
 
   static std::string get_package_name()
@@ -55,6 +67,24 @@ public:
   {
     return StorageTraits<ReadOnlyInterface>::name;
   }
+  
+  /**
+  Seeks to a given timestamp. Running read_next() after seek(t)
+  will return a message that is equal to or after time t. Running read_next()
+  repeatedly until the end of the storage should return all messages equal to
+  or after time t.
+
+  If a filter has been previously set, it will persist, meaning
+  that the next message returned will need to both satisfy the filter,
+  and satisfy the seek time requirement.
+
+  seek(t) can jump forward or backward in time. If t is earlier than the
+  first message message timestamp that satisfies the storage filter, then read_next()
+  will return that first message. If t is later than the last message timestamp, then
+  read_next() will behave as if the end of the file has been reached, and has_next()
+  will return false.
+  */
+  virtual void seek(const rcutils_time_point_value_t & timestamp) = 0;
 };
 
 }  // namespace storage_interfaces

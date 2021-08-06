@@ -76,6 +76,8 @@ public:
 
   void reset_filter() override;
 
+  void seek(const rcutils_time_point_value_t & timestamp) override;
+
   /**
    * Ask whether there is another database file to read from the list of relative
    * file paths.
@@ -96,8 +98,14 @@ public:
 
 protected:
   /**
+  * Opens the current file and sets up the filters in the new storage.
+  *
+  */
+  virtual void load_current_file();
+
+  /**
   * Increment the current file iterator to point to the next file in the list of relative file
-  * paths.
+  * paths, and opens the next file by calling open_current_file()
   *
   * Expected usage:
   * if (has_next_file()) load_next_file();
@@ -144,6 +152,7 @@ protected:
   std::unique_ptr<Converter> converter_{};
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_{};
   rosbag2_storage::BagMetadata metadata_{};
+  rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter topics_filter_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.

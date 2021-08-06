@@ -79,6 +79,11 @@ public:
     filter_ = rosbag2_storage::StorageFilter();
   }
 
+  void seek(const rcutils_time_point_value_t & timestamp) override
+  {
+    seek_time_ = timestamp;
+  }
+
   void prepare(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
     std::vector<rosbag2_storage::TopicMetadata> topics)
@@ -92,6 +97,7 @@ private:
   rosbag2_storage::BagMetadata metadata_;
   std::vector<rosbag2_storage::TopicMetadata> topics_;
   size_t num_read_;
+  rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter filter_;
 };
 
