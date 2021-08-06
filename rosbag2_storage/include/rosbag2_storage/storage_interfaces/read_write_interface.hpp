@@ -51,13 +51,15 @@ public:
   /**
    * Get the read/write storage package name
    */
-  static std::string get_package_name() {
+  static std::string get_package_name()
+  {
     return "rosbag2_storage";
   }
   /**
    * Get the read/write storage base class name
    */
-  static std::string get_base_class_name() {
+  static std::string get_base_class_name()
+  {
     return StorageTraits<ReadWriteInterface>::name;
   }
 };

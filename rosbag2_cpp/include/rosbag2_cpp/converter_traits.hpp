@@ -18,11 +18,12 @@
 namespace rosbag2_cpp
 {
 
-  namespace converter_interfaces {
-    class SerializationFormatSerializer;
-    class SerializationFormatDeserializer;
-    class SerializationFormatConverter;
-  }
+namespace converter_interfaces
+{
+class SerializationFormatSerializer;
+class SerializationFormatDeserializer;
+class SerializationFormatConverter;
+}
 
 template<typename T>
 struct ConverterTraits

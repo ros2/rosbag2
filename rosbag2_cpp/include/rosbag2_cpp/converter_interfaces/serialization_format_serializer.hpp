@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_SERIALIZER_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rosbag2_cpp/converter_traits.hpp"
 #include "rosbag2_cpp/types/introspection_message.hpp"
@@ -42,13 +43,15 @@ public:
   /**
    * Get the serializer package name
    */
-  static std::string get_package_name() {
+  static std::string get_package_name()
+  {
     return "rosbag2_cpp";
   }
   /**
    * Get the serializer base class name
    */
-  static std::string get_base_class_name() {
+  static std::string get_base_class_name()
+  {
     return ConverterTraits<SerializationFormatSerializer>::name;
   }
 };

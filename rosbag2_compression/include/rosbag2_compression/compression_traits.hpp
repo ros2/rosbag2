@@ -19,8 +19,8 @@
 
 namespace rosbag2_compression
 {
-  class BaseCompressorInterface;
-  class BaseDecompressorInterface;
+class BaseCompressorInterface;
+class BaseDecompressorInterface;
 
 template<typename T>
 struct CompressionTraits

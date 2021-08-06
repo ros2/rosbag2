@@ -74,13 +74,15 @@ public:
   /**
    * Get the compressor package name
    */
-  static std::string get_package_name() {
+  static std::string get_package_name()
+  {
     return "rosbag2_compression";
   }
   /**
    * Get the compressor base class name
    */
-  static std::string get_base_class_name() {
+  static std::string get_base_class_name()
+  {
     return CompressionTraits<BaseCompressorInterface>::name;
   }
 };

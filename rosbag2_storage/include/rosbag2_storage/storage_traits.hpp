@@ -21,10 +21,11 @@
 namespace rosbag2_storage
 {
 
-  namespace storage_interfaces {
-    class ReadWriteInterface;
-    class ReadOnlyInterface;
-  }
+namespace storage_interfaces
+{
+class ReadWriteInterface;
+class ReadOnlyInterface;
+}
 
 template<typename T>
 struct StorageTraits
