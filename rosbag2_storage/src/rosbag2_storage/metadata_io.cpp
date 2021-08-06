@@ -142,17 +142,9 @@ struct convert<rosbag2_storage::FileInformation>
   {
     Node node;
     node["relative_file_path"] = metadata.relative_file_path;
-    node["staring_time"] = metadata.starting_time;
+    node["starting_time"] = metadata.starting_time;
     node["duration"] = metadata.duration;
     return node;
-  }
-
-  static bool decode(const Node & node, rosbag2_storage::FileInformation & metadata)
-  {
-    metadata.relative_file_path = node["relative_file_path"].as<std::string>();
-    metadata.starting_time = node["starting_time"].as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
-    metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
-    return true;
   }
 
   static bool decode(const Node & node, rosbag2_storage::FileInformation & metadata, int version)
