@@ -90,20 +90,11 @@ protected:
 
 std::unordered_set<std::string> get_registered_readers()
 {
-  const auto rw_lookup_name =
-    rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadWriteInterface>::name;
   std::unordered_set<std::string> combined_plugins =
-    get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
-    "rosbag2_storage",
-    rw_lookup_name);
+    get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 
-  const auto read_lookup_name =
-    rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadOnlyInterface>::name;
   std::unordered_set<std::string> read_only_plugins =
-    get_class_plugins<rosbag2_storage::storage_interfaces::ReadOnlyInterface>(
-    "rosbag2_storage",
-    read_lookup_name);
-
+    get_class_plugins<rosbag2_storage::storage_interfaces::ReadOnlyInterface>();
 
   // Merge read/write and read-only plugin sets
   combined_plugins.insert(read_only_plugins.begin(), read_only_plugins.end());

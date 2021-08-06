@@ -20,6 +20,7 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
+#include "compression_traits.hpp"
 #include "visibility_control.hpp"
 
 namespace rosbag2_compression
@@ -71,6 +72,19 @@ public:
    * compressed file.
    */
   virtual std::string get_decompression_identifier() const = 0;
+
+  /**
+   * Get the decompressor package name
+   */
+  static std::string get_package_name() {
+    return "rosbag2_compression";
+  }
+  /**
+   * Get the decompressor base class name
+   */
+  static std::string get_base_class_name() {
+    return CompressionTraits<BaseDecompressorInterface>::name;
+  }
 };
 
 }  // namespace rosbag2_compression

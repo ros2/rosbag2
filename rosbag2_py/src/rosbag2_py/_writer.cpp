@@ -86,27 +86,17 @@ protected:
 
 std::unordered_set<std::string> get_registered_writers()
 {
-  const auto lookup_name =
-    rosbag2_storage::StorageTraits<rosbag2_storage::storage_interfaces::ReadWriteInterface>::name;
-  return get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>(
-    "rosbag2_storage", lookup_name);
+  return get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
-  const auto lookup_name =
-    rosbag2_compression::CompressionTraits<rosbag2_compression::BaseCompressorInterface>::name;
-  return get_class_plugins<rosbag2_compression::BaseCompressorInterface>(
-    "rosbag2_compression",
-    lookup_name);
+  return get_class_plugins<rosbag2_compression::BaseCompressorInterface>();
 }
 
 std::unordered_set<std::string> get_registered_serializers()
 {
-  const auto lookup_name = rosbag2_cpp::ConverterTraits
-    <rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>::name;
-  return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>(
-    "rosbag2_cpp", lookup_name);
+  return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
 }
 
 }  // namespace rosbag2_py

@@ -15,12 +15,14 @@
 #ifndef ROSBAG2_CPP__CONVERTER_TRAITS_HPP_
 #define ROSBAG2_CPP__CONVERTER_TRAITS_HPP_
 
-#include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
-#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
-#include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
-
 namespace rosbag2_cpp
 {
+
+  namespace converter_interfaces {
+    class SerializationFormatSerializer;
+    class SerializationFormatDeserializer;
+    class SerializationFormatConverter;
+  }
 
 template<typename T>
 struct ConverterTraits

@@ -25,9 +25,10 @@
 namespace rosbag2_py
 {
 template<typename InterfaceT>
-std::unordered_set<std::string> get_class_plugins(
-  std::string package_name, std::string base_class)
+std::unordered_set<std::string> get_class_plugins()
 {
+  std::string package_name = InterfaceT::get_package_name();
+  std::string base_class = InterfaceT::get_base_class_name();
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader =
     std::make_shared<pluginlib::ClassLoader<InterfaceT>>(package_name, base_class);
 

@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "rosbag2_cpp/converter_traits.hpp"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -37,6 +38,19 @@ public:
     std::shared_ptr<const rosbag2_introspection_message_t> ros_message,
     const rosidl_message_type_support_t * type_support,
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message) = 0;
+
+  /**
+   * Get the serializer package name
+   */
+  static std::string get_package_name() {
+    return "rosbag2_cpp";
+  }
+  /**
+   * Get the serializer base class name
+   */
+  static std::string get_base_class_name() {
+    return ConverterTraits<SerializationFormatSerializer>::name;
+  }
 };
 
 }  // namespace converter_interfaces
