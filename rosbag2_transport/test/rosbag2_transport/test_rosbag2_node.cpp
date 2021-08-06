@@ -227,7 +227,7 @@ TEST_F(
 
 TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) {
   std::string first_topic("/string_topic");
-  std::string second_topic("/other_topic");
+  std::string second_topic("/_other_topic");
   std::string third_topic("/wrong_topic");
 
   create_publisher(first_topic);
@@ -235,7 +235,8 @@ TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_only_specified_topics) 
   create_publisher(third_topic);
 
   sleep_to_allow_topics_discovery();
-  auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic});
+  // Tests for both regular and hidden topics
+  auto topics_and_types = node_->get_topics_with_types({first_topic, second_topic}, true);
 
   ASSERT_THAT(topics_and_types, SizeIs(2));
   EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
@@ -258,22 +259,5 @@ TEST_F(RosBag2NodeFixture, get_all_topics_with_types_returns_all_topics)
   ASSERT_THAT(topics_and_types, SizeIs(Ge(3u)));
   EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
   EXPECT_THAT(topics_and_types.find(second_topic)->second, StrEq("test_msgs/msg/Strings"));
-  EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
-}
-
-TEST_F(RosBag2NodeFixture, get_topics_with_types_returns_specified_hidden_topics) {
-  std::string first_topic("/string_topic");
-  std::string second_topic("/other_topic");
-  std::string third_topic("/_hidden_topic");
-
-  create_publisher(first_topic);
-  create_publisher(second_topic);
-  create_publisher(third_topic);
-
-  sleep_to_allow_topics_discovery();
-  auto topics_and_types = node_->get_topics_with_types({first_topic, third_topic}, true);
-
-  ASSERT_THAT(topics_and_types, SizeIs(2));
-  EXPECT_THAT(topics_and_types.find(first_topic)->second, StrEq("test_msgs/msg/Strings"));
   EXPECT_THAT(topics_and_types.find(third_topic)->second, StrEq("test_msgs/msg/Strings"));
 }
