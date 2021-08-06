@@ -100,22 +100,6 @@ std::unordered_set<std::string> get_registered_serializers()
   return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
 }
 
-std::unordered_set<std::string> get_registered_compressors()
-{
-  rosbag2_compression::CompressionFactory compression_factory;
-  const auto compressor_plugins = compression_factory.get_declared_compressor_plugins();
-  return std::unordered_set<std::string>(compressor_plugins.begin(), compressor_plugins.end());
-}
-
-std::unordered_set<std::string> get_registered_serializers()
-{
-  rosbag2_cpp::SerializationFormatConverterFactory serialization_factory;
-  const auto serialization_plugins = serialization_factory.get_declared_serialization_plugins();
-  return std::unordered_set<std::string>(
-    serialization_plugins.begin(),
-    serialization_plugins.end());
-}
-
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_writer, m) {
