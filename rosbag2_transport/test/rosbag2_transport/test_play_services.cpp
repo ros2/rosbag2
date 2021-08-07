@@ -173,7 +173,7 @@ private:
       });
   }
 
-  void topic_callback(const test_msgs::msg::BasicTypes::SharedPtr /* msg */)
+  void topic_callback(const test_msgs::msg::BasicTypes::ConstSharedPtr /* msg */)
   {
     {
       std::lock_guard<std::mutex> lk(got_msg_mutex_);
