@@ -150,7 +150,8 @@ struct convert<rosbag2_storage::FileInformation>
   static bool decode(const Node & node, rosbag2_storage::FileInformation & metadata, int version)
   {
     metadata.relative_file_path = node["relative_file_path"].as<std::string>();
-    metadata.starting_time = node["starting_time"].as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
+    metadata.starting_time =
+    node["starting_time"].as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     return true;
   }
@@ -228,7 +229,9 @@ struct convert<rosbag2_storage::BagMetadata>
     node["version"] = metadata.version;
     node["storage_identifier"] = metadata.storage_identifier;
     node["relative_file_paths"] = metadata.relative_file_paths;
-    node["files_metadata"] = metadata.files_metadata;
+    if (metadata.version >=5) {
+      node["files_metadata"] = metadata.files_metadata;
+    }
     node["duration"] = metadata.duration;
     node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
@@ -246,9 +249,11 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.version = node["version"].as<int>();
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
+    if (metadata.version >= 5) {
     metadata.files_metadata =
     decode_for_version<std::vector<rosbag2_storage::FileInformation>>(
       node["files_metadata"], metadata.version);
+    }
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]
       .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();

@@ -316,13 +316,13 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     std::chrono::nanoseconds(message->time_stamp));
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
-  metadata_.files_metadata.back().starting_time = 
+  metadata_.files_metadata.back().starting_time =
   std::min(metadata_.files_metadata.back().starting_time, message_timestamp);
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
   const auto file_duration = message_timestamp - metadata_.files_metadata.back().starting_time;
-  metadata_.files_metadata.back().duration = 
+  metadata_.files_metadata.back().duration =
   std::max(metadata_.files_metadata.back().duration, file_duration);
 
   auto converted_msg = get_writeable_message(message);
