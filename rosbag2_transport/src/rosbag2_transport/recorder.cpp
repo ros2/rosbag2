@@ -108,7 +108,7 @@ Recorder::get_requested_or_available_topics(
 {
   return requested_topics.empty() ?
          node_->get_all_topics_with_types(include_hidden_topics) :
-         node_->get_topics_with_types(requested_topics);
+         node_->get_topics_with_types(requested_topics, include_hidden_topics);
 }
 
 std::unordered_map<std::string, std::string>
