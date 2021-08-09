@@ -20,7 +20,6 @@
 #include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
-#include "rosbag2_cpp/converter_traits.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"

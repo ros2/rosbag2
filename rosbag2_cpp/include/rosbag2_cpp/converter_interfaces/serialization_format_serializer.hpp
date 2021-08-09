@@ -18,7 +18,6 @@
 #include <memory>
 #include <string>
 
-#include "rosbag2_cpp/converter_traits.hpp"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -52,7 +51,7 @@ public:
    */
   static std::string get_base_class_name()
   {
-    return ConverterTraits<SerializationFormatSerializer>::name;
+    return "rosbag2_cpp::converter_interfaces::SerializationFormatSerializer";
   }
 };
 
