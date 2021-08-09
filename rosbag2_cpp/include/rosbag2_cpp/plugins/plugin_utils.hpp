@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PY__PY_UTILS_HPP_
-#define ROSBAG2_PY__PY_UTILS_HPP_
+#ifndef ROSBAG2_CPP__PLUGINS__PLUGIN_UTILS_HPP_
+#define ROSBAG2_CPP__PLUGINS__PLUGIN_UTILS_HPP_
 
 #include <memory>
 #include <string>
@@ -22,7 +22,9 @@
 
 #include "pluginlib/class_loader.hpp"
 
-namespace rosbag2_py
+namespace rosbag2_cpp
+{
+namespace plugins
 {
 template<typename InterfaceT>
 std::unordered_set<std::string> get_class_plugins()
@@ -35,6 +37,7 @@ std::unordered_set<std::string> get_class_plugins()
   std::vector<std::string> plugin_list = class_loader->getDeclaredClasses();
   return std::unordered_set<std::string>(plugin_list.begin(), plugin_list.end());
 }
-}  // namespace rosbag2_py
+}  // namespace plugins
+}  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_PY__PY_UTILS_HPP_
+#endif  // ROSBAG2_CPP__PLUGINS__PLUGIN_UTILS_HPP_

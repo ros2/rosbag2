@@ -20,6 +20,7 @@
 #include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/plugins/plugin_utils.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
@@ -31,7 +32,6 @@
 #include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
-#include "./py_utils.hpp"
 #include "./pybind11.hpp"
 
 namespace rosbag2_py
@@ -85,17 +85,20 @@ protected:
 
 std::unordered_set<std::string> get_registered_writers()
 {
-  return get_class_plugins<rosbag2_storage::storage_interfaces::ReadWriteInterface>();
+  return rosbag2_cpp::plugins::get_class_plugins
+    <rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
-  return get_class_plugins<rosbag2_compression::BaseCompressorInterface>();
+  return rosbag2_cpp::plugins::get_class_plugins
+    <rosbag2_compression::BaseCompressorInterface>();
 }
 
 std::unordered_set<std::string> get_registered_serializers()
 {
-  return get_class_plugins<rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
+  return rosbag2_cpp::plugins::get_class_plugins
+    <rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
 }
 
 }  // namespace rosbag2_py
