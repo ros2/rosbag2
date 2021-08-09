@@ -25,7 +25,6 @@
 
 #include "logging.hpp"
 #include "rosbag2_compression/compression_factory.hpp"
-#include "rosbag2_compression/compression_traits.hpp"
 
 namespace rosbag2_compression
 {
@@ -37,7 +36,7 @@ template<typename InterfaceT>
 std::shared_ptr<pluginlib::ClassLoader<InterfaceT>>
 get_class_loader()
 {
-  const auto lookup_name = CompressionTraits<InterfaceT>::name;
+  const auto lookup_name = InterfaceT::get_base_class_name();
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>(
     "rosbag2_compression", lookup_name);
 }

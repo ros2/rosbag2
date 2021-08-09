@@ -19,7 +19,6 @@
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
-#include "compression_traits.hpp"
 #include "visibility_control.hpp"
 
 namespace rosbag2_compression
@@ -83,7 +82,7 @@ public:
    */
   static std::string get_base_class_name()
   {
-    return CompressionTraits<BaseCompressorInterface>::name;
+    return "rosbag2_compression::BaseCompressorInterface";
   }
 };
 
