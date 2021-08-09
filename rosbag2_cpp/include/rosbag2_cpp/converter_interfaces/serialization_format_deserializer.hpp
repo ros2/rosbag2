@@ -39,16 +39,10 @@ public:
     const rosidl_message_type_support_t * type_support,
     std::shared_ptr<rosbag2_introspection_message_t> ros_message) = 0;
 
-  /**
-   * Get the deserializer package name
-   */
   static std::string get_package_name()
   {
     return "rosbag2_cpp";
   }
-  /**
-   * Get the deserializer base class name
-   */
   static std::string get_base_class_name()
   {
     return "rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer";

@@ -72,16 +72,11 @@ public:
    */
   virtual std::string get_decompression_identifier() const = 0;
 
-  /**
-   * Get the decompressor package name
-   */
+
   static std::string get_package_name()
   {
     return "rosbag2_compression";
   }
-  /**
-   * Get the decompressor base class name
-   */
   static std::string get_base_class_name()
   {
     return "rosbag2_compression::BaseDecompressorInterface";

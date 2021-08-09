@@ -47,16 +47,10 @@ public:
 
   virtual void reset_filter() = 0;
 
-  /**
-   * Get the read only storage package name
-   */
   static std::string get_package_name()
   {
     return "rosbag2_storage";
   }
-  /**
-   * Get the read only storage base class name
-   */
   static std::string get_base_class_name()
   {
     return StorageTraits<ReadOnlyInterface>::name;
