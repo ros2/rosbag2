@@ -54,7 +54,9 @@ public:
     std::function<void(std::shared_ptr<rclcpp::SerializedMessage>)> callback);
 
   std::unordered_map<std::string, std::string>
-  get_topics_with_types(const std::vector<std::string> & topic_names);
+  get_topics_with_types(
+    const std::vector<std::string> & topic_names,
+    bool include_hidden_topics = false);
 
   std::string
   expand_topic_name(const std::string & topic_name);

@@ -136,7 +136,7 @@ std::string Rosbag2Node::expand_topic_name(const std::string & topic_name)
 }
 
 std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
-  const std::vector<std::string> & topic_names)
+  const std::vector<std::string> & topic_names, bool include_hidden_topics)
 {
   std::vector<std::string> sanitized_topic_names;
   for (const auto & topic_name : topic_names) {
@@ -159,7 +159,7 @@ std::unordered_map<std::string, std::string> Rosbag2Node::get_topics_with_types(
     }
   }
 
-  return filter_topics_with_more_than_one_type(filtered_topics_and_types);
+  return filter_topics_with_more_than_one_type(filtered_topics_and_types, include_hidden_topics);
 }
 
 std::unordered_map<std::string, std::string>
