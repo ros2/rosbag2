@@ -102,7 +102,7 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::FileInformation>(m, "FileInformation")
   .def(
-    pybind11::init<std::string, 
+    pybind11::init<std::string,
       std::chrono::time_point<std::chrono::high_resolution_clock>,
       std::chrono::nanoseconds>(),
     pybind11::arg("relative_file_path"),

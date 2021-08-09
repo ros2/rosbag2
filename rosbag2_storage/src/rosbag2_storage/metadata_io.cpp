@@ -246,8 +246,9 @@ struct convert<rosbag2_storage::BagMetadata>
     metadata.version = node["version"].as<int>();
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
     metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
-    metadata.files_metadata = 
-    decode_for_version<std::vector<rosbag2_storage::FileInformation>>(node["files_metadata"], metadata.version);
+    metadata.files_metadata =
+    decode_for_version<std::vector<rosbag2_storage::FileInformation>>(
+      node["files_metadata"], metadata.version);
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]
       .as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
