@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__CONVERTER_INTERFACES__SERIALIZATION_FORMAT_CONVERTER_HPP_
 
 #include <memory>
+#include <string>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
@@ -32,7 +33,12 @@ namespace converter_interfaces
 
 class SerializationFormatConverter
   : public SerializationFormatSerializer, public SerializationFormatDeserializer
-{};
+{
+  static std::string get_base_class_name()
+  {
+    return "rosbag2_cpp::converter_interfaces::SerializationFormatConverter";
+  }
+};
 
 }  // namespace converter_interfaces
 }  // namespace rosbag2_cpp
