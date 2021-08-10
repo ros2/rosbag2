@@ -25,7 +25,6 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
