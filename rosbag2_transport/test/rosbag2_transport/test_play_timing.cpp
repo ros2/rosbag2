@@ -212,12 +212,10 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
     play_options_.delay = 5.0;
     auto lower_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
       message_time_difference +
-      std::chrono::duration<float>(play_options_.delay)
-    ).count();
+      std::chrono::duration<float>(play_options_.delay)).count();
     auto upper_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
       message_time_difference +
-      std::chrono::duration<float>(play_options_.delay + delay_margin)
-    ).count();
+      std::chrono::duration<float>(play_options_.delay + delay_margin)).count();
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
