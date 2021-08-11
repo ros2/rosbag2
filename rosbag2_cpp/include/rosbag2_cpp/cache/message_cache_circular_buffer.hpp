@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_
-#define ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_
+#ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
+#define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 
 #include <memory>
 #include <list>
@@ -34,10 +34,10 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-class ROSBAG2_CPP_PUBLIC CircularMessageCacheBuffer
+class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
 {
 public:
-  explicit CircularMessageCacheBuffer(const uint64_t max_cache_size);
+  explicit MessageCacheCircularBuffer(const uint64_t max_cache_size);
 
   using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
 
@@ -69,4 +69,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_
+#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_

@@ -15,7 +15,7 @@
 #include <memory>
 #include <list>
 
-#include "rosbag2_cpp/cache/circular_message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 
 namespace rosbag2_cpp
 {
@@ -29,12 +29,12 @@ namespace cache
 * to the end. This buffer may consume more byte than max_cache_size, however
 * it will only exceed the limit by the excess data in the most recent message.
 */
-CircularMessageCacheBuffer::CircularMessageCacheBuffer(const uint64_t max_cache_size)
+MessageCacheCircularBuffer::MessageCacheCircularBuffer(const uint64_t max_cache_size)
 : max_bytes_size_(max_cache_size)
 {
 }
 
-void CircularMessageCacheBuffer::push(buffer_element_t msg)
+void MessageCacheCircularBuffer::push(buffer_element_t msg)
 {
   // Remove any old items until there is room for new message
   while (buffer_bytes_size_ >= max_bytes_size_) {
@@ -46,18 +46,18 @@ void CircularMessageCacheBuffer::push(buffer_element_t msg)
   buffer_.push_back(msg);
 }
 
-void CircularMessageCacheBuffer::clear()
+void MessageCacheCircularBuffer::clear()
 {
   buffer_.clear();
   buffer_bytes_size_ = 0u;
 }
 
-size_t CircularMessageCacheBuffer::size()
+size_t MessageCacheCircularBuffer::size()
 {
   return buffer_.size();
 }
 
-const std::list<CircularMessageCacheBuffer::buffer_element_t> & CircularMessageCacheBuffer::data()
+const std::list<MessageCacheCircularBuffer::buffer_element_t> & MessageCacheCircularBuffer::data()
 {
   return buffer_;
 }

@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
-#include "rosbag2_cpp/cache/circular_message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -28,8 +28,8 @@ namespace cache
 
 CircularMessageCache::CircularMessageCache(uint64_t max_buffer_size)
 {
-  primary_buffer_ = std::make_shared<CircularMessageCacheBuffer>(max_buffer_size);
-  secondary_buffer_ = std::make_shared<CircularMessageCacheBuffer>(max_buffer_size);
+  primary_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
+  secondary_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
 }
 
 void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
@@ -38,7 +38,7 @@ void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::Serialize
   primary_buffer_->push(msg);
 }
 
-std::shared_ptr<CircularMessageCacheBuffer> CircularMessageCache::consumer_buffer()
+std::shared_ptr<MessageCacheCircularBuffer> CircularMessageCache::consumer_buffer()
 {
   return secondary_buffer_;
 }

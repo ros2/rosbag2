@@ -19,7 +19,7 @@
 #include <mutex>
 #include <string>
 
-#include "rosbag2_cpp/cache/circular_message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -46,15 +46,15 @@ public:
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
   /// get current buffer to consume
-  std::shared_ptr<CircularMessageCacheBuffer> consumer_buffer();
+  std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer();
 
   /// Swap the primary and secondary buffer before consumption.
   void swap_buffers();
 
 private:
   /// Double buffers
-  std::shared_ptr<CircularMessageCacheBuffer> primary_buffer_;
-  std::shared_ptr<CircularMessageCacheBuffer> secondary_buffer_;
+  std::shared_ptr<MessageCacheCircularBuffer> primary_buffer_;
+  std::shared_ptr<MessageCacheCircularBuffer> secondary_buffer_;
 
   /// Double buffers sync
   std::mutex cache_mutex_;
