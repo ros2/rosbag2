@@ -53,6 +53,7 @@ void CircularMessageCache::swap_buffers()
 {
   {
     std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+    secondary_buffer_->clear();
     std::swap(primary_buffer_, secondary_buffer_);
   }
 }

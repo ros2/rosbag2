@@ -38,7 +38,7 @@ void CircularMessageCacheBuffer::push(buffer_element_t msg)
 {
   if (buffer_full_) {
     // Remove old items until there is room for new message
-    while (buffer_bytes_size_ >= max_bytes_size_ + msg->serialized_data->buffer_length) {
+    while (buffer_bytes_size_ >= max_bytes_size_) {
       buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
       buffer_.pop_front();
     }
