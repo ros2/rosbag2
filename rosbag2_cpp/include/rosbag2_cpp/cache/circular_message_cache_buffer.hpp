@@ -44,7 +44,7 @@ public:
 
   /**
   * If buffer size has some space left, we push the message regardless of its size,
-  *  but if this results in exceeding buffer size, we begin dropping old messages
+  *  but if this results in exceeding buffer size, we begin dropping old messages.
   */
   void push(buffer_element_t msg);
 
@@ -73,4 +73,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#endif  // ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_

@@ -15,6 +15,17 @@
 #ifndef ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 #define ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <string>
+
+#include "rosbag2_cpp/cache/circular_message_cache_buffer.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
+
+#include "rosbag2_storage/serialized_bag_message.hpp"
+
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
 // b) there are no inline functions.
@@ -38,44 +49,18 @@ public:
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
-  /// Summarize dropped/remaining messages
-  void log_dropped();
-
-  /// Producer API: notify consumer to wake-up (primary buffer has data)
-  void notify_buffer_consumer();
-
-  /// Set the cache to consume-only mode for final buffer flush before closing
-  void finalize();
-
-  /// Notify that flushing is complete
-  void notify_flushing_done();
-
-  /**
-  * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
-  * The caller thread (consumer thread) will sleep on a conditional variable
-  * until it can be awaken, which is to happen when:
-  * a) data was inserted into the producer buffer, consuming can continue after a swap
-  * b) we are flushing the data (in case we missed the last notification when consuming)
-  **/
-  void wait_for_buffer();
-
   /// Consumer API: get current buffer to consume
-  std::shared_ptr<MessageCacheBuffer> consumer_buffer();
+  std::shared_ptr<CircularMessageCacheBuffer> consumer_buffer();
 
-  /// Exposes counts of messages dropped per topic
-  std::unordered_map<std::string, uint32_t> messages_dropped() const;
+  /// Consumer API: Swap the primary and secondary buffer before consumption.
+  void swap_buffers();
 
 private:
   /// Double buffers
   std::shared_ptr<CircularMessageCacheBuffer> primary_buffer_;
   std::shared_ptr<CircularMessageCacheBuffer> secondary_buffer_;
 
-  /// Dropped messages per topic. Used for printing in alphabetic order
-  std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
-
-  /// Double buffers sync (following cpp core guidelines for condition variables)
-  bool primary_buffer_can_be_swapped_ {false};
-  std::condition_variable cache_condition_var_;
+  /// Double buffers sync
   std::mutex cache_mutex_;
 
   /// Cache is no longer accepting messages and is in the process of flushing
