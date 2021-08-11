@@ -210,8 +210,14 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
   // Sleep 5.0 seconds before play
   {
     play_options_.delay = 5.0;
-    std::chrono::duration<float> delay(play_options_.delay);
-    std::chrono::duration<float> delay_uppper(play_options_.delay + delay_margin);
+    auto lower_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      message_time_difference +
+      std::chrono::duration<float>(play_options_.delay)
+    ).count();
+    auto upper_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      message_time_difference +
+      std::chrono::duration<float>(play_options_.delay + delay_margin)
+    ).count();
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
@@ -220,16 +226,20 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
       std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
-    auto replay_time = std::chrono::steady_clock::now() - start;
 
-    ASSERT_THAT(replay_time, Gt(message_time_difference + delay));
-    ASSERT_THAT(replay_time, Lt(message_time_difference + delay_uppper));
+    auto replay_time = std::chrono::steady_clock::now() - start;
+    auto replay_nanos = std::chrono::nanoseconds(replay_time).count();
+    EXPECT_THAT(replay_nanos, Gt(lower_expected_nanos));
+    EXPECT_THAT(replay_nanos, Lt(upper_expected_nanos));
   }
 
   // Invalid value should result in playing at default delay 0.0
   {
     play_options_.delay = -5.0;
-    std::chrono::duration<float> delay_uppper(delay_margin);
+    auto lower_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      message_time_difference).count();
+    auto upper_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      message_time_difference + std::chrono::duration<float>(delay_margin)).count();
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
@@ -238,9 +248,10 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
       std::move(reader), storage_options_, play_options_);
     auto start = std::chrono::steady_clock::now();
     player->play();
-    auto replay_time = std::chrono::steady_clock::now() - start;
 
-    ASSERT_THAT(replay_time, Gt(message_time_difference));
-    ASSERT_THAT(replay_time, Lt(message_time_difference + delay_uppper));
+    auto replay_time = std::chrono::steady_clock::now() - start;
+    auto replay_nanos = std::chrono::nanoseconds(replay_time).count();
+    EXPECT_THAT(replay_nanos, Gt(lower_expected_nanos));
+    EXPECT_THAT(replay_nanos, Lt(upper_expected_nanos));
   }
 }
