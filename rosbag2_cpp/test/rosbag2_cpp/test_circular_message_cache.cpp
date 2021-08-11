@@ -14,14 +14,11 @@
 
 #include <gmock/gmock.h>
 
-#include <chrono>
 #include <cmath>
-#include <numeric>
+#include <list>
 #include <memory>
 #include <string>
 #include <utility>
-#include <list>
-#include <thread>
 
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"

@@ -36,27 +36,20 @@ CircularMessageCacheBuffer::CircularMessageCacheBuffer(const uint64_t max_cache_
 
 void CircularMessageCacheBuffer::push(buffer_element_t msg)
 {
-  if (buffer_full_) {
-    // Remove old items until there is room for new message
-    while (buffer_bytes_size_ >= max_bytes_size_) {
-      buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
-      buffer_.pop_front();
-    }
+  // Remove any old items until there is room for new message
+  while (buffer_bytes_size_ >= max_bytes_size_) {
+    buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
+    buffer_.pop_front();
   }
   // Add new message to end of buffer
   buffer_bytes_size_ += msg->serialized_data->buffer_length;
   buffer_.push_back(msg);
-
-  if (buffer_bytes_size_ >= max_bytes_size_) {
-    buffer_full_ = true;
-  }
 }
 
 void CircularMessageCacheBuffer::clear()
 {
   buffer_.clear();
   buffer_bytes_size_ = 0u;
-  buffer_full_ = false;
 }
 
 size_t CircularMessageCacheBuffer::size()

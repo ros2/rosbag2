@@ -13,10 +13,8 @@
 // limitations under the License.
 
 #include <algorithm>
-#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
@@ -36,12 +34,8 @@ CircularMessageCache::CircularMessageCache(uint64_t max_buffer_size)
 
 void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
-  {
-    std::lock_guard<std::mutex> cache_lock(cache_mutex_);
-    if (!flushing_) {
-      primary_buffer_->push(msg);
-    }
-  }
+  std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+  primary_buffer_->push(msg);
 }
 
 std::shared_ptr<CircularMessageCacheBuffer> CircularMessageCache::consumer_buffer()
@@ -51,15 +45,9 @@ std::shared_ptr<CircularMessageCacheBuffer> CircularMessageCache::consumer_buffe
 
 void CircularMessageCache::swap_buffers()
 {
-  {
-    std::lock_guard<std::mutex> cache_lock(cache_mutex_);
-    secondary_buffer_->clear();
-    std::swap(primary_buffer_, secondary_buffer_);
-  }
-}
-
-CircularMessageCache::~CircularMessageCache()
-{
+  std::lock_guard<std::mutex> cache_lock(cache_mutex_);
+  secondary_buffer_->clear();
+  std::swap(primary_buffer_, secondary_buffer_);
 }
 
 }  // namespace cache

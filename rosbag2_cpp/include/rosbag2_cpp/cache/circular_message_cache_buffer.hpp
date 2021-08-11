@@ -15,7 +15,6 @@
 #ifndef ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_
 #define ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_BUFFER_HPP_
 
-#include <atomic>
 #include <memory>
 #include <list>
 
@@ -61,9 +60,6 @@ private:
   std::list<buffer_element_t> buffer_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
-
-  /// Determine when to start dropping old messages
-  std::atomic_bool buffer_full_ {false};
 };
 
 }  // namespace cache

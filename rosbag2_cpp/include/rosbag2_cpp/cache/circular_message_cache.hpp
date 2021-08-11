@@ -15,8 +15,6 @@
 #ifndef ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 #define ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 
-#include <atomic>
-#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -44,15 +42,13 @@ class ROSBAG2_CPP_PUBLIC CircularMessageCache
 public:
   explicit CircularMessageCache(uint64_t max_buffer_size);
 
-  ~CircularMessageCache();
-
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
 
-  /// Consumer API: get current buffer to consume
+  /// get current buffer to consume
   std::shared_ptr<CircularMessageCacheBuffer> consumer_buffer();
 
-  /// Consumer API: Swap the primary and secondary buffer before consumption.
+  /// Swap the primary and secondary buffer before consumption.
   void swap_buffers();
 
 private:
@@ -62,9 +58,6 @@ private:
 
   /// Double buffers sync
   std::mutex cache_mutex_;
-
-  /// Cache is no longer accepting messages and is in the process of flushing
-  std::atomic_bool flushing_ {false};
 };
 
 }  // namespace cache
