@@ -75,6 +75,10 @@ public:
    *   Perform any cleanup or final tasks before exitting.
    */
   virtual void finalize() {}
+
+  // Mutex that can be used to prevent buffer from being swapped out while
+  // it is being consumed.
+  std::mutex consuming_buffer_mutex_;
 };
 
 }  // namespace cache

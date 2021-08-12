@@ -46,6 +46,10 @@ public:
   // Storage specific configuration file.
   // Defaults to empty string.
   std::string storage_config_uri = "";
+
+  // Enable snapshot mode.
+  // Defaults to disabled.
+  bool snapshot_mode = false;
 };
 
 }  // namespace rosbag2_storage

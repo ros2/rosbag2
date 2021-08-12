@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <list>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -132,7 +133,7 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  use_cache_ = storage_options.max_cache_size > 0u;
+  use_cache_ = storage_options.max_cache_size > 0u && !storage_options_.snapshot_mode;
   if (use_cache_) {
     message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
       storage_options.max_cache_size);
@@ -142,6 +143,15 @@ void SequentialWriter::open(
         storage_,
         topics_names_to_info_,
         topics_info_mutex_));
+  } else if (storage_options_.snapshot_mode) {
+    if (storage_options_.max_cache_size == 0) {
+      throw std::runtime_error(
+              "Max cache size must be greater than 0 when snapshot mode is enabled"
+      );
+    }
+    message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
+      storage_options.max_cache_size
+    );
   }
   init_metadata();
 }
@@ -161,6 +171,22 @@ void SequentialWriter::close()
 
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
+}
+
+bool SequentialWriter::take_snapshot()
+{
+  std::lock_guard<std::mutex> lock(message_cache_->consuming_buffer_mutex_);
+  message_cache_->swap_buffers();
+  auto msg_vector = message_cache_->consumer_buffer()->data();
+
+  storage_->write(msg_vector);
+  for (const auto & msg : msg_vector) {
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
+      topics_names_to_info_[msg->topic_name].message_count++;
+    }
+  }
+  return true;
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
@@ -315,8 +341,10 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     // If cache size is set to zero, we write to storage directly
     storage_->write(converted_msg);
     ++topic_information->message_count;
-  } else {
+  } else if (use_cache_) {
     // Otherwise, use cache buffer
+    message_cache_->push(converted_msg);
+  } else if (storage_options_.snapshot_mode) {
     message_cache_->push(converted_msg);
   }
 }

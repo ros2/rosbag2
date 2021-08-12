@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/cache/cache_consumer.hpp"
+#include "rosbag2_cpp/cache/circular_message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/converter.hpp"
@@ -106,6 +107,13 @@ public:
    * \throws runtime_error if the Writer is not open.
    */
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
+
+  /**
+   * Take a snapshot by triggering a circular buffer flip, writing data to rosbag,
+   * closing the rosbag, and opening a new one.
+   * *\returns true if snapshot is successful
+   */
+  bool take_snapshot() override;
 
 protected:
   std::string base_folder_;
