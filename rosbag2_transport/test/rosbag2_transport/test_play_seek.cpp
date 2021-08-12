@@ -53,7 +53,7 @@ TEST_F(RosBag2PlayTestFixture, seek_back_in_time) {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"topic1", "test_msgs/BasicTypes", "", ""}};
 
-  const size_t num_msgs_to_publish = 3;
+  const size_t num_msgs_to_publish = 7;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
   messages.reserve(num_msgs_to_publish);
   int64_t start_time_ms = 1000;
@@ -68,6 +68,7 @@ TEST_F(RosBag2PlayTestFixture, seek_back_in_time) {
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  play_options_.read_ahead_queue_size = 3;
   auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
   sub_ = std::make_shared<SubscriptionManager>();
@@ -103,7 +104,7 @@ TEST_F(RosBag2PlayTestFixture, seek_with_timestamp_later_than_in_last_message) {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"topic1", "test_msgs/BasicTypes", "", ""}};
 
-  const size_t num_msgs_to_publish = 3;
+  const size_t num_msgs_to_publish = 7;
   const size_t expected_number_of_messages = num_msgs_to_publish;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
   messages.reserve(num_msgs_to_publish);
@@ -119,6 +120,7 @@ TEST_F(RosBag2PlayTestFixture, seek_with_timestamp_later_than_in_last_message) {
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  play_options_.read_ahead_queue_size = 3;
   auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
   sub_ = std::make_shared<SubscriptionManager>();
@@ -142,6 +144,7 @@ TEST_F(RosBag2PlayTestFixture, seek_with_timestamp_later_than_in_last_message) {
     player->seek((start_time_ms + message_spacing_ms * (num_msgs_to_publish - 1)) * 1000000 + 1));
 
   EXPECT_TRUE(player->play_next());
+  EXPECT_TRUE(player->play_next());
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -154,7 +157,7 @@ TEST_F(RosBag2PlayTestFixture, seek_forward) {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"topic1", "test_msgs/BasicTypes", "", ""}};
 
-  const size_t num_msgs_to_publish = 5;
+  const size_t num_msgs_to_publish = 7;
   const size_t expected_number_of_messages = num_msgs_to_publish - 1;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
   messages.reserve(num_msgs_to_publish);
@@ -170,6 +173,7 @@ TEST_F(RosBag2PlayTestFixture, seek_forward) {
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  play_options_.read_ahead_queue_size = 3;
   auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
   sub_ = std::make_shared<SubscriptionManager>();
