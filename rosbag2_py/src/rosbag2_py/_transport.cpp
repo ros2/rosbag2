@@ -67,14 +67,15 @@ template<class T>
 struct OptionsWrapper : public T
 {
 public:
-  void setDelay(float delay)
+  void setDelay(double delay)
   {
-    this->delay = rclcpp::Duration::from_nanoseconds(RCUTILS_S_TO_NS(delay));
+    this->delay = rclcpp::Duration::from_nanoseconds(
+      static_cast<rcl_duration_value_t>(RCUTILS_S_TO_NS(delay)));
   }
 
-  float getDelay() const
+  double getDelay() const
   {
-    return RCUTILS_NS_TO_S(this->delay.nanoseconds());
+    return RCUTILS_NS_TO_S(static_cast<double>(this->delay.nanoseconds()));
   }
 
   void setTopicQoSProfileOverrides(const py::dict & overrides)

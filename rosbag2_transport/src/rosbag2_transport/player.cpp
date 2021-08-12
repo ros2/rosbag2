@@ -216,14 +216,14 @@ void Player::play()
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
   } else {
-    RCLCPP_WARN(
+    RCLCPP_WARN_STREAM(
       this->get_logger(),
-      "Invalid delay value: %d. Delay is disabled.", play_options_.delay.nanoseconds());
+      "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
   try {
     do {
-      if (delay > rclcpp::Duration(0)) {
+      if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds duration(delay.nanoseconds());
         std::this_thread::sleep_for(duration);
