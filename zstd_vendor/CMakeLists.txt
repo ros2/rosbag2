@@ -42,8 +42,8 @@ macro(build_zstd)
       ${extra_cmake_args}
     # Note: zstd v1.4.6 will include the following fix. When that is released, upgrade and remove this patch.
     PATCH_COMMAND
-      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
-      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
+      git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
+      git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
   )
 
   install(
