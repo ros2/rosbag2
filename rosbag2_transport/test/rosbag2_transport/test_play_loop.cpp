@@ -44,7 +44,7 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   const float rate = 1.0;
   const bool loop_playback = false;
   double clock_publish_frequency = 0.0;
-  const float delay = 1.0;
+  const rclcpp::Duration delay(1, 0);
 
   auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->int32_value = test_value;
@@ -104,7 +104,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   const float rate = 1.0;
   const bool loop_playback = true;
   const double clock_publish_frequency = 0.0;
-  const float delay = 1.0;
+  const rclcpp::Duration delay(1, 0);
 
   auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->int32_value = test_value;

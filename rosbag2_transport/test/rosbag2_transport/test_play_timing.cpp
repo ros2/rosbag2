@@ -194,7 +194,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
   auto primitive_message2 = get_messages_strings()[0];
   primitive_message2->string_value = "Hello World 2";
 
-  auto message_time_difference = std::chrono::seconds(1);
+  auto message_time_difference = rclcpp::Duration(1, 0);
   auto topics_and_types =
     std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -202,20 +202,15 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
     serialize_test_message("topic1", 0, primitive_message2)};
 
   messages[0]->time_stamp = 100;
-  messages[1]->time_stamp =
-    messages[0]->time_stamp + std::chrono::nanoseconds(message_time_difference).count();
+  messages[1]->time_stamp = messages[0]->time_stamp + message_time_difference.nanoseconds();
 
-  float delay_margin = 1.0;
+  rclcpp::Duration delay_margin(1, 0);
 
   // Sleep 5.0 seconds before play
   {
-    play_options_.delay = 5.0;
-    auto lower_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      message_time_difference +
-      std::chrono::duration<float>(play_options_.delay)).count();
-    auto upper_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      message_time_difference +
-      std::chrono::duration<float>(play_options_.delay + delay_margin)).count();
+    play_options_.delay = rclcpp::Duration(5, 0);
+    auto lower_expected_duration = message_time_difference + play_options_.delay;
+    auto upper_expected_duration = message_time_difference + play_options_.delay + delay_margin;
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
@@ -227,17 +222,15 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
 
     auto replay_time = std::chrono::steady_clock::now() - start;
     auto replay_nanos = std::chrono::nanoseconds(replay_time).count();
-    EXPECT_THAT(replay_nanos, Gt(lower_expected_nanos));
-    EXPECT_THAT(replay_nanos, Lt(upper_expected_nanos));
+    EXPECT_THAT(replay_nanos, Gt(lower_expected_duration.nanoseconds()));
+    EXPECT_THAT(replay_nanos, Lt(upper_expected_duration.nanoseconds()));
   }
 
   // Invalid value should result in playing at default delay 0.0
   {
-    play_options_.delay = -5.0;
-    auto lower_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      message_time_difference).count();
-    auto upper_expected_nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      message_time_difference + std::chrono::duration<float>(delay_margin)).count();
+    play_options_.delay = rclcpp::Duration(-5, 0);
+    auto lower_expected_duration = message_time_difference;
+    auto upper_expected_duration = message_time_difference + delay_margin;
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topics_and_types);
@@ -249,7 +242,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
 
     auto replay_time = std::chrono::steady_clock::now() - start;
     auto replay_nanos = std::chrono::nanoseconds(replay_time).count();
-    EXPECT_THAT(replay_nanos, Gt(lower_expected_nanos));
-    EXPECT_THAT(replay_nanos, Lt(upper_expected_nanos));
+    EXPECT_THAT(replay_nanos, Gt(lower_expected_duration.nanoseconds()));
+    EXPECT_THAT(replay_nanos, Lt(upper_expected_duration.nanoseconds()));
   }
 }
