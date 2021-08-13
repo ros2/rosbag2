@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "./topic_filter.hpp"
@@ -88,6 +89,28 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
     for (const auto & topic : {"topic/a", "topic/b", "topic/c"}) {
       EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
     }
+  }
+}
+
+TEST(TestTopicFilter, filter_topics_with_known_type) {
+  std::unordered_map<std::string, std::string> topic_with_type;
+  std::unordered_set<std::string> topic_unknown_types;
+  topic_with_type.insert({"topic/a", "type_a"});
+  topic_with_type.insert({"topic/b", "type_b"});
+  topic_with_type.insert({"topic/c", "type_c"});
+  {
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_known_type(
+      topic_with_type, topic_unknown_types);
+    ASSERT_EQ(0u, filtered_topics.size());
+  }
+  topic_with_type.clear();
+  topic_with_type.insert({"topic/a", "test_msgs/BasicTypes"});
+  topic_with_type.insert({"topic/b", "test_msgs/BasicTypes"});
+  topic_with_type.insert({"topic/c", "test_msgs/BasicTypes"});
+  {
+    auto filtered_topics = rosbag2_transport::topic_filter::filter_topics_with_known_type(
+      topic_with_type, topic_unknown_types);
+    ASSERT_EQ(3u, filtered_topics.size());
   }
 }
 

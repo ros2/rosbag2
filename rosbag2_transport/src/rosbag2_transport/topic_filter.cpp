@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "rclcpp/logging.hpp"
 
@@ -117,6 +118,35 @@ filter_topics_using_regex(
     }
   }
   return filtered_by_regex;
+}
+
+std::unordered_map<std::string, std::string>
+filter_topics_with_known_type(
+  const std::unordered_map<std::string, std::string> & topics_and_types,
+  std::unordered_set<std::string> & topic_unknown_types)
+{
+  std::unordered_map<std::string, std::string> filtered_topics_and_types;
+
+  for (const auto & topic_and_type : topics_and_types) {
+    try {
+      auto package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic_and_type.second));
+      rosbag2_cpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
+    } catch (std::runtime_error & e) {
+      std::unordered_set<std::string>::const_iterator got = topic_unknown_types.find(
+        topic_and_type.second);
+      if (got == topic_unknown_types.end()) {
+        topic_unknown_types.emplace(topic_and_type.second);
+        RCLCPP_WARN_STREAM(
+          rclcpp::get_logger("rosbag2_transport"),
+          "Topic '" << topic_and_type.first <<
+            "' has unknown type '" << topic_and_type.second <<
+            "' associated. Only topics with known type are supported. Reason: '" << e.what());
+      }
+      continue;
+    }
+    filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second});
+  }
+  return filtered_topics_and_types;
 }
 
 }  // namespace topic_filter
