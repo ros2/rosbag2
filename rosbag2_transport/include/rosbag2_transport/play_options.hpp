@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rclcpp/duration.hpp"
 #include "rclcpp/qos.hpp"
 
 namespace rosbag2_transport
@@ -45,8 +46,8 @@ public:
   // 0 (or negative) means that no publisher will be created
   double clock_publish_frequency = 0.0;
 
-  // Sleep SEC seconds before play. Valid range > 0.0.
-  float delay = 0.0;
+  // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
+  rclcpp::Duration delay = rclcpp::Duration(0, 0);
 };
 
 }  // namespace rosbag2_transport

@@ -67,14 +67,24 @@ template<class T>
 struct OptionsWrapper : public T
 {
 public:
-  void setTopicQoSProfileOverrides(
-    const py::dict & overrides)
+  void setDelay(double delay)
+  {
+    this->delay = rclcpp::Duration::from_nanoseconds(
+      static_cast<rcl_duration_value_t>(RCUTILS_S_TO_NS(delay)));
+  }
+
+  double getDelay() const
+  {
+    return RCUTILS_NS_TO_S(static_cast<double>(this->delay.nanoseconds()));
+  }
+
+  void setTopicQoSProfileOverrides(const py::dict & overrides)
   {
     py_dict = overrides;
     this->topic_qos_profile_overrides = qos_map_from_py_dict(overrides);
   }
 
-  const py::dict & getTopicQoSProfileOverrides()
+  const py::dict & getTopicQoSProfileOverrides() const
   {
     return py_dict;
   }
@@ -225,7 +235,10 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("loop", &PlayOptions::loop)
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
   .def_readwrite("clock_publish_frequency", &PlayOptions::clock_publish_frequency)
-  .def_readwrite("delay", &PlayOptions::delay)
+  .def_property(
+    "delay",
+    &PlayOptions::getDelay,
+    &PlayOptions::setDelay)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
