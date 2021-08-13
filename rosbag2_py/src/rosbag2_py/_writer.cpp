@@ -17,14 +17,15 @@
 #include <string>
 #include <unordered_set>
 
-#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/plugins/plugin_utils.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -81,25 +82,20 @@ protected:
 
 std::unordered_set<std::string> get_registered_writers()
 {
-  rosbag2_storage::StorageFactory storage_factory;
-  const auto read_write = storage_factory.get_declared_read_write_plugins();
-  return std::unordered_set<std::string>(read_write.begin(), read_write.end());
+  return rosbag2_cpp::plugins::get_class_plugins
+         <rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
-  rosbag2_compression::CompressionFactory compression_factory;
-  const auto compressor_plugins = compression_factory.get_declared_compressor_plugins();
-  return std::unordered_set<std::string>(compressor_plugins.begin(), compressor_plugins.end());
+  return rosbag2_cpp::plugins::get_class_plugins
+         <rosbag2_compression::BaseCompressorInterface>();
 }
 
 std::unordered_set<std::string> get_registered_serializers()
 {
-  rosbag2_cpp::SerializationFormatConverterFactory serialization_factory;
-  const auto serialization_plugins = serialization_factory.get_declared_serialization_plugins();
-  return std::unordered_set<std::string>(
-    serialization_plugins.begin(),
-    serialization_plugins.end());
+  return rosbag2_cpp::plugins::get_class_plugins
+         <rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
 }
 
 }  // namespace rosbag2_py
