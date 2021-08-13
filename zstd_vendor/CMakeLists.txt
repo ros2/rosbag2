@@ -26,12 +26,17 @@ macro(build_zstd)
   endif()
   list(APPEND extra_cmake_args "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
+  set(zstd_version 1.4.4)
   include(ExternalProject)
   # The CMakeLists.txt file for zstd is in a subdirectory.
   # We need to configure the CMake command to build from there instead.
-  ExternalProject_Add(zstd-1.4.4
-    URL https://github.com/facebook/zstd/archive/v1.4.4.zip
-    URL_MD5 3a5c3a535280b7f4dfdbd739fcc7173f
+  ExternalProject_Add(zstd-${zstd_version}
+    GIT_REPOSITORY https://github.com/facebook/zstd.git
+    GIT_TAG v${zstd_version}
+    GIT_CONFIG advice.detachedHead=false
+    # Suppress git update due to https://gitlab.kitware.com/cmake/cmake/-/issues/16419
+    # See https://github.com/ament/uncrustify_vendor/pull/22 for details
+    UPDATE_COMMAND ""
     TIMEOUT 60
     SOURCE_SUBDIR build/cmake
     CMAKE_ARGS
@@ -42,8 +47,10 @@ macro(build_zstd)
       ${extra_cmake_args}
     # Note: zstd v1.4.6 will include the following fix. When that is released, upgrade and remove this patch.
     PATCH_COMMAND
-      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
-      patch -p1 -d . < ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
+      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> git apply -p1 --ignore-space-change --whitespace=nowarn
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
+      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> git apply -p1 --ignore-space-change --whitespace=nowarn
+        ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
   )
 
   install(
