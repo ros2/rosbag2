@@ -61,6 +61,8 @@ public:
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
   void reset_filter() override;
+
+  void seek(const rcutils_time_point_value_t & timestamp) override;
 };
 
 #endif  // ROSBAG2_STORAGE__TEST_PLUGIN_HPP_

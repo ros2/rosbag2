@@ -222,3 +222,14 @@ TEST_F(MultifileReaderTest, get_all_topics_and_types_returns_from_io_metadata)
   const auto all_topics_and_types = reader_->get_all_topics_and_types();
   EXPECT_FALSE(all_topics_and_types.empty());
 }
+
+TEST_F(MultifileReaderTest, seek_bag)
+{
+  init();
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
+  EXPECT_CALL(*storage_, has_next()).Times(3).WillRepeatedly(Return(false));
+  EXPECT_CALL(*storage_, seek(_)).Times(3);
+  EXPECT_CALL(*storage_, set_filter(_)).Times(3);
+  reader_->seek(9999999999999);
+  reader_->has_next();
+}

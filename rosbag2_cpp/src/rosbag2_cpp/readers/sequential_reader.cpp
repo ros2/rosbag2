@@ -142,10 +142,6 @@ bool SequentialReader::has_next()
     bool current_storage_has_next = storage_->has_next();
     if (!current_storage_has_next && has_next_file()) {
       load_next_file();
-      storage_options_.uri = get_current_file();
-
-      storage_ = storage_factory_->open_read_only(storage_options_);
-      storage_->set_filter(topics_filter_);
       // recursively call has_next again after rollover
       return has_next();
     }
@@ -154,13 +150,18 @@ bool SequentialReader::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
+// Note: if files in the bag are not time
+// normalized, it's possible to read messages that have a timestamp
+// before the timestamp of the last read upon a file roll-over.
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
     // performs rollover if necessary
-    has_next();
-    auto message = storage_->read_next();
-    return converter_ ? converter_->convert(message) : message;
+    if (has_next()) {
+      auto message = storage_->read_next();
+      return converter_ ? converter_->convert(message) : message;
+    }
+    throw std::runtime_error("Bag is at end. No next message.");
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
@@ -191,13 +192,20 @@ void SequentialReader::set_filter(
 
 void SequentialReader::reset_filter()
 {
-  topics_filter_ = rosbag2_storage::StorageFilter();
+  set_filter(rosbag2_storage::StorageFilter());
+}
+
+void SequentialReader::seek(const rcutils_time_point_value_t & timestamp)
+{
+  seek_time_ = timestamp;
   if (storage_) {
-    storage_->reset_filter();
+    // reset to the first file
+    current_file_iterator_ = file_paths_.begin();
+    load_current_file();
     return;
   }
   throw std::runtime_error(
-          "Bag is not open. Call open() before resetting filter.");
+          "Bag is not open. Call open() before seeking time.");
 }
 
 bool SequentialReader::has_next_file() const
@@ -205,11 +213,21 @@ bool SequentialReader::has_next_file() const
   return current_file_iterator_ + 1 != file_paths_.end();
 }
 
+void SequentialReader::load_current_file()
+{
+  preprocess_current_file();
+  storage_options_.uri = get_current_file();
+  // open and set filters
+  storage_ = storage_factory_->open_read_only(storage_options_);
+  storage_->seek(seek_time_);
+  set_filter(topics_filter_);
+}
+
 void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
-  preprocess_current_file();
+  load_current_file();
 }
 
 std::string SequentialReader::get_current_file() const
