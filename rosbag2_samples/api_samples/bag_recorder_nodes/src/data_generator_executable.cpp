@@ -16,8 +16,6 @@
 */
 
 
-#include <iostream>
-
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <example_interfaces/msg/int32.hpp>
@@ -26,14 +24,17 @@
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_storage/serialized_bag_message.hpp>
 
-int main(int, char**)
+#include <iostream>
+#include <memory>
+
+int main(int, char **)
 {
   example_interfaces::msg::Int32 data;
   data.data = 0;
   const rosbag2_cpp::StorageOptions storage_options({"big_synthetic_bag", "sqlite3"});
   const rosbag2_cpp::ConverterOptions converter_options(
     {rmw_get_serialization_format(),
-     rmw_get_serialization_format()});
+      rmw_get_serialization_format()});
   std::unique_ptr<rosbag2_cpp::writers::SequentialWriter> writer_ =
     std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
 
@@ -41,9 +42,9 @@ int main(int, char**)
 
   writer_->create_topic(
     {"synthetic",
-     "example_interfaces/msg/Int32",
-     rmw_get_serialization_format(),
-     ""});
+      "example_interfaces/msg/Int32",
+      rmw_get_serialization_format(),
+      ""});
 
   rcutils_time_point_value_t time_stamp;
   if (rcutils_system_time_now(&time_stamp) != RCUTILS_RET_OK) {
@@ -60,12 +61,12 @@ int main(int, char**)
 
     bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       new rcutils_uint8_array_t,
-      [](rcutils_uint8_array_t *msg) {
+      [](rcutils_uint8_array_t * msg) {
         auto fini_return = rcutils_uint8_array_fini(msg);
         delete msg;
         if (fini_return != RCUTILS_RET_OK) {
           std::cerr << "Failed to destroy serialized message " <<
-            rcutils_get_error_string().str;
+          rcutils_get_error_string().str;
         }
       });
     *bag_message->serialized_data = serialized_message.release_rcl_serialized_message();
@@ -80,4 +81,3 @@ int main(int, char**)
 
   return 0;
 }
-
