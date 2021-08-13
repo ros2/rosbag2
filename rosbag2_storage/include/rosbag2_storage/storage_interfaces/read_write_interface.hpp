@@ -20,6 +20,7 @@
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
+#include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 namespace rosbag2_storage
@@ -46,6 +47,15 @@ public:
   void set_filter(const StorageFilter & storage_filter) override = 0;
 
   void reset_filter() override = 0;
+
+  static std::string get_package_name()
+  {
+    return "rosbag2_storage";
+  }
+  static std::string get_base_class_name()
+  {
+    return StorageTraits<ReadWriteInterface>::name;
+  }
 };
 
 }  // namespace storage_interfaces

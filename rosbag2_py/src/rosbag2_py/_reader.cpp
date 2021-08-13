@@ -20,8 +20,11 @@
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/plugins/plugin_utils.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -86,15 +89,16 @@ protected:
 
 std::unordered_set<std::string> get_registered_readers()
 {
-  rosbag2_storage::StorageFactory storage_factory;
+  std::unordered_set<std::string> combined_plugins = rosbag2_cpp::plugins::get_class_plugins
+    <rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 
-  const auto read_only = storage_factory.get_declared_read_only_plugins();
-  std::unordered_set<std::string> all_readers(read_only.begin(), read_only.end());
+  std::unordered_set<std::string> read_only_plugins = rosbag2_cpp::plugins::get_class_plugins
+    <rosbag2_storage::storage_interfaces::ReadOnlyInterface>();
 
-  const auto read_write = storage_factory.get_declared_read_write_plugins();
-  std::copy(read_write.begin(), read_write.end(), std::inserter(all_readers, all_readers.end()));
+  // Merge read/write and read-only plugin sets
+  combined_plugins.insert(read_only_plugins.begin(), read_only_plugins.end());
 
-  return all_readers;
+  return combined_plugins;
 }
 
 }  // namespace rosbag2_py

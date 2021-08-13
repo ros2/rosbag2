@@ -17,11 +17,15 @@
 #define ROSBAG2_STORAGE__STORAGE_TRAITS_HPP_
 
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 namespace rosbag2_storage
 {
+
+namespace storage_interfaces
+{
+class ReadWriteInterface;
+class ReadOnlyInterface;
+}
 
 template<typename T>
 struct StorageTraits

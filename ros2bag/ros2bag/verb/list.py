@@ -29,7 +29,7 @@ class ListVerb(VerbExtension):
         parser.add_argument(
             'plugin_type',
             help='lists available plugins',
-            choices=['storage', 'converter', 'compression', 'decompression'])
+            choices=['storage', 'converter', 'compressor', 'decompressor'])
         parser.add_argument(
             '--verbose', help='output verbose information about the available plugin',
             action='store_true')
@@ -38,7 +38,7 @@ class ListVerb(VerbExtension):
         # the following is the resource index which is created when installing a pluginlib xml file
         if args.plugin_type == 'storage':
             pluginlib_resource_index = 'rosbag2_storage__pluginlib__plugin'
-        elif args.plugin_type == 'compression' or args.plugin_type == 'decompression':
+        elif args.plugin_type == 'compressor' or args.plugin_type == 'decompressor':
             pluginlib_resource_index = 'rosbag2_compression__pluginlib__plugin'
         else:
             pluginlib_resource_index = 'rosbag2_cpp__pluginlib__plugin'
@@ -62,11 +62,11 @@ class ListVerb(VerbExtension):
 
                     # Compression and decompression plugins share the same resource index
                     # so they must be filtered using their base class
-                    if args.plugin_type == 'compression' and \
+                    if args.plugin_type == 'compressor' and \
                             base_class_name.value != \
                             'rosbag2_compression::BaseCompressorInterface':
                         continue
-                    elif args.plugin_type == 'decompression' and \
+                    elif args.plugin_type == 'decompressor' and \
                             base_class_name.value != \
                             'rosbag2_compression::BaseDecompressorInterface':
                         continue

@@ -71,6 +71,16 @@ public:
    * compressed file.
    */
   virtual std::string get_decompression_identifier() const = 0;
+
+
+  static std::string get_package_name()
+  {
+    return "rosbag2_compression";
+  }
+  static std::string get_base_class_name()
+  {
+    return "rosbag2_compression::BaseDecompressorInterface";
+  }
 };
 
 }  // namespace rosbag2_compression

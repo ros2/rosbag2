@@ -69,6 +69,21 @@ public:
    * This is appended to the extension of the compressed file.
    */
   virtual std::string get_compression_identifier() const = 0;
+
+  /**
+   * Get the compressor package name
+   */
+  static std::string get_package_name()
+  {
+    return "rosbag2_compression";
+  }
+  /**
+   * Get the compressor base class name
+   */
+  static std::string get_base_class_name()
+  {
+    return "rosbag2_compression::BaseCompressorInterface";
+  }
 };
 
 }  // namespace rosbag2_compression
