@@ -67,7 +67,7 @@ public:
   {
     return StorageTraits<ReadOnlyInterface>::name;
   }
-  
+
   /**
   Seeks to a given timestamp. Running read_next() after seek(t)
   will return a message that is equal to or after time t. Running read_next()

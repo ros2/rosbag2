@@ -150,14 +150,15 @@ bool SequentialReader::has_next()
   throw std::runtime_error("Bag is not open. Call open() before reading.");
 }
 
+// Note: if files in the bag are not time
+// normalized, it's possible to read messages that have a timestamp
+// before the timestamp of the last read upon a file roll-over.
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_next()
 {
   if (storage_) {
     // performs rollover if necessary
     if (has_next()) {
       auto message = storage_->read_next();
-      // update seek time
-      seek_time_ = message->time_stamp;
       return converter_ ? converter_->convert(message) : message;
     }
     throw std::runtime_error("Bag is at end. No next message.");

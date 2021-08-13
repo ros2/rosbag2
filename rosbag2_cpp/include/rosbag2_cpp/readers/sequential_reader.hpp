@@ -76,6 +76,10 @@ public:
 
   void reset_filter() override;
 
+  /**
+   * seek(t) will cause subsequent reads to return messages that satisfy
+   * timestamp >= time t.
+   */
   void seek(const rcutils_time_point_value_t & timestamp) override;
 
   /**
