@@ -53,7 +53,7 @@ public:
     play_options_.read_ahead_queue_size = 2;
   }
 
-  const size_t num_msgs_to_publish_ = 7;
+  const size_t num_msgs_to_publish_ = 5;
   const int64_t start_time_ms_ = 1000;
   const int64_t message_spacing_ms_ = 100;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
@@ -85,6 +85,9 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_back_in_time) {
   EXPECT_TRUE(player->seek(start_time_ms_ * 1000000 - 1));
   EXPECT_TRUE(player->play_next());
   EXPECT_TRUE(player->play_next());
+  EXPECT_TRUE(player->seek(start_time_ms_ * 1000000));
+  EXPECT_TRUE(player->play_next());
+  EXPECT_TRUE(player->play_next());
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -94,9 +97,11 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_back_in_time) {
 
   EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
   EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
+  EXPECT_EQ(replayed_topic1[2]->int32_value, 1);
+  EXPECT_EQ(replayed_topic1[3]->int32_value, 2);
 
-  for (size_t i = 1; i <= num_msgs_to_publish_; i++) {
-    EXPECT_EQ(replayed_topic1[i + 1]->int32_value, static_cast<int32_t>(i)) << "i=" << i;
+  for (size_t i = 4; i < replayed_topic1.size(); i++) {
+    EXPECT_EQ(replayed_topic1[i]->int32_value, static_cast<int32_t>(i - 3)) << "i=" << i;
   }
 }
 
@@ -161,7 +166,7 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_forward) {
   EXPECT_TRUE(player->is_paused());
   EXPECT_TRUE(player->play_next());
 
-  EXPECT_TRUE(player->seek((start_time_ms_ + message_spacing_ms_) * 1000000 + 1));
+  EXPECT_TRUE(player->seek((start_time_ms_ + message_spacing_ms_ * 2) * 1000000));
   EXPECT_TRUE(player->play_next());
   player->resume();
   player_future.get();
