@@ -83,6 +83,11 @@ public:
     reader_->reset_filter();
   }
 
+  void seek(const rcutils_time_point_value_t & timestamp)
+  {
+    reader_->seek(timestamp);
+  }
+
 protected:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
@@ -116,7 +121,8 @@ PYBIND11_MODULE(_reader, m) {
     "get_all_topics_and_types",
     &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::get_all_topics_and_types)
   .def("set_filter", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::set_filter)
-  .def("reset_filter", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::reset_filter);
+  .def("reset_filter", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::reset_filter)
+  .def("seek", &rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>::seek);
 
   pybind11::class_<rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>>(
     m, "SequentialCompressionReader")
@@ -135,7 +141,10 @@ PYBIND11_MODULE(_reader, m) {
     &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::set_filter)
   .def(
     "reset_filter",
-    &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::reset_filter);
+    &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::reset_filter)
+  .def(
+    "seek",
+    &rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>::seek);
 
   m.def(
     "get_registered_readers",

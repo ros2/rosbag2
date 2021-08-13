@@ -69,6 +69,7 @@ public:
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
+    EXPECT_CALL(*storage_, has_next()).WillRepeatedly(Return(true));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
 
     EXPECT_CALL(*storage_factory, open_read_only(_));
@@ -139,7 +140,7 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   EXPECT_ANY_THROW(reader_->get_implementation_handle().set_filter(storage_filter));
   EXPECT_ANY_THROW(reader_->get_implementation_handle().reset_filter());
 
-  EXPECT_CALL(*storage_, set_filter(_)).Times(2);
+  EXPECT_CALL(*storage_, set_filter(_)).Times(3);
   reader_->open(default_storage_options_, {"", storage_serialization_format_});
   reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
@@ -147,8 +148,6 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   storage_filter.topics.push_back("topic2");
   reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
-
-  EXPECT_CALL(*storage_, reset_filter()).Times(1);
   reader_->get_implementation_handle().reset_filter();
   reader_->read_next();
 }

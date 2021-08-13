@@ -169,6 +169,11 @@ public:
    */
   void reset_filter();
 
+  /**
+   * Skip to a specific timestamp for reading.
+   */
+  void seek(const rcutils_time_point_value_t & timestamp);
+
   reader_interfaces::BaseReaderInterface & get_implementation_handle() const
   {
     return *reader_impl_;
