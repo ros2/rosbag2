@@ -212,20 +212,20 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
-  float delay;
-  if (play_options_.delay >= 0.0) {
+  rclcpp::Duration delay(0, 0);
+  if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
   } else {
-    RCLCPP_WARN(
-      this->get_logger(), "Invalid delay value: %f. Delay is disabled.", play_options_.delay);
-    delay = 0.0;
+    RCLCPP_WARN_STREAM(
+      this->get_logger(),
+      "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
   try {
     do {
-      if (delay > 0.0) {
-        RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay << " sec");
-        std::chrono::duration<float> duration(delay);
+      if (delay > rclcpp::Duration(0, 0)) {
+        RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+        std::chrono::nanoseconds duration(delay.nanoseconds());
         std::this_thread::sleep_for(duration);
       }
       reader_->open(storage_options_, {"", rmw_get_serialization_format()});
