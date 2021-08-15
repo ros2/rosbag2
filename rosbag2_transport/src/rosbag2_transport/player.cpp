@@ -353,6 +353,7 @@ bool Player::play_next()
 void Player::restore_message_queue_from_storage(
   rosbag2_storage::SerializedBagMessageSharedPtr origin_message)
 {
+  if (!origin_message) {return;}
   reader_->close();
   reader_->open(storage_options_, {"", rmw_get_serialization_format()});
   rosbag2_storage::SerializedBagMessageSharedPtr current_message = reader_->read_next();
@@ -397,6 +398,11 @@ bool Player::seek(rcutils_time_point_value_t time_point)
         if (!reader_->has_next()) {
           return false;  // The bag is empty
         }
+        // else means that we were at the end of the bag when we were started and will try to
+        // search from the beginning
+        assert(is_storage_completely_loaded());
+        storage_loading_future_ =
+          std::async(std::launch::async, [this]() {load_storage_content();});
       }
       current_message = reader_->read_next();
     }
@@ -531,8 +537,7 @@ void Player::play_messages_from_queue()
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
-      if (cancel_wait_for_next_message_) {
-        cancel_wait_for_next_message_ = false;
+      if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }
     }
