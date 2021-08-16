@@ -144,7 +144,7 @@ filter_topics_with_known_type(
       }
       continue;
     }
-    filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second});
+    filtered_topics_and_types.insert(topic_and_type);
   }
   return filtered_topics_and_types;
 }

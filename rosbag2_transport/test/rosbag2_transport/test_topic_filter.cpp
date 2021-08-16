@@ -92,7 +92,7 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   }
 }
 
-TEST(TestTopicFilter, filter_topics_with_known_type) {
+TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
   std::unordered_map<std::string, std::string> topic_with_type;
   std::unordered_set<std::string> topic_unknown_types;
   topic_with_type.insert({"topic/a", "type_a"});
@@ -103,7 +103,11 @@ TEST(TestTopicFilter, filter_topics_with_known_type) {
       topic_with_type, topic_unknown_types);
     ASSERT_EQ(0u, filtered_topics.size());
   }
-  topic_with_type.clear();
+}
+
+TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
+  std::unordered_map<std::string, std::string> topic_with_type;
+  std::unordered_set<std::string> topic_unknown_types;
   topic_with_type.insert({"topic/a", "test_msgs/BasicTypes"});
   topic_with_type.insert({"topic/b", "test_msgs/BasicTypes"});
   topic_with_type.insert({"topic/c", "test_msgs/BasicTypes"});

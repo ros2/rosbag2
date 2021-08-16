@@ -18,8 +18,8 @@
 #include <map>
 #include <string>
 #include <unordered_map>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 #include "rosbag2_transport/visibility_control.hpp"

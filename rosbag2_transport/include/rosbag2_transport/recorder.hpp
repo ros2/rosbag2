@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <list>
 
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
