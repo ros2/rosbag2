@@ -295,6 +295,11 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
       message_ptr = message_queue_.peek();
     }
   }
+  // Workaround for race condition between peek and is_storage_completely_loaded()
+  // Don't sync with mutex for the sake of the performance
+  if (message_ptr == nullptr) {
+    message_ptr = message_queue_.peek();
+  }
   return message_ptr;
 }
 
