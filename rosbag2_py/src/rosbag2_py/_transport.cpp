@@ -152,6 +152,9 @@ public:
 
 class Recorder
 {
+private:
+  std::promise<void> cancel_;
+
 public:
   Recorder()
   {
@@ -201,13 +204,19 @@ public:
     recorder->record();
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(recorder);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
 
-    exec.cancel();
-    spin_thread.join();
+    cancel_ = std::promise<void>();
+    auto future = cancel_.get_future();
+    // Release the GIL for long-running record, so that calling Python code can use other threads
+    {
+      py::gil_scoped_release release;
+      exec.spin_until_future_complete(future);
+    }
+  }
+
+  void cancel()
+  {
+    cancel_.set_value();
   }
 };
 
@@ -270,5 +279,6 @@ PYBIND11_MODULE(_transport, m) {
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
   .def("record", &rosbag2_py::Recorder::record)
+  .def("cancel", &rosbag2_py::Recorder::cancel)
   ;
 }
