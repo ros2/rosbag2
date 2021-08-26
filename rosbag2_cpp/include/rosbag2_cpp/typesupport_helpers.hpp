@@ -34,6 +34,10 @@ std::shared_ptr<rcpputils::SharedLibrary>
 get_typesupport_library(const std::string & type, const std::string & typesupport_identifier);
 
 ROSBAG2_CPP_PUBLIC
+std::string get_typesupport_library_path(
+  const std::string & package_name, const std::string & typesupport_identifier);
+
+ROSBAG2_CPP_PUBLIC
 const rosidl_message_type_support_t *
 get_typesupport_handle(
   const std::string & type,
