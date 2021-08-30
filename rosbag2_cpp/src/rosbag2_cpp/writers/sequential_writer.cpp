@@ -90,6 +90,7 @@ void SequentialWriter::init_metadata()
   file_info.relative_file_path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  file_info.message_count = 0;
   metadata_.files_metadata = {file_info};
 }
 
@@ -326,6 +327,8 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     std::max(metadata_.files_metadata.back().duration, file_duration);
 
   auto converted_msg = get_writeable_message(message);
+
+  metadata_.files_metadata.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
     storage_->write(converted_msg);

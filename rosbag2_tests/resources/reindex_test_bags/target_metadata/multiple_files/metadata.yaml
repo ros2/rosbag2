@@ -8,23 +8,26 @@ rosbag2_bagfile_information:
   files_metadata:
     - relative_file_path: multiple_files_0.db3
       starting_time:
-        nanoseconds_since_epoch: 1628507519269235249
+        nanoseconds_since_epoch: 1630323209340674354
       duration:
-        nanoseconds: 9999809405
+        nanoseconds: 9999842612
+      message_count: 21
     - relative_file_path: multiple_files_1.db3
       starting_time:
-        nanoseconds_since_epoch: 1628507529769081741
+        nanoseconds_since_epoch: 1630323219840020147
       duration:
-        nanoseconds: 9500009674
+        nanoseconds: 9500514108
+      message_count: 20
     - relative_file_path: multiple_files_2.db3
       starting_time:
-        nanoseconds_since_epoch: 1628507539769087721
+        nanoseconds_since_epoch: 1630323229840036322
       duration:
-        nanoseconds: 3500018890
+        nanoseconds: 3500498594
+      message_count: 8
   duration:
-    nanoseconds: 9999809405
+    nanoseconds: 9999842612
   starting_time:
-    nanoseconds_since_epoch: 1628507539769087721
+    nanoseconds_since_epoch: 1630323229840036322
   message_count: 49
   topics_with_message_count:
     - topic_metadata:

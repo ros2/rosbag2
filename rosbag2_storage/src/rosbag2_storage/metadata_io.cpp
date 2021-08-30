@@ -144,6 +144,7 @@ struct convert<rosbag2_storage::FileInformation>
     node["relative_file_path"] = metadata.relative_file_path;
     node["starting_time"] = metadata.starting_time;
     node["duration"] = metadata.duration;
+    node["message_count"] = metadata.message_count;
     return node;
   }
 
@@ -153,6 +154,7 @@ struct convert<rosbag2_storage::FileInformation>
     metadata.starting_time =
       node["starting_time"].as<std::chrono::time_point<std::chrono::high_resolution_clock>>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
+    metadata.message_count = node["message_count"].as<uint64_t>();
     return true;
   }
 };

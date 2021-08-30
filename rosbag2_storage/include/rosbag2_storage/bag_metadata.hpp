@@ -36,6 +36,7 @@ struct FileInformation
   std::string relative_file_path;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   std::chrono::nanoseconds duration;
+  size_t message_count;
 };
 
 struct BagMetadata
