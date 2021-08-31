@@ -69,6 +69,7 @@ public:
 
 private:
   std::deque<buffer_element_t> buffer_;
+  std::vector<buffer_element_t> msg_vector_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
 };

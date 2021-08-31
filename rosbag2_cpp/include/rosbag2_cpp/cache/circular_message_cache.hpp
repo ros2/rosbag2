@@ -49,6 +49,9 @@ public:
   std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer();
 
   /// Swap the primary and secondary buffer before consumption.
+  /// NOTE: consumer_buffer() should be called sequentially after
+  /// swap_buffer() to ensure expected behavior. Calling swap_buffer()
+  /// while accessing consumer_buffer() will be undefined behavior.
   void swap_buffers();
 
 private:
