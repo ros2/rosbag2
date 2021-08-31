@@ -15,8 +15,9 @@
 #ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 #define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 
+#include <deque>
 #include <memory>
-#include <list>
+#include <vector>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -34,6 +35,14 @@ namespace rosbag2_cpp
 namespace cache
 {
 
+/**
+* This class implements a circular buffer message cache. Since the buffer
+* size is limited by total byte size of the storage messages rather than
+* a fix number of messages, a deque is used instead of a vector since
+* older messages can always be dropped from the front and new messages added
+* to the end. This buffer may consume more byte than max_cache_size, however
+* it will only exceed the limit by the excess data in the most recent message.
+*/
 class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
 {
 public:
@@ -54,10 +63,10 @@ public:
   size_t size();
 
   /// Get buffer data
-  const std::list<buffer_element_t> & data();
+  const std::vector<buffer_element_t> & data();
 
 private:
-  std::list<buffer_element_t> buffer_;
+  std::deque<buffer_element_t> buffer_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
 };

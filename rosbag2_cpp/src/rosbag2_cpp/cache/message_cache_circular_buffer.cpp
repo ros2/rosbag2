@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <deque>
 #include <memory>
-#include <list>
+#include <vector>
 
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 
@@ -21,14 +22,7 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-/**
-* This class implements a circular buffer message cache. Since the buffer
-* size is limited by total byte size of the storage messages rather than
-* a fix number of messages, a linked list is used instead of a vector since
-* older messages can always be dropped from the front and new messages added
-* to the end. This buffer may consume more byte than max_cache_size, however
-* it will only exceed the limit by the excess data in the most recent message.
-*/
+
 MessageCacheCircularBuffer::MessageCacheCircularBuffer(const uint64_t max_cache_size)
 : max_bytes_size_(max_cache_size)
 {
@@ -57,7 +51,7 @@ size_t MessageCacheCircularBuffer::size()
   return buffer_.size();
 }
 
-const std::list<MessageCacheCircularBuffer::buffer_element_t> & MessageCacheCircularBuffer::data()
+const std::vector<MessageCacheCircularBuffer::buffer_element_t> & MessageCacheCircularBuffer::data()
 {
   return buffer_;
 }
