@@ -32,6 +32,7 @@
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
