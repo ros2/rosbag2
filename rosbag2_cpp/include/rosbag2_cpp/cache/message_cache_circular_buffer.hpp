@@ -46,6 +46,8 @@ namespace cache
 class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
 {
 public:
+  // Delete default constructor since max_cache_size is required
+  MessageCacheCircularBuffer() = delete;
   explicit MessageCacheCircularBuffer(const uint64_t max_cache_size);
 
   using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
