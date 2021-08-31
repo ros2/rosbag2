@@ -66,31 +66,28 @@ public:
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
   const uint32_t message_count = 100;
-  uint64_t size_bytes_so_far = 0;
 
   auto circular_message_cache = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
     cache_size_);
 
   for (uint32_t i = 0; i < message_count; ++i) {
     auto msg = make_test_msg();
-    size_t serialized_data_size = msg->serialized_data->buffer_length;
     circular_message_cache->push(msg);
-    size_bytes_so_far += serialized_data_size;
   }
   // Swap cache
   circular_message_cache->swap_buffers();
 
   auto consumer_buffer = circular_message_cache->consumer_buffer();
-  auto message_list = consumer_buffer->data();
-  std::string first_message = deserialize_message(message_list.front()->serialized_data);
+  auto message_vector = consumer_buffer->data();
+  std::string first_message = deserialize_message(message_vector.front()->serialized_data);
 
   // Old messages should be dropped
   EXPECT_THAT(first_message, StrNe("Hello0"));
 
   uint64_t message_data_size = 0;
 
-  for (auto it = message_list.begin(); it != message_list.end(); it++) {
-    message_data_size += (*it)->serialized_data->buffer_length;
+  for (auto & msg : message_vector) {
+    message_data_size += msg->serialized_data->buffer_length;
   }
 
   int cache_size_diff = cache_size_ - message_data_size;
@@ -101,16 +98,13 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
   const uint32_t message_count = 100;
-  uint64_t size_bytes_so_far = 0;
 
   auto circular_message_cache = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
     cache_size_);
 
   for (uint32_t i = 0; i < message_count; ++i) {
     auto msg = make_test_msg();
-    size_t serialized_data_size = msg->serialized_data->buffer_length;
     circular_message_cache->push(msg);
-    size_bytes_so_far += serialized_data_size;
   }
   // Swap filled cache to secondary
   circular_message_cache->swap_buffers();
