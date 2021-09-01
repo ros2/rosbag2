@@ -87,11 +87,11 @@ void SequentialWriter::init_metadata()
     std::chrono::nanoseconds::max());
   metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
   rosbag2_storage::FileInformation file_info{};
-  file_info.relative_file_path = strip_parent_path(storage_->get_relative_file_path());
+  file_info.path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   file_info.message_count = 0;
-  metadata_.files_metadata = {file_info};
+  metadata_.files = {file_info};
 }
 
 void SequentialWriter::open(
@@ -284,8 +284,8 @@ void SequentialWriter::split_bagfile()
   metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   rosbag2_storage::FileInformation file_info{};
-  file_info.relative_file_path = strip_parent_path(storage_->get_relative_file_path());
-  metadata_.files_metadata.push_back(file_info);
+  file_info.path = strip_parent_path(storage_->get_relative_file_path());
+  metadata_.files.push_back(file_info);
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -310,25 +310,25 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
     // Update bagfile starting time
     metadata_.starting_time = std::chrono::high_resolution_clock::now();
-    metadata_.files_metadata.back().starting_time = std::chrono::high_resolution_clock::now();
+    metadata_.files.back().starting_time = std::chrono::high_resolution_clock::now();
   }
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
-  metadata_.files_metadata.back().starting_time =
-    std::min(metadata_.files_metadata.back().starting_time, message_timestamp);
+  metadata_.files.back().starting_time =
+    std::min(metadata_.files.back().starting_time, message_timestamp);
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
-  const auto file_duration = message_timestamp - metadata_.files_metadata.back().starting_time;
-  metadata_.files_metadata.back().duration =
-    std::max(metadata_.files_metadata.back().duration, file_duration);
+  const auto file_duration = message_timestamp - metadata_.files.back().starting_time;
+  metadata_.files.back().duration =
+    std::max(metadata_.files.back().duration, file_duration);
 
   auto converted_msg = get_writeable_message(message);
 
-  metadata_.files_metadata.back().message_count++;
+  metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
     storage_->write(converted_msg);

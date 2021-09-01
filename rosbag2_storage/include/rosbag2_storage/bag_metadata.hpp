@@ -33,7 +33,7 @@ struct TopicInformation
 
 struct FileInformation
 {
-  std::string relative_file_path;
+  std::string path;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   std::chrono::nanoseconds duration;
   size_t message_count;
@@ -45,7 +45,7 @@ struct BagMetadata
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
-  std::vector<FileInformation> files_metadata;
+  std::vector<FileInformation> files;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   uint64_t message_count;
