@@ -310,7 +310,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
-  const auto actual_splits = static_cast<int>(metadata.relative_file_paths.size());
+  const auto actual_splits = static_cast<int>(metadata.files.size());
 
   // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.
   // The only guarantee with splits right now is that they will not occur until
@@ -381,7 +381,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   // Check that there's only 1 bagfile and that it exists.
-  ASSERT_EQ(1u, metadata.relative_file_paths.size());
+  ASSERT_EQ(1u, metadata.files.size());
   const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[0]};
   ASSERT_TRUE(bagfile_path.exists()) <<
     "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
@@ -448,7 +448,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
       }
     }
 
-    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
+    ASSERT_GE(metadata.files.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
 #endif
@@ -587,7 +587,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
       }
     }
 
-    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
+    ASSERT_GE(metadata.files.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
   #endif
