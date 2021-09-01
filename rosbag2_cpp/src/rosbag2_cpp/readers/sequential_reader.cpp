@@ -91,13 +91,22 @@ void SequentialReader::open(
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
-    if (metadata_.relative_file_paths.empty()) {
-      ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
-      return;
-    }
+    if (metadata_.version < 5) {
+      if (metadata_.relative_file_paths.empty()) {
+        ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
+        return;
+      }
 
-    file_paths_ = details::resolve_relative_paths(
-      storage_options.uri, metadata_.relative_file_paths, metadata_.version);
+      file_paths_ = details::resolve_relative_paths(
+        storage_options.uri, metadata_.relative_file_paths, metadata_.version);
+    } else {
+      std::vector<std::string> relative_file_paths;
+      for (auto file : metadata_.files) {
+        relative_file_paths.push_back(file.path);
+      }
+      file_paths_ = details::resolve_relative_paths(
+        storage_options.uri, relative_file_paths, metadata_.version);
+    }
     current_file_iterator_ = file_paths_.begin();
 
     preprocess_current_file();
