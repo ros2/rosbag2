@@ -382,7 +382,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 
   // Check that there's only 1 bagfile and that it exists.
   ASSERT_EQ(1u, metadata.files.size());
-  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[0]path};
+  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[0].path};
   ASSERT_TRUE(bagfile_path.exists()) <<
     "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
