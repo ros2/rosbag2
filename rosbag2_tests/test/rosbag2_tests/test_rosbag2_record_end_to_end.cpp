@@ -448,7 +448,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
       }
     }
 
-    ASSERT_GE(metadata.files.size(), 1) << "Bagfile never split!";
+    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
 #endif
@@ -587,7 +587,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
       }
     }
 
-    ASSERT_GE(metadata.files.size(), 1) << "Bagfile never split!";
+    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
     metadata_io.write_metadata(root_bag_path_.string(), metadata);
   }
   #endif
@@ -595,8 +595,8 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
-  for (const auto & file : metadata.files) {
-    const auto file_path = root_bag_path_ / rcpputils::fs::path{file.path};
+  for (const auto & path : metadata.relative_file_paths) {
+    const auto file_path = root_bag_path_ / rcpputils::fs::path{path};
 
     EXPECT_TRUE(file_path.exists()) << "File: \"" <<
       file_path.string() << "\" does not exist!";
