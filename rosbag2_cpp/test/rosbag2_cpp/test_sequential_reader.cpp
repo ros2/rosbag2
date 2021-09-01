@@ -23,6 +23,7 @@
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/logging.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
@@ -61,6 +62,7 @@ public:
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     rosbag2_storage::BagMetadata metadata;
     metadata.relative_file_paths = {relative_file_path};
+    metadata.version = 4;
     metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
 
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
