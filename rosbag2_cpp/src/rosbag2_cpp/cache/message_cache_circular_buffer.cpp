@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 
+#include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 
 namespace rosbag2_cpp
@@ -30,8 +31,14 @@ MessageCacheCircularBuffer::MessageCacheCircularBuffer(const uint64_t max_cache_
 
 void MessageCacheCircularBuffer::push(buffer_element_t msg)
 {
+  // Drop message if it exceeds the buffer size
+  if (msg->serialized_data->buffer_length > max_bytes_size_) {
+    ROSBAG2_CPP_LOG_WARN_STREAM("Last message exceeds snapshot buffer size. Dropping message!");
+    return;
+  }
+
   // Remove any old items until there is room for new message
-  while (buffer_bytes_size_ >= max_bytes_size_) {
+  while (buffer_bytes_size_ > (max_bytes_size_ - msg->serialized_data->buffer_length)) {
     buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
     buffer_.pop_front();
   }

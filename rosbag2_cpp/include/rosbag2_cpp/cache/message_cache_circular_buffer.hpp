@@ -40,8 +40,9 @@ namespace cache
 * size is limited by total byte size of the storage messages rather than
 * a fix number of messages, a deque is used instead of a vector since
 * older messages can always be dropped from the front and new messages added
-* to the end. This buffer may consume more byte than max_cache_size, however
-* it will only exceed the limit by the excess data in the most recent message.
+* to the end. The buffer will never consume more than max_cache_size bytes,
+* and will log a warning message if an individual message exceeds the buffer
+* size.
 */
 class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
 {
