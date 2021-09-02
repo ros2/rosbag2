@@ -136,6 +136,9 @@ Recorder::get_requested_or_available_topics()
   auto filtered_topics_and_types = topic_filter::filter_topics_with_more_than_one_type(
     all_topics_and_types, record_options_.include_hidden_topics);
 
+  filtered_topics_and_types = topic_filter::filter_topics_with_known_type(
+    filtered_topics_and_types, topic_unknown_types_);
+
   if (!record_options_.topics.empty()) {
     // expand specified topics
     std::vector<std::string> expanded_topics;
