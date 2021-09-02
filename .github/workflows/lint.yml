@@ -21,6 +21,7 @@ jobs:
       with:
         linter: copyright
         package-name: |
+            bag_recorder_nodes
             ros2bag
             rosbag2_compression
             rosbag2_converter_default_plugins
@@ -43,6 +44,7 @@ jobs:
       with:
         linter: xmllint
         package-name: |
+            bag_recorder_nodes
             ros2bag
             rosbag2
             rosbag2_compression
@@ -71,6 +73,7 @@ jobs:
       with:
         linter: ${{ matrix.linter }}
         package-name: |
+            bag_recorder_nodes
             rosbag2_compression
             rosbag2_converter_default_plugins
             rosbag2_cpp
