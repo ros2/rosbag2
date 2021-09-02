@@ -60,13 +60,9 @@ size_t MessageCacheCircularBuffer::size()
 
 const std::vector<MessageCacheCircularBuffer::buffer_element_t> & MessageCacheCircularBuffer::data()
 {
-  msg_vector_.clear();
-  msg_vector_.reserve(buffer_.size());
-
   // Copy data to vector to maintain same interface as MessageCacheBuffer
-  for (auto & msg : buffer_) {
-    msg_vector_.push_back(msg);
-  }
+  msg_vector_ = std::vector<MessageCacheCircularBuffer::buffer_element_t>(
+    buffer_.begin(), buffer_.end());
   return msg_vector_;
 }
 
