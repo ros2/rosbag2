@@ -75,9 +75,6 @@ public:
   /// Summarize dropped/remaining messages
   void log_dropped();
 
-  /// Producer API: notify consumer to wake-up (primary buffer has data)
-  void notify_buffer_consumer();
-
   /// Set the cache to consume-only mode for final buffer flush before closing
   void finalize();
 
@@ -101,6 +98,9 @@ public:
   std::unordered_map<std::string, uint32_t> messages_dropped() const;
 
 private:
+  /// Producer API: notify consumer to wake-up (primary buffer has data)
+  void notify_buffer_consumer();
+
   /// Double buffers
   std::shared_ptr<MessageCacheBuffer> primary_buffer_;
   std::shared_ptr<MessageCacheBuffer> secondary_buffer_;
