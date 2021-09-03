@@ -23,7 +23,7 @@ namespace cache
 {
 
 CacheConsumer::CacheConsumer(
-  std::shared_ptr<MessageCache> message_cache,
+  std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseMessageCacheInterface> message_cache,
   consume_callback_function_t consume_callback)
 : message_cache_(message_cache),
   consume_callback_(consume_callback)

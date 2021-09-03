@@ -20,7 +20,7 @@
 #include <utility>
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_cache_interface.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_message_cache_interface.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp

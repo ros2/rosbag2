@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__CACHE_INTERFACES__BASE_CACHE_INTERFACE_HPP_
-#define ROSBAG2_CPP__CACHE_INTERFACES__BASE_CACHE_INTERFACE_HPP_
+#ifndef ROSBAG2_CPP__CACHE_INTERFACES__BASE_MESSAGE_CACHE_INTERFACE_HPP_
+#define ROSBAG2_CPP__CACHE_INTERFACES__BASE_MESSAGE_CACHE_INTERFACE_HPP_
 
 #include <memory>
 
@@ -26,10 +26,10 @@ namespace rosbag2_cpp
 namespace cache_interfaces
 {
 
-class ROSBAG2_CPP_PUBLIC BaseCacheInterface
+class ROSBAG2_CPP_PUBLIC BaseMessageCacheInterface
 {
 public:
-  virtual ~BaseCacheInterface() {}
+  virtual ~BaseMessageCacheInterface() {}
 
   virtual void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
 
@@ -37,9 +37,15 @@ public:
   consumer_buffer() = 0;
 
   virtual void swap_buffers() = 0;
+
+  virtual void notify_flushing_done() {}
+
+  virtual void log_dropped() {}
+
+  virtual void finalize() {}
 };
 
 }  // namespace cache_interfaces
 }  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_CPP__CACHE_INTERFACES__BASE_CACHE_INTERFACE_HPP_
+#endif  // ROSBAG2_CPP__CACHE_INTERFACES__BASE_MESSAGE_CACHE_INTERFACE_HPP_

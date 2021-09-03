@@ -20,7 +20,7 @@
 #include <string>
 
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_cache_interface.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_message_cache_interface.hpp"
 #include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -40,7 +40,7 @@ namespace cache
 {
 
 class ROSBAG2_CPP_PUBLIC CircularMessageCache
-  : public rosbag2_cpp::cache_interfaces::BaseCacheInterface
+  : public rosbag2_cpp::cache_interfaces::BaseMessageCacheInterface
 {
 public:
   explicit CircularMessageCache(uint64_t max_buffer_size);
