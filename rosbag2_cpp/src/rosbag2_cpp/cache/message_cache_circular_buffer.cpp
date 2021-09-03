@@ -29,12 +29,12 @@ MessageCacheCircularBuffer::MessageCacheCircularBuffer(const uint64_t max_cache_
 {
 }
 
-void MessageCacheCircularBuffer::push(buffer_element_t msg)
+bool MessageCacheCircularBuffer::push(buffer_element_t msg)
 {
   // Drop message if it exceeds the buffer size
   if (msg->serialized_data->buffer_length > max_bytes_size_) {
     ROSBAG2_CPP_LOG_WARN_STREAM("Last message exceeds snapshot buffer size. Dropping message!");
-    return;
+    return false;
   }
 
   // Remove any old items until there is room for new message
@@ -45,6 +45,8 @@ void MessageCacheCircularBuffer::push(buffer_element_t msg)
   // Add new message to end of buffer
   buffer_bytes_size_ += msg->serialized_data->buffer_length;
   buffer_.push_back(msg);
+
+  return true;
 }
 
 void MessageCacheCircularBuffer::clear()
@@ -58,10 +60,10 @@ size_t MessageCacheCircularBuffer::size()
   return buffer_.size();
 }
 
-const std::vector<MessageCacheCircularBuffer::buffer_element_t> & MessageCacheCircularBuffer::data()
+const std::vector<buffer_element_t> & MessageCacheCircularBuffer::data()
 {
   // Copy data to vector to maintain same interface as MessageCacheBuffer
-  msg_vector_ = std::vector<MessageCacheCircularBuffer::buffer_element_t>(
+  msg_vector_ = std::vector<buffer_element_t>(
     buffer_.begin(), buffer_.end());
   return msg_vector_;
 }

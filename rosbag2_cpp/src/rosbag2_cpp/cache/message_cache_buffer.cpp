@@ -54,7 +54,7 @@ size_t MessageCacheBuffer::size()
   return buffer_.size();
 }
 
-const std::vector<MessageCacheBuffer::buffer_element_t> & MessageCacheBuffer::data()
+const std::vector<buffer_element_t> & MessageCacheBuffer::data()
 {
   return buffer_;
 }

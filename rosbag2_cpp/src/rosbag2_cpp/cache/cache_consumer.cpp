@@ -68,7 +68,7 @@ void CacheConsumer::exec_consuming()
     // Invariant at loop start: consumer buffer is empty
 
     // swap producer buffer with consumer buffer
-    message_cache_->wait_for_buffer();
+    message_cache_->swap_buffers();
 
     // make sure to use consistent callback for each iteration
     auto callback_for_this_loop = consume_callback_;

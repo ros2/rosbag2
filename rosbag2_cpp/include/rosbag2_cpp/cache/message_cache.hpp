@@ -24,6 +24,8 @@
 #include <vector>
 
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_cache_interface.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -48,7 +50,7 @@ namespace cache
 * the consumer performance (which can be a bottleneck, e.g. disk writes).
 *
 * Two instances of MessageCacheBuffer are used, one for producer and one for
-* the consumer. Buffers are switched through wait_for_buffer function, which
+* the consumer. Buffers are switched through swap_buffers function, which
 * involves synchronization and a simple pointer switch.
 *
 * The cache can enter a flushing state, intended as a finalization state,
@@ -60,6 +62,7 @@ namespace cache
 * performance issues, most likely with the CacheConsumer consumer callback.
 */
 class ROSBAG2_CPP_PUBLIC MessageCache
+  : public rosbag2_cpp::cache_interfaces::BaseCacheInterface
 {
 public:
   explicit MessageCache(uint64_t max_buffer_size);
@@ -67,7 +70,7 @@ public:
   ~MessageCache();
 
   /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
-  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Summarize dropped/remaining messages
   void log_dropped();
@@ -88,10 +91,11 @@ public:
   * a) data was inserted into the producer buffer, consuming can continue after a swap
   * b) we are flushing the data (in case we missed the last notification when consuming)
   **/
-  void wait_for_buffer();
+  void swap_buffers() override;
 
   /// Consumer API: get current buffer to consume
-  std::shared_ptr<MessageCacheBuffer> consumer_buffer();
+  std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface>
+  consumer_buffer() override;
 
   /// Exposes counts of messages dropped per topic
   std::unordered_map<std::string, uint32_t> messages_dropped() const;

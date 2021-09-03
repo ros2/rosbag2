@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -45,30 +46,29 @@ namespace cache
 * ->byte_size() - like interface
 */
 class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
+  : public rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface
 {
 public:
   explicit MessageCacheBuffer(const uint64_t max_cache_size);
-
-  using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
 
   /**
   * If buffer size got some space left, we push message regardless of its size, but if
   * this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
   * This flag is cleared when buffers are swapped.
   */
-  bool push(buffer_element_t msg);
+  bool push(rosbag2_cpp::buffer_element_t msg) override;
 
   /// Clear buffer
-  void clear();
+  void clear() override;
 
   /// Get number of elements in the buffer
-  size_t size();
+  size_t size() override;
 
   /// Get buffer data
-  const std::vector<buffer_element_t> & data();
+  const std::vector<rosbag2_cpp::buffer_element_t> & data() override;
 
 private:
-  std::vector<buffer_element_t> buffer_;
+  std::vector<rosbag2_cpp::buffer_element_t> buffer_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
 

@@ -61,7 +61,7 @@ class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
   using consume_callback_function_t = std::function<void (const
-      std::vector<MessageCacheBuffer::buffer_element_t> &)>;
+      std::vector<rosbag2_cpp::buffer_element_t> &)>;
 
   CacheConsumer(
     std::shared_ptr<MessageCache> message_cache,

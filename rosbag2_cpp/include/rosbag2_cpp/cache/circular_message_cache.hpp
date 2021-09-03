@@ -20,6 +20,8 @@
 #include <string>
 
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_cache_interface.hpp"
+#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -38,21 +40,23 @@ namespace cache
 {
 
 class ROSBAG2_CPP_PUBLIC CircularMessageCache
+  : public rosbag2_cpp::cache_interfaces::BaseCacheInterface
 {
 public:
   explicit CircularMessageCache(uint64_t max_buffer_size);
 
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
-  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// get current buffer to consume
-  std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer();
+  std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface>
+  consumer_buffer() override;
 
   /// Swap the primary and secondary buffer before consumption.
   /// NOTE: consumer_buffer() should be called sequentially after
   /// swap_buffer() to ensure expected behavior. Calling swap_buffer()
   /// while accessing consumer_buffer() will be undefined behavior.
-  void swap_buffers();
+  void swap_buffers() override;
 
 private:
   /// Double buffers
