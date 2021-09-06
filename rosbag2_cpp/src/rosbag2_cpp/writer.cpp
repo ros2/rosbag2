@@ -131,8 +131,8 @@ void Writer::write(
       }
     });
 
-  // While using message compression mode, another thread deals with this serialized message
-  // asynchronously.
+  // While using compression mode and cache size isn't 0, another thread deals with this serialized
+  // message asynchronously.
   // In order to keep serialized message valid, have to duplicate message.
 
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
