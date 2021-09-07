@@ -212,11 +212,10 @@ struct convert<rosbag2_storage::BagMetadata>
       node["compression_format"] = metadata.compression_format;
       node["compression_mode"] = metadata.compression_mode;
     }
-    if (metadata.version < 5) {
-      node["relative_file_paths"] = metadata.relative_file_paths;
-    }
     if (metadata.version >= 5) {
       node["files"] = metadata.files;
+    } else {
+      node["relative_file_paths"] = metadata.relative_file_paths;
     }
     return node;
   }
@@ -233,16 +232,22 @@ struct convert<rosbag2_storage::BagMetadata>
       decode_for_version<std::vector<rosbag2_storage::TopicInformation>>(
       node["topics_with_message_count"], metadata.version);
 
+    metadata.files =
+      node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
+
+    std::vector<std::string> relative_paths;
+    if (node["relative_file_paths"]){
+      relative_paths = node["relative_file_paths"].as<std::vector<std::string>>();
+    }
+    for (const auto & relative_path : relative_paths) {
+      rosbag2_storage::FileInformation fi;
+      fi.path = relative_path;
+      metadata.files.push_back(fi);
+    }
+
     if (metadata.version >= 3) {  // fields introduced by rosbag2_compression
       metadata.compression_format = node["compression_format"].as<std::string>();
       metadata.compression_mode = node["compression_mode"].as<std::string>();
-    }
-    if (metadata.version < 5) {
-      metadata.relative_file_paths = node["relative_file_paths"].as<std::vector<std::string>>();
-    }
-    if (metadata.version >= 5) {
-      metadata.files =
-        node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
     }
     return true;
   }
