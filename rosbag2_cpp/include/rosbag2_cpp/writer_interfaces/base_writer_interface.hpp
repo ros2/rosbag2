@@ -51,6 +51,8 @@ public:
    * \returns true if snapshot is successful, false if snapshot fails or is not supported
    */
   virtual bool take_snapshot() = 0;
+
+  virtual bool is_async_process_message() = 0;
 };
 
 }  // namespace writer_interfaces

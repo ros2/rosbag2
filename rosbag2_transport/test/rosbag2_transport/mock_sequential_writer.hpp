@@ -62,6 +62,11 @@ public:
     std::swap(snapshot_buffer_, messages_);
     snapshot_buffer_.clear();
     return true;
+	}
+
+  bool is_async_process_message() override
+  {
+    return false;
   }
 
   const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & get_messages()

@@ -313,6 +313,15 @@ bool SequentialWriter::take_snapshot()
   return true;
 }
 
+bool SequentialWriter::is_async_process_message()
+{
+  if (storage_options_.max_cache_size != 0u) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
 SequentialWriter::get_writeable_message(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)

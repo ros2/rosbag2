@@ -216,6 +216,15 @@ void SequentialCompressionWriter::close()
   storage_factory_.reset();
 }
 
+bool SequentialCompressionWriter::is_async_process_message()
+{
+  if (compression_options_.compression_mode == CompressionMode::MESSAGE) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void SequentialCompressionWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type)
 {

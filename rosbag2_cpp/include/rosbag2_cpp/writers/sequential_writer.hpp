@@ -114,6 +114,13 @@ public:
    */
   bool take_snapshot() override;
 
+  /**
+   * Get the information on whether message processing is asynchronous
+   *
+   * \return true for asynchronous processing. Otherwise, synchronous processing
+   */
+  bool is_async_process_message() override;
+
 protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;

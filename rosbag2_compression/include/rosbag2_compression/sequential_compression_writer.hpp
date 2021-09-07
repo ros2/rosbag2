@@ -119,6 +119,13 @@ public:
    */
   void close() override;
 
+  /**
+   * Get the information on whether message processing is asynchronous
+   *
+   * \return true for asynchronous processing. Otherwise, synchronous processing
+   */
+  bool is_async_process_message() override;
+
 protected:
   /**
    * Compress a file and update the metadata file path.
