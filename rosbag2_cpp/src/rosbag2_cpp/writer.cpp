@@ -141,7 +141,7 @@ void Writer::write(
       &allocator);
     if (ret != RCUTILS_RET_OK) {
       auto err = std::string("Failed to call rcutils_uint8_array_init(): return ");
-      err += ret;
+      err += std::to_string(ret);
       throw std::runtime_error(err);
     }
 
