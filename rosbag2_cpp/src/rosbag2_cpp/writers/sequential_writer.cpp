@@ -315,7 +315,7 @@ bool SequentialWriter::take_snapshot()
 
 bool SequentialWriter::is_async_process_message()
 {
-  if (storage_options_.max_cache_size != 0u) {
+  if (converter_ == nullptr && storage_options_.max_cache_size != 0u) {
     return true;
   } else {
     return false;
