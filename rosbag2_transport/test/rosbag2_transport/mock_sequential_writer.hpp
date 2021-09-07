@@ -64,7 +64,7 @@ public:
     return true;
 	}
 
-  bool is_async_process_message() override
+  bool request_owned_serialized_data() override
   {
     return false;
   }

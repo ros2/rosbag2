@@ -216,7 +216,7 @@ void SequentialCompressionWriter::close()
   storage_factory_.reset();
 }
 
-bool SequentialCompressionWriter::is_async_process_message()
+bool SequentialCompressionWriter::request_owned_serialized_data()
 {
   if (compression_options_.compression_mode == CompressionMode::MESSAGE) {
     return true;

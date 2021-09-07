@@ -119,7 +119,7 @@ void Writer::write(
   serialized_bag_message->topic_name = topic_name;
   serialized_bag_message->time_stamp = time.nanoseconds();
 
-  if (writer_impl_->is_async_process_message()) {
+  if (writer_impl_->request_owned_serialized_data()) {
     // For asynchronous processing message, duplicate message
     serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       new rcutils_uint8_array_t,

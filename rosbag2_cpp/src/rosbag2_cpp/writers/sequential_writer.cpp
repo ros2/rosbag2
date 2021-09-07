@@ -313,7 +313,7 @@ bool SequentialWriter::take_snapshot()
   return true;
 }
 
-bool SequentialWriter::is_async_process_message()
+bool SequentialWriter::request_owned_serialized_data()
 {
   if (converter_ == nullptr && storage_options_.max_cache_size != 0u) {
     return true;

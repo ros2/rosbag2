@@ -115,11 +115,11 @@ public:
   bool take_snapshot() override;
 
   /**
-   * Get the information on whether message processing is asynchronous
+   * Check if write processing needs to have the ownership of serialized message
    *
-   * \return true for asynchronous processing. Otherwise, synchronous processing
+   * \return true if writer processing needs the ownership. Otherwise, return false.
    */
-  bool is_async_process_message() override;
+  bool request_owned_serialized_data() override;
 
 protected:
   std::string base_folder_;

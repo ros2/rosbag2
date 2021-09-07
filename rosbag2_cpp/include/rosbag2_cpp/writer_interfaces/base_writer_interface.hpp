@@ -52,7 +52,7 @@ public:
    */
   virtual bool take_snapshot() = 0;
 
-  virtual bool is_async_process_message() = 0;
+  virtual bool request_owned_serialized_data() = 0;
 };
 
 }  // namespace writer_interfaces
