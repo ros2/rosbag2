@@ -120,7 +120,7 @@ void Writer::write(
   serialized_bag_message->time_stamp = time.nanoseconds();
 
   if (writer_impl_->request_owned_serialized_data()) {
-    // For asynchronous processing message, duplicate message
+    // Need owned serialized data, so duplicate message
     serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       new rcutils_uint8_array_t,
       [](rcutils_uint8_array_t * msg) {
@@ -153,6 +153,8 @@ void Writer::write(
     serialized_bag_message->serialized_data.get()->buffer_length =
       message.get_rcl_serialized_message().buffer_length;
   } else {
+    // temporary store the payload in a shared_ptr.
+    // add custom no-op deleter to avoid deep copying data.
     serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       const_cast<rcutils_uint8_array_t *>(&message.get_rcl_serialized_message()),
       [](rcutils_uint8_array_t * /* data */) {});

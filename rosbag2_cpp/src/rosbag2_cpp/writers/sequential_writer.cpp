@@ -315,11 +315,7 @@ bool SequentialWriter::take_snapshot()
 
 bool SequentialWriter::request_owned_serialized_data()
 {
-  if (converter_ == nullptr && storage_options_.max_cache_size != 0u) {
-    return true;
-  } else {
-    return false;
-  }
+  return converter_ == nullptr && storage_options_.max_cache_size != 0u;
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
