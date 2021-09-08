@@ -18,7 +18,7 @@ $ ros2 bag record --max-cache-size 100000 --snapshot-mode [topics [topics ...]]
 
 Triggering a snapshot via CLI:
 ```
-$ ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/TakeSnapshot
+$ ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/Snapshot
 ```
 
 Triggering a snapshot with a keyboard shortcut:
@@ -39,7 +39,7 @@ Triggering a snapshot with a keyboard shortcut:
 
 * Modify `BaseWriterInterface` to include a pure virutal function `take_snapshot` to ensure that all future writers are compatible with snapshot mode.
 
-* Implement the `~/snapshot` service interface as `TakeSnapshot.srv` in `rosbag2_interfaces`. It won’t require any arguments (similar to `Resume.srv`).
+* Implement the `~/snapshot` service interface as `Snapshot.srv` in `rosbag2_interfaces`. It won’t require any arguments (similar to `Resume.srv`).
 
 
 ## Implementation Breakdown
@@ -47,6 +47,6 @@ The snapshot feature implementation could be broken down into the following PRs:
 
 * Implement `CircularMessageCache` and `MessageCacheCircularBuffer`. Then add corresponding tests.
 * Integrate `CircularMessageCache` into `SequentialWriter` and update its tests.
-* Create the `~/snapshot` service in the `Recorder` class, add corresponding tests, and create the `TakeSnapshot.srv` service interface.
+* Create the `~/snapshot` service in the `Recorder` class, add corresponding tests, and create the `Snapshot.srv` service interface.
 * Add `--snapshot-mode` to the `record` verb and update `StorageOptions`
 * Add keyboard shortcut for triggering a snapshot in snapshot mode
