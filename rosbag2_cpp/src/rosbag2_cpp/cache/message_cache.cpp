@@ -20,7 +20,7 @@
 #include <utility>
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_message_cache_interface.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -88,8 +88,7 @@ void MessageCache::swap_buffers()
   std::swap(primary_buffer_, secondary_buffer_);
 }
 
-std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface> MessageCache::
-consumer_buffer()
+std::shared_ptr<CacheBufferInterface> MessageCache::consumer_buffer()
 {
   return secondary_buffer_;
 }

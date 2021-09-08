@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/visibility_control.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
@@ -46,7 +46,7 @@ namespace cache
 * size.
 */
 class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
-  : public rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface
+  : public CacheBufferInterface
 {
 public:
   // Delete default constructor since max_cache_size is required
@@ -57,7 +57,7 @@ public:
   * If buffer size has some space left, we push the message regardless of its size,
   *  but if this results in exceeding buffer size, we begin dropping old messages.
   */
-  bool push(rosbag2_cpp::buffer_element_t msg) override;
+  bool push(buffer_element_t msg) override;
 
   /// Clear buffer
   void clear() override;
@@ -66,11 +66,11 @@ public:
   size_t size() override;
 
   /// Get buffer data
-  const std::vector<rosbag2_cpp::buffer_element_t> & data() override;
+  const std::vector<buffer_element_t> & data() override;
 
 private:
-  std::deque<rosbag2_cpp::buffer_element_t> buffer_;
-  std::vector<rosbag2_cpp::buffer_element_t> msg_vector_;
+  std::deque<buffer_element_t> buffer_;
+  std::vector<buffer_element_t> msg_vector_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
 };

@@ -19,7 +19,7 @@
 
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -39,8 +39,7 @@ void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::Serialize
   primary_buffer_->push(msg);
 }
 
-std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface> CircularMessageCache::
-consumer_buffer()
+std::shared_ptr<CacheBufferInterface> CircularMessageCache::consumer_buffer()
 {
   return secondary_buffer_;
 }

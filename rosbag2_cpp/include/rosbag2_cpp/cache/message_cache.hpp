@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_message_cache_interface.hpp"
-#include "rosbag2_cpp/cache_interfaces/base_cache_buffer_interface.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -62,7 +62,7 @@ namespace cache
 * performance issues, most likely with the CacheConsumer consumer callback.
 */
 class ROSBAG2_CPP_PUBLIC MessageCache
-  : public rosbag2_cpp::cache_interfaces::BaseMessageCacheInterface
+  : public MessageCacheInterface
 {
 public:
   explicit MessageCache(uint64_t max_buffer_size);
@@ -91,8 +91,7 @@ public:
   void swap_buffers() override;
 
   /// Consumer API: get current buffer to consume
-  std::shared_ptr<rosbag2_cpp::cache_interfaces::BaseCacheBufferInterface>
-  consumer_buffer() override;
+  std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
 
   /// Exposes counts of messages dropped per topic
   std::unordered_map<std::string, uint32_t> messages_dropped() const;
