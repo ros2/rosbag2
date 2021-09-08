@@ -210,10 +210,10 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   readable_storage->open(
     {db_filename, kPluginID},
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  const auto metadata = readable_storage->get_metadata();
+  auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
+  EXPECT_THAT(metadata.relative_file_paths(), ElementsAreArray({db_filename}));
   EXPECT_THAT(
     metadata.topics_with_message_count, ElementsAreArray(
   {
@@ -239,10 +239,10 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   readable_storage->open(
     {db_filename, kPluginID},
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  const auto metadata = readable_storage->get_metadata();
+  auto metadata = readable_storage->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
+  EXPECT_THAT(metadata.relative_file_paths(), ElementsAreArray({db_filename}));
   EXPECT_THAT(metadata.topics_with_message_count, IsEmpty());
   EXPECT_THAT(metadata.message_count, Eq(0u));
   EXPECT_THAT(

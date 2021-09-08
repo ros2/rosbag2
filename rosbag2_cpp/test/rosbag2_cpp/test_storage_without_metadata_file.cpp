@@ -65,7 +65,9 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
     };
 
     rosbag2_storage::BagMetadata metadata;
-    metadata.relative_file_paths = {"TestPath"};
+    rosbag2_storage::FileInformation file_info;
+    file_info.path = "TestPath";
+    metadata.files = {file_info};
     metadata.topics_with_message_count = {topic_information};
 
     EXPECT_CALL(*storage_, get_metadata).Times(1).WillOnce(Return(metadata));

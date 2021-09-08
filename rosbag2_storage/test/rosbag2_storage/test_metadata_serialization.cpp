@@ -47,8 +47,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   BagMetadata metadata{};
   metadata.version = 1;
   metadata.storage_identifier = "sqlite3";
-  metadata.relative_file_paths.emplace_back("some_relative_path");
-  metadata.relative_file_paths.emplace_back("some_other_relative_path");
+  // metadata.relative_file_paths().emplace_back("some_relative_path");
+  // metadata.relative_file_paths().emplace_back("some_other_relative_path");
   metadata.duration = std::chrono::nanoseconds(100);
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
@@ -61,7 +61,7 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
 
   EXPECT_THAT(read_metadata.version, Eq(metadata.version));
   EXPECT_THAT(read_metadata.storage_identifier, Eq(metadata.storage_identifier));
-  EXPECT_THAT(read_metadata.relative_file_paths, Eq(metadata.relative_file_paths));
+  EXPECT_THAT(read_metadata.relative_file_paths(), Eq(metadata.relative_file_paths()));
   EXPECT_THAT(read_metadata.duration, Eq(metadata.duration));
   EXPECT_THAT(read_metadata.starting_time, Eq(metadata.starting_time));
   EXPECT_THAT(read_metadata.message_count, Eq(metadata.message_count));

@@ -148,7 +148,9 @@ void Reindexer::init_metadata(
   // Record the relative paths to the metadata
   for (const auto & path : files) {
     auto cleaned_path = path.filename().string();
-    metadata_.relative_file_paths.push_back(cleaned_path);
+    rosbag2_storage::FileInformation file_info{};
+    file_info.path = cleaned_path;;
+    metadata_.files.push_back(file_info);
   }
 }
 

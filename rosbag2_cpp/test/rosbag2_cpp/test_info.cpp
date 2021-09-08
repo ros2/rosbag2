@@ -64,14 +64,14 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   }
 
   rosbag2_cpp::Info info;
-  const auto metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
+  auto metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
 
   EXPECT_EQ(metadata.version, 2);
   EXPECT_EQ(metadata.storage_identifier, "sqlite3");
 
-  const auto expected_paths =
+  auto expected_paths =
     std::vector<std::string>{"some_relative_path", "some_other_relative_path"};
-  EXPECT_EQ(metadata.relative_file_paths, expected_paths);
+  EXPECT_EQ(metadata.relative_file_paths(), expected_paths);
   EXPECT_EQ(metadata.duration, std::chrono::nanoseconds{100});
   EXPECT_EQ(
     metadata.starting_time,
@@ -137,7 +137,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(
-    read_metadata.relative_file_paths,
+    read_metadata.relative_file_paths(),
     Eq(std::vector<std::string>({"some_relative_path", "some_other_relative_path"})));
   EXPECT_THAT(read_metadata.duration, Eq(std::chrono::nanoseconds(100)));
   EXPECT_THAT(
