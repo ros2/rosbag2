@@ -218,7 +218,8 @@ void SequentialCompressionWriter::close()
 
 bool SequentialCompressionWriter::request_owned_serialized_data()
 {
-  return compression_options_.compression_mode == CompressionMode::MESSAGE;
+  return compression_options_.compression_mode == CompressionMode::MESSAGE ||
+         SequentialWriter::request_owned_serialized_data();
 }
 
 void SequentialCompressionWriter::create_topic(
