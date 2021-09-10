@@ -82,8 +82,6 @@ def test_record_cancel(tmp_path):
         pub.publish(msg)
 
     recorder.cancel()
-    msg.data = 'Spining one last time'
-    pub.publish(msg)
 
     time_counter = 0
     while (not os.path.exists(Path(bag_path) / 'metadata.yaml') or
