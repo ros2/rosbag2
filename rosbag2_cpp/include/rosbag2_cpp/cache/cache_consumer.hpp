@@ -22,6 +22,7 @@
 #include <thread>
 #include <vector>
 
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 
@@ -62,7 +63,7 @@ class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
   using consume_callback_function_t = std::function<void (const
-      std::vector<buffer_element_t> &)>;
+      std::vector<CacheBufferInterface::buffer_element_t> &)>;
 
   CacheConsumer(
     std::shared_ptr<MessageCacheInterface> message_cache,

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 
 namespace rosbag2_cpp
@@ -29,7 +30,7 @@ MessageCacheCircularBuffer::MessageCacheCircularBuffer(const uint64_t max_cache_
 {
 }
 
-bool MessageCacheCircularBuffer::push(buffer_element_t msg)
+bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg)
 {
   // Drop message if it exceeds the buffer size
   if (msg->serialized_data->buffer_length > max_bytes_size_) {
@@ -60,10 +61,10 @@ size_t MessageCacheCircularBuffer::size()
   return buffer_.size();
 }
 
-const std::vector<buffer_element_t> & MessageCacheCircularBuffer::data()
+const std::vector<CacheBufferInterface::buffer_element_t> & MessageCacheCircularBuffer::data()
 {
   // Copy data to vector to maintain same interface as MessageCacheBuffer
-  msg_vector_ = std::vector<buffer_element_t>(
+  msg_vector_ = std::vector<CacheBufferInterface::buffer_element_t>(
     buffer_.begin(), buffer_.end());
   return msg_vector_;
 }

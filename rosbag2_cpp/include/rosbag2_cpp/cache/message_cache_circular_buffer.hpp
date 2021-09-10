@@ -57,7 +57,7 @@ public:
   * If buffer size has some space left, we push the message regardless of its size,
   *  but if this results in exceeding buffer size, we begin dropping old messages.
   */
-  bool push(buffer_element_t msg) override;
+  bool push(CacheBufferInterface::buffer_element_t msg) override;
 
   /// Clear buffer
   void clear() override;
@@ -66,11 +66,11 @@ public:
   size_t size() override;
 
   /// Get buffer data
-  const std::vector<buffer_element_t> & data() override;
+  const std::vector<CacheBufferInterface::buffer_element_t> & data() override;
 
 private:
-  std::deque<buffer_element_t> buffer_;
-  std::vector<buffer_element_t> msg_vector_;
+  std::deque<CacheBufferInterface::buffer_element_t> buffer_;
+  std::vector<CacheBufferInterface::buffer_element_t> msg_vector_;
   uint64_t buffer_bytes_size_ {0u};
   const uint64_t max_bytes_size_;
 };

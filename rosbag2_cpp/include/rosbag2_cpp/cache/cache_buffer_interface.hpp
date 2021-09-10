@@ -25,18 +25,46 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
+/**
+* This class provides the interface for all CacheBuffer implementations. The
+* role of these buffers is store messages that are received via topic subscriptions
+* before they are written to the bagfile.
+*
+* Any class that implements CacheBufferInterface is reponsible for handling
+* synchronization that is needed for the buffer to operate properly.
+*/
 class ROSBAG2_CPP_PUBLIC CacheBufferInterface
 {
 public:
+  using buffer_element_t = std::shared_ptr<const rosbag2_storage::SerializedBagMessage>;
   virtual ~CacheBufferInterface() {}
 
+  /**
+   *   Pushes a SerializedBagMessage into the cache buffer.
+   *
+   *   \param msg SerializedBagMessage to add to the buffer.
+   *   \return whether message was successfully added to the cache.
+   */
   virtual bool push(buffer_element_t msg) = 0;
 
+  /**
+   *   Clears the buffer by removing all remaining messages.
+   */
   virtual void clear() = 0;
 
+  /**
+   *   Check the buffer message count.
+   *
+   *   \return number of elements in the buffer.
+   */
   virtual size_t size() = 0;
 
+  /**
+   *   Get the data/messages stored in the buffer. This should only be
+   *   called once no more messages are being added to the buffer.
+   *
+   *   \return a vector containing messages in the buffer.
+   */
   virtual const std::vector<buffer_element_t> & data() = 0;
 };
 
