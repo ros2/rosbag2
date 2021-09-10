@@ -32,10 +32,10 @@ namespace readers
 namespace details
 {
 std::vector<std::string> resolve_relative_paths(
-  const std::string & base_folder, rosbag2_storage::BagMetadata metadata)
+  const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
 {
   auto base_path = rcpputils::fs::path(base_folder);
-  if (metadata.version < 4) {
+  if (version < 4) {
     // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
     base_path = rcpputils::fs::path(base_folder).parent_path();
   }
@@ -45,15 +45,12 @@ std::vector<std::string> resolve_relative_paths(
   rcpputils::require_true(
     base_path.is_directory(), "base folder has to be a directory: " + base_folder);
 
-  std::vector<std::string> relative_files;
-
-  for (auto & file : metadata.files) {
-    auto path = rcpputils::fs::path(file.path);
+  for (auto & file : relative_files) {
+    auto path = rcpputils::fs::path(file);
     if (path.is_absolute()) {
       continue;
     }
-    std::string filename = (base_path / path).string();
-    relative_files.push_back(filename);
+    file = (base_path / path).string();
   }
 
   return relative_files;
@@ -94,15 +91,22 @@ void SequentialReader::open(
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
+    if (metadata_.version < 5) {
+      if (metadata_.relative_file_paths.empty()) {
+        ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
+        return;
+      }
 
-    file_paths_ = details::resolve_relative_paths(
-      storage_options.uri, metadata_);
-
-    if (file_paths_.empty()) {
-      ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
-      return;
+      file_paths_ = details::resolve_relative_paths(
+        storage_options.uri, metadata_.relative_file_paths, metadata_.version);
+    } else {
+      std::vector<std::string> relative_file_paths;
+      for (auto file : metadata_.files) {
+        relative_file_paths.push_back(file.path);
+      }
+      file_paths_ = details::resolve_relative_paths(
+        storage_options.uri, relative_file_paths, metadata_.version);
     }
-
     current_file_iterator_ = file_paths_.begin();
 
     preprocess_current_file();
