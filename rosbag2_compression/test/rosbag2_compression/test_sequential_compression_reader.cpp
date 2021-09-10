@@ -76,11 +76,11 @@ public:
   rosbag2_storage::BagMetadata construct_default_bag_metadata() const
   {
     rosbag2_storage::BagMetadata metadata;
-    rosbag2_storage::FileInformation file_info_1;
-    file_info_1.path = "bagfile_0." + std::string(DefaultTestCompressor);
-      rosbag2_storage::FileInformation file_info_2;
-    file_info_2.path = "bagfile_1." + std::string(DefaultTestCompressor);
-    metadata.files = {file_info_1, file_info_2};
+    metadata.version = 4;
+    metadata.relative_file_paths = {
+      "bagfile_0." + std::string(DefaultTestCompressor),
+      "bagfile_1." + std::string(DefaultTestCompressor)
+    };
     metadata.topics_with_message_count.push_back({{topic_with_type_}, 1});
     metadata.compression_format = DefaultTestCompressor;
     metadata.compression_mode =
@@ -92,7 +92,7 @@ public:
   {
     // Initialize some dummy files so that they can be found
     rcpputils::fs::create_directories(tmp_dir_);
-    for (auto relative : metadata_.relative_file_paths()) {
+    for (auto relative : metadata_.relative_file_paths) {
       std::ofstream output((tmp_dir_ / relative).string());
       output << "Fake storage data" << std::endl;
     }
@@ -215,8 +215,8 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_loading_split_ba
   auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
   // We are mocking two splits, so file decompression should occur twice
   EXPECT_CALL(*decompressor, decompress_uri(_)).Times(2)
-  .WillOnce(Return(metadata_.relative_file_paths()[0]))
-  .WillOnce(Return(metadata_.relative_file_paths()[1]));
+  .WillOnce(Return(metadata_.relative_file_paths[0]))
+  .WillOnce(Return(metadata_.relative_file_paths[1]));
   EXPECT_CALL(*decompressor, decompress_serialized_bag_message(_)).Times(0);
 
   auto compression_factory = std::make_unique<StrictMock<MockCompressionFactory>>();
@@ -251,7 +251,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_v4_names)
 
 TEST_F(SequentialCompressionReaderTest, throws_on_incorrect_filenames)
 {
-  for (auto & relative_file_path : metadata_.relative_file_paths()) {
+  for (auto & relative_file_path : metadata_.relative_file_paths) {
     relative_file_path = (
       rcpputils::fs::path(bag_name_) / (relative_file_path + ".something")).string();
   }
@@ -262,7 +262,7 @@ TEST_F(SequentialCompressionReaderTest, throws_on_incorrect_filenames)
 TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames)
 {
   // By prefixing the bag name, this imitates the V3 filename logic
-  for (auto & relative_file_path : metadata_.relative_file_paths()) {
+  for (auto & relative_file_path : metadata_.relative_file_paths) {
     relative_file_path = (rcpputils::fs::path(bag_name_) / relative_file_path).string();
   }
   auto reader = create_reader();
@@ -276,7 +276,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_b
   // By prefixing a _different_ path than the bagname, we imitate the situation where the bag
   // was recorded using V3 logic, then the directory was moved to be a new name - this is the
   // use case the V4 relative path logic was intended to fix
-  for (auto & relative_file_path : metadata_.relative_file_paths()) {
+  for (auto & relative_file_path : metadata_.relative_file_paths) {
     relative_file_path = (rcpputils::fs::path("OtherBagName") / relative_file_path).string();
   }
   auto reader = create_reader();

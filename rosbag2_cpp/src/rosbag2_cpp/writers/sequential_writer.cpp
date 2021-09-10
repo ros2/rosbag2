@@ -85,6 +85,7 @@ void SequentialWriter::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
@@ -251,7 +252,7 @@ void SequentialWriter::switch_to_next_storage()
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
-    metadata_.relative_file_paths().size());
+    metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (!storage_) {
@@ -279,6 +280,8 @@ void SequentialWriter::switch_to_next_storage()
 void SequentialWriter::split_bagfile()
 {
   switch_to_next_storage();
+
+  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
@@ -373,7 +376,7 @@ void SequentialWriter::finalize_metadata()
 {
   metadata_.bag_size = 0;
 
-  for (const auto & path : metadata_.relative_file_paths()) {
+  for (const auto & path : metadata_.relative_file_paths) {
     const auto bag_path = rcpputils::fs::path{path};
 
     if (bag_path.exists()) {

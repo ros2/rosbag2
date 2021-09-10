@@ -80,13 +80,10 @@ public:
   virtual rosbag2_storage::BagMetadata get_metadata() const
   {
     rosbag2_storage::BagMetadata metadata;
-    rosbag2_storage::FileInformation file_info_1;
-    file_info_1.path = relative_path_1_;
-    rosbag2_storage::FileInformation file_info_2;
-    file_info_2.path = relative_path_2_;
-    rosbag2_storage::FileInformation file_info_3;
-    file_info_3.path = absolute_path_1_;
-    metadata.files = {file_info_1, file_info_2, file_info_3};
+
+    metadata.relative_file_paths =
+    {relative_path_1_, relative_path_2_, absolute_path_1_};
+    metadata.version = 4;
 
     return metadata;
   }

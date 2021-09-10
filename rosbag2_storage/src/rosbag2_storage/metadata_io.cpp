@@ -207,10 +207,16 @@ struct convert<rosbag2_storage::BagMetadata>
     node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
     node["topics_with_message_count"] = metadata.topics_with_message_count;
-    node["compression_format"] = metadata.compression_format;
-    node["compression_mode"] = metadata.compression_mode;
-    node["files"] = metadata.files;
 
+    if (metadata.version >= 3) {  // fields introduced by rosbag2_compression
+      node["compression_format"] = metadata.compression_format;
+      node["compression_mode"] = metadata.compression_mode;
+    }
+    if (metadata.version >= 5) {
+      node["files"] = metadata.files;
+    } else {
+      node["relative_file_paths"] = metadata.relative_file_paths;
+    }
     return node;
   }
 

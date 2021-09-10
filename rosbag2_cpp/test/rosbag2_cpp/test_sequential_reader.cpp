@@ -60,9 +60,8 @@ public:
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     rosbag2_storage::BagMetadata metadata;
-    rosbag2_storage::FileInformation file_info;
-    file_info.path = relative_file_path;
-    metadata.files = {file_info};
+    metadata.relative_file_paths = {relative_file_path};
+    metadata.version = 4;
     metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
 
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));

@@ -88,7 +88,7 @@ std::string format_file_size(uint64_t file_size)
 }
 
 void format_file_paths(
-  std::vector<std::string> & paths,
+  const std::vector<std::string> & paths,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -134,7 +134,7 @@ void format_topics_with_type(
 
 }  // namespace
 
-std::string format_bag_meta_data(rosbag2_storage::BagMetadata & metadata)
+std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -143,8 +143,7 @@ std::string format_bag_meta_data(rosbag2_storage::BagMetadata & metadata)
 
   info_stream << std::endl;
   info_stream << "Files:             ";
-  auto relative_file_paths = metadata.relative_file_paths();
-  format_file_paths(relative_file_paths, info_stream, indentation_spaces);
+  format_file_paths(metadata.relative_file_paths, info_stream, indentation_spaces);
   info_stream << "Bag size:          " << format_file_size(
     metadata.bag_size) << std::endl;
   info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;

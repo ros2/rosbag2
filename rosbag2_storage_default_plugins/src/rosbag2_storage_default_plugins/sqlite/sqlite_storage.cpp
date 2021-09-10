@@ -433,7 +433,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
   metadata.storage_identifier = get_storage_identifier();
-  // metadata.relative_file_paths = {get_relative_file_path()};
+  metadata.relative_file_paths = {get_relative_file_path()};
 
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};

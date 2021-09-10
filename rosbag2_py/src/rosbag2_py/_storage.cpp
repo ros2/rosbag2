@@ -121,6 +121,7 @@ PYBIND11_MODULE(_storage, m) {
       int,
       uint64_t,
       std::string,
+      std::vector<std::string>,
       std::vector<rosbag2_storage::FileInformation>,
       std::chrono::nanoseconds,
       std::chrono::time_point<std::chrono::high_resolution_clock>,
@@ -131,6 +132,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("version"),
     pybind11::arg("bag_size"),
     pybind11::arg("storage_identifier"),
+    pybind11::arg("relative_file_paths"),
     pybind11::arg("files"),
     pybind11::arg("duration"),
     pybind11::arg("starting_time"),
@@ -141,6 +143,7 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("version", &rosbag2_storage::BagMetadata::version)
   .def_readwrite("bag_size", &rosbag2_storage::BagMetadata::bag_size)
   .def_readwrite("storage_identifier", &rosbag2_storage::BagMetadata::storage_identifier)
+  .def_readwrite("relative_file_paths", &rosbag2_storage::BagMetadata::relative_file_paths)
   .def_readwrite("files", &rosbag2_storage::BagMetadata::files)
   .def_readwrite("duration", &rosbag2_storage::BagMetadata::duration)
   .def_readwrite("starting_time", &rosbag2_storage::BagMetadata::starting_time)

@@ -249,13 +249,13 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   // metadata should be written now that the Writer was released.
 
   EXPECT_EQ(
-    fake_metadata_.relative_file_paths().size(),
+    fake_metadata_.relative_file_paths.size(),
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 
   const auto base_path = storage_options_.uri;
   int counter = 0;
-  for (const auto & path : fake_metadata_.relative_file_paths()) {
+  for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
     ss << base_path << "_" << counter;
 

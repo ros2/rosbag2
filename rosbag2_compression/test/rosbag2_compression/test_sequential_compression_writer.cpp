@@ -248,11 +248,11 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   writer_.reset();
 
   EXPECT_EQ(
-    intercepted_metadata_.relative_file_paths().size(), 2u);
+    intercepted_metadata_.relative_file_paths.size(), 2u);
 
   const auto base_path = tmp_dir_storage_options_.uri;
   int counter = 0;
-  for (const auto & path : intercepted_metadata_.relative_file_paths()) {
+  for (const auto & path : intercepted_metadata_.relative_file_paths) {
     std::stringstream ss;
     ss << bag_name_ << "_" << counter << "." << DefaultTestCompressor;
     counter++;

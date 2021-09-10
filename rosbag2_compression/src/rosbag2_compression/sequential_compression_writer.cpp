@@ -192,8 +192,8 @@ void SequentialCompressionWriter::close()
       std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
       try {
         storage_.reset();  // Storage must be closed before it can be compressed.
-        if (!metadata_.relative_file_paths().empty()) {
-          std::string file = metadata_.relative_file_paths().back();
+        if (!metadata_.relative_file_paths.empty()) {
+          std::string file = metadata_.relative_file_paths.back();
           compressor_file_queue_.push(file);
           compressor_condition_.notify_one();
         }
@@ -247,13 +247,11 @@ void SequentialCompressionWriter::compress_file(
       // Must search for the entry because other threads may have changed the order of the vector
       // and invalidated any index or iterator we held to it.
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-
-      auto relative_file_paths = metadata_.relative_file_paths();
       const auto iter = std::find(
-        relative_file_paths.begin(),
-        relative_file_paths.end(),
+        metadata_.relative_file_paths.begin(),
+        metadata_.relative_file_paths.end(),
         file_relative_to_bag);
-      if (iter != relative_file_paths.end()) {
+      if (iter != metadata_.relative_file_paths.end()) {
         *iter = relative_compressed_uri.string();
       } else {
         ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
@@ -281,7 +279,7 @@ void SequentialCompressionWriter::split_bagfile()
   std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
   // Grab last file before calling common splitting logic, which pushes the new filename
-  const auto last_file = metadata_.relative_file_paths().back();
+  const auto last_file = metadata_.relative_file_paths.back();
   SequentialWriter::split_bagfile();
 
   // If we're in FILE compression mode, push this file's name on to the queue so another

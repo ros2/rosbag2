@@ -70,15 +70,15 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
   auto metadata_io = std::make_unique<rosbag2_storage::MetadataIo>();
   auto generated_metadata = metadata_io->read_metadata(bag_dir.string());
   auto target_metadata = metadata_io->read_metadata((target_dir / "multiple_files").string());
-  auto target_file_paths = target_metadata.relative_file_paths();
+
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
 
-  for (const auto & gen_rel_path : generated_metadata.relative_file_paths()) {
+  for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
     EXPECT_TRUE(
       std::find(
-        target_file_paths.begin(),
-        target_file_paths.end(),
-        gen_rel_path) != target_file_paths.end());
+        target_metadata.relative_file_paths.begin(),
+        target_metadata.relative_file_paths.end(),
+        gen_rel_path) != target_metadata.relative_file_paths.end());
   }
 
   // Disabled for now, since it may not be possible to 100% recreate

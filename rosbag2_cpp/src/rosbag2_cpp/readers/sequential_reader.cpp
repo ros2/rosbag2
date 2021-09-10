@@ -118,11 +118,11 @@ void SequentialReader::open(
       throw std::runtime_error{"No storage could be initialized. Abort"};
     }
     metadata_ = storage_->get_metadata();
-    if (metadata_.relative_file_paths().empty()) {
+    if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
     }
-    file_paths_ = metadata_.relative_file_paths();
+    file_paths_ = metadata_.relative_file_paths;
     current_file_iterator_ = file_paths_.begin();
   }
   auto topics = metadata_.topics_with_message_count;
