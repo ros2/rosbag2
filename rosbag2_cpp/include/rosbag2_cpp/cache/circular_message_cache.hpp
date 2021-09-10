@@ -43,7 +43,7 @@ class ROSBAG2_CPP_PUBLIC CircularMessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit CircularMessageCache(uint64_t max_buffer_size);
+  explicit CircularMessageCache(size_t max_buffer_size);
 
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;

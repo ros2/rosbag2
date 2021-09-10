@@ -61,16 +61,16 @@ public:
 
   virtual ~CircularMessageCacheTest() = default;
 
-  const uint64_t cache_size_ {1 * 500};  // ~0.5 Kb cache
+  const size_t cache_size_ {1 * 500};  // ~0.5 Kb cache
 };
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
-  const uint32_t message_count = 100;
+  const unsigned message_count = 100;
 
   auto circular_message_cache = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
     cache_size_);
 
-  for (uint32_t i = 0; i < message_count; ++i) {
+  for (unsigned i = 0; i < message_count; ++i) {
     auto msg = make_test_msg();
     circular_message_cache->push(msg);
   }
@@ -84,7 +84,7 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
   // Old messages should be dropped
   EXPECT_THAT(first_message, StrNe("Hello0"));
 
-  uint64_t message_data_size = 0;
+  size_t message_data_size = 0;
 
   for (auto & msg : message_vector) {
     message_data_size += msg->serialized_data->buffer_length;
@@ -97,12 +97,12 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
 }
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
-  const uint32_t message_count = 100;
+  const unsigned message_count = 100;
 
   auto circular_message_cache = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
     cache_size_);
 
-  for (uint32_t i = 0; i < message_count; ++i) {
+  for (unsigned i = 0; i < message_count; ++i) {
     auto msg = make_test_msg();
     circular_message_cache->push(msg);
   }

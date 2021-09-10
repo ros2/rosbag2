@@ -49,7 +49,7 @@ class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
   : public CacheBufferInterface
 {
 public:
-  explicit MessageCacheBuffer(const uint64_t max_cache_size);
+  explicit MessageCacheBuffer(size_t max_cache_size);
 
   /**
   * If buffer size got some space left, we push message regardless of its size, but if
@@ -69,8 +69,8 @@ public:
 
 private:
   std::vector<CacheBufferInterface::buffer_element_t> buffer_;
-  uint64_t buffer_bytes_size_ {0u};
-  const uint64_t max_bytes_size_;
+  size_t buffer_bytes_size_ {0u};
+  const size_t max_bytes_size_;
 
   /// set when buffer is full and should drop messages instead of inserting them
   std::atomic_bool drop_messages_ {false};

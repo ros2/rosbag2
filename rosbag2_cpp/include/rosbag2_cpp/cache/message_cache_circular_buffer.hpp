@@ -51,7 +51,7 @@ class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
 public:
   // Delete default constructor since max_cache_size is required
   MessageCacheCircularBuffer() = delete;
-  explicit MessageCacheCircularBuffer(const uint64_t max_cache_size);
+  explicit MessageCacheCircularBuffer(size_t max_cache_size);
 
   /**
   * If buffer size has some space left, we push the message regardless of its size,
@@ -71,8 +71,8 @@ public:
 private:
   std::deque<CacheBufferInterface::buffer_element_t> buffer_;
   std::vector<CacheBufferInterface::buffer_element_t> msg_vector_;
-  uint64_t buffer_bytes_size_ {0u};
-  const uint64_t max_bytes_size_;
+  size_t buffer_bytes_size_ {0u};
+  const size_t max_bytes_size_;
 };
 
 }  // namespace cache

@@ -23,7 +23,7 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCacheBuffer::MessageCacheBuffer(const uint64_t max_cache_size)
+MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size)
 : max_bytes_size_(max_cache_size)
 {
 }

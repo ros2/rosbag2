@@ -65,7 +65,7 @@ class ROSBAG2_CPP_PUBLIC MessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit MessageCache(uint64_t max_buffer_size);
+  explicit MessageCache(size_t max_buffer_size);
 
   ~MessageCache();
 
@@ -73,13 +73,13 @@ public:
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Summarize dropped/remaining messages
-  void log_dropped();
+  void log_dropped() override;
 
   /// Set the cache to consume-only mode for final buffer flush before closing
-  void finalize();
+  void finalize() override;
 
   /// Notify that flushing is complete
-  void notify_flushing_done();
+  void notify_flushing_done() override;
 
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
