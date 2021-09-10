@@ -1,4 +1,4 @@
-// Copyright 2021, Apex.AI Software Innovations GmbH.
+// Copyright 2021, Apex.AI
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
+#include "mock_player.hpp"
 #include "rosbag2_play_test_fixture.hpp"
-#include "rosbag2_transport/player.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -29,32 +29,6 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
-
-class MockPlayer : public rosbag2_transport::Player
-{
-public:
-  MockPlayer(
-    std::unique_ptr<rosbag2_cpp::Reader> reader,
-    const rosbag2_storage::StorageOptions & storage_options,
-    const rosbag2_transport::PlayOptions & play_options)
-  : Player(std::move(reader), storage_options, play_options)
-  {}
-
-  std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
-  {
-    std::vector<rclcpp::PublisherBase *> pub_list;
-    for (const auto & publisher : publishers_) {
-      pub_list.push_back(static_cast<rclcpp::PublisherBase *>(publisher.second.get()));
-    }
-    return pub_list;
-  }
-
-  void wait_for_playback_to_start()
-  {
-    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
-  }
-};
 
 TEST_F(RosBag2PlayTestFixture, play_next_with_false_preconditions) {
   auto primitive_message = get_messages_basic_types()[0];

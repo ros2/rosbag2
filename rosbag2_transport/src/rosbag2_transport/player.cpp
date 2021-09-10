@@ -40,6 +40,20 @@
 namespace
 {
 /**
+ * Trivial std::unique_lock wrapper providing constructor that allows Clang Thread Safety Analysis.
+ * The std::unique_lock does not have these annotations.
+ */
+class RCPPUTILS_TSA_SCOPED_CAPABILITY TSAUniqueLock : public std::unique_lock<std::mutex>
+{
+public:
+  explicit TSAUniqueLock(std::mutex & mu) RCPPUTILS_TSA_ACQUIRE(mu)
+  : std::unique_lock<std::mutex>(mu)
+  {}
+
+  ~TSAUniqueLock() RCPPUTILS_TSA_RELEASE() {}
+};
+
+/**
  * Determine which QoS to offer for a topic.
  * The priority of the profile selected is:
  *   1. The override specified in play_options (if one exists for the topic).
@@ -102,11 +116,12 @@ Player::Player(
 : rclcpp::Node(
     node_name,
     rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
-  reader_(std::move(reader)),
   storage_options_(storage_options),
   play_options_(play_options)
 {
   {
+    std::lock_guard<std::mutex> lk(reader_mutex_);
+    reader_ = std::move(reader);
     reader_->open(storage_options_, {"", rmw_get_serialization_format()});
     const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
       reader_->get_metadata().starting_time.time_since_epoch()).count();
@@ -186,6 +201,7 @@ Player::Player(
 
 Player::~Player()
 {
+  std::lock_guard<std::mutex> lk(reader_mutex_);
   if (reader_) {
     reader_->close();
   }
@@ -193,6 +209,7 @@ Player::~Player()
 
 rosbag2_cpp::Reader * Player::release_reader()
 {
+  std::lock_guard<std::mutex> lk(reader_mutex_);
   reader_->close();
   return reader_.release();
 }
@@ -228,9 +245,13 @@ void Player::play()
         std::chrono::nanoseconds duration(delay.nanoseconds());
         std::this_thread::sleep_for(duration);
       }
-      reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-      const auto starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        reader_->get_metadata().starting_time.time_since_epoch()).count();
+      rcutils_time_point_value_t starting_time = 0;
+      {
+        std::lock_guard<std::mutex> lk(reader_mutex_);
+        reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+        starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          reader_->get_metadata().starting_time.time_since_epoch()).count();
+      }
       clock_->jump(starting_time);
 
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
@@ -242,6 +263,7 @@ void Player::play()
         is_ready_to_play_from_queue_ = false;
         ready_to_play_from_queue_cv_.notify_all();
       }
+      std::lock_guard<std::mutex> lk(reader_mutex_);
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
@@ -333,6 +355,134 @@ bool Player::play_next()
   return next_message_published;
 }
 
+void Player::restore_message_queue_from_storage(
+  rosbag2_storage::SerializedBagMessageSharedPtr origin_message)
+{
+  if (!origin_message) {return;}
+  reader_->close();
+  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+  rosbag2_storage::SerializedBagMessageSharedPtr current_message = reader_->read_next();
+  while (current_message->time_stamp != origin_message->time_stamp) {
+    current_message = reader_->read_next();
+  }
+  if (current_message->time_stamp != origin_message->time_stamp) {
+    throw std::runtime_error("Fail to restore message queue");
+  }
+  message_queue_.enqueue(current_message);
+  enqueue_up_to_boundary(play_options_.read_ahead_queue_size);  // refill queue
+}
+
+bool Player::seek(rcutils_time_point_value_t time_point)
+{
+  // Temporary stop playback in play_messages_from_queue() and block play_next()
+  std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+  skip_message_in_main_play_loop_ = true;
+  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
+  // be called if not yet and queue to be filled with messages.
+  {
+    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  }
+
+  cancel_wait_for_next_message_ = true;
+  bool message_found = false;
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message_before_seek;
+  if (message_ptr != nullptr) {
+    message_before_seek = *message_ptr;
+  }
+
+  {  // Update message queue and adjust reader pointer
+    std::lock_guard<std::mutex> lk(reader_mutex_);
+    // Read next current_message
+    rosbag2_storage::SerializedBagMessageSharedPtr current_message;
+    if (!message_queue_.try_dequeue(current_message)) {
+      if (!reader_->has_next()) {
+        reader_->close();
+        reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+        if (!reader_->has_next()) {
+          return false;  // The bag is empty
+        }
+        // else means that we were at the end of the bag when we were started and will try to
+        // search from the beginning
+        assert(is_storage_completely_loaded());
+        storage_loading_future_ =
+          std::async(std::launch::async, [this]() {load_storage_content();});
+      }
+      current_message = reader_->read_next();
+    }
+
+    const bool jump_forward = (time_point >= current_message->time_stamp);
+
+    if (jump_forward) {
+      if (current_message->time_stamp >= time_point) {
+        message_found = true;
+      }
+      // Pop up current_message queue trying to find current_message with needed timestamp
+      while (!message_found && message_queue_.try_dequeue(current_message)) {
+        if (current_message->time_stamp >= time_point) {
+          message_found = true;
+        }
+      }
+      while (!message_found && reader_->has_next()) {
+        current_message = reader_->read_next();
+        if (current_message->time_stamp >= time_point) {
+          message_found = true;
+        }
+      }
+      if (message_found) {
+        // Enqueue current_message and rest of the queue to the queue again to preserve order of
+        // messages
+        if (message_queue_.peek() != nullptr) {  // if message_queue_ not empty
+          decltype(message_queue_) temp_message_queue;
+          temp_message_queue.enqueue(current_message);
+          // Copy residual messages from message_queue_ to the temp_message_queue
+          while (message_queue_.try_dequeue(current_message)) {
+            temp_message_queue.enqueue(current_message);
+          }
+          // Copy all messages back to the message_queue_
+          while (temp_message_queue.try_dequeue(current_message)) {
+            message_queue_.enqueue(current_message);
+          }
+          enqueue_up_to_boundary(play_options_.read_ahead_queue_size);  // refill queue
+        } else {
+          message_queue_.enqueue(current_message);
+          enqueue_up_to_boundary(play_options_.read_ahead_queue_size);  // refill queue
+        }
+      } else {
+        restore_message_queue_from_storage(message_before_seek);
+      }
+    } else {  // jump_backward
+      // Purge queue
+      while (message_queue_.pop()) {}
+      // Reopen bag
+      reader_->close();
+      reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+
+      // Try to find current_message in bag with timestamp >= time_point
+      while (!message_found && reader_->has_next()) {
+        current_message = reader_->read_next();
+        if (current_message->time_stamp >= time_point) {
+          message_found = true;
+        }
+      }
+      if (message_found) {
+        message_queue_.enqueue(current_message);
+        enqueue_up_to_boundary(play_options_.read_ahead_queue_size);  // refill queue
+      } else {
+        restore_message_queue_from_storage(message_before_seek);
+      }
+    }
+  }
+
+  if (message_found) {
+    clock_->jump(time_point);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void Player::wait_for_filled_queue() const
 {
   while (
@@ -349,16 +499,20 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (reader_->has_next() && rclcpp::ok()) {
+  while (rclcpp::ok()) {
+    TSAUniqueLock lk(reader_mutex_);
+    if (!reader_->has_next()) {break;}
+
     if (message_queue_.size_approx() < queue_lower_boundary) {
       enqueue_up_to_boundary(queue_upper_boundary);
     } else {
+      lk.unlock();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }
 
-void Player::enqueue_up_to_boundary(uint64_t boundary)
+void Player::enqueue_up_to_boundary(size_t boundary)
 {
   rosbag2_storage::SerializedBagMessageSharedPtr message;
   for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
@@ -384,25 +538,26 @@ void Player::play_messages_from_queue()
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    {
-      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
-      // Do not move on until sleep_until returns true
-      // It will always sleep, so this is not a tight busy loop on pause
-      while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {}
-      if (rclcpp::ok()) {
-        {
-          std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
-          if (skip_message_in_main_play_loop_) {
-            skip_message_in_main_play_loop_ = false;
-            message_ptr = peek_next_message_from_queue();
-            continue;
-          }
-        }
-        publish_message(message);
+    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+    // Do not move on until sleep_until returns true
+    // It will always sleep, so this is not a tight busy loop on pause
+    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
+      if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
+        break;
       }
-      message_queue_.pop();
-      message_ptr = peek_next_message_from_queue();
     }
+    std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+    if (rclcpp::ok()) {
+      if (skip_message_in_main_play_loop_) {
+        skip_message_in_main_play_loop_ = false;
+        cancel_wait_for_next_message_ = false;
+        message_ptr = peek_next_message_from_queue();
+        continue;
+      }
+      publish_message(message);
+    }
+    message_queue_.pop();
+    message_ptr = peek_next_message_from_queue();
   }
 }
 
