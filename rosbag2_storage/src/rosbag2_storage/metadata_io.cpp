@@ -232,13 +232,11 @@ struct convert<rosbag2_storage::BagMetadata>
       decode_for_version<std::vector<rosbag2_storage::TopicInformation>>(
       node["topics_with_message_count"], metadata.version);
 
-    metadata.files = std::vector<rosbag2_storage::FileInformation>();
-    if (node["files"]) {
-      metadata.files = node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
-    }
+    metadata.files =
+      node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
 
     std::vector<std::string> relative_paths;
-    if (node["relative_file_paths"]) {
+    if (node["relative_file_paths"]){
       relative_paths = node["relative_file_paths"].as<std::vector<std::string>>();
     }
     for (const auto & relative_path : relative_paths) {
