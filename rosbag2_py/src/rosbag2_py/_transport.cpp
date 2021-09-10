@@ -153,12 +153,13 @@ public:
 class Recorder
 {
 private:
-  std::promise<void> cancel_;
+  rclcpp::executors::SingleThreadedExecutor * exec_;
 
 public:
   Recorder()
   {
     rclcpp::init(0, nullptr);
+    exec_ = new rclcpp::executors::SingleThreadedExecutor;
     std::signal(
       SIGTERM, [](int /* signal */) {
         rclcpp::shutdown();
@@ -167,6 +168,7 @@ public:
 
   virtual ~Recorder()
   {
+    delete exec_;
     rclcpp::shutdown();
   }
 
@@ -202,21 +204,18 @@ public:
     auto recorder = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options);
     recorder->record();
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(recorder);
 
-    cancel_ = std::promise<void>();
-    auto future = cancel_.get_future();
+    exec_->add_node(recorder);
     // Release the GIL for long-running record, so that calling Python code can use other threads
     {
       py::gil_scoped_release release;
-      exec.spin_until_future_complete(future);
+      exec_->spin();
     }
   }
 
   void cancel()
   {
-    cancel_.set_value();
+    exec_->cancel();
   }
 };
 
