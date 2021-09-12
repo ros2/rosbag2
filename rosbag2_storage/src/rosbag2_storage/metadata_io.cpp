@@ -236,7 +236,7 @@ struct convert<rosbag2_storage::BagMetadata>
     if (metadata.version >= 5) {
       metadata.files =
         node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
-
+    }
     return true;
   }
 };
