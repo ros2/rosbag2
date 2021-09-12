@@ -1,6 +1,10 @@
 rosbag2_bagfile_information:
   version: 5
   storage_identifier: sqlite3
+  relative_file_paths:
+    - multiple_files_0.db3
+    - multiple_files_1.db3
+    - multiple_files_2.db3
   duration:
     nanoseconds: 9500166674
   starting_time:
