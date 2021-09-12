@@ -1,21 +1,40 @@
 rosbag2_bagfile_information:
-  version: 4
+  version: 5
   storage_identifier: sqlite3
   relative_file_paths:
     - multiple_files_0.db3
     - multiple_files_1.db3
     - multiple_files_2.db3
   duration:
-    nanoseconds: 1616630880179528024
+    nanoseconds: 9500166674
   starting_time:
-    nanoseconds_since_epoch: 22460796745086
-  message_count: 3177
+    nanoseconds_since_epoch: 1630486341839168680
+  message_count: 52
   topics_with_message_count:
     - topic_metadata:
-        name: /chatter
+        name: /topic
         type: std_msgs/msg/String
         serialization_format: cdr
-        offered_qos_profiles: "- history: 1\n  depth: 1\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
-      message_count: 3177
+        offered_qos_profiles: "- history: 1\n  depth: 10\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+      message_count: 52
   compression_format: ""
   compression_mode: ""
+  files:
+    - path: multiple_files_0.db3
+      starting_time:
+        nanoseconds_since_epoch: 1630486321838886148
+      duration:
+        nanoseconds: 9500166674
+      message_count: 20
+    - path: multiple_files_1.db3
+      starting_time:
+        nanoseconds_since_epoch: 1630486331839194483
+      duration:
+        nanoseconds: 9499955003
+      message_count: 20
+    - path: multiple_files_2.db3
+      starting_time:
+        nanoseconds_since_epoch: 1630486341839168680
+      duration:
+        nanoseconds: 5499907705
+      message_count: 12

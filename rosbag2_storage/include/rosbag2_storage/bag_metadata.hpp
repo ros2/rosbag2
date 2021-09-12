@@ -31,12 +31,21 @@ struct TopicInformation
   size_t message_count;
 };
 
+struct FileInformation
+{
+  std::string path;
+  std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
+  std::chrono::nanoseconds duration;
+  size_t message_count;
+};
+
 struct BagMetadata
 {
-  int version = 4;  // upgrade this number when changing the content of the struct
+  int version = 5;  // upgrade this number when changing the content of the struct
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
+  std::vector<FileInformation> files;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
   uint64_t message_count;
