@@ -1,4 +1,4 @@
-// Copyright 2020, Robotec.ai sp. z o.o.
+// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
-#define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
+#define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 
-#include <atomic>
+#include <deque>
 #include <memory>
 #include <vector>
 
@@ -35,26 +35,27 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
+
 /**
-* This class implements a single buffer for message cache. The buffer is byte size
-* limited and won't accept any messages when current buffer byte size is already
-* over the limit set by max_cache_size. This means that buffer can at times use
-* more memory than max_cache_size, but never by more than a single message. When
-* the buffer is full, the next incoming message is dropped.
-*
-* Note that it could be reused as a template with any class that has
-* ->byte_size() - like interface
+* This class implements a circular buffer message cache. Since the buffer
+* size is limited by total byte size of the storage messages rather than
+* a fix number of messages, a deque is used instead of a vector since
+* older messages can always be dropped from the front and new messages added
+* to the end. The buffer will never consume more than max_cache_size bytes,
+* and will log a warning message if an individual message exceeds the buffer
+* size.
 */
-class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
+class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
   : public CacheBufferInterface
 {
 public:
-  explicit MessageCacheBuffer(size_t max_cache_size);
+  // Delete default constructor since max_cache_size is required
+  MessageCacheCircularBuffer() = delete;
+  explicit MessageCacheCircularBuffer(size_t max_cache_size);
 
   /**
-  * If buffer size got some space left, we push message regardless of its size, but if
-  * this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-  * This flag is cleared when buffers are swapped.
+  * If buffer size has some space left, we push the message regardless of its size,
+  *  but if this results in exceeding buffer size, we begin dropping old messages.
   */
   bool push(CacheBufferInterface::buffer_element_t msg) override;
 
@@ -68,12 +69,10 @@ public:
   const std::vector<CacheBufferInterface::buffer_element_t> & data() override;
 
 private:
-  std::vector<CacheBufferInterface::buffer_element_t> buffer_;
+  std::deque<CacheBufferInterface::buffer_element_t> buffer_;
+  std::vector<CacheBufferInterface::buffer_element_t> msg_vector_;
   size_t buffer_bytes_size_ {0u};
   const size_t max_bytes_size_;
-
-  /// set when buffer is full and should drop messages instead of inserting them
-  std::atomic_bool drop_messages_ {false};
 };
 
 }  // namespace cache
@@ -83,4 +82,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
+#endif  // ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_

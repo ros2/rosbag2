@@ -55,7 +55,9 @@ find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/cache_consumer.cpp
   src/rosbag2_cpp/cache/message_cache_buffer.cpp
+  src/rosbag2_cpp/cache/message_cache_circular_buffer.cpp
   src/rosbag2_cpp/cache/message_cache.cpp
+  src/rosbag2_cpp/cache/circular_message_cache.cpp
   src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
@@ -185,6 +187,12 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_message_cache.cpp)
   if(TARGET test_message_cache)
     target_link_libraries(test_message_cache ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_circular_message_cache
+    test/rosbag2_cpp/test_circular_message_cache.cpp)
+  if(TARGET test_circular_message_cache)
+    target_link_libraries(test_circular_message_cache ${PROJECT_NAME})
   endif()
 
 

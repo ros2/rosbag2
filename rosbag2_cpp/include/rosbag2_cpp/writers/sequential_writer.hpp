@@ -23,6 +23,7 @@
 
 #include "rosbag2_cpp/cache/cache_consumer.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
@@ -115,7 +116,7 @@ protected:
   std::unique_ptr<Converter> converter_;
 
   bool use_cache_;
-  std::shared_ptr<rosbag2_cpp::cache::MessageCache> message_cache_;
+  std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
 
   void switch_to_next_storage();

@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 
 namespace rosbag2_cpp
@@ -22,12 +23,12 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCacheBuffer::MessageCacheBuffer(const uint64_t max_cache_size)
+MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size)
 : max_bytes_size_(max_cache_size)
 {
 }
 
-bool MessageCacheBuffer::push(buffer_element_t msg)
+bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
 {
   bool pushed = false;
   if (!drop_messages_) {
@@ -54,7 +55,7 @@ size_t MessageCacheBuffer::size()
   return buffer_.size();
 }
 
-const std::vector<MessageCacheBuffer::buffer_element_t> & MessageCacheBuffer::data()
+const std::vector<CacheBufferInterface::buffer_element_t> & MessageCacheBuffer::data()
 {
   return buffer_;
 }

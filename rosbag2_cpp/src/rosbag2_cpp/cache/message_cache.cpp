@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "rosbag2_cpp/cache/message_cache.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -27,7 +28,7 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(uint64_t max_buffer_size)
+MessageCache::MessageCache(size_t max_buffer_size)
 {
   primary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
   secondary_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
@@ -73,7 +74,7 @@ void MessageCache::notify_buffer_consumer()
   cache_condition_var_.notify_one();
 }
 
-void MessageCache::wait_for_buffer()
+void MessageCache::swap_buffers()
 {
   std::unique_lock<std::mutex> lock(cache_mutex_);
   if (!flushing_) {
@@ -87,7 +88,7 @@ void MessageCache::wait_for_buffer()
   std::swap(primary_buffer_, secondary_buffer_);
 }
 
-std::shared_ptr<MessageCacheBuffer> MessageCache::consumer_buffer()
+std::shared_ptr<CacheBufferInterface> MessageCache::consumer_buffer()
 {
   return secondary_buffer_;
 }

@@ -22,7 +22,9 @@
 #include <thread>
 #include <vector>
 
+#include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
@@ -61,10 +63,10 @@ class ROSBAG2_CPP_PUBLIC CacheConsumer
 {
 public:
   using consume_callback_function_t = std::function<void (const
-      std::vector<MessageCacheBuffer::buffer_element_t> &)>;
+      std::vector<CacheBufferInterface::buffer_element_t> &)>;
 
   CacheConsumer(
-    std::shared_ptr<MessageCache> message_cache,
+    std::shared_ptr<MessageCacheInterface> message_cache,
     consume_callback_function_t consume_callback);
 
   ~CacheConsumer();
@@ -76,7 +78,7 @@ public:
   void change_consume_callback(consume_callback_function_t callback);
 
 private:
-  std::shared_ptr<MessageCache> message_cache_;
+  std::shared_ptr<MessageCacheInterface> message_cache_;
   consume_callback_function_t consume_callback_;
 
   /// Write buffer data to a storage
