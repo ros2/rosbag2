@@ -29,6 +29,11 @@ using namespace testing;  // NOLINT
 
 namespace
 {
+inline size_t abs_diff(size_t a, size_t b)
+{
+  return a < b ? b - a : a - b;
+}
+
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
 {
   static uint32_t counter = 0;
@@ -61,7 +66,7 @@ public:
 
   virtual ~CircularMessageCacheTest() = default;
 
-  const size_t cache_size_ {1 * 500};  // ~0.5 Kb cache
+  const size_t cache_size_ {1 * 500};  // 500B cache
 };
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
@@ -90,10 +95,11 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
     message_data_size += msg->serialized_data->buffer_length;
   }
 
-  int cache_size_diff = cache_size_ - message_data_size;
+  size_t cache_size_diff = abs_diff(cache_size_, message_data_size);
+  size_t allowed_diff{10};
 
   // Actual stored data size should be roughly the desired cache size
-  EXPECT_THAT(std::abs(cache_size_diff), Lt(10));
+  EXPECT_THAT(cache_size_diff, Lt(allowed_diff));
 }
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
