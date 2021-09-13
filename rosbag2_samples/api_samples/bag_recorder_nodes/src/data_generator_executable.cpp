@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Open Source Robotics Foundation
+// Copyright 2021 Open Source Robotics Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
 // limitations under the License.
 
 #include <chrono>
+#include <memory>
 
-#include <rclcpp/rclcpp.hpp>  // For rclcpp::Clock, rclcpp::Duration and rclcpp::Time
-#include <example_interfaces/msg/int32.hpp>
+#include "example_interfaces/msg/int32.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-#include <rosbag2_cpp/writer.hpp>
-#include <rosbag2_cpp/writers/sequential_writer.hpp>
-#include <rosbag2_storage/serialized_bag_message.hpp>
+#include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 using namespace std::chrono_literals;
 
-int main(int, char**)
+int main(int, char **)
 {
   example_interfaces::msg::Int32 data;
   data.data = 0;
@@ -32,10 +33,12 @@ int main(int, char**)
   writer_->open("big_synthetic_bag");
 
   writer_->create_topic(
-    {"synthetic",
-     "example_interfaces/msg/Int32",
-     rmw_get_serialization_format(),
-     ""});
+  {
+    "synthetic",
+    "example_interfaces/msg/Int32",
+    rmw_get_serialization_format(),
+    ""
+  });
 
   rclcpp::Clock clock;
   rclcpp::Time time_stamp = clock.now();
