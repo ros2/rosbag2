@@ -109,8 +109,7 @@ public:
   void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
 
   /**
-   * Take a snapshot by triggering a circular buffer flip, writing data to rosbag,
-   * closing the rosbag, and opening a new one.
+   * Take a snapshot by triggering a circular buffer flip, writing data to disk.
    * *\returns true if snapshot is successful
    */
   bool take_snapshot() override;

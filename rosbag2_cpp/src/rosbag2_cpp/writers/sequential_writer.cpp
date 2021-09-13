@@ -341,10 +341,8 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     // If cache size is set to zero, we write to storage directly
     storage_->write(converted_msg);
     ++topic_information->message_count;
-  } else if (use_cache_) {
+  } else {
     // Otherwise, use cache buffer
-    message_cache_->push(converted_msg);
-  } else if (storage_options_.snapshot_mode) {
     message_cache_->push(converted_msg);
   }
 }
