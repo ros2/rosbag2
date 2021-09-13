@@ -153,13 +153,13 @@ public:
 class Recorder
 {
 private:
-  rclcpp::executors::SingleThreadedExecutor * exec_;
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
 
 public:
   Recorder()
   {
     rclcpp::init(0, nullptr);
-    exec_ = new rclcpp::executors::SingleThreadedExecutor;
+    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     std::signal(
       SIGTERM, [](int /* signal */) {
         rclcpp::shutdown();
@@ -168,7 +168,6 @@ public:
 
   virtual ~Recorder()
   {
-    delete exec_;
     rclcpp::shutdown();
   }
 
