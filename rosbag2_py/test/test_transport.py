@@ -17,10 +17,9 @@ from pathlib import Path
 import os
 import sys
 import threading
-import time
 
 
-from common import get_rosbag_options
+from common import get_rosbag_options, wait_for
 import rclpy
 from rclpy.qos import QoSProfile
 from std_msgs.msg import String
@@ -83,13 +82,7 @@ def test_record_cancel(tmp_path):
 
     recorder.cancel()
 
-    time_counter = 0
-    while (not os.path.exists(Path(bag_path) / 'metadata.yaml') or
-           not os.path.exists(Path(bag_path) / 'test_record_cancel_0.db3')):
-        time.sleep(0.1)
-        time_counter += 1
-        if time_counter >= 10:
-            break
-
-    assert (Path(bag_path) / 'metadata.yaml').exists()
-    assert (Path(bag_path) / 'test_record_cancel_0.db3').exists()
+    metadata_path = Path(bag_path) / 'metadata.yaml'
+    db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
+    assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
+                    timeout=rclpy.duration.Duration(seconds=3))
