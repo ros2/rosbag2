@@ -15,8 +15,8 @@
 import time
 from typing import Callable
 
-from rclpy.duration import Duration
 from rclpy.clock import Clock, ClockType
+from rclpy.duration import Duration
 import rosbag2_py
 
 

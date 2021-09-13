@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import datetime
-from pathlib import Path
 import os
+from pathlib import Path
 import sys
 import threading
 
@@ -22,8 +22,8 @@ import threading
 from common import get_rosbag_options, wait_for
 import rclpy
 from rclpy.qos import QoSProfile
-from std_msgs.msg import String
 import rosbag2_py
+from std_msgs.msg import String
 
 if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
     # This is needed on Linux when compiling with clang/libc++.
@@ -57,7 +57,6 @@ def test_record_cancel(tmp_path):
     record_options = rosbag2_py.RecordOptions()
     record_options.all = True
     record_options.is_discovery_disabled = False
-    record_options.rmw_serialization_format = ""
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
     rclpy.init()
