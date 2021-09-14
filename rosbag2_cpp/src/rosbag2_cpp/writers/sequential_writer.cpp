@@ -28,6 +28,7 @@
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/info.hpp"
+#include "rosbag2_cpp/logging.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
 
@@ -41,24 +42,6 @@ namespace
 std::string strip_parent_path(const std::string & relative_path)
 {
   return rcpputils::fs::path(relative_path).filename().string();
-}
-
-rosbag2_cpp::cache::CacheConsumer::consume_callback_function_t make_callback(
-  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_interface,
-  std::unordered_map<std::string, rosbag2_storage::TopicInformation> & topics_info_map,
-  std::mutex & topics_mutex)
-{
-  return [callback_interface = storage_interface, &topics_info_map, &topics_mutex](
-    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs) {
-           callback_interface->write(msgs);
-           for (const auto & msg : msgs) {
-             // count messages as successfully written
-             std::lock_guard<std::mutex> lock(topics_mutex);
-             if (topics_info_map.find(msg->topic_name) != topics_info_map.end()) {
-               topics_info_map[msg->topic_name].message_count++;
-             }
-           }
-         };
 }
 }  // namespace
 
@@ -139,10 +122,7 @@ void SequentialWriter::open(
       storage_options.max_cache_size);
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,
-      make_callback(
-        storage_,
-        topics_names_to_info_,
-        topics_info_mutex_));
+      std::bind(&SequentialWriter::write_messages, this, std::placeholders::_1));
   } else if (storage_options_.snapshot_mode) {
     if (storage_options_.max_cache_size == 0) {
       throw std::runtime_error(
@@ -171,22 +151,6 @@ void SequentialWriter::close()
 
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
   storage_factory_.reset();
-}
-
-bool SequentialWriter::take_snapshot()
-{
-  std::lock_guard<std::mutex> lock(message_cache_->consuming_buffer_mutex_);
-  message_cache_->swap_buffers();
-  auto msg_vector = message_cache_->consumer_buffer()->data();
-
-  storage_->write(msg_vector);
-  for (const auto & msg : msg_vector) {
-    std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
-      topics_names_to_info_[msg->topic_name].message_count++;
-    }
-  }
-  return true;
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
@@ -290,10 +254,7 @@ void SequentialWriter::switch_to_next_storage()
   // Set new storage in buffer layer and restart consumer thread
   if (use_cache_) {
     cache_consumer_->change_consume_callback(
-      make_callback(
-        storage_,
-        topics_names_to_info_,
-        topics_info_mutex_));
+      std::bind(&SequentialWriter::write_messages, this, std::placeholders::_1));
   }
 }
 
@@ -345,6 +306,19 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
   }
+}
+
+bool SequentialWriter::take_snapshot()
+{
+  if (!storage_options_.snapshot_mode) {
+    ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(message_cache_->consuming_buffer_mutex_);
+  message_cache_->swap_buffers();
+  auto msg_vector = message_cache_->consumer_buffer()->data();
+  write_messages(msg_vector);
+  return true;
 }
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
@@ -399,6 +373,18 @@ void SequentialWriter::finalize_metadata()
   for (const auto & topic : topics_names_to_info_) {
     metadata_.topics_with_message_count.push_back(topic.second);
     metadata_.message_count += topic.second.message_count;
+  }
+}
+
+void SequentialWriter::write_messages(
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+{
+  storage_->write(messages);
+  for (const auto & msg : messages) {
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
+      topics_names_to_info_[msg->topic_name].message_count++;
+    }
   }
 }
 

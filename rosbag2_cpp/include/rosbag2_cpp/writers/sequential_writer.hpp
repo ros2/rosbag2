@@ -161,6 +161,11 @@ protected:
   virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   get_writeable_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
+private:
+  /// Helper method to write messages while also updating tracked metadata.
+  void write_messages(
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 };
 
 }  // namespace writers
