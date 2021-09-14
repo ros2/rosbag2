@@ -150,7 +150,7 @@ public:
    * Write a non-serialized message to a bagfile.
    * The topic will be created if it has not been created already.
    *
-   * \param message MessageT The serialized message to be written to the bagfile
+   * \param message MessageT The non-serialized message to be written to the bagfile
    * \param topic_name the string of the topic this messages belongs to
    * \param type_name the string of the type associated with this message
    * \param time The time stamp of the message

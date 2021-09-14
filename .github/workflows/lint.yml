@@ -20,6 +20,7 @@ jobs:
         linter: ${{ matrix.linter }}
         distribution: rolling
         package-name: |
+            bag_recorder_nodes
             ros2bag
             rosbag2
             rosbag2_compression
@@ -50,6 +51,7 @@ jobs:
         linter: ${{ matrix.linter }}
         distribution: rolling
         package-name: |
+            bag_recorder_nodes
             rosbag2_compression
             rosbag2_compression_zstd
             rosbag2_cpp
