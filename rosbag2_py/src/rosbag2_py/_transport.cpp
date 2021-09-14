@@ -152,10 +152,14 @@ public:
 
 class Recorder
 {
+private:
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+
 public:
   Recorder()
   {
     rclcpp::init(0, nullptr);
+    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     std::signal(
       SIGTERM, [](int /* signal */) {
         rclcpp::shutdown();
@@ -199,15 +203,18 @@ public:
     auto recorder = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options);
     recorder->record();
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(recorder);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
 
-    exec.cancel();
-    spin_thread.join();
+    exec_->add_node(recorder);
+    // Release the GIL for long-running record, so that calling Python code can use other threads
+    {
+      py::gil_scoped_release release;
+      exec_->spin();
+    }
+  }
+
+  void cancel()
+  {
+    exec_->cancel();
   }
 };
 
@@ -270,5 +277,6 @@ PYBIND11_MODULE(_transport, m) {
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
   .def("record", &rosbag2_py::Recorder::record)
+  .def("cancel", &rosbag2_py::Recorder::cancel)
   ;
 }
