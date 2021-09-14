@@ -62,7 +62,7 @@ public:
     std::swap(snapshot_buffer_, messages_);
     snapshot_buffer_.clear();
     return true;
-	}
+  }
 
   bool request_owned_serialized_data() override
   {

@@ -183,6 +183,9 @@ public:
 private:
   std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
+  void copy_message_into(
+    const rclcpp::SerializedMessage & message,
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> & serialized_bag_message);
 };
 
 }  // namespace rosbag2_cpp
