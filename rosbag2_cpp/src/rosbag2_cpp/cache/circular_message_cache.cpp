@@ -29,26 +29,33 @@ namespace cache
 
 CircularMessageCache::CircularMessageCache(size_t max_buffer_size)
 {
-  primary_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
-  secondary_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
+  producer_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
+  consumer_buffer_ = std::make_shared<MessageCacheCircularBuffer>(max_buffer_size);
 }
 
 void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
-  std::lock_guard<std::mutex> cache_lock(cache_mutex_);
-  primary_buffer_->push(msg);
+  std::lock_guard<std::mutex> cache_lock(producer_buffer_mutex_);
+  producer_buffer_->push(msg);
 }
 
 std::shared_ptr<CacheBufferInterface> CircularMessageCache::consumer_buffer()
 {
-  return secondary_buffer_;
+  consumer_buffer_mutex_.lock();
+  return consumer_buffer_;
+}
+
+void CircularMessageCache::return_consumer_buffer()
+{
+  consumer_buffer_mutex_.unlock();
 }
 
 void CircularMessageCache::swap_buffers()
 {
-  std::lock_guard<std::mutex> cache_lock(cache_mutex_);
-  secondary_buffer_->clear();
-  std::swap(primary_buffer_, secondary_buffer_);
+  std::lock_guard<std::mutex> producer_lock(producer_buffer_mutex_);
+  std::lock_guard<std::mutex> consumer_lock(consumer_buffer_mutex_);
+  consumer_buffer_->clear();
+  std::swap(producer_buffer_, consumer_buffer_);
 }
 
 }  // namespace cache

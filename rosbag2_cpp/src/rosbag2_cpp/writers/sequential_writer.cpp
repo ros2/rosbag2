@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <list>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -116,23 +115,25 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  use_cache_ = storage_options.max_cache_size > 0u && !storage_options_.snapshot_mode;
+  use_cache_ = storage_options.max_cache_size > 0u;
+  if (storage_options.snapshot_mode && !use_cache_) {
+    throw std::runtime_error(
+            "Max cache size must be greater than 0 when snapshot mode is enabled");
+  }
+
   if (use_cache_) {
-    message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
-      storage_options.max_cache_size);
+    if (storage_options.snapshot_mode) {
+      message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
+        storage_options.max_cache_size);
+    } else {
+      message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
+        storage_options.max_cache_size);
+    }
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,
       std::bind(&SequentialWriter::write_messages, this, std::placeholders::_1));
-  } else if (storage_options_.snapshot_mode) {
-    if (storage_options_.max_cache_size == 0) {
-      throw std::runtime_error(
-              "Max cache size must be greater than 0 when snapshot mode is enabled"
-      );
-    }
-    message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
-      storage_options.max_cache_size
-    );
   }
+
   init_metadata();
 }
 
@@ -250,12 +251,6 @@ void SequentialWriter::switch_to_next_storage()
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }
-
-  // Set new storage in buffer layer and restart consumer thread
-  if (use_cache_) {
-    cache_consumer_->change_consume_callback(
-      std::bind(&SequentialWriter::write_messages, this, std::placeholders::_1));
-  }
 }
 
 void SequentialWriter::split_bagfile()
@@ -314,10 +309,7 @@ bool SequentialWriter::take_snapshot()
     ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
     return false;
   }
-  std::lock_guard<std::mutex> lock(message_cache_->consuming_buffer_mutex_);
   message_cache_->swap_buffers();
-  auto msg_vector = message_cache_->consumer_buffer()->data();
-  write_messages(msg_vector);
   return true;
 }
 
@@ -379,6 +371,9 @@ void SequentialWriter::finalize_metadata()
 void SequentialWriter::write_messages(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
+  if (messages.empty()) {
+    return;
+  }
   storage_->write(messages);
   for (const auto & msg : messages) {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);

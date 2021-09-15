@@ -74,9 +74,6 @@ public:
   /// shut down the consumer thread
   void close();
 
-  /// Set new consume callback, restart thread if necessary
-  void change_consume_callback(consume_callback_function_t callback);
-
 private:
   std::shared_ptr<MessageCacheInterface> message_cache_;
   consume_callback_function_t consume_callback_;
