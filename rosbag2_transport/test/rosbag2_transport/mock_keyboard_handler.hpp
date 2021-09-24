@@ -26,7 +26,22 @@
 class MockKeyboardHandler : public KeyboardHandler
 {
 public:
-  MockKeyboardHandler() = default;
+  #ifdef _WIN32
+  MockKeyboardHandler()
+  : KeyboardHandlerWindowsImpl(
+      [](int) -> int {return 1;},  // isatty
+      []() -> int {return 0;},  // kbhit
+      []() -> int {return 0;})  // getch
+  {}
+  #else
+  MockKeyboardHandler()
+  : KeyboardHandlerUnixImpl(
+      [](int, void *, size_t) -> ssize_t {return 0;},  // read
+      [](int) -> int {return 1;},  // isatty
+      [](int, struct termios *) -> int {return 0;},  // tcgetattr
+      [](int, int, const struct termios *) -> int {return 0;})   // tcsetattr
+  {}
+  #endif
 
   void simulate_key_press(
     KeyboardHandler::KeyCode key_code,
