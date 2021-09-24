@@ -64,7 +64,7 @@ void CacheConsumer::exec_consuming()
     auto consumer_buffer = message_cache_->consumer_buffer();
     callback_for_this_loop(consumer_buffer->data());
     consumer_buffer->clear();
-    message_cache_->return_consumer_buffer();
+    message_cache_->release_consumer_buffer();
 
     if (flushing) {exit_flag = true;}  // this was the final run
     if (is_stop_issued_) {flushing = true;}  // run one final time to flush

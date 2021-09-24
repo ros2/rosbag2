@@ -54,12 +54,12 @@ public:
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Get current buffer to consume.
-  /// Locks consumer_buffer and swap_buffers until return_consumer_buffer is called.
+  /// Locks consumer_buffer and swap_buffers until release_consumer_buffer is called.
   /// This may be repeatedly empty if `swap_buffers` has not been called.
   std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
 
   /// Unlock access to the consumer buffer.
-  void return_consumer_buffer() override;
+  void release_consumer_buffer() override;
 
   /// Swap the primary and secondary buffer before consumption.
   /// NOTE: If swap_buffers is called again before consuming via consumer_buffer,

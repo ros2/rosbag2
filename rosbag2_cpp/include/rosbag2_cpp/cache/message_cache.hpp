@@ -81,7 +81,7 @@ public:
   std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
 
   /// Notify that consumer_buffer has been fully used. Unlock.
-  void return_consumer_buffer() override;
+  void release_consumer_buffer() override;
 
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.

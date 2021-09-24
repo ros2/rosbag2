@@ -45,16 +45,16 @@ public:
 
   /// Get a pointer to the buffer that can be used for consuming the cached messages.
   /// This call locks access to the buffer, `swap_buffers` and `consumer_buffer` will block until
-  /// `return_consumer_buffer` is called to unlock access to the buffer.
-  /// Consumer should call `return_consumer_buffer` when they are done consuming the messages.
+  /// `release_consumer_buffer` is called to unlock access to the buffer.
+  /// Consumer should call `release_consumer_buffer` when they are done consuming the messages.
   /// \return a pointer to the consumer buffer interface.
   virtual std::shared_ptr<CacheBufferInterface> consumer_buffer() = 0;
 
   /// Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
-  virtual void return_consumer_buffer() = 0;
+  virtual void release_consumer_buffer() = 0;
 
   /// Swap producer and consumer buffers.
-  /// Note: this will block if `consumer_buffer` has been called but `return_consumer_buffer`
+  /// Note: this will block if `consumer_buffer` has been called but `release_consumer_buffer`
   /// has not been called yet to signal end of consuming.
   virtual void swap_buffers() = 0;
 

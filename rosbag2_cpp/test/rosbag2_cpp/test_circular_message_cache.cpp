@@ -85,7 +85,7 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
   auto consumer_buffer = circular_message_cache->consumer_buffer();
   auto message_vector = consumer_buffer->data();
   std::string first_message = deserialize_message(message_vector.front()->serialized_data);
-  circular_message_cache->return_consumer_buffer();
+  circular_message_cache->release_consumer_buffer();
 
   // Old messages should be dropped
   EXPECT_THAT(first_message, StrNe("Hello0"));
@@ -116,7 +116,7 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
   // Swap filled cache to secondary
   circular_message_cache->swap_buffers();
   EXPECT_THAT(circular_message_cache->consumer_buffer()->size(), Ne(0u));
-  circular_message_cache->return_consumer_buffer();
+  circular_message_cache->release_consumer_buffer();
 
   // Swap back to primary (expected to empty buffer)
   circular_message_cache->swap_buffers();
@@ -125,5 +125,5 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
   circular_message_cache->swap_buffers();
   // Cache should have been emptied
   EXPECT_THAT(circular_message_cache->consumer_buffer()->size(), Eq(0u));
-  circular_message_cache->return_consumer_buffer();
+  circular_message_cache->release_consumer_buffer();
 }

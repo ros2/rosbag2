@@ -45,7 +45,7 @@ std::shared_ptr<CacheBufferInterface> CircularMessageCache::consumer_buffer()
   return consumer_buffer_;
 }
 
-void CircularMessageCache::return_consumer_buffer()
+void CircularMessageCache::release_consumer_buffer()
 {
   consumer_buffer_mutex_.unlock();
 }

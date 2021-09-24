@@ -63,7 +63,7 @@ std::shared_ptr<CacheBufferInterface> MessageCache::consumer_buffer()
   return consumer_buffer_;
 }
 
-void MessageCache::return_consumer_buffer()
+void MessageCache::release_consumer_buffer()
 {
   consumer_buffer_mutex_.unlock();
 }
