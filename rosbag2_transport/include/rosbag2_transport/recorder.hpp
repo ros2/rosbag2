@@ -28,6 +28,8 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/snapshot.hpp"
+
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
@@ -121,6 +123,7 @@ private:
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
 };
 
 }  // namespace rosbag2_transport

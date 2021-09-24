@@ -40,41 +40,32 @@ class ROSBAG2_CPP_PUBLIC MessageCacheInterface
 public:
   virtual ~MessageCacheInterface() {}
 
-  /**
-   *   Push a pointer to a bag message into the primary buffer.
-   */
+  /// Push a bag message into the producer buffer.
   virtual void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
 
-  /**
-   *   Get a pointer to the buffer that can be used for consuming the
-   *   cached messages. In a double buffer implementation, this should
-   *   always be called after swap_buffers().
-   *
-   *   \return a pointer to the consumer buffer interface.
-   */
+  /// Get a pointer to the buffer that can be used for consuming the cached messages.
+  /// This call locks access to the buffer, `swap_buffers` and `consumer_buffer` will block until
+  /// `release_consumer_buffer` is called to unlock access to the buffer.
+  /// Consumer should call `release_consumer_buffer` when they are done consuming the messages.
+  /// \return a pointer to the consumer buffer interface.
   virtual std::shared_ptr<CacheBufferInterface> consumer_buffer() = 0;
 
-  /**
-   *   Swap primary and secondary buffers when using a double buffer
-   *   configuration.
-   */
+  /// Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
+  virtual void release_consumer_buffer() = 0;
+
+  /// Swap producer and consumer buffers.
+  /// Note: this will block if `consumer_buffer` has been called but `release_consumer_buffer`
+  /// has not been called yet to signal end of consuming.
   virtual void swap_buffers() = 0;
 
-  /**
-   *   Mark message cache as having finished flushing
-   *   remaining messages to the bagfile.
-   */
-  virtual void notify_flushing_done() {}
+  /// Go into a read-only state to drain the final consumer buffer without letting in new data.
+  virtual void begin_flushing() {}
 
-  /**
-   *   Print a log message with details of any dropped messages.
-   */
+  /// Call after `begin_flushing`, once the final consumer buffer is emptied.
+  virtual void done_flushing() {}
+
+  /// Print a log message with details of any dropped messages.
   virtual void log_dropped() {}
-
-  /**
-   *   Perform any cleanup or final tasks before exitting.
-   */
-  virtual void finalize() {}
 };
 
 }  // namespace cache

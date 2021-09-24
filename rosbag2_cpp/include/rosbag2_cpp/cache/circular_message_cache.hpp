@@ -39,6 +39,11 @@ namespace rosbag2_cpp
 namespace cache
 {
 
+/// Provides a "deferred-consumption" implementation of the MessageCacheInterface.
+/// When a consumer asks for a buffer, it will not receive a new buffer until some control
+/// source calls `swap_buffers` manually.
+/// This is useful for a snapshot mode, where no data is written to disk until asked for,
+/// then the full circular buffer is dumped all at once, giving historical context.
 class ROSBAG2_CPP_PUBLIC CircularMessageCache
   : public MessageCacheInterface
 {
@@ -48,22 +53,24 @@ public:
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
-  /// get current buffer to consume
+  /// Get current buffer to consume.
+  /// Locks consumer_buffer and swap_buffers until release_consumer_buffer is called.
+  /// This may be repeatedly empty if `swap_buffers` has not been called.
   std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
 
+  /// Unlock access to the consumer buffer.
+  void release_consumer_buffer() override;
+
   /// Swap the primary and secondary buffer before consumption.
-  /// NOTE: consumer_buffer() should be called sequentially after
-  /// swap_buffer() to ensure expected behavior. Calling swap_buffer()
-  /// while accessing consumer_buffer() will be undefined behavior.
+  /// NOTE: If swap_buffers is called again before consuming via consumer_buffer,
+  /// that data will be cleared for use by the producer.
   void swap_buffers() override;
 
 private:
-  /// Double buffers
-  std::shared_ptr<MessageCacheCircularBuffer> primary_buffer_;
-  std::shared_ptr<MessageCacheCircularBuffer> secondary_buffer_;
-
-  /// Double buffers sync
-  std::mutex cache_mutex_;
+  std::shared_ptr<MessageCacheCircularBuffer> producer_buffer_;
+  std::mutex producer_buffer_mutex_;
+  std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer_;
+  std::mutex consumer_buffer_mutex_;
 };
 
 }  // namespace cache

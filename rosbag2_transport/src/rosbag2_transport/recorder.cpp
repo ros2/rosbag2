@@ -28,6 +28,8 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/snapshot.hpp"
+
 #include "qos.hpp"
 #include "topic_filter.hpp"
 
@@ -92,6 +94,19 @@ void Recorder::record()
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
+
+  // Only expose snapshot service when mode is enabled
+  if (storage_options_.snapshot_mode) {
+    srv_snapshot_ = create_service<rosbag2_interfaces::srv::Snapshot>(
+      "~/snapshot",
+      [this](
+        const std::shared_ptr<rmw_request_id_t>/* request_header */,
+        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Request>/* request */,
+        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Response> response)
+      {
+        response->success = writer_->take_snapshot();
+      });
+  }
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(this->get_logger(), "Listening for topics...");
