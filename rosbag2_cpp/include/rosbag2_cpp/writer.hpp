@@ -97,6 +97,12 @@ public:
   void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type);
 
   /**
+   * Trigger a snapshot when snapshot mode is enabled.
+   * \returns true if snapshot is successful, false if snapshot fails or is not supported
+   */
+  bool take_snapshot();
+
+  /**
    * Remove a new topic in the underlying storage.
    * If creation of subscription fails remove the topic
    * from the db (more of cleanup)

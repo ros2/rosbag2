@@ -30,6 +30,11 @@ public:
   explicit MockMessageCache(uint64_t max_buffer_size)
   : rosbag2_cpp::cache::MessageCache(max_buffer_size) {}
 
+  std::unordered_map<std::string, uint32_t> messages_dropped() const
+  {
+    return messages_dropped_per_topic_;
+  }
+
   MOCK_METHOD0(log_dropped, void());
 };
 

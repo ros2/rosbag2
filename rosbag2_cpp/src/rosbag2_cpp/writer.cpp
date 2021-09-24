@@ -76,6 +76,11 @@ void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type
   writer_impl_->remove_topic(topic_with_type);
 }
 
+bool Writer::take_snapshot()
+{
+  return writer_impl_->take_snapshot();
+}
+
 void Writer::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);

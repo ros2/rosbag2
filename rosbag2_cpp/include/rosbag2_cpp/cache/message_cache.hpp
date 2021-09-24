@@ -49,6 +49,10 @@ namespace cache
 * Double buffering is a part of producer-consumer pattern and optimizes for
 * the consumer performance (which can be a bottleneck, e.g. disk writes).
 *
+* This is a "greedy consumer" implementation -  every time the consumer asks
+* for a buffer to consume, the buffers are swapped so that the latest data
+* goes to the consumer right away.
+*
 * Two instances of MessageCacheBuffer are used, one for producer and one for
 * the consumer. Buffers are switched through swap_buffers function, which
 * involves synchronization and a simple pointer switch.
@@ -72,14 +76,12 @@ public:
   /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
-  /// Summarize dropped/remaining messages
-  void log_dropped() override;
+  /// Gets a consumer buffer.
+  /// In this greedy implementation, swap buffers before providing the buffer.
+  std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
 
-  /// Set the cache to consume-only mode for final buffer flush before closing
-  void finalize() override;
-
-  /// Notify that flushing is complete
-  void notify_flushing_done() override;
+  /// Notify that consumer_buffer has been fully used. Unlock.
+  void release_consumer_buffer() override;
 
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
@@ -90,27 +92,33 @@ public:
   **/
   void swap_buffers() override;
 
-  /// Consumer API: get current buffer to consume
-  std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
+  /// Set the cache to consume-only mode for final buffer flush before closing
+  void begin_flushing() override;
 
-  /// Exposes counts of messages dropped per topic
-  std::unordered_map<std::string, uint32_t> messages_dropped() const;
+  /// Notify that flushing is complete
+  void done_flushing() override;
+
+  /// Summarize dropped/remaining messages
+  void log_dropped() override;
+
+protected:
+  /// Dropped messages per topic. Used for printing in alphabetic order
+  std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
 
 private:
   /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_buffer_consumer();
 
   /// Double buffers
-  std::shared_ptr<MessageCacheBuffer> primary_buffer_;
-  std::shared_ptr<MessageCacheBuffer> secondary_buffer_;
+  std::shared_ptr<MessageCacheBuffer> producer_buffer_;
+  std::mutex producer_buffer_mutex_;
+  std::shared_ptr<MessageCacheBuffer> consumer_buffer_;
+  std::recursive_mutex consumer_buffer_mutex_;
 
-  /// Dropped messages per topic. Used for printing in alphabetic order
-  std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
 
   /// Double buffers sync (following cpp core guidelines for condition variables)
   bool primary_buffer_can_be_swapped_ {false};
   std::condition_variable cache_condition_var_;
-  std::mutex cache_mutex_;
 
   /// Cache is no longer accepting messages and is in the process of flushing
   std::atomic_bool flushing_ {false};
