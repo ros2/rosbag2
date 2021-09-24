@@ -26,21 +26,18 @@
 class MockKeyboardHandler : public KeyboardHandler
 {
 public:
-  MockKeyboardHandler()
-  {}
+  MockKeyboardHandler() = default;
 
-  void press_key(KeyboardHandler::KeyCode key_code)
+  void simulate_key_press(
+    KeyboardHandler::KeyCode key_code,
+    KeyboardHandler::KeyModifiers key_modifiers = KeyboardHandler::KeyModifiers::NONE)
   {
     std::lock_guard<std::mutex> lk(callbacks_mutex_);
-    KeyboardHandler::KeyModifiers key_modifiers = KeyboardHandler::KeyModifiers::NONE;
     auto range = callbacks_.equal_range(KeyAndModifiers{key_code, key_modifiers});
     for (auto it = range.first; it != range.second; ++it) {
       it->second.callback(key_code, key_modifiers);
     }
   }
-
-  virtual ~MockKeyboardHandler()
-  {}
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_KEYBOARD_HANDLER_HPP_

@@ -102,9 +102,9 @@ TEST_F(RosBag2PlayTestFixture, invalid_keybindings)
   prepared_mock_reader->prepare(messages, topics_and_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
+  std::shared_ptr<Player> player;
   EXPECT_THROW(
-    std::make_shared<Player>(
-      std::move(reader), storage_options_, play_options_),
+    player = std::make_shared<Player>(std::move(reader), storage_options_, play_options_),
     std::invalid_argument
   );
 }
@@ -135,26 +135,26 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topics_and_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-  auto keyboard_handler = new MockKeyboardHandler();
+  auto keyboard_handler = std::make_shared<MockKeyboardHandler>();
 
   // play bag in thread
   auto player = std::make_shared<CountPlayer>(
-    std::move(reader), std::shared_ptr<KeyboardHandler>(keyboard_handler),
+    std::move(reader), keyboard_handler,
     storage_options_, play_options_);
 
   // start in pause mode
   EXPECT_THAT(player->is_paused(), false);
-  keyboard_handler->press_key(play_options_.pause_resume_toggle_key);
+  keyboard_handler->simulate_key_press(play_options_.pause_resume_toggle_key);
   EXPECT_THAT(player->is_paused(), true);
 
   // start play thread
   std::thread player_thread = std::thread([player]() {player->play();});
 
   // play next
-  keyboard_handler->press_key(play_options_.play_next_key);
+  keyboard_handler->simulate_key_press(play_options_.play_next_key);
   EXPECT_THAT(player->is_paused(), true);
   // resume
-  keyboard_handler->press_key(play_options_.pause_resume_toggle_key);
+  keyboard_handler->simulate_key_press(play_options_.pause_resume_toggle_key);
   EXPECT_THAT(player->is_paused(), false);
 
   if (player_thread.joinable()) {
