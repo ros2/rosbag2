@@ -21,6 +21,9 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "keyboard_handler/keyboard_handler.hpp"
 
 #include "moodycamel/readerwriterqueue.h"
 
@@ -76,6 +79,15 @@ public:
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
   ROSBAG2_TRANSPORT_PUBLIC
+  Player(
+    std::unique_ptr<rosbag2_cpp::Reader> reader,
+    std::shared_ptr<KeyboardHandler> keyboard_handler,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
@@ -87,11 +99,11 @@ public:
   // Playback control interface
   /// Pause the flow of time for playback.
   ROSBAG2_TRANSPORT_PUBLIC
-  void pause();
+  virtual void pause();
 
   /// Start the flow of time for playback.
   ROSBAG2_TRANSPORT_PUBLIC
-  void resume();
+  virtual void resume();
 
   /// Pause if time running, resume if paused.
   ROSBAG2_TRANSPORT_PUBLIC
@@ -117,7 +129,7 @@ public:
   /// this method will wait until new element will be pushed to the queue.
   /// \return true if player in pause mode and successfully played next message, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
-  bool play_next();
+  virtual bool play_next();
 
   /// \brief Advance player to the message with closest timestamp >= time_point.
   /// \details This is blocking call and it will wait until current message will be published
@@ -154,6 +166,13 @@ private:
 
   std::mutex reader_mutex_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
+
+  void add_key_callback(
+    KeyboardHandler::KeyCode key,
+    const std::function<void()> & cb,
+    const std::string & op_name);
+  void add_keyboard_callbacks();
+
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
@@ -172,6 +191,10 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::GetRate>::SharedPtr srv_get_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
+
+  // defaults
+  std::shared_ptr<KeyboardHandler> keyboard_handler_;
+  std::vector<KeyboardHandler::callback_handle_t> keyboard_callbacks_;
 };
 
 }  // namespace rosbag2_transport

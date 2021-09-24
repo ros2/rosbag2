@@ -22,6 +22,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
+find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
@@ -43,6 +44,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(${PROJECT_NAME}
+  keyboard_handler
   rcl
   rclcpp
   rcutils
@@ -75,6 +77,7 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(
+  keyboard_handler
   rosbag2_cpp
   rosbag2_compression
   rosbag2_interfaces
@@ -158,6 +161,11 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_record_all_no_discovery
     test/rosbag2_transport/test_record_all_no_discovery.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_keyboard_controls
+    test/rosbag2_transport/test_keyboard_controls.cpp
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 

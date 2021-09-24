@@ -113,11 +113,26 @@ Player::Player(
   const rosbag2_transport::PlayOptions & play_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
+: Player(std::move(reader),
+    // only call KeyboardHandler when using default keyboard handler implementation
+    std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+    storage_options, play_options,
+    node_name, node_options)
+{}
+
+Player::Player(
+  std::unique_ptr<rosbag2_cpp::Reader> reader,
+  std::shared_ptr<KeyboardHandler> keyboard_handler,
+  const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::PlayOptions & play_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(
     node_name,
     rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
   storage_options_(storage_options),
-  play_options_(play_options)
+  play_options_(play_options),
+  keyboard_handler_(keyboard_handler)
 {
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -133,7 +148,7 @@ Player::Player(
 
     reader_->close();
   }
-
+  // service callbacks
   srv_pause_ = create_service<rosbag2_interfaces::srv::Pause>(
     "~/pause",
     [this](
@@ -197,10 +212,18 @@ Player::Player(
     {
       response->success = play_next();
     });
+  // keyboard callbacks
+  add_keyboard_callbacks();
 }
 
 Player::~Player()
 {
+  // remove callbacks on key_codes to prevent race conditions
+  // Note: keyboard_handler handles locks between removing & executing callbacks
+  for (auto cb_handle : keyboard_callbacks_) {
+    keyboard_handler_->delete_key_press_callback(cb_handle);
+  }
+  // closes reader
   std::lock_guard<std::mutex> lk(reader_mutex_);
   if (reader_) {
     reader_->close();
@@ -234,14 +257,14 @@ void Player::play()
     delay = play_options_.delay;
   } else {
     RCLCPP_WARN_STREAM(
-      this->get_logger(),
+      get_logger(),
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
-        RCLCPP_INFO_STREAM(this->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+        RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds duration(delay.nanoseconds());
         std::this_thread::sleep_for(duration);
       }
@@ -267,7 +290,7 @@ void Player::play()
       reader_->close();
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to play: %s", e.what());
+    RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
   }
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
@@ -277,16 +300,18 @@ void Player::play()
 void Player::pause()
 {
   clock_->pause();
+  RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
 }
 
 void Player::resume()
 {
   clock_->resume();
+  RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
 }
 
 void Player::toggle_paused()
 {
-  clock_->is_paused() ? clock_->resume() : clock_->pause();
+  is_paused() ? resume() : pause();
 }
 
 bool Player::is_paused() const
@@ -309,7 +334,7 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
   if (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
     RCLCPP_WARN(
-      this->get_logger(),
+      get_logger(),
       "Message queue starved. Messages will be delayed. Consider "
       "increasing the --read-ahead-queue-size option.");
     while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
@@ -328,8 +353,11 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
 bool Player::play_next()
 {
   if (!clock_->is_paused()) {
+    RCLCPP_WARN_STREAM(get_logger(), "Called play next, but not in paused state.");
     return false;
   }
+
+  RCLCPP_INFO_STREAM(get_logger(), "Playing next message.");
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
@@ -573,9 +601,9 @@ void Player::prepare_publishers()
       static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
     // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
     // should not own transport-based functionality
-    clock_publisher_ = this->create_publisher<rosgraph_msgs::msg::Clock>(
+    clock_publisher_ = create_publisher<rosgraph_msgs::msg::Clock>(
       "/clock", rclcpp::ClockQoS());
-    clock_publish_timer_ = this->create_wall_timer(
+    clock_publish_timer_ = create_wall_timer(
       publish_period, [this]() {
         auto msg = rosgraph_msgs::msg::Clock();
         msg.clock = rclcpp::Time(clock_->now());
@@ -600,16 +628,16 @@ void Player::prepare_publishers()
 
     auto topic_qos = publisher_qos_for_topic(
       topic, topic_qos_profile_overrides_,
-      this->get_logger());
+      get_logger());
     try {
       publishers_.insert(
         std::make_pair(
-          topic.name, this->create_generic_publisher(topic.name, topic.type, topic_qos)));
+          topic.name, create_generic_publisher(topic.name, topic.type, topic_qos)));
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
       RCLCPP_WARN(
-        this->get_logger(),
+        get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }
@@ -624,6 +652,49 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
     message_published = true;
   }
   return message_published;
+}
+
+void Player::add_key_callback(
+  KeyboardHandler::KeyCode key,
+  const std::function<void()> & cb,
+  const std::string & op_name)
+{
+  std::string key_str = enum_key_code_to_str(key);
+  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "Invalid key binding " << key_str << " for " << op_name);
+    throw std::invalid_argument("Invalid key binding.");
+  }
+  keyboard_callbacks_.push_back(
+    keyboard_handler_->add_key_press_callback(
+      [cb](KeyboardHandler::KeyCode /*key_code*/,
+      KeyboardHandler::KeyModifiers /*key_modifiers*/) {cb();},
+      key));
+  // show instructions
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "Press " << key_str << " for " << op_name);
+}
+
+void Player::add_keyboard_callbacks()
+{
+  // skip if disabled
+  if (play_options_.disable_keyboard_controls) {
+    return;
+  }
+  RCLCPP_INFO_STREAM(get_logger(), "Adding keyboard callbacks.");
+  // check keybindings
+  add_key_callback(
+    play_options_.pause_resume_toggle_key,
+    [this]() {toggle_paused();},
+    "Pause/Resume"
+  );
+  add_key_callback(
+    play_options_.play_next_key,
+    [this]() {play_next();},
+    "Play Next Message"
+  );
 }
 
 }  // namespace rosbag2_transport

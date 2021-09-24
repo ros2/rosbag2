@@ -85,6 +85,9 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
+        parser.add_argument(
+            '--disable-keyboard-controls', action='store_true',
+            help='disables keyboard controls for playback')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -120,6 +123,7 @@ class PlayVerb(VerbExtension):
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
+        play_options.disable_keyboard_controls = args.disable_keyboard_controls
 
         player = Player()
         player.play(storage_options, play_options)
