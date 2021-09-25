@@ -110,6 +110,11 @@ class RecordVerb(VerbExtension):
                  'Default is 0, which will be interpreted as the number of CPU cores.'
         )
         parser.add_argument(
+            '--snapshot-mode', action='store_true',
+            help='Enable snapshot mode. Messages will not be written to the bagfile until '
+                 'the "/rosbag2_recorder/snapshot" service is called.'
+        )
+        parser.add_argument(
             '--include-hidden-topics', action='store_true',
             help='record also hidden topics.'
         )
@@ -185,6 +190,7 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
+            snapshot_mode=args.snapshot_mode
         )
         record_options = RecordOptions()
         record_options.all = args.all
