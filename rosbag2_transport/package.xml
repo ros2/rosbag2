@@ -20,6 +20,7 @@
   <depend>rmw</depend>
   <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
+  <depend>keyboard_handler</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_index_cpp</test_depend>
