@@ -353,6 +353,7 @@ bool Player::play_next()
     std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
+
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
@@ -475,6 +476,11 @@ void Player::play_messages_from_queue()
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
+  }
+  // while we're in pause state, make sure we don't return
+  // if we happen to be at the end of queue
+  while (is_paused()) {
+    clock_->sleep_until(clock_->now());
   }
 }
 
