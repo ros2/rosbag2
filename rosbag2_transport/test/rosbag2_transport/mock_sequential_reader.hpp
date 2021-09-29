@@ -82,6 +82,7 @@ public:
   void seek(const rcutils_time_point_value_t & timestamp) override
   {
     seek_time_ = timestamp;
+    num_read_ = 0;
   }
 
   void prepare(
