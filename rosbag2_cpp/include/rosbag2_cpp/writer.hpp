@@ -146,8 +146,32 @@ public:
    * \param time The time stamp of the message
    * \throws runtime_error if the Writer is not open or duplicating message is failed.
    */
+  [[deprecated(
+    "Use write(std::shared_ptr<rclcpp::SerializedMessage> message," \
+    " const std::string & topic_name," \
+    " const std::string & type_name," \
+    " const rclcpp::Time & time) instead."
+  )]]
   void write(
     const rclcpp::SerializedMessage & message,
+    const std::string & topic_name,
+    const std::string & type_name,
+    const rclcpp::Time & time);
+
+  /**
+   * Write a serialized message to a bagfile.
+   * The topic will be created if it has not been created already.
+   *
+   * \warning after calling this function, the serialized data will no longer be managed by message.
+   *
+   * \param message rclcpp::SerializedMessage The serialized message to be written to the bagfile
+   * \param topic_name the string of the topic this messages belongs to
+   * \param type_name the string of the type associated with this message
+   * \param time The time stamp of the message
+   * \throws runtime_error if the Writer is not open or duplicating message is failed.
+   */
+  void write(
+    std::shared_ptr<rclcpp::SerializedMessage> message,
     const std::string & topic_name,
     const std::string & type_name,
     const rclcpp::Time & time);
