@@ -43,6 +43,6 @@ class InfoVerb(VerbExtension):
             print(m)
         except RuntimeError:
             return ('Could not read metadata for {}.'
-                    'Please specify the path to the folder containing'
-                    "an existing 'metadata.yaml' file or provide correct storage id"
+                    'Please specify the path to the folder containing '
+                    "an existing 'metadata.yaml' file or provide correct storage id "
                     "if metadata file doesn't exist (see help).".format(bag_file))
