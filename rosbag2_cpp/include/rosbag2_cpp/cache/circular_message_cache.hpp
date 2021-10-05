@@ -19,6 +19,8 @@
 #include <mutex>
 #include <string>
 
+#include "rcpputils/thread_safety_annotations.hpp"
+
 #include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
@@ -56,10 +58,11 @@ public:
   /// Get current buffer to consume.
   /// Locks consumer_buffer and swap_buffers until release_consumer_buffer is called.
   /// This may be repeatedly empty if `swap_buffers` has not been called.
-  std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
+  std::shared_ptr<CacheBufferInterface>
+  consumer_buffer() override RCPPUTILS_TSA_ACQUIRE(consumer_buffer_mutex_);
 
   /// Unlock access to the consumer buffer.
-  void release_consumer_buffer() override;
+  void release_consumer_buffer() override RCPPUTILS_TSA_RELEASE(consumer_buffer_mutex_);
 
   /// Swap the primary and secondary buffer before consumption.
   /// NOTE: If swap_buffers is called again before consuming via consumer_buffer,
