@@ -215,7 +215,6 @@ bool SequentialReader::has_next_file() const
 
 void SequentialReader::load_current_file()
 {
-  preprocess_current_file();
   storage_options_.uri = get_current_file();
   // open and set filters
   storage_ = storage_factory_->open_read_only(storage_options_);
@@ -227,6 +226,7 @@ void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   current_file_iterator_++;
+  preprocess_current_file();
   load_current_file();
 }
 
