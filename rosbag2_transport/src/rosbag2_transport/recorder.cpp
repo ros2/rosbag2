@@ -320,7 +320,7 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     } else if (incompatible_durability) {
       RCLCPP_WARN_STREAM(
         this->get_logger(),
-        "A new publisher for susbcribed topic " << topic_name << " "
+        "A new publisher for subscribed topic " << topic_name << " "
           "was found offering RMW_QOS_POLICY_DURABILITY_VOLATILE, "
           "but rosbag2 already subscribed requesting RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
           "Messages from this new publisher will not be recorded.");
