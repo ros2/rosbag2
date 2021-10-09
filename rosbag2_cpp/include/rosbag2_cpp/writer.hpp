@@ -168,7 +168,7 @@ public:
    * \param topic_name the string of the topic this messages belongs to
    * \param type_name the string of the type associated with this message
    * \param time The time stamp of the message
-   * \throws runtime_error if the Writer is not open or duplicating message is failed.
+   * \throws runtime_error if the Writer is not open.
    */
   void write(
     std::shared_ptr<rclcpp::SerializedMessage> message,
