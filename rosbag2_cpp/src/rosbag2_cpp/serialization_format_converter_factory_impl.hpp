@@ -129,7 +129,7 @@ private:
     }
 
     ROSBAG2_CPP_LOG_INFO_STREAM(
-      "No plugin found providing serialization format '" << format << "'." <<
+      "No plugin found providing serialization format '" << format << "'. " <<
       "Falling back to checking RMW implementations.");
     try {
       return std::make_unique<RMWImplementedConverter>(format);

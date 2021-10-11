@@ -70,7 +70,8 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
-    node["offered_qos_profiles"] = topic.offered_qos_profiles;
+    YAML::Node profiles = YAML::Load(topic.offered_qos_profiles);
+    node["offered_qos_profiles"] = profiles;
     return node;
   }
 
@@ -80,7 +81,9 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 4) {
-      topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
+      std::stringstream profiles;
+      profiles << node["offered_qos_profiles"];
+      topic.offered_qos_profiles = profiles.str();
     } else {
       topic.offered_qos_profiles = "";
     }
