@@ -136,7 +136,7 @@ void WriterBenchmark::start_benchmark()
   for (auto & prod_thread : producer_threads_) {
     prod_thread.join();
   }
-  writer_->reset();
+  writer_->close();
 
   result_utils::write_benchmark_results(configurations_, bag_config_, results_file_);
 }
