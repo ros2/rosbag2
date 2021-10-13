@@ -266,7 +266,7 @@ void SequentialReader::check_converter_serialization_format(
       storage_serialization_format,
       converter_serialization_format,
       converter_factory_);
-    auto topics = get_all_topics_and_types();
+    auto topics = storage_->get_all_topics_and_types();
     for (const auto & topic_with_type : topics) {
       converter_->add_topic(topic_with_type.name, topic_with_type.type);
     }

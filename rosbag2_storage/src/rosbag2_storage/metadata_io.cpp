@@ -287,4 +287,18 @@ bool MetadataIo::metadata_file_exists(const std::string & uri)
   return rcpputils::fs::exists(rcpputils::fs::path(get_metadata_file_name(uri)));
 }
 
+std::string MetadataIo::serialize_metadata(const BagMetadata & metadata)
+{
+  auto node = YAML::convert<BagMetadata>().encode(metadata);
+  std::stringstream out;
+  out << node;
+  return out.str();
+}
+
+BagMetadata MetadataIo::deserialize_metadata(const std::string & serialized_metadata)
+{
+  YAML::Node yaml = YAML::Load(serialized_metadata);
+  return yaml.as<BagMetadata>();
+}
+
 }  // namespace rosbag2_storage
