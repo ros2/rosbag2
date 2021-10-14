@@ -192,10 +192,10 @@ public:
     const std::string & topic_name,
     const rclcpp::Time & time)
   {
-    rclcpp::SerializedMessage serialized_msg;
+    auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
 
     rclcpp::Serialization<MessageT> serialization;
-    serialization.serialize_message(&message, &serialized_msg);
+    serialization.serialize_message(&message, serialized_msg.get());
     return write(serialized_msg, topic_name, rosidl_generator_traits::name<MessageT>(), time);
   }
 
