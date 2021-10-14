@@ -310,7 +310,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
-  const auto actual_splits = static_cast<int>(metadata.relative_file_paths.size());
+  const auto actual_splits = static_cast<int>(metadata.files.size());
 
   // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.
   // The only guarantee with splits right now is that they will not occur until
@@ -319,7 +319,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
-    const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[i]};
+    const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[i].path};
     ASSERT_TRUE(bagfile_path.exists()) <<
       "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
@@ -381,8 +381,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
   // Check that there's only 1 bagfile and that it exists.
-  ASSERT_EQ(1u, metadata.relative_file_paths.size());
-  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.relative_file_paths[0]};
+  ASSERT_EQ(1u, metadata.files.size());
+  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[0].path};
   ASSERT_TRUE(bagfile_path.exists()) <<
     "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
 
@@ -456,8 +456,8 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
-  for (const auto & rel_path : metadata.relative_file_paths) {
-    auto path = root_bag_path_ / rcpputils::fs::path(rel_path);
+  for (const auto & file : metadata.files) {
+    auto path = root_bag_path_ / rcpputils::fs::path(file.path);
     EXPECT_TRUE(rcpputils::fs::exists(path));
   }
 }
@@ -520,8 +520,8 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
-  for (const auto & rel_path : metadata.relative_file_paths) {
-    auto path = root_bag_path_ / rcpputils::fs::path(rel_path);
+  for (const auto & file : metadata.files) {
+    auto path = root_bag_path_ / rcpputils::fs::path(file.path);
     EXPECT_TRUE(rcpputils::fs::exists(path));
   }
 }
