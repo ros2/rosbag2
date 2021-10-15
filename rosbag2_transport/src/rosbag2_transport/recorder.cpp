@@ -27,6 +27,7 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
@@ -133,6 +134,13 @@ void Recorder::record()
         response->success = writer_->take_snapshot();
       });
   }
+
+  event_pub_ = create_publisher<example_interfaces::msg::Empty>("bag_events", 1);
+  writer_->add_event_callback({[this]() {
+      auto message = example_interfaces::msg::Empty();
+      event_pub_->publish(message);
+    },
+    rosbag2_cpp::BagEvent::SplitOutputFile});
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(this->get_logger(), "Listening for topics...");

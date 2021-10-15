@@ -275,6 +275,8 @@ void SequentialWriter::split_bagfile()
     std::chrono::nanoseconds::max());
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
+
+  call_event_callbacks(BagEvent::SplitOutputFile);
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -410,6 +412,23 @@ void SequentialWriter::write_messages(
       topics_names_to_info_[msg->topic_name].message_count++;
     }
   }
+}
+
+void SequentialWriter::add_event_callback(BagEventCallback & callback)
+{
+  event_callbacks.push_back(callback);
+}
+
+void SequentialWriter::call_event_callbacks(BagEvent event)
+{
+  std::for_each(
+    event_callbacks.begin(),
+    event_callbacks.end(),
+    [event](BagEventCallback & cb) {
+      if (cb.type == event) {
+        cb.function();
+      }
+    });
 }
 
 }  // namespace writers

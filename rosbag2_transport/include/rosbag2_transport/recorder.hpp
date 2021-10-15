@@ -25,6 +25,8 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
+#include "example_interfaces/msg/empty.hpp"
+
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 
@@ -162,6 +164,7 @@ private:
   // Toogle paused key callback handle
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
+  rclcpp::Publisher<example_interfaces::msg::Empty>::SharedPtr event_pub_;
 };
 
 }  // namespace rosbag2_transport

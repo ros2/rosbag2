@@ -39,6 +39,7 @@ find_package(rosbag2_storage REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 find_package(shared_queues_vendor REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
+find_package(example_interfaces REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
@@ -63,6 +64,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_storage
   shared_queues_vendor
   yaml_cpp_vendor
+  example_interfaces
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -94,7 +96,8 @@ ament_export_dependencies(
   rosbag2_compression
   rosbag2_interfaces
   shared_queues_vendor
-  yaml_cpp_vendor)
+  yaml_cpp_vendor
+  example_interfaces)
 
 function(create_tests_for_rmw_implementation)
   # disable the following tests for connext
