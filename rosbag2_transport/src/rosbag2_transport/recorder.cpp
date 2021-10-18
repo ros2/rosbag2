@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "rclcpp/logging.hpp"
+#include "rclcpp/clock.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
 
@@ -234,33 +235,8 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> message) {
-      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      // the serialized bag message takes ownership of the incoming rclcpp serialized message
-      // we therefore have to make sure to cleanup that memory in a custom deleter.
-      bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-        new rcutils_uint8_array_t,
-        [](rcutils_uint8_array_t * msg) {
-          auto fini_return = rcutils_uint8_array_fini(msg);
-          delete msg;
-          if (fini_return != RCUTILS_RET_OK) {
-            RCLCPP_ERROR_STREAM(
-              rclcpp::get_logger("rosbag2_transport"),
-              "Failed to destroy serialized message: " << rcutils_get_error_string().str);
-          }
-        });
-      *bag_message->serialized_data = message->release_rcl_serialized_message();
-      bag_message->topic_name = topic_name;
-      rcutils_time_point_value_t time_stamp;
-      int error = rcutils_system_time_now(&time_stamp);
-      if (error != RCUTILS_RET_OK) {
-        RCLCPP_ERROR_STREAM(
-          this->get_logger(),
-          "Error getting current time. Error:" << rcutils_get_error_string().str);
-      }
-      bag_message->time_stamp = time_stamp;
-
-      writer_->write(bag_message);
+    [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
+      writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
     });
   return subscription;
 }
