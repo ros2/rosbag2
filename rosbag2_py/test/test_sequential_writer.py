@@ -118,4 +118,7 @@ def test_serialization_plugin_list():
     :return:
     """
     serialization_formats = rosbag2_py.get_registered_serializers()
-    assert 's_converter' in serialization_formats
+    assert 's_converter' in serialization_formats, \
+        'get_registered_serializers should return SerializationFormatSerializer plugins'
+    assert 'a_converter' in serialization_formats, \
+        'get_registered_serializers should also return SerializationFormatConverter plugins'
