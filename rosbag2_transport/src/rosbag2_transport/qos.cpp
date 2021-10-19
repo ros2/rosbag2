@@ -163,7 +163,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   }
   // Policy: deadline
   // Deadline does not affect delivery of messages,
-  // and we do not record DeadlineMissed events.
+  // and we do not record Deadline"Missed events.
   // We can always use unspecified deadline, which will be compatible with all publishers.
 
   // Policy: lifespan
