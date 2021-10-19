@@ -39,6 +39,12 @@ public:
   ROSBAG2_STORAGE_PUBLIC
   virtual bool metadata_file_exists(const std::string & uri);
 
+  ROSBAG2_STORAGE_PUBLIC
+  virtual std::string serialize_metadata(const BagMetadata & metadata);
+
+  ROSBAG2_STORAGE_PUBLIC
+  virtual BagMetadata deserialize_metadata(const std::string & serialized_metadata);
+
 private:
   std::string get_metadata_file_name(const std::string & uri);
 };
