@@ -44,13 +44,21 @@ namespace YAML
 Node convert<rmw_time_t>::encode(const rmw_time_t & time)
 {
   Node node;
-  node["sec"] = time.sec;
-  node["nsec"] = time.nsec;
+  if (rmw_time_equal(time, RMW_DURATION_INFINITE)) {
+    node = "RMW_DURATION_INFINITE";
+  } else {
+    node["sec"] = time.sec;
+    node["nsec"] = time.nsec;
+  }
   return node;
 }
 
 bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
 {
+  if (node.IsScalar() && node.as<std::string>() == "RMW_DURATION_INFINITE") {
+    time = RMW_DURATION_INFINITE;
+    return true;
+  }
   time.sec = node["sec"].as<uint64_t>();
   time.nsec = node["nsec"].as<uint64_t>();
   if (
@@ -163,7 +171,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   }
   // Policy: deadline
   // Deadline does not affect delivery of messages,
-  // and we do not record Deadline"Missed events.
+  // and we do not record DeadlineMissed events.
   // We can always use unspecified deadline, which will be compatible with all publishers.
 
   // Policy: lifespan
