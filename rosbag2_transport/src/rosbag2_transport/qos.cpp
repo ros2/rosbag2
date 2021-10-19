@@ -44,21 +44,13 @@ namespace YAML
 Node convert<rmw_time_t>::encode(const rmw_time_t & time)
 {
   Node node;
-  if (rmw_time_equal(time, RMW_DURATION_INFINITE)) {
-    node = "RMW_DURATION_INFINITE";
-  } else {
-    node["sec"] = time.sec;
-    node["nsec"] = time.nsec;
-  }
+  node["sec"] = time.sec;
+  node["nsec"] = time.nsec;
   return node;
 }
 
 bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
 {
-  if (node.IsScalar() && node.as<std::string>() == "RMW_DURATION_INFINITE") {
-    time = RMW_DURATION_INFINITE;
-    return true;
-  }
   time.sec = node["sec"].as<uint64_t>();
   time.nsec = node["nsec"].as<uint64_t>();
   if (
