@@ -292,5 +292,14 @@ void SequentialReader::fill_topics_metadata()
   }
 }
 
+void SequentialReader::add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks)
+{
+  if (callbacks.input_file_split_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.input_file_split_callback,
+      bag_events::BagEvent::INPUT_FILE_SPLIT);
+  }
+}
+
 }  // namespace readers
 }  // namespace rosbag2_cpp

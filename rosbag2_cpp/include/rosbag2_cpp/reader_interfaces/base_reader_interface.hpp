@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "rcutils/types.h"
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -57,6 +58,8 @@ public:
   virtual void reset_filter() = 0;
 
   virtual void seek(const rcutils_time_point_value_t & timestamp) = 0;
+
+  virtual void add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks) = 0;
 };
 
 }  // namespace reader_interfaces

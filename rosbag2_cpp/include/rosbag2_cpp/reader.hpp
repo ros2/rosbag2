@@ -23,6 +23,7 @@
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -178,6 +179,8 @@ public:
   {
     return *reader_impl_;
   }
+
+  void add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks);
 
 private:
   std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl_;

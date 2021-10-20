@@ -25,6 +25,7 @@
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/time.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
@@ -204,7 +205,7 @@ public:
     return *writer_impl_;
   }
 
-  void add_event_callback(BagEventCallback && callback);
+  void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks);
 
 private:
   std::mutex writer_mutex_;

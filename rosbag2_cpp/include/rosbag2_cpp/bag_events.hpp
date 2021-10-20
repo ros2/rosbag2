@@ -16,18 +16,114 @@
 #define ROSBAG2_CPP__BAG_EVENTS_HPP_
 
 #include <functional>
+#include <memory>
+#include <string>
+
+#include "rclcpp/function_traits.hpp"
+
+#include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {
 
-enum class BagEvent {
-  SplitOutputFile,
+namespace bag_events
+{
+
+enum class BagEvent
+{
+  OUTPUT_FILE_SPLIT,
+  INPUT_FILE_SPLIT,
 };
 
-struct BagEventCallback {
-  std::function<void ()> function;
-  BagEvent type;
+struct OutputFileSplitInfo
+{
+  std::string closed_file;
+  std::string opened_file;
 };
+
+struct InputFileSplitInfo
+{
+  std::string closed_file;
+  std::string opened_file;
+};
+
+using OutputFileSplitCallbackType = std::function<void (OutputFileSplitInfo &)>;
+using InputFileSplitCallbackType = std::function<void (InputFileSplitInfo &)>;
+
+struct WriterEventCallbacks
+{
+  OutputFileSplitCallbackType output_file_split_callback;
+};
+
+struct ReaderEventCallbacks
+{
+  InputFileSplitCallbackType input_file_split_callback;
+};
+
+class BagEventCallbackBase
+{
+public:
+  using SharedPtr = std::shared_ptr<BagEventCallbackBase>;
+  using InfoPtr = std::shared_ptr<void>;
+
+  virtual void execute(InfoPtr & info) = 0;
+
+  virtual bool is_type(BagEvent event) const = 0;
+};
+
+template<typename EventCallbackT>
+class BagEventCallback : public BagEventCallbackBase
+{
+public:
+  BagEventCallback(const EventCallbackT & callback, BagEvent event)
+  : callback_(callback),
+    event_(event)
+  {}
+
+  void execute(InfoPtr & info) override {
+    callback_(*std::static_pointer_cast<EventCallbackInfoT>(info));
+  }
+
+  bool is_type(BagEvent event) const override {
+    return event == event_;
+  }
+
+private:
+  using EventCallbackInfoT = typename std::remove_reference<typename
+      rclcpp::function_traits::function_traits<EventCallbackT>::template argument_type<0>>::type;
+
+  EventCallbackT callback_;
+  BagEvent event_;
+};
+
+class EventCallbackManager
+{
+public:
+  template<typename EventCallbackT>
+  void add_event_callback(
+    const EventCallbackT & callback,
+    const BagEvent event)
+  {
+    auto cb = std::make_shared<BagEventCallback<EventCallbackT>>(callback, event);
+    callbacks_.push_back(cb);
+  }
+
+  void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info) {
+    std::for_each(
+      callbacks_.begin(),
+      callbacks_.end(),
+      [&info, &event](BagEventCallbackBase::SharedPtr & cb) {
+        if (cb->is_type(event)) {
+          cb->execute(info);
+        }
+      });
+  }
+
+private:
+  std::vector<BagEventCallbackBase::SharedPtr> callbacks_;
+};
+
+}  // namespace bag_events
 
 }  // namespace rosbag2_cpp
 

@@ -135,12 +135,18 @@ void Recorder::record()
       });
   }
 
-  event_pub_ = create_publisher<example_interfaces::msg::Empty>("bag_events", 1);
-  writer_->add_event_callback({[this]() {
-      auto message = example_interfaces::msg::Empty();
-      event_pub_->publish(message);
-    },
-    rosbag2_cpp::BagEvent::SplitOutputFile});
+  split_event_pub_ = create_publisher<rosbag2_interfaces::msg::OutputFileSplitEvent>(
+    "bag_split_event",
+    1);
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.output_file_split_callback =
+    [this](rosbag2_cpp::bag_events::OutputFileSplitInfo & info) {
+      auto message = rosbag2_interfaces::msg::OutputFileSplitEvent();
+      message.closed_file = info.closed_file;
+      message.opened_file = info.opened_file;
+      split_event_pub_->publish(message);
+    };
+  writer_->add_event_callbacks(callbacks);
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(this->get_logger(), "Listening for topics...");

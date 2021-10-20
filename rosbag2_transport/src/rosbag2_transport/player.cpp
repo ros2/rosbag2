@@ -634,6 +634,20 @@ void Player::prepare_publishers()
       "--wait-for-all-acked is invalid for the below topics since reliability of QOS is "
       "BestEffort.\n%s", topic_without_support_acked.c_str());
   }
+
+  // Create a publisher and callback for when encountering a split in the input
+  split_event_pub_ = create_publisher<rosbag2_interfaces::msg::InputFileSplitEvent>(
+    "bag_split_event",
+    1);
+  rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
+  callbacks.input_file_split_callback =
+    [this](rosbag2_cpp::bag_events::InputFileSplitInfo & info) {
+      auto message = rosbag2_interfaces::msg::InputFileSplitEvent();
+      message.closed_file = info.closed_file;
+      message.opened_file = info.opened_file;
+      split_event_pub_->publish(message);
+    };
+  reader_->add_event_callbacks(callbacks);
 }
 
 bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
