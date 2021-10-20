@@ -2,6 +2,24 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix a bug on invalid pointer address when using "MESSAGE" compressio… (`#866 <https://github.com/ros2/rosbag2/issues/866>`_)
+* Metadata per file info (`#870 <https://github.com/ros2/rosbag2/issues/870>`_)
+* Fix TSA warnings when building with clang thread analysis. (`#877 <https://github.com/ros2/rosbag2/issues/877>`_)
+* Implement snapshot mechanism and corresponding ROS Service (`#850 <https://github.com/ros2/rosbag2/issues/850>`_)
+* Circular Message Cache implementation for snapshot feature (`#844 <https://github.com/ros2/rosbag2/issues/844>`_)
+* Fix discovery silently stops after unknown msg type is found. (`#848 <https://github.com/ros2/rosbag2/issues/848>`_)
+* added seek interface (`#836 <https://github.com/ros2/rosbag2/issues/836>`_)
+* Refactor plugin query mechanism and standardize trait management (`#833 <https://github.com/ros2/rosbag2/issues/833>`_)
+* fix sequential reader rollover-to-next-file strategy: (`#839 <https://github.com/ros2/rosbag2/issues/839>`_)
+* Load compression and serialization choices via plugin query (`#827 <https://github.com/ros2/rosbag2/issues/827>`_)
+* Workaround for false positive findings by clang thread safety analysis in time controller jump callbacks API. (`#799 <https://github.com/ros2/rosbag2/issues/799>`_)
+* Add callbacks for PlayerClock::jump(time_point) API with CI fix (`#779 <https://github.com/ros2/rosbag2/issues/779>`_)
+* Revert "Add callbacks for PlayerClock::jump(time_point) API (`#775 <https://github.com/ros2/rosbag2/issues/775>`_)" (`#778 <https://github.com/ros2/rosbag2/issues/778>`_)
+* Add callbacks for PlayerClock::jump(time_point) API (`#775 <https://github.com/ros2/rosbag2/issues/775>`_)
+* Contributors: Barry Xu, Cameron Miller, Chris Lalancette, Emerson Knapp, Lei Liu, Michael Orlov, Wojciech Jaworski, sonia
+
 0.9.0 (2021-05-17)
 ------------------
 * Naive clock jump implementation - allows for clock reuse and simplified Player setup (`#754 <https://github.com/ros2/rosbag2/issues/754>`_)

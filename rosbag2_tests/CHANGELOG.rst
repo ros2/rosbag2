@@ -2,6 +2,17 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix a bug on invalid pointer address when using "MESSAGE" compressio… (`#866 <https://github.com/ros2/rosbag2/issues/866>`_)
+* Metadata per file info (`#870 <https://github.com/ros2/rosbag2/issues/870>`_)
+* Fix record test to reflect plugin query changes (`#838 <https://github.com/ros2/rosbag2/issues/838>`_)
+* Make sure the subscription exists before publishing messages (`#804 <https://github.com/ros2/rosbag2/issues/804>`_)
+* Handle SIGTERM gracefully in recording (`#792 <https://github.com/ros2/rosbag2/issues/792>`_)
+* Add spin_and_wait_for_matched to PublicationManager and update test c… (`#797 <https://github.com/ros2/rosbag2/issues/797>`_)
+* Remove rmw_fastrtps_cpp find_package in rosbag2_tests (`#774 <https://github.com/ros2/rosbag2/issues/774>`_)
+* Contributors: Barry Xu, Cameron Miller, Emerson Knapp, Ivan Santiago Paunovic, Wojciech Jaworski
+
 0.9.0 (2021-05-17)
 ------------------
 * Correct expectation for exit code in play_end_to_end test since after redesign we are getting exception in constructor. (`#763 <https://github.com/ros2/rosbag2/issues/763>`_)

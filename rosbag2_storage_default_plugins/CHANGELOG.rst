@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* added seek interface (`#836 <https://github.com/ros2/rosbag2/issues/836>`_)
+* Contributors: sonia
+
 0.9.0 (2021-05-17)
 ------------------
 
