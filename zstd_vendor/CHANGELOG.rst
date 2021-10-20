@@ -2,8 +2,8 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Switch to using 'git apply' for zstd_vendor patches (`#846 <https://github.com/ros2/rosbag2/issues/846>`_)
 * Contributors: Christophe Bedard
 

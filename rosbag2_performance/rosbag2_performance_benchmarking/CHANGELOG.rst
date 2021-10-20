@@ -2,8 +2,8 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Updated node declare_parameter to new syntax (`#882 <https://github.com/ros2/rosbag2/issues/882>`_)
 * Updated benchmark package to use writer close() instead of old reset() (`#881 <https://github.com/ros2/rosbag2/issues/881>`_)
 * Contributors: Adam Dąbrowski

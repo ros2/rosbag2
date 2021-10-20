@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Fix a bug on invalid pointer address when using "MESSAGE" compressio… (`#866 <https://github.com/ros2/rosbag2/issues/866>`_)
 * Metadata per file info (`#870 <https://github.com/ros2/rosbag2/issues/870>`_)
 * Fix TSA warnings when building with clang thread analysis. (`#877 <https://github.com/ros2/rosbag2/issues/877>`_)

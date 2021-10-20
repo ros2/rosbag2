@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Fix a bug on invalid pointer address when using "MESSAGE" compressio… (`#866 <https://github.com/ros2/rosbag2/issues/866>`_)
 * Metadata per file info (`#870 <https://github.com/ros2/rosbag2/issues/870>`_)
 * Fix record test to reflect plugin query changes (`#838 <https://github.com/ros2/rosbag2/issues/838>`_)

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Implement snapshot mechanism and corresponding ROS Service (`#850 <https://github.com/ros2/rosbag2/issues/850>`_)
   * Add snapshot service to recorder node
   * Simplify and clarify double buffering patterns

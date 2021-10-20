@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2021-10-19)
+-------------------
 * Fix a bug on invalid pointer address when using "MESSAGE" compressio… (`#866 <https://github.com/ros2/rosbag2/issues/866>`_)
 * Fix typo (`#880 <https://github.com/ros2/rosbag2/issues/880>`_)
 * Use Reader's seek() method for seeking/jumping in Player (`#873 <https://github.com/ros2/rosbag2/issues/873>`_)

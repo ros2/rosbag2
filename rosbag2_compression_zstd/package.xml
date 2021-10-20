@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rosbag2_compression_zstd</name>
-  <version>0.9.0</version>
+  <version>0.10.0</version>
   <description>Zstandard compression library implementation of rosbag2_compression</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
