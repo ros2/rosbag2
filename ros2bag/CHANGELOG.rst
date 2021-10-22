@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2021-10-22)
+-------------------
+
 0.10.0 (2021-10-19)
 -------------------
 * Add missing spaces to error message (`#875 <https://github.com/ros2/rosbag2/issues/875>`_)

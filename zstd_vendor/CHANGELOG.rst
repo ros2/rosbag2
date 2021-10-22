@@ -2,6 +2,11 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2021-10-22)
+-------------------
+* Declare missing dependency on 'git' in zstd_vendor (`#890 <https://github.com/ros2/rosbag2/issues/890>`_)
+* Contributors: Scott K Logan
+
 0.10.0 (2021-10-19)
 -------------------
 * Switch to using 'git apply' for zstd_vendor patches (`#846 <https://github.com/ros2/rosbag2/issues/846>`_)
