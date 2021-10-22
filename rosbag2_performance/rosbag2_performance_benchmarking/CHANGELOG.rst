@@ -2,6 +2,9 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2021-10-22)
+-------------------
+
 0.10.0 (2021-10-19)
 -------------------
 * Updated node declare_parameter to new syntax (`#882 <https://github.com/ros2/rosbag2/issues/882>`_)

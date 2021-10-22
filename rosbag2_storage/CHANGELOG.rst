@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.10.1 (2021-10-22)
+-------------------
+
 0.10.0 (2021-10-19)
 -------------------
 * Metadata per file info (`#870 <https://github.com/ros2/rosbag2/issues/870>`_)
