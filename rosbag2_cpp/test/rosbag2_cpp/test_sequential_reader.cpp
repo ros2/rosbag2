@@ -140,7 +140,8 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   EXPECT_ANY_THROW(reader_->get_implementation_handle().set_filter(storage_filter));
   EXPECT_ANY_THROW(reader_->get_implementation_handle().reset_filter());
 
-  EXPECT_CALL(*storage_, set_filter(_)).Times(3);
+  // Three times + initial open
+  EXPECT_CALL(*storage_, set_filter(_)).Times(4);
   reader_->open(default_storage_options_, {"", storage_serialization_format_});
   reader_->get_implementation_handle().set_filter(storage_filter);
   reader_->read_next();
