@@ -592,17 +592,13 @@ void Player::add_keyboard_callbacks()
   );
   add_key_callback(
     play_options_.increase_rate_key,
-    [this]() {
-      set_rate(get_rate() * 1.1);
-    },
-    "Increate Rate"
+    [this]() {set_rate(get_rate() * 1.1);},
+    "Increase Rate"
   );
   add_key_callback(
     play_options_.decrease_rate_key,
-    [this]() {
-      set_rate(get_rate() * 0.9);
-    },
-    "Decreate Rate"
+    [this]() {set_rate(get_rate() * 0.9);},
+    "Decrease Rate"
   );
 }
 

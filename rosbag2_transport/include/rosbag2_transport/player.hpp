@@ -117,7 +117,7 @@ public:
   /// \brief Set the playback rate.
   /// \return false if an invalid value was provided (<= 0).
   ROSBAG2_TRANSPORT_PUBLIC
-  bool set_rate(double);
+  virtual bool set_rate(double);
 
   /// \brief Playing next message from queue when in pause.
   /// \details This is blocking call and it will wait until next available message will be
