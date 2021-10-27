@@ -207,23 +207,14 @@ bool SequentialReader::has_next_file() const
 
 void SequentialReader::load_current_file()
 {
-  storage_options_.uri = get_current_file();
-  // preprocess only once per file
-  bool preprocessed = false;
-  for (const auto & fp : preprocessed_file_paths_) {
-    if (fp == storage_options_.uri) {
-      preprocessed = true;
-      break;
-    }
-  }
   // only preprocess if file hasn't been preprocessed before
   // add path AFTER preprocessing since preprocessing may modify it
-  if (!preprocessed) {
+  if (preprocessed_file_paths_.find(get_current_file()) == preprocessed_file_paths_.end()) {
     preprocess_current_file();
-    storage_options_.uri = get_current_file();
-    preprocessed_file_paths_.push_back(storage_options_.uri);
+    preprocessed_file_paths_.insert(get_current_file());
   }
   // open and check storage exists
+  storage_options_.uri = get_current_file();
   storage_ = storage_factory_->open_read_only(storage_options_);
   if (!storage_) {
     throw std::runtime_error{"No storage could be initialized. Abort"};

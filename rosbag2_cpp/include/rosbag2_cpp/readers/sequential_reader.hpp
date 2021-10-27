@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "rosbag2_cpp/converter.hpp"
@@ -163,7 +164,7 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
   std::vector<std::string> file_paths_{};  // List of database files.
   std::vector<std::string>::iterator current_file_iterator_{};  // Index of file to read from
-  std::vector<std::string> preprocessed_file_paths_{};  // List of preprocessed paths
+  std::unordered_set<std::string> preprocessed_file_paths_;  // List of preprocessed paths
 
   // Hang on to this because storage_options_ is mutated to point at individual files
   std::string base_folder_;
