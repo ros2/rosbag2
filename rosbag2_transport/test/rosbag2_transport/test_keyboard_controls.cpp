@@ -72,9 +72,17 @@ public:
     return ret;
   }
 
+  bool set_rate(double rate) override
+  {
+    bool ret = Player::set_rate(rate);
+    num_set_rate++;
+    return ret;
+  }
+
   int num_paused = 0;
   int num_resumed = 0;
   int num_played_next = 0;
+  int num_set_rate = 0;
 };
 
 
@@ -147,6 +155,9 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   keyboard_handler->simulate_key_press(play_options_.pause_resume_toggle_key);
   EXPECT_THAT(player->is_paused(), true);
 
+  keyboard_handler->simulate_key_press(play_options_.increase_rate_key);
+  keyboard_handler->simulate_key_press(play_options_.decrease_rate_key);
+
   // start play thread
   std::thread player_thread = std::thread([player]() {player->play();});
 
@@ -164,4 +175,5 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   EXPECT_THAT(player->num_paused, 1);
   EXPECT_THAT(player->num_resumed, 1);
   EXPECT_THAT(player->num_played_next, 1);
+  EXPECT_THAT(player->num_set_rate, 2);
 }

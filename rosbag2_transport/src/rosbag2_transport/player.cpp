@@ -311,7 +311,13 @@ double Player::get_rate() const
 
 bool Player::set_rate(double rate)
 {
-  return clock_->set_rate(rate);
+  bool ok = clock_->set_rate(rate);
+  if (ok) {
+    RCLCPP_INFO_STREAM(get_logger(), "Set rate to " << rate);
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "Failed to set rate to invalid value " << rate);
+  }
+  return ok;
 }
 
 rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_queue()
@@ -589,6 +595,16 @@ void Player::add_keyboard_callbacks()
     play_options_.play_next_key,
     [this]() {play_next();},
     "Play Next Message"
+  );
+  add_key_callback(
+    play_options_.increase_rate_key,
+    [this]() {set_rate(get_rate() * 1.1);},
+    "Increase Rate 10%"
+  );
+  add_key_callback(
+    play_options_.decrease_rate_key,
+    [this]() {set_rate(get_rate() * 0.9);},
+    "Decrease Rate 10%"
   );
 }
 
