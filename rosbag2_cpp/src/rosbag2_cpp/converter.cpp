@@ -66,7 +66,6 @@ Converter::~Converter()
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> Converter::convert(
   std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  auto ts = topics_and_types_.at(message->topic_name).rmw_type_support;
   auto introspection_ts = topics_and_types_.at(message->topic_name).introspection_type_support;
   auto allocator = rcutils_get_default_allocator();
   std::shared_ptr<rosbag2_introspection_message_t> allocated_ros_message =
@@ -77,13 +76,13 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> Converter::convert(
   rosbag2_cpp::introspection_message_set_topic_name(
     allocated_ros_message.get(), message->topic_name.c_str());
   allocated_ros_message->time_stamp = message->time_stamp;
-  input_converter_->deserialize(message, ts, allocated_ros_message);
+  input_converter_->deserialize(message, introspection_ts, allocated_ros_message);
 
   // re-serialize
   output_message->serialized_data = rosbag2_storage::make_empty_serialized_message(0);
   output_message->topic_name = std::string(allocated_ros_message->topic_name);
   output_message->time_stamp = allocated_ros_message->time_stamp;
-  output_converter_->serialize(allocated_ros_message, ts, output_message);
+  output_converter_->serialize(allocated_ros_message, introspection_ts, output_message);
   return output_message;
 }
 
