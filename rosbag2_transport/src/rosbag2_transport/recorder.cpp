@@ -55,7 +55,6 @@ Recorder::Recorder(
   // TODO(karsten1987): Use this constructor later with parameter parsing.
   // The reader, storage_options as well as record_options can be loaded via parameter.
   // That way, the recorder can be used as a simple component in a component manager.
-  throw rclcpp::exceptions::UnimplementedError();
 }
 
 Recorder::Recorder(
