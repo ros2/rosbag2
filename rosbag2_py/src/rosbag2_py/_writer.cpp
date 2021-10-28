@@ -95,9 +95,9 @@ std::unordered_set<std::string> get_registered_compressors()
 std::unordered_set<std::string> get_registered_serializers()
 {
   auto serializers = rosbag2_cpp::plugins::get_class_plugins<
-      rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
+    rosbag2_cpp::converter_interfaces::SerializationFormatSerializer>();
   auto converters = rosbag2_cpp::plugins::get_class_plugins<
-      rosbag2_cpp::converter_interfaces::SerializationFormatConverter>();
+    rosbag2_cpp::converter_interfaces::SerializationFormatConverter>();
   serializers.insert(converters.begin(), converters.end());
   return serializers;
 }
