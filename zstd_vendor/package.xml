@@ -4,8 +4,8 @@
   <name>zstd_vendor</name>
   <version>0.10.1</version>
   <description>Zstd compression vendor package, providing a dependency for Zstd.</description>
-  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
-  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
+  <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
+  <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
