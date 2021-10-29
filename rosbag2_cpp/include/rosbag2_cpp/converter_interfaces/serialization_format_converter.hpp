@@ -35,6 +35,11 @@ class SerializationFormatConverter
   : public SerializationFormatSerializer, public SerializationFormatDeserializer
 {
 public:
+  static std::string get_package_name()
+  {
+    return "rosbag2_cpp";
+  }
+
   static std::string get_base_class_name()
   {
     return "rosbag2_cpp::converter_interfaces::SerializationFormatConverter";

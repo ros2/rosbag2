@@ -39,6 +39,12 @@ class RecordVerb(VerbExtension):
 
         compression_format_choices = get_registered_compressors()
         serialization_choices = get_registered_serializers()
+        converter_suffix = '_converter'
+        serialization_choices = {
+            f[:-len(converter_suffix)]
+            for f in serialization_choices
+            if f.endswith(converter_suffix)
+        }
 
         parser.add_argument(
             '-a', '--all', action='store_true',
