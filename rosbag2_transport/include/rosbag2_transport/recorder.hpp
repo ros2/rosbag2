@@ -78,6 +78,12 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_cpp::Writer & get_writer_handle();
 
+protected:
+  std::shared_ptr<rosbag2_cpp::Writer> writer_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::RecordOptions record_options_;
+  std::atomic<bool> stop_discovery_;
+
 private:
   void topics_discovery();
 
@@ -111,10 +117,6 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
-  std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_storage::StorageOptions storage_options_;
-  rosbag2_transport::RecordOptions record_options_;
-  std::atomic<bool> stop_discovery_;
   std::future<void> discovery_future_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
