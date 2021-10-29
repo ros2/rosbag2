@@ -3,8 +3,8 @@
   <name>rosbag2_storage_default_plugins</name>
   <version>0.10.1</version>
   <description>ROSBag2 SQLite3 storage plugin</description>
-  <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
-  <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>
+  <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
+  <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
