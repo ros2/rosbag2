@@ -142,7 +142,9 @@ Player::Player(
     auto metadata = reader_->get_metadata();
     starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
       metadata.starting_time.time_since_epoch()).count();
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(starting_time_);
+    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
+      starting_time_, std::chrono::steady_clock::now,
+      std::chrono::milliseconds{100}, play_options_.paused);
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();

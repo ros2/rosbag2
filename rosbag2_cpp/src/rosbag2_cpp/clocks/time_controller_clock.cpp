@@ -57,9 +57,10 @@ public:
   };
 
   explicit TimeControllerClockImpl(
-    PlayerClock::NowFunction now_fn, std::chrono::milliseconds sleep_time_while_paused)
+    PlayerClock::NowFunction now_fn, std::chrono::milliseconds sleep_time_while_paused, bool paused)
   : now_fn(now_fn),
-    sleep_time_while_paused(sleep_time_while_paused)
+    sleep_time_while_paused(sleep_time_while_paused),
+    paused(paused)
   {}
   virtual ~TimeControllerClockImpl() = default;
 
@@ -237,8 +238,9 @@ private:
 TimeControllerClock::TimeControllerClock(
   rcutils_time_point_value_t starting_time,
   NowFunction now_fn,
-  std::chrono::milliseconds sleep_time_while_paused)
-: impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused))
+  std::chrono::milliseconds sleep_time_while_paused,
+  bool paused)
+: impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused, paused))
 {
   if (now_fn == nullptr) {
     throw std::invalid_argument("TimeControllerClock now_fn must be non-empty.");

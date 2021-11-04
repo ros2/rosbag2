@@ -41,12 +41,14 @@ public:
    *   Used to control for unit testing, or for specialized needs
    * \param sleep_time_while_paused: Amount of time to sleep in `sleep_until` when the clock
    *   is paused. Allows the caller to spin at a defined rate while receiving `false`
+   * \param paused: Start the clock paused
    */
   ROSBAG2_CPP_PUBLIC
   TimeControllerClock(
     rcutils_time_point_value_t starting_time,
     NowFunction now_fn = std::chrono::steady_clock::now,
-    std::chrono::milliseconds sleep_time_while_paused = std::chrono::milliseconds{100});
+    std::chrono::milliseconds sleep_time_while_paused = std::chrono::milliseconds{100},
+    bool paused = false);
 
   ROSBAG2_CPP_PUBLIC
   virtual ~TimeControllerClock();
