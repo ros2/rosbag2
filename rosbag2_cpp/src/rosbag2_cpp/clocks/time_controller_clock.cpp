@@ -60,7 +60,7 @@ public:
     PlayerClock::NowFunction now_fn, std::chrono::milliseconds sleep_time_while_paused, bool paused)
   : now_fn(now_fn),
     sleep_time_while_paused(sleep_time_while_paused),
-    paused(paused)
+    paused(paused)  // cppcheck-suppress selfInitialization
   {}
   virtual ~TimeControllerClockImpl() = default;
 
