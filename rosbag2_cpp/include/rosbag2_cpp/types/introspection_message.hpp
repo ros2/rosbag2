@@ -20,14 +20,11 @@
 #include "rcutils/allocator.h"
 #include "rcutils/time.h"
 
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+
 #include "rosbag2_cpp/visibility_control.hpp"
 
 struct rosidl_message_type_support_t;
-
-namespace rosidl_typesupport_introspection_cpp
-{
-struct MessageMembers;
-}
 
 namespace rosbag2_cpp
 {
