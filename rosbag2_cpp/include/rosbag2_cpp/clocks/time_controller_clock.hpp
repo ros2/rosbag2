@@ -48,7 +48,7 @@ public:
     rcutils_time_point_value_t starting_time,
     NowFunction now_fn = std::chrono::steady_clock::now,
     std::chrono::milliseconds sleep_time_while_paused = std::chrono::milliseconds{100},
-    bool paused = false);
+    bool start_paused = false);
 
   ROSBAG2_CPP_PUBLIC
   virtual ~TimeControllerClock();
