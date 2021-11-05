@@ -130,9 +130,9 @@ void Recorder::record()
   }
   toogle_paused_key_callback_handle_ =
     keyboard_handler_->add_key_press_callback(
-      [this](KeyboardHandler::KeyCode /*key_code*/,
-      KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toogle_paused();},
-      key);
+    [this](KeyboardHandler::KeyCode /*key_code*/,
+    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toogle_paused();},
+    key);
   // show instructions
   RCLCPP_INFO_STREAM(
     get_logger(),
