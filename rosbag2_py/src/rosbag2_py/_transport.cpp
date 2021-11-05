@@ -268,6 +268,7 @@ PYBIND11_MODULE(_transport, m) {
     &RecordOptions::getTopicQoSProfileOverrides,
     &RecordOptions::setTopicQoSProfileOverrides)
   .def_readwrite("include_hidden_topics", &RecordOptions::include_hidden_topics)
+  .def_readwrite("start_paused", &RecordOptions::start_paused)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

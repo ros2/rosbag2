@@ -71,12 +71,15 @@ Recorder::Recorder(
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
-  stop_discovery_(record_options_.is_discovery_disabled)
+  stop_discovery_(record_options_.is_discovery_disabled),
+  paused_(record_options.start_paused),
+  keyboard_handler_(std::make_shared<KeyboardHandler>())
 {
 }
 
 Recorder::~Recorder()
 {
+  keyboard_handler_->delete_key_press_callback(toogle_paused_key_callback_handle_);
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     discovery_future_.wait();
@@ -117,11 +120,55 @@ void Recorder::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
+  auto key = record_options_.pause_resume_toggle_key;
+  std::string key_str = enum_key_code_to_str(key);
+  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "Invalid key binding " << key_str << " for pausing/resuming");
+    throw std::invalid_argument("Invalid key binding.");
+  }
+  toogle_paused_key_callback_handle_ =
+    keyboard_handler_->add_key_press_callback(
+      [this](KeyboardHandler::KeyCode /*key_code*/,
+      KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toogle_paused();},
+      key);
+  // show instructions
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "Press " << key_str << " for pausing/resuming");
 }
 
 const rosbag2_cpp::Writer & Recorder::get_writer_handle()
 {
   return *writer_;
+}
+
+void Recorder::pause()
+{
+  paused_.exchange(1);
+  RCLCPP_INFO_STREAM(get_logger(), "Pausing recording.");
+}
+
+void Recorder::resume()
+{
+  paused_.exchange(0);
+  RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
+}
+
+void Recorder::toogle_paused()
+{
+  auto was_paused_before = static_cast<bool>(paused_.fetch_xor(1));
+  if (was_paused_before) {
+    RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
+  } else {
+    RCLCPP_INFO_STREAM(get_logger(), "Pausing recording.");
+  }
+}
+
+bool Recorder::is_paused()
+{
+  return paused_.load();
 }
 
 void Recorder::topics_discovery()
@@ -236,7 +283,9 @@ Recorder::create_subscription(
     topic_type,
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
-      writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+      if (!paused_.load()) {
+        writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+      }
     });
   return subscription;
 }
