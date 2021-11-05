@@ -247,7 +247,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::getDelay,
     &PlayOptions::setDelay)
   .def_readwrite("disable_keyboard_controls", &PlayOptions::disable_keyboard_controls)
-  .def_readwrite("paused", &PlayOptions::paused)
+  .def_readwrite("start_paused", &PlayOptions::start_paused)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")

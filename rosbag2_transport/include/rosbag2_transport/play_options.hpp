@@ -51,7 +51,7 @@ public:
   rclcpp::Duration delay = rclcpp::Duration(0, 0);
 
   // Start paused.
-  bool paused = false;
+  bool start_paused = false;
 
   bool disable_keyboard_controls = false;
   // keybindings
