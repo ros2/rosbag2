@@ -2,6 +2,11 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2021-11-08)
+-------------------
+* Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)
+* Contributors: Michel Hidalgo
+
 0.10.1 (2021-10-22)
 -------------------
 * Declare missing dependency on 'git' in zstd_vendor (`#890 <https://github.com/ros2/rosbag2/issues/890>`_)

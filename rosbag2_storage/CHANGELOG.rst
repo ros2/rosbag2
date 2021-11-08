@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2021-11-08)
+-------------------
+* Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)
+* Provide MetadataIO interface to convert metadata to a string in memory, alongside file IO versions (`#894 <https://github.com/ros2/rosbag2/issues/894>`_)
+* Contributors: Emerson Knapp, Michel Hidalgo
+
 0.10.1 (2021-10-22)
 -------------------
 
