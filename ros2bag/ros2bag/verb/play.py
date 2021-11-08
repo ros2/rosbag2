@@ -88,6 +88,9 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
             help='disables keyboard controls for playback')
+        parser.add_argument(
+            '-p', '--start-paused', action='store_true', default=False,
+            help='Start the playback player in a paused state.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -124,6 +127,7 @@ class PlayVerb(VerbExtension):
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
+        play_options.start_paused = args.start_paused
 
         player = Player()
         player.play(storage_options, play_options)

@@ -50,6 +50,9 @@ public:
   // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
   rclcpp::Duration delay = rclcpp::Duration(0, 0);
 
+  // Start paused.
+  bool start_paused = false;
+
   bool disable_keyboard_controls = false;
   // keybindings
   KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;
