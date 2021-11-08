@@ -2,6 +2,17 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2021-11-08)
+-------------------
+* Add --start-paused option to `ros2 bag play` (`#904 <https://github.com/ros2/rosbag2/issues/904>`_)
+* Use the message_introspection header to get MessageMember. (`#903 <https://github.com/ros2/rosbag2/issues/903>`_)
+* Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)
+* Fix converter plugin choices for record (`#897 <https://github.com/ros2/rosbag2/issues/897>`_)
+* Enable sanitizers only if code actually can run (`#572 <https://github.com/ros2/rosbag2/issues/572>`_)
+* Need to pass introspection TS to converter plugin for it to be useful (`#896 <https://github.com/ros2/rosbag2/issues/896>`_)
+* Don't preprocess a storage file more than once (`#895 <https://github.com/ros2/rosbag2/issues/895>`_)
+* Contributors: Chris Lalancette, Emerson Knapp, Ivan Santiago Paunovic, Michel Hidalgo, Shane Loretz, sonia
+
 0.10.1 (2021-10-22)
 -------------------
 
