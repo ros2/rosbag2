@@ -266,7 +266,7 @@ void SequentialWriter::switch_to_next_storage()
 
 void SequentialWriter::split_bagfile()
 {
-  auto info = std::make_shared<bag_events::OutputFileSplitInfo>();
+  auto info = std::make_shared<bag_events::WriteSplitInfo>();
   info->closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
   info->opened_file = storage_->get_relative_file_path();
@@ -279,7 +279,7 @@ void SequentialWriter::split_bagfile()
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
 
-  callback_manager_.execute_callbacks(bag_events::BagEvent::OUTPUT_FILE_SPLIT, info);
+  callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -402,7 +402,6 @@ void SequentialWriter::finalize_metadata()
   }
 }
 
-<<<<<<< HEAD
 void SequentialWriter::write_messages(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
@@ -418,17 +417,12 @@ void SequentialWriter::write_messages(
   }
 }
 
-void SequentialWriter::add_event_callback(BagEventCallback & callback)
-||||||| parent of 0699545 (Improved prototype with more flexibility and event information)
-void SequentialWriter::add_event_callback(BagEventCallback & callback)
-=======
 void SequentialWriter::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
->>>>>>> 0699545 (Improved prototype with more flexibility and event information)
 {
-  if (callbacks.output_file_split_callback) {
+  if (callbacks.write_split_callback) {
     callback_manager_.add_event_callback(
-      callbacks.output_file_split_callback,
-      bag_events::BagEvent::OUTPUT_FILE_SPLIT);
+      callbacks.write_split_callback,
+      bag_events::BagEvent::WRITE_SPLIT);
   }
 }
 
