@@ -148,7 +148,8 @@ private:
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   // Toogle paused key callback handle
-  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_;
+  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
+    KeyboardHandler::invalid_handle;
 };
 
 }  // namespace rosbag2_transport

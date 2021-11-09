@@ -75,6 +75,23 @@ Recorder::Recorder(
   paused_(record_options.start_paused),
   keyboard_handler_(std::make_shared<KeyboardHandler>())
 {
+  auto key = record_options_.pause_resume_toggle_key;
+  std::string key_str = enum_key_code_to_str(key);
+  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "Invalid key binding " << key_str << " for pausing/resuming");
+    throw std::invalid_argument("Invalid key binding.");
+  }
+  toggle_paused_key_callback_handle_ =
+    keyboard_handler_->add_key_press_callback(
+    [this](KeyboardHandler::KeyCode /*key_code*/,
+    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
+    key);
+  // show instructions
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "Press " << key_str << " for pausing/resuming");
 }
 
 Recorder::~Recorder()
@@ -120,23 +137,6 @@ void Recorder::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
-  auto key = record_options_.pause_resume_toggle_key;
-  std::string key_str = enum_key_code_to_str(key);
-  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(),
-      "Invalid key binding " << key_str << " for pausing/resuming");
-    throw std::invalid_argument("Invalid key binding.");
-  }
-  toggle_paused_key_callback_handle_ =
-    keyboard_handler_->add_key_press_callback(
-    [this](KeyboardHandler::KeyCode /*key_code*/,
-    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
-    key);
-  // show instructions
-  RCLCPP_INFO_STREAM(
-    get_logger(),
-    "Press " << key_str << " for pausing/resuming");
 }
 
 const rosbag2_cpp::Writer & Recorder::get_writer_handle()
