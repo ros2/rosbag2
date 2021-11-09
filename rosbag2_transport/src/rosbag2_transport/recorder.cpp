@@ -146,23 +146,22 @@ const rosbag2_cpp::Writer & Recorder::get_writer_handle()
 
 void Recorder::pause()
 {
-  paused_.exchange(1);
+  paused_.store(true);
   RCLCPP_INFO_STREAM(get_logger(), "Pausing recording.");
 }
 
 void Recorder::resume()
 {
-  paused_.exchange(0);
+  paused_.store(false);
   RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
 }
 
 void Recorder::toggle_paused()
 {
-  auto was_paused_before = static_cast<bool>(paused_.fetch_xor(1));
-  if (was_paused_before) {
-    RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
+  if (paused_.load()) {
+    this->resume();
   } else {
-    RCLCPP_INFO_STREAM(get_logger(), "Pausing recording.");
+    this->pause();
   }
 }
 

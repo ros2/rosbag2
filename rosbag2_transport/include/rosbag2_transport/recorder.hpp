@@ -142,9 +142,7 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
-  // This is a 0/1 flag.
-  // Using an int, so we can atomically toggle it (atomic_bool doesn't have a fetch_xor operator).
-  std::atomic<int> paused_ = 0;
+  std::atomic<bool> paused_ = false;
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   // Toogle paused key callback handle
