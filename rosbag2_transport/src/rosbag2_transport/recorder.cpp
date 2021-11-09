@@ -79,7 +79,7 @@ Recorder::Recorder(
 
 Recorder::~Recorder()
 {
-  keyboard_handler_->delete_key_press_callback(toogle_paused_key_callback_handle_);
+  keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     discovery_future_.wait();
@@ -128,10 +128,10 @@ void Recorder::record()
       "Invalid key binding " << key_str << " for pausing/resuming");
     throw std::invalid_argument("Invalid key binding.");
   }
-  toogle_paused_key_callback_handle_ =
+  toggle_paused_key_callback_handle_ =
     keyboard_handler_->add_key_press_callback(
     [this](KeyboardHandler::KeyCode /*key_code*/,
-    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toogle_paused();},
+    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
     key);
   // show instructions
   RCLCPP_INFO_STREAM(
@@ -156,7 +156,7 @@ void Recorder::resume()
   RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
 }
 
-void Recorder::toogle_paused()
+void Recorder::toggle_paused()
 {
   auto was_paused_before = static_cast<bool>(paused_.fetch_xor(1));
   if (was_paused_before) {

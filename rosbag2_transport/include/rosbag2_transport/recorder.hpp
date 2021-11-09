@@ -92,7 +92,7 @@ public:
 
   /// Pause if it was recording, continue recording if paused.
   ROSBAG2_TRANSPORT_PUBLIC
-  void toogle_paused();
+  void toggle_paused();
 
   /// Return the current paused state.
   ROSBAG2_TRANSPORT_PUBLIC
@@ -143,12 +143,12 @@ private:
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   // This is a 0/1 flag.
-  // Using an int, so we can atomically toogle it (atomic_bool doesn't have a fetch_xor operator).
+  // Using an int, so we can atomically toggle it (atomic_bool doesn't have a fetch_xor operator).
   std::atomic<int> paused_ = 0;
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   // Toogle paused key callback handle
-  KeyboardHandler::callback_handle_t toogle_paused_key_callback_handle_;
+  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_;
 };
 
 }  // namespace rosbag2_transport
