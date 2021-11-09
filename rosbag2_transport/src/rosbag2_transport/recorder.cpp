@@ -135,13 +135,13 @@ void Recorder::record()
       });
   }
 
-  split_event_pub_ = create_publisher<rosbag2_interfaces::msg::OutputFileSplitEvent>(
+  split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
     "bag_split_event",
     1);
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
-  callbacks.output_file_split_callback =
-    [this](rosbag2_cpp::bag_events::OutputFileSplitInfo & info) {
-      auto message = rosbag2_interfaces::msg::OutputFileSplitEvent();
+  callbacks.write_split_callback =
+    [this](rosbag2_cpp::bag_events::WriteSplitInfo & info) {
+      auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = info.closed_file;
       message.opened_file = info.opened_file;
       split_event_pub_->publish(message);

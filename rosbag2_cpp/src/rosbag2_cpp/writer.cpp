@@ -159,7 +159,6 @@ void Writer::write(
     serialized_bag_message, topic_name, type_name, rmw_get_serialization_format());
 }
 
-<<<<<<< HEAD
 void Writer::write(
   std::shared_ptr<rclcpp::SerializedMessage> message,
   const std::string & topic_name,

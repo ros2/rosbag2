@@ -13,8 +13,8 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/InputFileSplitEvent.msg"
-  "msg/OutputFileSplitEvent.msg"
+  "msg/ReadSplitEvent.msg"
+  "msg/WriteSplitEvent.msg"
   "srv/Burst.srv"
   "srv/GetRate.srv"
   "srv/IsPaused.srv"

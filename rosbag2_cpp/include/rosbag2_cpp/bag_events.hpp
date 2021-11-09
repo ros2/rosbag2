@@ -31,33 +31,33 @@ namespace bag_events
 
 enum class BagEvent
 {
-  OUTPUT_FILE_SPLIT,
-  INPUT_FILE_SPLIT,
+  WRITE_SPLIT,
+  READ_SPLIT,
 };
 
-struct OutputFileSplitInfo
+struct WriteSplitInfo
 {
   std::string closed_file;
   std::string opened_file;
 };
 
-struct InputFileSplitInfo
+struct ReadSplitInfo
 {
   std::string closed_file;
   std::string opened_file;
 };
 
-using OutputFileSplitCallbackType = std::function<void (OutputFileSplitInfo &)>;
-using InputFileSplitCallbackType = std::function<void (InputFileSplitInfo &)>;
+using WriteSplitCallbackType = std::function<void (WriteSplitInfo &)>;
+using ReadSplitCallbackType = std::function<void (ReadSplitInfo &)>;
 
 struct WriterEventCallbacks
 {
-  OutputFileSplitCallbackType output_file_split_callback;
+  WriteSplitCallbackType write_split_callback;
 };
 
 struct ReaderEventCallbacks
 {
-  InputFileSplitCallbackType input_file_split_callback;
+  ReadSplitCallbackType read_split_callback;
 };
 
 class BagEventCallbackBase
