@@ -67,13 +67,29 @@ Recorder::Recorder(
   const rosbag2_transport::RecordOptions & record_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
+: Recorder(
+    std::move(writer),
+    std::make_shared<KeyboardHandler>(),
+    storage_options,
+    record_options,
+    node_name,
+    node_options)
+{}
+
+Recorder::Recorder(
+  std::shared_ptr<rosbag2_cpp::Writer> writer,
+  std::shared_ptr<KeyboardHandler> keyboard_handler,
+  const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::RecordOptions & record_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options).start_parameter_event_publisher(false)),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
   stop_discovery_(record_options_.is_discovery_disabled),
   paused_(record_options.start_paused),
-  keyboard_handler_(std::make_shared<KeyboardHandler>())
+  keyboard_handler_(std::move(keyboard_handler))
 {
   std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
   toggle_paused_key_callback_handle_ =

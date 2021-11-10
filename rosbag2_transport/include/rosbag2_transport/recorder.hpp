@@ -62,6 +62,15 @@ public:
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
   ROSBAG2_TRANSPORT_PUBLIC
+  Recorder(
+    std::shared_ptr<rosbag2_cpp::Writer> writer,
+    std::shared_ptr<KeyboardHandler> keyboard_handler,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::RecordOptions & record_options,
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
   ROSBAG2_TRANSPORT_PUBLIC
