@@ -85,6 +85,11 @@ public:
     num_read_ = 0;
   }
 
+  void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & /* callbacks */)
+  {
+    // TODO(gbiggs): Figure out how to mock this appropriately
+  }
+
   void prepare(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
     std::vector<rosbag2_storage::TopicMetadata> topics)
