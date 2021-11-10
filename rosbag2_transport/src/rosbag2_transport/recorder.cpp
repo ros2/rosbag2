@@ -75,19 +75,12 @@ Recorder::Recorder(
   paused_(record_options.start_paused),
   keyboard_handler_(std::make_shared<KeyboardHandler>())
 {
-  auto key = record_options_.pause_resume_toggle_key;
-  std::string key_str = enum_key_code_to_str(key);
-  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(),
-      "Invalid key binding " << key_str << " for pausing/resuming");
-    throw std::invalid_argument("Invalid key binding.");
-  }
+  std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
   toggle_paused_key_callback_handle_ =
     keyboard_handler_->add_key_press_callback(
     [this](KeyboardHandler::KeyCode /*key_code*/,
     KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
-    key);
+    Recorder::kPauseResumeToggleKey);
   // show instructions
   RCLCPP_INFO_STREAM(
     get_logger(),

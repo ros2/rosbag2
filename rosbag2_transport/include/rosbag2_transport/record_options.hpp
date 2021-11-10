@@ -43,7 +43,6 @@ public:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
   bool start_paused = false;
-  KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;
 };
 
 }  // namespace rosbag2_transport

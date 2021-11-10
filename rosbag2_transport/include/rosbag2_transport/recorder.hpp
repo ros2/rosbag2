@@ -148,6 +148,7 @@ private:
   // Toogle paused key callback handle
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
+  inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 };
 
 }  // namespace rosbag2_transport
