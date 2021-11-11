@@ -81,11 +81,13 @@ public:
     event_(event)
   {}
 
-  void execute(InfoPtr & info) override {
+  void execute(InfoPtr & info) override
+  {
     callback_(*std::static_pointer_cast<EventCallbackInfoT>(info));
   }
 
-  bool is_type(BagEvent event) const override {
+  bool is_type(BagEvent event) const override
+  {
     return event == event_;
   }
 
@@ -109,7 +111,8 @@ public:
     callbacks_.push_back(cb);
   }
 
-  void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info) {
+  void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info)
+  {
     std::for_each(
       callbacks_.begin(),
       callbacks_.end(),
