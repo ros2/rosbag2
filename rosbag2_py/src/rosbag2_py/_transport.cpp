@@ -191,13 +191,11 @@ public:
     recorder->record();
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(recorder);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
-
-    exec.cancel();
-    spin_thread.join();
+    // Release the GIL for long-running record, so that calling Python code can use other threads
+    {
+      py::gil_scoped_release release;
+      exec_->spin();
+    }
   }
 };
 
