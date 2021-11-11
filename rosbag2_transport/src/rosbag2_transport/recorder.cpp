@@ -31,7 +31,7 @@
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 
-#include "qos.hpp"
+#include "rosbag2_transport/qos.hpp"
 #include "topic_filter.hpp"
 
 #ifdef _WIN32

@@ -35,7 +35,7 @@
 
 #include "rosbag2_storage/storage_filter.hpp"
 
-#include "qos.hpp"
+#include "rosbag2_transport/qos.hpp"
 
 namespace
 {

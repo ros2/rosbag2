@@ -21,6 +21,8 @@
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
 
+#include "rosbag2_transport/visibility_control.hpp"
+
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
@@ -40,11 +42,15 @@ namespace rosbag2_transport
 class Rosbag2QoS : public rclcpp::QoS
 {
 public:
+  ROSBAG2_TRANSPORT_PUBLIC
   Rosbag2QoS()
   : rclcpp::QoS(rmw_qos_profile_default.depth) {}
+
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
 
+  ROSBAG2_TRANSPORT_PUBLIC
   Rosbag2QoS & default_history()
   {
     keep_last(rmw_qos_profile_default.depth);
@@ -59,6 +65,7 @@ public:
     * - Does not specify Lifespan, Deadline, or Liveliness to be maximally compatible, because
     * these policies do not affect message delivery.
     */
+  ROSBAG2_TRANSPORT_PUBLIC
   static Rosbag2QoS adapt_request_to_offers(
     const std::string & topic_name,
     const std::vector<rclcpp::TopicEndpointInfo> & endpoints);
@@ -71,6 +78,7 @@ public:
     * that exact value is returned.
     * Otherwise, fall back to the rosbag2 default and emit a warning.
     */
+  ROSBAG2_TRANSPORT_PUBLIC
   static Rosbag2QoS adapt_offer_to_recorded_offers(
     const std::string & topic_name,
     const std::vector<Rosbag2QoS> & profiles);

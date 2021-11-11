@@ -376,6 +376,7 @@ void SequentialWriter::finalize_metadata()
     }
   }
 
+
   metadata_.topics_with_message_count.clear();
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   metadata_.message_count = 0;
