@@ -194,7 +194,7 @@ public:
     // Release the GIL for long-running record, so that calling Python code can use other threads
     {
       py::gil_scoped_release release;
-      exec->spin();
+      exec.spin();
     }
   }
 };
