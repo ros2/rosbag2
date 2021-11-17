@@ -189,7 +189,6 @@ TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
   record_options.start_paused = true;
 
-  // play bag in thread
   auto recorder = std::make_shared<Recorder>(
     std::move(writer), keyboard_handler, storage_options_,
     record_options, "test_count_recorder");
