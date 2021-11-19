@@ -26,6 +26,7 @@ find_package(rosbag2_transport REQUIRED)
 # Find python before pybind11
 find_package(python_cmake_module REQUIRED)
 find_package(PythonExtra REQUIRED)
+find_package(Python3 REQUIRED Interpreter Development)
 if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # Set the python debug interpreter.
   # pybind11 will setup the build for debug now.
@@ -41,31 +42,6 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(PYTHON_LIBRARIES "${PYTHON_DEBUG_LIBRARIES}")
 endif()
 
-function(clean_windows_flags target)
-  # Hack to avoid pybind11 issue.
-  #
-  # TODO(ivanpauno):
-  # This can be deleted when we update `pybind11_vendor` to a version including
-  # https://github.com/pybind/pybind11/pull/2590.
-  #
-  # They are enabling /LTCG on Windows to reduce binary size,
-  # but that doesn't play well with MSVC incremental linking (default for Debug/RelWithDebInfo).
-  #
-  # See:
-  # - https://docs.microsoft.com/en-us/cpp/build/reference/incremental-link-incrementally?view=vs-2019
-  # - https://docs.microsoft.com/en-us/cpp/build/reference/ltcg-link-time-code-generation?view=vs-2019
-
-  if(MSVC AND "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    get_target_property(target_link_libraries ${target} LINK_LIBRARIES)
-    list(REMOVE_ITEM target_link_libraries "$<$<NOT:$<CONFIG:Debug>>:-LTCG>")
-    set_target_properties(${target} PROPERTIES LINK_LIBRARIES "${target_link_libraries}")
-
-    get_target_property(target_compile_options ${target} COMPILE_OPTIONS)
-    list(REMOVE_ITEM target_compile_options "$<$<NOT:$<CONFIG:Debug>>:/GL>")
-    set_target_properties(${target} PROPERTIES COMPILE_OPTIONS "${target_compile_options}")
-  endif()
-endfunction()
-
 ament_python_install_package(${PROJECT_NAME})
 
 pybind11_add_module(_reader SHARED
@@ -76,7 +52,6 @@ ament_target_dependencies(_reader PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_reader)
 
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
@@ -86,7 +61,6 @@ ament_target_dependencies(_storage PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_storage)
 
 pybind11_add_module(_writer SHARED
   src/rosbag2_py/_writer.cpp
@@ -96,7 +70,6 @@ ament_target_dependencies(_writer PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_writer)
 
 pybind11_add_module(_info SHARED
   src/rosbag2_py/_info.cpp
@@ -105,7 +78,6 @@ ament_target_dependencies(_info PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_info)
 
 pybind11_add_module(_transport SHARED
   src/rosbag2_py/_transport.cpp
@@ -116,7 +88,6 @@ ament_target_dependencies(_transport PUBLIC
   "rosbag2_storage"
   "rosbag2_transport"
 )
-clean_windows_flags(_transport)
 
 pybind11_add_module(_reindexer SHARED
   src/rosbag2_py/_reindexer.cpp
@@ -125,7 +96,6 @@ ament_target_dependencies(_reindexer PUBLIC
   "rosbag2_cpp"
   "rosbag2_storage"
 )
-clean_windows_flags(_reindexer)
 
 # Install cython modules as sub-modules of the project
 install(
