@@ -180,6 +180,10 @@ public:
     return *reader_impl_;
   }
 
+  /**
+   * \brief Add callbacks for events that may occur during bag reading.
+   * \param callbacks the structure containing the callback to add for each event.
+   */
   void add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks);
 
 private:
