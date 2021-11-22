@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "rclcpp/function_traits.hpp"
-
 #include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
