@@ -136,11 +136,11 @@ void Recorder::record()
   }
 
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
-    "bag_write_split_event",
+    "events/write_split",
     1);
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
-    [this](rosbag2_cpp::bag_events::WriteSplitInfo & info) {
+    [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
       auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = info.closed_file;
       message.opened_file = info.opened_file;

@@ -266,7 +266,7 @@ void SequentialWriter::switch_to_next_storage()
 
 void SequentialWriter::split_bagfile()
 {
-  auto info = std::make_shared<bag_events::WriteSplitInfo>();
+  auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
   info->opened_file = storage_->get_relative_file_path();

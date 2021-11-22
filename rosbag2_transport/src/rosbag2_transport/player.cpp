@@ -637,11 +637,11 @@ void Player::prepare_publishers()
 
   // Create a publisher and callback for when encountering a split in the input
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(
-    "bag_read_split_event",
+    "events/read_split",
     1);
   rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
   callbacks.read_split_callback =
-    [this](rosbag2_cpp::bag_events::ReadSplitInfo & info) {
+    [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
       auto message = rosbag2_interfaces::msg::ReadSplitEvent();
       message.closed_file = info.closed_file;
       message.opened_file = info.opened_file;

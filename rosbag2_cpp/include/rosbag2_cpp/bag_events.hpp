@@ -35,29 +35,22 @@ enum class BagEvent
   READ_SPLIT,
 };
 
-struct WriteSplitInfo
+struct BagSplitInfo
 {
   std::string closed_file;
   std::string opened_file;
 };
 
-struct ReadSplitInfo
-{
-  std::string closed_file;
-  std::string opened_file;
-};
-
-using WriteSplitCallbackType = std::function<void (WriteSplitInfo &)>;
-using ReadSplitCallbackType = std::function<void (ReadSplitInfo &)>;
+using BagSplitCallbackType = std::function<void (BagSplitInfo &)>;
 
 struct WriterEventCallbacks
 {
-  WriteSplitCallbackType write_split_callback;
+  BagSplitCallbackType write_split_callback;
 };
 
 struct ReaderEventCallbacks
 {
-  ReadSplitCallbackType read_split_callback;
+  BagSplitCallbackType read_split_callback;
 };
 
 class BagEventCallbackBase

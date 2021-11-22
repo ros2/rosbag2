@@ -235,8 +235,12 @@ void SequentialReader::load_current_file()
 void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
+  auto info = std::make_shared<bag_events::BagSplitInfo>();
+  info->closed_file = get_current_file();
   current_file_iterator_++;
+  info->opened_file = get_current_file();
   load_current_file();
+  callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
 }
 
 std::string SequentialReader::get_current_file() const

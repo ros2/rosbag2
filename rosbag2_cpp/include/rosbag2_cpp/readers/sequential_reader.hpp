@@ -103,8 +103,7 @@ public:
   virtual std::string get_current_uri() const;
 
   /**
-   * Add callbacks for events that may occur during bag reading.
-   *
+   * \brief Add callbacks for events that may occur during bag reading.
    * \param callbacks the structure containing the callback to add for each event.
    */
   void add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks) override;

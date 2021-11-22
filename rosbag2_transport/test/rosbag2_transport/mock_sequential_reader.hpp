@@ -56,6 +56,13 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override
   {
     // filter_ was considered when incrementing num_read_ in has_next()
+    if (num_read_ % 5 == 0) {
+      auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
+      info->closed_file = "BagFile" + std::to_string(file_number_);
+      file_number_++;
+      info->opened_file = "BagFile" + std::to_string(file_number_);
+      callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::READ_SPLIT, info);
+    }
     return messages_[num_read_++];
   }
 
@@ -85,9 +92,13 @@ public:
     num_read_ = 0;
   }
 
-  void add_event_callbacks(const rosbag2_cpp::bag_events::ReaderEventCallbacks & /* callbacks */)
+  void add_event_callbacks(const rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
   {
-    // TODO(gbiggs): Figure out how to mock this appropriately
+    if (callbacks.read_split_callback) {
+      callback_manager_.add_event_callback(
+        callbacks.read_split_callback,
+        rosbag2_cpp::bag_events::BagEvent::READ_SPLIT);
+    }
   }
 
   void prepare(
@@ -105,6 +116,8 @@ private:
   size_t num_read_;
   rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter filter_;
+  rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
+  size_t file_number_ = 0;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
