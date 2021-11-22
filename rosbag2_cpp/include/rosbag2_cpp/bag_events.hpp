@@ -113,14 +113,11 @@ public:
 
   void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info)
   {
-    std::for_each(
-      callbacks_.begin(),
-      callbacks_.end(),
-      [&info, &event](BagEventCallbackBase::SharedPtr & cb) {
-        if (cb->is_type(event)) {
-          cb->execute(info);
-        }
-      });
+    for (auto & cb : callbacks_) {
+      if (cb->is_type(event)) {
+        cb->execute(info);
+      }
+    }
   }
 
 private:
