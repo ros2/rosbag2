@@ -292,7 +292,7 @@ void SequentialReader::fill_topics_metadata()
   }
 }
 
-void SequentialReader::add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks)
+void SequentialReader::add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks)
 {
   if (callbacks.read_split_callback) {
     callback_manager_.add_event_callback(

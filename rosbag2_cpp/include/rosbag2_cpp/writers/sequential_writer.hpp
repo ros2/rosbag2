@@ -118,8 +118,8 @@ public:
   /**
    * \brief Add callbacks for events that may occur during bag writing.
    * \param callbacks the structure containing the callback to add for each event.
-   */```
-  void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks) override;
+   */
+  void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) override;
 
 protected:
   std::string base_folder_;

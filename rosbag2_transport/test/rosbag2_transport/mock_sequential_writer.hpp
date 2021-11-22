@@ -64,7 +64,7 @@ public:
     return true;
   }
 
-  void add_event_callbacks(rosbag2_cpp::bag_events::WriterEventCallbacks & /* callbacks */)
+  void add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & /* callbacks */)
   {
     // TODO(gbiggs): Figure out how to mock this appropriately
   }

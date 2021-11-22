@@ -59,7 +59,7 @@ public:
 
   virtual void seek(const rcutils_time_point_value_t & timestamp) = 0;
 
-  virtual void add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks) = 0;
+  virtual void add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks) = 0;
 };
 
 }  // namespace reader_interfaces

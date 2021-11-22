@@ -53,7 +53,7 @@ public:
    */
   virtual bool take_snapshot() = 0;
 
-  virtual void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks) = 0;
+  virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 };
 
 }  // namespace writer_interfaces
