@@ -136,7 +136,7 @@ void Recorder::record()
   }
 
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
-    "bag_split_event",
+    "bag_write_split_event",
     1);
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
