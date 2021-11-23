@@ -55,30 +55,47 @@ public:
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;
 
-    auto relative_file_path =
+    relative_file_path_ =
       (rcpputils::fs::path(storage_uri_) / "some/folder").string();
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
-    rosbag2_storage::BagMetadata metadata;
-    metadata.relative_file_paths = {relative_file_path};
-    metadata.version = 4;
-    metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
+    bag_file_1_path_ = relative_file_path_ / "bag_file1";
+    bag_file_2_path_ = relative_file_path_ / "bag_file2";
+    metadata_.relative_file_paths = {bag_file_1_path_.string(), bag_file_2_path_.string()};
+    metadata_.version = 4;
+    metadata_.topics_with_message_count.push_back({{topic_with_type}, 6});
     metadata.storage_identifier = "mock_storage";
 
-    EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
+    EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata_));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
-    EXPECT_CALL(*storage_, has_next()).WillRepeatedly(Return(true));
+    // 5 messages in the first bag file, then infinite in the second
+    EXPECT_CALL(*storage_, has_next()).Times(AnyNumber());
+    ON_CALL(*storage_, has_next).WillByDefault(
+      [this]() {
+        num_next_++;
+        if (num_next_ % 5 == 0 && num_next_ > 0) {
+          return false;
+        } else {
+          return true;
+        }
+      });
+    EXPECT_CALL(*storage_, has_next_file()).WillRepeatedly(Return(true));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
 
-    EXPECT_CALL(*storage_factory, open_read_only(_));
+    EXPECT_CALL(*storage_factory, open_read_only(_)).Times(AnyNumber());
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
-      [this, relative_file_path](const rosbag2_storage::StorageOptions & storage_options) {
+      [this](const rosbag2_storage::StorageOptions & storage_options) {
+        EXPECT_TRUE(
+          std::find(
+            metadata_.relative_file_paths.begin(),
+            metadata_.relative_file_paths.end(),
+            storage_options.uri) !=
+          metadata_.relative_file_paths.end());
         // Storage_id has to be set to something for open to succeed
         EXPECT_EQ(storage_options.storage_id, "mock_storage");
-        EXPECT_STREQ(relative_file_path.c_str(), storage_options.uri.c_str());
         return storage_;
       });
 
@@ -92,7 +109,12 @@ public:
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
   std::string storage_serialization_format_;
   std::string storage_uri_;
+  rosbag2_storage::BagMetadata metadata_;
+  rcpputils::fs::path relative_file_path_;
+  rcpputils::fs::path bag_file_1_path_;
+  rcpputils::fs::path bag_file_2_path_;
   rosbag2_storage::StorageOptions default_storage_options_;
+  size_t num_next_ = 0;
 };
 
 TEST_F(SequentialReaderTest, read_next_uses_converters_to_convert_serialization_format) {
@@ -161,4 +183,30 @@ TEST_F(SequentialReaderTest, open_determines_unspecified_storage_id_from_metadat
   storage_options.storage_id = "";
   // This call fails if the SequentialReader doesn't pull storage impl from metadata
   reader_->open(storage_options, {"", storage_serialization_format_});
+}
+
+TEST_F(SequentialReaderTest, next_file_calls_callback) {
+  bool callback_called = false;
+  std::string closed_file, opened_file;
+  rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
+  callbacks.read_split_callback =
+    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_file = info.closed_file;
+      opened_file = info.opened_file;
+      callback_called = true;
+    };
+  reader_->add_event_callbacks(callbacks);
+
+  reader_->open(default_storage_options_, {"", storage_serialization_format_});
+  // Calling read_next() 6 times should trigger the read-split event callback
+  reader_->read_next();
+  reader_->read_next();
+  reader_->read_next();
+  reader_->read_next();
+  reader_->read_next();
+  reader_->read_next();
+
+  ASSERT_TRUE(callback_called);
+  EXPECT_EQ(closed_file, bag_file_1_path_.string());
+  EXPECT_EQ(opened_file, bag_file_2_path_.string());
 }
