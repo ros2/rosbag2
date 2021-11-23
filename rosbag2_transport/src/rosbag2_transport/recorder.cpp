@@ -109,6 +109,13 @@ Recorder::~Recorder()
   }
 
   subscriptions_.clear();
+
+  {
+    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+    event_publisher_thread_should_exit_ = true;
+  }
+  event_publisher_thread_wake_cv_.notify_all();
+  event_publisher_thread_->join();
 }
 
 void Recorder::record()
@@ -135,16 +142,21 @@ void Recorder::record()
       });
   }
 
+  // Start the thread that will publish events
+  event_publisher_thread_ =
+    std::make_unique<std::thread>([this]{ event_publisher_thread_main(); });
+
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
     "events/write_split",
     1);
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      auto message = rosbag2_interfaces::msg::WriteSplitEvent();
-      message.closed_file = info.closed_file;
-      message.opened_file = info.opened_file;
-      split_event_pub_->publish(message);
+      {
+        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+        bag_split_info_ = info;
+      }
+      event_publisher_thread_wake_cv_.notify_all();
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -156,6 +168,38 @@ void Recorder::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
+}
+
+void Recorder::event_publisher_thread_main()
+{
+  RCLCPP_INFO(get_logger(), "Event publisher threaad: Starting");
+
+  bool should_exit = false;
+
+  while (!should_exit) {
+    std::unique_lock<std::mutex> lock(event_publisher_thread_mutex_);
+    event_publisher_thread_wake_cv_.wait(
+      lock,
+      [this]{ return event_publisher_thread_should_wake(); });
+
+    if (write_split_has_occurred_) {
+      write_split_has_occurred_ = false;
+
+      auto message = rosbag2_interfaces::msg::WriteSplitEvent();
+      message.closed_file = bag_split_info_.closed_file;
+      message.opened_file = bag_split_info_.opened_file;
+      split_event_pub_->publish(message);
+    }
+
+    should_exit = event_publisher_thread_should_exit_;
+  }
+
+  RCLCPP_INFO(get_logger(), "Event publisher threaad: Exiting");
+}
+
+bool Recorder::event_publisher_thread_should_wake()
+{
+  return write_split_has_occurred_ || event_publisher_thread_should_exit_;
 }
 
 const rosbag2_cpp::Writer & Recorder::get_writer_handle()

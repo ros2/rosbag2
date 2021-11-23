@@ -101,8 +101,7 @@ public:
     callbacks_.push_back(cb);
   }
 
-  template<typename EventCallbackT>
-  bool has_callback_for_event(const BagEvent event)
+  bool has_callback_for_event(const BagEvent event) const
   {
     for (auto & cb : callbacks_) {
       if (cb->is_type(event)) {

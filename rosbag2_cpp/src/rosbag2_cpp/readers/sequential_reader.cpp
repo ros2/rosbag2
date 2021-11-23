@@ -305,7 +305,7 @@ void SequentialReader::add_event_callbacks(const bag_events::ReaderEventCallback
   }
 }
 
-bool has_callback_for_event(const bag_events::BagEvent event) const
+bool SequentialReader::has_callback_for_event(const bag_events::BagEvent event) const
 {
   return callback_manager_.has_callback_for_event(event);
 }
