@@ -41,6 +41,7 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_cpp::ConverterOptions::output_serialization_format);
 
   pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
+  .def(pybind11::init<>())
   .def(
     pybind11::init<
       std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool>(),
