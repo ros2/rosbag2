@@ -95,12 +95,21 @@ class EventCallbackManager
 {
 public:
   template<typename EventCallbackT>
-  void add_event_callback(
-    const EventCallbackT & callback,
-    const BagEvent event)
+  void add_event_callback(const EventCallbackT & callback, const BagEvent event)
   {
     auto cb = std::make_shared<BagEventCallback<EventCallbackT>>(callback, event);
     callbacks_.push_back(cb);
+  }
+
+  template<typename EventCallbackT>
+  bool has_callback_for_event(const BagEvent event)
+  {
+    for (auto & cb : callbacks_) {
+      if (cb->is_type(event)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info)

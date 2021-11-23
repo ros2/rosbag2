@@ -108,6 +108,12 @@ public:
    */
   void add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks) override;
 
+  /**
+   * \brief Check if a callback is registered for the given event.
+   * \return True if there is any callback registered for the event, false otherwise.
+   */
+  bool has_callback_for_event(const bag_events::BagEvent event) const;
+
 protected:
   /**
   * Opens the current file and sets up the filters in the new storage.
