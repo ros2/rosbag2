@@ -55,7 +55,7 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override
   {
-    if (num_read_ % 5 == 0) {  // "Split" the bag every 5 messages
+    if (num_read_ > 0 && num_read_ % 5 == 0) {  // "Split" the bag every 5 messages
       auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
       info->closed_file = "BagFile" + std::to_string(file_number_);
       file_number_++;
