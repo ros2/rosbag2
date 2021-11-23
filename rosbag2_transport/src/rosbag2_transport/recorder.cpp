@@ -144,7 +144,7 @@ void Recorder::record()
 
   // Start the thread that will publish events
   event_publisher_thread_ =
-    std::make_unique<std::thread>([this]{ event_publisher_thread_main(); });
+    std::make_unique<std::thread>([this] {event_publisher_thread_main();});
 
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
     "events/write_split",
@@ -180,7 +180,7 @@ void Recorder::event_publisher_thread_main()
     std::unique_lock<std::mutex> lock(event_publisher_thread_mutex_);
     event_publisher_thread_wake_cv_.wait(
       lock,
-      [this]{ return event_publisher_thread_should_wake(); });
+      [this] {return event_publisher_thread_should_wake();});
 
     if (write_split_has_occurred_) {
       write_split_has_occurred_ = false;
