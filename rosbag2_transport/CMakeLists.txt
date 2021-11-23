@@ -140,6 +140,7 @@ function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_qos
     test/rosbag2_transport/test_qos.cpp
     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    LINK_LIBS rosbag2_transport
     AMENT_DEPS rosbag2_test_common yaml_cpp_vendor)
 
   rosbag2_transport_add_gmock(test_record
