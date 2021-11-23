@@ -31,22 +31,10 @@
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_exception.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_pragmas.hpp"
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
-
-#ifdef _WIN32
-// This is necessary because of a bug in yaml-cpp's cmake
-#define YAML_CPP_DLL
-// This is necessary because yaml-cpp does not always use dllimport/dllexport consistently
-# pragma warning(push)
-# pragma warning(disable:4251)
-# pragma warning(disable:4275)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-# pragma warning(pop)
-#endif
 
 #include "../logging.hpp"
 
