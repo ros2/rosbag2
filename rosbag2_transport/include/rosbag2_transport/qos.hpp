@@ -21,6 +21,8 @@
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
 
+#include "rosbag2_transport/visibility_control.hpp"
+
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
 #define YAML_CPP_DLL
@@ -37,11 +39,12 @@
 namespace rosbag2_transport
 {
 /// Simple wrapper around rclcpp::QoS to provide a default constructor for YAML deserialization.
-class Rosbag2QoS : public rclcpp::QoS
+class ROSBAG2_TRANSPORT_PUBLIC Rosbag2QoS : public rclcpp::QoS
 {
 public:
   Rosbag2QoS()
   : rclcpp::QoS(rmw_qos_profile_default.depth) {}
+
   explicit Rosbag2QoS(const rclcpp::QoS & value)
   : rclcpp::QoS(value) {}
 
@@ -80,14 +83,14 @@ public:
 namespace YAML
 {
 template<>
-struct convert<rmw_time_t>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_time_t>
 {
   static Node encode(const rmw_time_t & time);
   static bool decode(const Node & node, rmw_time_t & time);
 };
 
 template<>
-struct convert<rosbag2_transport::Rosbag2QoS>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::Rosbag2QoS>
 {
   static Node encode(const rosbag2_transport::Rosbag2QoS & qos);
   static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
