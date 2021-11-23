@@ -20,11 +20,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "rclcpp/logging.hpp"
-
 #include "rcpputils/split.hpp"
 
-#include "./topic_filter.hpp"
+#include "logging.hpp"
+#include "topic_filter.hpp"
 
 namespace rosbag2_transport
 {
@@ -59,12 +58,9 @@ std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_ty
 {
   std::unordered_map<std::string, std::string> filtered_topics_and_types;
 
-  auto logger = rclcpp::get_logger("rosbag2_transport");
-
   for (const auto & topic_and_type : topics_and_types) {
     if (topic_and_type.second.size() > 1) {
-      RCLCPP_ERROR_STREAM(
-        logger,
+      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
         "Topic '" << topic_and_type.first <<
           "' has several types associated. Only topics with one type are supported");
       continue;
@@ -79,8 +75,7 @@ std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_ty
           return token[0] == '_';
         });
       if (is_hidden != tokens.end()) {
-        RCLCPP_WARN_ONCE(
-          logger,
+        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
           "Hidden topics are not recorded. Enable them with --include-hidden-topics");
         continue;
       }
@@ -136,8 +131,7 @@ filter_topics_with_known_type(
         topic_and_type.second);
       if (got == topic_unknown_types.end()) {
         topic_unknown_types.emplace(topic_and_type.second);
-        RCLCPP_WARN_STREAM(
-          rclcpp::get_logger("rosbag2_transport"),
+        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
           "Topic '" << topic_and_type.first <<
             "' has unknown type '" << topic_and_type.second <<
             "' associated. Only topics with known type are supported. Reason: '" << e.what());
