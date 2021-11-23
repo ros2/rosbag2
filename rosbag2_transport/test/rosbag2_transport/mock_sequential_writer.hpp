@@ -56,7 +56,7 @@ public:
     }
     messages_per_topic_[message->topic_name] += 1;
     messages_per_file_ += 1;
-    if (messages_per_file_ == 5) {
+    if (messages_per_file_ == 5) {  // "Split" the bag every 5 messages
       auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
       info->closed_file = "BagFile" + std::to_string(file_number_);
       file_number_ += 1;
