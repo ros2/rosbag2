@@ -26,11 +26,13 @@
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 #include "rosbag2_transport/player.hpp"
+#include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
+#include "record_integration_fixture.hpp"
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_keyboard_handler.hpp"
@@ -176,4 +178,30 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   EXPECT_THAT(player->num_resumed, 1);
   EXPECT_THAT(player->num_played_next, 1);
   EXPECT_THAT(player->num_set_rate, 2);
+}
+
+TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
+{
+  auto mock_sequential_writer = std::make_unique<MockSequentialWriter>();
+  auto writer = std::make_unique<rosbag2_cpp::Writer>(std::move(mock_sequential_writer));
+  auto keyboard_handler = std::make_shared<MockKeyboardHandler>();
+
+  rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
+  record_options.start_paused = true;
+
+  auto recorder = std::make_shared<Recorder>(
+    std::move(writer), keyboard_handler, storage_options_,
+    record_options, "test_count_recorder");
+
+  recorder->record();
+
+  this->start_async_spin(recorder);
+
+  EXPECT_THAT(recorder->is_paused(), true);
+  keyboard_handler->simulate_key_press(rosbag2_transport::Recorder::kPauseResumeToggleKey);
+  EXPECT_THAT(recorder->is_paused(), false);
+  keyboard_handler->simulate_key_press(rosbag2_transport::Recorder::kPauseResumeToggleKey);
+  EXPECT_THAT(recorder->is_paused(), true);
+
+  this->stop_spinning();
 }

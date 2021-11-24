@@ -149,6 +149,9 @@ class RecordVerb(VerbExtension):
                  'write:'
                  '  pragmas: [\"<setting_name>\" = <setting_value>]'
                  'For a list of sqlite3 settings, refer to sqlite3 documentation')
+        parser.add_argument(
+            '--start-paused', action='store_true', default=False,
+            help='Start the recorder in a paused state.')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -219,6 +222,7 @@ class RecordVerb(VerbExtension):
         record_options.compression_threads = args.compression_threads
         record_options.topic_qos_profile_overrides = qos_profile_overrides
         record_options.include_hidden_topics = args.include_hidden_topics
+        record_options.start_paused = args.start_paused
 
         recorder = Recorder()
 

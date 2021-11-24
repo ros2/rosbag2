@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include "keyboard_handler/keyboard_handler.hpp"
+
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 
@@ -60,6 +62,15 @@ public:
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
   ROSBAG2_TRANSPORT_PUBLIC
+  Recorder(
+    std::shared_ptr<rosbag2_cpp::Writer> writer,
+    std::shared_ptr<KeyboardHandler> keyboard_handler,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::RecordOptions & record_options,
+    const std::string & node_name = "rosbag2_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
+
+  ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
   ROSBAG2_TRANSPORT_PUBLIC
@@ -79,6 +90,24 @@ public:
 
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_cpp::Writer & get_writer_handle();
+
+  /// Pause the recording.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void pause();
+
+  /// Resume recording.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void resume();
+
+  /// Pause if it was recording, continue recording if paused.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void toggle_paused();
+
+  /// Return the current paused state.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_paused();
+
+  inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
 private:
   void topics_discovery();
@@ -124,6 +153,12 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
+  std::atomic<bool> paused_ = false;
+  // Keyboard handler
+  std::shared_ptr<KeyboardHandler> keyboard_handler_;
+  // Toogle paused key callback handle
+  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
+    KeyboardHandler::invalid_handle;
 };
 
 }  // namespace rosbag2_transport

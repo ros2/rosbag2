@@ -56,16 +56,45 @@ Recorder::Recorder(
   const rosbag2_transport::RecordOptions & record_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
+: Recorder(
+    std::move(writer),
+    std::make_shared<KeyboardHandler>(),
+    storage_options,
+    record_options,
+    node_name,
+    node_options)
+{}
+
+Recorder::Recorder(
+  std::shared_ptr<rosbag2_cpp::Writer> writer,
+  std::shared_ptr<KeyboardHandler> keyboard_handler,
+  const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::RecordOptions & record_options,
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options).start_parameter_event_publisher(false)),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
-  stop_discovery_(record_options_.is_discovery_disabled)
+  stop_discovery_(record_options_.is_discovery_disabled),
+  paused_(record_options.start_paused),
+  keyboard_handler_(std::move(keyboard_handler))
 {
+  std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
+  toggle_paused_key_callback_handle_ =
+    keyboard_handler_->add_key_press_callback(
+    [this](KeyboardHandler::KeyCode /*key_code*/,
+    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
+    Recorder::kPauseResumeToggleKey);
+  // show instructions
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "Press " << key_str << " for pausing/resuming");
 }
 
 Recorder::~Recorder()
 {
+  keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     discovery_future_.wait();
@@ -111,6 +140,32 @@ void Recorder::record()
 const rosbag2_cpp::Writer & Recorder::get_writer_handle()
 {
   return *writer_;
+}
+
+void Recorder::pause()
+{
+  paused_.store(true);
+  RCLCPP_INFO_STREAM(get_logger(), "Pausing recording.");
+}
+
+void Recorder::resume()
+{
+  paused_.store(false);
+  RCLCPP_INFO_STREAM(get_logger(), "Resuming recording.");
+}
+
+void Recorder::toggle_paused()
+{
+  if (paused_.load()) {
+    this->resume();
+  } else {
+    this->pause();
+  }
+}
+
+bool Recorder::is_paused()
+{
+  return paused_.load();
 }
 
 void Recorder::topics_discovery()
@@ -225,7 +280,9 @@ Recorder::create_subscription(
     topic_type,
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
-      writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+      if (!paused_.load()) {
+        writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+      }
     });
   return subscription;
 }

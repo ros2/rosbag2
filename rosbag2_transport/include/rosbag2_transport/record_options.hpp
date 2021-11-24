@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "keyboard_handler/keyboard_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
@@ -43,6 +44,7 @@ public:
   uint64_t compression_threads = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
+  bool start_paused = false;
 };
 
 }  // namespace rosbag2_transport
