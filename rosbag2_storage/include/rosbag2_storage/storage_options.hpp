@@ -17,6 +17,9 @@
 
 #include <string>
 
+#include "rosbag2_storage/visibility_control.hpp"
+#include "rosbag2_storage/yaml.hpp"
+
 namespace rosbag2_storage
 {
 
@@ -53,5 +56,15 @@ public:
 };
 
 }  // namespace rosbag2_storage
+
+namespace YAML
+{
+template<>
+struct ROSBAG2_STORAGE_PUBLIC convert<rosbag2_storage::StorageOptions>
+{
+  static Node encode(const rosbag2_storage::StorageOptions & storage_options);
+  static bool decode(const Node & node, rosbag2_storage::StorageOptions & storage_options);
+};
+}  // namespace YAML
 
 #endif  // ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_

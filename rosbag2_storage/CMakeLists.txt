@@ -32,6 +32,7 @@ add_library(
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
   src/rosbag2_storage/storage_factory.cpp
+  src/rosbag2_storage/storage_options.cpp
   src/rosbag2_storage/base_io_interface.cpp)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -109,6 +110,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_metadata_serialization ${PROJECT_NAME})
     ament_target_dependencies(test_metadata_serialization rosbag2_test_common)
   endif()
+
+  ament_add_gmock(test_storage_options
+    test/rosbag2_storage/test_storage_options.cpp)
+  target_include_directories(test_storage_options PRIVATE include)
+  target_link_libraries(test_storage_options ${PROJECT_NAME})
+  ament_target_dependencies(test_storage_options rosbag2_test_common)
 endif()
 
 ament_package()

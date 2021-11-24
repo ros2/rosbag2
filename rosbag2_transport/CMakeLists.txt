@@ -39,6 +39,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
+  src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -192,6 +193,12 @@ if(BUILD_TESTING)
   include(cmake/rosbag2_transport_add_gmock.cmake)
   ament_lint_auto_find_test_dependencies()
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
+
+  ament_add_gmock(test_record_options
+    test/rosbag2_transport/test_record_options.cpp)
+  target_include_directories(test_record_options PRIVATE include)
+  target_link_libraries(test_record_options ${PROJECT_NAME})
+
 endif()
 
 ament_package()
