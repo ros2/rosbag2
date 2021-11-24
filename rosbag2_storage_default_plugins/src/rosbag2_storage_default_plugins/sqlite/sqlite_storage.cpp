@@ -248,7 +248,21 @@ void SqliteStorage::write_locked(
             "' has not been created yet! Call 'create_topic' first.");
   }
 
-  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+  try {
+    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+  } catch (const SqliteException & exc) {
+    if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+        "Message on topic '" << message->topic_name << "' of size '"
+        << message->serialized_data->buffer_length
+        << "' bytes failed to write because it exceeds the maximum size sqlite can store: "
+        << exc.what());
+      return;
+    } else {
+      // Rethrow.
+      throw;
+    }
+  }
   write_statement_->execute_and_reset();
 }
 

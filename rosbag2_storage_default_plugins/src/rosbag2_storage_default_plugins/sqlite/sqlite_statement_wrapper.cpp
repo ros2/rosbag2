@@ -38,7 +38,7 @@ SqliteStatementWrapper::SqliteStatementWrapper(sqlite3 * database, const std::st
     errmsg << "Error when preparing SQL statement '" << query << "'. SQLite error: (" <<
       return_code << "): " << sqlite3_errstr(return_code);
 
-    throw SqliteException{errmsg.str()};
+    throw SqliteException{errmsg.str(), return_code};
   }
 
   statement_ = statement;
@@ -61,7 +61,7 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
     errmsg << "Error when processing SQL statement. SQLite error (" <<
       return_code << "): " << sqlite3_errstr(return_code);
 
-    throw SqliteException{errmsg.str()};
+    throw SqliteException{errmsg.str(), return_code};
   }
 
   if (assert_return_value) {
@@ -73,7 +73,7 @@ std::shared_ptr<SqliteStatementWrapper> SqliteStatementWrapper::execute_and_rese
       errmsg << "Statement returned empty value while result was expected: \'" <<
         sqlite3_sql(statement_) << "\'";
 
-      throw SqliteException{errmsg.str()};
+      throw SqliteException{errmsg.str(), return_code};
     }
   }
 
@@ -147,7 +147,7 @@ bool SqliteStatementWrapper::step()
     errmsg << "Error reading SQL query. SQLite error (" <<
       return_code << "): " << sqlite3_errstr(return_code);
 
-    throw SqliteException{errmsg.str()};
+    throw SqliteException{errmsg.str(), return_code};
   }
 }
 
@@ -188,7 +188,7 @@ void SqliteStatementWrapper::check_and_report_bind_error(int return_code)
       last_bound_parameter_index_ << ". SQLite error (" <<
       return_code << "): " << sqlite3_errstr(return_code);
 
-    throw SqliteException{errmsg.str()};
+    throw SqliteException{errmsg.str(), return_code};
   }
 }
 
