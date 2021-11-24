@@ -36,6 +36,7 @@ find_package(shared_queues_vendor REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
+  src/rosbag2_transport/bag_rewrite.cpp
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
