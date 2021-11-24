@@ -498,6 +498,14 @@ std::string SqliteStorage::get_storage_setting(const std::string & key)
   return database_->query_pragma_value(key);
 }
 
+SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
+{
+  if (nullptr == database_) {
+    throw std::runtime_error("database not open");
+  }
+  return *database_;
+}
+
 }  // namespace rosbag2_storage_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT

@@ -373,3 +373,23 @@ TEST_F(StorageTestFixture, throws_on_invalid_pragma_in_config_file) {
       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE),
     std::runtime_error);
 }
+
+TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
+  // Check that storage does not throw when a message is too large to be stored.
+
+  // Use write_messages_to_sqlite() to open the database without writing anything.
+  auto writable_storage = this->write_messages_to_sqlite({});
+
+  // Get the sqlite string/blob limit.
+  size_t sqlite_limit = sqlite3_limit(
+    writable_storage->get_sqlite_database_wrapper().get_database(),
+    SQLITE_LIMIT_LENGTH,
+    -1);
+
+  // This should produce a warning, but not an exception.
+  std::string msg(sqlite_limit + 1, '\0');
+  this->write_messages_to_sqlite(
+  {
+    {msg, 0, "/too_big_message", "some_type", "some_rmw"}
+  }, writable_storage);
+}
