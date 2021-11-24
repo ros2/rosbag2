@@ -103,6 +103,11 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
     load_current_file();
   } else {
+    if (storage_options_.storage_id.empty()) {
+      throw std::runtime_error(
+              "No metadata found and no storage_id specified. "
+              "Can't open bag.");
+    }
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};
