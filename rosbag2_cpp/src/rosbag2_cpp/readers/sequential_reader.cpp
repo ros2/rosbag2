@@ -91,6 +91,9 @@ void SequentialReader::open(
   // This is necessary for non ROS2 bags (aka ROS1 legacy bags).
   if (metadata_io_->metadata_file_exists(storage_options.uri)) {
     metadata_ = metadata_io_->read_metadata(storage_options.uri);
+    if (storage_options_.storage_id.empty()) {
+      storage_options_.storage_id = metadata_.storage_identifier;
+    }
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
       return;
@@ -100,6 +103,11 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
     load_current_file();
   } else {
+    if (storage_options_.storage_id.empty()) {
+      throw std::runtime_error(
+              "No metadata found and no storage_id specified. "
+              "Can't open bag.");
+    }
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized. Abort"};

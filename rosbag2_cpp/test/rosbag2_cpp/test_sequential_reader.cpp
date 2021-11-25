@@ -44,7 +44,7 @@ public:
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
     storage_uri_(rcpputils::fs::temp_directory_path().string()),
-    default_storage_options_({storage_uri_, ""})
+    default_storage_options_({storage_uri_, "mock_storage"})
   {
     rosbag2_storage::TopicMetadata topic_with_type;
     topic_with_type.name = "topic";
@@ -63,6 +63,7 @@ public:
     metadata.relative_file_paths = {relative_file_path};
     metadata.version = 4;
     metadata.topics_with_message_count.push_back({{topic_with_type}, 1});
+    metadata.storage_identifier = "mock_storage";
 
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
@@ -75,6 +76,8 @@ public:
     EXPECT_CALL(*storage_factory, open_read_only(_));
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
       [this, relative_file_path](const rosbag2_storage::StorageOptions & storage_options) {
+        // Storage_id has to be set to something for open to succeed
+        EXPECT_EQ(storage_options.storage_id, "mock_storage");
         EXPECT_STREQ(relative_file_path.c_str(), storage_options.uri.c_str());
         return storage_;
       });
@@ -151,4 +154,11 @@ TEST_F(SequentialReaderTest, set_filter_calls_storage) {
   reader_->read_next();
   reader_->get_implementation_handle().reset_filter();
   reader_->read_next();
+}
+
+TEST_F(SequentialReaderTest, open_determines_unspecified_storage_id_from_metadata) {
+  auto storage_options = default_storage_options_;
+  storage_options.storage_id = "";
+  // This call fails if the SequentialReader doesn't pull storage impl from metadata
+  reader_->open(storage_options, {"", storage_serialization_format_});
 }
