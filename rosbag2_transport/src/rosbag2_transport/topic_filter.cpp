@@ -74,8 +74,8 @@ bool
 is_leaf_topic(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
 {
-  auto publishers_info = node_graph.get_publishers_info_by_topic(topic_name);
-  return publishers_info.size() == 0;
+  auto subscriptions_info = node_graph.get_subscriptions_info_by_topic(topic_name);
+  return subscriptions_info.size() == 0;
 }
 }  // namespace
 
