@@ -38,7 +38,10 @@ namespace rosbag2_transport
 class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 {
 public:
-  explicit TopicFilter(RecordOptions record_options, bool allow_unknown_types = false);
+  explicit TopicFilter(
+    RecordOptions record_options,
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
+    bool allow_unknown_types = false);
   virtual ~TopicFilter();
 
   /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
@@ -58,6 +61,7 @@ private:
   RecordOptions record_options_;
   bool allow_unknown_types_ = false;
   std::unordered_set<std::string> already_warned_unknown_types_;
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
 };
 }  // namespace rosbag2_transport
 

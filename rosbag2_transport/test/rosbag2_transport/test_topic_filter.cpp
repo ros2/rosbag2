@@ -52,14 +52,14 @@ TEST(TestTopicFilter, filter_hidden_topics) {
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.include_hidden_topics = true;
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(topics_and_types.size(), filtered_topics.size());
   }
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.include_hidden_topics = false;
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(topics_and_types.size() - 3, filtered_topics.size());
   }
@@ -73,7 +73,7 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
     {"topic/d", {"type_d", "type_d", "type_d2"}},
   };
 
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, true};
+  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   EXPECT_THAT(filtered_topics, SizeIs(2));
   for (const auto & topic :
@@ -90,7 +90,7 @@ TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
     {"topic/c", {"type_c"}}
   };
 
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}};
+  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(0u, filtered_topics.size());
 }
@@ -101,7 +101,7 @@ TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
     {"topic/b", {"test_msgs/BasicTypes"}},
     {"topic/c", {"test_msgs/BasicTypes"}}
   };
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}};
+  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(3u, filtered_topics.size());
 }
@@ -116,7 +116,7 @@ TEST(TestTopicFilter, filter_topics) {
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.topics = {"topic/a"};
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(1u, filtered_topics.size());
     ASSERT_EQ("topic/a", filtered_topics.begin()->first);
@@ -125,7 +125,7 @@ TEST(TestTopicFilter, filter_topics) {
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.topics = {"topic/a", "topic/b", "topic/c"};
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(3u, filtered_topics.size());
     for (const auto & topic : {"topic/a", "topic/b", "topic/c"}) {
@@ -136,7 +136,7 @@ TEST(TestTopicFilter, filter_topics) {
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.topics = {"topic/d", "topic/e", "topic/f"};
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(0u, filtered_topics.size());
   }
@@ -144,7 +144,7 @@ TEST(TestTopicFilter, filter_topics) {
   {
     rosbag2_transport::RecordOptions record_options;
     record_options.topics = {"topic/a", "topic/b", "topic/d"};
-    rosbag2_transport::TopicFilter filter{record_options, true};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(2u, filtered_topics.size());
     for (const auto & topic : {"topic/a", "topic/b"}) {
@@ -158,7 +158,7 @@ TEST_F(RegexFixture, regex_all_and_exclude)
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude = "/inv.*";
   record_options.all = true;
-  rosbag2_transport::TopicFilter filter{record_options, true};
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
   EXPECT_THAT(filtered_topics, SizeIs(3));
@@ -173,7 +173,7 @@ TEST_F(RegexFixture, regex_filter_exclude)
   record_options.regex = "/invalid.*";
   record_options.exclude = ".invalidated.*";
   record_options.all = false;
-  rosbag2_transport::TopicFilter filter{record_options, true};
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
   EXPECT_THAT(filtered_topics, SizeIs(1));
@@ -185,7 +185,7 @@ TEST_F(RegexFixture, regex_filter)
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/inval.*";
   record_options.all = false;
-  rosbag2_transport::TopicFilter filter{record_options, true};
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
   EXPECT_THAT(filtered_topics, SizeIs(2));
@@ -199,7 +199,7 @@ TEST_F(RegexFixture, regex_all_and_filter)
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/status";
   record_options.all = true;
-  rosbag2_transport::TopicFilter filter{record_options, true};
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
   EXPECT_THAT(filtered_topics, SizeIs(6));
 }
