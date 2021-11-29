@@ -31,6 +31,7 @@ class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 {
 public:
   explicit TopicFilter(RecordOptions record_options, bool allow_unknown_types = false);
+  virtual ~TopicFilter() {}
 
   /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
   /// Filtering order is:
