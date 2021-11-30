@@ -21,42 +21,44 @@
 #include <unordered_set>
 #include <vector>
 
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
 
 namespace rosbag2_transport
 {
-namespace topic_filter
+
+class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 {
+public:
+  explicit TopicFilter(RecordOptions record_options, bool allow_unknown_types = false);
+  virtual ~TopicFilter();
 
-ROSBAG2_TRANSPORT_PUBLIC
-std::unordered_map<std::string, std::string>
-filter_topics(
-  const std::vector<std::string> & selected_topic_names,
-  const std::unordered_map<std::string, std::string> & all_topic_names_and_types);
+  /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
+  /// Filtering order is:
+  /// - remove topics with multiple types, unknown type, and hidden topics
+  /// - topics list
+  /// - exclude regex
+  /// - include regex OR "all"
+  std::unordered_map<std::string, std::string> filter_topics(
+    const std::map<std::string, std::vector<std::string>> & topic_names_and_types);
 
-ROSBAG2_TRANSPORT_PUBLIC
-std::unordered_map<std::string, std::string>
-filter_topics_with_more_than_one_type(
-  const std::map<std::string, std::vector<std::string>> & topics_and_types,
-  bool include_hidden_topics = false);
+private:
+  /// Return true if the topic passes all filter criteria
+  bool take_topic(const std::string & topic_name, const std::vector<std::string> & topic_types);
+  bool type_is_known(const std::string & topic_name, const std::string & topic_type);
 
-ROSBAG2_TRANSPORT_PUBLIC
-std::unordered_map<std::string, std::string>
-filter_topics_using_regex(
-  const std::unordered_map<std::string, std::string> & topics_and_types,
-  const std::string & filter_regex_string,
-  const std::string & exclude_regex_string,
-  bool all_flag
-);
-
-ROSBAG2_TRANSPORT_PUBLIC
-std::unordered_map<std::string, std::string>
-filter_topics_with_known_type(
-  const std::unordered_map<std::string, std::string> & topics_and_types,
-  std::unordered_set<std::string> & topic_unknown_types);
-
-}  // namespace topic_filter
+  RecordOptions record_options_;
+  bool allow_unknown_types_ = false;
+  std::unordered_set<std::string> already_warned_unknown_types_;
+};
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__TOPIC_FILTER_HPP_

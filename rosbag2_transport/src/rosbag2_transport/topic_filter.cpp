@@ -18,130 +18,137 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
+#include <utility>
 
 #include "rcpputils/split.hpp"
+#include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
 #include "topic_filter.hpp"
 
+namespace
+{
+bool has_single_type(
+  const std::string & topic_name, const std::vector<std::string> & topic_types)
+{
+  if (topic_types.empty()) {
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "Topic " << topic_name << " has no associated types. "
+        "This case shouldn't occur.");
+    return false;
+  }
+  auto it = topic_types.begin();
+  const std::string & reference_type = *it;
+  for (; it != topic_types.end(); it++) {
+    if (reference_type != *it) {
+      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
+        "Topic '" << topic_name <<
+          "' has more than one type associated. Only topics with one type are supported");
+      return false;
+    }
+  }
+  return true;
+}
+
+
+bool topic_is_hidden(const std::string & topic_name)
+{
+  // According to rclpy's implementation, the indicator for a hidden topic is a leading '_'
+  // https://github.com/ros2/rclpy/blob/master/rclpy/rclpy/topic_or_service_is_hidden.py#L15
+  auto tokens = rcpputils::split(topic_name, '/', true);  // skip empty
+  auto hidden_it = std::find_if(
+    tokens.begin(), tokens.end(), [](const auto & token) -> bool {
+      return token[0] == '_';
+    });
+  return hidden_it != tokens.end();
+}
+
+bool topic_in_list(const std::string & topic_name, const std::vector<std::string> & topics)
+{
+  auto it = std::find(topics.begin(), topics.end(), topic_name);
+  return it != topics.end();
+}
+
+}  // namespace
+
 namespace rosbag2_transport
 {
-namespace topic_filter
+
+TopicFilter::TopicFilter(RecordOptions record_options, bool allow_unknown_types)
+: record_options_(record_options),
+  allow_unknown_types_(allow_unknown_types)
+{}
+
+TopicFilter::~TopicFilter()
+{}
+
+std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
+  const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
 {
-
-std::unordered_map<std::string, std::string> filter_topics(
-  const std::vector<std::string> & selected_topic_names,
-  const std::unordered_map<std::string, std::string> & all_topic_names_and_types)
-{
-  std::unordered_map<std::string, std::string> filtered_topics_and_types;
-
-  auto topic_name_matches = [&selected_topic_names](const auto & topic_and_type) -> bool
-    {
-      return std::find(
-        selected_topic_names.begin(),
-        selected_topic_names.end(), topic_and_type.first) != selected_topic_names.end();
-    };
-
-  for (const auto & topic_and_type : all_topic_names_and_types) {
-    if (topic_name_matches(topic_and_type)) {
-      filtered_topics_and_types.insert(topic_and_type);
+  std::unordered_map<std::string, std::string> filtered_topics;
+  for (const auto & [topic_name, topic_types] : topic_names_and_types) {
+    if (take_topic(topic_name, topic_types)) {
+      filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
     }
   }
-
-  return filtered_topics_and_types;
+  return filtered_topics;
 }
 
-std::unordered_map<std::string, std::string> filter_topics_with_more_than_one_type(
-  const std::map<std::string, std::vector<std::string>> & topics_and_types,
-  bool include_hidden_topics)
+bool TopicFilter::take_topic(
+  const std::string & topic_name, const std::vector<std::string> & topic_types)
 {
-  std::unordered_map<std::string, std::string> filtered_topics_and_types;
-
-  for (const auto & topic_and_type : topics_and_types) {
-    if (topic_and_type.second.size() > 1) {
-      ROSBAG2_TRANSPORT_LOG_ERROR_STREAM(
-        "Topic '" << topic_and_type.first <<
-          "' has several types associated. Only topics with one type are supported");
-      continue;
-    }
-
-    // According to rclpy's implementation, the indicator for a hidden topic is a leading '_'
-    // https://github.com/ros2/rclpy/blob/master/rclpy/rclpy/topic_or_service_is_hidden.py#L15
-    if (!include_hidden_topics) {
-      auto tokens = rcpputils::split(topic_and_type.first, '/', true);  // skip empty
-      auto is_hidden = std::find_if(
-        tokens.begin(), tokens.end(), [](const auto & token) -> bool {
-          return token[0] == '_';
-        });
-      if (is_hidden != tokens.end()) {
-        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-          "Hidden topics are not recorded. Enable them with --include-hidden-topics");
-        continue;
-      }
-    }
-
-    filtered_topics_and_types.insert({topic_and_type.first, topic_and_type.second[0]});
+  if (!has_single_type(topic_name, topic_types)) {
+    return false;
   }
-  return filtered_topics_and_types;
+
+  const std::string & topic_type = topic_types[0];
+  if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
+    return false;
+  }
+
+  if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+    return false;
+  }
+
+  if (!record_options_.topics.empty() && !topic_in_list(topic_name, record_options_.topics)) {
+    return false;
+  }
+
+  std::regex exclude_regex(record_options_.exclude);
+  if (std::regex_match(topic_name, exclude_regex)) {
+    return false;
+  }
+
+  std::regex include_regex(record_options_.regex);
+  if (
+    !record_options_.all &&  // All takes precedence over regex
+    !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
+    !std::regex_match(topic_name, include_regex))
+  {
+    return false;
+  }
+
+  return true;
 }
 
-std::unordered_map<std::string, std::string>
-filter_topics_using_regex(
-  const std::unordered_map<std::string, std::string> & topics_and_types,
-  const std::string & filter_regex_string,
-  const std::string & exclude_regex_string,
-  bool all_flag
-)
+bool TopicFilter::type_is_known(const std::string & topic_name, const std::string & topic_type)
 {
-  std::unordered_map<std::string, std::string> filtered_by_regex;
-
-  std::regex filter_regex(filter_regex_string);
-  std::regex exclude_regex(exclude_regex_string);
-
-  for (const auto & kv : topics_and_types) {
-    bool take = all_flag;
-    // regex_match returns false for 'empty' regex
-    if (!all_flag && !filter_regex_string.empty()) {
-      take = std::regex_match(kv.first, filter_regex);
+  try {
+    auto package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic_type));
+    rosbag2_cpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
+  } catch (std::runtime_error & e) {
+    if (already_warned_unknown_types_.find(topic_type) == already_warned_unknown_types_.end()) {
+      already_warned_unknown_types_.emplace(topic_type);
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "Topic '" << topic_name <<
+          "' has unknown type '" << topic_type <<
+          "' . Only topics with known type are supported. Reason: '" << e.what());
     }
-    if (take) {
-      take = !std::regex_match(kv.first, exclude_regex);
-    }
-    if (take) {
-      filtered_by_regex.insert(kv);
-    }
+    return false;
   }
-  return filtered_by_regex;
+  return true;
 }
 
-std::unordered_map<std::string, std::string>
-filter_topics_with_known_type(
-  const std::unordered_map<std::string, std::string> & topics_and_types,
-  std::unordered_set<std::string> & topic_unknown_types)
-{
-  std::unordered_map<std::string, std::string> filtered_topics_and_types;
-
-  for (const auto & topic_and_type : topics_and_types) {
-    try {
-      auto package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic_and_type.second));
-      rosbag2_cpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
-    } catch (std::runtime_error & e) {
-      std::unordered_set<std::string>::const_iterator got = topic_unknown_types.find(
-        topic_and_type.second);
-      if (got == topic_unknown_types.end()) {
-        topic_unknown_types.emplace(topic_and_type.second);
-        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-          "Topic '" << topic_and_type.first <<
-            "' has unknown type '" << topic_and_type.second <<
-            "' associated. Only topics with known type are supported. Reason: '" << e.what());
-      }
-      continue;
-    }
-    filtered_topics_and_types.insert(topic_and_type);
-  }
-  return filtered_topics_and_types;
-}
-
-}  // namespace topic_filter
 }  // namespace rosbag2_transport
