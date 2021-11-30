@@ -178,45 +178,32 @@ protected:
   int write_data_to_serialized_string_message(
     uint8_t * buffer, size_t buffer_capacity, const std::string & message)
   {
-    // snprintf doesn't handle very large messages, so use memcpy when the
-    // message is large.
-    if (message.size() <= 4096) {
-      // This function also writes the final null charachter, which is absent in the CDR format.
-      // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
-      return rcutils_snprintf(
-        reinterpret_cast<char *>(buffer),
-        buffer_capacity,
-        "%c%c%c%c%c%c%c%c%s",
-        0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
-        message.c_str());
-    } else {
-      size_t remaining_buffer = buffer_capacity;
-      size_t amount_written = 0;
-      if (remaining_buffer == 0) {
-        return amount_written;
-      }
-
-      size_t amount_to_write = remaining_buffer;
-      std::string preamble = get_preamble();
-      if (preamble.size() < amount_to_write) {
-        amount_to_write = preamble.size();
-      }
-      std::memcpy(buffer, preamble.data(), amount_to_write);
-      amount_written += amount_to_write;
-      remaining_buffer -= amount_written;
-      if (remaining_buffer == 0) {
-        return amount_written;
-      }
-
-      amount_to_write = remaining_buffer;
-      if (message.size() < amount_to_write) {
-        amount_to_write = message.size();
-      }
-      std::memcpy(buffer + amount_written, message.data(), amount_to_write);
-      amount_written += amount_to_write;
-
+    size_t remaining_buffer = buffer_capacity;
+    size_t amount_written = 0;
+    if (remaining_buffer == 0) {
       return amount_written;
     }
+
+    size_t amount_to_write = remaining_buffer;
+    std::string preamble = get_preamble();
+    if (preamble.size() < amount_to_write) {
+      amount_to_write = preamble.size();
+    }
+    std::memcpy(buffer, preamble.data(), amount_to_write);
+    amount_written += amount_to_write;
+    remaining_buffer -= amount_written;
+    if (remaining_buffer == 0) {
+      return amount_written;
+    }
+
+    amount_to_write = remaining_buffer;
+    if (message.size() < amount_to_write) {
+      amount_to_write = message.size();
+    }
+    std::memcpy(buffer + amount_written, message.data(), amount_to_write);
+    amount_written += amount_to_write;
+
+    return amount_written;
   }
 
   rcutils_allocator_t allocator_;
