@@ -252,10 +252,16 @@ void SqliteStorage::write_locked(
     write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
   } catch (const SqliteException & exc) {
     if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
+      // Get the sqlite string/blob limit.
+      size_t sqlite_limit = sqlite3_limit(
+        this->get_sqlite_database_wrapper().get_database(),
+        SQLITE_LIMIT_LENGTH,
+        -1);
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
         "Message on topic '" << message->topic_name << "' of size '"
         << message->serialized_data->buffer_length
-        << "' bytes failed to write because it exceeds the maximum size sqlite can store: "
+        << "' bytes failed to write because it exceeds the maximum size sqlite can store ('"
+        << sqlite_limit << "' bytes): "
         << exc.what());
       return;
     } else {
