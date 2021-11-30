@@ -388,8 +388,10 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
 
   // This should produce a warning, but not an exception.
   std::string msg(sqlite_limit + 1, '\0');
-  this->write_messages_to_sqlite(
-  {
-    {msg, 0, "/too_big_message", "some_type", "some_rmw"}
-  }, writable_storage);
+  EXPECT_NO_THROW({
+    this->write_messages_to_sqlite(
+    {
+      {msg, 0, "/too_big_message", "some_type", "some_rmw"}
+    }, writable_storage);
+  });
 }
