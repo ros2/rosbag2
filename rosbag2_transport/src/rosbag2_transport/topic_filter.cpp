@@ -79,6 +79,9 @@ TopicFilter::TopicFilter(RecordOptions record_options, bool allow_unknown_types)
   allow_unknown_types_(allow_unknown_types)
 {}
 
+TopicFilter::~TopicFilter()
+{}
+
 std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
 {

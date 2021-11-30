@@ -24,6 +24,14 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2_transport
 {
 
@@ -31,7 +39,7 @@ class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 {
 public:
   explicit TopicFilter(RecordOptions record_options, bool allow_unknown_types = false);
-  virtual ~TopicFilter() {}
+  virtual ~TopicFilter();
 
   /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
   /// Filtering order is:
