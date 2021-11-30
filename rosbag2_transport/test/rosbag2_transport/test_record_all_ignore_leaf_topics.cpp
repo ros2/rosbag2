@@ -36,7 +36,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_two_topics_ignore_l
 {
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
   auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
-    "/string_topic", 10, [](test_msgs::msg::Strings::SharedPtr) {});
+    "/string_topic", 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
 
   auto array_message = get_messages_arrays()[0];
   array_message->float32_values = {{40.0f, 2.0f, 0.0f}};
