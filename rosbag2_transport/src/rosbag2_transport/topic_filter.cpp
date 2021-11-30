@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rcpputils/split.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
@@ -69,14 +70,25 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
   return it != topics.end();
 }
 
+bool
+is_leaf_topic(
+  const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
+{
+  auto subscriptions_info = node_graph.get_subscriptions_info_by_topic(topic_name);
+  return subscriptions_info.size() == 0;
+}
 }  // namespace
 
 namespace rosbag2_transport
 {
 
-TopicFilter::TopicFilter(RecordOptions record_options, bool allow_unknown_types)
+TopicFilter::TopicFilter(
+  RecordOptions record_options,
+  rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
+  bool allow_unknown_types)
 : record_options_(record_options),
-  allow_unknown_types_(allow_unknown_types)
+  allow_unknown_types_(allow_unknown_types),
+  node_graph_(node_graph)
 {}
 
 TopicFilter::~TopicFilter()
@@ -109,6 +121,10 @@ bool TopicFilter::take_topic(
   if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
       "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+    return false;
+  }
+
+  if (record_options_.ignore_leaf_topics && is_leaf_topic(topic_name, *node_graph_)) {
     return false;
   }
 
@@ -150,5 +166,4 @@ bool TopicFilter::type_is_known(const std::string & topic_name, const std::strin
   }
   return true;
 }
-
 }  // namespace rosbag2_transport

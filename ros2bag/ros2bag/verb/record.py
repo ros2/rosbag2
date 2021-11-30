@@ -130,6 +130,10 @@ class RecordVerb(VerbExtension):
             help='record also hidden topics.'
         )
         parser.add_argument(
+            '--ignore-leaf-topics', action='store_true',
+            help='Ignore topics without a publisher.'
+        )
+        parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
@@ -223,6 +227,7 @@ class RecordVerb(VerbExtension):
         record_options.topic_qos_profile_overrides = qos_profile_overrides
         record_options.include_hidden_topics = args.include_hidden_topics
         record_options.start_paused = args.start_paused
+        record_options.ignore_leaf_topics = args.ignore_leaf_topics
 
         recorder = Recorder()
 
