@@ -38,6 +38,7 @@ find_package(yaml_cpp_vendor REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/qos.cpp
+  src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp)

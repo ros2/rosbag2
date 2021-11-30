@@ -20,16 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_compression/compression_options.hpp"
-#include "rosbag2_compression/sequential_compression_reader.hpp"
-#include "rosbag2_compression/sequential_compression_writer.hpp"
-#include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/readers/sequential_reader.hpp"
-#include "rosbag2_cpp/writer.hpp"
-#include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
+#include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
@@ -116,24 +110,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    std::unique_ptr<rosbag2_cpp::Reader> reader = nullptr;
-    // Determine whether to build compression or regular reader
-    {
-      rosbag2_storage::MetadataIo metadata_io{};
-      rosbag2_storage::BagMetadata metadata{};
-      if (metadata_io.metadata_file_exists(storage_options.uri)) {
-        metadata = metadata_io.read_metadata(storage_options.uri);
-        if (!metadata.compression_format.empty()) {
-          reader = std::make_unique<rosbag2_cpp::Reader>(
-            std::make_unique<rosbag2_compression::SequentialCompressionReader>());
-        }
-      }
-      if (reader == nullptr) {
-        reader = std::make_unique<rosbag2_cpp::Reader>(
-          std::make_unique<rosbag2_cpp::readers::SequentialReader>());
-      }
-    }
-
+    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options, play_options);
 
@@ -175,31 +152,11 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options)
   {
-    rosbag2_compression::CompressionOptions compression_options {
-      record_options.compression_format,
-      rosbag2_compression::compression_mode_from_string(record_options.compression_mode),
-      record_options.compression_queue_size,
-      record_options.compression_threads
-    };
-    if (compression_options.compression_threads < 1) {
-      compression_options.compression_threads = std::thread::hardware_concurrency();
-    }
-
     if (record_options.rmw_serialization_format.empty()) {
       record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
     }
 
-
-    std::unique_ptr<rosbag2_cpp::Writer> writer = nullptr;
-    // Change writer based on recording options
-    if (!record_options.compression_format.empty()) {
-      writer = std::make_unique<rosbag2_cpp::Writer>(
-        std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
-    } else {
-      writer = std::make_unique<rosbag2_cpp::Writer>(
-        std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
-    }
-
+    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
     auto recorder = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options);
     recorder->record();
