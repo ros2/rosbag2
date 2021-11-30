@@ -35,9 +35,10 @@ public:
 
   /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
   /// Filtering order is:
-  /// - remove topics with more than one type or unknown type (unable to load typesupport)
-  /// - RecordOptions::all xor RecordOptions::topics (topics takes precedence if both provided)
-  /// - apply include/exclude regex if specified
+  /// - remove topics with multiple types, unknown type, and hidden topics
+  /// - topics list
+  /// - exclude regex
+  /// - include regex OR "all"
   std::unordered_map<std::string, std::string> filter_topics(
     const std::map<std::string, std::vector<std::string>> & topic_names_and_types);
 
