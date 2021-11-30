@@ -169,6 +169,7 @@ private:
     const std::function<void()> & cb,
     const std::string & op_name);
   void add_keyboard_callbacks();
+  void add_jump_callbacks();
 
   void create_control_services();
 
@@ -177,13 +178,16 @@ private:
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
-  std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
-  std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
     (skip_message_in_main_play_loop_mutex_) = false;
 
   rcutils_time_point_value_t starting_time_;
+
+  // timing
+  std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
+  std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
+  rclcpp::JumpHandler::SharedPtr clock_jump_handler_;
 
   // control services
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;

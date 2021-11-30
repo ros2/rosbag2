@@ -29,6 +29,8 @@
 
 #include "rcutils/time.h"
 
+#include "rosbag2_cpp/clocks/player_clock.hpp"
+#include "rosbag2_cpp/clocks/ros_time_clock.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
@@ -153,15 +155,25 @@ Player::Player(
     } else {
       starting_time_ += play_options_.start_offset;
     }
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
-      starting_time_, std::chrono::steady_clock::now,
-      std::chrono::milliseconds{100}, play_options_.start_paused);
+    // pick the right clock
+    if (play_options_.use_ros_time) {
+      clock_ = std::make_unique<rosbag2_cpp::RosTimeClock>();
+    } else {
+      clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
+        starting_time_, std::chrono::steady_clock::now,
+        std::chrono::milliseconds{100}, play_options_.start_paused);
+    }
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
   }
-  create_control_services();
-  add_keyboard_callbacks();
+  // check play options
+  if (play_options_.use_ros_time) {
+    add_jump_callbacks();
+  } else {
+    create_control_services();
+    add_keyboard_callbacks();
+  }
 }
 
 Player::~Player()
@@ -626,4 +638,14 @@ void Player::create_control_services()
     });
 }
 
+void Player::add_jump_callbacks()
+{
+  rcl_duration_t min_forward{0};
+  rcl_duration_t min_backward{1};
+  rcl_jump_threshold_t threshold{false, min_forward, min_backward};
+  clock_jump_handler_ = clock_->create_jump_callback(
+    []() {return;},
+    [this](const rcl_time_jump_t & /*time_jump*/) {seek(clock_->now());},
+    threshold);
+}
 }  // namespace rosbag2_transport

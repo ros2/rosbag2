@@ -21,6 +21,9 @@
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
+
+#include "rcl/time.h"
+
 #include "rclcpp/duration.hpp"
 #include "rclcpp/qos.hpp"
 
@@ -46,6 +49,10 @@ public:
   // Rate in Hz at which to publish to /clock.
   // 0 (or negative) means that no publisher will be created
   double clock_publish_frequency = 0.0;
+  // if using ros time, then depending on external time controller
+  // and disabling all player time controls including keyboard controls and ros service controls
+  // Incompatible with positive clock_publish_frequency
+  bool use_ros_time = false;
 
   // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
   rclcpp::Duration delay = rclcpp::Duration(0, 0);

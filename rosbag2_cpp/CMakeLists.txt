@@ -58,6 +58,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/message_cache_circular_buffer.cpp
   src/rosbag2_cpp/cache/message_cache.cpp
   src/rosbag2_cpp/cache/circular_message_cache.cpp
+  src/rosbag2_cpp/clocks/ros_time_clock.cpp
   src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp

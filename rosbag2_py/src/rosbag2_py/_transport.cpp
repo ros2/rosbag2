@@ -247,6 +247,7 @@ PYBIND11_MODULE(_transport, m) {
     "start_offset",
     &PlayOptions::getStartOffset,
     &PlayOptions::setStartOffset)
+  .def_readwrite("use_ros_time", &PlayOptions::use_ros_time)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")

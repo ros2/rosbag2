@@ -82,6 +82,10 @@ class PlayVerb(VerbExtension):
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
         parser.add_argument(
+            '--use-ros-time', type='store_true',
+            help='Use ROS Time by subscribing to /clock. '
+            'This will disable all player time controls. Incompatible with --clock.')
+        parser.add_argument(
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
         parser.add_argument(
@@ -131,6 +135,7 @@ class PlayVerb(VerbExtension):
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
+        play_options.use_ros_time = args.use_ros_time
 
         player = Player()
         player.play(storage_options, play_options)
