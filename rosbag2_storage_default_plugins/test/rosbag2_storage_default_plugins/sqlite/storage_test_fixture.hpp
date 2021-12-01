@@ -52,7 +52,6 @@ public:
   std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(const std::string & message)
   {
     int message_size = get_buffer_capacity(message);
-    message_size++;  // need to account for terminating null character
     assert(message_size > 0);
 
     auto msg = new rcutils_uint8_array_t;
@@ -78,20 +77,18 @@ public:
     int written_size = write_data_to_serialized_string_message(
       serialized_data->buffer, serialized_data->buffer_capacity, message);
 
-    assert(written_size == message_size - 1);  // terminated null character not counted
     (void) written_size;
     return serialized_data;
   }
 
   std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
-    uint8_t * copied = new uint8_t[serialized_message->buffer_length];
-    auto string_length = serialized_message->buffer_length - 8;
-    memcpy(copied, &serialized_message->buffer[8], string_length);
-    std::string message_content(reinterpret_cast<char *>(copied));
-    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
-    delete[] copied;
-    return message_content;
+    size_t preamble_len = this->get_preamble().size();
+    assert(serialized_message->buffer_length > preamble_len);
+    size_t amount_to_read = serialized_message->buffer_length - preamble_len;
+    return std::string(
+      reinterpret_cast<char *>(&serialized_message->buffer[preamble_len]),
+      amount_to_read);
   }
 
   std::shared_ptr<rosbag2_storage_plugins::SqliteStorage>
