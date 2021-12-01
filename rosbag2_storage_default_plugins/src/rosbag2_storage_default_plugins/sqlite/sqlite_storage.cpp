@@ -258,11 +258,11 @@ void SqliteStorage::write_locked(
         SQLITE_LIMIT_LENGTH,
         -1);
       ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
-        "Message on topic '" << message->topic_name << "' of size '"
-        << message->serialized_data->buffer_length
-        << "' bytes failed to write because it exceeds the maximum size sqlite can store ('"
-        << sqlite_limit << "' bytes): "
-        << exc.what());
+        "Message on topic '" << message->topic_name << "' of size '" <<
+          message->serialized_data->buffer_length <<
+          "' bytes failed to write because it exceeds the maximum size sqlite can store ('" <<
+          sqlite_limit << "' bytes): " <<
+          exc.what());
       return;
     } else {
       // Rethrow.
