@@ -29,30 +29,53 @@ namespace rosbag2_cpp
 namespace bag_events
 {
 
+/**
+ * \brief The types of bag events available for registering callbacks.
+ */
 enum class BagEvent
 {
+  /// The output bag file has been split, starting a new file.
   WRITE_SPLIT,
+  /// Reading of the input bag file has gone over a split, opening the next file.
   READ_SPLIT,
 };
 
+/**
+ * \brief The information structure passed to callbacks for the WRITE_SPLIT and READ_SPLIT events.
+ */
 struct BagSplitInfo
 {
+  /// The URI of the file that was closed.
   std::string closed_file;
+  /// The URI of the file that was opened.
   std::string opened_file;
 };
 
 using BagSplitCallbackType = std::function<void (BagSplitInfo &)>;
 
+/**
+ * \brief Use this structure to register callbacks with Writers.
+ */
 struct WriterEventCallbacks
 {
+  /// The callback to call for the WRITE_SPLIT event.
   BagSplitCallbackType write_split_callback;
 };
 
+/**
+ * \brief Use this structure to register callbacks with Readers.
+ */
 struct ReaderEventCallbacks
 {
+  /// The callback to call for the READ_SPLIT event.
   BagSplitCallbackType read_split_callback;
 };
 
+/**
+ * \brief Base class for event callbacks.
+ *
+ * This class should not be used directly.
+ */
 class BagEventCallbackBase
 {
 public:
@@ -64,6 +87,11 @@ public:
   virtual bool is_type(BagEvent event) const = 0;
 };
 
+/**
+ * \brief Templated class for storing an event callback.
+ *
+ * This class should not be used directly by users.
+ */
 template<typename EventCallbackT>
 class BagEventCallback : public BagEventCallbackBase
 {
@@ -91,9 +119,23 @@ private:
   BagEvent event_;
 };
 
+/**
+ * \brief The class used to manage event callbacks registered with a Writer or Reader.
+ *
+ * Each implementation of the Writer and Reader interfaces should store one instance of this type.
+ * When new callbacks are registered, they should be passed to that instance using \ref
+ * add_event_callback. When an event occurs, the callbacks registered for it can be called by
+ * calling the \ref execute_callbacks method, passing in the event information.
+ */
 class EventCallbackManager
 {
 public:
+  /**
+   * \brief Add an event callback.
+   *
+   * \param callback The callback that should be called for the event.
+   * \param event The event, one of the values of the \ref BagEvent enumeration.
+   */
   template<typename EventCallbackT>
   void add_event_callback(const EventCallbackT & callback, const BagEvent event)
   {
@@ -101,6 +143,12 @@ public:
     callbacks_.push_back(cb);
   }
 
+  /**
+   * \brief Check if a callback is registered for the given event.
+   *
+   * \param event The event, one of the values of the \ref BagEvent enumeration.
+   * \return True if a callback is registered for the event, false otherwise.
+   */
   bool has_callback_for_event(const BagEvent event) const
   {
     for (auto & cb : callbacks_) {
@@ -111,6 +159,14 @@ public:
     return false;
   }
 
+  /**
+   * \brief Execute all callbacks registered for the given event.
+   *
+   * The provided information value is passed to each callback by copy.
+   *
+   * \param event The event, one of the values of the \ref BagEvent enumeration.
+   * \param info The information relevant to the event that has occurred. The type varies by event.
+   */
   void execute_callbacks(const BagEvent event, BagEventCallbackBase::InfoPtr info)
   {
     for (auto & cb : callbacks_) {
