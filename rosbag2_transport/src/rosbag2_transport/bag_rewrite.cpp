@@ -35,6 +35,7 @@ namespace
 /// Find the next chronological message from all opened input bags.
 /// Updates the next_messages queue as necessary.
 /// next_messages is needed because Reader has no "peek" interface, we cannot put a message back.
+/// Returns nullptr when all input bags have been fully read.
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
   const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & next_messages)

@@ -124,7 +124,9 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  if (record_options_.ignore_leaf_topics && is_leaf_topic(topic_name, *node_graph_)) {
+  if (record_options_.ignore_leaf_topics && node_graph_ &&
+    is_leaf_topic(topic_name, *node_graph_))
+  {
     return false;
   }
 

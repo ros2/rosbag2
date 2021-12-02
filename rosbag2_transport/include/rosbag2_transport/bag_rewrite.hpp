@@ -32,6 +32,9 @@ namespace rosbag2_transport
 /// - compress
 /// - serialization format conversion
 ///
+/// Note: If a serialization format is not specified for an output bag's RecordOptions,
+/// any topic going into it will use the serialization format of the last input with that topic.
+///
 /// \param input_options vector of settings to create Readers for bags to read messages from
 /// \param output_bags - full "recording" configuration of the bag(s) to write messages to
 ///   Each output bag will be passed messages from every input bag,

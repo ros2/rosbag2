@@ -14,6 +14,10 @@
 
 #include <gmock/gmock.h>
 
+#include <string>
+#include <vector>
+#include <utility>
+
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
@@ -72,7 +76,7 @@ public:
   const rcpputils::fs::path output_dir_;
   std::vector<rosbag2_storage::StorageOptions> input_bags_;
   std::vector<std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>>
-    output_bags_;
+  output_bags_;
 };
 
 TEST_F(TestRewrite, test_noop_rewrite) {
