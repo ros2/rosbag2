@@ -21,6 +21,7 @@
 
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
 {
@@ -39,6 +40,7 @@ namespace rosbag2_transport
 /// \param output_bags - full "recording" configuration of the bag(s) to write messages to
 ///   Each output bag will be passed messages from every input bag,
 ///   on topics that pass its filtering settings
+ROSBAG2_TRANSPORT_PUBLIC
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
   const std::vector<
