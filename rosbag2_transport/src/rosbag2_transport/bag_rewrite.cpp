@@ -81,6 +81,7 @@ setup_topic_filtering(
   std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>> filtered_outputs;
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, YAML::Node> input_topics_qos_profiles;
+  std::unordered_map<std::string, std::string> input_topics_serialization_format;
 
   for (const auto & input_bag : input_bags) {
     auto bag_topics_and_types = input_bag->get_all_topics_and_types();
@@ -88,6 +89,7 @@ setup_topic_filtering(
       const std::string & topic_name = topic_metadata.name;
       input_topics.try_emplace(topic_name);
       input_topics[topic_name].push_back(topic_metadata.type);
+      input_topics_serialization_format[topic_name] = topic_metadata.serialization_format;
 
       // Gather all offered qos profiles from all inputs
       input_topics_qos_profiles.try_emplace(topic_name);
@@ -108,7 +110,14 @@ setup_topic_filtering(
       rosbag2_storage::TopicMetadata topic_metadata;
       topic_metadata.name = topic_name;
       topic_metadata.type = topic_type;
-      topic_metadata.serialization_format = record_options.rmw_serialization_format;
+
+      // Take source serialization format for the topic if output format is unspecified
+      if (record_options.rmw_serialization_format.empty()) {
+        topic_metadata.serialization_format = input_topics_serialization_format[topic_name];
+      } else {
+        topic_metadata.serialization_format = record_options.rmw_serialization_format;
+      }
+
       std::stringstream qos_profiles;
       qos_profiles << input_topics_qos_profiles[topic_name];
       topic_metadata.offered_qos_profiles = qos_profiles.str();

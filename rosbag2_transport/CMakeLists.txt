@@ -187,6 +187,8 @@ function(create_tests_for_rmw_implementation)
 endfunction()
 
 if(BUILD_TESTING)
+  add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/resources")
+
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_index_cpp REQUIRED)
   find_package(ament_lint_auto REQUIRED)
@@ -206,6 +208,12 @@ if(BUILD_TESTING)
   target_include_directories(test_topic_filter PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
   target_link_libraries(test_topic_filter rosbag2_transport)
+
+  ament_add_gmock(test_rewrite
+    test/rosbag2_transport/test_rewrite.cpp)
+  target_include_directories(test_rewrite PRIVATE include)
+  target_link_libraries(test_rewrite ${PROJECT_NAME})
+  ament_target_dependencies(test_rewrite keyboard_handler rcpputils rosbag2_cpp test_msgs)
 endif()
 
 ament_package()

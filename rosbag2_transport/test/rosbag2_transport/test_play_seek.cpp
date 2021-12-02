@@ -41,9 +41,8 @@ public:
     topic_types_ = std::vector<rosbag2_storage::TopicMetadata>{
       {"topic1", "test_msgs/BasicTypes", rmw_get_serialization_format(), ""}};
 
-    const rcpputils::fs::path current_file_path{__FILE__};
-    const rcpputils::fs::path base = current_file_path.parent_path().parent_path();
-    const rcpputils::fs::path bag_path = base / "resources" / "test_bag_for_seek";
+    const rcpputils::fs::path base{_SRC_RESOURCES_DIR_PATH};
+    const rcpputils::fs::path bag_path = base / "test_bag_for_seek";
 
     storage_options_ = rosbag2_storage::StorageOptions({bag_path.string(), "sqlite3", 0, 0, 0});
     play_options_.read_ahead_queue_size = 2;
