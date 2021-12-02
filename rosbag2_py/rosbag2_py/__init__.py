@@ -42,6 +42,7 @@ with add_dll_directories_from_env('PATH'):
         Info,
     )
     from rosbag2_py._transport import (
+        bag_rewrite,
         Player,
         PlayOptions,
         Recorder,
@@ -52,6 +53,7 @@ with add_dll_directories_from_env('PATH'):
     )
 
 __all__ = [
+    'bag_rewrite',
     'ConverterOptions',
     'get_registered_readers',
     'get_registered_writers',
