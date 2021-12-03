@@ -51,7 +51,7 @@ public:
 
   std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(const std::string & message)
   {
-    int message_size = get_buffer_capacity(message);
+    size_t message_size = get_buffer_capacity(message);
     assert(message_size > 0);
 
     auto msg = new rcutils_uint8_array_t;
@@ -74,7 +74,7 @@ public:
       });
 
     serialized_data->buffer_length = message_size;
-    int written_size = write_data_to_serialized_string_message(
+    size_t written_size = write_data_to_serialized_string_message(
       serialized_data->buffer, serialized_data->buffer_capacity, message);
 
     (void) written_size;
@@ -167,12 +167,12 @@ protected:
     return {0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00};
   }
 
-  int get_buffer_capacity(const std::string & message)
+  size_t get_buffer_capacity(const std::string & message)
   {
     return get_preamble().size() + message.size();
   }
 
-  int write_data_to_serialized_string_message(
+  size_t write_data_to_serialized_string_message(
     uint8_t * buffer, size_t buffer_capacity, const std::string & message)
   {
     size_t remaining_buffer = buffer_capacity;
