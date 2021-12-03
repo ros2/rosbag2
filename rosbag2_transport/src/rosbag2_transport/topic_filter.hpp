@@ -40,7 +40,7 @@ class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 public:
   explicit TopicFilter(
     RecordOptions record_options,
-    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph = nullptr,
     bool allow_unknown_types = false);
   virtual ~TopicFilter();
 
