@@ -52,7 +52,6 @@ public:
   std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(const std::string & message)
   {
     size_t message_size = get_buffer_capacity(message);
-    assert(message_size > 0);
 
     auto msg = new rcutils_uint8_array_t;
     *msg = rcutils_get_zero_initialized_uint8_array();
