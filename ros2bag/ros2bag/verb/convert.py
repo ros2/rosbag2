@@ -42,8 +42,7 @@ class ConvertVerb(VerbExtension):
             if len(input_bag) > 2:
                 raise argparse.ArgumentTypeError(
                     f'--input expects 1 or 2 arguments, {len(input_bag)} provided')
-            storage_options = StorageOptions()
-            storage_options.uri = input_bag[0]
+            storage_options = StorageOptions(uri=input_bag[0])
             if len(input_bag) > 1:
                 storage_options.storage_id = input_bag[1]
             input_options.append(storage_options)
