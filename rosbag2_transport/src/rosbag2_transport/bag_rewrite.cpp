@@ -149,7 +149,7 @@ void perform_rewrite(
   next_messages.resize(input_bags.size(), nullptr);
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_msg;
-  while (next_msg = get_next(input_bags, next_messages)) {
+  while ((next_msg = get_next(input_bags, next_messages))) {
     auto topic_writers = topic_outputs.find(next_msg->topic_name);
     if (topic_writers != topic_outputs.end()) {
       for (auto writer : topic_writers->second) {
