@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -386,8 +387,9 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
     SQLITE_LIMIT_LENGTH,
     -1);
 
-  // Make an arbitrarily new artificial limit that is much smaller, but also never 0 or 1.
-  size_t artificial_limit = ((sqlite_limit % 1000) + 1) * 42;
+  // Artificially lower the limit, make sure it's smaller than the original.
+  size_t artificial_limit = 1000;  // 1KB
+  artificial_limit = std::min(artificial_limit, sqlite_limit);
   sqlite3_limit(
     writable_storage->get_sqlite_database_wrapper().get_database(),
     SQLITE_LIMIT_LENGTH,
