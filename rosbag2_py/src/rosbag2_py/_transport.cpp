@@ -81,7 +81,7 @@ public:
 
   double getStartingTime() const
   {
-    return RCUTILS_NS_TO_S(static_cast<double>(starting_time));
+    return RCUTILS_NS_TO_S(static_cast<double>(this->starting_time));
   }
 
   void setTopicQoSProfileOverrides(const py::dict & overrides)
