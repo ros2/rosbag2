@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -178,6 +179,46 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
   rclcpp::Duration delay_margin(1, 0);
   // Invalid value should result in playing at default delay 0.0
   play_options_.delay = rclcpp::Duration(-5, 0);
+  auto lower_expected_duration = message_time_difference;
+  auto upper_expected_duration = message_time_difference + delay_margin;
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(reader), storage_options_, play_options_);
+
+  auto start = clock.now();
+  player->play();
+  auto replay_time = clock.now() - start;
+
+  EXPECT_THAT(replay_time, Gt(lower_expected_duration));
+  EXPECT_THAT(replay_time, Lt(upper_expected_duration));
+}
+
+TEST_F(PlayerTestFixture, play_respects_starting_time)
+{
+  rclcpp::Duration start_delay(5, 0);
+  rclcpp::Duration delay_margin(1, 0);
+
+  // Start 5 seconds into the bag
+  play_option_.starting_time = INT64_C(5);
+  auto lower_expected_duration = message_time_difference + start_delay;
+  auto upper_expected_duration = message_time_difference + start_delay + delay_margin;
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(reader), storage_options_, play_options);
+
+  auto start = clock.now();
+  player->play();
+  auto replay_time = clock.now() - start;
+
+  EXPECT_THAT(replay_time, Gt(lower_expected_duration));
+  EXPECT_THAT(replay_time, Lt(upper_expected_duration));
+}
+
+TEST_F(PlayerTestFixture, play_ignores_invalid_starting_time)
+{
+  rclcpp::Duration delay_margin(1, 0);
+
+  // Invalid value should result in playing from
+  // metadata starting time - which is 0 seconds here
+  play_options_.starting_time = INT64_C(-5);
   auto lower_expected_duration = message_time_difference;
   auto upper_expected_duration = message_time_difference + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(
