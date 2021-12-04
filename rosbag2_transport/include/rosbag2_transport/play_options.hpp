@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -52,6 +53,9 @@ public:
 
   // Start paused.
   bool start_paused = false;
+
+  // Start time from which the player should play the bag.
+  rcutils_time_point_value_t starting_time = INT64_C(0);
 
   bool disable_keyboard_controls = false;
   // keybindings
