@@ -198,11 +198,11 @@ TEST_F(PlayerTestFixture, play_respects_starting_time)
   rclcpp::Duration delay_margin(1, 0);
 
   // Start 5 seconds into the bag
-  play_option_.starting_time = INT64_C(5);
+  play_options_.starting_time = INT64_C(5);
   auto lower_expected_duration = message_time_difference + start_delay;
   auto upper_expected_duration = message_time_difference + start_delay + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(reader), storage_options_, play_options);
+    std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
   player->play();
