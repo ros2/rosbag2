@@ -74,6 +74,16 @@ public:
     return RCUTILS_NS_TO_S(static_cast<double>(this->delay.nanoseconds()));
   }
 
+  void setStartingTime(double starting_time)
+  {
+    this->starting_time = static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(starting_time));
+  }
+
+  double getStartingTime() const
+  {
+    return RCUTILS_NS_TO_S(static_cast<double>(starting_time));
+  }
+
   void setTopicQoSProfileOverrides(const py::dict & overrides)
   {
     py_dict = overrides;
@@ -233,6 +243,10 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::setDelay)
   .def_readwrite("disable_keyboard_controls", &PlayOptions::disable_keyboard_controls)
   .def_readwrite("start_paused", &PlayOptions::start_paused)
+  .def_property(
+    "starting_time",
+    &PlayOptions::getStartingTime,
+    &PlayOptions::setStartingTime)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
