@@ -386,8 +386,15 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
     SQLITE_LIMIT_LENGTH,
     -1);
 
+  // Make an arbitrarily new artificial limit that is much smaller, but also never 0 or 1.
+  size_t artificial_limit = ((sqlite_limit % 1000) + 1) * 42;
+  sqlite3_limit(
+    writable_storage->get_sqlite_database_wrapper().get_database(),
+    SQLITE_LIMIT_LENGTH,
+    artificial_limit);
+
   // This should produce a warning, but not an exception.
-  std::string msg(sqlite_limit + 1, '\0');
+  std::string msg(artificial_limit + 1, '\0');
   EXPECT_NO_THROW(
   {
     this->write_messages_to_sqlite(
