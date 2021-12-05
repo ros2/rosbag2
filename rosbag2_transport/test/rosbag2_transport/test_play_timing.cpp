@@ -194,7 +194,7 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
 
 TEST_F(PlayerTestFixture, play_respects_starting_time)
 {
-  rclcpp::Duration start_delay(0, 5e8);  // 5e8 ns == 0.5 s
+  rclcpp::Duration start_delay(0, static_cast<uint32_t>(5e8));  // 5e8 ns == 0.5 s
   rclcpp::Duration delay_margin(1, 0);
 
   // Start 5 seconds into the bag
