@@ -191,8 +191,8 @@ void Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  // If a non-default (positive) starting time was
-  // provided, override the starting time from metadata
+  // If a non-default (positive) starting time is provided in PlayOptions,
+  // override the starting time obtained from reader metadata
   if (play_options_.starting_time > INT64_C(0)) {
     starting_time_ = play_options_.starting_time;
   }
