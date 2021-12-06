@@ -34,6 +34,7 @@
 
 #include "rosbag2_transport/qos.hpp"
 
+#include "mock_player.hpp"
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_player.hpp"
@@ -669,7 +670,7 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
   // This tests adding to the underlying prepared_mock_reader via the Reader instance
   reader->add_event_callbacks(callbacks);
 
- auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
   sub_ = std::make_shared<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", messages.size());
