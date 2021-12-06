@@ -55,7 +55,8 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override
   {
-    if (num_read_ > 0 && num_read_ % 5 == 0) {  // "Split" the bag every 5 messages
+    // "Split" the bag every few messages
+    if (num_read_ > 0 && num_read_ % max_messages_per_file_ == 0) {
       auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
       info->closed_file = "BagFile" + std::to_string(file_number_);
       file_number_++;
@@ -118,6 +119,7 @@ private:
   rosbag2_storage::StorageFilter filter_;
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
+  const size_t max_messages_per_file_ = 5;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
