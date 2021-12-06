@@ -686,7 +686,7 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/topic1");
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Ge(5u)));
+  EXPECT_THAT(replayed_test_primitives, SizeIs(messages.size()));
 
   // Confirm that the callback was called and the file names have been sent with the event
   ASSERT_TRUE(callback_called);
