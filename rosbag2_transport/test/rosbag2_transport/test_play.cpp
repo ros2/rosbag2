@@ -635,20 +635,23 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
 
 TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
 {
-  auto primitive_message1 = get_messages_basic_types()[0];
-  primitive_message1->int32_value = 42;
-
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
     {"topic1", "test_msgs/BasicTypes", "", ""},
   };
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic1", 1000, primitive_message1),
-    serialize_test_message("topic1", 1200, primitive_message1),
-    serialize_test_message("topic1", 1500, primitive_message1)};
+  constexpr size_t num_msgs_in_bag = 6;
+  const int64_t start_time_ms = 100;
+  const int64_t message_spacing_ms = 50;
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
+  messages.reserve(num_msgs_in_bag);
+
+  auto primitive_message = get_messages_basic_types()[0];
+  for (size_t i = 0; i < num_msgs_in_bag; i++) {
+    primitive_message->int32_value = static_cast<int32_t>(i + 1);
+    const int64_t timestamp = start_time_ms + message_spacing_ms * static_cast<int64_t>(i);
+    messages.push_back(serialize_test_message("topic1", timestamp, primitive_message));
+  }
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
