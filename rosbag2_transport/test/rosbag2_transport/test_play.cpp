@@ -669,15 +669,17 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
   // This tests adding to the underlying prepared_mock_reader via the Reader instance
   reader->add_event_callbacks(callbacks);
 
-  // Due to a problem related to the subscriber, we play many (6) messages but make the subscriber
-  // node spin only until 5 have arrived. Hence the 5 as `launch_subscriber()` argument.
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 5);
+ auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", messages.size());
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(
+    sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
+
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(reader),
-    storage_options_,
-    play_options_);
   player->play();
 
   await_received_messages.get();
