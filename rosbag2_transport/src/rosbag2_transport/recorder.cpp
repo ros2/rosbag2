@@ -196,7 +196,7 @@ void Recorder::event_publisher_thread_main()
     should_exit = event_publisher_thread_should_exit_;
   }
 
-  RCLCPP_INFO(get_logger(), "Event publisher threaad: Exiting");
+  RCLCPP_INFO(get_logger(), "Event publisher thread: Exiting");
 }
 
 bool Recorder::event_publisher_thread_should_wake()
