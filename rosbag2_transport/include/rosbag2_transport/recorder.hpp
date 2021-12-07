@@ -174,7 +174,7 @@ private:
   rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
-  std::unique_ptr<std::thread> event_publisher_thread_;
+  std::thread event_publisher_thread_;
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();

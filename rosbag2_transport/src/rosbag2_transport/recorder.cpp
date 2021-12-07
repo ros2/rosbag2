@@ -115,8 +115,8 @@ Recorder::~Recorder()
     event_publisher_thread_should_exit_ = true;
   }
   event_publisher_thread_wake_cv_.notify_all();
-  if (event_publisher_thread_->joinable()) {
-    event_publisher_thread_->join();
+  if (event_publisher_thread_.joinable()) {
+    event_publisher_thread_.join();
   }
 }
 
@@ -145,8 +145,7 @@ void Recorder::record()
   }
 
   // Start the thread that will publish events
-  event_publisher_thread_ =
-    std::make_unique<std::thread>([this] {event_publisher_thread_main();});
+  event_publisher_thread_ = std::thread(&Recorder::event_publisher_thread_main, this);
 
   split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
     "events/write_split",
@@ -157,6 +156,7 @@ void Recorder::record()
       {
         std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
         bag_split_info_ = info;
+        write_split_has_occurred_ = true;
       }
       event_publisher_thread_wake_cv_.notify_all();
     };
