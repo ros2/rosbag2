@@ -31,9 +31,11 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
 from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
 
+RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+
 
 def test_sequential_reader():
-    bag_path = str(Path(__file__).parent.parent / 'resources' / 'talker')
+    bag_path = str(RESOURCES_PATH / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     reader = rosbag2_py.SequentialReader()
@@ -81,7 +83,7 @@ def test_sequential_reader():
 
 
 def test_sequential_reader_seek():
-    bag_path = str(Path(__file__).parent.parent / 'resources' / 'talker')
+    bag_path = str(RESOURCES_PATH / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path)
 
     reader = rosbag2_py.SequentialReader()

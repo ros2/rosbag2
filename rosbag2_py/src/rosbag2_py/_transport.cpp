@@ -188,7 +188,9 @@ void bag_rewrite(
     throw std::runtime_error("Output bag config YAML file must have top-level key 'output_bags'");
   }
   if (!bag_nodes.IsSequence()) {
-    throw std::runtime_error("Top-level key 'output_bags' must contain a list.");
+    throw std::runtime_error(
+            "Top-level key 'output_bags' must contain a list of "
+            "StorageOptions/RecordOptions dicts.");
   }
 
   std::vector<

@@ -32,9 +32,9 @@ class ConvertVerb(VerbExtension):
         parser.add_argument(
             '-o', '--output-options',
             type=str, required=True,
-            help='YAML file with options for output bags. Should have one top-level key '
+            help='YAML file with options for output bags. Must have one top-level key '
                  '"output_bags", which contains a sequence of StorageOptions/RecordOptions '
-                 'combined objects. See README.md for some examples.')
+                 'objects. See README.md for some examples.')
 
     def main(self, *, args):
         input_options = []
