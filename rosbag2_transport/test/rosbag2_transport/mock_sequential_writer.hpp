@@ -102,6 +102,11 @@ public:
     return topics_;
   }
 
+  size_t max_messages_per_file() const
+  {
+    return max_messages_per_file_;
+  }
+
 private:
   std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;

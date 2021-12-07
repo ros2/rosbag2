@@ -110,6 +110,11 @@ public:
     topics_ = std::move(topics);
   }
 
+  size_t max_messages_per_file() const
+  {
+    return max_messages_per_file_;
+  }
+
 private:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
   rosbag2_storage::BagMetadata metadata_;
