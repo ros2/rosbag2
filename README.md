@@ -174,6 +174,97 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
+### Converting bags
+
+Rosbag2 provides a tool `ros2 bag convert` (or, `rosbag2_transport::bag_rewrite` in the C++ API).
+This allows the user to take one or more input bags, and write them out to one or more output bags with new settings.
+This flexible feature enables the following features:
+* Merge (multiple input bags, one output bag)
+* Split top-level bags (one input bag, multiple output bags)
+* Split internal files (by time or size - one input bag with fewer internal files, one output bag with more, smaller, internal files)
+* Compress/Decompress (output bag(s) with different compression settings than the input(s))
+* Serialization format conversion
+* ... and more!
+
+Here is an example command:
+
+```
+ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id --output-options output_options.yaml
+```
+
+The `--input` argument may be specified any number of times, and takes 1 or 2 values.
+The first value is the URI of the input bag.
+If a second value is supplied, it specifies the storage implementation of the bag.
+If no storage implementation is specified, rosbag2 will try to determine it automatically from the bag.
+
+The `--output-options` argument must point to the URI of a YAML file specifying the full recording configuration for each bag to output (`StorageOptions` + `RecordOptions`).
+This file must contain a top-level key `output_bags`, which contains a list of these objects.
+
+The only required value in the output bags is `uri` and `storage_id`. All other values are options (however, if no topic selection is specified, this output bag will be empty!).
+
+This example notes all fields that can have an effect, with a comment on the required ones.
+
+```
+output_bags
+- uri: /output/bag1  # required
+  storage_id: sqlite3  # required
+  max_bagfile_size: 0
+  max_bagfile_duration: 0
+  storage_preset_profile: ""
+  storage_config_uri: ""
+  all: false
+  topics: []
+  rmw_serialization_format: ""  # defaults to using the format of the input topic
+  regex: ""
+  exclude: ""
+  compression_mode: ""
+  compression_format: ""
+  compression_queue_size: 1
+  compression_threads: 0
+  include_hidden_topics: false
+```
+
+Example merge:
+
+```
+$ ros2 bag convert -i bag1 -i bag2 -o out.yaml
+
+# out.yaml
+output_bags:
+- uri: merged_bag
+  storage_id: sqlite3
+  all: true
+```
+
+Example split:
+
+```
+$ ros2 bag convert -i bag1 -o out.yaml
+
+# out.yaml
+output_bags:
+- uri: split1
+  storage_id: sqlite3
+  topics: [/topic1, /topic2]
+- uri: split2
+  storage_id: sqlite3
+  topics: [/topic3]
+```
+
+Example compress:
+
+```
+$ ros2 bag convert -i bag1 -o out.yaml
+
+# out.yaml
+output_bags:
+- uri: compressed
+  storage_id: sqlite3
+  all: true
+  compression_mode: file
+  compression_format: zstd
+```
+
 ### Overriding QoS Profiles
 
 When starting a recording or playback workflow, you can pass a YAML file that contains QoS profile settings for a specific topic.

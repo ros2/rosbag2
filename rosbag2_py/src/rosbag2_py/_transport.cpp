@@ -21,6 +21,8 @@
 #include <vector>
 
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/yaml.hpp"
+#include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
@@ -175,6 +177,32 @@ public:
   }
 };
 
+// Simple wrapper to read the output config YAML into structs
+void bag_rewrite(
+  const std::vector<rosbag2_storage::StorageOptions> & input_options,
+  std::string output_config_file)
+{
+  YAML::Node yaml_file = YAML::LoadFile(output_config_file);
+  auto bag_nodes = yaml_file["output_bags"];
+  if (!bag_nodes) {
+    throw std::runtime_error("Output bag config YAML file must have top-level key 'output_bags'");
+  }
+  if (!bag_nodes.IsSequence()) {
+    throw std::runtime_error(
+            "Top-level key 'output_bags' must contain a list of "
+            "StorageOptions/RecordOptions dicts.");
+  }
+
+  std::vector<
+    std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>> output_options;
+  for (const auto & bag_node : bag_nodes) {
+    auto storage_options = bag_node.as<rosbag2_storage::StorageOptions>();
+    auto record_options = bag_node.as<rosbag2_transport::RecordOptions>();
+    output_options.push_back(std::make_pair(storage_options, record_options));
+  }
+  rosbag2_transport::bag_rewrite(input_options, output_options);
+}
+
 }  // namespace rosbag2_py
 
 PYBIND11_MODULE(_transport, m) {
@@ -240,4 +268,9 @@ PYBIND11_MODULE(_transport, m) {
   .def("record", &rosbag2_py::Recorder::record)
   .def("cancel", &rosbag2_py::Recorder::cancel)
   ;
+
+  m.def(
+    "bag_rewrite",
+    &rosbag2_py::bag_rewrite,
+    "Given one or more input bags, output one or more bags with new settings.");
 }
