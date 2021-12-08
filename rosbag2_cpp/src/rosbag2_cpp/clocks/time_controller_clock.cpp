@@ -251,4 +251,12 @@ void TimeControllerClock::jump(rclcpp::Time ros_time)
   jump(ros_time.nanoseconds());
 }
 
+rclcpp::JumpHandler::SharedPtr TimeControllerClock::create_jump_callback(
+  rclcpp::JumpHandler::pre_callback_t /* pre_callback */,
+  rclcpp::JumpHandler::post_callback_t /* post_callback */,
+  const rcl_jump_threshold_t & /* threshold */)
+{
+  return nullptr;
+}
+
 }  // namespace rosbag2_cpp

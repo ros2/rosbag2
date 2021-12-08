@@ -126,16 +126,15 @@ public:
   ROSBAG2_CPP_PUBLIC
   void jump(rclcpp::Time ros_time) override;
 
-  /// Since a jump can only occur via a `jump` call by the owner of this Clock, jump callbacks
-  /// are not handled here, they are a no-op. It is expected that the caller handles jumps
-  /// in their calling code.
+  /// Since a jump can only occur via a `jump` call by the owner of this Clock,
+  /// jump callbacks are not handled in this clock.
+  /// It is expected that the caller handles jumps in their calling code.
+  /// \return nullptr
+  ROSBAG2_CPP_PUBLIC
   rclcpp::JumpHandler::SharedPtr create_jump_callback(
     rclcpp::JumpHandler::pre_callback_t pre_callback,
     rclcpp::JumpHandler::post_callback_t post_callback,
-    const rcl_jump_threshold_t & threshold) override
-  {
-    return std::make_shared<rclcpp::JumpHandler>(pre_callback, post_callback, threshold);
-  }
+    const rcl_jump_threshold_t & threshold) override;
 
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;
