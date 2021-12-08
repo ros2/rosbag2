@@ -54,8 +54,8 @@ public:
   // Start paused.
   bool start_paused = false;
 
-  // Start time from which the player should play the bag.
-  rcutils_time_point_value_t starting_time = INT64_C(0);
+  // Time to start playback as an offset from the beginning of the bag.
+  rcutils_time_point_value_t start_offset = INT64_C(0);
 
   bool disable_keyboard_controls = false;
   // keybindings

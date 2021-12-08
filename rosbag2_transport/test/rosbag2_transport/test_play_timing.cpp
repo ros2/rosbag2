@@ -192,14 +192,14 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
   EXPECT_THAT(replay_time, Lt(upper_expected_duration));
 }
 
-TEST_F(PlayerTestFixture, play_respects_starting_time)
+TEST_F(PlayerTestFixture, play_respects_start_offset)
 {
   rclcpp::Duration start_delay(0, static_cast<uint32_t>(5e8));  // 5e8 ns == 0.5 s
   rclcpp::Duration delay_margin(1, 0);
 
   // Start 0.5 seconds into the bag
-  play_options_.starting_time = static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(0.5));
-  // Subtract the delay since we've seeked further into the bag
+  play_options_.start_offset = static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(0.5));
+  // Subtract the delay since we've sought further into the bag
   auto lower_expected_duration = message_time_difference - start_delay;
   auto upper_expected_duration = message_time_difference - start_delay + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(
@@ -213,13 +213,12 @@ TEST_F(PlayerTestFixture, play_respects_starting_time)
   EXPECT_THAT(replay_time, Lt(upper_expected_duration));
 }
 
-TEST_F(PlayerTestFixture, play_ignores_invalid_starting_time)
+TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
 {
   rclcpp::Duration delay_margin(1, 0);
 
-  // Invalid value should result in playing from
-  // metadata starting time - which is 0 seconds here
-  play_options_.starting_time = INT64_C(-5);
+  // Player should ignore an invalid (negative) start offset
+  play_options_.start_offset = INT64_C(-5);
   auto lower_expected_duration = message_time_difference;
   auto upper_expected_duration = message_time_difference + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(

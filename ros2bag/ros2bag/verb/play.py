@@ -130,7 +130,7 @@ class PlayVerb(VerbExtension):
         play_options.delay = args.delay
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
-        play_options.starting_time = args.start_time
+        play_options.start_offset = args.start_time
 
         player = Player()
         player.play(storage_options, play_options)
