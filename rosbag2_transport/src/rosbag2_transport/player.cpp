@@ -144,7 +144,7 @@ Player::Player(
       metadata.starting_time.time_since_epoch()).count();
     // If a non-default (positive) starting time offset is provided in PlayOptions,
     // then add the offset to the starting time obtained from reader metadata
-    if (play_options_.start_offset < INT64_C(0)) {
+    if (play_options_.start_offset < 0) {
       RCLCPP_WARN_STREAM(
         get_logger(),
         "Invalid start offset value: " <<

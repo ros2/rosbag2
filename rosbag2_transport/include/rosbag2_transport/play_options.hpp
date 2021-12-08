@@ -16,7 +16,6 @@
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
 #include <cstddef>
-#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -55,7 +54,7 @@ public:
   bool start_paused = false;
 
   // Time to start playback as an offset from the beginning of the bag.
-  rcutils_time_point_value_t start_offset = INT64_C(0);
+  rcutils_time_point_value_t start_offset = 0;
 
   bool disable_keyboard_controls = false;
   // keybindings

@@ -15,7 +15,6 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -194,7 +193,7 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
 
 TEST_F(PlayerTestFixture, play_respects_start_offset)
 {
-  rclcpp::Duration start_delay(0, static_cast<uint32_t>(5e8));  // 5e8 ns == 0.5 s
+  rclcpp::Duration start_delay(0, static_cast<uint32_t>(RCUTILS_S_TO_NS(0.5)));
   rclcpp::Duration delay_margin(1, 0);
 
   // Start 0.5 seconds into the bag
@@ -218,7 +217,7 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
   rclcpp::Duration delay_margin(1, 0);
 
   // Player should ignore an invalid (negative) start offset
-  play_options_.start_offset = INT64_C(-5);
+  play_options_.start_offset = -5;
   auto lower_expected_duration = message_time_difference;
   auto upper_expected_duration = message_time_difference + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(
