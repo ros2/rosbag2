@@ -206,10 +206,10 @@ TEST_F(PlayerTestFixture, play_respects_start_offset)
 
   auto start = clock.now();
   player->play();
-  auto replay_time = clock.now() - start;
+  auto replay_duration = clock.now() - start;
 
-  EXPECT_THAT(replay_time, Gt(lower_expected_duration));
-  EXPECT_THAT(replay_time, Lt(upper_expected_duration));
+  EXPECT_THAT(replay_duration, Gt(lower_expected_duration));
+  EXPECT_THAT(replay_duration, Lt(upper_expected_duration));
 }
 
 TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
@@ -225,8 +225,8 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
 
   auto start = clock.now();
   player->play();
-  auto replay_time = clock.now() - start;
+  auto replay_duration = clock.now() - start;
 
-  EXPECT_THAT(replay_time, Gt(lower_expected_duration));
-  EXPECT_THAT(replay_time, Lt(upper_expected_duration));
+  EXPECT_THAT(replay_duration, Gt(lower_expected_duration));
+  EXPECT_THAT(replay_duration, Lt(upper_expected_duration));
 }
