@@ -53,6 +53,9 @@ public:
   // Start paused.
   bool start_paused = false;
 
+  // Time to start playback as an offset from the beginning of the bag.
+  rcutils_time_point_value_t start_offset = 0;
+
   bool disable_keyboard_controls = false;
   // keybindings
   KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;

@@ -142,6 +142,17 @@ Player::Player(
     auto metadata = reader_->get_metadata();
     starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
       metadata.starting_time.time_since_epoch()).count();
+    // If a non-default (positive) starting time offset is provided in PlayOptions,
+    // then add the offset to the starting time obtained from reader metadata
+    if (play_options_.start_offset < 0) {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Invalid start offset value: " <<
+          RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
+          ". Negative start offset ignored.");
+    } else {
+      starting_time_ += play_options_.start_offset;
+    }
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
       std::chrono::milliseconds{100}, play_options_.start_paused);
