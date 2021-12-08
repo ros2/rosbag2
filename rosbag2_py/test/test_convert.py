@@ -89,7 +89,7 @@ output_bags:
   topics: [a_empty]
 - uri: {output_uri_2}
   storage_id: sqlite3
-  exclude: "*empty*"
+  exclude: ".*empty.*"
 """
         with output_options_path.open('w') as f:
             f.write(output_options_content)
