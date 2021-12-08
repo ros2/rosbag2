@@ -45,7 +45,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::init<
       std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool>(),
     pybind11::arg("uri"),
-    pybind11::arg("storage_id") = "",
+    pybind11::arg("storage_id"),
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
     pybind11::arg("max_cache_size") = 0,

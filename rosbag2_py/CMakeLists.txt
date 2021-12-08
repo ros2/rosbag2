@@ -148,48 +148,38 @@ if(BUILD_TESTING)
   if(WIN32 AND "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(_PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE_DEBUG}")
   endif()
-  set(append_env_vars "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}")
-  set(set_env_vars "ROSBAG2_PY_TEST_RESOURCES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test/resources")
+  set(other_environment_vars)
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Work around a rtti bug when using class_loader from a
     # python extension built with libc++.
-    set(set_env_vars "${set_env_vars} ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
+    set(other_environment_vars "ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
   endif()
-
-  # message(FATAL_ERROR "HELP I AM THE PATH ${CMAKE_CURRENT_SOURCE_DIR}")
   ament_add_pytest_test(test_sequential_reader_py "test/test_sequential_reader.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
+    APPEND_ENV
+      PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+      ${other_environment_vars}
   )
   ament_add_pytest_test(test_sequential_reader_multiple_files_py "test/test_sequential_reader_multiple_files.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
+    APPEND_ENV
+      PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+      ${other_environment_vars}
   )
   ament_add_pytest_test(test_sequential_writer_py
     "test/test_sequential_writer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
   ament_add_pytest_test(test_transport_py
     "test/test_transport.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
   ament_add_pytest_test(test_reindexer_py
     "test/test_reindexer.py"
     PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
-  )
-  ament_add_pytest_test(test_convert_py
-    "test/test_convert.py"
-    PYTHON_EXECUTABLE "${_PYTHON_EXECUTABLE}"
-    APPEND_ENV "${append_env_vars}"
-    ENV "${set_env_vars}"
+    APPEND_ENV "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}" ${other_environment_vars}
   )
 endif()
 

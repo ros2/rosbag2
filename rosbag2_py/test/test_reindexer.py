@@ -34,11 +34,9 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
 from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
 
-RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
-
 
 def test_reindexer_multiple_files():
-    bag_path = RESOURCES_PATH / 'reindex_test_bags' / 'multiple_files'
+    bag_path = Path(__file__).parent.parent / 'resources' / 'reindex_test_bags' / 'multiple_files'
     result_path = bag_path / 'metadata.yaml'
 
     storage_options, converter_options = get_rosbag_options(str(bag_path))
