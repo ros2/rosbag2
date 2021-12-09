@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 
+#include "rclcpp/clock.hpp"
 #include "rclcpp/time.hpp"
 #include "rcutils/time.h"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -36,76 +37,6 @@ namespace rosbag2_cpp
 class PlayerClock
 {
 public:
-  class JumpHandler final
-  {
-public:
-    using SharedPtr = std::shared_ptr<JumpHandler>;
-    using pre_callback_t = std::function<void ()>;
-    using post_callback_t = std::function<void (const rcl_time_jump_t &)>;
-
-    JumpHandler() = delete;
-    JumpHandler(const JumpHandler &) = delete;
-    const JumpHandler & operator=(const JumpHandler &) = delete;
-
-    /**
-     * \brief Creates JumpHandler object with callbacks for jump operation.
-     * \param pre_callback Pre-time jump callback. Must be non-throwing.
-     * \param post_callback Post-time jump callback. Must be non-throwing.
-     * \param threshold Callbacks will be triggered if the time jump is greater then the threshold.
-     * \note These callback functions must remain valid as long as the returned shared pointer is
-     * valid.
-     * \return Shared pointer to the newly created JumpHandler object.
-     * \throws std::bad_alloc if the allocation of the JumpHandler fails.
-     * \throws std::invalid argument if any of the provided callbacks are nullptr.
-     */
-    ROSBAG2_CPP_PUBLIC
-    static SharedPtr create(
-      const pre_callback_t & pre_callback, const post_callback_t & post_callback,
-      const rcl_jump_threshold_t & threshold)
-    {
-      JumpHandler::SharedPtr handler(new JumpHandler(pre_callback, post_callback, threshold));
-      if (handler == nullptr) {
-        throw std::bad_alloc{};
-      }
-      return handler;
-    }
-
-    /**
-     * \brief Equal operator for PlayerClock::JumpHandler class.
-     * \param right Right side operand for equal comparison operation.
-     * \return true if internal id's of two JumpHandlers match, otherwise false.
-     */
-    ROSBAG2_CPP_PUBLIC
-    bool operator==(const PlayerClock::JumpHandler & right) const
-    {
-      return id == right.id;
-    }
-
-    const pre_callback_t pre_callback;
-    const post_callback_t post_callback;
-    const rcl_jump_threshold_t notice_threshold;
-
-private:
-    uint64_t id;
-
-    JumpHandler(
-      const pre_callback_t & pre_callback, const post_callback_t & post_callback,
-      const rcl_jump_threshold_t & threshold)
-    : pre_callback(pre_callback), post_callback(post_callback), notice_threshold(threshold)
-    {
-      if (pre_callback == nullptr && post_callback == nullptr) {
-        throw std::invalid_argument("At least one callback for JumpHandler should be not nullptr");
-      }
-      id = create_id();
-    }
-
-    static uint64_t create_id()
-    {
-      static std::atomic<uint64_t> id_count{0};
-      return id_count.fetch_add(1, std::memory_order_relaxed) + 1;
-    }
-  };
-
   /**
    * Type representing an arbitrary steady time, used to measure real-time durations
    * This type is never exposed by the PlayerClock - it is only used as input to the PlayerClock.
@@ -186,25 +117,13 @@ private:
   ROSBAG2_CPP_PUBLIC
   virtual void jump(rclcpp::Time time) = 0;
 
-  /**
-   * \brief Add callbacks to be called when a time jump exceeds a threshold.
-   * \details Callbacks specified in JumpHandler object will be called in two cases:
-   *   1. use_sim_time is true: if the external time source jumps back in time, or forward
-   * farther than the threshold.
-   *   2. use_sim_time is false: if jump(time_point) is called and time jumps back or forward
-   * farther than the threshold.
-   * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
-   * \throws std::invalid argument if jump threshold has invalid value.
-   */
+  /// Add a callback to invoke if the jump threshold is exceeded.
+  /// \sa rclcpp::Clock::create_jump_callback
   ROSBAG2_CPP_PUBLIC
-  virtual void add_jump_calbacks(PlayerClock::JumpHandler::SharedPtr handler) = 0;
-
-  /**
-   * \brief remove jump callbacks from processing list.
-   * \param handler Shared pointer to the JumpHandler object returned from JumpHandler::create(..)
-   */
-  ROSBAG2_CPP_PUBLIC
-  virtual void remove_jump_callbacks(PlayerClock::JumpHandler::SharedPtr handler) = 0;
+  virtual rclcpp::JumpHandler::SharedPtr create_jump_callback(
+    rclcpp::JumpHandler::pre_callback_t pre_callback,
+    rclcpp::JumpHandler::post_callback_t post_callback,
+    const rcl_jump_threshold_t & threshold) = 0;
 };
 
 }  // namespace rosbag2_cpp
