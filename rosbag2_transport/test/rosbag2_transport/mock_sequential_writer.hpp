@@ -73,7 +73,8 @@ public:
     return true;
   }
 
-  void add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks)
+  void
+  add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks) override
   {
     if (callbacks.write_split_callback) {
       callback_manager_.add_event_callback(

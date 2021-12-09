@@ -93,7 +93,8 @@ public:
     num_read_ = 0;
   }
 
-  void add_event_callbacks(const rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
+  void
+  add_event_callbacks(const rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks) override
   {
     if (callbacks.read_split_callback) {
       callback_manager_.add_event_callback(
