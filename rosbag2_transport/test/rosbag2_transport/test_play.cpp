@@ -640,7 +640,9 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
     {"topic1", "test_msgs/BasicTypes", "", ""},
   };
 
-  constexpr size_t num_msgs_in_bag = 6;
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+
+  const size_t num_msgs_in_bag = prepared_mock_reader->max_messages_per_file() + 1;
   const int64_t start_time_ms = 100;
   const int64_t message_spacing_ms = 50;
 
@@ -654,7 +656,6 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
     messages.push_back(serialize_test_message("topic1", timestamp, primitive_message));
   }
 
-  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 

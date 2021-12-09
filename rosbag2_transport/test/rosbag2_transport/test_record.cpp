@@ -313,9 +313,6 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   auto string_message = get_messages_strings()[1];
   std::string string_topic = "/string_topic";
 
-  rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(string_topic, string_message, 6);
-
   bool callback_called = false;
   std::string closed_file, opened_file;
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
@@ -335,15 +332,17 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  pub_manager.run_publishers();
-
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 6;
+  const size_t expected_messages = mock_writer.max_messages_per_file() + 1;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(string_topic, string_message, expected_messages);
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+  pub_manager.run_publishers();
+
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
