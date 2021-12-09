@@ -557,6 +557,7 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   }
 
   ASSERT_TRUE(callback_called);
-  EXPECT_EQ(closed_file, storage_options_.uri + '/' + storage_options_.uri + "_0");
+  auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
+  EXPECT_EQ(closed_file, expected_closed.string());
   EXPECT_EQ(opened_file, fake_storage_uri_);
 }
