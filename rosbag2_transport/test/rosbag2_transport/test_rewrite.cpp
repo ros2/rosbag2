@@ -140,7 +140,7 @@ TEST_F(TestRewrite, test_filter_split) {
     storage_opts.storage_id = "sqlite3";
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all = true;
-    rec_opts.exclude = ".*basic.*";
+    rec_opts.exclude = "basic";
     output_bags_.push_back({storage_opts, rec_opts});
   }
   {

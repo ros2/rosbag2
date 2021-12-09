@@ -135,7 +135,7 @@ bool TopicFilter::take_topic(
   }
 
   std::regex exclude_regex(record_options_.exclude);
-  if (std::regex_match(topic_name, exclude_regex)) {
+  if (!record_options_.exclude.empty() && std::regex_search(topic_name, exclude_regex)) {
     return false;
   }
 
@@ -143,7 +143,7 @@ bool TopicFilter::take_topic(
   if (
     !record_options_.all &&  // All takes precedence over regex
     !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
-    !std::regex_match(topic_name, include_regex))
+    !std::regex_search(topic_name, include_regex))
   {
     return false;
   }

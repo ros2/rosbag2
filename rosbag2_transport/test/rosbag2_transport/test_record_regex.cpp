@@ -39,7 +39,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
 {
   auto test_string_messages = get_messages_strings();
   auto test_array_messages = get_messages_arrays();
-  std::string regex = "/aa";
+  std::string regex = "^/aa$";
 
   // matching topic
   std::string v1 = "/aa";

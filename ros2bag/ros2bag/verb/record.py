@@ -46,19 +46,25 @@ class RecordVerb(VerbExtension):
             if f.endswith(converter_suffix)
         }
 
+        # Topic filter arguments
+        parser.add_argument(
+            'topics', nargs='*', default=None, help='List of topics to record.')
         parser.add_argument(
             '-a', '--all', action='store_true',
-            help='recording all topics, required if no topics '
-            'are listed explicitly or through a regex')
+            help='Record all topics. Required if no explicit topic list or regex filters.')
         parser.add_argument(
-            'topics', nargs='*', default=None, help='topics to be recorded')
+            '-e', '--regex', default='',
+            help='Record only topics containing provided regular expression. '
+            'Overrides --all, applies on top of topics list.')
         parser.add_argument(
-            '-e', '--regex', default='', help='recording only topics '
-            'matching provided regular expression')
+            '-x', '--exclude', default='',
+            help='Exclude topics containing provided regular expression. '
+            'Works on top of --all, --regex, or topics list.')
         parser.add_argument(
-            '-x', '--exclude', default='', help='exclude topics '
-            'matching provided regular expression. Works with -a and -e, '
-            'subtracting excluded topics')
+            '--include-hidden-topics', action='store_true',
+            help='Discover and record hidden topics as well. '
+            'These are topics used internally by ROS 2 implementation.')
+        # The rest. TODO(emersonknapp) organize these better by category
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
@@ -124,10 +130,6 @@ class RecordVerb(VerbExtension):
             '--snapshot-mode', action='store_true',
             help='Enable snapshot mode. Messages will not be written to the bagfile until '
                  'the "/rosbag2_recorder/snapshot" service is called.'
-        )
-        parser.add_argument(
-            '--include-hidden-topics', action='store_true',
-            help='record also hidden topics.'
         )
         parser.add_argument(
             '--ignore-leaf-topics', action='store_true',
