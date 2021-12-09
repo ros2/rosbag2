@@ -40,10 +40,6 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   const size_t num_messages = 3;
   const int64_t time_stamp_in_milliseconds = 700;
   const size_t expected_number_of_messages = num_messages * 2;
-  const size_t read_ahead_queue_size = 1000;
-  const float rate = 1.0;
-  const bool loop_playback = false;
-  double clock_publish_frequency = 0.0;
   const rclcpp::Duration delay(1, 0);
 
   auto primitive_message1 = get_messages_basic_types()[0];
@@ -66,9 +62,9 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport::PlayOptions play_options = {
-    read_ahead_queue_size, "", rate, {}, {}, loop_playback, {},
-    clock_publish_frequency, delay};
+  rosbag2_transport::PlayOptions play_options;
+  play_options.delay = delay;
+
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options);
@@ -100,10 +96,6 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   const size_t num_messages = 3;
   const int64_t time_stamp_in_milliseconds = 700;
   const size_t expected_number_of_messages = num_messages * 3;
-  const size_t read_ahead_queue_size = 1000;
-  const float rate = 1.0;
-  const bool loop_playback = true;
-  const double clock_publish_frequency = 0.0;
   const rclcpp::Duration delay(1, 0);
 
   auto primitive_message1 = get_messages_basic_types()[0];
@@ -126,8 +118,9 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  rosbag2_transport::PlayOptions play_options{read_ahead_queue_size, "", rate, {}, {},
-    loop_playback, {}, clock_publish_frequency, delay};
+  rosbag2_transport::PlayOptions play_options;
+  play_options.loop = true;
+  play_options.delay = delay;
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options);
