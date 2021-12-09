@@ -41,7 +41,8 @@ public:
   ROSBAG2_CPP_PUBLIC
   rcutils_time_point_value_t now() const override;
 
-  /// Try to sleep (non-busy) the current thread until the provided time is reached according to /clock
+  /// Try to sleep (non-busy) the current thread until the provided time is reached,
+  /// according to /clock
   /// \return true if time has been reached, false if it was not successfully reached
   ROSBAG2_CPP_PUBLIC
   bool sleep_until(rcutils_time_point_value_t until) override;
