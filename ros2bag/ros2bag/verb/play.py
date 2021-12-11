@@ -82,7 +82,7 @@ class PlayVerb(VerbExtension):
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
         parser.add_argument(
-            '--use-ros-time', type='store_true',
+            '--use-ros-time', action='store_true',
             help='Use ROS Time by subscribing to /clock. '
             'This will disable all player time controls. Incompatible with --clock.')
         parser.add_argument(

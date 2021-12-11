@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "rclcpp/clock.hpp"
+#include "rclcpp/node.hpp"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
 
@@ -32,7 +33,7 @@ class RosTimeClock : public PlayerClock
 {
 public:
   ROSBAG2_CPP_PUBLIC
-  RosTimeClock();
+  RosTimeClock(rclcpp::Clock::SharedPtr clock);
 
   ROSBAG2_CPP_PUBLIC
   virtual ~RosTimeClock();
@@ -96,7 +97,7 @@ public:
     const rcl_jump_threshold_t & threshold) override;
 
 private:
-  std::unique_ptr<rclcpp::Clock> clock_;
+  std::shared_ptr<rclcpp::Clock> clock_;
 };
 }  // namespace rosbag2_cpp
 

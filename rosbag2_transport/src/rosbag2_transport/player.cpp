@@ -157,7 +157,8 @@ Player::Player(
     }
     // pick the right clock
     if (play_options_.use_ros_time) {
-      clock_ = std::make_unique<rosbag2_cpp::RosTimeClock>();
+      set_parameter(rclcpp::Parameter("use_sim_time", true));
+      clock_ = std::make_unique<rosbag2_cpp::RosTimeClock>(get_clock());
     } else {
       clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
         starting_time_, std::chrono::steady_clock::now,
@@ -458,7 +459,13 @@ void Player::prepare_publishers()
   reader_->set_filter(storage_filter);
 
   // Create /clock publisher
-  if (play_options_.clock_publish_frequency > 0.f) {
+  bool do_clock_publish = play_options_.clock_publish_frequency > 0.f;
+  if (play_options_.use_ros_time && do_clock_publish) {
+    RCLCPP_WARN(
+      get_logger(),
+      "Requested use-ros-time and clock publishing. "
+      "These are not mutually compatible, will not publish /clock.");
+  } else if (play_options_.clock_publish_frequency > 0.f) {
     const auto publish_period = std::chrono::nanoseconds(
       static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
     // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
@@ -641,7 +648,7 @@ void Player::create_control_services()
 void Player::add_jump_callbacks()
 {
   rcl_duration_t min_forward{0};
-  rcl_duration_t min_backward{1};
+  rcl_duration_t min_backward{-1};
   rcl_jump_threshold_t threshold{false, min_forward, min_backward};
   clock_jump_handler_ = clock_->create_jump_callback(
     []() {return;},

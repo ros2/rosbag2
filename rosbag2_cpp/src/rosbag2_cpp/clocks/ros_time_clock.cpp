@@ -21,13 +21,15 @@
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rosbag2_cpp/clocks/ros_time_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
+#include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
 {
 
-RosTimeClock::RosTimeClock()
-: clock_(std::make_unique<rclcpp::Clock>(RCL_ROS_TIME))
-{}
+RosTimeClock::RosTimeClock(rclcpp::Clock::SharedPtr clock)
+: clock_(clock)
+{
+}
 
 RosTimeClock::~RosTimeClock()
 {}
@@ -39,12 +41,39 @@ rcutils_time_point_value_t RosTimeClock::now() const
 
 bool RosTimeClock::sleep_until(rcutils_time_point_value_t until)
 {
-  return sleep_until(rclcpp::Time(until));
+  return sleep_until(rclcpp::Time(until, RCL_ROS_TIME));
 }
 
 bool RosTimeClock::sleep_until(rclcpp::Time until)
 {
-  return clock_->sleep_until(until);
+  std::mutex mutex;
+  std::condition_variable cv;
+  bool time_source_changed;
+
+  // Watch the clock for any time change at all.
+  rcl_jump_threshold_t thresh;
+  thresh.on_clock_change = true;
+  thresh.min_backward.nanoseconds = -1;
+  thresh.min_forward.nanoseconds = 1;
+  auto clock_handler = create_jump_callback(
+    nullptr,
+    [&cv, &time_source_changed](const rcl_time_jump_t & jump) {
+      if (jump.clock_change != RCL_ROS_TIME_NO_CHANGE) {
+        time_source_changed = true;
+      }
+      cv.notify_all();
+    },
+    thresh);
+
+  // Wake up periodically so that control could be given back to the program if desired.
+  std::unique_lock lock(mutex);
+  ROSBAG2_CPP_LOG_WARN("Sleeping until %ld", until.nanoseconds());
+  while (clock_->now() < until && rclcpp::contexts::get_global_default_context()->is_valid()) {
+    cv.wait_for(lock, std::chrono::seconds(1));
+    ROSBAG2_CPP_LOG_WARN("Sleepies done clock time %ld", clock_->now().nanoseconds());
+  }
+
+  return clock_->now()  >= until;
 }
 
 rclcpp::JumpHandler::SharedPtr RosTimeClock::create_jump_callback(
