@@ -71,6 +71,9 @@ public:
 
   ~CacheConsumer();
 
+  /// \brief start inner consumer thread if it hasn't been started yet
+  void start();
+
   /// shut down the consumer thread
   void close();
 

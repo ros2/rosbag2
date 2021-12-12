@@ -257,6 +257,11 @@ void SequentialWriter::switch_to_next_storage()
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }
+
+  if (use_cache_) {
+    // restart consumer thread for cache
+    cache_consumer_->start();
+  }
 }
 
 void SequentialWriter::split_bagfile()
@@ -347,8 +352,7 @@ bool SequentialWriter::should_split_bagfile() const
   if (storage_options_.max_bagfile_size !=
     rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
   {
-    should_split = should_split ||
-      (storage_->get_bagfile_size() > storage_options_.max_bagfile_size);
+    should_split = (storage_->get_bagfile_size() >= storage_options_.max_bagfile_size);
   }
 
   // Splitting by time
