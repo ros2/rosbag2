@@ -82,6 +82,9 @@ public:
   using SharedPtr = std::shared_ptr<BagEventCallbackBase>;
   using InfoPtr = std::shared_ptr<void>;
 
+  virtual ~BagEventCallbackBase()
+  {}
+
   virtual void execute(InfoPtr & info) = 0;
 
   virtual bool is_type(BagEvent event) const = 0;
@@ -99,6 +102,9 @@ public:
   BagEventCallback(const EventCallbackT & callback, BagEvent event)
   : callback_(callback),
     event_(event)
+  {}
+
+  virtual ~BagEventCallback()
   {}
 
   void execute(InfoPtr & info) override
