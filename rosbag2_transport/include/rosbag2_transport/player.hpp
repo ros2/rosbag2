@@ -180,8 +180,8 @@ private:
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::mutex skip_message_in_main_play_loop_mutex_;
-  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY
-    (skip_message_in_main_play_loop_mutex_) = false;
+  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
+    skip_message_in_main_play_loop_mutex_) = false;
 
   rcutils_time_point_value_t starting_time_;
 
