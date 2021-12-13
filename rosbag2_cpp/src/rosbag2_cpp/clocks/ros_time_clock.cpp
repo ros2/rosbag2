@@ -68,12 +68,15 @@ bool RosTimeClock::sleep_until(rclcpp::Time until)
   // Wake up periodically so that control could be given back to the program if desired.
   std::unique_lock lock(mutex);
   ROSBAG2_CPP_LOG_WARN("Sleeping until %ld", until.nanoseconds());
-  while (clock_->now() < until && rclcpp::contexts::get_global_default_context()->is_valid()) {
-    cv.wait_for(lock, std::chrono::seconds(1));
-    ROSBAG2_CPP_LOG_WARN("Sleepies done clock time %ld", clock_->now().nanoseconds());
+  while (rclcpp::ok() && clock_->now() < until) {
+    cv.wait_for(lock, std::chrono::milliseconds(10));
+    ROSBAG2_CPP_LOG_WARN("Done one sleep, clock time is now %ld", clock_->now().nanoseconds());
+  }
+  if (!rclcpp::ok()) {
+    return false;
   }
 
-  return clock_->now()  >= until;
+  return clock_->now() >= until;
 }
 
 rclcpp::JumpHandler::SharedPtr RosTimeClock::create_jump_callback(

@@ -103,19 +103,15 @@ public:
   virtual bool is_paused() const = 0;
 
   /**
-   * \brief Change the current ROS time to an arbitrary time.
+   * \brief Change the internal offset used to calculate "now".
+   * Each clock implementation has an underlying source of truth for time, and maintains
+   * some offset to associate that with a bag time. 
    * \note This will wake any waiting `sleep_until` and trigger any registered JumpHandler
    * callbacks.
    * \param time_point Time point in ROS playback timeline.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void jump(rcutils_time_point_value_t time_point) = 0;
-
-  /**
-   * \sa jump
-   */
-  ROSBAG2_CPP_PUBLIC
-  virtual void jump(rclcpp::Time time) = 0;
+  virtual void override_offset(rclcpp::Time time) = 0;
 
   /// Add a callback to invoke if the jump threshold is exceeded.
   /// \sa rclcpp::Clock::create_jump_callback

@@ -111,20 +111,12 @@ public:
 
   /**
    * Change the current ROS time to an arbitrary time.
-   * \note This will wake any waiting `sleep_until` and trigger any registered JumpHandler
-   * callbacks.
-   * \note The Player should not use this method while its queues are active ("during playback")
-   * as an arbitrary time jump can make those queues, and the state of the Reader/Storage, invalid
-   * The current Player implementation should only use this method in between calls to `play`,
-   * to reset the initial time of the clock.
+   * \note This will wake any waiting `sleep_until`, and may trigger jump callbacks.
    *
-   * \param ros_time: The new ROS time to use as the basis for "now()"
+   * \param ros_time: The new bag time to use as the basis for "now()"
    */
   ROSBAG2_CPP_PUBLIC
-  void jump(rcutils_time_point_value_t ros_time) override;
-
-  ROSBAG2_CPP_PUBLIC
-  void jump(rclcpp::Time ros_time) override;
+  void override_offset(rclcpp::Time ros_time) override;
 
   /// Since a jump can only occur via a `jump` call by the owner of this Clock,
   /// jump callbacks are not handled in this clock.

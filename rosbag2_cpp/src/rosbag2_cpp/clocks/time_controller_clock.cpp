@@ -125,7 +125,7 @@ public:
    * \note Will trigger any registered JumpHandler callbacks.
    * \param ros_time Time point in ROS playback timeline.
    */
-  void jump(rcutils_time_point_value_t ros_time)
+  void override_offset(rcutils_time_point_value_t ros_time)
   {
     std::lock_guard<std::mutex> lock(state_mutex);
     snapshot(ros_time);
@@ -241,14 +241,9 @@ bool TimeControllerClock::is_paused() const
   return impl_->paused;
 }
 
-void TimeControllerClock::jump(rcutils_time_point_value_t ros_time)
+void TimeControllerClock::override_offset(rclcpp::Time ros_time)
 {
-  impl_->jump(ros_time);
-}
-
-void TimeControllerClock::jump(rclcpp::Time ros_time)
-{
-  jump(ros_time.nanoseconds());
+  impl_->override_offset(ros_time.nanoseconds());
 }
 
 rclcpp::JumpHandler::SharedPtr TimeControllerClock::create_jump_callback(

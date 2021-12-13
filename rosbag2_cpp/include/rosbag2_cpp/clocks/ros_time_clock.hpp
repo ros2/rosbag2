@@ -80,13 +80,9 @@ public:
     return false;
   }
 
-  /// No-op
+  /// Override the internal offset between ROS time and returned "now" time.
   ROSBAG2_CPP_PUBLIC
-  void jump(rcutils_time_point_value_t /*ros_time*/) override {}
-
-  /// No-op
-  ROSBAG2_CPP_PUBLIC
-  void jump(rclcpp::Time /*ros_time*/) override {}
+  void override_offset(rclcpp::Time /*ros_time*/) override {}
 
   /// Add a callback to invoke if the jump threshold is exceeded.
   /// \sa rclcpp::Clock::create_jump_callback

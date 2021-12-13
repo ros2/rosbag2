@@ -39,6 +39,8 @@
 
 #include "rosbag2_transport/qos.hpp"
 
+#include "logging.hpp"
+
 namespace
 {
 /**
@@ -85,6 +87,22 @@ rclcpp::QoS publisher_qos_for_topic(
   const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
+
+rclcpp::Time wait_for_first_nonzero_time(const rclcpp::Clock::SharedPtr clock)
+{
+  ROSBAG2_TRANSPORT_LOG_INFO("Waiting for first sim_time sample before starting playback.");
+  while (rclcpp::ok()) {
+    auto now = clock->now();
+    if (now == rclcpp::Time(0)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    } else {
+      return now;
+    }
+  }
+  ROSBAG2_TRANSPORT_LOG_WARN("No active /clock time found before RCLCPP shutdown.");
+  return rclcpp::Time(0);
+}
+
 }  // namespace
 
 namespace rosbag2_transport
@@ -116,8 +134,7 @@ Player::Player(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
 : Player(std::move(reader),
-    // only call KeyboardHandler when using default keyboard handler implementation
-    std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+    play_options.use_ros_time ? nullptr : std::make_shared<KeyboardHandler>(),
     storage_options, play_options,
     node_name, node_options)
 {}
@@ -217,6 +234,14 @@ void Player::play()
 
   try {
     do {
+      // TODO(emersonknapp) we need some "wait for first simulated time" function here
+      // give good messaging and match up first received time with the bag start time
+      // if (play_options_.use_ros_time) {
+      //   auto start_sim_time = wait_for_first_nonzero_time(get_clock());
+      //   ROSBAG2_TRANSPORT_LOG_INFO("Sim time detected. Bag ");
+          // clock_->override_offset(start_sim_time);
+      // }
+
       if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds duration(delay.nanoseconds());
@@ -225,7 +250,7 @@ void Player::play()
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
         reader_->seek(starting_time_);
-        clock_->jump(starting_time_);
+        clock_->override_offset(rclcpp::Time(starting_time_));
       }
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
@@ -247,13 +272,17 @@ void Player::play()
 void Player::pause()
 {
   clock_->pause();
-  RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
+  if (!play_options_.use_ros_time) {
+    RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
+  }
 }
 
 void Player::resume()
 {
   clock_->resume();
-  RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
+  if (!play_options_.use_ros_time) {
+    RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
+  }
 }
 
 void Player::toggle_paused()
@@ -274,10 +303,12 @@ double Player::get_rate() const
 bool Player::set_rate(double rate)
 {
   bool ok = clock_->set_rate(rate);
-  if (ok) {
-    RCLCPP_INFO_STREAM(get_logger(), "Set rate to " << rate);
-  } else {
-    RCLCPP_WARN_STREAM(get_logger(), "Failed to set rate to invalid value " << rate);
+  if (!play_options_.use_ros_time) {
+    if (ok) {
+      RCLCPP_INFO_STREAM(get_logger(), "Set rate to " << rate);
+    } else {
+      RCLCPP_WARN_STREAM(get_logger(), "Failed to set rate to invalid value " << rate);
+    }
   }
   return ok;
 }
@@ -329,7 +360,7 @@ bool Player::play_next()
     {
       rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
       next_message_published = publish_message(message);
-      clock_->jump(message->time_stamp);
+      clock_->override_offset(rclcpp::Time(message->time_stamp));
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
@@ -359,7 +390,7 @@ void Player::seek(rcutils_time_point_value_t time_point)
     // Purge current messages in queue.
     while (message_queue_.pop()) {}
     reader_->seek(time_point);
-    clock_->jump(time_point);
+    clock_->override_offset(rclcpp::Time(time_point));
     // Restart queuing thread if it has finished running (previously reached end of bag),
     // otherwise, queueing should continue automatically after releasing mutex
     if (is_storage_completely_loaded() && rclcpp::ok()) {

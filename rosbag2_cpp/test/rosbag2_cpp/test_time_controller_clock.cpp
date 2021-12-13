@@ -243,19 +243,19 @@ TEST_F(TimeControllerClockTest, jump)
   rcutils_time_point_value_t expected_ros_time = RCUTILS_S_TO_NS(10);
   rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);
 
-  clock.jump(expected_ros_time);
+  clock.override_offset(expected_ros_time);
   EXPECT_EQ(clock.now(), expected_ros_time);
 
   return_time += std::chrono::seconds(10);
   expected_ros_time += RCUTILS_S_TO_NS(10);
   EXPECT_EQ(clock.now(), expected_ros_time);
 
-  clock.jump(rclcpp::Time(100, 0));
+  clock.override_offset(rclcpp::Time(100, 0));
   return_time += std::chrono::seconds(1);
   EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(101));
 
   // Jump backward
-  clock.jump(rclcpp::Time(50, 0));
+  clock.override_offset(rclcpp::Time(50, 0));
   return_time += std::chrono::seconds(2);
   EXPECT_EQ(clock.now(), RCUTILS_S_TO_NS(52));
 }
@@ -271,7 +271,7 @@ TEST_F(TimeControllerClockTest, jump_forward_with_playback_rate)
   testing_clock.set_rate(playback_rate);
 
   const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time + RCUTILS_S_TO_NS(3);
-  testing_clock.jump(ros_time_point_for_jump);
+  testing_clock.override_offset(ros_time_point_for_jump);
 
   // Emulate wall clock ticks
   const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
@@ -297,7 +297,7 @@ TEST_F(TimeControllerClockTest, jump_backward_with_playback_rate)
   testing_clock.set_rate(playback_rate);
 
   const rcutils_time_point_value_t ros_time_point_for_jump = ros_start_time - RCUTILS_S_TO_NS(3);
-  testing_clock.jump(ros_time_point_for_jump);
+  testing_clock.override_offset(ros_time_point_for_jump);
 
   // Emulate wall clock ticks
   const SteadyTimePoint current_wall_time = wall_time_begin + SteadyTimeDurationSecT(5);
