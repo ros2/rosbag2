@@ -241,14 +241,14 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
   message->topic_name = test_topic_name;
 
   writer_->write(message);
-  // bag size == max_bafile_size, no split yet
+  // bag size == max_bagfile_size, split
   writer_->write(message);
-  // bag size > max_bagfile_size, split
+  // bag size == max_bagfile_size, split
   writer_->write(message);
   writer_.reset();
 
   EXPECT_EQ(
-    intercepted_metadata_.relative_file_paths.size(), 2u);
+    intercepted_metadata_.relative_file_paths.size(), 3u);
 
   const auto base_path = tmp_dir_storage_options_.uri;
   int counter = 0;
