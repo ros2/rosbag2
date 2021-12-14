@@ -53,9 +53,9 @@ public:
 
   /// No-op
   ROSBAG2_CPP_PUBLIC
-  bool set_rate(double /*rate*/) override
+  bool set_rate(double rate) override
   {
-    return false;
+    return rate != 1.0;
   }
 
   /// No-op

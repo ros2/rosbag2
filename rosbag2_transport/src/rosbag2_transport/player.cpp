@@ -29,7 +29,6 @@
 
 #include "rcutils/time.h"
 
-#include "rosbag2_cpp/clocks/player_clock.hpp"
 #include "rosbag2_cpp/clocks/ros_time_clock.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -38,8 +37,6 @@
 #include "rosbag2_storage/storage_filter.hpp"
 
 #include "rosbag2_transport/qos.hpp"
-
-#include "logging.hpp"
 
 namespace
 {
@@ -87,7 +84,6 @@ rclcpp::QoS publisher_qos_for_topic(
   const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
-
 }  // namespace
 
 namespace rosbag2_transport
@@ -119,6 +115,7 @@ Player::Player(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
 : Player(std::move(reader),
+    // TODO(emersonknapp) why is keyboardhandler causing hang on sigint?
     play_options.use_ros_time ? nullptr : std::make_shared<KeyboardHandler>(),
     storage_options, play_options,
     node_name, node_options)
@@ -157,7 +154,7 @@ Player::Player(
     } else {
       starting_time_ += play_options_.start_offset;
     }
-    // pick the right clock
+
     if (play_options_.use_ros_time) {
       set_parameter(rclcpp::Parameter("use_sim_time", true));
       clock_ = std::make_unique<rosbag2_cpp::RosTimeClock>(get_clock());
@@ -170,7 +167,7 @@ Player::Player(
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
   }
-  // check play options
+
   if (play_options_.use_ros_time) {
     add_jump_callbacks();
   } else {
@@ -220,7 +217,7 @@ void Player::play()
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
-        RCLCPP_INFO_STREAM(get_logger(), "Sleeping for delay: " << delay.nanoseconds() << " ns");
+        RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds duration(delay.nanoseconds());
         std::this_thread::sleep_for(duration);
       }
@@ -280,12 +277,10 @@ double Player::get_rate() const
 bool Player::set_rate(double rate)
 {
   bool ok = clock_->set_rate(rate);
-  if (!play_options_.use_ros_time) {
-    if (ok) {
-      RCLCPP_INFO_STREAM(get_logger(), "Set rate to " << rate);
-    } else {
-      RCLCPP_WARN_STREAM(get_logger(), "Failed to set rate to invalid value " << rate);
-    }
+  if (ok) {
+    RCLCPP_INFO_STREAM(get_logger(), "Set rate to " << rate);
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "Failed to set rate to value " << rate);
   }
   return ok;
 }
@@ -422,15 +417,14 @@ void Player::play_messages_from_queue()
 {
   if (play_options_.use_ros_time) {
     RCLCPP_INFO(get_logger(), "Waiting for /clock for ROS time playback...");
-    while (rclcpp::ok()) {
-      auto current_time = this->now();
-      ROSBAG2_TRANSPORT_LOG_ERROR("-- now is %ld", current_time.nanoseconds());
-      if (current_time == rclcpp::Time(0, 0, RCL_ROS_TIME)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      } else {
-        break;
-      }
+    rclcpp::Time current_ros_time = this->now();
+    while (rclcpp::ok() && current_ros_time == rclcpp::Time(0, 0, RCL_ROS_TIME)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      RCLCPP_ERROR(get_logger(), "-- now is %ld", current_ros_time.nanoseconds());
     }
+    RCLCPP_INFO(get_logger(), "/clock value received. "
+            "Bag starting time %ld will correspond to current ROS time %ld",
+            starting_time_, current_ros_time.nanoseconds());
     clock_->override_offset(starting_time_);
   }
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
