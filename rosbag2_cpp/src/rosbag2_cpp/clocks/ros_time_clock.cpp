@@ -27,7 +27,8 @@ namespace rosbag2_cpp
 {
 
 RosTimeClock::RosTimeClock(rclcpp::Clock::SharedPtr clock)
-: clock_(clock)
+: clock_(clock),
+  offset_(0)
 {
 }
 
@@ -36,7 +37,7 @@ RosTimeClock::~RosTimeClock()
 
 rcutils_time_point_value_t RosTimeClock::now() const
 {
-  return clock_->now().nanoseconds();
+  return (clock_->now() + rclcpp::Duration::from_nanoseconds(offset_)).nanoseconds();
 }
 
 bool RosTimeClock::sleep_until(rcutils_time_point_value_t until)
@@ -46,37 +47,16 @@ bool RosTimeClock::sleep_until(rcutils_time_point_value_t until)
 
 bool RosTimeClock::sleep_until(rclcpp::Time until)
 {
-  std::mutex mutex;
-  std::condition_variable cv;
-  bool time_source_changed;
+  return clock_->sleep_until(until + rclcpp::Duration::from_nanoseconds(offset_));
+}
 
-  // Watch the clock for any time change at all.
-  rcl_jump_threshold_t thresh;
-  thresh.on_clock_change = true;
-  thresh.min_backward.nanoseconds = -1;
-  thresh.min_forward.nanoseconds = 1;
-  auto clock_handler = create_jump_callback(
-    nullptr,
-    [&cv, &time_source_changed](const rcl_time_jump_t & jump) {
-      if (jump.clock_change != RCL_ROS_TIME_NO_CHANGE) {
-        time_source_changed = true;
-      }
-      cv.notify_all();
-    },
-    thresh);
-
-  // Wake up periodically so that control could be given back to the program if desired.
-  std::unique_lock lock(mutex);
-  ROSBAG2_CPP_LOG_WARN("Sleeping until %ld", until.nanoseconds());
-  while (rclcpp::ok() && clock_->now() < until) {
-    cv.wait_for(lock, std::chrono::milliseconds(10));
-    ROSBAG2_CPP_LOG_WARN("Done one sleep, clock time is now %ld", clock_->now().nanoseconds());
-  }
-  if (!rclcpp::ok()) {
-    return false;
-  }
-
-  return clock_->now() >= until;
+void RosTimeClock::override_offset(rcutils_time_point_value_t bag_time)
+{
+  auto current = clock_->now();
+  RCUTILS_LOG_ERROR("Making offset from clock's %ld to bag's %ld",
+    current.nanoseconds(), bag_time);
+  offset_ = current.nanoseconds() - bag_time;
+  RCUTILS_LOG_ERROR("New offset value is %ld", offset_);
 }
 
 rclcpp::JumpHandler::SharedPtr RosTimeClock::create_jump_callback(

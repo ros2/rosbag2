@@ -110,13 +110,13 @@ public:
   bool is_paused() const override;
 
   /**
-   * Change the current ROS time to an arbitrary time.
+   * Change the current time to an arbitrary time.
    * \note This will wake any waiting `sleep_until`, and may trigger jump callbacks.
    *
    * \param ros_time: The new bag time to use as the basis for "now()"
    */
   ROSBAG2_CPP_PUBLIC
-  void override_offset(rclcpp::Time ros_time) override;
+  void override_offset(rcutils_time_point_value_t bag_time) override;
 
   /// Since a jump can only occur via a `jump` call by the owner of this Clock,
   /// jump callbacks are not handled in this clock.

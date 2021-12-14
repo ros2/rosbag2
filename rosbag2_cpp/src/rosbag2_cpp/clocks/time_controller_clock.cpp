@@ -241,9 +241,9 @@ bool TimeControllerClock::is_paused() const
   return impl_->paused;
 }
 
-void TimeControllerClock::override_offset(rclcpp::Time ros_time)
+void TimeControllerClock::override_offset(rcutils_time_point_value_t bag_time)
 {
-  impl_->override_offset(ros_time.nanoseconds());
+  impl_->override_offset(bag_time);
 }
 
 rclcpp::JumpHandler::SharedPtr TimeControllerClock::create_jump_callback(

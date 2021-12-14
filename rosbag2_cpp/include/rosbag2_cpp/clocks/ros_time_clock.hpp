@@ -80,9 +80,9 @@ public:
     return false;
   }
 
-  /// Override the internal offset between ROS time and returned "now" time.
+  /// Override the internal offset between bag's timestamps and clock's ROS time.
   ROSBAG2_CPP_PUBLIC
-  void override_offset(rclcpp::Time /*ros_time*/) override {}
+  void override_offset(rcutils_time_point_value_t bag_time) override;
 
   /// Add a callback to invoke if the jump threshold is exceeded.
   /// \sa rclcpp::Clock::create_jump_callback
@@ -94,6 +94,7 @@ public:
 
 private:
   std::shared_ptr<rclcpp::Clock> clock_;
+  rcutils_duration_value_t offset_{0};
 };
 }  // namespace rosbag2_cpp
 

@@ -105,13 +105,13 @@ public:
   /**
    * \brief Change the internal offset used to calculate "now".
    * Each clock implementation has an underlying source of truth for time, and maintains
-   * some offset to associate that with a bag time. 
+   * some offset to associate that with a bag time.
    * \note This will wake any waiting `sleep_until` and trigger any registered JumpHandler
    * callbacks.
-   * \param time_point Time point in ROS playback timeline.
+   * \param time_point Current time point in bag's reference frame, to match with internal now.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void override_offset(rclcpp::Time time) = 0;
+  virtual void override_offset(rcutils_time_point_value_t) = 0;
 
   /// Add a callback to invoke if the jump threshold is exceeded.
   /// \sa rclcpp::Clock::create_jump_callback
