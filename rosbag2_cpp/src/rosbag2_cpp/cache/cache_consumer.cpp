@@ -33,10 +33,10 @@ CacheConsumer::CacheConsumer(
 
 CacheConsumer::~CacheConsumer()
 {
-  close();
+  stop();
 }
 
-void CacheConsumer::close()
+void CacheConsumer::stop()
 {
   message_cache_->begin_flushing();
   is_stop_issued_ = true;
@@ -63,14 +63,11 @@ void CacheConsumer::exec_consuming()
   bool exit_flag = false;
   bool flushing = false;
   while (!exit_flag) {
-    // make sure to use consistent callback for each iteration
-    auto callback_for_this_loop = consume_callback_;
-
+    message_cache_->wait_for_data();
+    message_cache_->swap_buffers();
     // Get the current consumer buffer.
-    // Depending on the cache implementation, this may swap buffers now, or could
-    // provide an empty buffer if swapping is handled via other conditions.
-    auto consumer_buffer = message_cache_->consumer_buffer();
-    callback_for_this_loop(consumer_buffer->data());
+    auto consumer_buffer = message_cache_->get_consumer_buffer();
+    consume_callback_(consumer_buffer->data());
     consumer_buffer->clear();
     message_cache_->release_consumer_buffer();
 

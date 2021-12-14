@@ -235,9 +235,9 @@ std::string SequentialWriter::format_storage_uri(
 
 void SequentialWriter::switch_to_next_storage()
 {
-  // consumer remaining message cache
+  // consume remaining message cache
   if (use_cache_) {
-    cache_consumer_->close();
+    cache_consumer_->stop();
     message_cache_->log_dropped();
   }
 
@@ -332,7 +332,7 @@ bool SequentialWriter::take_snapshot()
     ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
     return false;
   }
-  message_cache_->swap_buffers();
+  message_cache_->notify_data_ready();
   return true;
 }
 
@@ -397,8 +397,8 @@ void SequentialWriter::write_messages(
     return;
   }
   storage_->write(messages);
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & msg : messages) {
-    std::lock_guard<std::mutex> lock(topics_info_mutex_);
     if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
       topics_names_to_info_[msg->topic_name].message_count++;
     }

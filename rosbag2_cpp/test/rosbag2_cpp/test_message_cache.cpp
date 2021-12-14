@@ -102,6 +102,6 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(20ms);
 
-  mock_cache_consumer->close();
+  mock_cache_consumer->stop();
   EXPECT_EQ(consumed_message_count, message_count - should_be_dropped_count);
 }
