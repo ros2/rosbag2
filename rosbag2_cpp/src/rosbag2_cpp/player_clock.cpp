@@ -123,7 +123,6 @@ public:
     cv.notify_all();
   }
 
-  const PlayerClock::NowFunction now_fn;
   rclcpp::Clock::SharedPtr clock;
   rclcpp::JumpHandler::SharedPtr jump_handler;
   const std::chrono::milliseconds sleep_time_while_paused;

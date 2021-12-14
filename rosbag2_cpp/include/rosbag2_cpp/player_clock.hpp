@@ -39,13 +39,6 @@ class PlayerClock
 {
 public:
   /**
-   * Function type that returns an underlying source time to the PlayerClock.
-   * This may be system steady-time, ROS /clock time, or another arbitrary time source.
-   * Timing for the bag playback is measured relative to this time source.
-   */
-  typedef std::function<rcutils_time_point_value_t()> NowFunction;
-
-  /**
    * Constructor.
    *
    * \param starting_time: provides an initial offset for managing time

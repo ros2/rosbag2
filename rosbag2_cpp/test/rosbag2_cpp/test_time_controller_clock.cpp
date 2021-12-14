@@ -21,7 +21,6 @@
 using namespace testing;  // NOLINT
 using SteadyTimePoint = std::chrono::steady_clock::time_point;
 using SteadyTimeDurationSecT = std::chrono::duration<int>;
-using NowFunction = rosbag2_cpp::PlayerClock::NowFunction;
 
 class TimeControllerClockTest : public Test
 {
@@ -39,14 +38,12 @@ public:
     return std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
   }
 
-  NowFunction now_fn;
   SteadyTimePoint return_time;  // defaults to 0
   rcutils_time_point_value_t ros_start_time = 0;
 };
 
 TEST_F(TimeControllerClockTest, must_provide_now_fn)
 {
-  NowFunction empty_now;
   EXPECT_THROW(
     rosbag2_cpp::TimeControllerClock(ros_start_time, empty_now),
     std::invalid_argument);

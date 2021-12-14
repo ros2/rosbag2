@@ -154,7 +154,6 @@ Player::Player(
       starting_time_ += play_options_.start_offset;
     }
 
-    rosbag2_cpp::PlayerClock::NowFunction now_fn;
     auto clock = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
     if (play_options_.use_ros_time) {
       set_parameter(rclcpp::Parameter("use_sim_time", true));
