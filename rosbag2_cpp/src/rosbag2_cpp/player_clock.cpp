@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
-#include "rosbag2_cpp/clocks/time_controller_clock.hpp"
+#include "rosbag2_cpp/player_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
 
 namespace
@@ -42,21 +42,21 @@ public:
 namespace rosbag2_cpp
 {
 
-class TimeControllerClockImpl
+class PlayerClockImpl
 {
 public:
   /**
-   * Stores an exact time match between a system steady clock and the playback ROS clock.
+   * Stores an exact time match between a source-time and the bag-time for playback.
    * This snapshot is taken whenever a factor changes such that a new reference is needed,
-   * such as pause, resume, rate change, or jump
+   * such as pause, resume, rate change, or offset override
    */
   struct TimeReference
   {
-    rcutils_time_point_value_t ros;
-    std::chrono::steady_clock::time_point steady;
+    rcutils_time_point_value_t source;
+    rcutils_time_point_value_t bag;
   };
 
-  explicit TimeControllerClockImpl(
+  explicit PlayerClockImpl(
     PlayerClock::NowFunction now_fn,
     std::chrono::milliseconds sleep_time_while_paused,
     bool start_paused)
@@ -64,71 +64,58 @@ public:
     sleep_time_while_paused(sleep_time_while_paused),
     paused(start_paused)
   {}
-  virtual ~TimeControllerClockImpl() = default;
+  virtual ~PlayerClockImpl() = default;
 
-  /// Return the total nanoseconds of an arbitrary duration type.
-  template<typename T>
-  rcutils_duration_value_t duration_nanos(const T & duration) const
-  {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-  }
-
-  /// Convert an arbitrary SteadyTime to a ROSTime, based on the current reference snapshot.
-  rcutils_time_point_value_t steady_to_ros(std::chrono::steady_clock::time_point steady_time) const
+  /// Convert an arbitrary source-time to bag-time, based on the current reference snapshot.
+  rcutils_time_point_value_t source_to_bag(rcutils_time_point_value_t source_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    return reference.ros + static_cast<rcutils_duration_value_t>(
-      rate * duration_nanos(steady_time - reference.steady));
+    return reference.bag + (rate * (source_time - reference.source));
   }
 
-  /// Convert an arbitrary ROSTime to a SteadyTime, based on the current reference snapshot.
-  std::chrono::steady_clock::time_point ros_to_steady(rcutils_time_point_value_t ros_time) const
+  /// Convert an arbitrary bag-time to a source-time, based on the current reference snapshot.
+  rcutils_time_point_value_t bag_to_source(rcutils_time_point_value_t bag_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    const auto diff_nanos = static_cast<rcutils_duration_value_t>(
-      (ros_time - reference.ros) / rate);
-    return reference.steady + std::chrono::nanoseconds(diff_nanos);
+    const auto diff_nanos = (bag_time - reference.bag) / rate;
+    return reference.source + diff_nanos;
   }
 
-  /// Return the current ROS time right now, based on current settings.
-  rcutils_time_point_value_t ros_now() const
+  /// Return the current bag time right now, based on current settings.
+  rcutils_time_point_value_t bag_now() const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
     if (paused) {
-      return reference.ros;
+      return reference.bag;
     }
-    return steady_to_ros(now_fn());
+    return source_to_bag(now_fn());
   }
 
-  /// Take a new reference snapshot, matching `ros_time` to the current steady time
-  void snapshot(rcutils_time_point_value_t ros_time)
+  /// Take a new reference snapshot, matching bag-time to the current source-time
+  void snapshot(rcutils_time_point_value_t bag_time)
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    reference.ros = ros_time;
-    reference.steady = now_fn();
+    reference.source = now_fn();
+    reference.bag = bag_time;
   }
 
-  /**
-   * Take a new reference snaphot to match the current ROStime to the current SteadyTime
-   * This is needed when changing a setting such as pause or rate.
-   */
+  /// Take a new reference snaphot to match the current bag-time to the current source-time
+  /// This is needed when changing a setting such as pause or rate.
   void snapshot()
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    snapshot(ros_now());
+    snapshot(bag_now());
   }
 
-  /**
-   * \brief Adjust internal clock to the specified timestamp.
-   * \details It will change the current internally maintained offset so that next published time
-   * is different.
-   * \note Will trigger any registered JumpHandler callbacks.
-   * \param ros_time Time point in ROS playback timeline.
-   */
-  void override_offset(rcutils_time_point_value_t ros_time)
+
+  /// \brief Adjust internal clock to the specified timestamp.
+  /// \details It will change the internal offset so that next returned time is different.
+  /// \note Will trigger any registered JumpHandler callbacks.
+  /// \param bag_time Time point in bag playback timeline.
+  void override_offset(rcutils_time_point_value_t bag_time)
   {
     std::lock_guard<std::mutex> lock(state_mutex);
-    snapshot(ros_time);
+    snapshot(bag_time);
     cv.notify_all();
   }
 
@@ -142,38 +129,37 @@ public:
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
 };
 
-TimeControllerClock::TimeControllerClock(
+PlayerClock::PlayerClock(
   rcutils_time_point_value_t starting_time,
   NowFunction now_fn,
   std::chrono::milliseconds sleep_time_while_paused,
   bool paused)
-: impl_(std::make_unique<TimeControllerClockImpl>(now_fn, sleep_time_while_paused, paused))
+: impl_(std::make_unique<PlayerClockImpl>(now_fn, sleep_time_while_paused, paused))
 {
   if (now_fn == nullptr) {
-    throw std::invalid_argument("TimeControllerClock now_fn must be non-empty.");
+    throw std::invalid_argument("PlayerClock now_fn must be non-empty.");
   }
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
-  impl_->reference.ros = starting_time;
-  impl_->reference.steady = impl_->now_fn();
+  impl_->snapshot(starting_time);
 }
 
-TimeControllerClock::~TimeControllerClock()
+PlayerClock::~PlayerClock()
 {}
 
-rcutils_time_point_value_t TimeControllerClock::now() const
+rcutils_time_point_value_t PlayerClock::now() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
-  return impl_->ros_now();
+  return impl_->bag_now();
 }
 
-bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
+bool PlayerClock::sleep_until(rcutils_time_point_value_t until)
 {
   {
     TSAUniqueLock lock(impl_->state_mutex);
     if (impl_->paused) {
       impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
     } else {
-      const auto steady_until = impl_->ros_to_steady(until);
+      const auto steady_until = impl_->bag_to_source(until);
       impl_->cv.wait_until(lock, steady_until);
     }
     if (impl_->paused) {
@@ -185,12 +171,12 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
   return now() >= until;
 }
 
-bool TimeControllerClock::sleep_until(rclcpp::Time until)
+bool PlayerClock::sleep_until(rclcpp::Time until)
 {
   return sleep_until(until.nanoseconds());
 }
 
-bool TimeControllerClock::set_rate(double rate)
+bool PlayerClock::set_rate(double rate)
 {
   if (rate <= 0) {
     return false;
@@ -205,13 +191,13 @@ bool TimeControllerClock::set_rate(double rate)
   return true;
 }
 
-double TimeControllerClock::get_rate() const
+double PlayerClock::get_rate() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   return impl_->rate;
 }
 
-void TimeControllerClock::pause()
+void PlayerClock::pause()
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   if (impl_->paused) {
@@ -223,7 +209,7 @@ void TimeControllerClock::pause()
   impl_->cv.notify_all();
 }
 
-void TimeControllerClock::resume()
+void PlayerClock::resume()
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   if (!impl_->paused) {
@@ -235,23 +221,15 @@ void TimeControllerClock::resume()
   impl_->cv.notify_all();
 }
 
-bool TimeControllerClock::is_paused() const
+bool PlayerClock::is_paused() const
 {
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   return impl_->paused;
 }
 
-void TimeControllerClock::override_offset(rcutils_time_point_value_t bag_time)
+void PlayerClock::override_offset(rcutils_time_point_value_t bag_time)
 {
   impl_->override_offset(bag_time);
-}
-
-rclcpp::JumpHandler::SharedPtr TimeControllerClock::create_jump_callback(
-  rclcpp::JumpHandler::pre_callback_t /* pre_callback */,
-  rclcpp::JumpHandler::post_callback_t /* post_callback */,
-  const rcl_jump_threshold_t & /* threshold */)
-{
-  return nullptr;
 }
 
 }  // namespace rosbag2_cpp

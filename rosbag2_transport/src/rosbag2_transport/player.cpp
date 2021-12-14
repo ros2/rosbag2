@@ -155,25 +155,22 @@ Player::Player(
       starting_time_ += play_options_.start_offset;
     }
 
+    rosbag2_cpp::PlayerClock::NowFunction now_fn;
     if (play_options_.use_ros_time) {
       set_parameter(rclcpp::Parameter("use_sim_time", true));
-      clock_ = std::make_unique<rosbag2_cpp::RosTimeClock>(get_clock());
+      now_fn = [&this]() { return this->get_clock()->now().nanoseconds(); };
     } else {
-      clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
-        starting_time_, std::chrono::steady_clock::now,
-        std::chrono::milliseconds{100}, play_options_.start_paused);
+      now_fn = []() { return std::chrono::steady_clock::now().count(); };
     }
+    clock_ = std::make_unique<rosbag2_cpp::PlayerClock>(
+      starting_time_, now_fn, std::chrono::milliseconds{100}, play_options_.start_paused);
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
   }
-
-  if (play_options_.use_ros_time) {
-    add_jump_callbacks();
-  } else {
-    create_control_services();
-    add_keyboard_callbacks();
-  }
+  add_jump_callbacks();
+  create_control_services();
+  add_keyboard_callbacks();
 }
 
 Player::~Player()
@@ -246,17 +243,13 @@ void Player::play()
 void Player::pause()
 {
   clock_->pause();
-  if (!play_options_.use_ros_time) {
-    RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
-  }
+  RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
 }
 
 void Player::resume()
 {
   clock_->resume();
-  if (!play_options_.use_ros_time) {
-    RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
-  }
+  RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
 }
 
 void Player::toggle_paused()
@@ -665,7 +658,7 @@ void Player::add_jump_callbacks()
   rcl_duration_t min_forward{0};
   rcl_duration_t min_backward{-1};
   rcl_jump_threshold_t threshold{false, min_forward, min_backward};
-  clock_jump_handler_ = clock_->create_jump_callback(
+  clock_jump_handler_ = get_clock()->create_jump_callback(
     []() {return;},
     [this](const rcl_time_jump_t & /*time_jump*/) {seek(clock_->now());},
     threshold);

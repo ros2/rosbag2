@@ -34,23 +34,44 @@ namespace rosbag2_cpp
  * so that the complexity involved around time control and time sources
  * is encapsulated in this one place.
  */
+class PlayerClockImpl;
 class PlayerClock
 {
 public:
   /**
-   * Type representing an arbitrary steady time, used to measure real-time durations
-   * This type is never exposed by the PlayerClock - it is only used as input to the PlayerClock.
+   * Function type that returns an underlying source time to the PlayerClock.
+   * This may be system steady-time, ROS /clock time, or another arbitrary time source.
+   * Timing for the bag playback is measured relative to this time source.
    */
-  typedef std::function<std::chrono::steady_clock::time_point()> NowFunction;
+  typedef std::function<rcutils_time_point_value_t()> NowFunction;
+
+  /**
+   * Constructor.
+   *
+   * \param starting_time: provides an initial offset for managing time
+   *    This will likely be the timestamp of the first message in the bag
+   * \param now_fn: Function used to get the current steady time
+   *   defaults to std::chrono::steady_clock::now
+   *   Used to control for unit testing, or for specialized needs
+   * \param sleep_check_period: Amount of time to sleep in `sleep_until` when the clock
+   *   is paused. Allows the caller to spin at a defined rate while receiving `false`
+   * \param paused: Start the clock paused
+   */
+  ROSBAG2_CPP_PUBLIC
+  PlayerClock(
+    rcutils_time_point_value_t starting_time,
+    NowFunction now_fn,
+    std::chrono::milliseconds sleep_checkin_period = std::chrono::milliseconds{100},
+    bool start_paused = false);
 
   ROSBAG2_CPP_PUBLIC
-  virtual ~PlayerClock() = default;
+  virtual ~PlayerClock();
 
   /**
    * Calculate and return current rcutils_time_point_value_t based on starting time, playback rate, pause state.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual rcutils_time_point_value_t now() const = 0;
+  virtual rcutils_time_point_value_t now() const;
 
   /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
@@ -60,13 +81,13 @@ public:
    * The user should not take action based on this sleep until it returns true.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual bool sleep_until(rcutils_time_point_value_t until) = 0;
+  virtual bool sleep_until(rcutils_time_point_value_t until);
 
   /**
    * \sa sleep_until
    */
   ROSBAG2_CPP_PUBLIC
-  virtual bool sleep_until(rclcpp::Time time) = 0;
+  virtual bool sleep_until(rclcpp::Time time);
 
   /**
    * Change the rate of the flow of time for the clock.
@@ -74,33 +95,33 @@ public:
    * \bool false if rate is invalid for the clock implementation
    */
   ROSBAG2_CPP_PUBLIC
-  virtual bool set_rate(double rate) = 0;
+  virtual bool set_rate(double rate);
 
   /**
    * \return the current playback rate.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual double get_rate() const = 0;
+  virtual double get_rate() const;
 
   /**
    * Stop the flow of time of the clock.
    * If this changes the pause state, this will wake any waiting `sleep_until`
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void pause() = 0;
+  virtual void pause();
 
   /**
    * Start the flow of time of the clock
    * If this changes the pause state, this will wake any waiting `sleep_until`
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void resume() = 0;
+  virtual void resume();
 
   /**
    * Return whether the clock is currently paused.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual bool is_paused() const = 0;
+  virtual bool is_paused() const;
 
   /**
    * \brief Change the internal offset used to calculate "now".
@@ -111,15 +132,10 @@ public:
    * \param time_point Current time point in bag's reference frame, to match with internal now.
    */
   ROSBAG2_CPP_PUBLIC
-  virtual void override_offset(rcutils_time_point_value_t) = 0;
+  virtual void override_offset(rcutils_time_point_value_t);
 
-  /// Add a callback to invoke if the jump threshold is exceeded.
-  /// \sa rclcpp::Clock::create_jump_callback
-  ROSBAG2_CPP_PUBLIC
-  virtual rclcpp::JumpHandler::SharedPtr create_jump_callback(
-    rclcpp::JumpHandler::pre_callback_t pre_callback,
-    rclcpp::JumpHandler::post_callback_t post_callback,
-    const rcl_jump_threshold_t & threshold) = 0;
+private:
+  std::unique_ptr<PlayerClockImpl> impl_;
 };
 
 }  // namespace rosbag2_cpp
