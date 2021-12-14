@@ -29,8 +29,7 @@
 
 #include "rcutils/time.h"
 
-#include "rosbag2_cpp/clocks/ros_time_clock.hpp"
-#include "rosbag2_cpp/clocks/time_controller_clock.hpp"
+#include "rosbag2_cpp/player_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
@@ -156,14 +155,13 @@ Player::Player(
     }
 
     rosbag2_cpp::PlayerClock::NowFunction now_fn;
+    auto clock = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
     if (play_options_.use_ros_time) {
       set_parameter(rclcpp::Parameter("use_sim_time", true));
-      now_fn = [&this]() { return this->get_clock()->now().nanoseconds(); };
-    } else {
-      now_fn = []() { return std::chrono::steady_clock::now().count(); };
+      clock = get_clock();
     }
     clock_ = std::make_unique<rosbag2_cpp::PlayerClock>(
-      starting_time_, now_fn, std::chrono::milliseconds{100}, play_options_.start_paused);
+      starting_time_, clock, std::chrono::milliseconds{100}, play_options_.start_paused);
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();

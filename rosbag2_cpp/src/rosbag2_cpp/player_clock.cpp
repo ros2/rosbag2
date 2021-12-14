@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "rosbag2_cpp/player_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
 
@@ -57,10 +58,11 @@ public:
   };
 
   explicit PlayerClockImpl(
-    PlayerClock::NowFunction now_fn,
+    rclcpp::Clock::SharedPtr clock,
     std::chrono::milliseconds sleep_time_while_paused,
     bool start_paused)
-  : now_fn(now_fn),
+  :
+    clock(clock),
     sleep_time_while_paused(sleep_time_while_paused),
     paused(start_paused)
   {}
@@ -88,23 +90,25 @@ public:
     if (paused) {
       return reference.bag;
     }
-    return source_to_bag(now_fn());
+    return source_to_bag(clock->now().nanoseconds());
   }
 
   /// Take a new reference snapshot, matching bag-time to the current source-time
-  void snapshot(rcutils_time_point_value_t bag_time)
+  TimeReference snapshot(rcutils_time_point_value_t bag_time) const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    reference.source = now_fn();
-    reference.bag = bag_time;
+    TimeReference ref;
+    ref.source = clock->now().nanoseconds();
+    ref.bag = bag_time;
+    return ref;
   }
 
   /// Take a new reference snaphot to match the current bag-time to the current source-time
   /// This is needed when changing a setting such as pause or rate.
-  void snapshot()
+  TimeReference snapshot() const
   RCPPUTILS_TSA_REQUIRES(state_mutex)
   {
-    snapshot(bag_now());
+    return snapshot(bag_now());
   }
 
 
@@ -115,11 +119,13 @@ public:
   void override_offset(rcutils_time_point_value_t bag_time)
   {
     std::lock_guard<std::mutex> lock(state_mutex);
-    snapshot(bag_time);
+    reference = snapshot(bag_time);
     cv.notify_all();
   }
 
   const PlayerClock::NowFunction now_fn;
+  rclcpp::Clock::SharedPtr clock;
+  rclcpp::JumpHandler::SharedPtr jump_handler;
   const std::chrono::milliseconds sleep_time_while_paused;
 
   std::mutex state_mutex;
@@ -131,16 +137,31 @@ public:
 
 PlayerClock::PlayerClock(
   rcutils_time_point_value_t starting_time,
-  NowFunction now_fn,
+  rclcpp::Clock::SharedPtr clock,
   std::chrono::milliseconds sleep_time_while_paused,
   bool paused)
-: impl_(std::make_unique<PlayerClockImpl>(now_fn, sleep_time_while_paused, paused))
+: impl_(std::make_unique<PlayerClockImpl>(clock, sleep_time_while_paused, paused))
 {
-  if (now_fn == nullptr) {
-    throw std::invalid_argument("PlayerClock now_fn must be non-empty.");
+  if (clock == nullptr) {
+    throw std::invalid_argument("PlayerClock's ROS clock must be non-null.");
   }
   std::lock_guard<std::mutex> lock(impl_->state_mutex);
   impl_->snapshot(starting_time);
+  if (clock->get_clock_type() == RCL_ROS_TIME) {
+    rcl_jump_threshold_t threshold;
+    threshold.on_clock_change = true;
+    // 0 is disable, so -1 and 1 are smallest possible time changes
+    threshold.min_backward.nanoseconds = -1;
+    threshold.min_forward.nanoseconds = 1;
+    impl_->jump_handler = clock->create_jump_callback(
+      nullptr,
+      [this](const rcl_time_jump_t & jump) {
+        if (jump.clock_change != RCL_ROS_TIME_NO_CHANGE) {
+        //   time_source_changed = true;
+        }
+        impl_->cv.notify_one();
+      }, threshold);
+  }
 }
 
 PlayerClock::~PlayerClock()
@@ -158,9 +179,25 @@ bool PlayerClock::sleep_until(rcutils_time_point_value_t until)
     TSAUniqueLock lock(impl_->state_mutex);
     if (impl_->paused) {
       impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
+    } else if (impl_->clock->get_clock_type() == RCL_STEADY_TIME) {
+      const auto rcl_entry = impl_->clock->now();
+      const auto chrono_entry = std::chrono::steady_clock::now();
+      const rcutils_duration_value_t delta_t = until - rcl_entry.nanoseconds();
+      const auto chrono_until =
+        chrono_entry + std::chrono::nanoseconds(delta_t);
+
+      impl_->cv.wait_until(lock, chrono_until);
+    } else if (impl_->clock->get_clock_type() == RCL_ROS_TIME) {
+      if (!impl_->clock->ros_time_is_active()) {
+        throw std::runtime_error("PlayerClock has RCL_ROS_TIME but ros time is not active! "
+          "Invalid configuration.");
+      }
+      // TODO!
+      while (now() < until && rclcpp::ok()) {
+        impl_->cv.wait_for(lock, std::chrono::milliseconds(10));
+      }
     } else {
-      const auto steady_until = impl_->bag_to_source(until);
-      impl_->cv.wait_until(lock, steady_until);
+      throw std::runtime_error("PlayerClock's ROS clock has unsupported type. Shouldn't happen.");
     }
     if (impl_->paused) {
       // Don't allow publishing any messages while paused
@@ -169,11 +206,6 @@ bool PlayerClock::sleep_until(rcutils_time_point_value_t until)
     }
   }
   return now() >= until;
-}
-
-bool PlayerClock::sleep_until(rclcpp::Time until)
-{
-  return sleep_until(until.nanoseconds());
 }
 
 bool PlayerClock::set_rate(double rate)

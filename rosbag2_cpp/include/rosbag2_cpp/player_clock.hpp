@@ -29,10 +29,10 @@ namespace rosbag2_cpp
 {
 
 /**
- * Virtual interface used to drive the timing of bag playback.
+ * Clock used drive the timing of bag playback.
+ * Takes an input ROS clock and manages an offset to it, providing
  * This clock should be used to query times and sleep between message playing,
- * so that the complexity involved around time control and time sources
- * is encapsulated in this one place.
+ * so that the logic around translateing underlying time sources is encapsulated in this one place.
  */
 class PlayerClockImpl;
 class PlayerClock
@@ -60,7 +60,7 @@ public:
   ROSBAG2_CPP_PUBLIC
   PlayerClock(
     rcutils_time_point_value_t starting_time,
-    NowFunction now_fn,
+    rclcpp::Clock::SharedPtr clock,
     std::chrono::milliseconds sleep_checkin_period = std::chrono::milliseconds{100},
     bool start_paused = false);
 
@@ -82,12 +82,6 @@ public:
    */
   ROSBAG2_CPP_PUBLIC
   virtual bool sleep_until(rcutils_time_point_value_t until);
-
-  /**
-   * \sa sleep_until
-   */
-  ROSBAG2_CPP_PUBLIC
-  virtual bool sleep_until(rclcpp::Time time);
 
   /**
    * Change the rate of the flow of time for the clock.

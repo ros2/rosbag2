@@ -31,7 +31,7 @@
 #include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"
 
-#include "rosbag2_cpp/clocks/player_clock.hpp"
+#include "rosbag2_cpp/player_clock.hpp"
 #include "rosbag2_interfaces/srv/get_rate.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
