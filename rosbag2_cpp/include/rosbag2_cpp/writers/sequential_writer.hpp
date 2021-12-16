@@ -122,7 +122,7 @@ protected:
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
 
-  bool use_cache_;
+  bool use_cache_ {false};
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
 
@@ -132,10 +132,6 @@ protected:
     const std::string & base_folder, uint64_t storage_count);
 
   rosbag2_storage::StorageOptions storage_options_;
-
-  // Used in bagfile splitting;
-  // specifies the best-effort maximum duration of a bagfile in seconds.
-  std::chrono::seconds max_bagfile_duration;
 
   // Used to track topic -> message count. If cache is present, it is updated by CacheConsumer
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;

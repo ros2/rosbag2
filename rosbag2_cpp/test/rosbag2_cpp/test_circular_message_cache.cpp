@@ -80,9 +80,12 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
     circular_message_cache->push(msg);
   }
   // Swap cache
+  circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
 
-  auto consumer_buffer = circular_message_cache->consumer_buffer();
+  auto consumer_buffer = circular_message_cache->get_consumer_buffer();
+  EXPECT_THAT(consumer_buffer->size(), Ne(0u));
+
   auto message_vector = consumer_buffer->data();
   std::string first_message = deserialize_message(message_vector.front()->serialized_data);
   circular_message_cache->release_consumer_buffer();
@@ -114,16 +117,19 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
     circular_message_cache->push(msg);
   }
   // Swap filled cache to secondary
+  circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
-  EXPECT_THAT(circular_message_cache->consumer_buffer()->size(), Ne(0u));
+  EXPECT_THAT(circular_message_cache->get_consumer_buffer()->size(), Ne(0u));
   circular_message_cache->release_consumer_buffer();
 
   // Swap back to primary (expected to empty buffer)
+  circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
 
   // Swap back to secondary without adding messages
+  circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
   // Cache should have been emptied
-  EXPECT_THAT(circular_message_cache->consumer_buffer()->size(), Eq(0u));
+  EXPECT_THAT(circular_message_cache->get_consumer_buffer()->size(), Eq(0u));
   circular_message_cache->release_consumer_buffer();
 }

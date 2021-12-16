@@ -43,18 +43,21 @@ public:
   /// Push a bag message into the producer buffer.
   virtual void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
 
-  /// Get a pointer to the buffer that can be used for consuming the cached messages.
-  /// This call locks access to the buffer, `swap_buffers` and `consumer_buffer` will block until
-  /// `release_consumer_buffer` is called to unlock access to the buffer.
+  /// \brief Get a pointer to the buffer that can be used for consuming the cached messages.
+  /// This call locks access to the buffer, `swap_buffers` and `get_consumer_buffer` will block
+  /// until `release_consumer_buffer` is called to unlock access to the buffer.
   /// Consumer should call `release_consumer_buffer` when they are done consuming the messages.
   /// \return a pointer to the consumer buffer interface.
-  virtual std::shared_ptr<CacheBufferInterface> consumer_buffer() = 0;
+  virtual std::shared_ptr<CacheBufferInterface> get_consumer_buffer() = 0;
 
   /// Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
   virtual void release_consumer_buffer() = 0;
 
+  /// \brief Blocks current thread and going to wait until notify_data_ready will be called.
+  virtual void wait_for_data() {}
+
   /// Swap producer and consumer buffers.
-  /// Note: this will block if `consumer_buffer` has been called but `release_consumer_buffer`
+  /// Note: this will block if `get_consumer_buffer` has been called but `release_consumer_buffer`
   /// has not been called yet to signal end of consuming.
   virtual void swap_buffers() = 0;
 
@@ -66,6 +69,9 @@ public:
 
   /// Print a log message with details of any dropped messages.
   virtual void log_dropped() {}
+
+  /// \brief Producer API: notify wait_for_data() to wake up and unblock consumer thread.
+  virtual void notify_data_ready() {}
 };
 
 }  // namespace cache

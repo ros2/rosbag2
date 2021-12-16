@@ -36,6 +36,11 @@ MessageCache::MessageCache(size_t max_buffer_size)
 
 MessageCache::~MessageCache()
 {
+  // Initiate flushing on destruction to unblock wait_for_data. This is defensive programming
+  // and in regular flow upper object owner should take care about unblocking wait_for_data in
+  // exceptional situations.
+  flushing_ = true;
+  cache_condition_var_.notify_one();
   log_dropped();
 }
 
@@ -45,21 +50,19 @@ void MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   bool pushed = false;
   {
     std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
-    if (!flushing_) {
-      pushed = producer_buffer_->push(msg);
-    }
+    pushed = producer_buffer_->push(msg);
   }
+
   if (!pushed) {
     messages_dropped_per_topic_[msg->topic_name]++;
   }
 
-  notify_buffer_consumer();
+  notify_data_ready();
 }
 
-std::shared_ptr<CacheBufferInterface> MessageCache::consumer_buffer()
+std::shared_ptr<CacheBufferInterface> MessageCache::get_consumer_buffer()
 {
   consumer_buffer_mutex_.lock();
-  swap_buffers();
   return consumer_buffer_;
 }
 
@@ -68,18 +71,32 @@ void MessageCache::release_consumer_buffer()
   consumer_buffer_mutex_.unlock();
 }
 
-void MessageCache::swap_buffers()
+void MessageCache::notify_data_ready()
+{
+  {
+    std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
+    data_ready_ = true;
+  }
+  cache_condition_var_.notify_one();
+}
+
+void MessageCache::wait_for_data()
 {
   std::unique_lock<std::mutex> producer_lock(producer_buffer_mutex_);
-  std::lock_guard<std::recursive_mutex> consumer_lock(consumer_buffer_mutex_);
   if (!flushing_) {
     // Required condition check to protect against spurious wakeups
     cache_condition_var_.wait(
       producer_lock, [this] {
-        return primary_buffer_can_be_swapped_ || flushing_;
+        return data_ready_ || flushing_;
       });
-    primary_buffer_can_be_swapped_ = false;
+    data_ready_ = false;
   }
+}
+
+void MessageCache::swap_buffers()
+{
+  std::lock_guard<std::mutex> producer_lock(producer_buffer_mutex_);
+  std::lock_guard<std::mutex> consumer_lock(consumer_buffer_mutex_);
   std::swap(producer_buffer_, consumer_buffer_);
 }
 
@@ -128,15 +145,6 @@ void MessageCache::log_dropped()
       "Cache buffers were unflushed with " << remaining << " remaining messages"
     );
   }
-}
-
-void MessageCache::notify_buffer_consumer()
-{
-  {
-    std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
-    primary_buffer_can_be_swapped_ = true;
-  }
-  cache_condition_var_.notify_one();
 }
 
 }  // namespace cache

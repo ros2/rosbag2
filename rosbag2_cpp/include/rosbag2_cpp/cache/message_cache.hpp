@@ -71,17 +71,21 @@ class ROSBAG2_CPP_PUBLIC MessageCache
 public:
   explicit MessageCache(size_t max_buffer_size);
 
-  ~MessageCache();
+  ~MessageCache() override;
 
   /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Gets a consumer buffer.
   /// In this greedy implementation, swap buffers before providing the buffer.
-  std::shared_ptr<CacheBufferInterface> consumer_buffer() override;
+  std::shared_ptr<CacheBufferInterface> get_consumer_buffer() override;
 
-  /// Notify that consumer_buffer has been fully used. Unlock.
+  /// \brief Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
   void release_consumer_buffer() override;
+
+  /// \brief Blocks current thread and going to wait on condition variable until notify_data_ready
+  /// will be called.
+  void wait_for_data() override;
 
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
@@ -101,23 +105,22 @@ public:
   /// Summarize dropped/remaining messages
   void log_dropped() override;
 
+  /// Producer API: notify consumer to wake-up (primary buffer has data)
+  void notify_data_ready() override;
+
 protected:
   /// Dropped messages per topic. Used for printing in alphabetic order
   std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
 
 private:
-  /// Producer API: notify consumer to wake-up (primary buffer has data)
-  void notify_buffer_consumer();
-
   /// Double buffers
   std::shared_ptr<MessageCacheBuffer> producer_buffer_;
   std::mutex producer_buffer_mutex_;
   std::shared_ptr<MessageCacheBuffer> consumer_buffer_;
-  std::recursive_mutex consumer_buffer_mutex_;
-
+  std::mutex consumer_buffer_mutex_;
 
   /// Double buffers sync (following cpp core guidelines for condition variables)
-  bool primary_buffer_can_be_swapped_ {false};
+  bool data_ready_ {false};
   std::condition_variable cache_condition_var_;
 
   /// Cache is no longer accepting messages and is in the process of flushing

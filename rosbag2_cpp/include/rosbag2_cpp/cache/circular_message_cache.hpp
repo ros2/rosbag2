@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 #define ROSBAG2_CPP__CACHE__CIRCULAR_MESSAGE_CACHE_HPP_
 
+#include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -52,28 +54,49 @@ class ROSBAG2_CPP_PUBLIC CircularMessageCache
 public:
   explicit CircularMessageCache(size_t max_buffer_size);
 
+  ~CircularMessageCache() override;
+
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Get current buffer to consume.
-  /// Locks consumer_buffer and swap_buffers until release_consumer_buffer is called.
+  /// Locks consumer buffer until release_consumer_buffer is called.
   /// This may be repeatedly empty if `swap_buffers` has not been called.
   std::shared_ptr<CacheBufferInterface>
-  consumer_buffer() override RCPPUTILS_TSA_ACQUIRE(consumer_buffer_mutex_);
+  get_consumer_buffer() override RCPPUTILS_TSA_ACQUIRE(consumer_buffer_mutex_);
 
   /// Unlock access to the consumer buffer.
   void release_consumer_buffer() override RCPPUTILS_TSA_RELEASE(consumer_buffer_mutex_);
 
+  /// \brief Blocks current thread and going to wait on condition variable until notify_data_ready
+  /// will be called.
+  void wait_for_data() override;
+
   /// Swap the primary and secondary buffer before consumption.
-  /// NOTE: If swap_buffers is called again before consuming via consumer_buffer,
+  /// NOTE: If swap_buffers is called again before consuming via get_consumer_buffer,
   /// that data will be cleared for use by the producer.
   void swap_buffers() override;
+
+  /// Signal wait_for_data to wake up and unblock consumer thread on exit or during bag split
+  void begin_flushing() override;
+
+  /// Notify that flushing is complete
+  void done_flushing() override;
+
+  /// Snapshot API: notify cache consumer to wake-up for dumping buffer
+  void notify_data_ready() override;
 
 private:
   std::shared_ptr<MessageCacheCircularBuffer> producer_buffer_;
   std::mutex producer_buffer_mutex_;
   std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer_;
   std::mutex consumer_buffer_mutex_;
+
+  bool data_ready_ {false};
+  std::condition_variable cache_condition_var_;
+
+  /// Synchronization flag. Needs for unblock wait_for_data on exit.
+  std::atomic_bool flushing_ {false};
 };
 
 }  // namespace cache
