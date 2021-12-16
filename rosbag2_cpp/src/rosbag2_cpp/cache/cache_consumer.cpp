@@ -50,6 +50,14 @@ void CacheConsumer::close()
   message_cache_->done_flushing();
 }
 
+void CacheConsumer::start()
+{
+  is_stop_issued_ = false;
+  if (!consumer_thread_.joinable()) {
+    consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
+  }
+}
+
 void CacheConsumer::exec_consuming()
 {
   bool exit_flag = false;
