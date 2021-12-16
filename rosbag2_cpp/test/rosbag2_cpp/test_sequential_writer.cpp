@@ -297,7 +297,7 @@ TEST_F(
       (const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
     {
       written_messages += msgs.size();
-      fake_storage_size_.fetch_add(msgs.size());
+      fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
     });
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
