@@ -80,12 +80,13 @@ public:
   /// In this greedy implementation, swap buffers before providing the buffer.
   std::shared_ptr<CacheBufferInterface> get_consumer_buffer() override;
 
-  /// Notify that get_consumer_buffer has been fully used. Unlock.
+  /// \brief Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
   void release_consumer_buffer() override;
 
   /// \brief Blocks current thread and going to wait on condition variable until notify_data_ready
   /// will be called.
   void wait_for_data() override;
+
   /**
   * Consumer API: wait until primary buffer is ready and swap it with consumer buffer.
   * The caller thread (consumer thread) will sleep on a conditional variable
