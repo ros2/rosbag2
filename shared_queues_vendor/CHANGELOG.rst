@@ -2,6 +2,9 @@
 Changelog for package shared_queues_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.11.0 (2021-11-08)
 -------------------
 * Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)
