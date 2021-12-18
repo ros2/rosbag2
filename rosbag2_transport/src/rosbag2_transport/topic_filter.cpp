@@ -75,7 +75,7 @@ is_leaf_topic(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
 {
   auto subscriptions_info = node_graph.get_subscriptions_info_by_topic(topic_name);
-  return subscriptions_info.size() == 0;
+  return subscriptions_info.empty();
 }
 }  // namespace
 
@@ -83,16 +83,19 @@ namespace rosbag2_transport
 {
 
 TopicFilter::TopicFilter(
-  RecordOptions record_options,
+  const RecordOptions & record_options,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
   bool allow_unknown_types)
 : record_options_(record_options),
   allow_unknown_types_(allow_unknown_types),
   node_graph_(node_graph)
-{}
-
-TopicFilter::~TopicFilter()
-{}
+{
+  if (record_options_.ignore_leaf_topics && !node_graph_) {
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "Requested to filter leaf topics, however node_graph not provided. \n"
+      "Leaf topics will not be filtered.");
+  }
+}
 
 std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
@@ -130,22 +133,28 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  if (!record_options_.topics.empty() && !topic_in_list(topic_name, record_options_.topics)) {
-    return false;
-  }
-
   std::regex exclude_regex(record_options_.exclude);
-  if (!record_options_.exclude.empty() && std::regex_search(topic_name, exclude_regex)) {
-    return false;
-  }
-
-  std::regex include_regex(record_options_.regex);
-  if (
-    !record_options_.all &&  // All takes precedence over regex
-    !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
-    !std::regex_search(topic_name, include_regex))
+  if (!record_options_.exclude.empty() &&
+    std::regex_search(topic_name, exclude_regex))
   {
     return false;
+  }
+
+  if (!record_options_.all) {  // All takes precedence over regex and topic list
+    bool topic_name_in_topic_list =
+      (!record_options_.topics.empty() && topic_in_list(topic_name, record_options_.topics));
+
+    if (!record_options_.regex.empty()) {
+      std::regex include_regex(record_options_.regex);
+      // Check if topic_name not in include_regex nor in topic list
+      if (!std::regex_search(topic_name, include_regex) && !topic_name_in_topic_list) {
+        return false;
+      }
+    } else {  // In case if regex empty, check if topic name not in topic list
+      if (!topic_name_in_topic_list) {
+        return false;
+      }
+    }
   }
 
   return true;

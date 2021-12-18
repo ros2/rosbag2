@@ -49,15 +49,15 @@ TEST(TestTopicFilter, filter_hidden_topics) {
     {"_/topic/c", {"type_c"}},
   };
 
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all = true;
   {
-    rosbag2_transport::RecordOptions record_options;
     record_options.include_hidden_topics = true;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
     ASSERT_EQ(topics_and_types.size(), filtered_topics.size());
   }
   {
-    rosbag2_transport::RecordOptions record_options;
     record_options.include_hidden_topics = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
@@ -73,7 +73,9 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
     {"topic/d", {"type_d", "type_d", "type_d2"}},
   };
 
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr, true};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   EXPECT_THAT(filtered_topics, SizeIs(2));
   for (const auto & topic :
@@ -90,7 +92,9 @@ TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
     {"topic/c", {"type_c"}}
   };
 
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(0u, filtered_topics.size());
 }
@@ -101,7 +105,9 @@ TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
     {"topic/b", {"test_msgs/BasicTypes"}},
     {"topic/c", {"test_msgs/BasicTypes"}}
   };
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(3u, filtered_topics.size());
 }
