@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2021-12-17)
+-------------------
+* Add pause/resume options to the bag recorder (`#905 <https://github.com/ros2/rosbag2/issues/905>`_)
+* Contributors: Ivan Santiago Paunovic
+
 0.11.0 (2021-11-08)
 -------------------
 * Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)

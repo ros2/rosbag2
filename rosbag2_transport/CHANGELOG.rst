@@ -2,6 +2,22 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2021-12-17)
+-------------------
+* Changes for uncrustify 0.72 (`#937 <https://github.com/ros2/rosbag2/issues/937>`_)
+* TopicFilter use regex_search instead of regex_match (`#932 <https://github.com/ros2/rosbag2/issues/932>`_)
+* Add start-offset play option (`#931 <https://github.com/ros2/rosbag2/issues/931>`_)
+* Add parentheses suggested by Clang on OSX to fix build warning (`#930 <https://github.com/ros2/rosbag2/issues/930>`_)
+* Bag rewriter (C++) (`#920 <https://github.com/ros2/rosbag2/issues/920>`_)
+* Add "ignore leaf topics" option to recorder (`#925 <https://github.com/ros2/rosbag2/issues/925>`_)
+* Rewrite TopicFilter for single-call reusability (`#924 <https://github.com/ros2/rosbag2/issues/924>`_)
+* Add a ReaderWriterFactory utility to share logic for reuse (`#923 <https://github.com/ros2/rosbag2/issues/923>`_)
+* Add pause/resume options to the bag recorder (`#905 <https://github.com/ros2/rosbag2/issues/905>`_)
+* Add logging macros for rosbag2_transport (`#917 <https://github.com/ros2/rosbag2/issues/917>`_)
+* Enable YAML encoding/decoding for RecordOptions and StorageOptions (`#916 <https://github.com/ros2/rosbag2/issues/916>`_)
+* Expose the QoS object wrapper (`#910 <https://github.com/ros2/rosbag2/issues/910>`_)
+* Contributors: Abrar Rahman Protyasha, Chris Lalancette, Emerson Knapp, Geoffrey Biggs, Ivan Santiago Paunovic
+
 0.11.0 (2021-11-08)
 -------------------
 * Add --start-paused option to `ros2 bag play` (`#904 <https://github.com/ros2/rosbag2/issues/904>`_)

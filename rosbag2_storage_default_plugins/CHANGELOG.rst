@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2021-12-17)
+-------------------
+* Enable YAML encoding/decoding for RecordOptions and StorageOptions (`#916 <https://github.com/ros2/rosbag2/issues/916>`_)
+* Contributors: Emerson Knapp
+
 0.11.0 (2021-11-08)
 -------------------
 * Update package maintainers (`#899 <https://github.com/ros2/rosbag2/issues/899>`_)

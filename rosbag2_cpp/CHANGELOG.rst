@@ -2,6 +2,15 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.12.0 (2021-12-17)
+-------------------
+* Changes for uncrustify 0.72 (`#937 <https://github.com/ros2/rosbag2/issues/937>`_)
+* Redesign in cache consumer and circular message cache to get rid from busy loop (`#941 <https://github.com/ros2/rosbag2/issues/941>`_)
+* Bugfix for broken bag split when using cache (`#936 <https://github.com/ros2/rosbag2/issues/936>`_)
+* Remove JumpHandler copy-implementation from PlayerClock/TimeControllerClock (`#935 <https://github.com/ros2/rosbag2/issues/935>`_)
+* Auto-detect storage_id for Reader (if possible) (`#918 <https://github.com/ros2/rosbag2/issues/918>`_)
+* Contributors: Chris Lalancette, Emerson Knapp, Michael Orlov
+
 0.11.0 (2021-11-08)
 -------------------
 * Add --start-paused option to `ros2 bag play` (`#904 <https://github.com/ros2/rosbag2/issues/904>`_)
