@@ -140,6 +140,49 @@ public:
   double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
   bool paused RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
+
+private:
+  std::mutex callback_list_mutex_;
+  std::vector<PlayerClock::JumpHandler::SharedPtr> callback_list_
+  RCPPUTILS_TSA_GUARDED_BY(callback_list_mutex_);
+
+  void process_callbacks_before_jump(const rcl_time_jump_t & time_jump)
+  {
+    std::lock_guard<std::mutex> lock(callback_list_mutex_);
+    for (auto const & handler : callback_list_) {
+      process_callback(handler, time_jump, true);
+    }
+  }
+
+  void process_callbacks_after_jump(const rcl_time_jump_t & time_jump)
+  {
+    std::lock_guard<std::mutex> lock(callback_list_mutex_);
+    for (auto const & handler : callback_list_) {
+      process_callback(handler, time_jump, false);
+    }
+  }
+
+  void process_callback(
+    PlayerClock::JumpHandler::SharedPtr handler, const rcl_time_jump_t & time_jump,
+    bool before_jump) const RCPPUTILS_TSA_REQUIRES(callback_list_mutex_)
+  {
+    bool is_clock_change = time_jump.clock_change == RCL_ROS_TIME_ACTIVATED ||
+      time_jump.clock_change == RCL_ROS_TIME_DEACTIVATED;
+    if ((is_clock_change && handler->notice_threshold.on_clock_change) ||
+      (handler->notice_threshold.min_backward.nanoseconds != 0 &&
+      time_jump.delta.nanoseconds < 0 &&
+      time_jump.delta.nanoseconds <= handler->notice_threshold.min_backward.nanoseconds) ||
+      (handler->notice_threshold.min_forward.nanoseconds != 0 &&
+      time_jump.delta.nanoseconds > 0 &&
+      time_jump.delta.nanoseconds >= handler->notice_threshold.min_forward.nanoseconds))
+    {
+      if (before_jump && handler->pre_callback) {
+        handler->pre_callback();
+      } else if (!before_jump && handler->post_callback) {
+        handler->post_callback(time_jump);
+      }
+    }
+  }
 };
 
 TimeControllerClock::TimeControllerClock(
