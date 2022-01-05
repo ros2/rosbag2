@@ -73,10 +73,9 @@ public:
       });
 
     serialized_data->buffer_length = message_size;
-    size_t written_size = write_data_to_serialized_string_message(
+    write_data_to_serialized_string_message(
       serialized_data->buffer, serialized_data->buffer_capacity, message);
 
-    (void) written_size;
     return serialized_data;
   }
 
@@ -179,6 +178,8 @@ protected:
     if (remaining_buffer == 0) {
       return amount_written;
     }
+
+    assert(buffer_capacity >= preamble.size() + message.size());
 
     size_t amount_to_write = remaining_buffer;
     std::string preamble = get_preamble();

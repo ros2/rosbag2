@@ -253,7 +253,7 @@ void SqliteStorage::write_locked(
   } catch (const SqliteException & exc) {
     if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
       // Get the sqlite string/blob limit.
-      size_t sqlite_limit = sqlite3_limit(
+      const size_t sqlite_limit = sqlite3_limit(
         this->get_sqlite_database_wrapper().get_database(),
         SQLITE_LIMIT_LENGTH,
         -1);
