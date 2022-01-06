@@ -179,10 +179,10 @@ protected:
       return amount_written;
     }
 
+    std::string preamble = get_preamble();
     assert(buffer_capacity >= preamble.size() + message.size());
 
     size_t amount_to_write = remaining_buffer;
-    std::string preamble = get_preamble();
     if (preamble.size() < amount_to_write) {
       amount_to_write = preamble.size();
     }
