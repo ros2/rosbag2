@@ -391,7 +391,7 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
   // Artificially lower the limit, make sure it's smaller than the original.
   size_t artificial_limit = 1000;  // 1KB
   artificial_limit = std::min(artificial_limit, sqlite_limit);
-  assert(artificial_limit <= std::numeric_limits<int>::max());
+  assert(artificial_limit <= static_cast<size_t>(std::numeric_limits<int>::max()));
   sqlite3_limit(
     writable_storage->get_sqlite_database_wrapper().get_database(),
     SQLITE_LIMIT_LENGTH,
