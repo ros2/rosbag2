@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include "rcpputils/thread_safety_annotations.hpp"
+
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
@@ -78,10 +80,11 @@ public:
 
   /// Gets a consumer buffer.
   /// In this greedy implementation, swap buffers before providing the buffer.
-  std::shared_ptr<CacheBufferInterface> get_consumer_buffer() override;
+  std::shared_ptr<CacheBufferInterface>
+  get_consumer_buffer() override RCPPUTILS_TSA_ACQUIRE(consumer_buffer_mutex_);
 
-  /// \brief Signals that tne consumer is done consuming, unlocking the buffer so it may be swapped.
-  void release_consumer_buffer() override;
+  /// \brief Signals that the consumer is done consuming, unlocking the buffer so it may be swapped.
+  void release_consumer_buffer() override RCPPUTILS_TSA_RELEASE(consumer_buffer_mutex_);
 
   /// \brief Blocks current thread and going to wait on condition variable until notify_data_ready
   /// will be called.
