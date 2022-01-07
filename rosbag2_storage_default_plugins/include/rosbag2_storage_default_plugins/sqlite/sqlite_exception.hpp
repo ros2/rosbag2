@@ -33,7 +33,20 @@ class ROSBAG2_STORAGE_DEFAULT_PLUGINS_PUBLIC SqliteException : public std::runti
 {
 public:
   explicit SqliteException(const std::string & message)
-  : runtime_error(message) {}
+  : runtime_error(message), sqlite_return_code_(-1) {}
+
+  SqliteException(const std::string & message, int sqlite_return_code)
+  : runtime_error(message), sqlite_return_code_(sqlite_return_code) {}
+
+  /// Return the sqlite return code associated with the Exception, or -1 if none was given.
+  int
+  get_sqlite_return_code() const
+  {
+    return sqlite_return_code_;
+  }
+
+private:
+  int sqlite_return_code_;
 };
 
 }  // namespace rosbag2_storage_plugins

@@ -133,4 +133,9 @@ SqliteWrapper::operator bool()
   return db_ptr != nullptr;
 }
 
+sqlite3 * SqliteWrapper::get_database()
+{
+  return db_ptr;
+}
+
 }  // namespace rosbag2_storage_plugins

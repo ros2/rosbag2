@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -48,16 +49,15 @@ public:
     allocator_ = rcutils_get_default_allocator();
   }
 
-  std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(std::string message)
+  std::shared_ptr<rcutils_uint8_array_t> make_serialized_message(const std::string & message)
   {
-    int message_size = get_buffer_capacity(message);
-    message_size++;  // need to account for terminating null character
-    assert(message_size > 0);
+    size_t message_size = get_buffer_capacity(message);
 
     auto msg = new rcutils_uint8_array_t;
     *msg = rcutils_get_zero_initialized_uint8_array();
     auto ret = rcutils_uint8_array_init(msg, message_size, &allocator_);
     if (ret != RCUTILS_RET_OK) {
+      delete msg;
       throw std::runtime_error("Error allocating resources " + std::to_string(ret));
     }
 
@@ -73,48 +73,52 @@ public:
       });
 
     serialized_data->buffer_length = message_size;
-    int written_size = write_data_to_serialized_string_message(
+    write_data_to_serialized_string_message(
       serialized_data->buffer, serialized_data->buffer_capacity, message);
 
-    assert(written_size == message_size - 1);  // terminated null character not counted
-    (void) written_size;
     return serialized_data;
   }
 
   std::string deserialize_message(std::shared_ptr<rcutils_uint8_array_t> serialized_message)
   {
-    uint8_t * copied = new uint8_t[serialized_message->buffer_length];
-    auto string_length = serialized_message->buffer_length - 8;
-    memcpy(copied, &serialized_message->buffer[8], string_length);
-    std::string message_content(reinterpret_cast<char *>(copied));
-    // cppcheck-suppress mismatchAllocDealloc ; complains about "copied" but used new[] and delete[]
-    delete[] copied;
-    return message_content;
+    size_t preamble_len = this->get_preamble().size();
+    assert(serialized_message->buffer_length > preamble_len);
+    size_t amount_to_read = serialized_message->buffer_length - preamble_len;
+    return std::string(
+      reinterpret_cast<char *>(&serialized_message->buffer[preamble_len]),
+      amount_to_read);
   }
 
-  void write_messages_to_sqlite(
-    std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages)
+  std::shared_ptr<rosbag2_storage_plugins::SqliteStorage>
+  write_messages_to_sqlite(
+    std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages,
+    std::shared_ptr<rosbag2_storage_plugins::SqliteStorage> writable_storage = nullptr)
   {
-    std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
-      std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    if (nullptr == writable_storage) {
+      writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
 
-    auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+      auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
-    writable_storage->open({db_file, plugin_id_});
+      writable_storage->open({db_file, plugin_id_});
+    }
+
+    rosbag2_storage::storage_interfaces::ReadWriteInterface & rw_storage = *writable_storage;
 
     for (auto msg : messages) {
       std::string topic_name = std::get<2>(msg);
       std::string type_name = std::get<3>(msg);
       std::string rmw_format = std::get<4>(msg);
-      writable_storage->create_topic({topic_name, type_name, rmw_format, ""});
+      rw_storage.create_topic({topic_name, type_name, rmw_format, ""});
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
       bag_message->time_stamp = std::get<1>(msg);
       bag_message->topic_name = topic_name;
-      writable_storage->write(bag_message);
+      rw_storage.write(bag_message);
     }
 
-    metadata_io_.write_metadata(temporary_dir_path_, writable_storage->get_metadata());
+    metadata_io_.write_metadata(temporary_dir_path_, rw_storage.get_metadata());
+
+    return writable_storage;
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
@@ -156,22 +160,47 @@ public:
   }
 
 protected:
-  int get_buffer_capacity(const std::string & message)
+  std::string get_preamble() const
   {
-    return write_data_to_serialized_string_message(nullptr, 0, message);
+    return {0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00};
   }
 
-  int write_data_to_serialized_string_message(
+  size_t get_buffer_capacity(const std::string & message)
+  {
+    return get_preamble().size() + message.size();
+  }
+
+  size_t write_data_to_serialized_string_message(
     uint8_t * buffer, size_t buffer_capacity, const std::string & message)
   {
-    // This function also writes the final null charachter, which is absent in the CDR format.
-    // Here this behaviour is ok, because we only test test writing and reading from/to sqlite.
-    return rcutils_snprintf(
-      reinterpret_cast<char *>(buffer),
-      buffer_capacity,
-      "%c%c%c%c%c%c%c%c%s",
-      0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
-      message.c_str());
+    size_t remaining_buffer = buffer_capacity;
+    size_t amount_written = 0;
+    if (remaining_buffer == 0) {
+      return amount_written;
+    }
+
+    std::string preamble = get_preamble();
+    assert(buffer_capacity >= preamble.size() + message.size());
+
+    size_t amount_to_write = remaining_buffer;
+    if (preamble.size() < amount_to_write) {
+      amount_to_write = preamble.size();
+    }
+    std::memcpy(buffer, preamble.data(), amount_to_write);
+    amount_written += amount_to_write;
+    remaining_buffer -= amount_written;
+    if (remaining_buffer == 0) {
+      return amount_written;
+    }
+
+    amount_to_write = remaining_buffer;
+    if (message.size() < amount_to_write) {
+      amount_to_write = message.size();
+    }
+    std::memcpy(buffer + amount_written, message.data(), amount_to_write);
+    amount_written += amount_to_write;
+
+    return amount_written;
   }
 
   rcutils_allocator_t allocator_;

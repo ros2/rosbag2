@@ -248,7 +248,27 @@ void SqliteStorage::write_locked(
             "' has not been created yet! Call 'create_topic' first.");
   }
 
-  write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+  try {
+    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+  } catch (const SqliteException & exc) {
+    if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
+      // Get the sqlite string/blob limit.
+      const size_t sqlite_limit = sqlite3_limit(
+        this->get_sqlite_database_wrapper().get_database(),
+        SQLITE_LIMIT_LENGTH,
+        -1);
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(
+        "Message on topic '" << message->topic_name << "' of size '" <<
+          message->serialized_data->buffer_length <<
+          "' bytes failed to write because it exceeds the maximum size sqlite can store ('" <<
+          sqlite_limit << "' bytes): " <<
+          exc.what());
+      return;
+    } else {
+      // Rethrow.
+      throw;
+    }
+  }
   write_statement_->execute_and_reset();
 }
 
@@ -496,6 +516,14 @@ void SqliteStorage::seek(const rcutils_time_point_value_t & timestamp)
 std::string SqliteStorage::get_storage_setting(const std::string & key)
 {
   return database_->query_pragma_value(key);
+}
+
+SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
+{
+  if (nullptr == database_) {
+    throw std::runtime_error("database not open");
+  }
+  return *database_;
 }
 
 }  // namespace rosbag2_storage_plugins

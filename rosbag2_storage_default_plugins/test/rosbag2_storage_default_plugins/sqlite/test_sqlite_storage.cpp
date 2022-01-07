@@ -14,6 +14,8 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -372,4 +374,36 @@ TEST_F(StorageTestFixture, throws_on_invalid_pragma_in_config_file) {
       make_storage_options_with_config(invalid_yaml, kPluginID),
       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE),
     std::runtime_error);
+}
+
+TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
+  // Check that storage does not throw when a message is too large to be stored.
+
+  // Use write_messages_to_sqlite() to open the database without writing anything.
+  auto writable_storage = this->write_messages_to_sqlite({});
+
+  // Get the sqlite string/blob limit.
+  size_t sqlite_limit = sqlite3_limit(
+    writable_storage->get_sqlite_database_wrapper().get_database(),
+    SQLITE_LIMIT_LENGTH,
+    -1);
+
+  // Artificially lower the limit, make sure it's smaller than the original.
+  size_t artificial_limit = 1000;  // 1KB
+  artificial_limit = std::min(artificial_limit, sqlite_limit);
+  assert(artificial_limit <= static_cast<size_t>(std::numeric_limits<int>::max()));
+  sqlite3_limit(
+    writable_storage->get_sqlite_database_wrapper().get_database(),
+    SQLITE_LIMIT_LENGTH,
+    static_cast<int>(artificial_limit));
+
+  // This should produce a warning, but not an exception.
+  std::string msg(artificial_limit + 1, '\0');
+  EXPECT_NO_THROW(
+  {
+    this->write_messages_to_sqlite(
+    {
+      {msg, 0, "/too_big_message", "some_type", "some_rmw"}
+    }, writable_storage);
+  });
 }

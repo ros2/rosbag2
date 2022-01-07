@@ -88,6 +88,12 @@ public:
 
   std::string get_storage_setting(const std::string & key);
 
+  /// Return the sqlite database wrapper.
+  /**
+   * \throws std::runtime_error if open() has not been called
+   */
+  SqliteWrapper & get_sqlite_database_wrapper();
+
 private:
   void initialize();
   void prepare_for_writing();
