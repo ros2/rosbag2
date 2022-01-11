@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "./rmw_implemented_serialization_format_converter.hpp"
+#include "rmw_implemented_serialization_format_converter.hpp"
 
 #include <memory>
 #include <sstream>
