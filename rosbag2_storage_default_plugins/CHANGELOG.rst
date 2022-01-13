@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2022-01-13)
+-------------------
+* Emit a warning rather than crash when a message is too big for sqlite (`#919 <https://github.com/ros2/rosbag2/issues/919>`_)
+* Contributors: William Woodall
+
 0.12.0 (2021-12-17)
 -------------------
 * Enable YAML encoding/decoding for RecordOptions and StorageOptions (`#916 <https://github.com/ros2/rosbag2/issues/916>`_)

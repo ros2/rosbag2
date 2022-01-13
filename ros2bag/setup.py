@@ -5,7 +5,7 @@ package_name = 'ros2bag'
 
 setup(
     name=package_name,
-    version='0.12.0',
+    version='0.13.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/' + package_name, ['package.xml']),

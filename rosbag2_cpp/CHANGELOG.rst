@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2022-01-13)
+-------------------
+* Fix relative path syntax for cpplint (`#947 <https://github.com/ros2/rosbag2/issues/947>`_)
+* Mark up the message_cache with TSA annotations (`#946 <https://github.com/ros2/rosbag2/issues/946>`_)
+* Contributors: Chris Lalancette, Jacob Perron
+
 0.12.0 (2021-12-17)
 -------------------
 * Changes for uncrustify 0.72 (`#937 <https://github.com/ros2/rosbag2/issues/937>`_)

@@ -2,6 +2,9 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2022-01-13)
+-------------------
+
 0.12.0 (2021-12-17)
 -------------------
 * Add pause/resume options to the bag recorder (`#905 <https://github.com/ros2/rosbag2/issues/905>`_)

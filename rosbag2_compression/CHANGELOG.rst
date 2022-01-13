@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2022-01-13)
+-------------------
+
 0.12.0 (2021-12-17)
 -------------------
 * Changes for uncrustify 0.72 (`#937 <https://github.com/ros2/rosbag2/issues/937>`_)

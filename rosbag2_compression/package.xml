@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>rosbag2_compression</name>
-  <version>0.12.0</version>
+  <version>0.13.0</version>
   <description>Compression implementations for rosbag2 bags and messages.</description>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
   <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>

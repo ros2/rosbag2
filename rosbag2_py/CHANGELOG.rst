@@ -2,6 +2,12 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2022-01-13)
+-------------------
+* Fix relative path syntax for cpplint (`#947 <https://github.com/ros2/rosbag2/issues/947>`_)
+* Update to pybind11 2.7.1 (`#945 <https://github.com/ros2/rosbag2/issues/945>`_)
+* Contributors: Chris Lalancette, Jacob Perron
+
 0.12.0 (2021-12-17)
 -------------------
 * Add start-offset play option (`#931 <https://github.com/ros2/rosbag2/issues/931>`_)
