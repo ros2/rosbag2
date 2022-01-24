@@ -98,9 +98,6 @@ target_include_directories(${PROJECT_NAME}
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_CPP_BUILDING_DLL")
 
-# prevent pluginlib from using boost
-target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
-
 install(
   DIRECTORY include/
   DESTINATION include)
