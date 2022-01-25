@@ -45,9 +45,6 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_storage)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
 
-# prevent pluginlib from using boost
-target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
-
 install(
   DIRECTORY include/
   DESTINATION include)
