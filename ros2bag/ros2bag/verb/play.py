@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from argparse import ArgumentTypeError
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
@@ -32,6 +33,13 @@ def positive_float(arg: str) -> float:
     value = float(arg)
     if value <= 0:
         raise ValueError(f'Value {value} is less than or equal to zero.')
+    return value
+
+
+def not_negative_int(arg: str) -> int:
+    value = int(arg)
+    if value < 0:
+        raise ArgumentTypeError(f'Value {value} is less than zero.')
     return value
 
 
@@ -93,6 +101,17 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--start-offset', type=check_positive_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
+        parser.add_argument(
+            '--wait-for-all-acked', type=not_negative_int, default=0,
+            help='Wait until all published messages are acknowledged by all subscribers or until '
+                 'the timeout elapses in millisecond before play is terminated. '
+                 'Especially for the case of sending message with big size in a short time. '
+                 'Negative timeout is invalid. '
+                 '0 means wait forever until all published messages are acknowledged by all '
+                 'subscribers. '
+                 "Note that this option is valid only if the publisher\'s QOS profile is "
+                 'RELIABLE.',
+            metavar='TIMEOUT')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -131,6 +150,7 @@ class PlayVerb(VerbExtension):
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
+        play_options.wait_acked_timeout = args.wait_for_all_acked
 
         player = Player()
         player.play(storage_options, play_options)

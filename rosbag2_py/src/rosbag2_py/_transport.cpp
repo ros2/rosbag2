@@ -247,6 +247,7 @@ PYBIND11_MODULE(_transport, m) {
     "start_offset",
     &PlayOptions::getStartOffset,
     &PlayOptions::setStartOffset)
+  .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")

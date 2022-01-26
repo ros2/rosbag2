@@ -62,6 +62,10 @@ public:
   KeyboardHandler::KeyCode play_next_key = KeyboardHandler::KeyCode::CURSOR_RIGHT;
   KeyboardHandler::KeyCode increase_rate_key = KeyboardHandler::KeyCode::CURSOR_UP;
   KeyboardHandler::KeyCode decrease_rate_key = KeyboardHandler::KeyCode::CURSOR_DOWN;
+
+  // Timeout for waiting all published messages acknowledged
+  // negative means published messages need not to be acknowledged
+  int64_t wait_acked_timeout = -1;
 };
 
 }  // namespace rosbag2_transport
