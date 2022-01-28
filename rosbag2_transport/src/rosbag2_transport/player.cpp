@@ -230,7 +230,7 @@ void Player::play()
   is_ready_to_play_from_queue_ = false;
   ready_to_play_from_queue_cv_.notify_all();
 
-  // Wait for all published messages are acknowledged
+  // Wait for all published messages to be acknowledged.
   if (play_options_.wait_acked_timeout >= 0) {
     std::chrono::milliseconds timeout(play_options_.wait_acked_timeout);
     if (timeout == std::chrono::milliseconds(0)) {
@@ -241,7 +241,7 @@ void Player::play()
         if (!pub.second->wait_for_all_acked(timeout)) {
           RCLCPP_ERROR(
             get_logger(),
-            "Failed to wait all published messages acknowledged for topic %s",
+            "Timeout to wait all published messages acknowledged for topic %s",
             pub.first.c_str());
         }
       } catch (std::exception & e) {
@@ -487,6 +487,7 @@ void Player::prepare_publishers()
 
   // Create topic publishers
   auto topics = reader_->get_all_topics_and_types();
+  std::string topic_without_support_acked;
   for (const auto & topic : topics) {
     if (publishers_.find(topic.name) != publishers_.end()) {
       continue;
@@ -510,10 +511,7 @@ void Player::prepare_publishers()
       if (play_options_.wait_acked_timeout >= 0 &&
         topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
       {
-        RCLCPP_WARN(
-          get_logger(),
-          "--wait-for-all-acked is invaild for topic '%s' since reliability of QOS is BestEffort.",
-          topic.name.c_str());
+        topic_without_support_acked += topic.name + ", ";
       }
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
@@ -522,6 +520,18 @@ void Player::prepare_publishers()
         get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
+  }
+
+  if (!topic_without_support_acked.empty()) {
+    // remove the last ", "
+    topic_without_support_acked.erase(
+      topic_without_support_acked.end() - 2,
+      topic_without_support_acked.end());
+
+    RCLCPP_WARN(
+      get_logger(),
+      "--wait-for-all-acked is invaild for below topics since reliability of QOS is BestEffort.\n"
+      "%s", topic_without_support_acked.c_str());
   }
 }
 

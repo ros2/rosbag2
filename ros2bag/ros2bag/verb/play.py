@@ -102,7 +102,7 @@ class PlayVerb(VerbExtension):
             '--start-offset', type=check_positive_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
         parser.add_argument(
-            '--wait-for-all-acked', type=not_negative_int, default=0,
+            '--wait-for-all-acked', type=not_negative_int, default=-1,
             help='Wait until all published messages are acknowledged by all subscribers or until '
                  'the timeout elapses in millisecond before play is terminated. '
                  'Especially for the case of sending message with big size in a short time. '

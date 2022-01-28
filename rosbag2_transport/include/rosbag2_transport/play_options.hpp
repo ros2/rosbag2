@@ -63,8 +63,8 @@ public:
   KeyboardHandler::KeyCode increase_rate_key = KeyboardHandler::KeyCode::CURSOR_UP;
   KeyboardHandler::KeyCode decrease_rate_key = KeyboardHandler::KeyCode::CURSOR_DOWN;
 
-  // Timeout for waiting all published messages acknowledged
-  // negative means published messages need not to be acknowledged
+  // Timeout for waiting for all published messages to be acknowledged.
+  // Negative value means that published messages do not need to be acknowledged.
   int64_t wait_acked_timeout = -1;
 };
 
