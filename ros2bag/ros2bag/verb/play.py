@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentTypeError
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
+from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_path_exists
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_yaml_to_qos_profile
@@ -33,13 +33,6 @@ def positive_float(arg: str) -> float:
     value = float(arg)
     if value <= 0:
         raise ValueError(f'Value {value} is less than or equal to zero.')
-    return value
-
-
-def not_negative_int(arg: str) -> int:
-    value = int(arg)
-    if value < 0:
-        raise ArgumentTypeError(f'Value {value} is less than zero.')
     return value
 
 
@@ -102,7 +95,7 @@ class PlayVerb(VerbExtension):
             '--start-offset', type=check_positive_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
         parser.add_argument(
-            '--wait-for-all-acked', type=not_negative_int, default=-1,
+            '--wait-for-all-acked', type=check_not_negative_int, default=-1,
             help='Wait until all published messages are acknowledged by all subscribers or until '
                  'the timeout elapses in millisecond before play is terminated. '
                  'Especially for the case of sending message with big size in a short time. '
