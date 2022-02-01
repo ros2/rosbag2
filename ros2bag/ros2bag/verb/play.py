@@ -15,6 +15,7 @@
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
+from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_path_exists
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_yaml_to_qos_profile
@@ -93,6 +94,17 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--start-offset', type=check_positive_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
+        parser.add_argument(
+            '--wait-for-all-acked', type=check_not_negative_int, default=-1,
+            help='Wait until all published messages are acknowledged by all subscribers or until '
+                 'the timeout elapses in millisecond before play is terminated. '
+                 'Especially for the case of sending message with big size in a short time. '
+                 'Negative timeout is invalid. '
+                 '0 means wait forever until all published messages are acknowledged by all '
+                 'subscribers. '
+                 "Note that this option is valid only if the publisher\'s QOS profile is "
+                 'RELIABLE.',
+            metavar='TIMEOUT')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -131,6 +143,7 @@ class PlayVerb(VerbExtension):
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
+        play_options.wait_acked_timeout = args.wait_for_all_acked
 
         player = Player()
         player.play(storage_options, play_options)
