@@ -107,14 +107,3 @@ def check_path_exists(value: Any) -> str:
         raise ArgumentTypeError("Bag file '{}' does not exist!".format(value))
     except ValueError:
         raise ArgumentTypeError('{} is not the valid type (string)'.format(value))
-
-
-def check_not_negative_int(arg: str) -> int:
-    """Argparse validator to verify that a value is a int and not negative."""
-    try:
-        value = int(arg)
-        if value < 0:
-            raise ArgumentTypeError(f'Value {value} is less than zero.')
-        return value
-    except ValueError:
-        raise ArgumentTypeError('{} is not the valid type (int)'.format(value))

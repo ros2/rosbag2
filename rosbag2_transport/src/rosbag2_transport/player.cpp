@@ -229,31 +229,6 @@ void Player::play()
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
   ready_to_play_from_queue_cv_.notify_all();
-
-  // Wait for all published messages to be acknowledged.
-  if (play_options_.wait_acked_timeout >= 0) {
-    std::chrono::milliseconds timeout(play_options_.wait_acked_timeout);
-    if (timeout == std::chrono::milliseconds(0)) {
-      timeout = std::chrono::milliseconds(-1);
-    }
-    for (auto pub : publishers_) {
-      try {
-        if (!pub.second->wait_for_all_acked(timeout)) {
-          RCLCPP_ERROR(
-            get_logger(),
-            "Timed out while waiting for all published messages to be acknowledged for topic %s",
-            pub.first.c_str());
-        }
-      } catch (std::exception & e) {
-        RCLCPP_ERROR(
-          get_logger(),
-          "Exception occurred while waiting for all published messages to be acknowledged for "
-          "topic %s : %s",
-          pub.first.c_str(),
-          e.what());
-      }
-    }
-  }
 }
 
 void Player::pause()
@@ -488,7 +463,6 @@ void Player::prepare_publishers()
 
   // Create topic publishers
   auto topics = reader_->get_all_topics_and_types();
-  std::string topic_without_support_acked;
   for (const auto & topic : topics) {
     if (publishers_.find(topic.name) != publishers_.end()) {
       continue;
@@ -509,11 +483,6 @@ void Player::prepare_publishers()
       publishers_.insert(
         std::make_pair(
           topic.name, create_generic_publisher(topic.name, topic.type, topic_qos)));
-      if (play_options_.wait_acked_timeout >= 0 &&
-        topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
-      {
-        topic_without_support_acked += topic.name + ", ";
-      }
     } catch (const std::runtime_error & e) {
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
@@ -521,18 +490,6 @@ void Player::prepare_publishers()
         get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
-  }
-
-  if (!topic_without_support_acked.empty()) {
-    // remove the last ", "
-    topic_without_support_acked.erase(
-      topic_without_support_acked.end() - 2,
-      topic_without_support_acked.end());
-
-    RCLCPP_WARN(
-      get_logger(),
-      "--wait-for-all-acked is invalid for the below topics since reliability of QOS is "
-      "BestEffort.\n%s", topic_without_support_acked.c_str());
   }
 }
 
