@@ -241,13 +241,14 @@ void Player::play()
         if (!pub.second->wait_for_all_acked(timeout)) {
           RCLCPP_ERROR(
             get_logger(),
-            "Timeout to wait all published messages acknowledged for topic %s",
+            "Timed out while waiting for all published messages to be acknowledged for topic %s",
             pub.first.c_str());
         }
       } catch (std::exception & e) {
         RCLCPP_ERROR(
           get_logger(),
-          "Failed to wait all published messages acknowledged for topic %s : %s",
+          "Exception occurred while waiting for all published messages to be acknowledged for "
+          "topic %s : %s",
           pub.first.c_str(),
           e.what());
       }
@@ -530,8 +531,8 @@ void Player::prepare_publishers()
 
     RCLCPP_WARN(
       get_logger(),
-      "--wait-for-all-acked is invaild for below topics since reliability of QOS is BestEffort.\n"
-      "%s", topic_without_support_acked.c_str());
+      "--wait-for-all-acked is invalid for the below topics since reliability of QOS is "
+      "BestEffort.\n%s", topic_without_support_acked.c_str());
   }
 }
 
