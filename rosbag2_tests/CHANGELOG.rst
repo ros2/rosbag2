@@ -3,6 +3,9 @@ Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.9 (2022-02-03)
+------------------
+
 0.3.8 (2021-07-19)
 ------------------
 * Disable SIGTERM test on Windows in Foxy due to shutdown behavior in tests on that platform. (`#818 <https://github.com/ros2/rosbag2/issues/818>`_)

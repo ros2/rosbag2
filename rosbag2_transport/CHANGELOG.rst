@@ -3,6 +3,11 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.9 (2022-02-03)
+------------------
+* Fixed inability to record hidden topics (`#835 <https://github.com/ros2/rosbag2/issues/835>`_)
+* Contributors: Cameron Miller
+
 0.3.8 (2021-07-19)
 ------------------
 * [backport Foxy] Fixed playing if unknown message types exist (backports `#592 <https://github.com/ros2/rosbag2/issues/592>`_) (`#686 <https://github.com/ros2/rosbag2/issues/686>`_)
