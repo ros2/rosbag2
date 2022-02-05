@@ -36,7 +36,7 @@ add_library(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   rcpputils
@@ -47,7 +47,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_BUILDING_
 
 install(
   DIRECTORY include/
-  DESTINATION include)
+  DESTINATION include/${PROJECT_NAME})
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -56,9 +56,13 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-ament_export_include_directories(include)
+# Export old-style CMake variables
+ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_libraries(${PROJECT_NAME})
+
+# Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
+
 ament_export_dependencies(pluginlib rcpputils rcutils rosbag2_cpp rosbag2_storage)
 
 if(BUILD_TESTING)
@@ -86,18 +90,15 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
-  target_include_directories(test_compression_options PUBLIC include)
   target_link_libraries(test_compression_options ${PROJECT_NAME})
 
   ament_add_gmock(test_sequential_compression_reader
     test/rosbag2_compression/test_sequential_compression_reader.cpp)
-  target_include_directories(test_sequential_compression_reader PUBLIC include)
   target_link_libraries(test_sequential_compression_reader ${PROJECT_NAME})
   ament_target_dependencies(test_sequential_compression_reader rosbag2_cpp rosbag2_storage)
 
   ament_add_gmock(test_sequential_compression_writer
     test/rosbag2_compression/test_sequential_compression_writer.cpp)
-  target_include_directories(test_sequential_compression_writer PUBLIC include)
   target_link_libraries(test_sequential_compression_writer ${PROJECT_NAME})
   ament_target_dependencies(test_sequential_compression_writer rosbag2_cpp rosbag2_storage)
 endif()

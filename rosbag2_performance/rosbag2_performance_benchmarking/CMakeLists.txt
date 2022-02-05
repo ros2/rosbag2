@@ -60,19 +60,16 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   target_include_directories(writer_benchmark
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
   )
 
   target_include_directories(benchmark_publishers
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
   )
 
   target_include_directories(results_writer
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
   )
 
   install(TARGETS writer_benchmark benchmark_publishers results_writer

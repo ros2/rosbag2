@@ -45,7 +45,7 @@ ament_target_dependencies(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -57,7 +57,7 @@ pluginlib_export_plugin_description_file(rosbag2_storage plugin_description.xml)
 
 install(
   DIRECTORY include/
-  DESTINATION include)
+  DESTINATION include/${PROJECT_NAME})
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -65,8 +65,10 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-ament_export_include_directories(include)
+# Export old-style CMake variables
+ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_libraries(${PROJECT_NAME})
+
 ament_export_dependencies(rosbag2_storage rcpputils rcutils sqlite3_vendor SQLite3)
 
 if(BUILD_TESTING)
