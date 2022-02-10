@@ -91,7 +91,7 @@ ament_target_dependencies(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -100,7 +100,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_CPP_BUILDING_DLL")
 
 install(
   DIRECTORY include/
-  DESTINATION include)
+  DESTINATION include/${PROJECT_NAME})
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -109,9 +109,13 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
-ament_export_include_directories(include)
+# Export old-style CMake variables
+ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_libraries(${PROJECT_NAME})
+
+# Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
+
 ament_export_dependencies(
   pluginlib
   rclcpp
@@ -147,7 +151,6 @@ if(BUILD_TESTING)
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)
   if(TARGET test_converter_factory)
-    target_include_directories(test_converter_factory PRIVATE include)
     target_link_libraries(test_converter_factory ${PROJECT_NAME})
   endif()
 
@@ -206,8 +209,7 @@ if(BUILD_TESTING)
     endif()
     target_include_directories(test_ros2_message
       PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<INSTALL_INTERFACE:include>)
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
     ament_target_dependencies(test_ros2_message
       ament_index_cpp
       rcpputils

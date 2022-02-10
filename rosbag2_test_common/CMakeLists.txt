@@ -27,7 +27,7 @@ find_package(rcutils REQUIRED)
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 ament_target_dependencies(${PROJECT_NAME} INTERFACE rclcpp rcutils)
 
 install(
@@ -35,7 +35,7 @@ install(
   EXPORT export_${PROJECT_NAME})
 install(
   DIRECTORY include/
-  DESTINATION include)
+  DESTINATION include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -44,6 +44,10 @@ endif()
 
 ament_export_dependencies(rclcpp rcutils)
 
-ament_export_include_directories(include)
+# Export old-style CMake variables
+ament_export_include_directories("include/${PROJECT_NAME}")
+
+# Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
+
 ament_package()

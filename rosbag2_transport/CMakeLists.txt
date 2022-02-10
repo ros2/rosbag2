@@ -45,7 +45,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/topic_filter.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 ament_target_dependencies(${PROJECT_NAME}
   keyboard_handler
   rcl
@@ -66,7 +66,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_TRANSPORT_BUILDING_L
 
 install(
   DIRECTORY include/
-  DESTINATION include
+  DESTINATION include/${PROJECT_NAME}
 )
 install(
   TARGETS ${PROJECT_NAME}
@@ -76,9 +76,13 @@ install(
   RUNTIME DESTINATION bin
 )
 
-ament_export_include_directories(include)
+# Export old-style CMake variables
+ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_libraries(${PROJECT_NAME})
+
+# Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
+
 ament_export_dependencies(
   keyboard_handler
   rosbag2_cpp
@@ -200,7 +204,6 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
-  target_include_directories(test_record_options PRIVATE include)
   target_link_libraries(test_record_options ${PROJECT_NAME})
 
   ament_add_gmock(test_topic_filter
@@ -211,7 +214,6 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_rewrite
     test/rosbag2_transport/test_rewrite.cpp)
-  target_include_directories(test_rewrite PRIVATE include)
   target_link_libraries(test_rewrite ${PROJECT_NAME})
   ament_target_dependencies(test_rewrite keyboard_handler rcpputils rosbag2_cpp test_msgs)
 endif()
