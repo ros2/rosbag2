@@ -191,7 +191,7 @@ bool Player::is_storage_completely_loaded() const
   return !storage_loading_future_.valid();
 }
 
-void Player::play()
+void Player::play(const std::optional<rcutils_duration_value_t> & duration)
 {
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
@@ -206,8 +206,12 @@ void Player::play()
     do {
       if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
-        std::chrono::nanoseconds duration(delay.nanoseconds());
-        std::this_thread::sleep_for(duration);
+        std::chrono::nanoseconds delay_duration(delay.nanoseconds());
+        std::this_thread::sleep_for(delay_duration);
+      }
+      std::optional<rcutils_time_point_value_t> play_until_time{};
+      if (duration.has_value() && *duration > 0) {
+        play_until_time = {starting_time_ + *duration};
       }
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -216,7 +220,7 @@ void Player::play()
       }
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
-      play_messages_from_queue();
+      play_messages_from_queue({play_until_time});
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
         is_ready_to_play_from_queue_ = false;
@@ -422,7 +426,8 @@ void Player::enqueue_up_to_boundary(size_t boundary)
   }
 }
 
-void Player::play_messages_from_queue()
+void Player::play_messages_from_queue(
+  const std::optional<rcutils_duration_value_t> & play_until_time)
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -439,6 +444,9 @@ void Player::play_messages_from_queue()
     rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
+    if (play_until_time.has_value() && message->time_stamp > *play_until_time) {
+      break;
+    }
     while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
@@ -657,6 +665,20 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::PlayNext::Response::SharedPtr response)
     {
       response->success = play_next();
+    });
+  srv_play_for_ = create_service<rosbag2_interfaces::srv::PlayFor>(
+    "~/play_for",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayFor::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayFor::Response> response)
+    {
+      const rcutils_duration_value_t duration =
+      static_cast<rcutils_duration_value_t>(request->duration.sec) *
+      static_cast<rcutils_duration_value_t>(1000000000) +
+      static_cast<rcutils_duration_value_t>(request->duration.nanosec);
+      play({duration});
+      response->success = true;
     });
   srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",

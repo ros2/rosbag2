@@ -131,7 +131,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options);
-  std::thread loop_thread(&rosbag2_transport::Player::play, player);
+  std::thread loop_thread(&rosbag2_transport::Player::play, player, std::nullopt);
 
   await_received_messages.get();
   rclcpp::shutdown();
