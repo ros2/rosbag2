@@ -129,6 +129,18 @@ public:
       });
   }
 
+  std::future<void> spin_subscriptions_for(rcutils_duration_value_t duration)
+  {
+    return async(
+      std::launch::async, [this, duration]() {
+        rclcpp::executors::SingleThreadedExecutor exec;
+        auto end = std::chrono::high_resolution_clock::now() + std::chrono::nanoseconds(duration);
+        while (rclcpp::ok() && continue_spinning_until(expected_topics_with_size_, end)) {
+          exec.spin_node_some(subscriber_node_);
+        }
+      });
+  }
+
 private:
   bool continue_spinning(
     const std::unordered_map<std::string, size_t> & expected_topics_with_sizes,
@@ -136,6 +148,23 @@ private:
   {
     auto current = std::chrono::high_resolution_clock::now();
     if (current - start_time > std::chrono::seconds(10)) {
+      return false;
+    }
+
+    for (const auto & topic_expected : expected_topics_with_sizes) {
+      if (subscribed_messages_[topic_expected.first].size() < topic_expected.second) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool continue_spinning_until(
+    const std::unordered_map<std::string, size_t> & expected_topics_with_sizes,
+    std::chrono::time_point<std::chrono::high_resolution_clock> end_time)
+  {
+    auto current = std::chrono::high_resolution_clock::now();
+    if (current > end_time) {
       return false;
     }
 
