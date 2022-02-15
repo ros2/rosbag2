@@ -120,7 +120,8 @@ public:
 
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
-    PlayOptions & play_options)
+    PlayOptions & play_options,
+    const std::optional<rcutils_duration_value_t> & duration)
   {
     auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
     auto player = std::make_shared<rosbag2_transport::Player>(
@@ -132,7 +133,7 @@ public:
       [&exec]() {
         exec.spin();
       });
-    player->play();
+    player->play(duration);
 
     exec.cancel();
     spin_thread.join();
@@ -278,7 +279,9 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<rosbag2_py::Player>(m, "Player")
   .def(py::init())
-  .def("play", &rosbag2_py::Player::play)
+  .def(
+    "play", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg(
+      "play_options"), py::arg("duration") = std::nullopt)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")

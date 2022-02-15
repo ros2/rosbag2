@@ -111,6 +111,10 @@ class PlayVerb(VerbExtension):
                  'By default, if loaned message can be used, messages are published as loaned '
                  'message. It can help to reduce the number of data copies, so there is a greater '
                  'benefit for sending big data.')
+        parser.add_argument(
+            '-f', '--duration', type=float, default=None,
+            help='Play for SEC seconds. Default is None, meaning that playback will continue '
+                 'until the end of the bag. Valid range > 0.0')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -152,5 +156,9 @@ class PlayVerb(VerbExtension):
         play_options.wait_acked_timeout = args.wait_for_all_acked
         play_options.disable_loan_message = args.disable_loan_message
 
+        # Gets the duration in nanoseconds when a value is provided for player
+        # consumption.
+        duration = int(args.duration * 1e9) if args.duration else args.duration
+
         player = Player()
-        player.play(storage_options, play_options)
+        player.play(storage_options, play_options, duration)
