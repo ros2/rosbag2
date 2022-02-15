@@ -105,6 +105,10 @@ class PlayVerb(VerbExtension):
                  "Note that this option is valid only if the publisher\'s QOS profile is "
                  'RELIABLE.',
             metavar='TIMEOUT')
+        parser.add_argument(
+            '-f', '--duration', type=float, default=None,
+            help='Play for SEC seconds. Default is None, meaning that playback will continue '
+                 'until the end of the bag. Valid range > 0.0')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -145,5 +149,9 @@ class PlayVerb(VerbExtension):
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = args.wait_for_all_acked
 
+        # Gets the duration in nanoseconds when a value is provided for player
+        # consumption.
+        duration = int(args.duration * 1e9) if args.duration else args.duration
+
         player = Player()
-        player.play(storage_options, play_options)
+        player.play(storage_options, play_options, duration)
