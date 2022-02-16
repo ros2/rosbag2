@@ -193,6 +193,25 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play(const std::optional<rcutils_duration_value_t> & duration)
 {
+  do_play(duration, /* timestamp */ std::nullopt);
+}
+
+void Player::play_until(const rcutils_time_point_value_t & timestamp)
+{
+  do_play(/* duration */ std::nullopt, {timestamp});
+}
+
+void Player::do_play(
+  const std::optional<rcutils_duration_value_t> & duration,
+  const std::optional<rcutils_time_point_value_t> & timestamp)
+{
+  // This is a faulty condition. This method must be called exclusively with
+  // one or none of the attributes set, but not both.
+  if (duration.has_value() && timestamp.has_value()) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to play. Both duration and 'until' timestamp are set.");
+    return;
+  }
+
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
@@ -209,10 +228,15 @@ void Player::play(const std::optional<rcutils_duration_value_t> & duration)
         std::chrono::nanoseconds delay_duration(delay.nanoseconds());
         std::this_thread::sleep_for(delay_duration);
       }
+      // Define the time constraint. It could be based on duration or on a
+      // specific timestamp.
       std::optional<rcutils_time_point_value_t> play_until_time{};
       if (duration.has_value() && *duration > 0) {
         play_until_time = {starting_time_ + *duration};
+      } else if (timestamp.has_value()) {
+        play_until_time = timestamp;
       }
+      // else: we keep the nullopt which means play without any time constraint.
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
         reader_->seek(starting_time_);
@@ -678,6 +702,20 @@ void Player::create_control_services()
       static_cast<rcutils_duration_value_t>(1000000000) +
       static_cast<rcutils_duration_value_t>(request->duration.nanosec);
       play({duration});
+      response->success = true;
+    });
+  srv_play_until_ = create_service<rosbag2_interfaces::srv::PlayUntil>(
+    "~/play_until",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayUntil::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::PlayUntil::Response> response)
+    {
+      const rcutils_time_point_value_t timestamp =
+      static_cast<rcutils_time_point_value_t>(request->time.sec) *
+      static_cast<rcutils_time_point_value_t>(1000000000) +
+      static_cast<rcutils_time_point_value_t>(request->time.nanosec);
+      play_until(timestamp);
       response->success = true;
     });
   srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(

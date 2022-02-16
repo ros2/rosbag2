@@ -109,6 +109,11 @@ class PlayVerb(VerbExtension):
             '-f', '--duration', type=float, default=None,
             help='Play for SEC seconds. Default is None, meaning that playback will continue '
                  'until the end of the bag. Valid range > 0.0')
+        parser.add_argument(
+            '-u', '--until', type=float, default=None,
+            help='Play until a certain timestamp expressed as seconds since epoch. '
+                 'Default is none, meaning it will not affect playback execution. '
+                 'It must not be sent together with  duration. Valid range > 0.0')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -152,6 +157,14 @@ class PlayVerb(VerbExtension):
         # Gets the duration in nanoseconds when a value is provided for player
         # consumption.
         duration = int(args.duration * 1e9) if args.duration else args.duration
+        # Gets the timestamp in nanoseconds when a value is provided for player
+        # consumption.
+        timestamp = int(args.until * 1e9) if args.until else args.until
+        if duration and timestamp:
+            raise AssertionError('Duration and timestamp cannot be used together.')
 
         player = Player()
-        player.play(storage_options, play_options, duration)
+        if timestamp:
+            player.play_until(storage_options, play_options, timestamp)
+        else:
+            player.play(storage_options, play_options, duration)

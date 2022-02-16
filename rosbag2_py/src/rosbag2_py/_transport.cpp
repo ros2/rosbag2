@@ -138,6 +138,27 @@ public:
     exec.cancel();
     spin_thread.join();
   }
+
+  void play_until(
+    const rosbag2_storage::StorageOptions & storage_options,
+    PlayOptions & play_options,
+    const rcutils_time_point_value_t & timestamp)
+  {
+    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options, play_options);
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+    player->play_until(timestamp);
+
+    exec.cancel();
+    spin_thread.join();
+  }
 };
 
 class Recorder
@@ -279,6 +300,9 @@ PYBIND11_MODULE(_transport, m) {
   .def(
     "play", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg(
       "play_options"), py::arg("duration") = std::nullopt)
+  .def(
+    "play_until", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg(
+      "play_options"), py::arg("timestamp") = std::nullopt)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")

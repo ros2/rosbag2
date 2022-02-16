@@ -1,0 +1,3 @@
+builtin_interfaces/Time time
+---
+bool success  # return true
