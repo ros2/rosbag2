@@ -158,6 +158,69 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
   EXPECT_THAT(replayed_topic1, SizeIs(messages.size()));
 }
 
+TEST_F(RosBag2PlayTestFixture, play_next_n_messages_with_the_same_timestamp) {
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 1000, primitive_message),
+    serialize_test_message("topic1", 1000, primitive_message),
+    serialize_test_message("topic1", 1000, primitive_message),
+    serialize_test_message("topic1", 1000, primitive_message)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", messages.size());
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(
+    sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  player->pause();
+  ASSERT_TRUE(player->is_paused());
+
+  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->wait_for_playback_to_start();
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_TRUE(player->play_next({1u}));
+  // Yield CPU resources so messages are actually sent through.
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  EXPECT_THAT(sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1"), SizeIs(1u));
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_TRUE(player->play_next({2u}));
+  // Yield CPU resources so messages are actually sent through.
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  EXPECT_THAT(sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1"), SizeIs(3u));
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_TRUE(player->play_next({1u}));
+  // Yield CPU resources so messages are actually sent through.
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  EXPECT_THAT(sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1"), SizeIs(4u));
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_FALSE(player->play_next({1u}));
+  EXPECT_THAT(sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1"), SizeIs(4u));
+
+  ASSERT_TRUE(player->is_paused());
+  player->resume();
+  player_future.get();
+  await_received_messages.get();
+}
+
 TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   auto primitive_message = get_messages_basic_types()[0];
   primitive_message->int32_value = 42;
@@ -323,4 +386,48 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
   // All we care is that any messages arrived
   EXPECT_THAT(replayed_topic2, SizeIs(Eq(3u)));
+}
+
+TEST_F(RosBag2PlayTestFixture, play_next_no_message_must_succeed) {
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 1000, primitive_message)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", messages.size());
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(
+    sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  player->pause();
+  ASSERT_TRUE(player->is_paused());
+
+  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->wait_for_playback_to_start();
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_TRUE(player->play_next({0u}));
+  // Yield CPU resources so messages are actually sent through.
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  EXPECT_THAT(sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1"), SizeIs(0u));
+
+  ASSERT_TRUE(player->is_paused());
+  player->resume();
+  player_future.get();
+  await_received_messages.get();
 }

@@ -1,2 +1,3 @@
+uint64 num_messages 1  # Defaults to one for backwards compatibility
 ---
 bool success  # can only play-next while playback is paused

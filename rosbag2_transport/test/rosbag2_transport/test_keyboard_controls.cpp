@@ -65,7 +65,7 @@ public:
     num_resumed++;
   }
 
-  bool play_next() override
+  bool play_next(const std::optional<uint64_t> /* num_messages */ = std::nullopt) override
   {
     bool ret = Player::play_next();
     if (ret) {

@@ -315,8 +315,13 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
   return message_ptr;
 }
 
-bool Player::play_next()
+bool Player::play_next(const std::optional<uint64_t> num_messages)
 {
+  // Don't do anything if no messages were requested
+  if (num_messages.has_value() && *num_messages == 0) {
+    return true;
+  }
+
   if (!clock_->is_paused()) {
     RCLCPP_WARN_STREAM(get_logger(), "Called play next, but not in paused state.");
     return false;
@@ -326,7 +331,7 @@ bool Player::play_next()
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
-  skip_message_in_main_play_loop_ = true;
+
   // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
   // be called if not yet and queue to be filled with messages.
   {
@@ -334,17 +339,30 @@ bool Player::play_next()
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
 
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
-
   bool next_message_published = false;
-  while (message_ptr != nullptr && !next_message_published) {
-    {
-      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
-      next_message_published = publish_message(message);
-      clock_->jump(message->time_stamp);
+  uint64_t messages_remaining = num_messages.has_value() ? *num_messages : 1u;
+
+  while (messages_remaining > 0) {
+    // Reset state for the next iteration.
+    next_message_published = false;
+    skip_message_in_main_play_loop_ = true;
+
+    rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+
+    while (message_ptr != nullptr && !next_message_published) {
+      {
+        rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+        next_message_published = publish_message(message);
+        clock_->jump(message->time_stamp);
+      }
+      message_queue_.pop();
+      message_ptr = peek_next_message_from_queue();
     }
-    message_queue_.pop();
-    message_ptr = peek_next_message_from_queue();
+    // There are no more messages of the built publishers to play.
+    if (message_ptr == nullptr) {
+      break;
+    }
+    messages_remaining--;
   }
   return next_message_published;
 }
@@ -653,10 +671,10 @@ void Player::create_control_services()
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
     [this](
-      rosbag2_interfaces::srv::PlayNext::Request::ConstSharedPtr,
+      rosbag2_interfaces::srv::PlayNext::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::PlayNext::Response::SharedPtr response)
     {
-      response->success = play_next();
+      response->success = play_next({request->num_messages});
     });
   srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",
