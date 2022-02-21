@@ -25,8 +25,6 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
-#include "example_interfaces/msg/empty.hpp"
-
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 

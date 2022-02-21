@@ -516,7 +516,7 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
-      return fake_storage_size_;
+      return fake_storage_size_.load();
     });
 
   ON_CALL(*metadata_io_, write_metadata).WillByDefault(

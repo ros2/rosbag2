@@ -64,7 +64,7 @@ public:
     metadata_.relative_file_paths = {bag_file_1_path_.string(), bag_file_2_path_.string()};
     metadata_.version = 4;
     metadata_.topics_with_message_count.push_back({{topic_with_type}, 6});
-    metadata.storage_identifier = "mock_storage";
+    metadata_.storage_identifier = "mock_storage";
 
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata_));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
