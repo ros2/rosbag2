@@ -33,7 +33,7 @@ using namespace std::chrono_literals;  // NOLINT
 
 TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignores_unpublished)
 {
-  std::string string_topic = "/string_topic";
+  const std::string string_topic = "/string_topic";
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
   auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
     string_topic, 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
@@ -50,13 +50,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 0;
   rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(2),
-    [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() > expected_messages;
+    [&mock_writer]() {
+      // Return false so we wait the full two seconds
+      return false;
     });
-  (void) expected_messages;  // we can't say anything here, there might be some rosout
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(0u, recorded_topics.count(string_topic));
@@ -64,7 +63,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
 
 TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_includes_unpublished)
 {
-  std::string string_topic = "/string_topic";
+  const std::string string_topic = "/string_topic";
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
   auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
     string_topic, 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
@@ -81,13 +80,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_include
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 0;
   rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(2),
-    [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() > expected_messages;
+    [&mock_writer]() {
+      // Return false so we wait the full two seconds
+      return false;
     });
-  (void) expected_messages;  // we can't say anything here, there might be some rosout
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
@@ -97,7 +95,7 @@ TEST_F(
   RecordIntegrationTestFixture,
   record_all_include_unpublished_false_includes_later_published_default_qos)
 {
-  std::string string_topic = "/string_topic";
+  const std::string string_topic = "/string_topic";
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
   auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
     string_topic, 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
@@ -127,15 +125,13 @@ TEST_F(
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 0;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
+  rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(2),
-    [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() > expected_messages;
+    [&mock_writer]() {
+      // Return false so we wait the full two seconds
+      return false;
     });
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
-
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
 
@@ -151,7 +147,7 @@ TEST_F(
   RecordIntegrationTestFixture,
   record_all_include_unpublished_false_includes_later_published_sensor_data_qos)
 {
-  std::string string_topic = "/string_topic";
+  const std::string string_topic = "/string_topic";
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
   auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
     string_topic, 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
@@ -180,20 +176,19 @@ TEST_F(
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 0;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
+  rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(2),
-    [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() > expected_messages;
+    [&mock_writer]() {
+      // Return false so we wait the full two seconds
+      return false;
     });
-  auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
 
   // We expect to drop some messages due to the discovery process, but there
   // should be at least one message received in the duration of this test.
+  auto recorded_messages = mock_writer.get_messages();
   auto string_messages = filter_messages<test_msgs::msg::Strings>(
     recorded_messages, string_topic);
   ASSERT_THAT(string_messages, SizeIs(Ge(1u)));
