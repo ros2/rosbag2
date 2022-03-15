@@ -23,7 +23,6 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
-#include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -50,12 +49,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
-    [&mock_writer]() {
-      // Return false so we wait the full two seconds
-      return false;
-    });
+  rclcpp::sleep_for(std::chrono::seconds(2));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(0u, recorded_topics.count(string_topic));
@@ -80,12 +74,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_include
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
-    [&mock_writer]() {
-      // Return false so we wait the full two seconds
-      return false;
-    });
+  rclcpp::sleep_for(std::chrono::seconds(2));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
@@ -125,12 +114,8 @@ TEST_F(
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
-    [&mock_writer]() {
-      // Return false so we wait the full two seconds
-      return false;
-    });
+  rclcpp::sleep_for(std::chrono::seconds(2));
+
   auto recorded_messages = mock_writer.get_messages();
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
@@ -176,12 +161,7 @@ TEST_F(
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
-    [&mock_writer]() {
-      // Return false so we wait the full two seconds
-      return false;
-    });
+  rclcpp::sleep_for(std::chrono::seconds(2));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(1u, recorded_topics.count(string_topic));
