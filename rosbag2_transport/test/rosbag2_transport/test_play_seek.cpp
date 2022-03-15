@@ -115,17 +115,14 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_back_in_time) {
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
 
   EXPECT_TRUE(player->is_paused());
-  EXPECT_TRUE(player->play_next());
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(2u, player->play_next(2u));
 
   // Jump in timestamp equal to the timestamp in first message - 1 nanosecond
   player->seek(start_time_ms_ * 1000000 - 1);
-  EXPECT_TRUE(player->play_next());
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(2u, player->play_next(2u));
   // Jump in timestamp equal to the timestamp in first message
   player->seek(start_time_ms_ * 1000000);
-  EXPECT_TRUE(player->play_next());
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(2u, player->play_next(2u));
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -162,13 +159,13 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_with_timestamp_later_than_in_last_messag
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
 
   EXPECT_TRUE(player->is_paused());
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(1u, player->play_next(1u));
 
   // Jump in timestamp equal to the timestamp in last message + 1 nanosecond
   player->seek((start_time_ms_ + message_spacing_ms_ * (num_msgs_in_bag_ - 1)) * 1000000 + 1);
 
   // shouldn't be able to keep playing since we're at end of bag
-  EXPECT_FALSE(player->play_next());
+  EXPECT_EQ(0u, player->play_next(1u));
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -196,11 +193,11 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_forward) {
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
 
   EXPECT_TRUE(player->is_paused());
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(1u, player->play_next(1u));
 
   // Jump on third message (1200 ms)
   player->seek((start_time_ms_ + message_spacing_ms_ * 2) * 1000000);
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(1u, player->play_next(1u));
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -235,14 +232,12 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_back_in_time_from_the_end_of_the_bag) {
 
   EXPECT_TRUE(player->is_paused());
   // Play all messages  from bag
-  for (size_t i = 0; i < num_msgs_in_bag_; i++) {
-    EXPECT_TRUE(player->play_next());
-  }
-  EXPECT_FALSE(player->play_next());  // Make sure there are no messages to play
+  EXPECT_EQ(num_msgs_in_bag_, player->play_next(num_msgs_in_bag_));
+  EXPECT_EQ(0u, player->play_next(1u));  // Make sure there are no messages to play
 
   // Jump on third message (1200 ms)
   player->seek((start_time_ms_ + message_spacing_ms_ * 2) * 1000000);
-  EXPECT_TRUE(player->play_next());
+  EXPECT_EQ(1u, player->play_next(1u));
   player->resume();
   player_future.get();
   await_received_messages.get();
@@ -281,14 +276,12 @@ TEST_F(RosBag2PlaySeekTestFixture, seek_forward_from_the_end_of_the_bag) {
 
   EXPECT_TRUE(player->is_paused());
   // Play all messages  from bag
-  for (size_t i = 0; i < num_msgs_in_bag_; i++) {
-    EXPECT_TRUE(player->play_next());
-  }
-  EXPECT_FALSE(player->play_next());  // Make sure there are no messages to play
+  EXPECT_EQ(num_msgs_in_bag_, player->play_next(num_msgs_in_bag_));
+  EXPECT_EQ(0u, player->play_next(1u));  // Make sure there are no messages to play
 
   // Jump in timestamp equal to the timestamp in last message + 1 nanosecond
   player->seek((start_time_ms_ + message_spacing_ms_ * (num_msgs_in_bag_ - 1)) * 1000000 + 1);
-  EXPECT_FALSE(player->play_next());
+  EXPECT_EQ(0u, player->play_next(1u));
   player->resume();
   player_future.get();
   await_received_messages.get();

@@ -1,3 +1,3 @@
-uint64 num_messages 1  # Defaults to one for backwards compatibility
+uint64 num_messages 1  # Defaults to one for backwards compatibility.
 ---
-bool success  # can only play-next while playback is paused
+uint64 played_messages # The number of messages that were actually played.

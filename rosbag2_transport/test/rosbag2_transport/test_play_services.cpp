@@ -327,7 +327,7 @@ TEST_F(PlaySrvsTest, play_next) {
       message_counter_ = 0;
     }
     play_next_response = successful_call<PlayNext>(cli_play_next_);
-    ASSERT_TRUE(play_next_response->success);
+    ASSERT_EQ(1u, play_next_response->played_messages);
     expect_messages(true, false);
   }
 
@@ -337,13 +337,13 @@ TEST_F(PlaySrvsTest, play_next) {
     message_counter_ = 0;
   }
   play_next_response = successful_call<PlayNext>(cli_play_next_);
-  ASSERT_FALSE(play_next_response->success);
+  ASSERT_EQ(0u, play_next_response->played_messages);
   expect_messages(false, false);
 
   // Check that play_next will return false when player not in pause mode.
   start_playback();
   ASSERT_FALSE(player_->is_paused());
   play_next_response = successful_call<PlayNext>(cli_play_next_);
-  ASSERT_FALSE(play_next_response->success);
+  ASSERT_EQ(0u, play_next_response->played_messages);
   expect_messages(true);
 }

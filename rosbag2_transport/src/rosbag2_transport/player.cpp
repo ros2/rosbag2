@@ -315,56 +315,59 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
   return message_ptr;
 }
 
-bool Player::play_next(const std::optional<uint64_t> num_messages)
+uint64_t Player::play_next(const uint64_t num_messages)
 {
-  // Don't do anything if no messages were requested
-  if (num_messages.has_value() && *num_messages == 0) {
-    return true;
-  }
-
   if (!clock_->is_paused()) {
     RCLCPP_WARN_STREAM(get_logger(), "Called play next, but not in paused state.");
-    return false;
+    return 0u;
   }
-
-  RCLCPP_INFO_STREAM(get_logger(), "Playing next message.");
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+  skip_message_in_main_play_loop_ = true;
 
-  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
-  // be called if not yet and queue to be filled with messages.
-  {
-    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
-  }
+  uint64_t message_counter = 0;
 
-  bool next_message_published = false;
-  uint64_t messages_remaining = num_messages.has_value() ? *num_messages : 1u;
-
-  while (messages_remaining > 0) {
-    // Reset state for the next iteration.
-    next_message_published = false;
-    skip_message_in_main_play_loop_ = true;
+  while (message_counter < num_messages) {
+    RCLCPP_INFO_STREAM(get_logger(), "Playing next message.");
+    // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
+    // be called if not yet and queue to be filled with messages.
+    {
+      std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+      ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+    }
 
     rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
 
+    bool next_message_published = false;
     while (message_ptr != nullptr && !next_message_published) {
       {
         rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+
+        // Do not move on until sleep_until returns true
+        // It will always sleep, so this is not a tight busy loop on pause
+        clock_->resume();
+        while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
+          if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
+            break;
+          }
+        }
+        clock_->pause();
+
         next_message_published = publish_message(message);
-        clock_->jump(message->time_stamp);
       }
       message_queue_.pop();
       message_ptr = peek_next_message_from_queue();
     }
-    // There are no more messages of the built publishers to play.
-    if (message_ptr == nullptr) {
+    if (!next_message_published) {
       break;
     }
-    messages_remaining--;
+
+    message_counter++;
   }
-  return next_message_published;
+
+
+  return message_counter;
 }
 
 void Player::seek(rcutils_time_point_value_t time_point)
@@ -603,7 +606,7 @@ void Player::add_keyboard_callbacks()
   );
   add_key_callback(
     play_options_.play_next_key,
-    [this]() {play_next();},
+    [this]() {play_next(1u);},
     "Play Next Message"
   );
   add_key_callback(
@@ -674,7 +677,7 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::PlayNext::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::PlayNext::Response::SharedPtr response)
     {
-      response->success = play_next({request->num_messages});
+      response->played_messages = play_next(request->num_messages);
     });
   srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",
