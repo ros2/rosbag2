@@ -202,16 +202,24 @@ void Player::play(const std::optional<rcutils_duration_value_t> & duration)
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
+  rcutils_time_point_value_t play_until_time = starting_time_;
+  if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
+    play_until_time += play_options_.playback_duration.nanoseconds();
+  } else {
+    play_until_time = -1;
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "Invalid playback duration value: " << play_options_.playback_duration.nanoseconds() <<
+        ". Playback duration is disabled.");
+  }
+  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time);
+
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds delay_duration(delay.nanoseconds());
         std::this_thread::sleep_for(delay_duration);
-      }
-      std::optional<rcutils_time_point_value_t> play_until_time{};
-      if (duration.has_value() && *duration > 0) {
-        play_until_time = {starting_time_ + *duration};
       }
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -220,7 +228,7 @@ void Player::play(const std::optional<rcutils_duration_value_t> & duration)
       }
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
-      play_messages_from_queue({play_until_time});
+      play_messages_from_queue(play_until_time);
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
         is_ready_to_play_from_queue_ = false;
@@ -446,8 +454,7 @@ void Player::enqueue_up_to_boundary(size_t boundary)
   }
 }
 
-void Player::play_messages_from_queue(
-  const std::optional<rcutils_duration_value_t> & play_until_time)
+void Player::play_messages_from_queue(const rcutils_duration_value_t & play_until_time)
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -461,11 +468,12 @@ void Player::play_messages_from_queue(
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    // Do not move on until sleep_until returns true
-    // It will always sleep, so this is not a tight busy loop on pause
-    if (play_until_time.has_value() && message_ptr->time_stamp > *play_until_time) {
+    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+    if (play_until_time >= starting_time_ && message->time_stamp > play_until_time) {
       break;
     }
+    // Do not move on until sleep_until returns true
+    // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
@@ -685,6 +693,20 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::SetRate::Response::SharedPtr response)
     {
       response->success = set_rate(request->rate);
+    });
+  srv_play_ = create_service<rosbag2_interfaces::srv::Play>(
+    "~/play",
+    [this](
+      rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
+      rosbag2_interfaces::srv::Play::Response::SharedPtr response)
+    {
+      play_options_.start_offset =
+      static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(request->start_offset.sec)) +
+      static_cast<rcutils_time_point_value_t>(request->start_offset.nanosec);
+      play_options_.playback_duration = rclcpp::Duration(
+        request->playback_duration.sec, request->playback_duration.nanosec);
+      play();
+      response->success = true;
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
