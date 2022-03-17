@@ -161,9 +161,5 @@ class PlayVerb(VerbExtension):
         play_options.wait_acked_timeout = args.wait_for_all_acked
         play_options.disable_loan_message = args.disable_loan_message
 
-        # Gets the duration in nanoseconds when a value is provided for player
-        # consumption.
-        duration = int(args.duration * 1e9) if args.duration else args.duration
-
         player = Player()
-        player.play(storage_options, play_options, duration)
+        player.play(storage_options, play_options)

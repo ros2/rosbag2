@@ -96,7 +96,7 @@ public:
   virtual ~Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void play(const std::optional<rcutils_duration_value_t> & duration = std::nullopt);
+  bool play();
 
   // Playback control interface
   /// Pause the flow of time for playback.
@@ -228,6 +228,7 @@ private:
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
     skip_message_in_main_play_loop_mutex_) = false;
+  std::atomic_bool is_in_playback_{false};
 
   rcutils_time_point_value_t starting_time_;
 

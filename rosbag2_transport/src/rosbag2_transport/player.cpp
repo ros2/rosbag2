@@ -191,8 +191,14 @@ bool Player::is_storage_completely_loaded() const
   return !storage_loading_future_.valid();
 }
 
-void Player::play(const std::optional<rcutils_duration_value_t> & duration)
+bool Player::play()
 {
+  if (is_in_playback_) {
+    RCLCPP_WARN_STREAM(get_logger(), "Trying to play() while in playback, dismissing request.");
+    return false;
+  }
+  is_in_playback_ = true;
+
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
@@ -202,15 +208,9 @@ void Player::play(const std::optional<rcutils_duration_value_t> & duration)
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  rcutils_time_point_value_t play_until_time = starting_time_;
+  rcutils_time_point_value_t play_until_time = -1;
   if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
-    play_until_time += play_options_.playback_duration.nanoseconds();
-  } else {
-    play_until_time = -1;
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "Invalid playback duration value: " << play_options_.playback_duration.nanoseconds() <<
-        ". Playback duration is disabled.");
+    play_until_time = starting_time_ + play_options_.playback_duration.nanoseconds();
   }
   RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time);
 
@@ -266,6 +266,9 @@ void Player::play(const std::optional<rcutils_duration_value_t> & duration)
       }
     }
   }
+
+  is_in_playback_ = false;
+  return true;
 }
 
 void Player::pause()
@@ -474,7 +477,7 @@ void Player::play_messages_from_queue(const rcutils_duration_value_t & play_unti
     }
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
-    while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
+    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }
@@ -700,13 +703,9 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::Play::Response::SharedPtr response)
     {
-      play_options_.start_offset =
-      static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(request->start_offset.sec)) +
-      static_cast<rcutils_time_point_value_t>(request->start_offset.nanosec);
-      play_options_.playback_duration = rclcpp::Duration(
-        request->playback_duration.sec, request->playback_duration.nanosec);
-      play();
-      response->success = true;
+      play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
+      play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
+      response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
