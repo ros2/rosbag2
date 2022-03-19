@@ -19,13 +19,10 @@
 #include <string>
 #include <utility>
 
+#include "mock_recorder.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
-
 #include "rosbag2_test_common/publication_manager.hpp"
-
-#include "rosbag2_transport/recorder.hpp"
-
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
@@ -39,20 +36,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
 
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
   record_options.include_unpublished_topics = false;
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-    std::move(writer_), storage_options_, record_options);
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
-
   start_async_spin(recorder);
 
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
-  rclcpp::sleep_for(std::chrono::seconds(2));
-
-  auto recorded_topics = mock_writer.get_topics();
-  EXPECT_EQ(0u, recorded_topics.count(string_topic));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
+  ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));
 }
 
 TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_includes_unpublished)
@@ -64,25 +53,17 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_include
 
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
   record_options.include_unpublished_topics = true;
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-    std::move(writer_), storage_options_, record_options);
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
-
   start_async_spin(recorder);
 
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
-  rclcpp::sleep_for(std::chrono::seconds(2));
-
-  auto recorded_topics = mock_writer.get_topics();
-  EXPECT_EQ(1u, recorded_topics.count(string_topic));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
+  ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
 }
 
 TEST_F(
   RecordIntegrationTestFixture,
-  record_all_include_unpublished_false_includes_later_published_default_qos)
+  record_all_include_unpublished_false_includes_later_published)
 {
   const std::string string_topic = "/string_topic";
   auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
@@ -91,86 +72,24 @@ TEST_F(
 
   rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
   record_options.include_unpublished_topics = false;
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-    std::move(writer_), storage_options_, record_options);
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
-
   start_async_spin(recorder);
+
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
+  ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));
 
   // Start up a publisher on our topic *after* the recording has started
   auto string_message = get_messages_strings()[0];
   string_message->string_value = "Hello World";
   rosbag2_test_common::PublicationManager pub_manager;
 
-  // Publish 40 messages at a 50ms interval for a steady 2 seconds worth of data
+  // Publish 10 messages at a 30ms interval for a steady 300 milliseconds worth of data
   pub_manager.setup_publisher(
-    string_topic, string_message, 40, rclcpp::QoS{rclcpp::KeepAll()}, 50ms);
+    string_topic, string_message, 10, rclcpp::QoS{rclcpp::KeepAll()}, 30ms);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
   pub_manager.run_publishers();
 
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
-  rclcpp::sleep_for(std::chrono::seconds(2));
-
-  auto recorded_messages = mock_writer.get_messages();
-  auto recorded_topics = mock_writer.get_topics();
-  EXPECT_EQ(1u, recorded_topics.count(string_topic));
-
-  // We expect to drop some messages due to the discovery process, but there
-  // should be at least one message received in the duration of this test.
-  auto string_messages = filter_messages<test_msgs::msg::Strings>(
-    recorded_messages, string_topic);
-  ASSERT_THAT(string_messages, SizeIs(Ge(1u)));
-  EXPECT_THAT(string_messages[0]->string_value, Eq("Hello World"));
-}
-
-TEST_F(
-  RecordIntegrationTestFixture,
-  record_all_include_unpublished_false_includes_later_published_sensor_data_qos)
-{
-  const std::string string_topic = "/string_topic";
-  auto node = std::make_shared<rclcpp::Node>("test_string_msg_listener_node");
-  auto string_msgs_sub = node->create_subscription<test_msgs::msg::Strings>(
-    string_topic, 10, [](test_msgs::msg::Strings::ConstSharedPtr) {});
-
-  rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
-  record_options.include_unpublished_topics = false;
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-    std::move(writer_), storage_options_, record_options);
-  recorder->record();
-
-  start_async_spin(recorder);
-
-  // Start up a publisher on our topic *after* the recording has started
-  auto string_message = get_messages_strings()[0];
-  string_message->string_value = "Hello World";
-  rosbag2_test_common::PublicationManager pub_manager;
-
-  // Publish 40 messages at a 50ms interval for a steady 2 seconds worth of data
-  pub_manager.setup_publisher(string_topic, string_message, 40, rclcpp::SensorDataQoS(), 50ms);
-
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  pub_manager.run_publishers();
-
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
-  rclcpp::sleep_for(std::chrono::seconds(2));
-
-  auto recorded_topics = mock_writer.get_topics();
-  EXPECT_EQ(1u, recorded_topics.count(string_topic));
-
-  // We expect to drop some messages due to the discovery process, but there
-  // should be at least one message received in the duration of this test.
-  auto recorded_messages = mock_writer.get_messages();
-  auto string_messages = filter_messages<test_msgs::msg::Strings>(
-    recorded_messages, string_topic);
-  ASSERT_THAT(string_messages, SizeIs(Ge(1u)));
-  EXPECT_THAT(string_messages[0]->string_value, Eq("Hello World"));
+  ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
 }
