@@ -53,6 +53,8 @@ constexpr bool kBool1Value{false};
 constexpr bool kBool2Value{true};
 constexpr bool kBool3Value{false};
 
+constexpr int kMaximumTimeSpinningSec{1};
+
 #define EVAL_REPLAYED_PRIMITIVES(replayed_primitives) \
   EXPECT_THAT( \
     replayed_primitives, \
@@ -104,12 +106,12 @@ public:
     //    around without any knowledge about message chronology. It just picks
     //    the next one Make sure to keep the list in order or sort it!
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-    {serialize_test_message(kTopic1Name, 500, primitive_message1),
-      serialize_test_message(kTopic2Name, 550, complex_message1),
-      serialize_test_message(kTopic1Name, 700, primitive_message1),
-      serialize_test_message(kTopic2Name, 750, complex_message1),
-      serialize_test_message(kTopic1Name, 900, primitive_message1),
-      serialize_test_message(kTopic2Name, 950, complex_message1)};
+    {serialize_test_message(kTopic1Name, 100, primitive_message1),
+      serialize_test_message(kTopic2Name, 120, complex_message1),
+      serialize_test_message(kTopic1Name, 200, primitive_message1),
+      serialize_test_message(kTopic2Name, 220, complex_message1),
+      serialize_test_message(kTopic1Name, 300, primitive_message1),
+      serialize_test_message(kTopic2Name, 320, complex_message1)};
     // @}
     return messages;
   }
@@ -128,11 +130,12 @@ public:
 
     play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(milliseconds));
     player_ = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
     // Wait for discovery to match publishers with subscribers
     ASSERT_TRUE(
       sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), std::chrono::seconds(5)));
 
-    auto await_received_messages = sub_->spin_subscriptions();
+    auto await_received_messages = sub_->spin_subscriptions(kMaximumTimeSpinningSec);
 
     ASSERT_TRUE(player_->play());
 
@@ -145,7 +148,7 @@ public:
 
 TEST_F(RosBag2PlayForTestFixture, play_for_all_are_played_due_to_duration)
 {
-  InitPlayerWithPlaybackDurationAndPlay(1000);
+  InitPlayerWithPlaybackDurationAndPlay(350);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1);
@@ -161,7 +164,7 @@ TEST_F(RosBag2PlayForTestFixture, play_for_all_are_played_due_to_duration)
 
 TEST_F(RosBag2PlayForTestFixture, play_for_none_are_played_due_to_duration)
 {
-  InitPlayerWithPlaybackDurationAndPlay(300);
+  InitPlayerWithPlaybackDurationAndPlay(50);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1);
@@ -174,7 +177,7 @@ TEST_F(RosBag2PlayForTestFixture, play_for_none_are_played_due_to_duration)
 
 TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
 {
-  InitPlayerWithPlaybackDurationAndPlay(800);
+  InitPlayerWithPlaybackDurationAndPlay(270);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1);
@@ -202,7 +205,7 @@ TEST_F(
   RosBag2PlayForFilteredTopicTestFixture,
   play_for_full_duration_recorded_messages_with_filtered_topics)
 {
-  InitPlayerWithPlaybackDurationAndPlay(1000);
+  InitPlayerWithPlaybackDurationAndPlay(400);
 
   auto replayed_test_primitives =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -220,7 +223,7 @@ TEST_F(
   RosBag2PlayForFilteredTopicTestFixture,
   play_for_short_duration_recorded_messages_with_filtered_topics)
 {
-  InitPlayerWithPlaybackDurationAndPlay(300);
+  InitPlayerWithPlaybackDurationAndPlay(50);
 
   auto replayed_test_primitives =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -236,7 +239,7 @@ TEST_F(
   RosBag2PlayForFilteredTopicTestFixture,
   play_for_intermediate_duration_recorded_messages_with_filtered_topics)
 {
-  InitPlayerWithPlaybackDurationAndPlay(800);
+  InitPlayerWithPlaybackDurationAndPlay(270);
 
   auto replayed_test_primitives =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -271,9 +274,9 @@ public:
     //    around without any knowledge about message chronology. It just picks
     //    the next one Make sure to keep the list in order or sort it!
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-    {serialize_test_message(kTopic1Name, 500, primitive_message),
-      serialize_test_message(kTopic1Name, 700, primitive_message),
-      serialize_test_message(kTopic1Name, 900, primitive_message)};
+    {serialize_test_message(kTopic1Name, 50, primitive_message),
+      serialize_test_message(kTopic1Name, 100, primitive_message),
+      serialize_test_message(kTopic1Name, 150, primitive_message)};
     // @}
     return messages;
   }
@@ -283,7 +286,6 @@ TEST_F(
   RosBag2PlayForInterruptedTestFixture,
   play_should_return_false_when_interrupted)
 {
-
   auto topic_types = get_topic_types();
   auto messages = get_serialized_messages();
 
@@ -291,34 +293,27 @@ TEST_F(
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1, 3);
+  // Let the player only reproduce one message.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1, 1);
+  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(75));
 
-  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(1000));
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
-    std::move(
-      reader), storage_options_, play_options_);
+    std::move(reader), storage_options_, play_options_);
+
   // Wait for discovery to match publishers with subscribers
   ASSERT_TRUE(
     sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), std::chrono::seconds(5)));
 
-  auto await_received_messages = sub_->spin_subscriptions();
+  auto await_received_messages = sub_->spin_subscriptions(kMaximumTimeSpinningSec);
+  player_->pause();
+  auto player_future = std::async(std::launch::async, [player_]() {return player_->play();});
+  player_->wait_for_playback_to_start();
+  ASSERT_TRUE(player_->is_paused());
+  ASSERT_FALSE(player_->play());
 
-  auto play_execution_1 = std::async(std::launch::async, [player_]() {return player_->play();});
-  auto play_execution_2 = std::async(std::launch::async, [player_]() {return player_->play();});
-
+  player_->resume();
+  player_future.get();
   await_received_messages.get();
-
-  const auto play_execution_1_wait_result = play_execution_1.wait_for(
-    std::chrono::milliseconds(
-      1500));
-  const auto play_execution_2_wait_result = play_execution_2.wait_for(
-    std::chrono::milliseconds(
-      1500));
-
-  ASSERT_EQ(std::future_status::ready, play_execution_1_wait_result);
-  ASSERT_EQ(std::future_status::ready, play_execution_2_wait_result);
-
-  ASSERT_TRUE(
-    (play_execution_1.get() && !play_execution_2.get()) ||
-    (!play_execution_1.get() && play_execution_2.get()));
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1);
+  EXPECT_THAT(replayed_topic1, SizeIs(1));
 }

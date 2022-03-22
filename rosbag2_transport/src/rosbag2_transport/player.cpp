@@ -193,11 +193,10 @@ bool Player::is_storage_completely_loaded() const
 
 bool Player::play()
 {
-  if (is_in_playback_) {
+  if (is_in_playback_.exchange(true)) {
     RCLCPP_WARN_STREAM(get_logger(), "Trying to play() while in playback, dismissing request.");
     return false;
   }
-  is_in_playback_ = true;
 
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {

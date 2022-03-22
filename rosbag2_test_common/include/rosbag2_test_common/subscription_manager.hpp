@@ -117,13 +117,15 @@ public:
     return matched;
   }
 
-  std::future<void> spin_subscriptions()
+  std::future<void> spin_subscriptions(int maximum_time_spinning_sec = 10)
   {
     return async(
-      std::launch::async, [this]() {
+      std::launch::async, [this, maximum_time_spinning_sec]() {
         rclcpp::executors::SingleThreadedExecutor exec;
         auto start = std::chrono::high_resolution_clock::now();
-        while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start)) {
+        while (rclcpp::ok() &&
+        continue_spinning(expected_topics_with_size_, start, maximum_time_spinning_sec))
+        {
           exec.spin_node_some(subscriber_node_);
         }
       });
@@ -132,10 +134,11 @@ public:
 private:
   bool continue_spinning(
     const std::unordered_map<std::string, size_t> & expected_topics_with_sizes,
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time)
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time,
+    int maximum_time_spinning_sec = 10)
   {
     auto current = std::chrono::high_resolution_clock::now();
-    if (current - start_time > std::chrono::seconds(10)) {
+    if (current - start_time > std::chrono::seconds(maximum_time_spinning_sec)) {
       return false;
     }
 
