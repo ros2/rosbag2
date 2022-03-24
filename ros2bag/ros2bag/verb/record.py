@@ -149,6 +149,13 @@ class RecordVerb(VerbExtension):
                  'corresponding settings in the config passed with --storage-config-file.'
         )
         parser.add_argument(
+            '--custom-data', type=str, metavar='KEY=VALUE', nargs='*',
+            help='Store the custom data in metadata.yaml'
+                 'under "rosbag2_bagfile_information/custom_data". The key=value pair can '
+                 'appear more than once. The last value will override the former ones.'
+        )
+
+        parser.add_argument(
             '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations. '
                  'For the default storage plugin settings are specified through syntax:'
@@ -198,6 +205,12 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        # Prepare custom_data dictionary
+        custom_data = {}
+        if args.custom_data:
+            key_value_pairs = [pair.split('=') for pair in args.custom_data]
+            custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
+
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
@@ -210,7 +223,8 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
-            snapshot_mode=args.snapshot_mode
+            snapshot_mode=args.snapshot_mode,
+            custom_data=custom_data
         )
         record_options = RecordOptions()
         record_options.all = args.all

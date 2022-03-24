@@ -199,6 +199,7 @@ struct convert<rosbag2_storage::BagMetadata>
     node["compression_mode"] = metadata.compression_mode;
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["files"] = metadata.files;
+    node["custom_data"] = metadata.custom_data;
 
     return node;
   }
@@ -225,6 +226,11 @@ struct convert<rosbag2_storage::BagMetadata>
       metadata.files =
         node["files"].as<std::vector<rosbag2_storage::FileInformation>>();
     }
+
+    if (metadata.version >= 6) {
+      metadata.custom_data = node["custom_data"].as<std::unordered_map<std::string, std::string>>();
+    }
+
     return true;
   }
 };

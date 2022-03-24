@@ -15,6 +15,7 @@
 #define ROSBAG2_STORAGE__YAML_HPP_
 
 #include <string>
+#include <unordered_map>
 
 #ifdef _WIN32
 // This is necessary because of a bug in yaml-cpp's cmake
@@ -40,6 +41,27 @@ void optional_assign(const Node & node, std::string field, T & assign_to)
     assign_to = node[field].as<T>();
   }
 }
+
+template<>
+struct convert<std::unordered_map<std::string, std::string>>
+{
+  static Node encode(const std::unordered_map<std::string, std::string> & custom_data)
+  {
+    Node node;
+    for (const auto & it : custom_data) {
+      node[it.first] = it.second;
+    }
+    return node;
+  }
+
+  static bool decode(const Node & node, std::unordered_map<std::string, std::string> & custom_data)
+  {
+    for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+      custom_data.emplace(it->first.as<std::string>(), it->second.as<std::string>());
+    }
+    return true;
+  }
+};
 
 }  // namespace YAML
 
