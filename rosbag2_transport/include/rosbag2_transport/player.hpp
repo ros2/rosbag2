@@ -36,6 +36,7 @@
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
 #include "rosbag2_interfaces/srv/play_next.hpp"
+#include "rosbag2_interfaces/srv/burst.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/set_rate.hpp"
 #include "rosbag2_interfaces/srv/seek.hpp"
@@ -129,6 +130,16 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual bool play_next();
 
+  /// \brief Burst the next \p num_messages messages from the queue when paused.
+  /// \param num_messages The number of messages to burst from the queue.
+  /// \details This call will play the next \p num_messages from the queue in burst mode. The
+  /// timing of the messages is ignored.
+  /// \note If internal player queue is starving and storage has not been completely loaded,
+  /// this method will wait until new element will be pushed to the queue.
+  /// \return The number of messages that was played.
+  ROSBAG2_TRANSPORT_PUBLIC
+  virtual size_t burst(const size_t num_messages);
+
   /// \brief Advance player to the message with closest timestamp >= time_point.
   /// \details This is blocking call and it will wait until current message will be published
   /// and message queue will be refilled.
@@ -193,6 +204,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::GetRate>::SharedPtr srv_get_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
+  rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;
 
   // defaults

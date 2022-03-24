@@ -349,6 +349,21 @@ bool Player::play_next()
   return next_message_published;
 }
 
+size_t Player::burst(const size_t num_messages)
+{
+  uint64_t messages_played = 0;
+
+  for (auto ii = 0u; ii < num_messages; ++ii) {
+    if (play_next()) {
+      ++messages_played;
+    } else {
+      break;
+    }
+  }
+
+  return messages_played;
+}
+
 void Player::seek(rcutils_time_point_value_t time_point)
 {
   // Temporary stop playback in play_messages_from_queue() and block play_next()
@@ -657,6 +672,14 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::PlayNext::Response::SharedPtr response)
     {
       response->success = play_next();
+    });
+  srv_burst_ = create_service<rosbag2_interfaces::srv::Burst>(
+    "~/burst",
+    [this](
+      rosbag2_interfaces::srv::Burst::Request::ConstSharedPtr request,
+      rosbag2_interfaces::srv::Burst::Response::SharedPtr response)
+    {
+      response->actually_burst = burst(request->num_messages);
     });
   srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",
