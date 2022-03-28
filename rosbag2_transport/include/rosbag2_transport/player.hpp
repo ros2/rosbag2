@@ -222,6 +222,7 @@ private:
   rosbag2_transport::PlayOptions play_options_;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
+  std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;

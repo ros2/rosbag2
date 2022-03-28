@@ -53,8 +53,6 @@ constexpr bool kBool1Value{false};
 constexpr bool kBool2Value{true};
 constexpr bool kBool3Value{false};
 
-constexpr int kMaximumTimeSpinningSec{1};
-
 #define EVAL_REPLAYED_PRIMITIVES(replayed_primitives) \
   EXPECT_THAT( \
     replayed_primitives, \
@@ -81,15 +79,15 @@ constexpr int kMaximumTimeSpinningSec{1};
 class RosBag2PlayForTestFixture : public RosBag2PlayTestFixture
 {
 public:
-  static constexpr const char * kTopic1Name{"topic1"};
-  static constexpr const char * kTopic2Name{"topic2"};
-  static constexpr const char * kTopic1{"/topic1"};
-  static constexpr const char * kTopic2{"/topic2"};
+  static constexpr const char * kTopic1Name_{"topic1"};
+  static constexpr const char * kTopic2Name_{"topic2"};
+  static constexpr const char * kTopic1_{"/topic1"};
+  static constexpr const char * kTopic2_{"/topic2"};
 
   std::vector<rosbag2_storage::TopicMetadata> get_topic_types()
   {
-    return {{kTopic1Name, "test_msgs/BasicTypes", "", ""},
-      {kTopic2Name, "test_msgs/Arrays", "", ""}};
+    return {{kTopic1Name_, "test_msgs/BasicTypes", "", ""},
+      {kTopic2Name_, "test_msgs/Arrays", "", ""}};
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
@@ -106,17 +104,20 @@ public:
     //    around without any knowledge about message chronology. It just picks
     //    the next one Make sure to keep the list in order or sort it!
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-    {serialize_test_message(kTopic1Name, 100, primitive_message1),
-      serialize_test_message(kTopic2Name, 120, complex_message1),
-      serialize_test_message(kTopic1Name, 200, primitive_message1),
-      serialize_test_message(kTopic2Name, 220, complex_message1),
-      serialize_test_message(kTopic1Name, 300, primitive_message1),
-      serialize_test_message(kTopic2Name, 320, complex_message1)};
+    {serialize_test_message(kTopic1Name_, 100, primitive_message1),
+      serialize_test_message(kTopic2Name_, 120, complex_message1),
+      serialize_test_message(kTopic1Name_, 200, primitive_message1),
+      serialize_test_message(kTopic2Name_, 220, complex_message1),
+      serialize_test_message(kTopic1Name_, 300, primitive_message1),
+      serialize_test_message(kTopic2Name_, 320, complex_message1)};
     // @}
     return messages;
   }
 
-  void InitPlayerWithPlaybackDurationAndPlay(int64_t milliseconds)
+  void InitPlayerWithPlaybackDurationAndPlay(
+    int64_t milliseconds,
+    size_t expected_number_of_messages_on_topic1 = 3,
+    size_t expected_number_of_messages_on_topic2 = 3)
   {
     auto topic_types = get_topic_types();
     auto messages = get_serialized_messages();
@@ -125,20 +126,18 @@ public:
     prepared_mock_reader->prepare(messages, topic_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-    sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1, 3);
-    sub_->add_subscription<test_msgs::msg::Arrays>(kTopic2, 3);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(
+      kTopic1_, expected_number_of_messages_on_topic1);
+    sub_->add_subscription<test_msgs::msg::Arrays>(kTopic2_, expected_number_of_messages_on_topic2);
 
     play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(milliseconds));
     player_ = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
     // Wait for discovery to match publishers with subscribers
-    ASSERT_TRUE(
-      sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), std::chrono::seconds(5)));
+    ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
 
-    auto await_received_messages = sub_->spin_subscriptions(kMaximumTimeSpinningSec);
-
+    auto await_received_messages = sub_->spin_subscriptions();
     ASSERT_TRUE(player_->play());
-
     await_received_messages.get();
   }
 
@@ -151,12 +150,12 @@ TEST_F(RosBag2PlayForTestFixture, play_for_all_are_played_due_to_duration)
   InitPlayerWithPlaybackDurationAndPlay(350);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    kTopic1);
+    kTopic1_);
   EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(3u)));
   EVAL_REPLAYED_PRIMITIVES(replayed_test_primitives);
 
   auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    kTopic2);
+    kTopic2_);
   EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(3u)));
   EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
   EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
@@ -164,82 +163,110 @@ TEST_F(RosBag2PlayForTestFixture, play_for_all_are_played_due_to_duration)
 
 TEST_F(RosBag2PlayForTestFixture, play_for_none_are_played_due_to_duration)
 {
-  InitPlayerWithPlaybackDurationAndPlay(50);
+  auto primitive_message1 = get_messages_basic_types()[0];
+  auto primitive_message2 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 1;
+  primitive_message2->int32_value = 2;
 
-  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    kTopic1);
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(0u)));
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
 
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    kTopic2);
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(0u)));
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(kTopic1Name_, 50, primitive_message1),
+    serialize_test_message(kTopic1Name_, 100, primitive_message2),
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Expect to receive messages only from play_next in second round
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size());
+  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(49));
+
+  std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
+    std::move(reader), storage_options_, play_options_);
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+  ASSERT_TRUE(player_->play());
+
+  // Playing one more time with play_next to save time and count messages
+  player_->pause();
+  auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
+
+  EXPECT_TRUE(player_->play_next());
+  EXPECT_TRUE(player_->play_next());
+  EXPECT_FALSE(player_->play_next());
+  player_->resume();
+  player_future.get();
+  await_received_messages.get();
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
+  EXPECT_THAT(replayed_topic1, SizeIs(2));
+  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
+  EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
 }
 
 TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
 {
-  InitPlayerWithPlaybackDurationAndPlay(270);
+  auto primitive_message1 = get_messages_basic_types()[0];
+  auto primitive_message2 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 1;
+  primitive_message2->int32_value = 2;
 
-  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    kTopic1);
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(2u)));
-  EVAL_REPLAYED_PRIMITIVES(replayed_test_primitives);
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
 
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    kTopic2);
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(2u)));
-  EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
-  EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
-}
-
-class RosBag2PlayForFilteredTopicTestFixture : public RosBag2PlayForTestFixture
-{
-public:
-  void SetUp() override
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    // Filter allows /topic2, blocks /topic1
-    play_options_.topics_to_filter = {"topic2"};
-  }
-};
+    serialize_test_message(kTopic1Name_, 10, primitive_message1),
+    serialize_test_message(kTopic1Name_, 50, primitive_message2),
+  };
 
-TEST_F(
-  RosBag2PlayForFilteredTopicTestFixture,
-  play_for_full_duration_recorded_messages_with_filtered_topics)
-{
-  InitPlayerWithPlaybackDurationAndPlay(400);
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  auto replayed_test_primitives =
-    sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-  // No messages are allowed to have arrived
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(0u)));
+  // Expect to receive 1 message from play() and 2 messages from play_next in second round
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size() + 1);
+  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(49));
 
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
-  // All messages should have arrived.
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(3u)));
-  EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
-  EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
+  std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
+    std::move(reader), storage_options_, play_options_);
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+  ASSERT_TRUE(player_->play());
+
+  // Playing one more time with play_next to save time and count messages
+  player_->pause();
+  auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
+
+  ASSERT_TRUE(player_->play_next());
+  ASSERT_TRUE(player_->play_next());
+  ASSERT_FALSE(player_->play_next());
+  player_->resume();
+  player_future.get();
+  await_received_messages.get();
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
+  EXPECT_THAT(replayed_topic1, SizeIs(3));
+  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
+  EXPECT_EQ(replayed_topic1[1]->int32_value, 1);
+  EXPECT_EQ(replayed_topic1[2]->int32_value, 2);
 }
 
 TEST_F(
-  RosBag2PlayForFilteredTopicTestFixture,
-  play_for_short_duration_recorded_messages_with_filtered_topics)
-{
-  InitPlayerWithPlaybackDurationAndPlay(50);
-
-  auto replayed_test_primitives =
-    sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-  // No messages are allowed to have arrived
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(0u)));
-
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
-  // All messages should have arrived.
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(0u)));
-}
-
-TEST_F(
-  RosBag2PlayForFilteredTopicTestFixture,
+  RosBag2PlayForTestFixture,
   play_for_intermediate_duration_recorded_messages_with_filtered_topics)
 {
-  InitPlayerWithPlaybackDurationAndPlay(270);
+  // Filter allows /topic2, blocks /topic1
+  play_options_.topics_to_filter = {"topic2"};
+  InitPlayerWithPlaybackDurationAndPlay(270, 0, 2);
 
   auto replayed_test_primitives =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -253,58 +280,34 @@ TEST_F(
   EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
 }
 
-class RosBag2PlayForInterruptedTestFixture : public RosBag2PlayTestFixture
+TEST_F(RosBag2PlayForTestFixture, play_should_return_false_when_interrupted)
 {
-public:
-  static constexpr const char * kTopic1Name{"topic1"};
-  static constexpr const char * kTopic1{"/topic1"};
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
 
-  std::vector<rosbag2_storage::TopicMetadata> get_topic_types()
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = kIntValue;
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    return {{kTopic1Name, "test_msgs/BasicTypes", "", ""}};
-  }
-
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
-  get_serialized_messages()
-  {
-    auto primitive_message = get_messages_basic_types()[0];
-    primitive_message->int32_value = kIntValue;
-
-    // @{ Ordering matters. The mock reader implementation moves messages
-    //    around without any knowledge about message chronology. It just picks
-    //    the next one Make sure to keep the list in order or sort it!
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-    {serialize_test_message(kTopic1Name, 50, primitive_message),
-      serialize_test_message(kTopic1Name, 100, primitive_message),
-      serialize_test_message(kTopic1Name, 150, primitive_message)};
-    // @}
-    return messages;
-  }
-};
-
-TEST_F(
-  RosBag2PlayForInterruptedTestFixture,
-  play_should_return_false_when_interrupted)
-{
-  auto topic_types = get_topic_types();
-  auto messages = get_serialized_messages();
+    serialize_test_message(kTopic1Name_, 50, primitive_message),
+    serialize_test_message(kTopic1Name_, 100, primitive_message),
+  };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   // Let the player only reproduce one message.
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1, 1);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 1);
   play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(75));
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);
 
   // Wait for discovery to match publishers with subscribers
-  ASSERT_TRUE(
-    sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), std::chrono::seconds(5)));
+  ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
 
-  auto await_received_messages = sub_->spin_subscriptions(kMaximumTimeSpinningSec);
+  auto await_received_messages = sub_->spin_subscriptions();
   player_->pause();
   auto player_future = std::async(std::launch::async, [player_]() {return player_->play();});
   player_->wait_for_playback_to_start();
@@ -314,6 +317,6 @@ TEST_F(
   player_->resume();
   player_future.get();
   await_received_messages.get();
-  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1);
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
   EXPECT_THAT(replayed_topic1, SizeIs(1));
 }

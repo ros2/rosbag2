@@ -225,9 +225,14 @@ bool Player::play()
         reader_->seek(starting_time_);
         clock_->jump(starting_time_);
       }
+      load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
       play_messages_from_queue(play_until_time);
+
+      load_storage_content_ = false;
+      if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+      while (message_queue_.pop()) {}   // cleanup queue
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
         is_ready_to_play_from_queue_ = false;
@@ -236,6 +241,9 @@ bool Player::play()
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
+    load_storage_content_ = false;
+    if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+    while (message_queue_.pop()) {}   // cleanup queue
   }
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
@@ -409,6 +417,7 @@ void Player::seek(rcutils_time_point_value_t time_point)
     // Restart queuing thread if it has finished running (previously reached end of bag),
     // otherwise, queueing should continue automatically after releasing mutex
     if (is_storage_completely_loaded() && rclcpp::ok()) {
+      load_storage_content_ = true;
       storage_loading_future_ =
         std::async(std::launch::async, [this]() {load_storage_content();});
     }
@@ -431,7 +440,7 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (rclcpp::ok()) {
+  while (rclcpp::ok() && load_storage_content_) {
     TSAUniqueLock lk(reader_mutex_);
     if (!reader_->has_next()) {break;}
 
