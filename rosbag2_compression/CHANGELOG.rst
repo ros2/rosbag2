@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.14.0 (2022-03-29)
+-------------------
+* Install headers to include/${PROJECT_NAME} (`#958 <https://github.com/ros2/rosbag2/issues/958>`_)
+* Remove unnecessary public definition. (`#950 <https://github.com/ros2/rosbag2/issues/950>`_)
+* Contributors: Chris Lalancette, Shane Loretz
+
 0.13.0 (2022-01-13)
 -------------------
 
