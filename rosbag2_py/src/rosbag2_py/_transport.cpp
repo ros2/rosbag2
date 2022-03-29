@@ -153,10 +153,15 @@ public:
       [&exec]() {
         exec.spin();
       });
+    auto play_thread = std::thread(
+      [&player]() {
+        player->play();
+      });
     player->burst(num_messages);
 
     exec.cancel();
     spin_thread.join();
+    play_thread.join();
   }
 };
 
