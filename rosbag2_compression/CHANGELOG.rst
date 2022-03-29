@@ -2,8 +2,8 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.1 (2022-03-29)
+-------------------
 * Bump version number to avoid conflict
 * Contributors: Chris Lalancette
 
