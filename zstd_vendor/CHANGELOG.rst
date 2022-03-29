@@ -2,6 +2,18 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.14.0 (2022-03-28)
+-------------------
+* Use git hash for zstd vendor (`#969 <https://github.com/ros2/rosbag2/issues/969>`_)
+  CMake ExternalProject_add recommends using a specific git hash with
+  GIT_TAG because branches and tags can be updated to point to different
+  references.
+  https://cmake.org/cmake/help/latest/module/ExternalProject.html
+  This switches zstd_vendor to a git hash.
+  sqlite3_vendor and shared_queues_vendor don't need to be changed because
+  they use URL and URL_MD5 instead.
+* Contributors: Shane Loretz
+
 0.13.0 (2022-01-13)
 -------------------
 

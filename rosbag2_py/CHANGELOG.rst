@@ -2,6 +2,15 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.14.0 (2022-03-28)
+-------------------
+* Make sure published messages are acknowledged for play mode (`#951 <https://github.com/ros2/rosbag2/issues/951>`_)
+  * Make sure published messages are acknowledged for play mode
+  * Address review comments
+  * Move check_not_negative() to __init_\_.py
+  * Address review comments
+* Contributors: Barry Xu
+
 0.13.0 (2022-01-13)
 -------------------
 * Fix relative path syntax for cpplint (`#947 <https://github.com/ros2/rosbag2/issues/947>`_)
