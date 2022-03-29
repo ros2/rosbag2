@@ -57,10 +57,6 @@ class TestRecord(unittest.TestCase):
             "Subscribed to topic '/rosout'",
             process=record_all_process
         )
-        proc_output.assertWaitFor(
-            "Subscribed to topic '/parameter_events'",
-            process=record_all_process
-        )
 
 
 @launch_testing.post_shutdown_test()
