@@ -35,7 +35,9 @@ public:
   {
     std::vector<rclcpp::PublisherBase *> pub_list;
     for (const auto & publisher : publishers_) {
-      pub_list.push_back(static_cast<rclcpp::PublisherBase *>(publisher.second.get()));
+      pub_list.push_back(
+        static_cast<rclcpp::PublisherBase *>(
+          publisher.second->generic_publisher().get()));
     }
     return pub_list;
   }

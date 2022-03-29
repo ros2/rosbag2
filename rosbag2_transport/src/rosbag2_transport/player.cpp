@@ -238,7 +238,7 @@ void Player::play()
     }
     for (auto pub : publishers_) {
       try {
-        if (!pub.second->wait_for_all_acked(timeout)) {
+        if (!pub.second->generic_publisher()->wait_for_all_acked(timeout)) {
           RCLCPP_ERROR(
             get_logger(),
             "Timed out while waiting for all published messages to be acknowledged for topic %s",
@@ -521,9 +521,11 @@ void Player::prepare_publishers()
       topic, topic_qos_profile_overrides_,
       get_logger());
     try {
-      publishers_.insert(
-        std::make_pair(
-          topic.name, create_generic_publisher(topic.name, topic.type, topic_qos)));
+      std::shared_ptr<rclcpp::GenericPublisher> pub =
+        create_generic_publisher(topic.name, topic.type, topic_qos);
+      std::shared_ptr<DataPublisher> data_pub =
+        std::make_shared<DataPublisher>(std::move(pub));
+      publishers_.insert(std::make_pair(topic.name, data_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
         topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
       {
