@@ -2,6 +2,11 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.14.0 (2022-03-29)
+-------------------
+* Add burst-mode to Player (`#977 <https://github.com/ros2/rosbag2/issues/977>`_)
+* Contributors: Geoffrey Biggs
+
 0.13.0 (2022-01-13)
 -------------------
 
