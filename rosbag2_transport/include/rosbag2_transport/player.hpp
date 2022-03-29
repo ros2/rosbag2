@@ -131,7 +131,8 @@ public:
   virtual bool play_next();
 
   /// \brief Burst the next \p num_messages messages from the queue when paused.
-  /// \param num_messages The number of messages to burst from the queue.
+  /// \param num_messages The number of messages to burst from the queue. Specifying zero means no
+  /// limit (i.e. burst the entire bag).
   /// \details This call will play the next \p num_messages from the queue in burst mode. The
   /// timing of the messages is ignored.
   /// \note If internal player queue is starving and storage has not been completely loaded,

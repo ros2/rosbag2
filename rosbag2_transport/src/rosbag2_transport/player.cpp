@@ -351,9 +351,14 @@ bool Player::play_next()
 
 size_t Player::burst(const size_t num_messages)
 {
+  if (!clock_->is_paused()) {
+    RCLCPP_WARN_STREAM(get_logger(), "Burst can only be used when in the paused state.");
+    return 0;
+  }
+
   uint64_t messages_played = 0;
 
-  for (auto ii = 0u; ii < num_messages; ++ii) {
+  for (auto ii = 0u; ii < num_messages || num_messages == 0; ++ii) {
     if (play_next()) {
       ++messages_played;
     } else {
