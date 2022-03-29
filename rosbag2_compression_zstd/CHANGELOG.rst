@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression_zstd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bump version number to avoid conflict
+* Contributors: Chris Lalancette
+
 0.14.0 (2022-03-29)
 -------------------
 * Install headers to include/${PROJECT_NAME} (`#958 <https://github.com/ros2/rosbag2/issues/958>`_)

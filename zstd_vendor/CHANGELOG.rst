@@ -2,6 +2,11 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bump version number to avoid conflict
+* Contributors: Chris Lalancette
+
 0.14.0 (2022-03-29)
 -------------------
 * Use git hash for zstd vendor (`#969 <https://github.com/ros2/rosbag2/issues/969>`_)

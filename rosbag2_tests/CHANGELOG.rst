@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bump version number to avoid conflict
+* Contributors: Chris Lalancette
+
 0.14.0 (2022-03-29)
 -------------------
 
