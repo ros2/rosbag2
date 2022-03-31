@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <unordered_map>
 
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -42,7 +41,7 @@ struct FileInformation
 
 struct BagMetadata
 {
-  int version = 6;  // upgrade this number when changing the content of the struct
+  int version = 5;  // upgrade this number when changing the content of the struct
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
@@ -53,7 +52,6 @@ struct BagMetadata
   std::vector<TopicInformation> topics_with_message_count;
   std::string compression_format;
   std::string compression_mode;
-  std::unordered_map<std::string, std::string> custom_data;  // {key: value, ...}
 };
 
 }  // namespace rosbag2_storage
