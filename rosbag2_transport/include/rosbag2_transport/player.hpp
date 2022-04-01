@@ -61,14 +61,14 @@ namespace rosbag2_transport
 class DataPublisher final
 {
 public:
-  explicit DataPublisher(std::shared_ptr<rclcpp::GenericPublisher> pub, bool enable_loan_message)
+  explicit DataPublisher(std::shared_ptr<rclcpp::GenericPublisher> pub, bool disable_loan_message)
   : publisher_(std::move(pub))
   {
     using std::placeholders::_1;
-    if (enable_loan_message && publisher_->can_loan_messages()) {
-      publish_func_ = std::bind(&rclcpp::GenericPublisher::publish_as_loaned_msg, publisher_, _1);
-    } else {
+    if (disable_loan_message || !publisher_->can_loan_messages()) {
       publish_func_ = std::bind(&rclcpp::GenericPublisher::publish, publisher_, _1);
+    } else {
+      publish_func_ = std::bind(&rclcpp::GenericPublisher::publish_as_loaned_msg, publisher_, _1);
     }
   }
 

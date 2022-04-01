@@ -67,8 +67,8 @@ public:
   // Negative value means that published messages do not need to be acknowledged.
   int64_t wait_acked_timeout = -1;
 
-  // Enable to publish as loaned message
-  bool enable_loan_message = false;
+  // Disable to publish as loaned message
+  bool disable_loan_message = false;
 };
 
 }  // namespace rosbag2_transport

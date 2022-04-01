@@ -106,10 +106,11 @@ class PlayVerb(VerbExtension):
                  'RELIABLE.',
             metavar='TIMEOUT')
         parser.add_argument(
-            '--enable-loan-message', action='store_true', default=False,
-            help='Enable to publish as loaned message if loaned message can be used. '
-                 'It can help to reduce the number of data copies, so there is a greater benefit '
-                 'for sending big data.')
+            '--disable-loan-message', action='store_true', default=False,
+            help='Disable to publish as loaned message. '
+                 'By default, if loaned message can be used, messages are published as loaned '
+                 'message. It can help to reduce the number of data copies, so there is a greater '
+                 'benefit for sending big data.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -149,7 +150,7 @@ class PlayVerb(VerbExtension):
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = args.wait_for_all_acked
-        play_options.enable_loan_message = args.enable_loan_message
+        play_options.disable_loan_message = args.disable_loan_message
 
         player = Player()
         player.play(storage_options, play_options)

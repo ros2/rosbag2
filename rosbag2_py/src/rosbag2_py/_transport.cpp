@@ -248,7 +248,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::getStartOffset,
     &PlayOptions::setStartOffset)
   .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
-  .def_readwrite("enable_loan_message", &PlayOptions::enable_loan_message)
+  .def_readwrite("disable_loan_message", &PlayOptions::disable_loan_message)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")

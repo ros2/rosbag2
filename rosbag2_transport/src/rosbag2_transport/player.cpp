@@ -524,7 +524,7 @@ void Player::prepare_publishers()
       std::shared_ptr<rclcpp::GenericPublisher> pub =
         create_generic_publisher(topic.name, topic.type, topic_qos);
       std::shared_ptr<DataPublisher> data_pub =
-        std::make_shared<DataPublisher>(std::move(pub), play_options_.enable_loan_message);
+        std::make_shared<DataPublisher>(std::move(pub), play_options_.disable_loan_message);
       publishers_.insert(std::make_pair(topic.name, data_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
         topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
