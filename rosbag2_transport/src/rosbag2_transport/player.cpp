@@ -523,9 +523,10 @@ void Player::prepare_publishers()
     try {
       std::shared_ptr<rclcpp::GenericPublisher> pub =
         create_generic_publisher(topic.name, topic.type, topic_qos);
-      std::shared_ptr<DataPublisher> data_pub =
-        std::make_shared<DataPublisher>(std::move(pub), play_options_.disable_loan_message);
-      publishers_.insert(std::make_pair(topic.name, data_pub));
+      std::shared_ptr<Player::PlayerPublisher> player_pub =
+        std::make_shared<Player::PlayerPublisher>(
+        std::move(pub), play_options_.disable_loan_message);
+      publishers_.insert(std::make_pair(topic.name, player_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
         topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
       {
@@ -558,8 +559,14 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
   bool message_published = false;
   auto publisher_iter = publishers_.find(message->topic_name);
   if (publisher_iter != publishers_.end()) {
-    publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-    message_published = true;
+    try {
+      publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "Failed to publish message on '" << message->topic_name <<
+          "' topic. \nError: %s" << e.what());
+    }
   }
   return message_published;
 }

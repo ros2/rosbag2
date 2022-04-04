@@ -58,37 +58,6 @@ class Reader;
 
 namespace rosbag2_transport
 {
-class DataPublisher final
-{
-public:
-  explicit DataPublisher(std::shared_ptr<rclcpp::GenericPublisher> pub, bool disable_loan_message)
-  : publisher_(std::move(pub))
-  {
-    using std::placeholders::_1;
-    if (disable_loan_message || !publisher_->can_loan_messages()) {
-      publish_func_ = std::bind(&rclcpp::GenericPublisher::publish, publisher_, _1);
-    } else {
-      publish_func_ = std::bind(&rclcpp::GenericPublisher::publish_as_loaned_msg, publisher_, _1);
-    }
-  }
-
-  ~DataPublisher() {}
-
-  void publish(const rclcpp::SerializedMessage & message)
-  {
-    publish_func_(message);
-  }
-
-  std::shared_ptr<rclcpp::GenericPublisher> generic_publisher()
-  {
-    return publisher_;
-  }
-
-private:
-  std::shared_ptr<rclcpp::GenericPublisher> publisher_;
-  std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
-};
-
 class Player : public rclcpp::Node
 {
 public:
@@ -185,11 +154,43 @@ public:
   void seek(rcutils_time_point_value_t time_point);
 
 protected:
+  class PlayerPublisher final
+  {
+public:
+    explicit PlayerPublisher(
+      std::shared_ptr<rclcpp::GenericPublisher> pub,
+      bool disable_loan_message)
+    : publisher_(std::move(pub))
+    {
+      using std::placeholders::_1;
+      if (disable_loan_message || !publisher_->can_loan_messages()) {
+        publish_func_ = std::bind(&rclcpp::GenericPublisher::publish, publisher_, _1);
+      } else {
+        publish_func_ = std::bind(&rclcpp::GenericPublisher::publish_as_loaned_msg, publisher_, _1);
+      }
+    }
+
+    ~PlayerPublisher() {}
+
+    void publish(const rclcpp::SerializedMessage & message)
+    {
+      publish_func_(message);
+    }
+
+    std::shared_ptr<rclcpp::GenericPublisher> generic_publisher()
+    {
+      return publisher_;
+    }
+
+private:
+    std::shared_ptr<rclcpp::GenericPublisher> publisher_;
+    std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
+  };
   bool is_ready_to_play_from_queue_{false};
   std::mutex ready_to_play_from_queue_mutex_;
   std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
-  std::unordered_map<std::string, std::shared_ptr<DataPublisher>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> publishers_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
