@@ -16,7 +16,6 @@
 #define ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
 
 #include <string>
-#include <unordered_map>
 
 #include "rosbag2_storage/visibility_control.hpp"
 #include "rosbag2_storage/yaml.hpp"
@@ -54,9 +53,6 @@ public:
   // Enable snapshot mode.
   // Defaults to disabled.
   bool snapshot_mode = false;
-
-  // Stores the custom data
-  std::unordered_map<std::string, std::string> custom_data{};
 };
 
 }  // namespace rosbag2_storage
