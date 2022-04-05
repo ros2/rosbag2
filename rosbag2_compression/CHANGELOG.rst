@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.0 (2022-04-05)
+-------------------
+
 0.14.1 (2022-03-29)
 -------------------
 * Bump version number to avoid conflict
