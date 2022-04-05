@@ -66,6 +66,9 @@ public:
   // Timeout for waiting for all published messages to be acknowledged.
   // Negative value means that published messages do not need to be acknowledged.
   int64_t wait_acked_timeout = -1;
+
+  // Disable to publish as loaned message
+  bool disable_loan_message = false;
 };
 
 }  // namespace rosbag2_transport
