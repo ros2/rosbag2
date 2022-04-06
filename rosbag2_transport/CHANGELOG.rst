@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* support to publish as loaned message (`#981 <https://github.com/ros2/rosbag2/issues/981>`_)
+* Contributors: Audrow Nash, Barry Xu
+
 0.15.0 (2022-04-05)
 -------------------
 * support to publish as loaned message (`#981 <https://github.com/ros2/rosbag2/issues/981>`_)
