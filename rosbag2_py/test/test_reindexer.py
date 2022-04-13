@@ -47,4 +47,7 @@ def test_reindexer_multiple_files():
 
     assert(result_path.exists())
 
-    result_path.unlink(missing_ok=True)
+    try:
+        result_path.unlink()
+    except FileNotFoundError:
+        pass
