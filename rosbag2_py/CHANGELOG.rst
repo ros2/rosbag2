@@ -2,6 +2,11 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.2 (2022-04-13)
+-------------------
+* Fix test rosbag2_py test compatibility with Python < 3.8 (`#987 <https://github.com/ros2/rosbag2/issues/987>`_)
+* Contributors: Scott K Logan
+
 0.15.1 (2022-04-06)
 -------------------
 * support to publish as loaned message (`#981 <https://github.com/ros2/rosbag2/issues/981>`_)
