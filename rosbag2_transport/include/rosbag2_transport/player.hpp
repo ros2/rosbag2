@@ -193,7 +193,7 @@ private:
   std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> publishers_;
 
 private:
-  rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
   void load_storage_content();
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
