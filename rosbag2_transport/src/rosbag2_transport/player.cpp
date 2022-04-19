@@ -223,7 +223,7 @@ void Player::play()
         ready_to_play_from_queue_cv_.notify_all();
       }
     } while (rclcpp::ok() && play_options_.loop);
-  } catch (std::runtime_error & e) {
+  } catch (const std::runtime_error & e) {
     RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
   }
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
@@ -244,7 +244,7 @@ void Player::play()
             "Timed out while waiting for all published messages to be acknowledged for topic %s",
             pub.first.c_str());
         }
-      } catch (std::exception & e) {
+      } catch (const std::exception & e) {
         RCLCPP_ERROR(
           get_logger(),
           "Exception occurred while waiting for all published messages to be acknowledged for "
