@@ -417,26 +417,22 @@ void Player::load_storage_content()
 
   while (rclcpp::ok()) {
     TSAUniqueLock lk(reader_mutex_);
-    if (!reader_->has_next()) {break;}
+    if (!reader_->has_next()) {
+      break;
+    }
 
     if (message_queue_.size_approx() < queue_lower_boundary) {
-      enqueue_up_to_boundary(queue_upper_boundary);
+      for (size_t i = message_queue_.size_approx(); i < queue_upper_boundary; i++) {
+        if (!reader_->has_next()) {
+          break;
+        }
+        rosbag2_storage::SerializedBagMessageSharedPtr message = reader_->read_next();
+        message_queue_.enqueue(message);
+      }
     } else {
       lk.unlock();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-  }
-}
-
-void Player::enqueue_up_to_boundary(size_t boundary)
-{
-  rosbag2_storage::SerializedBagMessageSharedPtr message;
-  for (size_t i = message_queue_.size_approx(); i < boundary; i++) {
-    if (!reader_->has_next()) {
-      break;
-    }
-    message = reader_->read_next();
-    message_queue_.enqueue(message);
   }
 }
 
