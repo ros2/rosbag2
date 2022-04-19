@@ -344,10 +344,8 @@ bool Player::play_next()
 
   bool next_message_published = false;
   while (message != nullptr && !next_message_published) {
-    {
-      next_message_published = publish_message(message);
-      clock_->jump(message->time_stamp);
-    }
+    next_message_published = publish_message(message);
+    clock_->jump(message->time_stamp);
     message_queue_.pop();
     message = peek_next_message_from_queue();
   }
