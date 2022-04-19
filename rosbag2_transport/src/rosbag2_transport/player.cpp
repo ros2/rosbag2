@@ -354,9 +354,9 @@ bool Player::play_next()
 
 size_t Player::burst(const size_t num_messages)
 {
-  uint64_t messages_played = 0;
+  size_t messages_played = 0;
 
-  for (auto ii = 0u; ii < num_messages; ++ii) {
+  for (size_t ii = 0u; ii < num_messages; ++ii) {
     if (play_next()) {
       ++messages_played;
     } else {
