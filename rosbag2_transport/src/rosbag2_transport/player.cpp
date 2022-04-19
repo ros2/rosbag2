@@ -294,7 +294,7 @@ bool Player::set_rate(double rate)
   return ok;
 }
 
-rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_queue()
+rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_queue()
 {
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
   if (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
@@ -312,7 +312,11 @@ rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_
   if (message_ptr == nullptr) {
     message_ptr = message_queue_.peek();
   }
-  return message_ptr;
+
+  if (message_ptr != nullptr) {
+    return *message_ptr;
+  }
+  return nullptr;
 }
 
 bool Player::play_next()
@@ -334,17 +338,16 @@ bool Player::play_next()
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
 
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message = peek_next_message_from_queue();
 
   bool next_message_published = false;
-  while (message_ptr != nullptr && !next_message_published) {
+  while (message != nullptr && !next_message_published) {
     {
-      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
       next_message_published = publish_message(message);
       clock_->jump(message->time_stamp);
     }
     message_queue_.pop();
-    message_ptr = peek_next_message_from_queue();
+    message = peek_next_message_from_queue();
   }
   return next_message_published;
 }
@@ -441,7 +444,7 @@ void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message = peek_next_message_from_queue();
   { // Notify play_next() that we are ready for playback
     // Note: We should do notification that we are ready for playback after peeking pointer to
     // the next message. message_queue_.peek() is not allowed to be called from more than one
@@ -450,8 +453,7 @@ void Player::play_messages_from_queue()
     is_ready_to_play_from_queue_ = true;
     ready_to_play_from_queue_cv_.notify_all();
   }
-  while (message_ptr != nullptr && rclcpp::ok()) {
-    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+  while (message != nullptr && rclcpp::ok()) {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
@@ -464,13 +466,13 @@ void Player::play_messages_from_queue()
       if (skip_message_in_main_play_loop_) {
         skip_message_in_main_play_loop_ = false;
         cancel_wait_for_next_message_ = false;
-        message_ptr = peek_next_message_from_queue();
+        message = peek_next_message_from_queue();
         continue;
       }
       publish_message(message);
     }
     message_queue_.pop();
-    message_ptr = peek_next_message_from_queue();
+    message = peek_next_message_from_queue();
   }
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
