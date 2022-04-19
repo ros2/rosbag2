@@ -297,16 +297,18 @@ bool Player::set_rate(double rate)
 rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_queue()
 {
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
-  if (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
-    RCLCPP_WARN(
+  while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+    RCLCPP_WARN_THROTTLE(
       get_logger(),
+      *get_clock(),
+      1000,
       "Message queue starved. Messages will be delayed. Consider "
       "increasing the --read-ahead-queue-size option.");
-    while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
-      message_ptr = message_queue_.peek();
-    }
+
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    message_ptr = message_queue_.peek();
   }
+
   // Workaround for race condition between peek and is_storage_completely_loaded()
   // Don't sync with mutex for the sake of the performance
   if (message_ptr == nullptr) {
