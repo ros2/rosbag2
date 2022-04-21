@@ -296,8 +296,8 @@ bool Player::set_rate(double rate)
 
 rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_queue()
 {
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
-  while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr_ptr = message_queue_.peek();
+  while (message_ptr_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
     RCLCPP_WARN_THROTTLE(
       get_logger(),
       *get_clock(),
@@ -306,17 +306,17 @@ rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_qu
       "increasing the --read-ahead-queue-size option.");
 
     std::this_thread::sleep_for(std::chrono::microseconds(100));
-    message_ptr = message_queue_.peek();
+    message_ptr_ptr = message_queue_.peek();
   }
 
   // Workaround for race condition between peek and is_storage_completely_loaded()
   // Don't sync with mutex for the sake of the performance
-  if (message_ptr == nullptr) {
-    message_ptr = message_queue_.peek();
+  if (message_ptr_ptr == nullptr) {
+    message_ptr_ptr = message_queue_.peek();
   }
 
-  if (message_ptr != nullptr) {
-    return *message_ptr;
+  if (message_ptr_ptr != nullptr) {
+    return *message_ptr_ptr;
   }
   return nullptr;
 }
@@ -340,16 +340,16 @@ bool Player::play_next()
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
 
-  rosbag2_storage::SerializedBagMessageSharedPtr message = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
-  while (message != nullptr && !next_message_published) {
+  while (message_ptr != nullptr && !next_message_published) {
     {
-      next_message_published = publish_message(message);
-      clock_->jump(message->time_stamp);
+      next_message_published = publish_message(message_ptr);
+      clock_->jump(message_ptr->time_stamp);
     }
     message_queue_.pop();
-    message = peek_next_message_from_queue();
+    message_ptr = peek_next_message_from_queue();
   }
   return next_message_published;
 }
@@ -446,7 +446,7 @@ void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
-  rosbag2_storage::SerializedBagMessageSharedPtr message = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
   { // Notify play_next() that we are ready for playback
     // Note: We should do notification that we are ready for playback after peeking pointer to
     // the next message. message_queue_.peek() is not allowed to be called from more than one
@@ -455,10 +455,10 @@ void Player::play_messages_from_queue()
     is_ready_to_play_from_queue_ = true;
     ready_to_play_from_queue_cv_.notify_all();
   }
-  while (message != nullptr && rclcpp::ok()) {
+  while (message_ptr != nullptr && rclcpp::ok()) {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
-    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
+    while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }
@@ -468,13 +468,13 @@ void Player::play_messages_from_queue()
       if (skip_message_in_main_play_loop_) {
         skip_message_in_main_play_loop_ = false;
         cancel_wait_for_next_message_ = false;
-        message = peek_next_message_from_queue();
+        message_ptr = peek_next_message_from_queue();
         continue;
       }
-      publish_message(message);
+      publish_message(message_ptr);
     }
     message_queue_.pop();
-    message = peek_next_message_from_queue();
+    message_ptr = peek_next_message_from_queue();
   }
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
