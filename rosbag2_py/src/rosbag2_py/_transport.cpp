@@ -272,6 +272,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("include_hidden_topics", &RecordOptions::include_hidden_topics)
   .def_readwrite("start_paused", &RecordOptions::start_paused)
   .def_readwrite("ignore_leaf_topics", &RecordOptions::ignore_leaf_topics)
+  .def_readwrite("use_sim_time", &RecordOptions::use_sim_time)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

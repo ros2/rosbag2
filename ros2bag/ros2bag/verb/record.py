@@ -158,6 +158,10 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--start-paused', action='store_true', default=False,
             help='Start the recorder in a paused state.')
+        parser.add_argument(
+            '--use-sim-time', action='store_true',
+            help='Use simulation time.'
+        )
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -230,6 +234,7 @@ class RecordVerb(VerbExtension):
         record_options.include_hidden_topics = args.include_hidden_topics
         record_options.start_paused = args.start_paused
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
+        record_options.use_sim_time = args.use_sim_time
 
         recorder = Recorder()
 
