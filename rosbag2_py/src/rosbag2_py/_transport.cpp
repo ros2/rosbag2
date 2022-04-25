@@ -95,6 +95,16 @@ public:
     return RCUTILS_NS_TO_S(static_cast<double>(this->start_offset));
   }
 
+  void setPlaybackUntil(double playback_until)
+  {
+    this->playback_until = static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(playback_until));
+  }
+
+  double getPlaybackUntil() const
+  {
+    return RCUTILS_NS_TO_S(static_cast<double>(this->playback_until));
+  }
+
   void setTopicQoSProfileOverrides(const py::dict & overrides)
   {
     py_dict = overrides;
@@ -288,6 +298,10 @@ PYBIND11_MODULE(_transport, m) {
     "start_offset",
     &PlayOptions::getStartOffset,
     &PlayOptions::setStartOffset)
+  .def_property(
+    "start_offset",
+    &PlayOptions::getPlaybackUntil,
+    &PlayOptions::setPlaybackUntil)
   .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
   .def_readwrite("disable_loan_message", &PlayOptions::disable_loan_message)
   ;

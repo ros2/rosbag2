@@ -90,6 +90,10 @@ class PlayVerb(VerbExtension):
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
                  'Default is -1.0.')
         parser.add_argument(
+            '--playback_until', type=check_positive_float, default=-1.0,
+            help='Playback until timestamp, in seconds. Negative stamps disable this feature. '
+                 'Default is -1.0.')
+        parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
             help='disables keyboard controls for playback')
         parser.add_argument(
@@ -155,6 +159,7 @@ class PlayVerb(VerbExtension):
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
         play_options.playback_duration = args.playback_duration
+        play_options.playback_until = args.playback_until
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
