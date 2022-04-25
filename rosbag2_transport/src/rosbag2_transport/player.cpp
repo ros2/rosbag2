@@ -212,7 +212,15 @@ bool Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time_);
+  rcutils_time_point_value_t play_until_time = -1;
+  if (play_options_.playback_duration >= rclcpp::Duration(0, 0) ||
+    play_options_.playback_until >= rcutils_time_point_value_t{0})
+  {
+    play_until_time = std::max(
+      starting_time_ + play_options_.playback_duration.nanoseconds(),
+      play_options_.playback_until);
+  }
+  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time);
 
   try {
     do {
@@ -781,6 +789,7 @@ void Player::create_control_services()
     {
       play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
       play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
+      play_options_.playback_until = rclcpp::Time(request->playback_until).nanoseconds();
       response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(

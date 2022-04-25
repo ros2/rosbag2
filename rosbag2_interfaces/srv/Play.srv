@@ -2,6 +2,8 @@
 builtin_interfaces/Time start_offset
 # See rosbag2_transport::PlayOptions::playback_duration
 builtin_interfaces/Duration playback_duration
+# See rosbag2_transport::PlayOptions::playback_until
+builtin_interfaces/Time playback_until
 ---
 # returns false when another playback execution is running, otherwise true
 bool success
