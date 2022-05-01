@@ -205,7 +205,7 @@ The only required value in the output bags is `uri` and `storage_id`. All other 
 This example notes all fields that can have an effect, with a comment on the required ones.
 
 ```
-output_bags
+output_bags:
 - uri: /output/bag1  # required
   storage_id: sqlite3  # required
   max_bagfile_size: 0
