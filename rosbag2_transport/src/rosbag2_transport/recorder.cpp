@@ -258,7 +258,7 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
         writer_->write(message, topic_name, topic_type, this->get_clock()->now());
       }

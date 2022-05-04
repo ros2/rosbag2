@@ -100,7 +100,7 @@ public:
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
    */
-  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override;
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
   /**
    * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
@@ -142,10 +142,11 @@ protected:
    *
    * \param compressor An initialized compression context.
    * \param message The message to compress.
+   * \returns The compressed message.
    */
-  virtual void compress_message(
+  virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage> compress_message(
     BaseCompressorInterface & compressor,
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
 
   /**
    * Initializes the compressor if a compression mode is specified.
@@ -171,7 +172,7 @@ private:
   std::shared_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
   std::mutex compressor_queue_mutex_;
-  std::queue<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
+  std::queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>
   compressor_message_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::queue<std::string> compressor_file_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
   std::vector<std::thread> compression_threads_;

@@ -275,7 +275,7 @@ void SequentialWriter::split_bagfile()
   metadata_.files.push_back(file_info);
 }
 
-void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
@@ -336,9 +336,9 @@ bool SequentialWriter::take_snapshot()
   return true;
 }
 
-std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+std::shared_ptr<const rosbag2_storage::SerializedBagMessage>
 SequentialWriter::get_writeable_message(
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   return converter_ ? converter_->convert(message) : message;
 }

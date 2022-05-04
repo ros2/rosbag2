@@ -23,6 +23,7 @@
 
 #include "compression_utils.hpp"
 #include "rosbag2_compression_zstd/zstd_compressor.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 
 namespace rosbag2_compression_zstd
 {
@@ -102,35 +103,26 @@ std::string ZstdCompressor::compress_uri(const std::string & uri)
 }
 
 void ZstdCompressor::compress_serialized_bag_message(
-  rosbag2_storage::SerializedBagMessage * message)
+  const rosbag2_storage::SerializedBagMessage * bag_message,
+  rosbag2_storage::SerializedBagMessage * compressed_message)
 {
   const auto start = std::chrono::high_resolution_clock::now();
   // Allocate based on compression bound and compress
   const auto maximum_compressed_length =
-    ZSTD_compressBound(message->serialized_data->buffer_length);
-  std::vector<uint8_t> compressed_buffer(maximum_compressed_length);
+    ZSTD_compressBound(bag_message->serialized_data->buffer_length);
+  compressed_message->serialized_data =
+    rosbag2_storage::make_empty_serialized_message(maximum_compressed_length);
 
   // Perform compression and check.
   // compression_result is either the actual compressed size or an error code.
   const auto compression_result = ZSTD_compressCCtx(
     zstd_context_,
-    compressed_buffer.data(), maximum_compressed_length,
-    message->serialized_data->buffer, message->serialized_data->buffer_length,
+    compressed_message->serialized_data->buffer, maximum_compressed_length,
+    bag_message->serialized_data->buffer, bag_message->serialized_data->buffer_length,
     kDefaultZstdCompressionLevel);
   throw_on_zstd_error(compression_result);
 
-  // Compression_buffer_length might be larger than the actual compression size
-  // Resize compressed_buffer so its size is the actual compression size.
-  compressed_buffer.resize(compression_result);
-
-  const auto resize_result =
-    rcutils_uint8_array_resize(message->serialized_data.get(), compression_result);
-  throw_on_rcutils_resize_error(resize_result);
-
-  // Note that rcutils_uint8_array_resize changes buffer_capacity but not buffer_length, we
-  // have to do that manually.
-  message->serialized_data->buffer_length = compression_result;
-  std::copy(compressed_buffer.begin(), compressed_buffer.end(), message->serialized_data->buffer);
+  compressed_message->serialized_data->buffer_length = compression_result;
 
   const auto end = std::chrono::high_resolution_clock::now();
   print_compression_statistics(start, end, maximum_compressed_length, compression_result);
