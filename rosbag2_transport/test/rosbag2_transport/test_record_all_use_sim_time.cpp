@@ -58,7 +58,10 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   pub_manager.setup_publisher(string_topic, string_message, 5);
   pub_manager.setup_publisher(clock_topic, clock_message, 5);
 
-  rosbag2_transport::RecordOptions record_options = {true, true, {}, "rmw_format", 100ms};
+  rosbag2_transport::RecordOptions record_options =
+  {
+    true, true, {string_topic, clock_topic}, "rmw_format", 100ms
+  };
   record_options.use_sim_time = true;
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
@@ -69,7 +72,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(clock_topic.c_str()));
 
-  pub_manager.run_publishers(true);
+  pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
   MockSequentialWriter & mock_writer =
