@@ -32,18 +32,6 @@
 #include "record_integration_fixture.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 
-std::vector<rosgraph_msgs::msg::Clock::SharedPtr> get_clock_messages()
-{
-  std::vector<rosgraph_msgs::msg::Clock::SharedPtr> messages;
-  for (int i = 0; i < 5; ++i) {
-    auto msg = std::make_shared<rosgraph_msgs::msg::Clock>();
-    msg->clock.sec = 1234567890;
-    msg->clock.nanosec = 123456789;
-    messages.push_back(msg);
-  }
-  return messages;
-}
-
 TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 {
   std::string string_topic = "/string_topic";
@@ -52,7 +40,9 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   // clock
   std::string clock_topic = "/clock";
-  auto clock_message = get_clock_messages()[0];
+  rosgraph_msgs::msg::Clock::SharedPtr clock_message;
+  clock_message->clock.sec = 1234567890;
+  clock_message->clock.nanosec = 123456789;
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(string_topic, string_message, 5);
