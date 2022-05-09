@@ -79,12 +79,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = 10;
-  rosbag2_test_common::wait_until_shutdown(
+  auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(2),
     [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() > expected_messages;
+      return mock_writer.get_messages().size() >= expected_messages;
     });
-  (void) expected_messages;  // we can't say anything here, there might be some rosout
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
 
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
