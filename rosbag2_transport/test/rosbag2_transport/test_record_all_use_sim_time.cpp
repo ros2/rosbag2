@@ -88,7 +88,8 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
+  auto string_messages = filter_messages<test_msgs::msg::Strings>(
+    recorded_messages, string_topic);
   // check that the timestamp is same as the clock message
-  // Note: The first message may not reflect the Clock, so the last message is evaluated.
-  EXPECT_THAT(recorded_messages.back()->time_stamp, 1234567890123456789);
+  EXPECT_THAT(string_messages.[0]->time_stamp, 1234567890123456789);
 }
