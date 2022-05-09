@@ -159,7 +159,7 @@ class RecordVerb(VerbExtension):
             '--start-paused', action='store_true', default=False,
             help='Start the recorder in a paused state.')
         parser.add_argument(
-            '--use-sim-time', action='store_true',
+            '--use-sim-time', action='store_true', default=False,
             help='Use simulation time.'
         )
         self._subparser = parser
