@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
 #include <chrono>
+#include <forward_list>
 #include <functional>
 #include <future>
 #include <memory>
@@ -61,6 +62,19 @@ namespace rosbag2_transport
 class Player : public rclcpp::Node
 {
 public:
+  /// \brief Type for callback functions.
+  using play_msg_callback_t =
+    std::function<void (std::shared_ptr<rosbag2_storage::SerializedBagMessage>)>;
+
+  /// \brief Callback handle returning from add_on_play_message_pre_callback and
+  /// add_on_play_message_post_callback and used as an argument for
+  /// delete_on_play_message_callback.
+  using callback_handle_t = uint64_t;
+
+  /// \brief Const describing invalid value for callback_handle.
+  ROSBAG2_TRANSPORT_PUBLIC
+  static constexpr callback_handle_t invalid_callback_handle = 0;
+
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     const std::string & node_name = "rosbag2_player",
@@ -153,7 +167,37 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void seek(rcutils_time_point_value_t time_point);
 
+  /// \brief Adding callable object as handler for pre-callback on play message.
+  /// \param callback Callable which will be called before next message will be published.
+  /// \return Returns newly created callback handle if callback was successfully added,
+  /// otherwise returns invalid_callback_handle
+  ROSBAG2_TRANSPORT_PUBLIC
+  callback_handle_t add_on_play_message_pre_callback(const play_msg_callback_t & callback);
+
+  /// \brief Adding callable object as handler for post-callback on play message.
+  /// \param callback Callable which will be called after next message will be published.
+  /// \return Returns newly created callback handle if callback was successfully added,
+  /// otherwise returns invalid_callback_handle
+  ROSBAG2_TRANSPORT_PUBLIC
+  callback_handle_t add_on_play_message_post_callback(const play_msg_callback_t & callback);
+
+  /// \brief Delete pre or post on play message callback from internal player lists.
+  /// \param handle Callback's handle returned from #add_on_play_message_pre_callback or
+  /// #add_on_play_message_post_callback
+  ROSBAG2_TRANSPORT_PUBLIC
+  void delete_on_play_message_callback(const callback_handle_t & handle);
+
 protected:
+  struct play_msg_callback_data
+  {
+    callback_handle_t handle;
+    play_msg_callback_t callback;
+  };
+
+  std::mutex on_play_msg_callbacks_mutex_;
+  std::forward_list<play_msg_callback_data> on_play_msg_pre_callbacks_;
+  std::forward_list<play_msg_callback_data> on_play_msg_post_callbacks_;
+
   class PlayerPublisher final
   {
 public:
@@ -201,6 +245,7 @@ private:
   void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  static callback_handle_t get_new_on_play_msg_callback_handle();
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};

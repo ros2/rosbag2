@@ -87,6 +87,7 @@ rclcpp::QoS publisher_qos_for_topic(
 
 namespace rosbag2_transport
 {
+constexpr Player::callback_handle_t Player::invalid_callback_handle;
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
@@ -401,6 +402,49 @@ void Player::seek(rcutils_time_point_value_t time_point)
   }
 }
 
+Player::callback_handle_t Player::add_on_play_message_pre_callback(
+  const play_msg_callback_t & callback)
+{
+  if (callback == nullptr) {
+    return invalid_callback_handle;
+  }
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
+  on_play_msg_pre_callbacks_.emplace_front(play_msg_callback_data{new_handle, callback});
+  return new_handle;
+}
+
+Player::callback_handle_t Player::add_on_play_message_post_callback(
+  const play_msg_callback_t & callback)
+{
+  if (callback == nullptr) {
+    return invalid_callback_handle;
+  }
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
+  on_play_msg_post_callbacks_.emplace_front(play_msg_callback_data{new_handle, callback});
+  return new_handle;
+}
+
+void Player::delete_on_play_message_callback(const callback_handle_t & handle)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  on_play_msg_pre_callbacks_.remove_if(
+    [handle](const play_msg_callback_data & data) {
+      return data.handle == handle;
+    });
+  on_play_msg_post_callbacks_.remove_if(
+    [handle](const play_msg_callback_data & data) {
+      return data.handle == handle;
+    });
+}
+
+Player::callback_handle_t Player::get_new_on_play_msg_callback_handle()
+{
+  static std::atomic<callback_handle_t> handle_count{0};
+  return handle_count.fetch_add(1, std::memory_order_relaxed) + 1;
+}
+
 void Player::wait_for_filled_queue() const
 {
   while (
@@ -563,6 +607,15 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
   bool message_published = false;
   auto publisher_iter = publishers_.find(message->topic_name);
   if (publisher_iter != publishers_.end()) {
+    {  // Calling on play message pre-callbacks
+      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+      for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+        if (pre_callback_data.callback != nullptr) {  // Sanity check
+          pre_callback_data.callback(message);
+        }
+      }
+    }
+
     try {
       publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       message_published = true;
@@ -570,6 +623,14 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
       RCLCPP_ERROR_STREAM(
         get_logger(), "Failed to publish message on '" << message->topic_name <<
           "' topic. \nError: %s" << e.what());
+    }
+
+    // Calling on play message post-callbacks
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+      if (post_callback_data.callback != nullptr) {  // Sanity check
+        post_callback_data.callback(message);
+      }
     }
   }
   return message_published;
