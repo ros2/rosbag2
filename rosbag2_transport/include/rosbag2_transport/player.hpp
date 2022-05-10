@@ -112,6 +112,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
+  /// \brief Unpause if in pause mode, stop playback and exit from play.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop();
+
   // Playback control interface
   /// Pause the flow of time for playback.
   ROSBAG2_TRANSPORT_PUBLIC
@@ -265,6 +269,7 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
+  std::atomic_bool stop_playback_{false};
 
   std::mutex reader_mutex_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
