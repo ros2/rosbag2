@@ -478,7 +478,7 @@ void Player::play_messages_from_queue()
   }
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
-  while (is_paused()) {
+  while (is_paused() && rclcpp::ok()) {
     clock_->sleep_until(clock_->now());
   }
 }
