@@ -222,6 +222,7 @@ output_bags:
   compression_queue_size: 1
   compression_threads: 0
   include_hidden_topics: false
+  include_unpublished_topics: false
 ```
 
 Example merge:
