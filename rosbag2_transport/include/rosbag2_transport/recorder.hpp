@@ -109,11 +109,12 @@ public:
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
+protected:
+  ROSBAG2_TRANSPORT_EXPORT
+  std::unordered_map<std::string, std::string> get_requested_or_available_topics();
+
 private:
   void topics_discovery();
-
-  std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics();
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
