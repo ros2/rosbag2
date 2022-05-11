@@ -849,6 +849,14 @@ void Player::create_control_services()
       seek(rclcpp::Time(request->time).nanoseconds());
       response->success = true;
     });
+  srv_stop_ = create_service<rosbag2_interfaces::srv::Stop>(
+    "~/stop",
+    [this](
+      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
+      rosbag2_interfaces::srv::Stop::Response::SharedPtr)
+    {
+      stop();
+    });
 }
 
 void Player::configure_play_until_timestamp()

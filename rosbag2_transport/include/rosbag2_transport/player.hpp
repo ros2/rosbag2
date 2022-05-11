@@ -45,6 +45,7 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/set_rate.hpp"
 #include "rosbag2_interfaces/srv/seek.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -301,6 +302,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
   rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;
+  rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
 
   rclcpp::Publisher<rosbag2_interfaces::msg::ReadSplitEvent>::SharedPtr split_event_pub_;
 

@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "rosbag2_transport/player.hpp"
 
@@ -27,8 +28,9 @@ public:
   MockPlayer(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
-    const rosbag2_transport::PlayOptions & play_options)
-  : Player(std::move(reader), storage_options, play_options)
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_mock_player")
+  : Player(std::move(reader), storage_options, play_options, node_name)
   {}
 
   std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
