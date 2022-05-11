@@ -40,13 +40,13 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   // clock
   std::string clock_topic = "/clock";
-  rosgraph_msgs::msg::Clock::SharedPtr clock_message;
+  auto clock_message = std::make_shared<rosgraph_msgs::msg::Clock>();
   clock_message->clock.sec = 1234567890;
   clock_message->clock.nanosec = 123456789;
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(string_topic, string_message, 5);
   pub_manager.setup_publisher(clock_topic, clock_message, 5);
+  pub_manager.setup_publisher(string_topic, string_message, 5);
 
   rosbag2_transport::RecordOptions record_options =
   {
@@ -59,8 +59,8 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(clock_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   pub_manager.run_publishers();
 
@@ -78,8 +78,13 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
-  auto string_messages = filter_messages<test_msgs::msg::Strings>(
-    recorded_messages, string_topic);
+
+  std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> string_messages;
+  for (const auto & message : recorded_messages) {
+    if (message->topic_name == string_topic) {
+      string_messages.push_back(message);
+    }
+  }
   // check that the timestamp is same as the clock message
-  EXPECT_THAT(string_messages.[0]->time_stamp, 1234567890123456789);
+  EXPECT_THAT(string_messages[0]->time_stamp, 1234567890123456789);
 }
