@@ -299,7 +299,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::getStartOffset,
     &PlayOptions::setStartOffset)
   .def_property(
-    "start_offset",
+    "playback_until",
     &PlayOptions::getPlaybackUntil,
     &PlayOptions::setPlaybackUntil)
   .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
