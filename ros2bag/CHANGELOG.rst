@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.16.0 (2022-05-11)
+-------------------
+* Make unpublished topics unrecorded by default (`#968 <https://github.com/ros2/rosbag2/issues/968>`_)
+* Contributors: Michael Orlov, Sean Kelly
+
 0.15.1 (2022-04-06)
 -------------------
 * support to publish as loaned message (`#981 <https://github.com/ros2/rosbag2/issues/981>`_)

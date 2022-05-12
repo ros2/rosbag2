@@ -2,6 +2,14 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.16.0 (2022-05-11)
+-------------------
+* Add the /bigobj flag to Windows Debug builds. (`#1009 <https://github.com/ros2/rosbag2/issues/1009>`_)
+* Make unpublished topics unrecorded by default (`#968 <https://github.com/ros2/rosbag2/issues/968>`_)
+* Make peek_next_message_from_queue return a SharedPtr. (`#993 <https://github.com/ros2/rosbag2/issues/993>`_)
+* Change the topic names in test_record.cpp (`#988 <https://github.com/ros2/rosbag2/issues/988>`_)
+* Contributors: Chris Lalancette, Michael Orlov, Sean Kelly
+
 0.15.1 (2022-04-06)
 -------------------
 * support to publish as loaned message (`#981 <https://github.com/ros2/rosbag2/issues/981>`_)
