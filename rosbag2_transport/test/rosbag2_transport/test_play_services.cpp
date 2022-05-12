@@ -202,11 +202,11 @@ public:
   // Basic configuration
   const std::string player_name_ = "rosbag2_player_for_test_srvs";
   const std::chrono::seconds service_wait_timeout_ {2};
-  const std::chrono::seconds service_call_timeout_ {1};
+  const std::chrono::seconds service_call_timeout_ {2};
   const std::string test_topic_ = "/player_srvs_test_topic";
   // publishing at 50hz
   const size_t ms_between_msgs_ = 20;
-  const size_t num_msgs_to_publish_ = 200;
+  const size_t num_msgs_to_publish_ = 190;
 
   // Orchestration
   std::thread spin_thread_;
