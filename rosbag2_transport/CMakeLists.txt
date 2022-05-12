@@ -183,6 +183,11 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
+  rosbag2_transport_add_gmock(test_record_all_use_sim_time
+    test/rosbag2_transport/test_record_all_use_sim_time.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
   rosbag2_transport_add_gmock(test_keyboard_controls
     test/rosbag2_transport/test_keyboard_controls.cpp
     LINK_LIBS rosbag2_transport

@@ -47,6 +47,7 @@ public:
   bool include_unpublished_topics = false;
   bool ignore_leaf_topics = false;
   bool start_paused = false;
+  bool use_sim_time = false;
 };
 
 }  // namespace rosbag2_transport
