@@ -158,7 +158,7 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
   // clock.sleep_until can spuriously wake up and return false.
   // Check it until true and use a timeout to avoid a hang
   while (rclcpp::ok() && !sleep_result &&
-         (std::chrono::steady_clock::now() - start) < std::chrono::milliseconds(1200))
+    (std::chrono::steady_clock::now() - start) < std::chrono::milliseconds(1200))
   {
     sleep_result = clock.sleep_until(sleep_until_timestamp);
   }
