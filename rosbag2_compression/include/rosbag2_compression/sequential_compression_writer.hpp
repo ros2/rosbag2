@@ -194,7 +194,8 @@ private:
   void split_bagfile() override;
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile();
+  bool should_split_bagfile(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time);
 
   // Prepares the metadata by setting initial values.
   void init_metadata() override;

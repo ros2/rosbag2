@@ -143,7 +143,8 @@ protected:
   virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
-  bool should_split_bagfile() const;
+  bool should_split_bagfile(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
 
   // Prepares the metadata by setting initial values.
   virtual void init_metadata();
