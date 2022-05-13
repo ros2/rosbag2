@@ -31,6 +31,7 @@
 
 #include "record_integration_fixture.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
+#include "mock_recorder.hpp"
 
 TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 {
@@ -50,10 +51,10 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   rosbag2_transport::RecordOptions record_options =
   {
-    true, true, {string_topic, clock_topic}, "rmw_format", 100ms
+    false, false, {string_topic, clock_topic}, "rmw_format", 100ms
   };
   record_options.use_sim_time = true;
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
@@ -61,6 +62,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   ASSERT_TRUE(pub_manager.wait_for_matched(clock_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(clock_topic));
+
+  ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
+  ASSERT_TRUE(recorder->topic_available_for_recording(clock_topic));
 
   pub_manager.run_publishers();
 
@@ -70,13 +77,15 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   size_t expected_messages = 10;
   auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
+    std::chrono::seconds(10),
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
-
   auto recorded_messages = mock_writer.get_messages();
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time. " <<
+    "recorded messages = " << recorded_messages.size();
+  stop_spinning();
+
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
 
   std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> string_messages;
