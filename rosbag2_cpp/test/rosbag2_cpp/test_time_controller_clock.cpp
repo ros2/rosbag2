@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <thread>
+#include <rclcpp/utilities.hpp>
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
