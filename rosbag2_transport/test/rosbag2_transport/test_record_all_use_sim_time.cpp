@@ -86,6 +86,10 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     "recorded messages = " << recorded_messages.size();
   stop_spinning();
 
+  auto messages_per_topic = mock_writer.messages_per_topic();
+  EXPECT_EQ(messages_per_topic[clock_topic], 5);
+  EXPECT_EQ(messages_per_topic[string_topic], 5);
+
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
 
   std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> string_messages;
