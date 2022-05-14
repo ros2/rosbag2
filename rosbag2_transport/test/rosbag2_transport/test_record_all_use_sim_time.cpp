@@ -77,7 +77,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   size_t expected_messages = 10;
   auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(10),
+    std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
