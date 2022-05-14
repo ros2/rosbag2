@@ -36,6 +36,7 @@
 
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
+#include "mock_player.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -417,6 +418,33 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
       "/topic2");
     EXPECT_THAT(replayed_test_arrays, SizeIs(Ge(2u)));
   }
+}
+
+TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_pause) {
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  player->pause();
+  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->wait_for_playback_to_start();
+  ASSERT_TRUE(player->is_paused());
+
+  rclcpp::shutdown();
+  player_future.get();
 }
 
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
