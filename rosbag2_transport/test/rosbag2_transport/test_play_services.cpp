@@ -31,6 +31,10 @@
 
 #include "rosbag2_play_test_fixture.hpp"
 
+#if !defined(__PRETTY_FUNCTION__) && !defined(__GNUC__)
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
 using namespace ::testing;  // NOLINT
 
 class PlaySrvsTest : public RosBag2PlayTestFixture
@@ -95,11 +99,15 @@ public:
   template<typename Srv>
   typename Srv::Response::SharedPtr successful_call(
     typename rclcpp::Client<Srv>::SharedPtr cli,
-    typename Srv::Request::SharedPtr request)
+    typename Srv::Request::SharedPtr request,
+    const char * function_name,
+    int line_number)
   {
     auto future = cli->async_send_request(request);
-    EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready);
     EXPECT_TRUE(future.valid());
+    EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready) <<
+      function_name << ", line : " << line_number;
+    // std::cout << function_name << ", line : " << line_number << std::endl;
     auto result = std::make_shared<typename Srv::Response>();
     EXPECT_NO_THROW({result = future.get();});
     EXPECT_TRUE(result);
@@ -107,17 +115,38 @@ public:
   }
 
   template<typename Srv>
-  typename Srv::Response::SharedPtr successful_call(typename rclcpp::Client<Srv>::SharedPtr cli)
+  typename Srv::Response::SharedPtr successful_call(
+    typename rclcpp::Client<Srv>::SharedPtr cli, const char * function_name, int line_number)
   {
     auto request = std::make_shared<typename Srv::Request>();
-    return successful_call<Srv>(cli, request);
+    return successful_call<Srv>(cli, request, function_name, line_number);
   }
 
-  bool is_paused()
+  bool is_paused(const char * function_name, int line_number)
   {
-    auto result = successful_call<IsPaused>(cli_is_paused_);
+    auto result = successful_call<IsPaused>(cli_is_paused_, function_name, line_number);
     return result->paused;
   }
+
+#define service_call_play_next() \
+  successful_call<PlayNext>(cli_play_next_, __PRETTY_FUNCTION__, __LINE__)
+
+#define service_call_set_rate(set_request) \
+  successful_call<SetRate>(cli_set_rate_, set_request, __PRETTY_FUNCTION__, __LINE__)
+
+#define service_call_get_rate() \
+  successful_call<GetRate>(cli_get_rate_, __PRETTY_FUNCTION__, __LINE__)
+
+#define service_call_toggle_paused() \
+  successful_call<TogglePaused>(cli_toggle_paused_, __PRETTY_FUNCTION__, __LINE__);
+
+#define service_call_resume() \
+  successful_call<Resume>(cli_resume_, __PRETTY_FUNCTION__, __LINE__);
+
+#define service_call_pause() \
+  successful_call<Pause>(cli_pause_, __PRETTY_FUNCTION__, __LINE__);
+
+#define service_call_is_paused() is_paused(__PRETTY_FUNCTION__, __LINE__)
 
   /// EXPECT to receive (or not receive) any messages for a period
   void expect_messages(bool messages_should_arrive, bool reset_message_counter = true)
@@ -202,7 +231,7 @@ public:
   // Basic configuration
   const std::string player_name_ = "rosbag2_player_for_test_srvs";
   const std::chrono::seconds service_wait_timeout_ {2};
-  const std::chrono::seconds service_call_timeout_ {1};
+  const std::chrono::seconds service_call_timeout_ {3};
   const std::string test_topic_ = "/player_srvs_test_topic";
   // publishing at 50hz
   const size_t ms_between_msgs_ = 20;
@@ -236,49 +265,69 @@ TEST_F(PlaySrvsTest, pause_resume)
   start_playback();
   // No matter how many times we call pause, it's paused
   for (size_t i = 0; i < 3; i++) {
-    successful_call<Pause>(cli_pause_);
-    ASSERT_TRUE(is_paused());
+    service_call_pause();
+    ASSERT_TRUE(player_->is_paused());
   }
   expect_messages(false);
 
   // No matter how many times we call resume, it's resumed
   for (size_t i = 0; i < 3; i++) {
-    successful_call<Resume>(cli_resume_);
-    ASSERT_FALSE(is_paused());
+    service_call_resume();
+    ASSERT_FALSE(player_->is_paused());
   }
   expect_messages(true);
 
   // Let's do pause again to make sure back-and-forth works
   for (size_t i = 0; i < 3; i++) {
-    successful_call<Pause>(cli_pause_);
-    ASSERT_TRUE(is_paused());
+    service_call_pause();
+    ASSERT_TRUE(player_->is_paused());
   }
   expect_messages(false);
 
   // resume to make sure we exit
   for (size_t i = 0; i < 3; i++) {
-    successful_call<Resume>(cli_resume_);
-    ASSERT_FALSE(is_paused());
+    service_call_resume();
+    ASSERT_FALSE(player_->is_paused());
   }
 }
 
 TEST_F(PlaySrvsTest, toggle_paused)
 {
   start_playback();
-  successful_call<TogglePaused>(cli_toggle_paused_);
-  ASSERT_TRUE(is_paused());
+  service_call_toggle_paused();
+  ASSERT_TRUE(player_->is_paused());
   expect_messages(false);
 
-  successful_call<TogglePaused>(cli_toggle_paused_);
-  ASSERT_FALSE(is_paused());
+  service_call_toggle_paused();
+  ASSERT_FALSE(player_->is_paused());
   expect_messages(true);
 
-  successful_call<TogglePaused>(cli_toggle_paused_);
-  ASSERT_TRUE(is_paused());
+  service_call_toggle_paused();
+  ASSERT_TRUE(player_->is_paused());
   expect_messages(false);
 
-  successful_call<TogglePaused>(cli_toggle_paused_);
-  ASSERT_FALSE(is_paused());
+  service_call_toggle_paused();
+  ASSERT_FALSE(player_->is_paused());
+  expect_messages(true);
+}
+
+TEST_F(PlaySrvsTest, is_paused)
+{
+  start_playback();
+  player_->toggle_paused();
+  ASSERT_TRUE(service_call_is_paused());
+  expect_messages(false);
+
+  player_->toggle_paused();
+  ASSERT_FALSE(service_call_is_paused());
+  expect_messages(true);
+
+  player_->toggle_paused();
+  ASSERT_TRUE(service_call_is_paused());
+  expect_messages(false);
+
+  player_->toggle_paused();
+  ASSERT_FALSE(service_call_is_paused());
   expect_messages(true);
 }
 
@@ -290,15 +339,15 @@ TEST_F(PlaySrvsTest, set_rate_good_values)
   GetRate::Response::SharedPtr get_response;
 
   set_request->rate = 2.0;
-  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  set_response = service_call_set_rate(set_request);
   ASSERT_TRUE(set_response->success);
-  get_response = successful_call<GetRate>(cli_get_rate_);
+  get_response = service_call_get_rate();
   ASSERT_EQ(get_response->rate, 2.0);
 
   set_request->rate = 0.5;
-  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  set_response = service_call_set_rate(set_request);
   ASSERT_TRUE(set_response->success);
-  get_response = successful_call<GetRate>(cli_get_rate_);
+  get_response = service_call_get_rate();
   ASSERT_EQ(get_response->rate, 0.5);
 }
 
@@ -309,11 +358,11 @@ TEST_F(PlaySrvsTest, set_rate_bad_values)
   SetRate::Response::SharedPtr set_response;
 
   set_request->rate = 0.0;
-  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  set_response = service_call_set_rate(set_request);
   ASSERT_FALSE(set_response->success);
 
   set_request->rate = -1.0;
-  set_response = successful_call<SetRate>(cli_set_rate_, set_request);
+  set_response = service_call_set_rate(set_request);
   ASSERT_FALSE(set_response->success);
 }
 
@@ -326,7 +375,7 @@ TEST_F(PlaySrvsTest, play_next) {
       std::lock_guard<std::mutex> lk(got_msg_mutex_);
       message_counter_ = 0;
     }
-    play_next_response = successful_call<PlayNext>(cli_play_next_);
+    play_next_response = service_call_play_next();
     ASSERT_TRUE(play_next_response->success);
     expect_messages(true, false);
   }
@@ -336,14 +385,14 @@ TEST_F(PlaySrvsTest, play_next) {
     std::lock_guard<std::mutex> lk(got_msg_mutex_);
     message_counter_ = 0;
   }
-  play_next_response = successful_call<PlayNext>(cli_play_next_);
+  play_next_response = service_call_play_next();
   ASSERT_FALSE(play_next_response->success);
   expect_messages(false, false);
 
   // Check that play_next will return false when player not in pause mode.
   start_playback();
   ASSERT_FALSE(player_->is_paused());
-  play_next_response = successful_call<PlayNext>(cli_play_next_);
+  play_next_response = service_call_play_next();
   ASSERT_FALSE(play_next_response->success);
   expect_messages(true);
 }
