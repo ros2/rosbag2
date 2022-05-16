@@ -231,7 +231,7 @@ public:
   const std::string test_topic_ = "/player_srvs_test_topic";
   // publishing at 50hz
   const size_t ms_between_msgs_ = 20;
-  const size_t num_msgs_to_publish_ = 190;
+  const size_t num_msgs_to_publish_ = 200;
 
   // Orchestration
   std::thread spin_thread_;
