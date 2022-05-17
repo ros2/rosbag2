@@ -35,6 +35,7 @@ TEST(record_options, test_yaml_serialization)
   original.compression_threads = 123;
   original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
   original.include_hidden_topics = true;
+  original.include_unpublished_topics = true;
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>().encode(original);
 
