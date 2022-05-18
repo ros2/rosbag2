@@ -36,6 +36,7 @@
 
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_cpp
 {
@@ -115,6 +116,7 @@ protected:
 
 private:
   void topics_discovery();
+  std::unique_ptr<TopicFilter> topic_filter;
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
