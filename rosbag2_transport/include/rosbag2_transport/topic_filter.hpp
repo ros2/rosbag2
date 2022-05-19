@@ -42,7 +42,6 @@ public:
     RecordOptions record_options,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph = nullptr,
     bool allow_unknown_types = false);
-
   virtual ~TopicFilter();
 
   /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
