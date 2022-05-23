@@ -92,9 +92,17 @@ class PlayVerb(VerbExtension):
                  'that this attribute yields will be used to determine which one stops playback '
                  'execution.')
         parser.add_argument(
-            '--playback_until', type=check_positive_float, default=-1.0,
-            help='Playback until timestamp, in seconds. Negative stamps disable this feature. '
-                 'Default is -1.0. When positive, the maximum of the effective time that '
+            '--playback_until_sec', type=int, default=-1,
+            help='Playback until timestamp, the seconds part. See \'--playback_until_nsec\' to '
+                 'complete the stamp information. Negative stamps disable this feature. '
+                 'Default is -1. When positive, the maximum of the effective time that '
+                 '`playback_duration` yields and this attribute will be used to determine which '
+                 'one stops playback execution.')
+        parser.add_argument(
+            '--playback_until_nsec', type=int, default=-1,
+            help='Playback until timestamp, the nanoseconds part. See \'--playback_until_sec\' to '
+                 'complete the stamp information. Negative stamps disable this feature. '
+                 'Default is -1. When positive, the maximum of the effective time that '
                  '`playback_duration` yields and this attribute will be used to determine which '
                  'one stops playback execution.')
         parser.add_argument(
@@ -127,6 +135,16 @@ class PlayVerb(VerbExtension):
             '-f', '--duration', type=float, default=None,
             help='Play for SEC seconds. Default is None, meaning that playback will continue '
                  'until the end of the bag. Valid range > 0.0')
+
+    def get_playback_until_from(self, playback_until_sec, playback_until_nsec) -> int:
+        nano_scale = 1000 * 1000 * 1000
+        if playback_until_sec >= 0 and playback_until_nsec >= 0:
+            return playback_until_sec * nano_scale + playback_until_nsec
+        elif playback_until_sec >= 0 and playback_until_nsec < 0:
+            return playback_until_sec * nano_scale
+        elif playback_until_sec < 0 and playback_until_nsec >= 0:
+            return playback_until_nsec
+        return -1
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -163,7 +181,8 @@ class PlayVerb(VerbExtension):
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
         play_options.playback_duration = args.playback_duration
-        play_options.playback_until = args.playback_until
+        play_options.playback_until = self.get_playback_until_from(args.playback_until_sec,
+                                                                   args.playback_until_nsec)
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset

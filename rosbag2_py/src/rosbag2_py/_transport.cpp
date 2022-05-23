@@ -95,14 +95,14 @@ public:
     return RCUTILS_NS_TO_S(static_cast<double>(this->start_offset));
   }
 
-  void setPlaybackUntil(double playback_until)
+  void setPlaybackUntil(int64_t playback_until)
   {
-    this->playback_until = static_cast<rcutils_time_point_value_t>(RCUTILS_S_TO_NS(playback_until));
+    this->playback_until = static_cast<rcutils_time_point_value_t>(playback_until);
   }
 
-  double getPlaybackUntil() const
+  int64_t getPlaybackUntil() const
   {
-    return RCUTILS_NS_TO_S(static_cast<double>(this->playback_until));
+    return this->playback_until;
   }
 
   void setTopicQoSProfileOverrides(const py::dict & overrides)
