@@ -38,11 +38,11 @@ The package provides the rosbag command for the ROS 2 command line tools.""",
             'ros2bag.verb = ros2bag.verb:VerbExtension',
         ],
         'ros2bag.verb': [
+            'burst = ros2bag.verb.burst:BurstVerb',
             'convert = ros2bag.verb.convert:ConvertVerb',
             'info = ros2bag.verb.info:InfoVerb',
             'list = ros2bag.verb.list:ListVerb',
             'play = ros2bag.verb.play:PlayVerb',
-            'burst = ros2bag.verb.burst:BurstVerb',
             'record = ros2bag.verb.record:RecordVerb',
             'reindex = ros2bag.verb.reindex:ReindexVerb'
         ],
