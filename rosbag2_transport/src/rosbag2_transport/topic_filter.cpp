@@ -25,7 +25,7 @@
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
-#include "topic_filter.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace
 {

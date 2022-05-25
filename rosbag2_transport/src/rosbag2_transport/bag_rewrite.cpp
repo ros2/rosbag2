@@ -27,7 +27,7 @@
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include "logging.hpp"
-#include "topic_filter.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace
 {

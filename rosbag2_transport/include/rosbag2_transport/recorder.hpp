@@ -38,6 +38,7 @@
 
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_cpp
 {
@@ -156,6 +157,7 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
+  std::unique_ptr<TopicFilter> topic_filter_;
   std::future<void> discovery_future_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
