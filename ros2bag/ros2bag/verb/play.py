@@ -86,25 +86,32 @@ class PlayVerb(VerbExtension):
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
         parser.add_argument(
-            '--playback_duration', type=float, default=-1.0,
+            '--playback-duration', type=float, default=-1.0,
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
-                 'Default is -1.0. When positive, the maximum of `playback_until` and the one '
+                 'Default is -1.0. When positive, the maximum of `playback-until` and the one '
                  'that this attribute yields will be used to determine which one stops playback '
                  'execution.')
-        parser.add_argument(
-            '--playback_until_sec', type=int, default=-1,
-            help='Playback until timestamp, the seconds part. See \'--playback_until_nsec\' to '
-                 'complete the stamp information. Negative stamps disable this feature. '
-                 'Default is -1. When positive, the maximum of the effective time that '
-                 '`playback_duration` yields and this attribute will be used to determine which '
+
+        playback_until_arg_group = parser.add_mutually_exclusive_group()
+        playback_until_arg_group.add_argument(
+            '--playback-until-sec', type=float, default=-1.,
+            help='Playback until timestamp, expressed in seconds since epoch. '
+                 'Mutually exclusive argument with \'--playback-until-nsec\'. '
+                 'Use this argument when floating point to integer conversion error is not a '
+                 'problem for your application. Negative stamps disable this feature. Default is '
+                 '-1.0. When positive, the maximum of the effective time that '
+                 '`--playback-duration` yields and this attribute will be used to determine which '
                  'one stops playback execution.')
-        parser.add_argument(
-            '--playback_until_nsec', type=int, default=-1,
-            help='Playback until timestamp, the nanoseconds part. See \'--playback_until_sec\' to '
-                 'complete the stamp information. Negative stamps disable this feature. '
-                 'Default is -1. When positive, the maximum of the effective time that '
-                 '`playback_duration` yields and this attribute will be used to determine which '
-                 'one stops playback execution.')
+        playback_until_arg_group.add_argument(
+            '--playback-until-nsec', type=int, default=-1,
+            help='Playback until timestamp, expressed in nanoseconds since epoch.  '
+                 'Mutually exclusive argument with \'--playback-until-sec\'. '
+                 'Use this argument when floating point to integer conversion error matters for '
+                 'your application. Negative stamps disable this feature. Default is -1. When '
+                 'positive, the maximum of the effective time that `--playback-duration` yields '
+                 'and this attribute will be used to determine which one stops playback '
+                 'execution.')
+
         parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
             help='disables keyboard controls for playback')
@@ -138,11 +145,9 @@ class PlayVerb(VerbExtension):
 
     def get_playback_until_from(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
-        if playback_until_sec >= 0 and playback_until_nsec >= 0:
-            return playback_until_sec * nano_scale + playback_until_nsec
-        elif playback_until_sec >= 0 and playback_until_nsec < 0:
-            return playback_until_sec * nano_scale
-        elif playback_until_sec < 0 and playback_until_nsec >= 0:
+        if playback_until_sec and playback_until_sec >= 0.0:
+            return int(playback_until_sec * nano_scale)
+        if playback_until_nsec and playback_until_nsec >= 0:
             return playback_until_nsec
         return -1
 
