@@ -242,7 +242,6 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::Play>::SharedPtr srv_play_;
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
-  rclcpp::Service<rosbag2_interfaces::srv::PlayFor>::SharedPtr srv_play_for_;
   rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;
 
