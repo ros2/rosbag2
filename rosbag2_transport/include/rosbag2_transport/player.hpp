@@ -200,7 +200,7 @@ private:
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
-  void play_messages_from_queue(const rcutils_duration_value_t & play_until_time);
+  void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
@@ -220,6 +220,7 @@ private:
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
+  rcutils_time_point_value_t play_until_time_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};

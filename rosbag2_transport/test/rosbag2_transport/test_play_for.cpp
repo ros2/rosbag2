@@ -198,16 +198,12 @@ TEST_F(RosBag2PlayForTestFixture, play_for_none_are_played_due_to_duration)
   player_->pause();
   auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
 
-  EXPECT_TRUE(player_->play_next());
-  EXPECT_TRUE(player_->play_next());
   EXPECT_FALSE(player_->play_next());
   player_->resume();
   player_future.get();
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
-  EXPECT_THAT(replayed_topic1, SizeIs(2));
-  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
-  EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
+  EXPECT_THAT(replayed_topic1, SizeIs(0));
 }
 
 TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
@@ -248,16 +244,14 @@ TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
   auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
 
   ASSERT_TRUE(player_->play_next());
-  ASSERT_TRUE(player_->play_next());
   ASSERT_FALSE(player_->play_next());
   player_->resume();
   player_future.get();
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
-  EXPECT_THAT(replayed_topic1, SizeIs(3));
+  EXPECT_THAT(replayed_topic1, SizeIs(2));
   EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
   EXPECT_EQ(replayed_topic1[1]->int32_value, 1);
-  EXPECT_EQ(replayed_topic1[2]->int32_value, 2);
 }
 
 TEST_F(

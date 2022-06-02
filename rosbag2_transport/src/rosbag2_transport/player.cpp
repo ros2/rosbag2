@@ -159,6 +159,10 @@ Player::Player(
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
+
+    if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
+      play_until_time_ = starting_time_ + play_options_.playback_duration.nanoseconds();
+    }
   }
   create_control_services();
   add_keyboard_callbacks();
@@ -207,11 +211,7 @@ bool Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  rcutils_time_point_value_t play_until_time = -1;
-  if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
-    play_until_time = starting_time_ + play_options_.playback_duration.nanoseconds();
-  }
-  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time);
+  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time_);
 
   try {
     do {
@@ -228,7 +228,7 @@ bool Player::play()
       load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
-      play_messages_from_queue(play_until_time);
+      play_messages_from_queue();
 
       load_storage_content_ = false;
       if (storage_loading_future_.valid()) {storage_loading_future_.get();}
@@ -366,6 +366,9 @@ bool Player::play_next()
 
   bool next_message_published = false;
   while (message_ptr != nullptr && !next_message_published) {
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+      break;
+    }
     {
       next_message_published = publish_message(message_ptr);
       clock_->jump(message_ptr->time_stamp);
@@ -465,7 +468,7 @@ void Player::enqueue_up_to_boundary(size_t boundary)
   }
 }
 
-void Player::play_messages_from_queue(const rcutils_duration_value_t & play_until_time)
+void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -479,7 +482,7 @@ void Player::play_messages_from_queue(const rcutils_duration_value_t & play_unti
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    if (play_until_time >= starting_time_ && message_ptr->time_stamp > play_until_time) {
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
       break;
     }
     // Do not move on until sleep_until returns true
