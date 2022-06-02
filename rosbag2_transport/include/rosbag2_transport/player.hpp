@@ -19,6 +19,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -37,6 +38,7 @@
 #include "rosbag2_interfaces/srv/get_rate.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/play.hpp"
 #include "rosbag2_interfaces/srv/play_next.hpp"
 #include "rosbag2_interfaces/srv/burst.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
@@ -94,7 +96,7 @@ public:
   virtual ~Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void play();
+  bool play();
 
   // Playback control interface
   /// Pause the flow of time for playback.
@@ -218,14 +220,17 @@ private:
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
+  rcutils_time_point_value_t play_until_time_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
+  std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
     skip_message_in_main_play_loop_mutex_) = false;
+  std::atomic_bool is_in_playback_{false};
 
   rcutils_time_point_value_t starting_time_;
 
@@ -236,6 +241,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::GetRate>::SharedPtr srv_get_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
+  rclcpp::Service<rosbag2_interfaces::srv::Play>::SharedPtr srv_play_;
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
   rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;

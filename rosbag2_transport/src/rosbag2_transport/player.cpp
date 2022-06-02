@@ -159,6 +159,10 @@ Player::Player(
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
+
+    if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
+      play_until_time_ = starting_time_ + play_options_.playback_duration.nanoseconds();
+    }
   }
   create_control_services();
   add_keyboard_callbacks();
@@ -191,8 +195,13 @@ bool Player::is_storage_completely_loaded() const
   return !storage_loading_future_.valid();
 }
 
-void Player::play()
+bool Player::play()
 {
+  if (is_in_playback_.exchange(true)) {
+    RCLCPP_WARN_STREAM(get_logger(), "Trying to play() while in playback, dismissing request.");
+    return false;
+  }
+
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
@@ -202,21 +211,28 @@ void Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
+  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time_);
+
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
-        std::chrono::nanoseconds duration(delay.nanoseconds());
-        std::this_thread::sleep_for(duration);
+        std::chrono::nanoseconds delay_duration(delay.nanoseconds());
+        std::this_thread::sleep_for(delay_duration);
       }
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
         reader_->seek(starting_time_);
         clock_->jump(starting_time_);
       }
+      load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
       play_messages_from_queue();
+
+      load_storage_content_ = false;
+      if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+      while (message_queue_.pop()) {}   // cleanup queue
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
         is_ready_to_play_from_queue_ = false;
@@ -225,6 +241,9 @@ void Player::play()
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
+    load_storage_content_ = false;
+    if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+    while (message_queue_.pop()) {}   // cleanup queue
   }
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
@@ -254,6 +273,9 @@ void Player::play()
       }
     }
   }
+
+  is_in_playback_ = false;
+  return true;
 }
 
 void Player::pause()
@@ -344,6 +366,9 @@ bool Player::play_next()
 
   bool next_message_published = false;
   while (message_ptr != nullptr && !next_message_published) {
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+      break;
+    }
     {
       next_message_published = publish_message(message_ptr);
       clock_->jump(message_ptr->time_stamp);
@@ -395,6 +420,7 @@ void Player::seek(rcutils_time_point_value_t time_point)
     // Restart queuing thread if it has finished running (previously reached end of bag),
     // otherwise, queueing should continue automatically after releasing mutex
     if (is_storage_completely_loaded() && rclcpp::ok()) {
+      load_storage_content_ = true;
       storage_loading_future_ =
         std::async(std::launch::async, [this]() {load_storage_content();});
     }
@@ -417,7 +443,7 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (rclcpp::ok()) {
+  while (rclcpp::ok() && load_storage_content_) {
     TSAUniqueLock lk(reader_mutex_);
     if (!reader_->has_next()) {break;}
 
@@ -456,6 +482,9 @@ void Player::play_messages_from_queue()
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+      break;
+    }
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
@@ -677,6 +706,16 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::SetRate::Response::SharedPtr response)
     {
       response->success = set_rate(request->rate);
+    });
+  srv_play_ = create_service<rosbag2_interfaces::srv::Play>(
+    "~/play",
+    [this](
+      rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
+      rosbag2_interfaces::srv::Play::Response::SharedPtr response)
+    {
+      play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
+      play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
+      response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
