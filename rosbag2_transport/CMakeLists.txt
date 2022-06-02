@@ -133,6 +133,11 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
+  rosbag2_transport_add_gmock(test_play_callbacks
+    test/rosbag2_transport/test_play_callbacks.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
   rosbag2_transport_add_gmock(test_play_seek
     test/rosbag2_transport/test_play_seek.cpp
     LINK_LIBS rosbag2_transport
