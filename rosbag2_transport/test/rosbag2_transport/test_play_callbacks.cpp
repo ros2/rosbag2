@@ -130,10 +130,10 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, call_callbacks) {
   MockPlayer player(move(reader_), storage_options_, play_options_);
 
   testing::MockFunction<void(std::shared_ptr<SerializedBagMessage>)> mock_pre_callback;
-  EXPECT_CALL(mock_pre_callback, Call(_)).Times(Exactly(num_test_messages_));
+  EXPECT_CALL(mock_pre_callback, Call(_)).Times(Exactly(static_cast<int>(num_test_messages_)));
 
   testing::MockFunction<void(std::shared_ptr<SerializedBagMessage>)> mock_post_callback;
-  EXPECT_CALL(mock_post_callback, Call(_)).Times(Exactly(num_test_messages_));
+  EXPECT_CALL(mock_post_callback, Call(_)).Times(Exactly(static_cast<int>(num_test_messages_)));
 
   auto pre_callback_handle =
     player.add_on_play_message_pre_callback(mock_pre_callback.AsStdFunction());
