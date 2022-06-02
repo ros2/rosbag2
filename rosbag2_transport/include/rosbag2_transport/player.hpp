@@ -169,15 +169,19 @@ public:
 
   /// \brief Adding callable object as handler for pre-callback on play message.
   /// \param callback Callable which will be called before next message will be published.
+  /// \note In case of registering multiple callbacks later-registered callbacks will be called
+  /// first.
   /// \return Returns newly created callback handle if callback was successfully added,
-  /// otherwise returns invalid_callback_handle
+  /// otherwise returns invalid_callback_handle.
   ROSBAG2_TRANSPORT_PUBLIC
   callback_handle_t add_on_play_message_pre_callback(const play_msg_callback_t & callback);
 
   /// \brief Adding callable object as handler for post-callback on play message.
   /// \param callback Callable which will be called after next message will be published.
+  /// \note In case of registering multiple callbacks later-registered callbacks will be called
+  /// first.
   /// \return Returns newly created callback handle if callback was successfully added,
-  /// otherwise returns invalid_callback_handle
+  /// otherwise returns invalid_callback_handle.
   ROSBAG2_TRANSPORT_PUBLIC
   callback_handle_t add_on_play_message_post_callback(const play_msg_callback_t & callback);
 
