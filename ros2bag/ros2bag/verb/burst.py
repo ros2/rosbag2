@@ -28,6 +28,7 @@ from rosbag2_py import PlayOptions
 from rosbag2_py import StorageOptions
 import yaml
 
+
 class BurstVerb(VerbExtension):
     """Burst data from a bag."""
 

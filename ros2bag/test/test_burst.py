@@ -41,6 +41,7 @@ def generate_test_description():
 
 
 class TestRos2BagBurst(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls, launch_service, proc_info, proc_output):
         @contextlib.contextmanager
