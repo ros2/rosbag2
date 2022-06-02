@@ -35,7 +35,9 @@ public:
   {
     std::vector<rclcpp::PublisherBase *> pub_list;
     for (const auto & publisher : publishers_) {
-      pub_list.push_back(static_cast<rclcpp::PublisherBase *>(publisher.second.get()));
+      pub_list.push_back(
+        static_cast<rclcpp::PublisherBase *>(
+          publisher.second->generic_publisher().get()));
     }
     return pub_list;
   }
@@ -44,6 +46,28 @@ public:
   {
     std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  }
+
+  size_t get_number_of_registered_pre_callbacks()
+  {
+    size_t callback_counter = 0;
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+      (void)pre_callback_data;
+      callback_counter++;
+    }
+    return callback_counter;
+  }
+
+  size_t get_number_of_registered_post_callbacks()
+  {
+    size_t callback_counter = 0;
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+      (void)post_callback_data;
+      callback_counter++;
+    }
+    return callback_counter;
   }
 };
 

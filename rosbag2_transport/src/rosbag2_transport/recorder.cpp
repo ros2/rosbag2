@@ -34,7 +34,7 @@
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/qos.hpp"
 
-#include "topic_filter.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
 {
@@ -72,7 +72,9 @@ Recorder::Recorder(
   const rosbag2_transport::RecordOptions & record_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, rclcpp::NodeOptions(node_options).start_parameter_event_publisher(false)),
+: rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
+    .start_parameter_event_publisher(false)
+    .parameter_overrides({rclcpp::Parameter("use_sim_time", record_options.use_sim_time)})),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
@@ -86,6 +88,7 @@ Recorder::Recorder(
     [this](KeyboardHandler::KeyCode /*key_code*/,
     KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
     Recorder::kPauseResumeToggleKey);
+  topic_filter_ = std::make_unique<TopicFilter>(record_options, this->get_node_graph_interface());
   // show instructions
   RCLCPP_INFO_STREAM(
     get_logger(),
@@ -197,8 +200,7 @@ std::unordered_map<std::string, std::string>
 Recorder::get_requested_or_available_topics()
 {
   auto all_topics_and_types = this->get_topic_names_and_types();
-  TopicFilter topic_filter{record_options_, this->get_node_graph_interface()};
-  return topic_filter.filter_topics(all_topics_and_types);
+  return topic_filter_->filter_topics(all_topics_and_types);
 }
 
 std::unordered_map<std::string, std::string>
@@ -258,7 +260,7 @@ Recorder::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+        writer_->write(message, topic_name, topic_type, this->get_clock()->now());
       }
     });
   return subscription;

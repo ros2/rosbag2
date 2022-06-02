@@ -86,6 +86,10 @@ class PlayVerb(VerbExtension):
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
         parser.add_argument(
+            '--playback_duration', type=float, default=-1.0,
+            help='Playback duration, in seconds. Negative durations mark an infinite playback. '
+                 'Default is -1.0.')
+        parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
             help='disables keyboard controls for playback')
         parser.add_argument(
@@ -105,6 +109,16 @@ class PlayVerb(VerbExtension):
                  "Note that this option is valid only if the publisher\'s QOS profile is "
                  'RELIABLE.',
             metavar='TIMEOUT')
+        parser.add_argument(
+            '--disable-loan-message', action='store_true', default=False,
+            help='Disable to publish as loaned message. '
+                 'By default, if loaned message can be used, messages are published as loaned '
+                 'message. It can help to reduce the number of data copies, so there is a greater '
+                 'benefit for sending big data.')
+        parser.add_argument(
+            '-f', '--duration', type=float, default=None,
+            help='Play for SEC seconds. Default is None, meaning that playback will continue '
+                 'until the end of the bag. Valid range > 0.0')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -140,10 +154,12 @@ class PlayVerb(VerbExtension):
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
+        play_options.playback_duration = args.playback_duration
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = args.wait_for_all_acked
+        play_options.disable_loan_message = args.disable_loan_message
 
         player = Player()
         player.play(storage_options, play_options)

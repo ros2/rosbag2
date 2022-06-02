@@ -14,6 +14,11 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND MSVC)
+  # /bigobj is needed to avoid error C1128:
+  #   https://msdn.microsoft.com/en-us/library/8578y171.aspx
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+endif()
 
 # Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
@@ -105,6 +110,12 @@ function(create_tests_for_rmw_implementation)
     AMENT_DEPS test_msgs rosbag2_test_common
     ${SKIP_TEST})
 
+  rosbag2_transport_add_gmock(test_play_for
+    test/rosbag2_transport/test_play_for.cpp
+    INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
   rosbag2_transport_add_gmock(test_play_loop
     test/rosbag2_transport/test_play_loop.cpp
     LINK_LIBS rosbag2_transport
@@ -119,6 +130,11 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_play_timing
     test/rosbag2_transport/test_play_timing.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_play_callbacks
+    test/rosbag2_transport/test_play_callbacks.cpp
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
@@ -173,8 +189,18 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
+  rosbag2_transport_add_gmock(test_record_all_include_unpublished_topics
+    test/rosbag2_transport/test_record_all_include_unpublished_topics.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
   rosbag2_transport_add_gmock(test_record_all_no_discovery
     test/rosbag2_transport/test_record_all_no_discovery.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_record_all_use_sim_time
+    test/rosbag2_transport/test_record_all_use_sim_time.cpp
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 

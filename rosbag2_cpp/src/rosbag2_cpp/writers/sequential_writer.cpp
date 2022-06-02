@@ -292,16 +292,16 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     throw std::runtime_error(errmsg.str());
   }
 
-  if (should_split_bagfile()) {
-    split_bagfile();
-
-    // Update bagfile starting time
-    metadata_.starting_time = std::chrono::high_resolution_clock::now();
-    metadata_.files.back().starting_time = std::chrono::high_resolution_clock::now();
-  }
-
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
+
+  if (should_split_bagfile(message_timestamp)) {
+    split_bagfile();
+    // Update bagfile starting time
+    metadata_.starting_time = message_timestamp;
+    metadata_.files.back().starting_time = message_timestamp;
+  }
+
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
   metadata_.files.back().starting_time =
@@ -343,7 +343,8 @@ SequentialWriter::get_writeable_message(
   return converter_ ? converter_->convert(message) : message;
 }
 
-bool SequentialWriter::should_split_bagfile() const
+bool SequentialWriter::should_split_bagfile(
+  const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const
 {
   // Assume we aren't splitting
   bool should_split = false;
@@ -362,7 +363,7 @@ bool SequentialWriter::should_split_bagfile() const
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::seconds(storage_options_.max_bagfile_duration));
     should_split = should_split ||
-      ((std::chrono::high_resolution_clock::now() - metadata_.starting_time) > max_duration_ns);
+      ((current_time - metadata_.starting_time) > max_duration_ns);
   }
 
   return should_split;

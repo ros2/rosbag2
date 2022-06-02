@@ -16,11 +16,15 @@
 #define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
 #include <chrono>
+#include <forward_list>
+#include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
@@ -35,6 +39,7 @@
 #include "rosbag2_interfaces/srv/get_rate.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/play.hpp"
 #include "rosbag2_interfaces/srv/play_next.hpp"
 #include "rosbag2_interfaces/srv/burst.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
@@ -56,10 +61,22 @@ class Reader;
 
 namespace rosbag2_transport
 {
-
 class Player : public rclcpp::Node
 {
 public:
+  /// \brief Type for callback functions.
+  using play_msg_callback_t =
+    std::function<void (std::shared_ptr<rosbag2_storage::SerializedBagMessage>)>;
+
+  /// \brief Callback handle returning from add_on_play_message_pre_callback and
+  /// add_on_play_message_post_callback and used as an argument for
+  /// delete_on_play_message_callback.
+  using callback_handle_t = uint64_t;
+
+  /// \brief Const describing invalid value for callback_handle.
+  ROSBAG2_TRANSPORT_PUBLIC
+  static constexpr callback_handle_t invalid_callback_handle = 0;
+
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     const std::string & node_name = "rosbag2_player",
@@ -93,7 +110,7 @@ public:
   virtual ~Player();
 
   ROSBAG2_TRANSPORT_PUBLIC
-  void play();
+  bool play();
 
   // Playback control interface
   /// Pause the flow of time for playback.
@@ -153,15 +170,81 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void seek(rcutils_time_point_value_t time_point);
 
+  /// \brief Adding callable object as handler for pre-callback on play message.
+  /// \param callback Callable which will be called before next message will be published.
+  /// \note In case of registering multiple callbacks later-registered callbacks will be called
+  /// first.
+  /// \return Returns newly created callback handle if callback was successfully added,
+  /// otherwise returns invalid_callback_handle.
+  ROSBAG2_TRANSPORT_PUBLIC
+  callback_handle_t add_on_play_message_pre_callback(const play_msg_callback_t & callback);
+
+  /// \brief Adding callable object as handler for post-callback on play message.
+  /// \param callback Callable which will be called after next message will be published.
+  /// \note In case of registering multiple callbacks later-registered callbacks will be called
+  /// first.
+  /// \return Returns newly created callback handle if callback was successfully added,
+  /// otherwise returns invalid_callback_handle.
+  ROSBAG2_TRANSPORT_PUBLIC
+  callback_handle_t add_on_play_message_post_callback(const play_msg_callback_t & callback);
+
+  /// \brief Delete pre or post on play message callback from internal player lists.
+  /// \param handle Callback's handle returned from #add_on_play_message_pre_callback or
+  /// #add_on_play_message_post_callback
+  ROSBAG2_TRANSPORT_PUBLIC
+  void delete_on_play_message_callback(const callback_handle_t & handle);
+
 protected:
+  struct play_msg_callback_data
+  {
+    callback_handle_t handle;
+    play_msg_callback_t callback;
+  };
+
+  std::mutex on_play_msg_callbacks_mutex_;
+  std::forward_list<play_msg_callback_data> on_play_msg_pre_callbacks_;
+  std::forward_list<play_msg_callback_data> on_play_msg_post_callbacks_;
+
+  class PlayerPublisher final
+  {
+public:
+    explicit PlayerPublisher(
+      std::shared_ptr<rclcpp::GenericPublisher> pub,
+      bool disable_loan_message)
+    : publisher_(std::move(pub))
+    {
+      using std::placeholders::_1;
+      if (disable_loan_message || !publisher_->can_loan_messages()) {
+        publish_func_ = std::bind(&rclcpp::GenericPublisher::publish, publisher_, _1);
+      } else {
+        publish_func_ = std::bind(&rclcpp::GenericPublisher::publish_as_loaned_msg, publisher_, _1);
+      }
+    }
+
+    ~PlayerPublisher() {}
+
+    void publish(const rclcpp::SerializedMessage & message)
+    {
+      publish_func_(message);
+    }
+
+    std::shared_ptr<rclcpp::GenericPublisher> generic_publisher()
+    {
+      return publisher_;
+    }
+
+private:
+    std::shared_ptr<rclcpp::GenericPublisher> publisher_;
+    std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
+  };
   bool is_ready_to_play_from_queue_{false};
   std::mutex ready_to_play_from_queue_mutex_;
   std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> publishers_;
 
 private:
-  rosbag2_storage::SerializedBagMessageSharedPtr * peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
   void load_storage_content();
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
@@ -169,6 +252,7 @@ private:
   void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  static callback_handle_t get_new_on_play_msg_callback_handle();
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
@@ -186,14 +270,17 @@ private:
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
+  rcutils_time_point_value_t play_until_time_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
+  std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
     skip_message_in_main_play_loop_mutex_) = false;
+  std::atomic_bool is_in_playback_{false};
 
   rcutils_time_point_value_t starting_time_;
 
@@ -204,6 +291,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::GetRate>::SharedPtr srv_get_rate_;
   rclcpp::Service<rosbag2_interfaces::srv::SetRate>::SharedPtr srv_set_rate_;
+  rclcpp::Service<rosbag2_interfaces::srv::Play>::SharedPtr srv_play_;
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
   rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;

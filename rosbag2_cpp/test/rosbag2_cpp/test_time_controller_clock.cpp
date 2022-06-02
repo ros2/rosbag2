@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <thread>
+#include <rclcpp/utilities.hpp>
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 
 using namespace testing;  // NOLINT
@@ -151,7 +152,21 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 
   clock.pause();
   clock.resume();
-  EXPECT_TRUE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1)));
+
+  auto sleep_until_timestamp = clock.now() + RCUTILS_S_TO_NS(1);
+  auto start = std::chrono::steady_clock::now();
+  bool sleep_result = clock.sleep_until(sleep_until_timestamp);
+  // clock.sleep_until can spuriously wake up and return false.
+  // Check it until true and use a timeout to avoid a hang
+  while (rclcpp::ok() && !sleep_result &&
+    (std::chrono::steady_clock::now() - start) < std::chrono::milliseconds(1200))
+  {
+    sleep_result = clock.sleep_until(sleep_until_timestamp);
+  }
+  auto end = std::chrono::steady_clock::now();
+  EXPECT_TRUE(end - start < std::chrono::milliseconds(1200));
+  EXPECT_TRUE(end - start >= std::chrono::seconds(1));
+  EXPECT_TRUE(sleep_result);
 }
 
 TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)

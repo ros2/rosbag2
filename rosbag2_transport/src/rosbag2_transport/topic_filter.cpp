@@ -25,7 +25,7 @@
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
-#include "topic_filter.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace
 {
@@ -68,6 +68,14 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
 {
   auto it = std::find(topics.begin(), topics.end(), topic_name);
   return it != topics.end();
+}
+
+bool
+topic_is_unpublished(
+  const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
+{
+  auto publishers_info = node_graph.get_publishers_info_by_topic(topic_name);
+  return publishers_info.size() == 0;
 }
 
 bool
@@ -121,6 +129,12 @@ bool TopicFilter::take_topic(
   if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
     ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
       "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+    return false;
+  }
+
+  if (!record_options_.include_unpublished_topics && node_graph_ &&
+    topic_is_unpublished(topic_name, *node_graph_))
+  {
     return false;
   }
 

@@ -36,6 +36,7 @@
 
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_cpp
 {
@@ -109,11 +110,12 @@ public:
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
+protected:
+  ROSBAG2_TRANSPORT_EXPORT
+  std::unordered_map<std::string, std::string> get_requested_or_available_topics();
+
 private:
   void topics_discovery();
-
-  std::unordered_map<std::string, std::string>
-  get_requested_or_available_topics();
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
@@ -142,6 +144,7 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
+  std::unique_ptr<TopicFilter> topic_filter_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;

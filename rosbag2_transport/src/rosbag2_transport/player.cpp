@@ -87,6 +87,7 @@ rclcpp::QoS publisher_qos_for_topic(
 
 namespace rosbag2_transport
 {
+constexpr Player::callback_handle_t Player::invalid_callback_handle;
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
@@ -159,6 +160,10 @@ Player::Player(
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
+
+    if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
+      play_until_time_ = starting_time_ + play_options_.playback_duration.nanoseconds();
+    }
   }
   create_control_services();
   add_keyboard_callbacks();
@@ -191,8 +196,13 @@ bool Player::is_storage_completely_loaded() const
   return !storage_loading_future_.valid();
 }
 
-void Player::play()
+bool Player::play()
 {
+  if (is_in_playback_.exchange(true)) {
+    RCLCPP_WARN_STREAM(get_logger(), "Trying to play() while in playback, dismissing request.");
+    return false;
+  }
+
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
@@ -202,21 +212,28 @@ void Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
+  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time_);
+
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
         RCLCPP_INFO_STREAM(get_logger(), "Sleep " << delay.nanoseconds() << " ns");
-        std::chrono::nanoseconds duration(delay.nanoseconds());
-        std::this_thread::sleep_for(duration);
+        std::chrono::nanoseconds delay_duration(delay.nanoseconds());
+        std::this_thread::sleep_for(delay_duration);
       }
       {
         std::lock_guard<std::mutex> lk(reader_mutex_);
         reader_->seek(starting_time_);
         clock_->jump(starting_time_);
       }
+      load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
       play_messages_from_queue();
+
+      load_storage_content_ = false;
+      if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+      while (message_queue_.pop()) {}   // cleanup queue
       {
         std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
         is_ready_to_play_from_queue_ = false;
@@ -225,6 +242,9 @@ void Player::play()
     } while (rclcpp::ok() && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
+    load_storage_content_ = false;
+    if (storage_loading_future_.valid()) {storage_loading_future_.get();}
+    while (message_queue_.pop()) {}   // cleanup queue
   }
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
@@ -238,7 +258,7 @@ void Player::play()
     }
     for (auto pub : publishers_) {
       try {
-        if (!pub.second->wait_for_all_acked(timeout)) {
+        if (!pub.second->generic_publisher()->wait_for_all_acked(timeout)) {
           RCLCPP_ERROR(
             get_logger(),
             "Timed out while waiting for all published messages to be acknowledged for topic %s",
@@ -254,6 +274,9 @@ void Player::play()
       }
     }
   }
+
+  is_in_playback_ = false;
+  return true;
 }
 
 void Player::pause()
@@ -294,25 +317,31 @@ bool Player::set_rate(double rate)
   return ok;
 }
 
-rosbag2_storage::SerializedBagMessageSharedPtr * Player::peek_next_message_from_queue()
+rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_queue()
 {
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = message_queue_.peek();
-  if (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
-    RCLCPP_WARN(
+  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr_ptr = message_queue_.peek();
+  while (message_ptr_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+    RCLCPP_WARN_THROTTLE(
       get_logger(),
+      *get_clock(),
+      1000,
       "Message queue starved. Messages will be delayed. Consider "
       "increasing the --read-ahead-queue-size option.");
-    while (message_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(100));
-      message_ptr = message_queue_.peek();
-    }
+
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    message_ptr_ptr = message_queue_.peek();
   }
+
   // Workaround for race condition between peek and is_storage_completely_loaded()
   // Don't sync with mutex for the sake of the performance
-  if (message_ptr == nullptr) {
-    message_ptr = message_queue_.peek();
+  if (message_ptr_ptr == nullptr) {
+    message_ptr_ptr = message_queue_.peek();
   }
-  return message_ptr;
+
+  if (message_ptr_ptr != nullptr) {
+    return *message_ptr_ptr;
+  }
+  return nullptr;
 }
 
 bool Player::play_next()
@@ -334,14 +363,16 @@ bool Player::play_next()
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
   }
 
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
   while (message_ptr != nullptr && !next_message_published) {
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+      break;
+    }
     {
-      rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
-      next_message_published = publish_message(message);
-      clock_->jump(message->time_stamp);
+      next_message_published = publish_message(message_ptr);
+      clock_->jump(message_ptr->time_stamp);
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
@@ -395,10 +426,54 @@ void Player::seek(rcutils_time_point_value_t time_point)
     // Restart queuing thread if it has finished running (previously reached end of bag),
     // otherwise, queueing should continue automatically after releasing mutex
     if (is_storage_completely_loaded() && rclcpp::ok()) {
+      load_storage_content_ = true;
       storage_loading_future_ =
         std::async(std::launch::async, [this]() {load_storage_content();});
     }
   }
+}
+
+Player::callback_handle_t Player::add_on_play_message_pre_callback(
+  const play_msg_callback_t & callback)
+{
+  if (callback == nullptr) {
+    return invalid_callback_handle;
+  }
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
+  on_play_msg_pre_callbacks_.emplace_front(play_msg_callback_data{new_handle, callback});
+  return new_handle;
+}
+
+Player::callback_handle_t Player::add_on_play_message_post_callback(
+  const play_msg_callback_t & callback)
+{
+  if (callback == nullptr) {
+    return invalid_callback_handle;
+  }
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
+  on_play_msg_post_callbacks_.emplace_front(play_msg_callback_data{new_handle, callback});
+  return new_handle;
+}
+
+void Player::delete_on_play_message_callback(const callback_handle_t & handle)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  on_play_msg_pre_callbacks_.remove_if(
+    [handle](const play_msg_callback_data & data) {
+      return data.handle == handle;
+    });
+  on_play_msg_post_callbacks_.remove_if(
+    [handle](const play_msg_callback_data & data) {
+      return data.handle == handle;
+    });
+}
+
+Player::callback_handle_t Player::get_new_on_play_msg_callback_handle()
+{
+  static std::atomic<callback_handle_t> handle_count{0};
+  return handle_count.fetch_add(1, std::memory_order_relaxed) + 1;
 }
 
 void Player::wait_for_filled_queue() const
@@ -417,7 +492,7 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (rclcpp::ok()) {
+  while (rclcpp::ok() && load_storage_content_) {
     TSAUniqueLock lk(reader_mutex_);
     if (!reader_->has_next()) {break;}
 
@@ -446,7 +521,7 @@ void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
-  rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr = peek_next_message_from_queue();
+  rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
   { // Notify play_next() that we are ready for playback
     // Note: We should do notification that we are ready for playback after peeking pointer to
     // the next message. message_queue_.peek() is not allowed to be called from more than one
@@ -456,10 +531,12 @@ void Player::play_messages_from_queue()
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    rosbag2_storage::SerializedBagMessageSharedPtr message = *message_ptr;
+    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+      break;
+    }
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
-    while (rclcpp::ok() && !clock_->sleep_until(message->time_stamp)) {
+    while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }
@@ -472,14 +549,14 @@ void Player::play_messages_from_queue()
         message_ptr = peek_next_message_from_queue();
         continue;
       }
-      publish_message(message);
+      publish_message(message_ptr);
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
   }
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
-  while (is_paused()) {
+  while (is_paused() && rclcpp::ok()) {
     clock_->sleep_until(clock_->now());
   }
 }
@@ -526,9 +603,12 @@ void Player::prepare_publishers()
       topic, topic_qos_profile_overrides_,
       get_logger());
     try {
-      publishers_.insert(
-        std::make_pair(
-          topic.name, create_generic_publisher(topic.name, topic.type, topic_qos)));
+      std::shared_ptr<rclcpp::GenericPublisher> pub =
+        create_generic_publisher(topic.name, topic.type, topic_qos);
+      std::shared_ptr<Player::PlayerPublisher> player_pub =
+        std::make_shared<Player::PlayerPublisher>(
+        std::move(pub), play_options_.disable_loan_message);
+      publishers_.insert(std::make_pair(topic.name, player_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
         topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
       {
@@ -561,8 +641,31 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
   bool message_published = false;
   auto publisher_iter = publishers_.find(message->topic_name);
   if (publisher_iter != publishers_.end()) {
-    publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-    message_published = true;
+    {  // Calling on play message pre-callbacks
+      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+      for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+        if (pre_callback_data.callback != nullptr) {  // Sanity check
+          pre_callback_data.callback(message);
+        }
+      }
+    }
+
+    try {
+      publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "Failed to publish message on '" << message->topic_name <<
+          "' topic. \nError: %s" << e.what());
+    }
+
+    // Calling on play message post-callbacks
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+      if (post_callback_data.callback != nullptr) {  // Sanity check
+        post_callback_data.callback(message);
+      }
+    }
   }
   return message_published;
 }
@@ -669,6 +772,16 @@ void Player::create_control_services()
       rosbag2_interfaces::srv::SetRate::Response::SharedPtr response)
     {
       response->success = set_rate(request->rate);
+    });
+  srv_play_ = create_service<rosbag2_interfaces::srv::Play>(
+    "~/play",
+    [this](
+      rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
+      rosbag2_interfaces::srv::Play::Response::SharedPtr response)
+    {
+      play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
+      play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
+      response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",

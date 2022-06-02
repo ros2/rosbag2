@@ -61,6 +61,11 @@ class RecordVerb(VerbExtension):
             help='Exclude topics containing provided regular expression. '
             'Works on top of --all, --regex, or topics list.')
         parser.add_argument(
+            '--include-unpublished-topics', action='store_true',
+            help='Discover and record topics which have no publisher. '
+            'Subscriptions on such topics will be made with default QoS unless otherwise '
+            'specified in a QoS overrides file.')
+        parser.add_argument(
             '--include-hidden-topics', action='store_true',
             help='Discover and record hidden topics as well. '
             'These are topics used internally by ROS 2 implementation.')
@@ -158,6 +163,10 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--start-paused', action='store_true', default=False,
             help='Start the recorder in a paused state.')
+        parser.add_argument(
+            '--use-sim-time', action='store_true', default=False,
+            help='Use simulation time.'
+        )
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -228,8 +237,10 @@ class RecordVerb(VerbExtension):
         record_options.compression_threads = args.compression_threads
         record_options.topic_qos_profile_overrides = qos_profile_overrides
         record_options.include_hidden_topics = args.include_hidden_topics
+        record_options.include_unpublished_topics = args.include_unpublished_topics
         record_options.start_paused = args.start_paused
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
+        record_options.use_sim_time = args.use_sim_time
 
         recorder = Recorder()
 
