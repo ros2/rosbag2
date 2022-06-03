@@ -148,6 +148,32 @@ public:
     exec.cancel();
     spin_thread.join();
   }
+
+  void burst(
+    const rosbag2_storage::StorageOptions & storage_options,
+    PlayOptions & play_options,
+    size_t num_messages)
+  {
+    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options, play_options);
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+    auto play_thread = std::thread(
+      [&player]() {
+        player->play();
+      });
+    player->burst(num_messages);
+
+    exec.cancel();
+    spin_thread.join();
+    play_thread.join();
+  }
 };
 
 class Recorder
@@ -294,6 +320,7 @@ PYBIND11_MODULE(_transport, m) {
   py::class_<rosbag2_py::Player>(m, "Player")
   .def(py::init())
   .def("play", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg("play_options"))
+  .def("burst", &rosbag2_py::Player::burst)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
