@@ -88,7 +88,7 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--playback-duration', type=float, default=-1.0,
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
-                 'Default is -1.0. When positive, the maximum of `playback-until` and the one '
+                 'Default is -1.0. When positive, the maximum of `playback-until-*` and the one '
                  'that this attribute yields will be used to determine which one stops playback '
                  'execution.')
 
@@ -96,7 +96,7 @@ class PlayVerb(VerbExtension):
         playback_until_arg_group.add_argument(
             '--playback-until-sec', type=float, default=-1.,
             help='Playback until timestamp, expressed in seconds since epoch. '
-                 'Mutually exclusive argument with \'--playback-until-nsec\'. '
+                 'Mutually exclusive argument with `--playback-until-nsec`. '
                  'Use this argument when floating point to integer conversion error is not a '
                  'problem for your application. Negative stamps disable this feature. Default is '
                  '-1.0. When positive, the maximum of the effective time that '
@@ -105,7 +105,7 @@ class PlayVerb(VerbExtension):
         playback_until_arg_group.add_argument(
             '--playback-until-nsec', type=int, default=-1,
             help='Playback until timestamp, expressed in nanoseconds since epoch.  '
-                 'Mutually exclusive argument with \'--playback-until-sec\'. '
+                 'Mutually exclusive argument with `--playback-until-sec`. '
                  'Use this argument when floating point to integer conversion error matters for '
                  'your application. Negative stamps disable this feature. Default is -1. When '
                  'positive, the maximum of the effective time that `--playback-duration` yields '
@@ -143,7 +143,7 @@ class PlayVerb(VerbExtension):
             help='Play for SEC seconds. Default is None, meaning that playback will continue '
                  'until the end of the bag. Valid range > 0.0')
 
-    def get_playback_until_from(self, playback_until_sec, playback_until_nsec) -> int:
+    def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
         if playback_until_sec and playback_until_sec >= 0.0:
             return int(playback_until_sec * nano_scale)
@@ -186,8 +186,8 @@ class PlayVerb(VerbExtension):
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
         play_options.playback_duration = args.playback_duration
-        play_options.playback_until = self.get_playback_until_from(args.playback_until_sec,
-                                                                   args.playback_until_nsec)
+        play_options.playback_until_timestamp = self.get_playback_until_from_arg_group(
+            args.playback_until_sec, args.playback_until_nsec)
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset

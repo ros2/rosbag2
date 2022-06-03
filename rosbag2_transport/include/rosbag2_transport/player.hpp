@@ -20,7 +20,6 @@
 #include <functional>
 #include <future>
 #include <memory>
-#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -249,7 +248,7 @@ private:
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
-  void play_messages_from_queue();
+  void play_messages_from_queue(const rcutils_time_point_value_t & play_until_timestamp);
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static callback_handle_t get_new_on_play_msg_callback_handle();
@@ -270,7 +269,7 @@ private:
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
-  rcutils_time_point_value_t play_until_time_ = -1;
+  rcutils_time_point_value_t play_until_timestamp_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};

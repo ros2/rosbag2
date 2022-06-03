@@ -115,10 +115,10 @@ public:
   }
 
   void InitPlayerWithPlaybackUntilAndPlay(
-    int64_t playback_until_millis,
+    int64_t playback_until_timestamp_millis,
     size_t expected_number_of_messages_on_topic1 = 3,
     size_t expected_number_of_messages_on_topic2 = 3,
-    int64_t playback_for_millis = -1)
+    int64_t playbac_duration_millis = -1)
   {
     auto topic_types = get_topic_types();
     auto messages = get_serialized_messages();
@@ -131,10 +131,9 @@ public:
       kTopic1_, expected_number_of_messages_on_topic1);
     sub_->add_subscription<test_msgs::msg::Arrays>(kTopic2_, expected_number_of_messages_on_topic2);
 
-    play_options_.playback_until = RCL_MS_TO_NS(playback_until_millis);
-    play_options_.playback_duration = rclcpp::Duration(
-      std::chrono::milliseconds(
-        playback_for_millis));
+    play_options_.playback_until_timestamp = RCL_MS_TO_NS(playback_until_timestamp_millis);
+    play_options_.playback_duration =
+      rclcpp::Duration(std::chrono::milliseconds(playbac_duration_millis));
     player_ = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
     // Wait for discovery to match publishers with subscribers
@@ -149,7 +148,7 @@ public:
 };
 
 
-TEST_F(RosBag2PlayUntilTestFixture, play_until_all_are_played_due_to_duration)
+TEST_F(RosBag2PlayUntilTestFixture, play_until_all_are_played_due_to_timestamp)
 {
   InitPlayerWithPlaybackUntilAndPlay(350);
 
@@ -187,7 +186,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_none_are_played_due_to_timestamp)
 
   // Expect to receive messages only from play_next in second round
   sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size());
-  play_options_.playback_until = RCL_MS_TO_NS(49);
+  play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);
@@ -236,7 +235,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
 
   // Expect to receive 1 message from play() and 2 messages from play_next in second round
   sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size() + 1);
-  play_options_.playback_until = RCL_MS_TO_NS(49);
+  play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);
@@ -303,7 +302,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_should_return_false_when_interrupted)
 
   // Let the player only reproduce one message.
   sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 1);
-  play_options_.playback_until = RCL_MS_TO_NS(75);
+  play_options_.playback_until_timestamp = RCL_MS_TO_NS(75);
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);
@@ -325,11 +324,11 @@ TEST_F(RosBag2PlayUntilTestFixture, play_should_return_false_when_interrupted)
   EXPECT_THAT(replayed_topic1, SizeIs(1));
 }
 
-TEST_F(RosBag2PlayUntilTestFixture, play_until_all_are_played_until_is_bigger_than_for)
+TEST_F(RosBag2PlayUntilTestFixture, play_until_overrides_playback_duration)
 {
   InitPlayerWithPlaybackUntilAndPlay(
-    350 /* playback_until */, 3 /* num messages topic 1 */,
-    3 /* num messages topic 2 */, 50 /* playback_for */);
+    350 /* playback_until_timestamp_millis */, 3 /* num messages topic 1 */,
+    3 /* num messages topic 2 */, 50 /* playback_duration_millis */);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1_);
@@ -343,11 +342,29 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_all_are_played_until_is_bigger_th
   EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
 }
 
-TEST_F(RosBag2PlayUntilTestFixture, play_until_all_are_played_until_is_smaller_than_for)
+TEST_F(RosBag2PlayUntilTestFixture, playback_duration_overrides_play_until)
 {
   InitPlayerWithPlaybackUntilAndPlay(
-    50 /* playback_until */, 1 /* num messages topic 1 */,
-    1 /* num messages topic 2 */, 150 /* playback_for */);
+    50 /* playback_until_timestamp_millis */, 1 /* num messages topic 1 */,
+    1 /* num messages topic 2 */, 150 /* playback_duration_millis */);
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    kTopic1_);
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(1u)));
+  EVAL_REPLAYED_PRIMITIVES(replayed_test_primitives);
+
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
+    kTopic2_);
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(1u)));
+  EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
+  EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
+}
+
+TEST_F(RosBag2PlayUntilTestFixture, play_until_is_equal_to_the_total_duration)
+{
+  InitPlayerWithPlaybackUntilAndPlay(
+    150 /* playback_until_timestamp_millis */, 1 /* num messages topic 1 */,
+    1 /* num messages topic 2 */, 150 /* playback_duration_millis */);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1_);

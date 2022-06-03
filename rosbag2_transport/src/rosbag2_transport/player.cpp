@@ -162,7 +162,7 @@ Player::Player(
     prepare_publishers();
 
     if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
-      play_until_time_ = starting_time_ + play_options_.playback_duration.nanoseconds();
+      play_until_timestamp_ = starting_time_ + play_options_.playback_duration.nanoseconds();
     }
   }
   create_control_services();
@@ -212,15 +212,15 @@ bool Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  rcutils_time_point_value_t play_until_time = -1;
+  rcutils_time_point_value_t play_until_timestamp = -1;
   if (play_options_.playback_duration >= rclcpp::Duration(0, 0) ||
-    play_options_.playback_until >= rcutils_time_point_value_t{0})
+    play_options_.playback_until_timestamp >= rcutils_time_point_value_t{0})
   {
-    play_until_time = std::max(
+    play_until_timestamp = std::max(
       starting_time_ + play_options_.playback_duration.nanoseconds(),
-      play_options_.playback_until);
+      play_options_.playback_until_timestamp);
   }
-  RCLCPP_INFO_STREAM(get_logger(), "Playback duration value: " << play_until_time);
+  RCLCPP_INFO_STREAM(get_logger(), "Playback until timestamp: " << play_until_timestamp);
 
   try {
     do {
@@ -237,7 +237,7 @@ bool Player::play()
       load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
-      play_messages_from_queue();
+      play_messages_from_queue(play_until_timestamp);
 
       load_storage_content_ = false;
       if (storage_loading_future_.valid()) {storage_loading_future_.get();}
@@ -375,7 +375,9 @@ bool Player::play_next()
 
   bool next_message_published = false;
   while (message_ptr != nullptr && !next_message_published) {
-    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+    if (play_until_timestamp_ >= starting_time_ &&
+      message_ptr->time_stamp > play_until_timestamp_)
+    {
       break;
     }
     {
@@ -525,7 +527,7 @@ void Player::enqueue_up_to_boundary(size_t boundary)
   }
 }
 
-void Player::play_messages_from_queue()
+void Player::play_messages_from_queue(const rcutils_time_point_value_t & play_until_timestamp)
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -539,7 +541,7 @@ void Player::play_messages_from_queue()
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    if (play_until_time_ >= starting_time_ && message_ptr->time_stamp > play_until_time_) {
+    if (play_until_timestamp >= starting_time_ && message_ptr->time_stamp > play_until_timestamp) {
       break;
     }
     // Do not move on until sleep_until returns true
@@ -789,7 +791,8 @@ void Player::create_control_services()
     {
       play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
       play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
-      play_options_.playback_until = rclcpp::Time(request->playback_until).nanoseconds();
+      play_options_.playback_until_timestamp =
+      rclcpp::Time(request->playback_until_timestamp).nanoseconds();
       response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
