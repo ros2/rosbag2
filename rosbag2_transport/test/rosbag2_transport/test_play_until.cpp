@@ -118,7 +118,7 @@ public:
     int64_t playback_until_timestamp_millis,
     size_t expected_number_of_messages_on_topic1 = 3,
     size_t expected_number_of_messages_on_topic2 = 3,
-    int64_t playbac_duration_millis = -1)
+    int64_t playback_duration_millis = -1)
   {
     auto topic_types = get_topic_types();
     auto messages = get_serialized_messages();
@@ -133,7 +133,7 @@ public:
 
     play_options_.playback_until_timestamp = RCL_MS_TO_NS(playback_until_timestamp_millis);
     play_options_.playback_duration =
-      rclcpp::Duration(std::chrono::milliseconds(playbac_duration_millis));
+      rclcpp::Duration(std::chrono::milliseconds(playback_duration_millis));
     player_ = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
     // Wait for discovery to match publishers with subscribers
@@ -184,8 +184,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_none_are_played_due_to_timestamp)
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  // Expect to receive messages only from play_next in second round
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size());
+  // Expect to receive no messages.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 0u);
   play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
@@ -197,20 +197,18 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_none_are_played_due_to_timestamp)
   auto await_received_messages = sub_->spin_subscriptions();
   ASSERT_TRUE(player_->play());
 
-  // Playing one more time with play_next to save time and count messages
+  // Playing one more time with play_next() to save time and count messages. Note
+  // that none of the following play() and play_next() functions will make any of
+  // the messages to be played.
   player_->pause();
   auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
 
-  EXPECT_TRUE(player_->play_next());
-  EXPECT_TRUE(player_->play_next());
   EXPECT_FALSE(player_->play_next());
   player_->resume();
   player_future.get();
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
-  EXPECT_THAT(replayed_topic1, SizeIs(2));
-  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
-  EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
+  EXPECT_THAT(replayed_topic1, SizeIs(0));
 }
 
 TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
@@ -233,8 +231,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  // Expect to receive 1 message from play() and 2 messages from play_next in second round
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size() + 1);
+  // Expect to receive 1 message from play() and 1 message from play_next in second round.
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 2u);
   play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
@@ -246,21 +244,19 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
   auto await_received_messages = sub_->spin_subscriptions();
   ASSERT_TRUE(player_->play());
 
-  // Playing one more time with play_next to save time and count messages
+  // Playing one more time with play_next() to save time and count messages.
   player_->pause();
   auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
 
-  ASSERT_TRUE(player_->play_next());
   ASSERT_TRUE(player_->play_next());
   ASSERT_FALSE(player_->play_next());
   player_->resume();
   player_future.get();
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
-  EXPECT_THAT(replayed_topic1, SizeIs(3));
+  EXPECT_THAT(replayed_topic1, SizeIs(2));
   EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
   EXPECT_EQ(replayed_topic1[1]->int32_value, 1);
-  EXPECT_EQ(replayed_topic1[2]->int32_value, 2);
 }
 
 TEST_F(
@@ -327,17 +323,17 @@ TEST_F(RosBag2PlayUntilTestFixture, play_should_return_false_when_interrupted)
 TEST_F(RosBag2PlayUntilTestFixture, play_until_overrides_playback_duration)
 {
   InitPlayerWithPlaybackUntilAndPlay(
-    350 /* playback_until_timestamp_millis */, 3 /* num messages topic 1 */,
-    3 /* num messages topic 2 */, 50 /* playback_duration_millis */);
+    150 /* playback_until_timestamp_millis */, 1 /* num messages topic 1 */,
+    1 /* num messages topic 2 */, 50 /* playback_duration_millis */);
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     kTopic1_);
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(3u)));
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(1u)));
   EVAL_REPLAYED_PRIMITIVES(replayed_test_primitives);
 
   auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
     kTopic2_);
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(3u)));
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(1u)));
   EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
   EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
 }

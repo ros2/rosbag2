@@ -248,7 +248,7 @@ private:
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(size_t boundary) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
-  void play_messages_from_queue(const rcutils_time_point_value_t & play_until_timestamp);
+  void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static callback_handle_t get_new_on_play_msg_callback_handle();
@@ -266,6 +266,8 @@ private:
   void add_keyboard_callbacks();
 
   void create_control_services();
+
+  void configure_play_until_timestamp();
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;

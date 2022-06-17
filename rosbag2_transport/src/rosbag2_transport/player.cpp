@@ -160,10 +160,7 @@ Player::Player(
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
-
-    if (play_options_.playback_duration >= rclcpp::Duration(0, 0)) {
-      play_until_timestamp_ = starting_time_ + play_options_.playback_duration.nanoseconds();
-    }
+    configure_play_until_timestamp();
   }
   create_control_services();
   add_keyboard_callbacks();
@@ -212,15 +209,7 @@ bool Player::play()
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  rcutils_time_point_value_t play_until_timestamp = -1;
-  if (play_options_.playback_duration >= rclcpp::Duration(0, 0) ||
-    play_options_.playback_until_timestamp >= rcutils_time_point_value_t{0})
-  {
-    play_until_timestamp = std::max(
-      starting_time_ + play_options_.playback_duration.nanoseconds(),
-      play_options_.playback_until_timestamp);
-  }
-  RCLCPP_INFO_STREAM(get_logger(), "Playback until timestamp: " << play_until_timestamp);
+  RCLCPP_INFO_STREAM(get_logger(), "Playback until timestamp: " << play_until_timestamp_);
 
   try {
     do {
@@ -237,7 +226,7 @@ bool Player::play()
       load_storage_content_ = true;
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
-      play_messages_from_queue(play_until_timestamp);
+      play_messages_from_queue();
 
       load_storage_content_ = false;
       if (storage_loading_future_.valid()) {storage_loading_future_.get();}
@@ -527,7 +516,7 @@ void Player::enqueue_up_to_boundary(size_t boundary)
   }
 }
 
-void Player::play_messages_from_queue(const rcutils_time_point_value_t & play_until_timestamp)
+void Player::play_messages_from_queue()
 {
   // Note: We need to use message_queue_.peek() instead of message_queue_.try_dequeue(message)
   // to support play_next() API logic.
@@ -541,7 +530,9 @@ void Player::play_messages_from_queue(const rcutils_time_point_value_t & play_un
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (message_ptr != nullptr && rclcpp::ok()) {
-    if (play_until_timestamp >= starting_time_ && message_ptr->time_stamp > play_until_timestamp) {
+    if (play_until_timestamp_ >= starting_time_ &&
+      message_ptr->time_stamp > play_until_timestamp_)
+    {
       break;
     }
     // Do not move on until sleep_until returns true
@@ -793,6 +784,7 @@ void Player::create_control_services()
       play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
       play_options_.playback_until_timestamp =
       rclcpp::Time(request->playback_until_timestamp).nanoseconds();
+      configure_play_until_timestamp();
       response->success = play();
     });
   srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
@@ -820,6 +812,19 @@ void Player::create_control_services()
       seek(rclcpp::Time(request->time).nanoseconds());
       response->success = true;
     });
+}
+
+void Player::configure_play_until_timestamp()
+{
+  if (play_options_.playback_duration >= rclcpp::Duration(0, 0) ||
+    play_options_.playback_until_timestamp >= rcutils_time_point_value_t{0})
+  {
+    play_until_timestamp_ = std::max(
+      starting_time_ + play_options_.playback_duration.nanoseconds(),
+      play_options_.playback_until_timestamp);
+  } else {
+    play_until_timestamp_ = -1;
+  }
 }
 
 }  // namespace rosbag2_transport
