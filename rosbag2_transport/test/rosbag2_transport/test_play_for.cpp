@@ -181,29 +181,27 @@ TEST_F(RosBag2PlayForTestFixture, play_for_none_are_played_due_to_duration)
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  // Expect to receive messages only from play_next in second round
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size());
-  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(49));
+  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(0));
 
-  std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
+  std::shared_ptr<MockPlayer> player = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);
 
-  // Wait for discovery to match publishers with subscribers
-  ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
+  using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
+  testing::MockFunction<void(std::shared_ptr<SerializedBagMessage>)> mock_pre_callback;
+  EXPECT_CALL(mock_pre_callback, Call(_)).Times(Exactly(0));
 
-  auto await_received_messages = sub_->spin_subscriptions();
-  ASSERT_TRUE(player_->play());
+  testing::MockFunction<void(std::shared_ptr<SerializedBagMessage>)> mock_post_callback;
+  EXPECT_CALL(mock_post_callback, Call(_)).Times(Exactly(0));
 
-  // Playing one more time with play_next to save time and count messages
-  player_->pause();
-  auto player_future = std::async(std::launch::async, [&player_]() -> void {player_->play();});
+  auto pre_callback_handle =
+    player->add_on_play_message_pre_callback(mock_pre_callback.AsStdFunction());
+  ASSERT_NE(pre_callback_handle, Player::invalid_callback_handle);
 
-  EXPECT_FALSE(player_->play_next());
-  player_->resume();
-  player_future.get();
-  await_received_messages.get();
-  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
-  EXPECT_THAT(replayed_topic1, SizeIs(0));
+  auto post_callback_handle =
+    player->add_on_play_message_post_callback(mock_post_callback.AsStdFunction());
+  ASSERT_NE(post_callback_handle, Player::invalid_callback_handle);
+
+  ASSERT_TRUE(player->play());
 }
 
 TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
@@ -226,9 +224,9 @@ TEST_F(RosBag2PlayForTestFixture, play_for_less_than_the_total_duration)
   prepared_mock_reader->prepare(messages, topic_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  // Expect to receive 1 message from play() and 2 messages from play_next in second round
-  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, messages.size() + 1);
-  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(49));
+  // Expect to receive 1 message from play() and 1 messages from play_next in second round
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 2);
+  play_options_.playback_duration = rclcpp::Duration(std::chrono::milliseconds(39));
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);

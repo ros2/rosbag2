@@ -138,10 +138,6 @@ class PlayVerb(VerbExtension):
                  'By default, if loaned message can be used, messages are published as loaned '
                  'message. It can help to reduce the number of data copies, so there is a greater '
                  'benefit for sending big data.')
-        parser.add_argument(
-            '-f', '--duration', type=float, default=None,
-            help='Play for SEC seconds. Default is None, meaning that playback will continue '
-                 'until the end of the bag. Valid range > 0.0')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000

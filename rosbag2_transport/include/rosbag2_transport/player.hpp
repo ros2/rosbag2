@@ -253,22 +253,21 @@ private:
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static callback_handle_t get_new_on_play_msg_callback_handle();
+  void add_key_callback(
+    KeyboardHandler::KeyCode key,
+    const std::function<void()> & cb,
+    const std::string & op_name);
+  void add_keyboard_callbacks();
+  void create_control_services();
+  void configure_play_until_timestamp();
+  bool shall_stop_at_timestamp(const rcutils_time_point_value_t & msg_timestamp) const;
+
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
 
   std::mutex reader_mutex_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
-
-  void add_key_callback(
-    KeyboardHandler::KeyCode key,
-    const std::function<void()> & cb,
-    const std::string & op_name);
-  void add_keyboard_callbacks();
-
-  void create_control_services();
-
-  void configure_play_until_timestamp();
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
