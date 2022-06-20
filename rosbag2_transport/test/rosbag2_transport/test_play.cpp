@@ -34,7 +34,6 @@
 
 #include "rosbag2_transport/qos.hpp"
 
-#include "mock_player.hpp"
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_player.hpp"
