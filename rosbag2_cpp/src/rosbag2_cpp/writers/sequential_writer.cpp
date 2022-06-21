@@ -266,7 +266,10 @@ void SequentialWriter::switch_to_next_storage()
 
 void SequentialWriter::split_bagfile()
 {
+  auto info = std::make_shared<bag_events::BagSplitInfo>();
+  info->closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
+  info->opened_file = storage_->get_relative_file_path();
 
   metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
@@ -275,6 +278,8 @@ void SequentialWriter::split_bagfile()
     std::chrono::nanoseconds::max());
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
+
+  callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }
 
 void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
@@ -409,6 +414,15 @@ void SequentialWriter::write_messages(
     if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
       topics_names_to_info_[msg->topic_name].message_count++;
     }
+  }
+}
+
+void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks)
+{
+  if (callbacks.write_split_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.write_split_callback,
+      bag_events::BagEvent::WRITE_SPLIT);
   }
 }
 

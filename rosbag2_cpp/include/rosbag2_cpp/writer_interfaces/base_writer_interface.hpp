@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -51,6 +52,8 @@ public:
    * \returns true if snapshot is successful, false if snapshot fails or is not supported
    */
   virtual bool take_snapshot() = 0;
+
+  virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 };
 
 }  // namespace writer_interfaces

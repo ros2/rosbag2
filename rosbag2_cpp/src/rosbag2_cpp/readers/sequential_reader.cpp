@@ -235,8 +235,12 @@ void SequentialReader::load_current_file()
 void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
+  auto info = std::make_shared<bag_events::BagSplitInfo>();
+  info->closed_file = get_current_file();
   current_file_iterator_++;
+  info->opened_file = get_current_file();
   load_current_file();
+  callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
 }
 
 std::string SequentialReader::get_current_file() const
@@ -290,6 +294,20 @@ void SequentialReader::fill_topics_metadata()
   for (const auto & topic_information : metadata_.topics_with_message_count) {
     topics_metadata_.push_back(topic_information.topic_metadata);
   }
+}
+
+void SequentialReader::add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks)
+{
+  if (callbacks.read_split_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.read_split_callback,
+      bag_events::BagEvent::READ_SPLIT);
+  }
+}
+
+bool SequentialReader::has_callback_for_event(const bag_events::BagEvent event) const
+{
+  return callback_manager_.has_callback_for_event(event);
 }
 
 }  // namespace readers

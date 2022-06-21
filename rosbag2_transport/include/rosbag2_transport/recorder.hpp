@@ -32,6 +32,8 @@
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 
+#include "rosbag2_interfaces/msg/write_split_event.hpp"
+
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
@@ -162,6 +164,18 @@ private:
   // Toogle paused key callback handle
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
+
+  // Variables for event publishing
+  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
+  bool event_publisher_thread_should_exit_ = false;
+  bool write_split_has_occurred_ = false;
+  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
+  std::mutex event_publisher_thread_mutex_;
+  std::condition_variable event_publisher_thread_wake_cv_;
+  std::thread event_publisher_thread_;
+
+  void event_publisher_thread_main();
+  bool event_publisher_thread_should_wake();
 };
 
 }  // namespace rosbag2_transport
