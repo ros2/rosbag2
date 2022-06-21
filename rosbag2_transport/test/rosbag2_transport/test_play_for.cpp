@@ -22,7 +22,10 @@
 #include <unordered_map>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/experimental/buffers/intra_process_buffer.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos_event.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 

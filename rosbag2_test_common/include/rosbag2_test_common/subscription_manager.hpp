@@ -21,8 +21,18 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+#include "rclcpp/clock.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/intra_process_setting.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/publisher_base.hpp"
+#include "rclcpp/qos.hpp"
 #include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/subscription_base.hpp"
+#include "rclcpp/subscription_options.hpp"
+#include "rclcpp/utilities.hpp"
 
 namespace rosbag2_test_common
 {
