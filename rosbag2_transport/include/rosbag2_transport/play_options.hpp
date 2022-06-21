@@ -22,6 +22,7 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 #include "rclcpp/duration.hpp"
+#include "rclcpp/time.hpp"
 #include "rclcpp/qos.hpp"
 
 namespace rosbag2_transport
@@ -52,7 +53,15 @@ public:
 
   // Determines the maximum duration of the playback. Negative durations will make the playback to
   // not stop. Default configuration makes the player to not stop execution.
+  // When positive, the maximum of `play_until_timestamp` and the one that this attribute yields
+  // will be used to determine which one stops playback execution.
   rclcpp::Duration playback_duration = rclcpp::Duration(-1, 0);
+
+  // Determines the timestamp at which the playback will stop. Negative timestamps will make the
+  // playback to not stop. Default configuration makes the player to not stop execution.
+  // When positive, the maximum of the effective time that `playback_duration` yields and this
+  // attribute will be used to determine which one stops playback execution.
+  rcutils_time_point_value_t playback_until_timestamp = -1;
 
   // Start paused.
   bool start_paused = false;

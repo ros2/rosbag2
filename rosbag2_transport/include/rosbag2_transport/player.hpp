@@ -20,7 +20,6 @@
 #include <functional>
 #include <future>
 #include <memory>
-#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -268,9 +267,11 @@ private:
 
   void create_control_services();
 
+  void configure_play_until_timestamp();
+
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
-  rcutils_time_point_value_t play_until_time_ = -1;
+  rcutils_time_point_value_t play_until_timestamp_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};

@@ -160,7 +160,13 @@ function(create_tests_for_rmw_implementation)
       LINK_LIBS rosbag2_transport
       AMENT_DEPS test_msgs rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_burst
+  rosbag2_transport_add_gmock(test_play_until
+      test/rosbag2_transport/test_play_until.cpp
+      INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+      LINK_LIBS rosbag2_transport
+      AMENT_DEPS test_msgs rosbag2_test_common)
+
+    rosbag2_transport_add_gmock(test_burst
       test/rosbag2_transport/test_burst.cpp
       INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
       LINK_LIBS rosbag2_transport
