@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/cache/cache_consumer.hpp"
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
@@ -114,6 +115,12 @@ public:
    */
   bool take_snapshot() override;
 
+  /**
+   * \brief Add callbacks for events that may occur during bag writing.
+   * \param callbacks the structure containing the callback to add for each event.
+   */
+  void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) override;
+
 protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
@@ -162,6 +169,9 @@ private:
   /// Helper method to write messages while also updating tracked metadata.
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
+  bool is_first_message_ {true};
+
+  bag_events::EventCallbackManager callback_manager_;
 };
 
 }  // namespace writers

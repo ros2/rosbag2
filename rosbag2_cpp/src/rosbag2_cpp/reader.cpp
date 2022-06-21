@@ -92,4 +92,9 @@ void Reader::seek(const rcutils_time_point_value_t & timestamp)
   reader_impl_->seek(timestamp);
 }
 
+void Reader::add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks)
+{
+  reader_impl_->add_event_callbacks(callbacks);
+}
+
 }  // namespace rosbag2_cpp
