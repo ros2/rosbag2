@@ -66,20 +66,38 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
   return earliest_msg;
 }
 
+struct WritersAndTopicsMap
+{
+  rosbag2_cpp::Writer * const writer_ptr;
+  const std::unordered_map<std::string, std::string> & topics_map;
+};
+
+const std::string & remap_topic_name(
+  const std::string & topic_name,
+  const std::unordered_map<std::string, std::string> & topics_remap)
+{
+  auto search = topics_remap.find(topic_name);
+  if (search != topics_remap.end()) {
+    return search->second;
+  } else {
+    return topic_name;
+  }
+}
+
 /// Discover what topics are in the inputs, filter out topics that can't be processed,
 /// create_topic on Writers that will receive topics.
 /// Return a map f topic -> vector of which Writers want to receive that topic,
 /// based on the RecordOptions.
 /// The output vector has bare pointers to the uniquely owned Writers,
 /// so this may not outlive the output_bags Writers.
-std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>>
+std::unordered_map<std::string, std::vector<WritersAndTopicsMap>>
 setup_topic_filtering(
   const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
   const std::vector<
     std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>
   > & output_bags)
 {
-  std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>> filtered_outputs;
+  std::unordered_map<std::string, std::vector<WritersAndTopicsMap>> filtered_outputs;
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, YAML::Node> input_topics_qos_profiles;
   std::unordered_map<std::string, std::string> input_topics_serialization_format;
@@ -109,7 +127,8 @@ setup_topic_filtering(
     // Done filtering - set up writer
     for (const auto & [topic_name, topic_type] : filtered_topics_and_types) {
       rosbag2_storage::TopicMetadata topic_metadata;
-      topic_metadata.name = topic_name;
+      auto remaped_topic_name = remap_topic_name(topic_name, record_options.topics_map);
+      topic_metadata.name = remaped_topic_name;
       topic_metadata.type = topic_type;
 
       // Take source serialization format for the topic if output format is unspecified
@@ -125,7 +144,8 @@ setup_topic_filtering(
       writer->create_topic(topic_metadata);
 
       filtered_outputs.try_emplace(topic_name);
-      filtered_outputs[topic_name].push_back(writer.get());
+      filtered_outputs[topic_name].emplace_back(
+        WritersAndTopicsMap{writer.get(), record_options.topics_map});
     }
   }
 
@@ -150,10 +170,12 @@ void perform_rewrite(
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_msg;
   while ((next_msg = get_next(input_bags, next_messages))) {
-    auto topic_writers = topic_outputs.find(next_msg->topic_name);
-    if (topic_writers != topic_outputs.end()) {
-      for (auto writer : topic_writers->second) {
-        writer->write(next_msg);
+    auto topic_writers_and_map = topic_outputs.find(next_msg->topic_name);
+    if (topic_writers_and_map != topic_outputs.end()) {
+      std::string original_topic_name = next_msg->topic_name;
+      for (auto writer_and_map : topic_writers_and_map->second) {
+        next_msg->topic_name = remap_topic_name(original_topic_name, writer_and_map.topics_map);
+        writer_and_map.writer_ptr->write(next_msg);
       }
     }
   }

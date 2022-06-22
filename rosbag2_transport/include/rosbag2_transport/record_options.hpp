@@ -48,6 +48,7 @@ public:
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
+  std::unordered_map<std::string, std::string> topics_map{};
 };
 
 }  // namespace rosbag2_transport
