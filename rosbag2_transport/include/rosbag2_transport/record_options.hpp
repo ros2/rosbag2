@@ -43,12 +43,12 @@ public:
   uint64_t compression_queue_size = 1;
   uint64_t compression_threads = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
+  std::vector<std::string> remappings{};
   bool include_hidden_topics = false;
   bool include_unpublished_topics = false;
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
-  std::unordered_map<std::string, std::string> topics_map{};
 };
 
 }  // namespace rosbag2_transport

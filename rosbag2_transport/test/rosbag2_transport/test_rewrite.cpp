@@ -193,3 +193,49 @@ TEST_F(TestRewrite, test_compress) {
   EXPECT_TRUE(compressed_bagfile.exists());
   EXPECT_TRUE(compressed_bagfile.is_regular_file());
 }
+
+TEST_F(TestRewrite, test_remapping_all_topics) {
+  use_input_a();
+  use_input_b();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "remapped").string();
+  output_storage.storage_id = "sqlite3";
+  rosbag2_transport::RecordOptions output_record;
+  output_record.all = false;
+  output_record.topics = {"a_empty", "c_strings"};
+  output_record.remappings.emplace_back("a_empty:=a_empty_remapped");
+  output_bags_.push_back({output_storage, output_record});
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  reader->open(output_storage);
+  const auto metadata = reader->get_metadata();
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(2));
+  EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.name, "a_empty_remapped");
+  EXPECT_EQ(metadata.topics_with_message_count[1].topic_metadata.name, "c_strings");
+}
+
+TEST_F(TestRewrite, test_remapping_specific_topics) {
+  use_input_a();
+  use_input_b();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "remapped").string();
+  output_storage.storage_id = "sqlite3";
+  rosbag2_transport::RecordOptions output_record;
+  output_record.all = true;
+  output_record.remappings.emplace_back("a_empty:=a_empty_remapped");
+  output_bags_.push_back({output_storage, output_record});
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  reader->open(output_storage);
+  const auto metadata = reader->get_metadata();
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(3));
+  EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.name, "a_empty_remapped");
+  EXPECT_EQ(metadata.topics_with_message_count[1].topic_metadata.name, "b_basictypes");
+  EXPECT_EQ(metadata.topics_with_message_count[2].topic_metadata.name, "c_strings");
+}

@@ -34,6 +34,7 @@ TEST(record_options, test_yaml_serialization)
   original.compression_queue_size = 2;
   original.compression_threads = 123;
   original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
+  original.remappings.emplace_back("/foo:=/bar");
   original.include_hidden_topics = true;
   original.include_unpublished_topics = true;
 

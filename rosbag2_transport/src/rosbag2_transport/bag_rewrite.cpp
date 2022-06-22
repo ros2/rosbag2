@@ -29,6 +29,8 @@
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
+#include "rcl/remap.h"
+
 namespace
 {
 
@@ -66,23 +68,11 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
   return earliest_msg;
 }
 
-struct WritersAndTopicsMap
+struct WriterAndTopicRemap
 {
   rosbag2_cpp::Writer * const writer_ptr;
-  const std::unordered_map<std::string, std::string> & topics_map;
+  const std::string topic_remap;
 };
-
-const std::string & remap_topic_name(
-  const std::string & topic_name,
-  const std::unordered_map<std::string, std::string> & topics_remap)
-{
-  auto search = topics_remap.find(topic_name);
-  if (search != topics_remap.end()) {
-    return search->second;
-  } else {
-    return topic_name;
-  }
-}
 
 /// Discover what topics are in the inputs, filter out topics that can't be processed,
 /// create_topic on Writers that will receive topics.
@@ -90,14 +80,14 @@ const std::string & remap_topic_name(
 /// based on the RecordOptions.
 /// The output vector has bare pointers to the uniquely owned Writers,
 /// so this may not outlive the output_bags Writers.
-std::unordered_map<std::string, std::vector<WritersAndTopicsMap>>
+std::unordered_map<std::string, std::vector<WriterAndTopicRemap>>
 setup_topic_filtering(
   const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
   const std::vector<
     std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>
   > & output_bags)
 {
-  std::unordered_map<std::string, std::vector<WritersAndTopicsMap>> filtered_outputs;
+  std::unordered_map<std::string, std::vector<WriterAndTopicRemap>> filtered_outputs;
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, YAML::Node> input_topics_qos_profiles;
   std::unordered_map<std::string, std::string> input_topics_serialization_format;
@@ -124,12 +114,39 @@ setup_topic_filtering(
     rosbag2_transport::TopicFilter topic_filter{record_options};
     auto filtered_topics_and_types = topic_filter.filter_topics(input_topics);
 
-    // Done filtering - set up writer
+    // Convert a vector of string remaps, like ["/foo:=/bar", "/bar:=/baz"] to a set
+    // of ROS arguments, which is the required input format for the RCL remap code.
+    rcl_arguments_t global_arguments = rcl_get_zero_initialized_arguments();
+    std::vector<char const *> args = {"dummy_process_name", "--ros-args"};
+    for (const auto & remap : record_options.remappings) {
+      args.emplace_back("-r");
+      args.emplace_back(remap.c_str());
+    }
+    const rcl_ret_t global_arguments_ret = rcl_parse_arguments(
+      args.size(), args.data(), rcl_get_default_allocator(), &global_arguments);
+
+    // Setup writers and remaps for each filtered topic.
     for (const auto & [topic_name, topic_type] : filtered_topics_and_types) {
+      // Package up the topic metadata.
       rosbag2_storage::TopicMetadata topic_metadata;
-      auto remaped_topic_name = remap_topic_name(topic_name, record_options.topics_map);
-      topic_metadata.name = remaped_topic_name;
+      topic_metadata.name = topic_name;
       topic_metadata.type = topic_type;
+
+      // Query rcl topic remap API to resolve the remapped topic name.
+      if (global_arguments_ret == RCL_RET_OK) {
+        char * topic_remap = nullptr;
+        const rcl_ret_t remap_ret = rcl_remap_topic_name(
+          NULL,                               /* Local arguments, not required.        */
+          &global_arguments,                  /* Global arguments, including remaps.   */
+          topic_name.c_str(),                 /* Original topic name.                  */
+          "dummy_node_name",                  /* Dummy node name for API compatiblity. */
+          "/",                                /* Bag context -- everything is global.  */
+          rcl_get_default_allocator(),        /* No need for a custom allocator.       */
+          &topic_remap);                      /* Pointer to write the final name.      */
+        if (remap_ret == RCL_RET_OK && topic_remap != nullptr) {
+          topic_metadata.name = std::string(topic_remap);
+        }
+      }
 
       // Take source serialization format for the topic if output format is unspecified
       if (record_options.rmw_serialization_format.empty()) {
@@ -145,7 +162,7 @@ setup_topic_filtering(
 
       filtered_outputs.try_emplace(topic_name);
       filtered_outputs[topic_name].emplace_back(
-        WritersAndTopicsMap{writer.get(), record_options.topics_map});
+        WriterAndTopicRemap{writer.get(), topic_metadata.name});
     }
   }
 
@@ -172,9 +189,8 @@ void perform_rewrite(
   while ((next_msg = get_next(input_bags, next_messages))) {
     auto topic_writers_and_map = topic_outputs.find(next_msg->topic_name);
     if (topic_writers_and_map != topic_outputs.end()) {
-      std::string original_topic_name = next_msg->topic_name;
-      for (auto writer_and_map : topic_writers_and_map->second) {
-        next_msg->topic_name = remap_topic_name(original_topic_name, writer_and_map.topics_map);
+      for (auto & writer_and_map : topic_writers_and_map->second) {
+        next_msg->topic_name = writer_and_map.topic_remap;
         writer_and_map.writer_ptr->write(next_msg);
       }
     }

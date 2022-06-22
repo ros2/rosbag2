@@ -58,6 +58,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     record_options.topic_qos_profile_overrides.begin(),
     record_options.topic_qos_profile_overrides.end());
   node["topic_qos_profile_overrides"] = qos_overrides;
+  node["remappings"] = record_options.remappings;
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   return node;
@@ -87,6 +88,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     node, "topic_qos_profile_overrides", qos_overrides);
   record_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());
 
+  optional_assign<std::vector<std::string>>(node, "remappings", record_options.remappings);
   optional_assign<bool>(node, "include_hidden_topics", record_options.include_hidden_topics);
   optional_assign<bool>(
     node, "include_unpublished_topics",

@@ -223,6 +223,7 @@ output_bags:
   compression_threads: 0
   include_hidden_topics: false
   include_unpublished_topics: false
+  remappings: []
 ```
 
 Example merge:
@@ -265,6 +266,25 @@ output_bags:
   compression_mode: file
   compression_format: zstd
 ```
+
+Example topic remap:
+
+```
+$ ros2 bag convert -i bag1 -o out.yaml
+
+# out.yaml
+output_bags:
+- uri: remapped
+  storage_id: sqlite3
+  topics: [/topic1, /topic2]
+  remappings: [
+    "/topic1:=/old/topic1"
+  ]
+```
+
+This will create a new bag with `/topic1` remapped to `/old/topic1`. The remappings are declared in the same that one might
+declare them using the `--ros-args -r <remap1> -r <remap2> ... -r <remapN>` command-line arguments when launching.
+
 
 ### Overriding QoS Profiles
 
