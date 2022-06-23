@@ -337,17 +337,16 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_overrides_playback_duration)
 TEST_F(RosBag2PlayUntilTestFixture, playback_duration_overrides_play_until)
 {
   InitPlayerWithPlaybackUntilAndPlay(
-    50 /* playback_until_timestamp_millis */, 1 /* num messages topic 1 */,
-    1 /* num messages topic 2 */, 150 /* playback_duration_millis */);
+    50 /* playback_until_timestamp_millis */, 2 /* num messages topic 1 */,
+    2 /* num messages topic 2 */, 150 /* playback_duration_millis */);
 
-  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    kTopic1_);
-  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(1u)));
+  auto replayed_test_primitives =
+    sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
+  EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(2u)));
   EVAL_REPLAYED_PRIMITIVES(replayed_test_primitives);
 
-  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(
-    kTopic2_);
-  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(1u)));
+  auto replayed_test_arrays = sub_->get_received_messages<test_msgs::msg::Arrays>(kTopic2_);
+  EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(2u)));
   EVAL_REPLAYED_BOOL_ARRAY_PRIMITIVES(replayed_test_arrays);
   EVAL_REPLAYED_FLOAT_ARRAY_PRIMITIVES(replayed_test_arrays);
 }
