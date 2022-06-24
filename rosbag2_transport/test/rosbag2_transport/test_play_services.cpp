@@ -103,15 +103,27 @@ public:
     const char * function_name,
     int line_number)
   {
-    auto future = cli->async_send_request(request);
-    EXPECT_TRUE(future.valid());
-    EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready) <<
-      function_name << ", line : " << line_number;
-    // std::cout << function_name << ", line : " << line_number << std::endl;
-    auto result = std::make_shared<typename Srv::Response>();
-    EXPECT_NO_THROW({result = future.get();});
-    EXPECT_TRUE(result);
-    return result;
+    // retry 5 times
+    // NOTE(ivanpauno): There is a discovery issue in many rmw implementatations
+    // where the first few requests can be lost because of the server not having discovered
+    // the client yet. wait_for_service() thinks the server is ready, as the client has discovered
+    // the server.
+    // By retrying a few times, we make the tests more reliable.
+    // We could also just `std::this_thread::sleep()` for some seconds after creating the clients
+    // and before making requests, which should have a similar effect.
+    for (size_t i = 0; i < 5; ++i) {
+      auto future = cli->async_send_request(request);
+      EXPECT_TRUE(future.valid());
+      if (future.wait_for(service_call_timeout_) == std::future_status::ready) {
+        auto result = std::make_shared<typename Srv::Response>();
+        EXPECT_NO_THROW({result = future.get();});
+        EXPECT_TRUE(result);
+        return result;
+      }
+      cli->remove_pending_request(future);
+    }
+    ADD_FAILURE() << function_name << ", line : " << line_number;
+    return std::make_shared<typename Srv::Response>();
   }
 
   template<typename Srv>
