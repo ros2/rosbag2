@@ -840,7 +840,12 @@ void Player::configure_play_until_timestamp()
 inline bool Player::shall_stop_at_timestamp(const rcutils_time_point_value_t & msg_timestamp) const
 {
   if ((play_until_timestamp_ > -1 && msg_timestamp > play_until_timestamp_) ||
-    play_until_timestamp_ == 0) {return true;} else {return false;}
+    play_until_timestamp_ == 0)
+  {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 }  // namespace rosbag2_transport
