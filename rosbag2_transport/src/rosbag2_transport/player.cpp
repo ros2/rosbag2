@@ -363,16 +363,12 @@ bool Player::play_next()
   rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
-  while (message_ptr != nullptr && !next_message_published) {
-    if (play_until_timestamp_ >= starting_time_ &&
-      message_ptr->time_stamp > play_until_timestamp_)
-    {
-      break;
-    }
-    {
-      next_message_published = publish_message(message_ptr);
-      clock_->jump(message_ptr->time_stamp);
-    }
+  while (rclcpp::ok() && !next_message_published &&
+    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->time_stamp))
+  {
+    next_message_published = publish_message(message_ptr);
+    clock_->jump(message_ptr->time_stamp);
+
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
   }
@@ -529,12 +525,9 @@ void Player::play_messages_from_queue()
     is_ready_to_play_from_queue_ = true;
     ready_to_play_from_queue_cv_.notify_all();
   }
-  while (message_ptr != nullptr && rclcpp::ok()) {
-    if (play_until_timestamp_ >= starting_time_ &&
-      message_ptr->time_stamp > play_until_timestamp_)
-    {
-      break;
-    }
+  while (rclcpp::ok() &&
+    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->time_stamp))
+  {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
@@ -833,11 +826,25 @@ void Player::configure_play_until_timestamp()
   if (play_options_.playback_duration >= rclcpp::Duration(0, 0) ||
     play_options_.playback_until_timestamp >= rcutils_time_point_value_t{0})
   {
-    play_until_timestamp_ = std::max(
-      starting_time_ + play_options_.playback_duration.nanoseconds(),
-      play_options_.playback_until_timestamp);
+    // Handling special case when playback_duration = 0
+    auto play_until_from_duration = (play_options_.playback_duration == rclcpp::Duration(0, 0)) ?
+      0 : starting_time_ + play_options_.playback_duration.nanoseconds();
+
+    play_until_timestamp_ =
+      std::max(play_until_from_duration, play_options_.playback_until_timestamp);
   } else {
     play_until_timestamp_ = -1;
+  }
+}
+
+inline bool Player::shall_stop_at_timestamp(const rcutils_time_point_value_t & msg_timestamp) const
+{
+  if ((play_until_timestamp_ > -1 && msg_timestamp > play_until_timestamp_) ||
+    play_until_timestamp_ == 0)
+  {
+    return true;
+  } else {
+    return false;
   }
 }
 
