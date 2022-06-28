@@ -600,18 +600,36 @@ void Player::prepare_publishers()
   reader_->set_filter(storage_filter);
 
   // Create /clock publisher
-  if (play_options_.clock_publish_frequency > 0.f) {
-    const auto publish_period = std::chrono::nanoseconds(
-      static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
+  if (play_options_.clock_publish_frequency > 0.f || play_options_.clock_publish_on_topic_publish) {
     // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
     // should not own transport-based functionality
     clock_publisher_ = create_publisher<rosgraph_msgs::msg::Clock>(
       "/clock", rclcpp::ClockQoS());
+  }
+
+  if (play_options_.clock_publish_frequency > 0.f) {
+    const auto publish_period = std::chrono::nanoseconds(
+      static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
+
     clock_publish_timer_ = create_wall_timer(
       publish_period, [this]() {
-        auto msg = rosgraph_msgs::msg::Clock();
-        msg.clock = rclcpp::Time(clock_->now());
-        clock_publisher_->publish(msg);
+        publish_clock_update();
+      });
+  }
+
+  if (play_options_.clock_publish_on_topic_publish) {
+    add_on_play_message_pre_callback(
+      [this](const std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
+        if (play_options_.clock_trigger_topics.empty()) {
+          publish_clock_update();
+        } else {
+          for (const auto & topic : play_options_.clock_trigger_topics) {
+            if (topic == msg->topic_name) {
+              publish_clock_update();
+              break;
+            }
+          }
+        }
       });
   }
 
@@ -891,6 +909,24 @@ inline bool Player::shall_stop_at_timestamp(const rcutils_time_point_value_t & m
     return true;
   } else {
     return false;
+  }
+}
+
+void Player::publish_clock_update()
+{
+  publish_clock_update(rclcpp::Time(clock_->now()));
+}
+
+void Player::publish_clock_update(const rclcpp::Time & time)
+{
+  if (clock_publisher_->can_loan_messages()) {
+    auto loaned_timestamp{clock_publisher_->borrow_loaned_message()};
+    loaned_timestamp.get().clock = time;
+    clock_publisher_->publish(std::move(loaned_timestamp));
+  } else {
+    rosgraph_msgs::msg::Clock timestamp;
+    timestamp.clock = time;
+    clock_publisher_->publish(timestamp);
   }
 }
 

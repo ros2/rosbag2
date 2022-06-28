@@ -41,6 +41,9 @@ public:
         static_cast<rclcpp::PublisherBase *>(
           publisher.second->generic_publisher().get()));
     }
+    if (clock_publisher_) {
+      pub_list.push_back(clock_publisher_.get());
+    }
     return pub_list;
   }
 
