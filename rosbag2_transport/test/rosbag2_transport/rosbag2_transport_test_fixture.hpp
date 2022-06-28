@@ -22,8 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/types.hpp"
 #include "rosbag2_cpp/writer.hpp"

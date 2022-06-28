@@ -17,17 +17,10 @@
 #include <chrono>
 #include <future>
 #include <memory>
-#include <string>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
-
-#include "rosbag2_test_common/subscription_manager.hpp"
-
-#include "rosbag2_transport/player.hpp"
-#include "rosbag2_transport/qos.hpp"
+#include "rclcpp/duration.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
