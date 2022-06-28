@@ -53,6 +53,13 @@ public:
   // 0 (or negative) means that no publisher will be created
   double clock_publish_frequency = 0.0;
 
+  // Enable publishing to /clock when a replayed topic is published
+  bool clock_publish_on_topic_publish{false};
+
+  // If clock_publish_on_topic_publish is true, list of topics that will trigger
+  // a /clock update to be published. If list is empty, all topics will act as a trigger
+  std::vector<std::string> clock_trigger_topics = {};
+
   // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
   rclcpp::Duration delay = rclcpp::Duration(0, 0);
 
