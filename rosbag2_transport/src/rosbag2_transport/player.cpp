@@ -283,19 +283,26 @@ bool Player::play()
 
 void Player::stop()
 {
+  if (!is_in_playback_) {
+    return;
+  }
+  RCLCPP_INFO_STREAM(get_logger(), "Stopping playback.");
   stop_playback_ = true;
   // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
   // wait until those operations will be finished with stop_playback_ = true;
-  std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
-  {  // Purge current messages in queue.
-    std::lock_guard<std::mutex> lk(reader_mutex_);
-    while (message_queue_.pop()) {}
+  {
+    std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+    // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
+    skip_message_in_main_play_loop_ = true;
+    cancel_wait_for_next_message_ = true;
   }
-  // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
-  skip_message_in_main_play_loop_ = true;
-  cancel_wait_for_next_message_ = true;
-  clock_->resume();
-  RCLCPP_INFO_STREAM(get_logger(), "Stopping playback.");
+
+  if (clock_->is_paused()) {
+    clock_->resume();  // Temporary resume clock to force wakeup in clock_->sleep_until(time)
+    clock_->pause();   // Return in pause mode to preserve original state of the player
+  }
+  // Note: Don't clean up message queue here. It will be cleaned up automatically in
+  // Player::play() after finishing play_messages_from_queue();
 }
 
 void Player::pause()
