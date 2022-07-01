@@ -168,6 +168,9 @@ Player::Player(
 
 Player::~Player()
 {
+  // Force to stop playback to avoid hangout in case of unexpected exception or when smart
+  // pointer to the player object goes out of scope
+  stop();
   // remove callbacks on key_codes to prevent race conditions
   // Note: keyboard_handler handles locks between removing & executing callbacks
   for (auto cb_handle : keyboard_callbacks_) {
@@ -199,6 +202,8 @@ bool Player::play()
     RCLCPP_WARN_STREAM(get_logger(), "Trying to play() while in playback, dismissing request.");
     return false;
   }
+
+  stop_playback_ = false;
 
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
@@ -236,7 +241,7 @@ bool Player::play()
         is_ready_to_play_from_queue_ = false;
         ready_to_play_from_queue_cv_.notify_all();
       }
-    } while (rclcpp::ok() && play_options_.loop);
+    } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
   } catch (std::runtime_error & e) {
     RCLCPP_ERROR(get_logger(), "Failed to play: %s", e.what());
     load_storage_content_ = false;
@@ -274,6 +279,30 @@ bool Player::play()
 
   is_in_playback_ = false;
   return true;
+}
+
+void Player::stop()
+{
+  if (!is_in_playback_) {
+    return;
+  }
+  RCLCPP_INFO_STREAM(get_logger(), "Stopping playback.");
+  stop_playback_ = true;
+  // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
+  // wait until those operations will be finished with stop_playback_ = true;
+  {
+    std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+    // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
+    skip_message_in_main_play_loop_ = true;
+    cancel_wait_for_next_message_ = true;
+  }
+
+  if (clock_->is_paused()) {
+    clock_->resume();  // Temporary resume clock to force wakeup in clock_->sleep_until(time)
+    clock_->pause();   // Return in pause mode to preserve original state of the player
+  }
+  // Note: Don't clean up message queue here. It will be cleaned up automatically in
+  // Player::play() after finishing play_messages_from_queue();
 }
 
 void Player::pause()
@@ -317,7 +346,9 @@ bool Player::set_rate(double rate)
 rosbag2_storage::SerializedBagMessageSharedPtr Player::peek_next_message_from_queue()
 {
   rosbag2_storage::SerializedBagMessageSharedPtr * message_ptr_ptr = message_queue_.peek();
-  while (message_ptr_ptr == nullptr && !is_storage_completely_loaded() && rclcpp::ok()) {
+  while (!stop_playback_ && message_ptr_ptr == nullptr &&
+    !is_storage_completely_loaded() && rclcpp::ok())
+  {
     RCLCPP_WARN_THROTTLE(
       get_logger(),
       *get_clock(),
@@ -352,6 +383,12 @@ bool Player::play_next()
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+  // Check one more time that we are in pause mode after waiting on mutex. Someone could call
+  // resume() or stop() from another thread while we were waiting on mutex.
+  if (!clock_->is_paused()) {
+    RCLCPP_WARN_STREAM(get_logger(), "Called play next, but not in paused state.");
+    return false;
+  }
   skip_message_in_main_play_loop_ = true;
   // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
   // be called if not yet and queue to be filled with messages.
@@ -363,7 +400,7 @@ bool Player::play_next()
   rosbag2_storage::SerializedBagMessageSharedPtr message_ptr = peek_next_message_from_queue();
 
   bool next_message_published = false;
-  while (rclcpp::ok() && !next_message_published &&
+  while (rclcpp::ok() && !next_message_published && !stop_playback_ &&
     message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->time_stamp))
   {
     next_message_published = publish_message(message_ptr);
@@ -475,7 +512,7 @@ void Player::wait_for_filled_queue() const
 {
   while (
     message_queue_.size_approx() < play_options_.read_ahead_queue_size &&
-    !is_storage_completely_loaded() && rclcpp::ok())
+    !is_storage_completely_loaded() && rclcpp::ok() && !stop_playback_)
   {
     std::this_thread::sleep_for(queue_read_wait_period_);
   }
@@ -487,7 +524,7 @@ void Player::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (rclcpp::ok() && load_storage_content_) {
+  while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
     TSAUniqueLock lk(reader_mutex_);
     if (!reader_->has_next()) {break;}
 
@@ -525,7 +562,7 @@ void Player::play_messages_from_queue()
     is_ready_to_play_from_queue_ = true;
     ready_to_play_from_queue_cv_.notify_all();
   }
-  while (rclcpp::ok() &&
+  while (rclcpp::ok() && !stop_playback_ &&
     message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->time_stamp))
   {
     // Do not move on until sleep_until returns true
@@ -550,7 +587,7 @@ void Player::play_messages_from_queue()
   }
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
-  while (is_paused() && rclcpp::ok()) {
+  while (!stop_playback_ && is_paused() && rclcpp::ok()) {
     clock_->sleep_until(clock_->now());
   }
 }
@@ -818,6 +855,14 @@ void Player::create_control_services()
     {
       seek(rclcpp::Time(request->time).nanoseconds());
       response->success = true;
+    });
+  srv_stop_ = create_service<rosbag2_interfaces::srv::Stop>(
+    "~/stop",
+    [this](
+      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
+      rosbag2_interfaces::srv::Stop::Response::SharedPtr)
+    {
+      stop();
     });
 }
 

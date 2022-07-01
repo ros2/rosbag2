@@ -45,6 +45,7 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/set_rate.hpp"
 #include "rosbag2_interfaces/srv/seek.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -111,6 +112,10 @@ public:
 
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
+
+  /// \brief Unpause if in pause mode, stop playback and exit from play.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop();
 
   // Playback control interface
   /// Pause the flow of time for playback.
@@ -265,6 +270,7 @@ private:
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
+  std::atomic_bool stop_playback_{false};
 
   std::mutex reader_mutex_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_ RCPPUTILS_TSA_GUARDED_BY(reader_mutex_);
@@ -296,6 +302,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::PlayNext>::SharedPtr srv_play_next_;
   rclcpp::Service<rosbag2_interfaces::srv::Burst>::SharedPtr srv_burst_;
   rclcpp::Service<rosbag2_interfaces::srv::Seek>::SharedPtr srv_seek_;
+  rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
 
   rclcpp::Publisher<rosbag2_interfaces::msg::ReadSplitEvent>::SharedPtr split_event_pub_;
 
