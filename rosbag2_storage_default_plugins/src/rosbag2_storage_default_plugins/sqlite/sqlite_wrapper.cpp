@@ -167,8 +167,8 @@ sqlite3 * SqliteWrapper::get_database()
 void SqliteWrapper::initialize_application_functions()
 {
   sqlite3_create_function(
-    db_ptr, "regexp", 2, SQLITE_ANY, 0,
-    &sqlite3_application_functions::sqlite_regexp, 0, 0);
+    db_ptr, "regexp", 2, SQLITE_ANY, nullptr,
+    &sqlite3_application_functions::sqlite_regexp, nullptr, nullptr);
 }
 
 }  // namespace rosbag2_storage_plugins
