@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -32,6 +33,30 @@
 
 namespace rosbag2_storage_plugins
 {
+
+namespace sqlite3_application_functions
+{
+void sqlite_regexp(sqlite3_context * context, int argc, sqlite3_value ** values)
+{
+  const char * regex = reinterpret_cast<const char *>(sqlite3_value_text(values[0]));
+  const char * text = reinterpret_cast<const char *>(sqlite3_value_text(values[1]));
+
+  if (argc != 2 || regex == nullptr || text == nullptr) {
+    sqlite3_result_error(context, "Invalid arguments when calling regexp() function.\n", -1);
+    return;
+  }
+
+  std::regex input_regex(std::string(regex), std::regex::extended | std::regex::nosubs);
+
+  std::smatch re_match;
+
+  std::string s_text{text};
+
+  bool ret = std::regex_match(s_text, re_match, input_regex);
+  sqlite3_result_int(context, ret);
+}
+
+}   // namespace sqlite3_application_functions
 
 SqliteWrapper::SqliteWrapper(
   const std::string & uri,
@@ -63,6 +88,7 @@ SqliteWrapper::SqliteWrapper(
 
   apply_pragma_settings(pragmas, io_flag);
   sqlite3_extended_result_codes(db_ptr, 1);
+  initialize_application_functions();
 }
 
 SqliteWrapper::SqliteWrapper()
@@ -136,6 +162,13 @@ SqliteWrapper::operator bool()
 sqlite3 * SqliteWrapper::get_database()
 {
   return db_ptr;
+}
+
+void SqliteWrapper::initialize_application_functions()
+{
+  sqlite3_create_function(
+    db_ptr, "regexp", 2, SQLITE_ANY, nullptr,
+    &sqlite3_application_functions::sqlite_regexp, nullptr, nullptr);
 }
 
 }  // namespace rosbag2_storage_plugins
