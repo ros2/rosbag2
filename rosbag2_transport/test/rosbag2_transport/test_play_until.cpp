@@ -248,12 +248,12 @@ TEST_F(RosBag2PlayUntilTestFixture, playback_duration_overrides_play_until)
   .ExpectedNumberOfMessagesOnTopic2(2)
   .AndPlay();
 
-  auto replayed_test_primitives = 
+  auto replayed_test_primitives =
     sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
   EXPECT_THAT(replayed_test_primitives, SizeIs(Eq(2u)));
   EvalReplayedPrimitives(replayed_test_primitives);
 
-  auto replayed_test_arrays = 
+  auto replayed_test_arrays =
     sub_->get_received_messages<test_msgs::msg::Arrays>(kTopic2_);
   EXPECT_THAT(replayed_test_arrays, SizeIs(Eq(2u)));
   EvalReplayedBoolArrayPrimitives(replayed_test_arrays);
