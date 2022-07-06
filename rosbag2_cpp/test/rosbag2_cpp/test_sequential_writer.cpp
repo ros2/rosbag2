@@ -74,11 +74,12 @@ public:
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
-  std::unique_ptr<rosbag2_cpp::Writer> writer_;
+
   rosbag2_storage::StorageOptions storage_options_;
   std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
   rosbag2_storage::BagMetadata fake_metadata_;
+  std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
 };
 
