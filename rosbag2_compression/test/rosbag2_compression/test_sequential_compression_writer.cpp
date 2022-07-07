@@ -125,10 +125,12 @@ public:
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
-  std::unique_ptr<rosbag2_cpp::Writer> writer_;
+
   rcpputils::fs::path tmp_dir_;
   rosbag2_storage::StorageOptions tmp_dir_storage_options_;
   rosbag2_storage::BagMetadata intercepted_metadata_;
+  std::unique_ptr<rosbag2_cpp::Writer> writer_;
+
   std::string serialization_format_;
   uint64_t fake_storage_size_;
   std::string fake_storage_uri_;

@@ -74,6 +74,7 @@ void SequentialWriter::init_metadata()
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   file_info.message_count = 0;
+  metadata_.custom_data = storage_options_.custom_data;
   metadata_.files = {file_info};
 }
 
