@@ -1,5 +1,5 @@
 rosbag2_bagfile_information:
-  version: 5
+  version: 6
   storage_identifier: sqlite3
   relative_file_paths:
     - multiple_files_0.db3
@@ -38,3 +38,4 @@ rosbag2_bagfile_information:
       duration:
         nanoseconds: 5499907705
       message_count: 12
+  custom_data: ~

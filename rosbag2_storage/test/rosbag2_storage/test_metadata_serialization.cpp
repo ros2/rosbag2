@@ -132,3 +132,16 @@ TEST_F(MetadataFixture, metadata_reads_v4_fills_offered_qos_profiles)
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
   EXPECT_THAT(actual_first_topic.topic_metadata.offered_qos_profiles, Eq(offered_qos_profiles));
 }
+
+TEST_F(MetadataFixture, metadata_reads_v6_custom_data)
+{
+  BagMetadata metadata{};
+  metadata.version = 6;
+  metadata.custom_data["key1"] = "value1";
+  metadata.custom_data["key2"] = "value2";
+
+  metadata_io_->write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
+
+  EXPECT_THAT(read_metadata.custom_data, Eq(metadata.custom_data));
+}

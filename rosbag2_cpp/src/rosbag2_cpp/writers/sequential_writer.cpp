@@ -149,6 +149,7 @@ void SequentialWriter::init_metadata(std::optional<rosbag2_storage::BagMetadata>
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   file_info.message_count = 0;
+  metadata_.custom_data = storage_options_.custom_data;
   metadata_.files.push_back(file_info);
   ROSBAG2_CPP_LOG_INFO("Opened %s for writing", metadata_.relative_file_paths.back().c_str());
 }
