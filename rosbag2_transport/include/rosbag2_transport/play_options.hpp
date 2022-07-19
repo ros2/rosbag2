@@ -44,6 +44,11 @@ public:
   // If list is empty, the filter is ignored and all messages are played.
   std::string topics_regex_to_filter = "";
 
+  // Regular expression of topic names to exclude when playing a bag.
+  // Only messages not matching these specified topics will be played.
+  // If list is empty, the filter is ignored and all messages are played.
+  std::string topics_regex_to_exclude = "";
+
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
   bool loop = false;
   std::vector<std::string> topic_remapping_options = {};

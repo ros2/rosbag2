@@ -488,6 +488,7 @@ void Player::prepare_publishers()
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
   storage_filter.topics_regex = play_options_.topics_regex_to_filter;
+  storage_filter.topics_regex_to_exclude = play_options_.topics_regex_to_exclude;
   reader_->set_filter(storage_filter);
 
   // Create /clock publisher

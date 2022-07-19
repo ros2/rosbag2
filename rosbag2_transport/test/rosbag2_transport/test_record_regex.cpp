@@ -104,7 +104,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   auto test_string_messages = get_messages_strings();
   auto test_array_messages = get_messages_arrays();
   std::string regex = "/[a-z]+_nice(_.*)";
-  std::string regex_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
+  std::string topics_regex_to_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
 
   // matching topics - the only ones that should be recorded
   std::string v1 = "/awesome_nice_topic";
@@ -119,7 +119,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
 
   // checking the test data itself
   std::regex re(regex);
-  std::regex exclude(regex_exclude);
+  std::regex exclude(topics_regex_to_exclude);
   ASSERT_TRUE(std::regex_match(v1, re));
   ASSERT_TRUE(std::regex_match(v2, re));
   ASSERT_FALSE(std::regex_match(b1, re));
@@ -131,7 +131,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
 
   rosbag2_transport::RecordOptions record_options = {false, false, {}, "rmw_format", 10ms};
   record_options.regex = regex;
-  record_options.exclude = regex_exclude;
+  record_options.exclude = topics_regex_to_exclude;
 
 
   // TODO(karsten1987) Refactor this into publication manager

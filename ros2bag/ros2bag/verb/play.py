@@ -64,6 +64,10 @@ class PlayVerb(VerbExtension):
             help='filter topics by regular expression to replay, separated by space. If none '
                  'specified, all topics will be replayed.')
         parser.add_argument(
+            '-x', '--exclude', default='',
+            help='regular expressions to exclude topics from replay, separated by space. If none '
+                 'specified, all topics will be replayed.')
+        parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
         parser.add_argument(
@@ -146,6 +150,7 @@ class PlayVerb(VerbExtension):
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
         play_options.topics_regex_to_filter = args.regex
+        play_options.topics_regex_to_exclude = args.exclude
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
