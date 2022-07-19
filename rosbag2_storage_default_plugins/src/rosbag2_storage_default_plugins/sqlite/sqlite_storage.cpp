@@ -405,12 +405,12 @@ void SqliteStorage::prepare_for_reading()
     statement_str += "(topics.name IN (" + topic_list + ")) AND ";
   }
   // add topic filter based on regular expression
-  if (!storage_filter_.topics_regex.empty()) {
+  if (!storage_filter_.regex.empty()) {
     // Construct string for selected topics
     statement_str += "(";
-    for (auto & topic_regex : storage_filter_.topics_regex) {
+    for (auto & topic_regex : storage_filter_.regex) {
       statement_str += "(topics.name REGEXP '" + topic_regex + "')";
-      if (&topic_regex != &storage_filter_.topics_regex.back()) {
+      if (&topic_regex != &storage_filter_.regex.back()) {
         statement_str += " OR ";
       }
     }

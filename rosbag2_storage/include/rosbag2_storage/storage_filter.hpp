@@ -31,7 +31,7 @@ struct StorageFilter
   // Regular expressions of topic names to whitelist when playing a bag.
   // Only messages matching these specified topics will be played.
   // If list is empty, the filter is ignored and all messages are played.
-  std::vector<std::string> topics_regex = {};
+  std::vector<std::string> regex = {};
 };
 
 }  // namespace rosbag2_storage
