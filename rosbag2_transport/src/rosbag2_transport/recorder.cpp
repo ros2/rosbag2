@@ -72,7 +72,9 @@ Recorder::Recorder(
   const rosbag2_transport::RecordOptions & record_options,
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, rclcpp::NodeOptions(node_options).start_parameter_event_publisher(false)),
+: rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
+    .start_parameter_event_publisher(false)
+    .parameter_overrides({rclcpp::Parameter("use_sim_time", record_options.use_sim_time)})),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
@@ -258,7 +260,7 @@ Recorder::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, rclcpp::Clock(RCL_SYSTEM_TIME).now());
+        writer_->write(message, topic_name, topic_type, this->get_clock()->now());
       }
     });
   return subscription;
