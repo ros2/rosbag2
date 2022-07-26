@@ -35,7 +35,8 @@ class RecordVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         writer_choices = get_registered_writers()
-        default_writer = 'sqlite3' if 'sqlite3' in writer_choices else writer_choices[0]
+        default_writer = 'sqlite3' if 'sqlite3' in writer_choices else \
+            next(iter(writer_choices))
 
         compression_format_choices = get_registered_compressors()
         serialization_choices = get_registered_serializers()
