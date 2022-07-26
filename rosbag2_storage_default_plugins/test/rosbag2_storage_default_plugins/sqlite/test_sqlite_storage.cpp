@@ -423,7 +423,7 @@ TEST_F(StorageTestFixture, read_next_returns_filtered_messages_regex) {
   readable_storage->open({db_filename, kPluginID});
 
   rosbag2_storage::StorageFilter storage_filter;
-  storage_filter.topics_regex.push_back("topic.*");
+  storage_filter.regex.push_back("topic.*");
   readable_storage->set_filter(storage_filter);
 
   EXPECT_TRUE(readable_storage->has_next());
