@@ -13,15 +13,19 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ReadSplitEvent.msg"
+  "msg/WriteSplitEvent.msg"
   "srv/Burst.srv"
   "srv/GetRate.srv"
   "srv/IsPaused.srv"
   "srv/Pause.srv"
+  "srv/Play.srv"
   "srv/PlayNext.srv"
   "srv/Resume.srv"
   "srv/Seek.srv"
   "srv/SetRate.srv"
   "srv/Snapshot.srv"
+  "srv/Stop.srv"
   "srv/TogglePaused.srv"
   DEPENDENCIES builtin_interfaces
   ADD_LINTER_TESTS

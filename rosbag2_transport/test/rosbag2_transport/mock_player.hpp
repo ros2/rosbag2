@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "rosbag2_transport/player.hpp"
 
@@ -27,8 +28,9 @@ public:
   MockPlayer(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
-    const rosbag2_transport::PlayOptions & play_options)
-  : Player(std::move(reader), storage_options, play_options)
+    const rosbag2_transport::PlayOptions & play_options,
+    const std::string & node_name = "rosbag2_mock_player")
+  : Player(std::move(reader), storage_options, play_options, node_name)
   {}
 
   std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
@@ -46,6 +48,28 @@ public:
   {
     std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
     ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  }
+
+  size_t get_number_of_registered_pre_callbacks()
+  {
+    size_t callback_counter = 0;
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+      (void)pre_callback_data;
+      callback_counter++;
+    }
+    return callback_counter;
+  }
+
+  size_t get_number_of_registered_post_callbacks()
+  {
+    size_t callback_counter = 0;
+    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+      (void)post_callback_data;
+      callback_counter++;
+    }
+    return callback_counter;
   }
 };
 

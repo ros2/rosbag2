@@ -25,6 +25,7 @@
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/time.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
@@ -203,6 +204,12 @@ public:
   {
     return *writer_impl_;
   }
+
+  /*
+   * \brief Add callbacks for events that may occur during bag writing.
+   * \param callbacks the structure containing the callback to add for each event.
+   */
+  void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks);
 
 private:
   std::mutex writer_mutex_;

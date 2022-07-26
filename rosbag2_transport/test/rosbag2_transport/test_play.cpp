@@ -36,6 +36,7 @@
 
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
+#include "mock_player.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -419,6 +420,33 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
   }
 }
 
+TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_pause) {
+  auto primitive_message1 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 42;
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 500, primitive_message1),
+    serialize_test_message("topic1", 700, primitive_message1)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  player->pause();
+  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->wait_for_playback_to_start();
+  ASSERT_TRUE(player->is_paused());
+
+  rclcpp::shutdown();
+  player_future.get();
+}
+
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
 {
 public:
@@ -603,4 +631,66 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
 
   // Fails if times out
   play_and_wait(timeout);
+}
+
+TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
+{
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+
+  const size_t num_msgs_in_bag = prepared_mock_reader->max_messages_per_file() + 1;
+  const int64_t start_time_ms = 100;
+  const int64_t message_spacing_ms = 50;
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
+  messages.reserve(num_msgs_in_bag);
+
+  auto primitive_message = get_messages_basic_types()[0];
+  for (size_t i = 0; i < num_msgs_in_bag; i++) {
+    primitive_message->int32_value = static_cast<int32_t>(i + 1);
+    const int64_t timestamp = start_time_ms + message_spacing_ms * static_cast<int64_t>(i);
+    messages.push_back(serialize_test_message("topic1", timestamp, primitive_message));
+  }
+
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  bool callback_called = false;
+  std::string closed_file, opened_file;
+  rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
+  callbacks.read_split_callback =
+    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_file = info.closed_file;
+      opened_file = info.opened_file;
+      callback_called = true;
+    };
+  // This tests adding to the underlying prepared_mock_reader via the Reader instance
+  reader->add_event_callbacks(callbacks);
+
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  sub_ = std::make_shared<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", messages.size());
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(
+    sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  player->play();
+
+  await_received_messages.get();
+
+  auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_test_primitives, SizeIs(messages.size()));
+
+  // Confirm that the callback was called and the file names have been sent with the event
+  ASSERT_TRUE(callback_called);
+  EXPECT_EQ(closed_file, "BagFile0");
+  EXPECT_EQ(opened_file, "BagFile1");
 }

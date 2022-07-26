@@ -60,6 +60,10 @@ class PlayVerb(VerbExtension):
             help='topics to replay, separated by space. If none specified, all topics will be '
                  'replayed.')
         parser.add_argument(
+            '-e', '--regex', type=str, default=[], nargs='+',
+            help='filter topics by regular expression to replay, separated by space. If none '
+                 'specified, all topics will be replayed.')
+        parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
         parser.add_argument(
@@ -86,6 +90,33 @@ class PlayVerb(VerbExtension):
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
         parser.add_argument(
+            '--playback-duration', type=float, default=-1.0,
+            help='Playback duration, in seconds. Negative durations mark an infinite playback. '
+                 'Default is -1.0. When positive, the maximum of `playback-until-*` and the one '
+                 'that this attribute yields will be used to determine which one stops playback '
+                 'execution.')
+
+        playback_until_arg_group = parser.add_mutually_exclusive_group()
+        playback_until_arg_group.add_argument(
+            '--playback-until-sec', type=float, default=-1.,
+            help='Playback until timestamp, expressed in seconds since epoch. '
+                 'Mutually exclusive argument with `--playback-until-nsec`. '
+                 'Use this argument when floating point to integer conversion error is not a '
+                 'problem for your application. Negative stamps disable this feature. Default is '
+                 '-1.0. When positive, the maximum of the effective time that '
+                 '`--playback-duration` yields and this attribute will be used to determine which '
+                 'one stops playback execution.')
+        playback_until_arg_group.add_argument(
+            '--playback-until-nsec', type=int, default=-1,
+            help='Playback until timestamp, expressed in nanoseconds since epoch.  '
+                 'Mutually exclusive argument with `--playback-until-sec`. '
+                 'Use this argument when floating point to integer conversion error matters for '
+                 'your application. Negative stamps disable this feature. Default is -1. When '
+                 'positive, the maximum of the effective time that `--playback-duration` yields '
+                 'and this attribute will be used to determine which one stops playback '
+                 'execution.')
+
+        parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
             help='disables keyboard controls for playback')
         parser.add_argument(
@@ -111,6 +142,14 @@ class PlayVerb(VerbExtension):
                  'By default, if loaned message can be used, messages are published as loaned '
                  'message. It can help to reduce the number of data copies, so there is a greater '
                  'benefit for sending big data.')
+
+    def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
+        nano_scale = 1000 * 1000 * 1000
+        if playback_until_sec and playback_until_sec >= 0.0:
+            return int(playback_until_sec * nano_scale)
+        if playback_until_nsec and playback_until_nsec >= 0:
+            return playback_until_nsec
+        return -1
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -141,11 +180,15 @@ class PlayVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
+        play_options.regex_to_filter = args.regex
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
         play_options.delay = args.delay
+        play_options.playback_duration = args.playback_duration
+        play_options.playback_until_timestamp = self.get_playback_until_from_arg_group(
+            args.playback_until_sec, args.playback_until_nsec)
         play_options.disable_keyboard_controls = args.disable_keyboard_controls
         play_options.start_paused = args.start_paused
         play_options.start_offset = args.start_offset
