@@ -92,7 +92,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
 
-  std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> string_messages;
+  std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr> string_messages;
   for (const auto & message : recorded_messages) {
     if (message->topic_name == string_topic) {
       string_messages.push_back(message);

@@ -47,7 +47,7 @@ public:
     (void) topic_with_type;
   }
 
-  void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) override
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override
   {
     if (!snapshot_mode_) {
       messages_.push_back(message);
@@ -83,12 +83,13 @@ public:
     }
   }
 
-  const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & get_messages()
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & get_messages()
   {
     return messages_;
   }
 
-  const std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & get_snapshot_buffer()
+  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &
+  get_snapshot_buffer()
   {
     return snapshot_buffer_;
   }
@@ -110,8 +111,8 @@ public:
 
 private:
   std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_;
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> snapshot_buffer_;
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> messages_;
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> snapshot_buffer_;
   std::unordered_map<std::string, size_t> messages_per_topic_;
   size_t messages_per_file_ = 0;
   bool snapshot_mode_ = false;

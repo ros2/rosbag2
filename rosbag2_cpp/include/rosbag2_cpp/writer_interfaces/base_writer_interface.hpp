@@ -45,7 +45,7 @@ public:
 
   virtual void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
 
-  virtual void write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message) = 0;
+  virtual void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) = 0;
 
   /**
    * Triggers a snapshot for writers that support it.

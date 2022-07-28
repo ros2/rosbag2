@@ -70,7 +70,7 @@ public:
 
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> filter_messages(
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
+    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> messages,
     const std::string & topic)
   {
     std::vector<std::shared_ptr<MessageT>> filtered_messages;

@@ -68,7 +68,7 @@ void SequentialCompressionWriter::compression_thread_fn()
   rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
 
   while (true) {
-    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
+    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message;
     std::string file;
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
@@ -93,13 +93,13 @@ void SequentialCompressionWriter::compression_thread_fn()
     }
 
     if (message) {
-      compress_message(*compressor, message);
+      auto compressed_message = compress_message(*compressor, message);
 
       {
         // Now that the message is compressed, it can be written to file using the
         // normal method.
         std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
-        SequentialWriter::write(message);
+        SequentialWriter::write(compressed_message);
       }
     } else if (!file.empty()) {
       compress_file(*compressor, file);
@@ -296,15 +296,18 @@ void SequentialCompressionWriter::split_bagfile()
   }
 }
 
-void SequentialCompressionWriter::compress_message(
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+SequentialCompressionWriter::compress_message(
   BaseCompressorInterface & compressor,
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  compressor.compress_serialized_bag_message(message.get());
+  auto compressed_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  compressor.compress_serialized_bag_message(message.get(), compressed_message.get());
+  return compressed_message;
 }
 
 void SequentialCompressionWriter::write(
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   // If the compression mode is FILE, write as normal here.  Compressing files doesn't
   // occur until after the bag file is split.
