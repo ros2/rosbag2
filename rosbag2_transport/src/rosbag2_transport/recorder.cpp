@@ -191,6 +191,13 @@ void Recorder::event_publisher_thread_main()
       message.closed_file = bag_split_info_.closed_file;
       message.opened_file = bag_split_info_.opened_file;
       split_event_pub_->publish(message);
+      if (writer_ && record_options_.repeated_transient_local) {
+        for (const auto & message : transient_local_messages_) {
+          writer_->write(
+            message.second, message.first.first, message.first.second,
+            this->get_clock()->now());
+        }
+      }
     }
 
     should_exit = event_publisher_thread_should_exit_;
@@ -318,9 +325,14 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type, qos](std::shared_ptr<const rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
         writer_->write(message, topic_name, topic_type, this->get_clock()->now());
+        if (record_options_.repeated_transient_local &&
+        qos.get_rmw_qos_profile().durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        {
+          transient_local_messages_.insert_or_assign({topic_name, topic_type}, message);
+        }
       }
     });
   return subscription;

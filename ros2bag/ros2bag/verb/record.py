@@ -175,6 +175,10 @@ class RecordVerb(VerbExtension):
             '--use-sim-time', action='store_true', default=False,
             help='Use simulation time.'
         )
+        parser.add_argument(
+            '--repeated-transient-local', action='store_true', default=False,
+            help='Repeat transient local messages at the start of each new bag file.'
+        )
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
