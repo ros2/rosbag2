@@ -82,10 +82,20 @@ class PlayVerb(VerbExtension):
                  '  pragmas: [\"<setting_name>\" = <setting_value>]'
                  'Note that applicable settings are limited to read-only for ros2 bag play.'
                  'For a list of sqlite3 settings, refer to sqlite3 documentation')
-        parser.add_argument(
+        clock_args_group = parser.add_mutually_exclusive_group()
+        clock_args_group.add_argument(
             '--clock', type=positive_float, nargs='?', const=40, default=0,
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
+        clock_args_group.add_argument(
+            '--clock-topics', type=str, default=[], nargs='+',
+            help='List of topics separated by spaces that will trigger a /clock update '
+                 'when a message is published on them'
+        )
+        clock_args_group.add_argument(
+            '--clock-topics-all', default=False, action='store_true',
+            help='Publishes an update on /clock immediately before each replayed message'
+        )
         parser.add_argument(
             '-d', '--delay', type=positive_float, default=0.0,
             help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
@@ -185,6 +195,9 @@ class PlayVerb(VerbExtension):
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
+        if args.clock_topics_all or len(args.clock_topics) > 0:
+            play_options.clock_publish_on_topic_publish = True
+        play_options.clock_topics = args.clock_topics
         play_options.delay = args.delay
         play_options.playback_duration = args.playback_duration
         play_options.playback_until_timestamp = self.get_playback_until_from_arg_group(

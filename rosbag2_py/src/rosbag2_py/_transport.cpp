@@ -286,6 +286,8 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("loop", &PlayOptions::loop)
   .def_readwrite("topic_remapping_options", &PlayOptions::topic_remapping_options)
   .def_readwrite("clock_publish_frequency", &PlayOptions::clock_publish_frequency)
+  .def_readwrite("clock_publish_on_topic_publish", &PlayOptions::clock_publish_on_topic_publish)
+  .def_readwrite("clock_topics", &PlayOptions::clock_trigger_topics)
   .def_property(
     "delay",
     &PlayOptions::getDelay,
