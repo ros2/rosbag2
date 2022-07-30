@@ -2,6 +2,18 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Use a single variable for evaluating the filter regex (`#1053 <https://github.com/ros2/rosbag2/issues/1053>`_)
+* Speed optimization: Preparing copyless publish/subscribing by using const message for writing (`#1010 <https://github.com/ros2/rosbag2/issues/1010>`_)
+ * Update compression to make copy instead of in-place operation
+ * Get rid of extra data copying operation in writer by refrencing to received message
+* Renamed --topics-regex to --regex and -e in Player class to be consistent with Recorder (`#1045 <https://github.com/ros2/rosbag2/issues/1045>`_)
+* Add the ability to record any key/value pair in 'custom' field in metadata.yaml (`#1038 <https://github.com/ros2/rosbag2/issues/1038>`_)
+* Added support for filtering topics via regular expressions on Playback (`#1034 <https://github.com/ros2/rosbag2/issues/1034>`_)
+* Contributors: DensoADAS, Joshua Hampp, Esteve Fernandez, Hunter L. Allen, Michael Orlov,
+  Tony Peng
+
 0.16.0 (2022-05-11)
 -------------------
 

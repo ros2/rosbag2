@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Add the ability to record any key/value pair in 'custom' field in metadata.yaml (`#1038 <https://github.com/ros2/rosbag2/issues/1038>`_)
+* Contributors: Hunter L. Allen, Tony Peng
+
 0.16.0 (2022-05-11)
 -------------------
 

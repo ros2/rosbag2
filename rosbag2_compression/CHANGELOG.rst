@@ -2,6 +2,15 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Speed optimization: Preparing copyless publish/subscribing by using const message for writing (`#1010 <https://github.com/ros2/rosbag2/issues/1010>`_)
+ * Update compression to make copy instead of in-place operation
+ * Get rid of extra data copying operation in writer by refrencing to received message
+
+* Add the ability to record any key/value pair in 'custom' field in metadata.yaml (`#1038 <https://github.com/ros2/rosbag2/issues/1038>`_)
+* Contributors: DensoADAS, Hunter L. Allen, Joshua Hampp, Michael Orlov, Tony Peng
+
 0.16.0 (2022-05-11)
 -------------------
 

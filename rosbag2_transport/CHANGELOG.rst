@@ -2,6 +2,40 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Use a single variable for evaluating the filter regex (`#1053 <https://github.com/ros2/rosbag2/issues/1053>`_)
+* Add additional mode of publishing sim time updates triggered by replayed messages (`#1050 <https://github.com/ros2/rosbag2/issues/1050>`_)
+ * When this mode is active, /clock updates are triggered whenever messages are replayed rather
+   than at a fixed rate. Optionally, a list of triggering topics can be set so that only a subset
+   of replayed messages will trigger the /clock update. This mode is most useful when replaying
+   applications which do some sanity checking or correlation of message data to system timestamps.
+   If the application does not need the sim time to be updated at a consistent rate, this mode can
+   substantially reduce the overhead of having sim time enabled in rosbag2.
+* Speed optimization: Preparing copyless publish/subscribing by using const message for writing (`#1010 <https://github.com/ros2/rosbag2/issues/1010>`_)
+ * Update compression to make copy instead of in-place operation
+ * Get rid of extra data copying operation in writer by refrencing to received message
+* Renamed --topics-regex to --regex and -e in Player class to be consistent with Recorder (`#1045 <https://github.com/ros2/rosbag2/issues/1045>`_)
+* Refactor play until and duration tests (`#1024 <https://github.com/ros2/rosbag2/issues/1024>`_)
+* Added support for filtering topics via regular expressions on Playback (`#1034 <https://github.com/ros2/rosbag2/issues/1034>`_)
+* Adds stop operation for rosbag2::Player (`#1007 <https://github.com/ros2/rosbag2/issues/1007>`_)
+  Stop will unpause if in pause mode, stop playback and exit from `play()` method.
+* Fix incorrect boundary check for `playback_duration` and `play_until_timestamp` (`#1032 <https://github.com/ros2/rosbag2/issues/1032>`_)
+ * Add initialization for `metadata  starting time` in MockSequentialReader
+ * Fixed one false positive and one flaky test in test_play_until
+* Split up the include of rclcpp.hpp (`#1027 <https://github.com/ros2/rosbag2/issues/1027>`_)
+* Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_)
+* Adds play until timestamp functionality (`#1005 <https://github.com/ros2/rosbag2/issues/1005>`_)
+* Add CLI verb for burst mode of playback (`#980 <https://github.com/ros2/rosbag2/issues/980>`_)
+* Add on play message callbacks to the `rosbag2::Player` class (`#1004 <https://github.com/ros2/rosbag2/issues/1004>`_)
+* Add play-for specified number of seconds functionality (`#960 <https://github.com/ros2/rosbag2/issues/960>`_)
+* Reduce message spam when topics to be recorded do not exist (`#1018 <https://github.com/ros2/rosbag2/issues/1018>`_)
+* Address flakiness in record_all_with_sim_time test (`#1014 <https://github.com/ros2/rosbag2/issues/1014>`_)
+* Add debug instrumentation for `test_play_services` (`#1013 <https://github.com/ros2/rosbag2/issues/1013>`_)
+* Fix for rosbag2::Player freeze when pressing ctrl+c in pause mode (`#1002 <https://github.com/ros2/rosbag2/issues/1002>`_)
+* Contributors: Agustin Alba Chicar, Brian, Chris Lalancette, DensoADAS, Joshua Hampp,
+  Esteve Fernandez, Geoffrey Biggs, Jorge Perez, Michael Orlov, kylemarcey, Misha Shalem, Tony Peng
+
 0.16.0 (2022-05-11)
 -------------------
 * Add the /bigobj flag to Windows Debug builds. (`#1009 <https://github.com/ros2/rosbag2/issues/1009>`_)
