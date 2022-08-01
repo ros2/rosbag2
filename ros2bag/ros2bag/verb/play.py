@@ -60,7 +60,7 @@ class PlayVerb(VerbExtension):
             help='topics to replay, separated by space. If none specified, all topics will be '
                  'replayed.')
         parser.add_argument(
-            '-e', '--regex', type=str, default=[], nargs='+',
+            '-e', '--regex', default='',
             help='filter topics by regular expression to replay, separated by space. If none '
                  'specified, all topics will be replayed.')
         parser.add_argument(
@@ -145,7 +145,7 @@ class PlayVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
-        play_options.regex_to_filter = args.regex
+        play_options.topics_regex_to_filter = args.regex
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
