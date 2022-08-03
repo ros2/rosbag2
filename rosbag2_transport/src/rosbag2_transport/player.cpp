@@ -720,7 +720,7 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
         get_logger(), "Failed to publish message on '" << message->topic_name <<
-          "' topic. \nError: %s" << e.what());
+          "' topic. \nError: " << e.what());
     }
 
     // Calling on play message post-callbacks
