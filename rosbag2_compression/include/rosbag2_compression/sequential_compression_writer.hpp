@@ -200,6 +200,11 @@ private:
 
   // Prepares the metadata by setting initial values.
   void init_metadata() override;
+
+  // Compress a single message and write it
+  void compress_and_write_message(
+    std::shared_ptr<rosbag2_compression::BaseCompressorInterface> & compressor,
+    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
 };
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_

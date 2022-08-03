@@ -93,18 +93,29 @@ void SequentialCompressionWriter::compression_thread_fn()
     }
 
     if (message) {
-      auto compressed_message = compress_message(*compressor, message);
-
-      {
-        // Now that the message is compressed, it can be written to file using the
-        // normal method.
-        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
-        SequentialWriter::write(compressed_message);
-      }
+      compress_and_write_message(compressor, message);
     } else if (!file.empty()) {
       compress_file(*compressor, file);
     }
   }
+}
+
+void SequentialCompressionWriter::compress_and_write_message(
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> & compressor,
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+{
+  if (compressor == nullptr) {
+    // Initialize compressor on demand
+    compressor = compression_factory_->create_compressor(
+      compression_options_.compression_format);
+    rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
+  }
+  auto compressed_message = compress_message(*compressor, message);
+
+  // Now that the message is compressed, it can be written to file using the
+  // normal method.
+  std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
+  SequentialWriter::write(compressed_message);
 }
 
 void SequentialCompressionWriter::init_metadata()
@@ -317,11 +328,21 @@ void SequentialCompressionWriter::write(
     SequentialWriter::write(message);
   } else {
     std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
-    while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
+    while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
+      compression_options_.compression_queue_size > 0u)
+    {
       compressor_message_queue_.pop();
     }
-    compressor_message_queue_.push(message);
-    compressor_condition_.notify_one();
+
+    // If no message should be dropped and the queue has still messages, compress and write immediately
+    if (compression_options_.compression_queue_size == 0u &&
+      compressor_message_queue_.size() > 0u)
+    {
+      compress_and_write_message(compressor_, message);
+    } else {
+      compressor_message_queue_.push(message);
+      compressor_condition_.notify_one();
+    }
   }
 }
 
