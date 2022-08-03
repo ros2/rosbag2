@@ -334,7 +334,8 @@ void SequentialCompressionWriter::write(
       compressor_message_queue_.pop();
     }
 
-    // If no message should be dropped and the queue has still messages, compress and write immediately
+    // If no message should be dropped and the queue has still messages,
+    // compress and write immediately
     if (compression_options_.compression_queue_size == 0u &&
       compressor_message_queue_.size() > 0u)
     {
