@@ -278,7 +278,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("node_prefix", &PlayOptions::node_prefix)
   .def_readwrite("rate", &PlayOptions::rate)
   .def_readwrite("topics_to_filter", &PlayOptions::topics_to_filter)
-  .def_readwrite("regex_to_filter", &PlayOptions::regex_to_filter)
+  .def_readwrite("topics_regex_to_filter", &PlayOptions::topics_regex_to_filter)
   .def_property(
     "topic_qos_profile_overrides",
     &PlayOptions::getTopicQoSProfileOverrides,
