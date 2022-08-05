@@ -302,6 +302,8 @@ SequentialCompressionWriter::compress_message(
   std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   auto compressed_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  compressed_message->time_stamp = message->time_stamp;
+  compressed_message->topic_name = message->topic_name;
   compressor.compress_serialized_bag_message(message.get(), compressed_message.get());
   return compressed_message;
 }
