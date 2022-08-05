@@ -2,6 +2,15 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Adds stop operation for rosbag2::Player (`#1007 <https://github.com/ros2/rosbag2/issues/1007>`_)
+* Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_)
+* Adds play until timestamp functionality (`#1005 <https://github.com/ros2/rosbag2/issues/1005>`_)
+* Add CLI verb for burst mode of playback (`#980 <https://github.com/ros2/rosbag2/issues/980>`_)
+* Add play-for specified number of seconds functionality (`#960 <https://github.com/ros2/rosbag2/issues/960>`_)
+* Contributors: Agustin Alba Chicar, Geoffrey Biggs, Michael Orlov, Misha Shalem
+
 0.16.0 (2022-05-11)
 -------------------
 

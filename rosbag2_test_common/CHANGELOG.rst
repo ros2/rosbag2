@@ -2,6 +2,11 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.17.0 (2022-07-30)
+-------------------
+* Split up the include of rclcpp.hpp (`#1027 <https://github.com/ros2/rosbag2/issues/1027>`_)
+* Contributors: Chris Lalancette
+
 0.16.0 (2022-05-11)
 -------------------
 
