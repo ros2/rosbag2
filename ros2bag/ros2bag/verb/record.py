@@ -16,6 +16,7 @@ from argparse import FileType
 import datetime
 import os
 
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
@@ -77,6 +78,9 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-s', '--storage', default=default_writer, choices=writer_choices,
             help=f"storage identifier to be used, defaults to '{default_writer}'")
+        parser.add_argument(
+            '-S', '--services',
+            action='extend', nargs='*', help='Name(s) of service to record')
         parser.add_argument(
             '-f', '--serialization-format', default='', choices=serialization_choices,
             help='rmw serialization format in which the messages are saved, defaults to the'
@@ -174,8 +178,10 @@ class RecordVerb(VerbExtension):
         if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
             return print_error('Must specify only one option out of topics, --regex or --all')
         # one out of "all", "topics" and "regex" must be true
-        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
-            return print_error('Invalid choice: Must specify topic(s), --regex or --all')
+        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex) or \
+               (args.services and len(args.services) > 0)):
+            return print_error(
+                'Invalid choice: Must specify topic(s), --services, --regex or --all')
 
         if args.topics and args.exclude:
             return print_error('--exclude argument cannot be used when specifying a list '
@@ -221,6 +227,13 @@ class RecordVerb(VerbExtension):
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode
         )
+
+        if args.services is not None:
+            for srv in args.services:
+                args.topics.append(
+                    srv + _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
+            args.include_hidden_topics = True
+
         record_options = RecordOptions()
         record_options.all = args.all
         record_options.is_discovery_disabled = args.no_discovery
