@@ -83,6 +83,7 @@ void SequentialCompressionWriter::compression_thread_fn()
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
+        compressor_condition_.notify_all();
       } else if (!compressor_file_queue_.empty()) {
         file = compressor_file_queue_.front();
         compressor_file_queue_.pop();
@@ -93,29 +94,18 @@ void SequentialCompressionWriter::compression_thread_fn()
     }
 
     if (message) {
-      compress_and_write_message(compressor, message);
+      auto compressed_message = compress_message(*compressor, message);
+
+      {
+        // Now that the message is compressed, it can be written to file using the
+        // normal method.
+        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
+        SequentialWriter::write(compressed_message);
+      }
     } else if (!file.empty()) {
       compress_file(*compressor, file);
     }
   }
-}
-
-void SequentialCompressionWriter::compress_and_write_message(
-  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> & compressor,
-  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
-{
-  if (compressor == nullptr) {
-    // Initialize compressor on demand
-    compressor = compression_factory_->create_compressor(
-      compression_options_.compression_format);
-    rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
-  }
-  auto compressed_message = compress_message(*compressor, message);
-
-  // Now that the message is compressed, it can be written to file using the
-  // normal method.
-  std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
-  SequentialWriter::write(compressed_message);
 }
 
 void SequentialCompressionWriter::init_metadata()
@@ -327,7 +317,7 @@ void SequentialCompressionWriter::write(
   if (compression_options_.compression_mode == CompressionMode::FILE) {
     SequentialWriter::write(message);
   } else {
-    std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
       compression_options_.compression_queue_size > 0u)
     {
@@ -339,11 +329,16 @@ void SequentialCompressionWriter::write(
     if (compression_options_.compression_queue_size == 0u &&
       compressor_message_queue_.size() > compression_options_.compression_threads)
     {
-      compress_and_write_message(compressor_, message);
-    } else {
-      compressor_message_queue_.push(message);
-      compressor_condition_.notify_one();
+      compressor_condition_.wait(
+        lock,
+        [&] {
+          return !compression_is_running_ ||
+          compressor_message_queue_.size() <= compression_options_.compression_threads;
+        });
     }
+
+    compressor_message_queue_.push(message);
+    compressor_condition_.notify_one();
   }
 }
 
