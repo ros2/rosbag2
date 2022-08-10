@@ -178,7 +178,7 @@ class RecordVerb(VerbExtension):
         if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
             return print_error('Must specify only one option out of topics, --regex or --all')
         # one out of "all", "topics" and "regex" must be true
-        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex) or \
+        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex) or
                (args.services and len(args.services) > 0)):
             return print_error(
                 'Invalid choice: Must specify topic(s), --services, --regex or --all')
