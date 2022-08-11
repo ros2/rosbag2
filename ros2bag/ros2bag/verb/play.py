@@ -15,14 +15,15 @@
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import check_not_negative_int
-from ros2bag.api import check_path_exists
-from ros2bag.api import check_positive_float
-from ros2bag.api import convert_yaml_to_qos_profile
-from ros2bag.api import print_error
+from ros2bag.api import (
+    add_standard_reader_args,
+    check_not_negative_int,
+    check_positive_float,
+    convert_yaml_to_qos_profile,
+    print_error,
+)
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
-from rosbag2_py import get_registered_readers
 from rosbag2_py import Player
 from rosbag2_py import PlayOptions
 from rosbag2_py import StorageOptions
@@ -40,13 +41,7 @@ class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        reader_choices = get_registered_readers()
-
-        parser.add_argument(
-            'bag_file', type=check_path_exists, help='bag file to replay')
-        parser.add_argument(
-            '-s', '--storage', default='', choices=reader_choices,
-            help='Storage implementation of bag. By default tries to determine from metadata.')
+        add_standard_reader_args(parser)
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -181,7 +176,7 @@ class PlayVerb(VerbExtension):
             topic_remapping.append(remap_rule)
 
         storage_options = StorageOptions(
-            uri=args.bag_file,
+            uri=args.bag_path,
             storage_id=args.storage,
             storage_config_uri=storage_config_file,
         )
