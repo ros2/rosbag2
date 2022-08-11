@@ -39,11 +39,10 @@ private:
   void topic_callback(std::shared_ptr<rclcpp::SerializedMessage> msg) const
   {
     rclcpp::Time time_stamp = this->now();
-
-    writer_->write(*msg, "chatter", "example_interfaces/msg/String", time_stamp);
+    writer_->write(msg, "chatter", "example_interfaces/msg/String", time_stamp);
   }
 
-  rclcpp::Subscription<rclcpp::SerializedMessage>::SharedPtr subscription_;
+  rclcpp::Subscription<example_interfaces::msg::String>::SharedPtr subscription_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
 
