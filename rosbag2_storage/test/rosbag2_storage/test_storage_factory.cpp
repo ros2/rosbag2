@@ -33,16 +33,14 @@ class StorageFactoryTest : public ::testing::Test
 public:
   rosbag2_storage::StorageFactory factory;
 
-  std::string bag_file_path = "file/to/be/loaded.bag";
-  std::string test_plugin_id = "my_test_plugin";
-  std::string test_read_only_plugin_id = "my_read_only_test_plugin";
+  std::string bag_file_path = "path/to/be/loaded.bag";
   std::string test_unavailable_plugin_id = "my_unavailable_plugin";
 };
 
 TEST_F(StorageFactoryTest, load_test_plugin) {
   // Load plugin for read and write
   auto read_write_storage = factory.open_read_write(
-    {bag_file_path, test_plugin_id});
+    {bag_file_path, test_constants::READ_WRITE_PLUGIN_IDENTIFIER});
   ASSERT_NE(nullptr, read_write_storage);
 
   EXPECT_EQ(
@@ -69,7 +67,7 @@ TEST_F(StorageFactoryTest, load_test_plugin) {
 
 TEST_F(StorageFactoryTest, loads_readonly_plugin_only_for_read_only_storage) {
   auto storage_for_reading = factory.open_read_only(
-    {bag_file_path, test_read_only_plugin_id});
+    {bag_file_path, test_constants::READ_ONLY_PLUGIN_IDENTIFIER});
   ASSERT_NE(nullptr, storage_for_reading);
 
   EXPECT_EQ(
