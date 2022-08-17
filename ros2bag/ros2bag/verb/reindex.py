@@ -22,10 +22,8 @@
 
 import os
 
-from ros2bag.api import (
-    add_standard_reader_args,
-    print_error,
-)
+from ros2bag.api import add_standard_reader_args
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from rosbag2_py import Reindexer, StorageOptions
 

@@ -15,13 +15,11 @@
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import (
-    add_standard_reader_args,
-    check_not_negative_int,
-    check_positive_float,
-    convert_yaml_to_qos_profile,
-    print_error,
-)
+from ros2bag.api import add_standard_reader_args
+from ros2bag.api import check_not_negative_int
+from ros2bag.api import check_positive_float
+from ros2bag.api import convert_yaml_to_qos_profile
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
