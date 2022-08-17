@@ -404,18 +404,6 @@ void SqliteStorage::prepare_for_reading()
     }
     statement_str += "(topics.name IN (" + topic_list + ")) AND ";
   }
-  // add topic filter based on regular expression
-  if (!storage_filter_.regex.empty()) {
-    // Construct string for selected topics
-    statement_str += "(";
-    for (auto & topic_regex : storage_filter_.regex) {
-      statement_str += "(topics.name REGEXP '" + topic_regex + "')";
-      if (&topic_regex != &storage_filter_.regex.back()) {
-        statement_str += " OR ";
-      }
-    }
-    statement_str += ") AND ";
-  }
   // add start time filter
   statement_str += "(((timestamp = " + std::to_string(seek_time_) + ") "
     "AND (messages.id >= " + std::to_string(seek_row_id_) + ")) "
