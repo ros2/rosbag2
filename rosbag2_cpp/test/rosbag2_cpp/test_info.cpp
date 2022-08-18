@@ -273,3 +273,25 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_EQ(read_metadata.compression_format, "zstd");
   EXPECT_EQ(read_metadata.compression_mode, "FILE");
 }
+
+TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
+  const auto path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  // Create an empty bag with default storage
+  {
+    rosbag2_cpp::Writer writer;
+    writer.open(path.string());
+  }
+
+  // Delete the metadata file, just to assure that the info has to guess
+  const auto metadata_path = path / "metadata.yaml";
+  EXPECT_TRUE(rcpputils::fs::remove(metadata_path));
+
+  // Expect to be able to get info for a single file without specifying the storage ID.
+  const auto bagfile_path = path / "bag_0.db3";
+  rosbag2_cpp::Info info;
+  rosbag2_storage::BagMetadata metadata;
+  EXPECT_NO_THROW(
+    metadata = info.read_metadata(bagfile_path.string(), "")
+  );
+  EXPECT_EQ(metadata.storage_identifier, "sqlite3");
+}
