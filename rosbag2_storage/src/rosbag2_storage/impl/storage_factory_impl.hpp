@@ -43,6 +43,22 @@ get_class_loader()
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_storage", lookup_name);
 }
 
+template<typename InterfaceT>
+std::shared_ptr<InterfaceT>
+try_load_plugin()
+{
+  std::shared_ptr<InterfaceT> instance;
+  try {
+    auto unmanaged_instance = class_loader->createUnmanagedInstance(registered_class);
+    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
+  } catch (const std::runtime_error & ex) {
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Unable to load plugin: " << ex.what());
+  }
+  return instance;
+}
+
+
 template<
   typename InterfaceT,
   storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
@@ -52,7 +68,7 @@ try_detect_and_open_storage(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const StorageOptions & storage_options)
 {
-  bool creating_file = flag == storage_interfaces::IOFlag::READ_WRITE;
+  bool creating_file = flag != storage_interfaces::IOFlag::READ_ONLY;
   if (creating_file) {
     ROSBAG2_STORAGE_LOG_WARN_STREAM("Can not yet autodetect storage for writing bags.");
     return nullptr;
@@ -60,16 +76,10 @@ try_detect_and_open_storage(
 
   const auto & registered_classes = class_loader->getDeclaredClasses();
   for (const auto & registered_class : registered_classes) {
-    std::shared_ptr<InterfaceT> instance;
-    try {
-      auto unmanaged_instance = class_loader->createUnmanagedInstance(registered_class);
-      instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
-    } catch (const std::runtime_error & ex) {
-      ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-        "Unable to load plugin: " << ex.what());
+    std::shared_ptr<InterfaceT> instance = try_load_plugin(registered_class);
+    if (instance == nullptr) {
       continue;
     }
-
     ROSBAG2_STORAGE_LOG_INFO_STREAM(
       "Checking storage implementation '" << registered_class << "' to open bag.");
     try {
@@ -107,13 +117,8 @@ get_interface_instance(
     return nullptr;
   }
 
-  std::shared_ptr<InterfaceT> instance = nullptr;
-  try {
-    auto unmanaged_instance = class_loader->createUnmanagedInstance(storage_options.storage_id);
-    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
-  } catch (const std::runtime_error & ex) {
-    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Unable to load instance of read write interface: " << ex.what());
+  std::shared_ptr<InterfaceT> instance = try_load_plugin(storage_options.storage_id);
+  if (instance == nullptr) {
     return nullptr;
   }
 
