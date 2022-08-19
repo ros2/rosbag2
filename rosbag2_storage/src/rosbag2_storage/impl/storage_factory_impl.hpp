@@ -89,7 +89,7 @@ try_detect_and_open_storage(
       ROSBAG2_STORAGE_LOG_DEBUG_STREAM(
         "Success, using implementation '" << registered_class << "'.");
       return instance;
-    } catch (const std::runtime_error & ex) {
+    } catch (const std::runtime_error & /* ex */) {
       continue;
     }
   }
