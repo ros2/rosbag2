@@ -22,32 +22,24 @@
 
 import os
 
-from ros2bag.api import check_path_exists
+from ros2bag.api import add_standard_reader_args
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
-from rosbag2_py import get_registered_readers, Reindexer, StorageOptions
+from rosbag2_py import Reindexer, StorageOptions
 
 
 class ReindexVerb(VerbExtension):
     """Reconstruct metadata file for a bag."""
 
     def add_arguments(self, parser, cli_name):
-        storage_choices = get_registered_readers()
-        default_storage = 'sqlite3' if 'sqlite3' in storage_choices else \
-            next(iter(storage_choices))
-
-        parser.add_argument(
-            'bag_directory', type=check_path_exists, help='bag to reindex')
-        parser.add_argument(
-            'storage_id', default=default_storage, choices=storage_choices,
-            help=f"storage identifier to be used, defaults to '{default_storage}'")
+        add_standard_reader_args(parser)
 
     def main(self, *, args):
-        if not os.path.isdir(args.bag_directory):
+        if not os.path.isdir(args.bag_path):
             return print_error('Must specify a bag directory')
 
         storage_options = StorageOptions(
-            uri=args.bag_directory,
+            uri=args.bag_path,
             storage_id=args.storage_id,
         )
 
