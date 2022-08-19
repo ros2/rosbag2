@@ -43,6 +43,59 @@ get_class_loader()
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_storage", lookup_name);
 }
 
+template<typename InterfaceT>
+std::shared_ptr<InterfaceT>
+try_load_plugin(
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
+  const std::string & plugin_name)
+{
+  std::shared_ptr<InterfaceT> instance;
+  try {
+    auto unmanaged_instance = class_loader->createUnmanagedInstance(plugin_name);
+    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
+  } catch (const std::runtime_error & ex) {
+    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
+      "Unable to load plugin: " << ex.what());
+  }
+  return instance;
+}
+
+
+template<
+  typename InterfaceT,
+  storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
+>
+std::shared_ptr<InterfaceT>
+try_detect_and_open_storage(
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
+  const StorageOptions & storage_options)
+{
+  bool creating_file = flag != storage_interfaces::IOFlag::READ_ONLY;
+  if (creating_file) {
+    ROSBAG2_STORAGE_LOG_WARN_STREAM("Can not auto-choose storage for writing.");
+    return nullptr;
+  }
+
+  const auto & registered_classes = class_loader->getDeclaredClasses();
+  for (const auto & registered_class : registered_classes) {
+    std::shared_ptr<InterfaceT> instance = try_load_plugin(class_loader, registered_class);
+    if (instance == nullptr) {
+      continue;
+    }
+    ROSBAG2_STORAGE_LOG_INFO_STREAM(
+      "Checking storage implementation '" << registered_class << "' to open bag.");
+    try {
+      instance->open(storage_options, flag);
+      ROSBAG2_STORAGE_LOG_INFO_STREAM(
+        "Success, using implementation '" << registered_class << "'.");
+      return instance;
+    } catch (const std::runtime_error & ex) {
+      continue;
+    }
+  }
+  return nullptr;
+}
+
 template<
   typename InterfaceT,
   storage_interfaces::IOFlag flag = StorageTraits<InterfaceT>::io_flag
@@ -52,23 +105,22 @@ get_interface_instance(
   std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader,
   const StorageOptions & storage_options)
 {
+  if (storage_options.storage_id.empty()) {
+    return try_detect_and_open_storage<InterfaceT, flag>(class_loader, storage_options);
+  }
+
   const auto & registered_classes = class_loader->getDeclaredClasses();
   auto class_exists = std::find(
     registered_classes.begin(),
     registered_classes.end(), storage_options.storage_id);
   if (class_exists == registered_classes.end()) {
-    ROSBAG2_STORAGE_LOG_DEBUG_STREAM(
+    ROSBAG2_STORAGE_LOG_WARN_STREAM(
       "Requested storage id '" << storage_options.storage_id << "' does not exist");
     return nullptr;
   }
 
-  std::shared_ptr<InterfaceT> instance = nullptr;
-  try {
-    auto unmanaged_instance = class_loader->createUnmanagedInstance(storage_options.storage_id);
-    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
-  } catch (const std::runtime_error & ex) {
-    ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Unable to load instance of read write interface: " << ex.what());
+  std::shared_ptr<InterfaceT> instance = try_load_plugin(class_loader, storage_options.storage_id);
+  if (instance == nullptr) {
     return nullptr;
   }
 
@@ -120,10 +172,11 @@ public:
 
   std::shared_ptr<ReadOnlyInterface> open_read_only(const StorageOptions & storage_options)
   {
-    // try to load the instance as read_only interface
+    // try all registered ReadOnly plugins first
     auto instance = get_interface_instance(
       read_only_class_loader_, storage_options);
-    // try to load as read_write if not successful
+
+    // try ReadWrite plugins if no ReadOnly plugin was found
     if (instance == nullptr) {
       instance = get_interface_instance<ReadWriteInterface, storage_interfaces::IOFlag::READ_ONLY>(
         read_write_class_loader_, storage_options);

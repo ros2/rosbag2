@@ -30,7 +30,7 @@
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
-using namespace rosbag2_test_common;  // NOLINT
+using rosbag2_test_common::TemporaryDirectoryFixture;
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   const std::string bagfile = "rosbag2_bagfile_information:\n"
@@ -272,4 +272,21 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
 
   EXPECT_EQ(read_metadata.compression_format, "zstd");
   EXPECT_EQ(read_metadata.compression_mode, "FILE");
+}
+
+TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
+  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  const auto expected_bagfile_path = bag_path / "bag_0.db3";
+  {
+    // Create an empty bag with default storage
+    rosbag2_cpp::Writer writer;
+    writer.open(bag_path.string());
+  }
+
+  rosbag2_cpp::Info info;
+  rosbag2_storage::BagMetadata metadata;
+  EXPECT_NO_THROW(
+    metadata = info.read_metadata(expected_bagfile_path.string(), "")
+  );
+  EXPECT_EQ(metadata.storage_identifier, "sqlite3");
 }

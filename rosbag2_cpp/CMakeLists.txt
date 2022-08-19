@@ -172,7 +172,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp)
   if(TARGET test_sequential_reader)
-    ament_target_dependencies(test_sequential_reader rosbag2_storage)
+    ament_target_dependencies(test_sequential_reader rosbag2_storage rosbag2_test_common)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
   endif()
 

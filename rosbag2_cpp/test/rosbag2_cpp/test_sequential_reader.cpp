@@ -23,10 +23,13 @@
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
@@ -35,6 +38,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
+using rosbag2_test_common::TemporaryDirectoryFixture;
 
 class SequentialReaderTest : public Test
 {
@@ -209,4 +213,21 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   ASSERT_TRUE(callback_called);
   EXPECT_EQ(closed_file, bag_file_1_path_.string());
   EXPECT_EQ(opened_file, bag_file_2_path_.string());
+}
+
+TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
+  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  const auto expected_bagfile_path = bag_path / "bag_0.db3";
+  const auto expected_storage_implementation = "sqlite3";
+
+  {
+    // Create an empty bag with default storage
+    rosbag2_cpp::Writer writer;
+    writer.open(bag_path.string());
+  }
+
+  rosbag2_cpp::Reader reader;
+  EXPECT_NO_THROW(reader.open(expected_bagfile_path.string()));
+  EXPECT_FALSE(reader.has_next());
+  EXPECT_EQ(expected_storage_implementation, reader.get_metadata().storage_identifier);
 }

@@ -32,21 +32,13 @@ rosbag2_storage::BagMetadata Info::read_metadata(
   if (metadata_io.metadata_file_exists(uri)) {
     return metadata_io.read_metadata(uri);
   }
-  if (!storage_id.empty()) {
-    rosbag2_storage::StorageFactory factory;
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage;
-    storage = factory.open_read_only({uri, storage_id});
-    if (!storage) {
-      throw std::runtime_error(
-              "The metadata.yaml file does not exist and the bag could not be "
-              "opened.");
-    }
-    auto bag_metadata = storage->get_metadata();
-    return bag_metadata;
+
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_only({uri, storage_id});
+  if (!storage) {
+    throw std::runtime_error("Unable to open storage implementation for provided arguments.");
   }
-  throw std::runtime_error(
-          "The metadata.yaml file does not exist. Please specify a the "
-          "storage id of the bagfile to query it directly");
+  return storage->get_metadata();
 }
 
 }  // namespace rosbag2_cpp
