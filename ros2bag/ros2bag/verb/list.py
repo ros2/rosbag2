@@ -31,7 +31,7 @@ class ListVerb(VerbExtension):
             help='lists available plugins',
             choices=['storage', 'converter', 'compressor', 'decompressor'])
         parser.add_argument(
-            '--verbose', help='output verbose information about the available plugin',
+            '-v', '--verbose', help='output verbose information about the available plugin',
             action='store_true')
 
     def main(self, *, args):  # noqa: D102
