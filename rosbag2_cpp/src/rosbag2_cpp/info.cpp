@@ -18,6 +18,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_storage/logging.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -28,15 +30,24 @@ namespace rosbag2_cpp
 rosbag2_storage::BagMetadata Info::read_metadata(
   const std::string & uri, const std::string & storage_id)
 {
+  const rcpputils::fs::path bag_path{uri};
+  if (!bag_path.exists()) {
+    throw std::runtime_error("Bag path " + uri + " does not exist.");
+  }
+
   rosbag2_storage::MetadataIo metadata_io;
   if (metadata_io.metadata_file_exists(uri)) {
     return metadata_io.read_metadata(uri);
   }
 
+  if (bag_path.is_directory()) {
+    throw std::runtime_error("Could not find metadata in bag directory " + uri);
+  }
+
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_only({uri, storage_id});
   if (!storage) {
-    throw std::runtime_error("Unable to open storage implementation for provided arguments.");
+    throw std::runtime_error("No plugin detected that could open file " + uri);
   }
   return storage->get_metadata();
 }

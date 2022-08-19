@@ -78,5 +78,5 @@ TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_metadata_yaml_file_does
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(error_output, HasSubstr("Could not read metadata for " + database_path_));
+  EXPECT_THAT(error_output, HasSubstr("Could not find metadata"));
 }
