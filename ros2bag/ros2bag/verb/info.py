@@ -12,37 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
+from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
+from rosbag2_py._info import Info
 
 
 class InfoVerb(VerbExtension):
     """Print information about a bag to the screen."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        parser.add_argument(
-            'bag_file', help='bag file to introspect')
-        parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used to open storage, if no yaml file exists.'
-                 ' Defaults to "sqlite3"')
+        add_standard_reader_args(parser)
 
     def main(self, *, args):  # noqa: D102
-        bag_file = args.bag_file
-        if not os.path.exists(bag_file):
-            return "[ERROR] [ros2bag]: bag file '{}' does not exist!".format(bag_file)
-        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-        #               combined with constrained environments (as imposed by colcon test)
-        #               may result in DLL loading failures when attempting to import a C
-        #               extension. Therefore, do not import rosbag2_transport at the module
-        #               level but on demand, right before first use.
-        from rosbag2_py._info import Info
-        try:
-            m = Info().read_metadata(bag_file, args.storage)
-            print(m)
-        except RuntimeError:
-            return ('Could not read metadata for {}.'
-                    'Please specify the path to the folder containing '
-                    "an existing 'metadata.yaml' file or provide correct storage id "
-                    "if metadata file doesn't exist (see help).".format(bag_file))
+        m = Info().read_metadata(args.bag_path, args.storage)
+        print(m)
