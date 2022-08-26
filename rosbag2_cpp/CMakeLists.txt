@@ -166,13 +166,13 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
     target_link_libraries(test_info ${PROJECT_NAME})
-    ament_target_dependencies(test_info rosbag2_test_common)
+    ament_target_dependencies(test_info rosbag2_test_common test_msgs)
   endif()
 
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp)
   if(TARGET test_sequential_reader)
-    ament_target_dependencies(test_sequential_reader rosbag2_storage)
+    ament_target_dependencies(test_sequential_reader rosbag2_storage rosbag2_test_common test_msgs)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
   endif()
 

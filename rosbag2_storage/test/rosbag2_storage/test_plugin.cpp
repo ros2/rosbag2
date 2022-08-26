@@ -34,6 +34,9 @@ void TestPlugin::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag flag)
 {
+  if (storage_options.storage_id != test_constants::READ_WRITE_PLUGIN_IDENTIFIER) {
+    throw std::runtime_error{"storage_id did not match. TestReadOnlyPlugin won't open."};
+  }
   if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     std::cout << "opening testplugin read only: ";
   } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
