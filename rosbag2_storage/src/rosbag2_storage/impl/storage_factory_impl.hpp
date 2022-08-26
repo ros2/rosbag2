@@ -55,7 +55,7 @@ try_load_plugin(
     instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
   } catch (const std::runtime_error & ex) {
     ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-      "Unable to load plugin: " << ex.what());
+      "Unable to load plugin '" << plugin_name << "': " << ex.what());
   }
   return instance;
 }
@@ -90,6 +90,8 @@ try_detect_and_open_storage(
         "Success, using implementation '" << registered_class << "'.");
       return instance;
     } catch (const std::runtime_error & /* ex */) {
+      ROSBAG2_STORAGE_LOG_DEBUG_STREAM(
+        "Failed to open with implementation '" << registered_class << "'. Continuing loop.");
       continue;
     }
   }
@@ -115,7 +117,7 @@ get_interface_instance(
     registered_classes.end(), storage_options.storage_id);
   if (class_exists == registered_classes.end()) {
     ROSBAG2_STORAGE_LOG_WARN_STREAM(
-      "No plugin found with id '" << storage_options.storage_id << "'.");
+      "No storage plugin found with id '" << storage_options.storage_id << "'.");
     return nullptr;
   }
 

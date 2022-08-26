@@ -29,6 +29,8 @@
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
+#include "test_msgs/msg/basic_types.hpp"
+
 using namespace ::testing;  // NOLINT
 using rosbag2_test_common::TemporaryDirectoryFixture;
 
@@ -64,7 +66,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   }
 
   rosbag2_cpp::Info info;
-  const auto metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
+  const auto metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_EQ(metadata.version, 2);
   EXPECT_EQ(metadata.storage_identifier, "sqlite3");
@@ -144,7 +146,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
   }
 
   rosbag2_cpp::Info info;
-  const auto metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
+  const auto metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_EQ(metadata.version, 6);
   EXPECT_EQ(metadata.storage_identifier, "sqlite3");
@@ -231,7 +233,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   fout.close();
 
   rosbag2_cpp::Info info;
-  auto read_metadata = info.read_metadata(temporary_dir_path_, "sqlite3");
+  auto read_metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
   EXPECT_THAT(
@@ -281,12 +283,14 @@ TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
     writer.open(bag_path.string());
+    test_msgs::msg::BasicTypes msg;
+    writer.write(msg, "testtopic", rclcpp::Time{});
   }
 
   rosbag2_cpp::Info info;
   rosbag2_storage::BagMetadata metadata;
   EXPECT_NO_THROW(
-    metadata = info.read_metadata(expected_bagfile_path.string(), "")
+    metadata = info.read_metadata(expected_bagfile_path.string())
   );
-  EXPECT_EQ(metadata.storage_identifier, "sqlite3");
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
 }

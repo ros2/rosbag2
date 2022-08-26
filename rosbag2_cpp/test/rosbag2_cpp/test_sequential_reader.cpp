@@ -31,6 +31,8 @@
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
+#include "test_msgs/msg/basic_types.hpp"
+
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -218,16 +220,17 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
 TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
   const auto expected_bagfile_path = bag_path / "bag_0.db3";
-  const auto expected_storage_implementation = "sqlite3";
 
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
     writer.open(bag_path.string());
+    test_msgs::msg::BasicTypes msg;
+    writer.write(msg, "testtopic", rclcpp::Time{});
   }
 
   rosbag2_cpp::Reader reader;
   EXPECT_NO_THROW(reader.open(expected_bagfile_path.string()));
-  EXPECT_FALSE(reader.has_next());
-  EXPECT_EQ(expected_storage_implementation, reader.get_metadata().storage_identifier);
+  EXPECT_TRUE(reader.has_next());
+  EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
 }
