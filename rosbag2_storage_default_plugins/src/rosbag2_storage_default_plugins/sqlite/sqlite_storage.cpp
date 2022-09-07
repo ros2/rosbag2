@@ -410,6 +410,14 @@ void SqliteStorage::prepare_for_reading()
     statement_str += "(topics.name REGEXP '" + storage_filter_.topics_regex + "')";
     statement_str += " AND ";
   }
+  // exclude topics based on regular expressions
+  if (!storage_filter_.topics_regex_to_exclude.empty()) {
+    // Construct string for selected topics
+    statement_str += " (topics.name NOT IN ";
+    statement_str += " (SELECT topics.name FROM topics WHERE topics.name REGEXP '";
+    statement_str += storage_filter_.topics_regex_to_exclude + "')";
+    statement_str += " ) AND ";
+  }
   // add start time filter
   statement_str += "(((timestamp = " + std::to_string(seek_time_) + ") "
     "AND (messages.id >= " + std::to_string(seek_row_id_) + ")) "

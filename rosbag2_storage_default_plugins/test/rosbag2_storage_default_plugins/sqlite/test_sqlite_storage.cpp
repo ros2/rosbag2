@@ -453,3 +453,49 @@ TEST_F(StorageTestFixture, read_next_returns_filtered_messages_regex) {
   EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
   EXPECT_FALSE(readable_storage2->has_next());
 }
+
+TEST_F(StorageTestFixture, read_next_returns_filtered_messages_topics_regex_to_exclude) {
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
+  string_messages =
+  {std::make_tuple("topic1 message", 1, "prefix_topic1", "", ""),
+    std::make_tuple("topic2 message", 2, "topic2", "", ""),
+    std::make_tuple("topic3 message", 3, "topic3", "", "")};
+
+  write_messages_to_sqlite(string_messages);
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  auto db_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
+  readable_storage->open({db_filename, kPluginID});
+
+  rosbag2_storage::StorageFilter storage_filter;
+  storage_filter.topics_regex_to_exclude = "prefix.*";
+  readable_storage->set_filter(storage_filter);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage->has_next());
+
+  // Test reset filter
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage2 =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  readable_storage2->open({db_filename, kPluginID});
+  readable_storage2->set_filter(storage_filter);
+  readable_storage2->reset_filter();
+
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto third_message = readable_storage2->read_next();
+  EXPECT_THAT(third_message->topic_name, Eq("prefix_topic1"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fourth_message = readable_storage2->read_next();
+  EXPECT_THAT(fourth_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage2->has_next());
+  auto fifth_message = readable_storage2->read_next();
+  EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage2->has_next());
+}

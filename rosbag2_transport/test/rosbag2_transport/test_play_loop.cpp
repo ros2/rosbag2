@@ -69,7 +69,7 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   auto await_received_messages = sub_->spin_subscriptions();
 
   rosbag2_transport::PlayOptions play_options = {
-    read_ahead_queue_size, "", rate, {}, {}, {}, loop_playback, {},
+    read_ahead_queue_size, "", rate, {}, {}, {}, {}, loop_playback, {},
     clock_publish_frequency, clock_publish_per_topic, clock_trigger_topics, delay};
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
@@ -131,8 +131,8 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   auto await_received_messages = sub_->spin_subscriptions();
 
   rosbag2_transport::PlayOptions play_options{read_ahead_queue_size, "", rate, {}, {},
-    {}, loop_playback, {}, clock_publish_frequency, clock_publish_per_topic, clock_trigger_topics,
-    delay};
+    {}, {}, loop_playback, {}, clock_publish_frequency, clock_publish_per_topic,
+    clock_trigger_topics, delay};
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options);
