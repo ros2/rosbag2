@@ -25,14 +25,51 @@
 
 #include "./pybind11.hpp"
 
+namespace
+{
+
+namespace py = pybind11;
+using pybind11::literals::operator""_a;
+
+template<typename T>
+py::object getDuration(const T & self)
+{
+  py::object Duration = py::module_::import("rclpy.duration").attr("Duration");
+  return Duration("nanoseconds"_a = self.duration.count());
+}
+
+template<typename T>
+void setDuration(T & self, const py::object & value)
+{
+  py::int_ nanos = value.attr("nanoseconds");
+  self.duration = std::chrono::nanoseconds(nanos);
+}
+
+template<typename T>
+py::object getStartingTime(const T & self)
+{
+  py::object Time = py::module_::import("rclpy.time").attr("Time");
+  return Time("nanoseconds"_a = self.starting_time.time_since_epoch().count());
+}
+
+template<typename T>
+void setStartingTime(T & self, const py::object & value)
+{
+  py::int_ nanos = value.attr("nanoseconds");
+  self.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(nanos));
+}
+
+}  // namespace
+
 PYBIND11_MODULE(_storage, m) {
   m.doc() = "Python wrapper of the rosbag2 utilities API";
 
   pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
   .def(
     pybind11::init<std::string, std::string>(),
-    pybind11::arg("input_serialization_format"),
-    pybind11::arg("output_serialization_format"))
+    pybind11::arg("input_serialization_format") = "",
+    pybind11::arg("output_serialization_format") = "")
   .def_readwrite(
     "input_serialization_format",
     &rosbag2_cpp::ConverterOptions::input_serialization_format)
@@ -121,7 +158,14 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("duration"),
     pybind11::arg("message_count"))
   .def_readwrite("path", &rosbag2_storage::FileInformation::path)
-  .def_readwrite("starting_time", &rosbag2_storage::FileInformation::starting_time)
+  .def_property(
+    "starting_time",
+    &getStartingTime<rosbag2_storage::FileInformation>,
+    &setStartingTime<rosbag2_storage::FileInformation>)
+  .def_property(
+    "duration",
+    &getDuration<rosbag2_storage::FileInformation>,
+    &setDuration<rosbag2_storage::FileInformation>)
   .def_readwrite("duration", &rosbag2_storage::FileInformation::duration)
   .def_readwrite("message_count", &rosbag2_storage::FileInformation::message_count);
 
@@ -155,8 +199,14 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("storage_identifier", &rosbag2_storage::BagMetadata::storage_identifier)
   .def_readwrite("relative_file_paths", &rosbag2_storage::BagMetadata::relative_file_paths)
   .def_readwrite("files", &rosbag2_storage::BagMetadata::files)
-  .def_readwrite("duration", &rosbag2_storage::BagMetadata::duration)
-  .def_readwrite("starting_time", &rosbag2_storage::BagMetadata::starting_time)
+  .def_property(
+    "duration",
+    &getDuration<rosbag2_storage::BagMetadata>,
+    &setDuration<rosbag2_storage::BagMetadata>)
+  .def_property(
+    "starting_time",
+    &getStartingTime<rosbag2_storage::BagMetadata>,
+    &setStartingTime<rosbag2_storage::BagMetadata>)
   .def_readwrite("message_count", &rosbag2_storage::BagMetadata::message_count)
   .def_readwrite(
     "topics_with_message_count",
