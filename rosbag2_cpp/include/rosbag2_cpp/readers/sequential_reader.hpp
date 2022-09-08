@@ -66,6 +66,8 @@ public:
 
   void close() override;
 
+  void set_read_order(rosbag2_storage::ReadOrder order) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
@@ -187,6 +189,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 
   bag_events::EventCallbackManager callback_manager_;
+  rosbag2_storage::ReadOrder read_order_;
 };
 
 }  // namespace readers

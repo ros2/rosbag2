@@ -195,6 +195,7 @@ void SqliteStorage::open(
   if (is_read_write(io_flag)) {
     initialize();
   }
+  set_read_order(read_order_);
 
   // Reset the read and write statements in case the database changed.
   // These will be reinitialized lazily on the first read or write.
@@ -287,6 +288,22 @@ void SqliteStorage::write(
   }
 
   commit_transaction();
+}
+
+void SqliteStorage::set_read_order(rosbag2_storage::ReadOrder read_order)
+{
+  if (read_order == read_order_) {
+    return;
+  }
+  read_order_ = read_order;
+  read_statement_ = nullptr;
+
+  if (read_order_.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
+    throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
+  }
+  if (read_order.reverse && seek_row_id_ == 0) {
+    seek_row_id_ = get_last_rowid();
+  }
 }
 
 bool SqliteStorage::has_next()
@@ -391,6 +408,7 @@ void SqliteStorage::prepare_for_reading()
 {
   std::string statement_str = "SELECT data, timestamp, topics.name, messages.id "
     "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
+  std::vector<std::string> where_conditions;
 
   // add topic filter
   if (!storage_filter_.topics.empty()) {
@@ -402,30 +420,61 @@ void SqliteStorage::prepare_for_reading()
         topic_list += ",";
       }
     }
-    statement_str += "(topics.name IN (" + topic_list + ")) AND ";
+    where_conditions.push_back("(topics.name IN (" + topic_list + "))");
   }
   // add topic filter based on regular expression
   if (!storage_filter_.topics_regex.empty()) {
     // Construct string for selected topics
-    statement_str += "(topics.name REGEXP '" + storage_filter_.topics_regex + "')";
-    statement_str += " AND ";
+    where_conditions.push_back("(topics.name REGEXP '" + storage_filter_.topics_regex + "')");
   }
   // exclude topics based on regular expressions
   if (!storage_filter_.topics_regex_to_exclude.empty()) {
     // Construct string for selected topics
-    statement_str += " (topics.name NOT IN ";
-    statement_str += " (SELECT topics.name FROM topics WHERE topics.name REGEXP '";
-    statement_str += storage_filter_.topics_regex_to_exclude + "')";
-    statement_str += " ) AND ";
+    where_conditions.push_back(
+      "(topics.name NOT IN "
+      "(SELECT topics.name FROM topics WHERE topics.name REGEXP '" +
+      storage_filter_.topics_regex_to_exclude + "'))");
   }
-  // add start time filter
-  statement_str += "(((timestamp = " + std::to_string(seek_time_) + ") "
-    "AND (messages.id >= " + std::to_string(seek_row_id_) + ")) "
-    "OR (timestamp > " + std::to_string(seek_time_) + ")) ";
+
+  const std::string direction_op = read_order_.reverse ? "<" : ">";
+  const std::string order_direction = read_order_.reverse ? "DESC" : "ASC";
+
+  // add seek head filter
+  if (read_order_.sort_by == rosbag2_storage::ReadOrder::File) {
+    where_conditions.push_back(
+      "(messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ") ");
+  } else {
+    where_conditions.push_back(
+      "(((timestamp = " + std::to_string(seek_time_) + ") "
+      "AND (messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ")) "
+      "OR (timestamp " + direction_op + " " + std::to_string(seek_time_) + ")) ");
+  }
+
+  for (
+    std::vector<std::string>::const_iterator it = where_conditions.begin();
+    it != where_conditions.end(); ++it)
+  {
+    statement_str += *it;
+    if (it != where_conditions.end() - 1) {
+      statement_str += " AND ";
+    }
+  }
 
   // add order by time then id
-  statement_str += "ORDER BY messages.timestamp, messages.id;";
+  switch (read_order_.sort_by) {
+    case rosbag2_storage::ReadOrder::ReceivedTimestamp:
+      statement_str += "ORDER BY messages.timestamp " + order_direction;
+      statement_str += ", messages.id " + order_direction;
+      break;
+    case rosbag2_storage::ReadOrder::File:
+      statement_str += "ORDER BY messages.id " + order_direction;
+      break;
+    case rosbag2_storage::ReadOrder::PublishedTimestamp:
+      // not implemented
+      break;
+  }
 
+  statement_str += ";";
   read_statement_ = database_->prepare_statement(statement_str);
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>();
@@ -547,9 +596,9 @@ void SqliteStorage::reset_filter()
 
 void SqliteStorage::seek(const rcutils_time_point_value_t & timestamp)
 {
-  // reset row id to 0 and set start time to input
+  // reset row id and set start time to input
   // keep topic filter and reset read statement for re-read
-  seek_row_id_ = 0;
+  seek_row_id_ = read_order_.reverse ? get_last_rowid() : 0;
   seek_time_ = timestamp;
   read_statement_ = nullptr;
 }
@@ -565,6 +614,13 @@ SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
     throw std::runtime_error("database not open");
   }
   return *database_;
+}
+
+int SqliteStorage::get_last_rowid()
+{
+  auto statement = database_->prepare_statement("SELECT max(rowid) from messages;");
+  auto query_results = statement->execute_query<int>();
+  return std::get<0>(*query_results.begin());
 }
 
 }  // namespace rosbag2_storage_plugins

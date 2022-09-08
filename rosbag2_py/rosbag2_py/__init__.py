@@ -26,6 +26,8 @@ with add_dll_directories_from_env('PATH'):
     from rosbag2_py._storage import (
         ConverterOptions,
         FileInformation,
+        ReadOrder,
+        ReadOrderSortBy,
         StorageFilter,
         StorageOptions,
         TopicMetadata,
@@ -61,6 +63,8 @@ __all__ = [
     'get_registered_writers',
     'get_registered_compressors',
     'get_registered_serializers',
+    'ReadOrder',
+    'ReadOrderSortBy',
     'Reindexer',
     'SequentialCompressionReader',
     'SequentialCompressionWriter',

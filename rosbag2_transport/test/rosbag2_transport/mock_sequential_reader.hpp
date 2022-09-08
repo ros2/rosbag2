@@ -36,6 +36,11 @@ public:
 
   void close() override {}
 
+  void set_read_order(rosbag2_storage::ReadOrder) override
+  {
+    // TODO(emersonknapp)
+  }
+
   bool has_next() override
   {
     if (filter_.topics.empty()) {

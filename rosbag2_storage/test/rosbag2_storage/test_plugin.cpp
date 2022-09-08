@@ -46,6 +46,10 @@ void TestPlugin::open(
   std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
+void TestPlugin::set_read_order(rosbag2_storage::ReadOrder)
+{
+}
+
 bool TestPlugin::has_next()
 {
   return true;

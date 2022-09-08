@@ -43,6 +43,10 @@ void TestReadOnlyPlugin::open(
   std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
+void TestReadOnlyPlugin::set_read_order(rosbag2_storage::ReadOrder)
+{
+}
+
 bool TestReadOnlyPlugin::has_next()
 {
   return true;

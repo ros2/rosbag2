@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
@@ -27,6 +28,7 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -233,4 +235,137 @@ TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
   EXPECT_NO_THROW(reader.open(expected_bagfile_path.string()));
   EXPECT_TRUE(reader.has_next());
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
+}
+
+
+class OrderTestWriter : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  // makes the method public for manual splitting
+  void split()
+  {
+    split_bagfile();
+  }
+};
+
+
+class ReadOrderTest : public TemporaryDirectoryFixture
+{
+public:
+  ReadOrderTest()
+  {
+    std::string msg_content = "Hello";
+    auto msg_length = msg_content.length();
+    fake_data = rosbag2_storage::make_serialized_message(
+      msg_content.c_str(), msg_length);
+
+    storage_options.uri = (std::filesystem::path(temporary_dir_path_) / "ordertest").string();
+    storage_options.storage_id = "sqlite3";
+
+    writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
+    writer.create_topic(
+    {
+      topic_name,
+      "test_msgs/ByteMultiArray",
+      "cdr",
+      ""
+    });
+
+    for (const auto & file_messages : message_timestamps_by_file) {
+      for (const auto time_stamp : file_messages) {
+        message_timestamps.push_back(time_stamp);
+        auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        msg->serialized_data = fake_data;
+        msg->time_stamp = time_stamp;
+        msg->topic_name = topic_name;
+        writer.write(msg);
+      }
+      writer.split();
+    }
+    writer.close();
+  }
+
+  const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
+    {100, 300, 200},
+    {500, 400, 600}
+  };
+  std::vector<rcutils_time_point_value_t> message_timestamps;
+  const std::string topic_name = "testtopic";
+  OrderTestWriter writer;
+  rosbag2_cpp::readers::SequentialReader reader;
+  rosbag2_storage::StorageOptions storage_options;
+  std::shared_ptr<rcutils_uint8_array_t> fake_data;
+};
+
+TEST_F(ReadOrderTest, received_timestamp_order) {
+  rosbag2_storage::ReadOrder order;
+  order.sort_by = rosbag2_storage::ReadOrder::ReceivedTimestamp;
+  order.reverse = false;
+  reader.set_read_order(order);
+  reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+
+  std::sort(message_timestamps.begin(), message_timestamps.end());
+  for (const auto time_stamp : message_timestamps) {
+    ASSERT_TRUE(reader.has_next());
+    auto next = reader.read_next();
+    ASSERT_EQ(next->time_stamp, time_stamp);
+  }
+  ASSERT_FALSE(reader.has_next());
+}
+
+TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
+  rosbag2_storage::ReadOrder order;
+  order.sort_by = rosbag2_storage::ReadOrder::ReceivedTimestamp;
+  order.reverse = true;
+  reader.set_read_order(order);
+  reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  auto metadata = reader.get_metadata();
+  reader.seek((metadata.starting_time + metadata.duration).time_since_epoch().count());
+
+  std::sort(
+    message_timestamps.begin(), message_timestamps.end(), [](auto a, auto b) {return a > b;});
+  for (const auto time_stamp : message_timestamps) {
+    ASSERT_TRUE(reader.has_next());
+    auto next = reader.read_next();
+    ASSERT_EQ(next->time_stamp, time_stamp);
+  }
+  ASSERT_FALSE(reader.has_next());
+}
+
+TEST_F(ReadOrderTest, file_order) {
+  rosbag2_storage::ReadOrder order;
+  order.sort_by = rosbag2_storage::ReadOrder::File;
+  reader.set_read_order(order);
+  reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+
+  // Don't sort timestamps, should be returned in write order
+  for (const auto time_stamp : message_timestamps) {
+    ASSERT_TRUE(reader.has_next());
+    auto next = reader.read_next();
+    ASSERT_EQ(next->time_stamp, time_stamp);
+  }
+  ASSERT_FALSE(reader.has_next());
+}
+
+TEST_F(ReadOrderTest, reverse_file_order) {
+  rosbag2_storage::ReadOrder order;
+  order.sort_by = rosbag2_storage::ReadOrder::File;
+  reader.set_read_order(order);
+  reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  // Not knowing a better way to reach the "last message ID in all files",
+  // just iterate to end and turn around
+  while (reader.has_next()) {
+    reader.read_next();
+  }
+
+  order.reverse = true;
+  reader.set_read_order(order);
+  std::reverse(message_timestamps.begin(), message_timestamps.end());
+  // Don't sort timestamps, should be returned in write order
+  for (const auto time_stamp : message_timestamps) {
+    ASSERT_TRUE(reader.has_next());
+    auto next = reader.read_next();
+    ASSERT_EQ(next->time_stamp, time_stamp);
+  }
+  ASSERT_FALSE(reader.has_next());
 }

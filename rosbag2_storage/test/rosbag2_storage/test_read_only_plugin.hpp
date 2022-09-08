@@ -31,6 +31,8 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     rosbag2_storage::storage_interfaces::IOFlag flag) override;
 
+  void set_read_order(rosbag2_storage::ReadOrder) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;

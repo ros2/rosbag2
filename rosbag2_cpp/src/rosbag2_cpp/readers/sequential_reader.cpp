@@ -106,6 +106,7 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized from the inputs."};
     }
+    storage_->set_read_order(read_order_);
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
@@ -128,6 +129,14 @@ void SequentialReader::open(
     topics[0].topic_metadata.serialization_format);
 }
 
+void SequentialReader::set_read_order(rosbag2_storage::ReadOrder order)
+{
+  read_order_ = order;
+  if (storage_) {
+    storage_->set_read_order(order);
+  }
+}
+
 bool SequentialReader::has_next()
 {
   if (storage_) {
@@ -135,6 +144,7 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     bool current_storage_has_next = storage_->has_next();
     if (!current_storage_has_next && has_next_file()) {
+      // TODO(emersonknapp) has_next needs to roll to _previous_ file if necessary based on this
       load_next_file();
       // recursively call has_next again after rollover
       return has_next();
@@ -194,7 +204,11 @@ void SequentialReader::seek(const rcutils_time_point_value_t & timestamp)
   seek_time_ = timestamp;
   if (storage_) {
     // reset to the first file
-    current_file_iterator_ = file_paths_.begin();
+    if (read_order_.reverse) {
+      current_file_iterator_ = std::prev(file_paths_.end());
+    } else {
+      current_file_iterator_ = file_paths_.begin();
+    }
     load_current_file();
     return;
   }
@@ -204,7 +218,11 @@ void SequentialReader::seek(const rcutils_time_point_value_t & timestamp)
 
 bool SequentialReader::has_next_file() const
 {
-  return current_file_iterator_ + 1 != file_paths_.end();
+  if (read_order_.reverse) {
+    return current_file_iterator_ != file_paths_.begin();
+  } else {
+    return (current_file_iterator_ + 1) != file_paths_.end();
+  }
 }
 
 void SequentialReader::load_current_file()
@@ -222,6 +240,7 @@ void SequentialReader::load_current_file()
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
   // set filters
+  storage_->set_read_order(read_order_);
   storage_->seek(seek_time_);
   set_filter(topics_filter_);
 }
@@ -231,7 +250,11 @@ void SequentialReader::load_next_file()
   assert(current_file_iterator_ != file_paths_.end());
   auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = get_current_file();
-  current_file_iterator_++;
+  if (read_order_.reverse) {
+    current_file_iterator_--;
+  } else {
+    current_file_iterator_++;
+  }
   info->opened_file = get_current_file();
   load_current_file();
   callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
