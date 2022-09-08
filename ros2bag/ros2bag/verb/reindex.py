@@ -40,7 +40,7 @@ class ReindexVerb(VerbExtension):
 
         storage_options = StorageOptions(
             uri=args.bag_path,
-            storage_id=args.storage_id,
+            storage_id=args.storage,
         )
 
         reindexer = Reindexer()
