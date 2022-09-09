@@ -3,6 +3,11 @@ project(shared_queues_vendor)
 
 find_package(ament_cmake REQUIRED)
 
+# Avoid DOWNLOAD_EXTRACT_TIMESTAMP warning for CMake >= 3.24
+if (POLICY CMP0135)
+  cmake_policy(SET CMP0135 OLD)
+endif()
+
 include(ExternalProject)
 # Single producer single consumer queue by moodycamel - header only, don't build, install
 ExternalProject_Add(ext-singleproducerconsumer
