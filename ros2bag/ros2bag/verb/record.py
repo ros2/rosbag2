@@ -201,8 +201,8 @@ class RecordVerb(VerbExtension):
             return print_error('Invalid choice: Cannot specify compression format '
                                'without a compression mode.')
 
-        if args.compression_queue_size < 1:
-            return print_error('Compression queue size must be at least 1.')
+        if args.compression_queue_size < 0:
+            return print_error('Compression queue size must be at least 0.')
 
         args.compression_mode = args.compression_mode.upper()
 

@@ -83,6 +83,7 @@ void SequentialCompressionWriter::compression_thread_fn()
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
+        compressor_condition_.notify_all();
       } else if (!compressor_file_queue_.empty()) {
         file = compressor_file_queue_.front();
         compressor_file_queue_.pop();
@@ -318,10 +319,26 @@ void SequentialCompressionWriter::write(
   if (compression_options_.compression_mode == CompressionMode::FILE) {
     SequentialWriter::write(message);
   } else {
-    std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
-    while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+    while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
+      compression_options_.compression_queue_size > 0u)
+    {
       compressor_message_queue_.pop();
     }
+
+    // If no message should be dropped and the queue has still messages,
+    // compress and write immediately
+    if (compression_options_.compression_queue_size == 0u &&
+      compressor_message_queue_.size() > compression_options_.compression_threads)
+    {
+      compressor_condition_.wait(
+        lock,
+        [&] {
+          return !compression_is_running_ ||
+          compressor_message_queue_.size() <= compression_options_.compression_threads;
+        });
+    }
+
     compressor_message_queue_.push(message);
     compressor_condition_.notify_one();
   }
