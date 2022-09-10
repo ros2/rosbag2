@@ -59,7 +59,12 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : Recorder(
     std::move(writer),
-    std::make_shared<KeyboardHandler>(),
+#ifndef _WIN32
+    std::make_shared<KeyboardHandler>(false),
+#else
+    // We don't have signal handler option in constructor for windows version
+    std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+#endif
     storage_options,
     record_options,
     node_name,
