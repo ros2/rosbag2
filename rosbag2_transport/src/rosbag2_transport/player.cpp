@@ -116,7 +116,12 @@ Player::Player(
   const rclcpp::NodeOptions & node_options)
 : Player(std::move(reader),
     // only call KeyboardHandler when using default keyboard handler implementation
+#ifndef _WIN32
+    std::make_shared<KeyboardHandler>(false),
+#else
+    // We don't have signal handler option in constructor for windows version
     std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+#endif
     storage_options, play_options,
     node_name, node_options)
 {}
