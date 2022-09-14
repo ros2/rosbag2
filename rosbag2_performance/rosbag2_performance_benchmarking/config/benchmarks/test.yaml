@@ -24,6 +24,9 @@ rosbag2_performance_benchmarking:
           compression_threads:    [0]
           storage:
             - id: sqlite3
+              config_file: sqlite_optimized.yaml
+            - id: sqlite3
+              config_file: sqlite_resilient.yaml
             - id: mcap
               config_file: mcap_basic.yaml
             - id: mcap
