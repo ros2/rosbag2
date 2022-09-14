@@ -1,5 +1,6 @@
 
 #include "rclcpp/rclcpp.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 class ThroughputTester : public rclcpp::Node
 {
@@ -9,11 +10,11 @@ public:
 
   }
 
-  void start()
+  void run_test()
   {
-
-
+    RCLCPP_INFO(get_logger(), "Test start");
     write_results();
+    RCLCPP_INFO(get_logger(), "Test complete");
   }
 
   void write_results()
@@ -34,8 +35,7 @@ int main(int argc, char * argv[])
   // The benchmark has its own control loop but uses spinning for parameters
   std::thread spin_thread([&executor]() {executor.spin();});
 
-  bench->start_benchmark();
-  RCLCPP_INFO(bench->get_logger(), "Benchmark terminated");
+  node->run_test();
   rclcpp::shutdown();
   spin_thread.join();
   return 0;
