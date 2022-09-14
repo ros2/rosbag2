@@ -147,3 +147,19 @@ TEST_F(SqliteWrapperTestFixture, get_single_line_handles_empty_result_set) {
 
   EXPECT_THROW(result.get_single_line(), rosbag2_storage_plugins::SqliteException);
 }
+
+TEST_F(SqliteWrapperTestFixture, is_field_exist) {
+  db_.prepare_statement("CREATE TABLE test_table (timestamp INTEGER, data BLOB);")
+  ->execute_and_reset();
+  rcutils_time_point_value_t time = 1099511627783;
+  auto msg_content = "message";
+  std::shared_ptr<rcutils_uint8_array_t> message = make_serialized_message(msg_content);
+
+  db_.prepare_statement("INSERT INTO test_table (timestamp, data) VALUES (?, ?);")
+  ->bind(time, message)->execute_and_reset();
+
+  EXPECT_TRUE(db_.is_field_exist("test_table", "data"));
+  EXPECT_FALSE(db_.is_field_exist("test_table", "non_existent_field"));
+  EXPECT_THROW(
+    db_.is_field_exist("non_existent_table", "data"), rosbag2_storage_plugins::SqliteException);
+}
