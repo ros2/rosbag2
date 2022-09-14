@@ -112,7 +112,7 @@ BagConfig bag_config_from_node_parameters(
   node.declare_parameter<std::string>("storage_id", "sqlite3");
   node.declare_parameter<int>("max_cache_size", 10000000);
   node.declare_parameter<int>("max_bag_size", 0);
-  node.declare_parameter<std::string>("db_folder", default_bag_folder);
+  node.declare_parameter<std::string>("bag_dir", default_bag_folder);
   node.declare_parameter<std::string>("storage_config_file", "");
   node.declare_parameter<std::string>("compression_format", "");
   node.declare_parameter<int>("compression_queue_size", 1);
@@ -121,7 +121,7 @@ BagConfig bag_config_from_node_parameters(
   node.get_parameter("storage_id", bag_config.storage_options.storage_id);
   node.get_parameter("max_cache_size", bag_config.storage_options.max_cache_size);
   node.get_parameter("max_bag_size", bag_config.storage_options.max_bagfile_size);
-  node.get_parameter("db_folder", bag_config.storage_options.uri);
+  node.get_parameter("bag_dir", bag_config.storage_options.uri);
   node.get_parameter("storage_config_file", bag_config.storage_options.storage_config_uri);
   node.get_parameter("compression_format", bag_config.compression_format);
   node.get_parameter("compression_queue_size", bag_config.compression_queue_size);

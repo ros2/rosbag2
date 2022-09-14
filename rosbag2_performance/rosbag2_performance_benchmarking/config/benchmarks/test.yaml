@@ -2,15 +2,43 @@ rosbag2_performance_benchmarking:
   benchmark_node:
     ros__parameters:
       benchmark:
-        summary_result_file:  "results.csv"
-        db_root_folder:       "rosbag2_performance_test_results"
-        repeat_each:          2     # How many times to run each configurations (to average results)
-        no_transport:         True  # Whether to run storage-only or end-to-end (including transport) benchmark
-        preserve_bags:        False # Whether to leave bag files after experiment (and between runs). Some configurations can take lots of space!
-        parameters:                 # Each combination of parameters in this section will be benchmarked
-          max_cache_size:         [10000000, 100000000]
+        summary_result_file: "results.csv"
+        db_root_folder: "rosbag2_performance_test_results"
+        # How many times to run each configurations (to average results)
+        repeat_each: 2
+        # Whether to run storage-only or end-to-end (including transport) benchmark
+        no_transport: true
+        # Whether to leave bag files after experiment (and between runs). Some configurations can take lots of space!
+        preserve_bags: false
+        # Each combination of parameters in this section will be benchmarked
+        parameters:
+          max_cache_size:
+            - 0
+            - 100000
+            - 1000000
+            - 10000000
+            - 100000000
           max_bag_size:           [0]
-          compression:            ["", "zstd"]
+          compression:            [""]
           compression_queue_size: [1]
           compression_threads:    [0]
-          storage_config_file:    ["", "storage_resilient.yaml"]
+          storage:
+            - id: sqlite3
+            - id: mcap
+              config_file: mcap_basic.yaml
+            - id: mcap
+              config_file: mcap_chunk1M.yaml
+            - id: mcap
+              config_file: mcap_chunk10M.yaml
+            - id: mcap
+              config_file: mcap_chunk100M.yaml
+            - id: mcap
+              config_file: mcap_nochunking.yaml
+            - id: mcap
+              config_file: mcap_nocrc.yaml
+            - id: mcap
+              config_file: mcap_nomessageindex.yaml
+            - id: mcap
+              config_file: mcap_nosummary.yaml
+            - id: mcap
+              config_file: mcap_noall.yaml

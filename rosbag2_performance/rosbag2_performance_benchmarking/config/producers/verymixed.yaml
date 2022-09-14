@@ -1,0 +1,33 @@
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups
+      publisher_groups:
+        - imus
+        - pointcloud
+        - image
+        - other_med
+      wait_for_subscriptions: True
+      imus:
+        publishers_count:   100
+        topic_root:         "imu"
+        msg_size_bytes:     100
+        rate_hz:            500
+        msg_count_each:     5000
+      pointcloud:
+        publishers_count:   5
+        topic_root:         "pointcloud"
+        msg_size_bytes:     500000
+        rate_hz:            5
+        msg_count_each:     50
+      image:
+        publishers_count: 5
+        topic_root: "images"
+        msg_size_bytes: 1500000
+        rate_hz: 10
+        msg_count_each: 100
+      other_med:
+        publishers_count: 1
+        topic_root: "midmed"
+        msg_size_bytes: 2000
+        rate_hz: 200
+        msg_count_each: 2000

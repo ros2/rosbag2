@@ -82,8 +82,8 @@ private:
                 }
               }
             },
-            [pub](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
-              pub->publish(*msg);
+            [pub](std::shared_ptr<rclcpp::SerializedMessage> msg) {
+              // pub->publish(*msg);
             },
             [] { /* empty lambda */}));
       }

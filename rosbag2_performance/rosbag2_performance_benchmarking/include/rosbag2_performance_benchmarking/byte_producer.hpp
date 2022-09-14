@@ -21,6 +21,7 @@
 #include <functional>
 
 #include "rclcpp/utilities.hpp"
+#include "rclcpp/serialization.hpp"
 #include "std_msgs/msg/byte_multi_array.hpp"
 
 #include "rosbag2_performance_benchmarking/producer_config.hpp"
@@ -43,7 +44,7 @@ class ByteProducer
 public:
   using producer_initialize_function_t = std::function<void ()>;
   using producer_callback_function_t = std::function<void (
-        std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
+        std::shared_ptr<rclcpp::SerializedMessage>)>;
 
   using producer_finalize_function_t = std::function<void ()>;
 
@@ -58,7 +59,10 @@ public:
     producer_finalize_(producer_finalize),
     sleep_time_(configuration_.frequency == 0 ? 1 : 1000 / configuration_.frequency),
     message_(generate_random_message(configuration_))
-  {}
+  {
+    serialized_message_ = std::make_shared<rclcpp::SerializedMessage>();
+    serialization_.serialize_message(message_.get(), serialized_message_.get());
+  }
 
   void run()
   {
@@ -67,7 +71,7 @@ public:
       if (!rclcpp::ok()) {
         break;
       }
-      producer_callback_(message_);
+      producer_callback_(serialized_message_);
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time_));
     }
     producer_finalize_();
@@ -81,6 +85,9 @@ private:
   unsigned int sleep_time_;  // in milliseconds
   // for simplification, this pointer will be reused
   std::shared_ptr<std_msgs::msg::ByteMultiArray> message_;
+
+  rclcpp::Serialization<std_msgs::msg::ByteMultiArray> serialization_;
+  std::shared_ptr<rclcpp::SerializedMessage> serialized_message_;
 };
 
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__BYTE_PRODUCER_HPP_

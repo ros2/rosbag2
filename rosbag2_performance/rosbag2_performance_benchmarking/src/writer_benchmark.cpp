@@ -41,10 +41,6 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
   }
 
   bag_config_ = config_utils::bag_config_from_node_parameters(*this);
-  if (bag_config_.storage_options.storage_id != "sqlite3") {
-    RCLCPP_ERROR(get_logger(), "Benchmarking only supported for sqlite3 for now");
-    return;
-  }
 
   this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
   this->get_parameter("results_file", results_file_);
@@ -70,56 +66,13 @@ void WriterBenchmark::start_benchmark()
       }
 
       if (!queue->is_empty()) {  // behave as if we received the message.
-        auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-
-        // The pointer memory is owned by the producer until past the termination of the while loop.
-        // Note this ownership model should be changed if we want to generate messages on the fly
-        auto byte_ma_message = queue->pop_and_return();
-
-        // The compressor may resize this array, so it needs to be initialized with
-        // rcutils_uint8_array_init to ensure the allocator is set properly.
-        auto msg_array = new rcutils_uint8_array_t;
-        *msg_array = rcutils_get_zero_initialized_uint8_array();
-        int error = rcutils_uint8_array_init(msg_array, byte_ma_message->data.size(), &allocator);
-        if (error != RCUTILS_RET_OK) {
-          throw std::runtime_error(
-                  "Error allocating resources for serialized message: " +
-                  std::string(rcutils_get_error_string().str));
-        }
-        // The compressor may modify this buffer in-place, so it should take ownership of it.
-        std::move(
-          byte_ma_message->data.data(),
-          byte_ma_message->data.data() + byte_ma_message->data.size(),
-          msg_array->buffer);
-
-        auto serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-          msg_array,
-          [this](rcutils_uint8_array_t * msg) {
-            int error = rcutils_uint8_array_fini(msg);
-            delete msg;
-            if (error != RCUTILS_RET_OK) {
-              RCLCPP_ERROR_STREAM(
-                get_logger(),
-                "Leaking memory. Error: " << rcutils_get_error_string().str);
-            }
-          });
-
-        serialized_data->buffer_length = byte_ma_message->data.size();
-
-        message->serialized_data = serialized_data;
-
-        rcutils_time_point_value_t time_stamp;
-        error = rcutils_system_time_now(&time_stamp);
-        if (error != RCUTILS_RET_OK) {
-          RCLCPP_ERROR_STREAM(
-            get_logger(), "Error getting current time. Error:" <<
-              rcutils_get_error_string().str);
-        }
-        message->time_stamp = time_stamp;
-        message->topic_name = queue->topic_name();
-
+        auto serialized_message = queue->pop_and_return();
         try {
-          writer_->write(message);
+          writer_->write(
+            serialized_message,
+            queue->topic_name(),
+            "std_msgs/ByteMultiArray",
+            system_clock_.now());
         } catch (const std::runtime_error & e) {
           RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
         }
@@ -136,7 +89,7 @@ void WriterBenchmark::start_benchmark()
   for (auto & prod_thread : producer_threads_) {
     prod_thread.join();
   }
-  writer_->close();
+  writer_.reset();
 
   result_utils::write_benchmark_results(configurations_, bag_config_, results_file_);
 }
@@ -155,13 +108,13 @@ void WriterBenchmark::create_producers()
     const unsigned int queue_max_size = 10;
     for (unsigned int i = 0; i < c.count; ++i) {
       std::string topic = c.topic_root + std::to_string(i);
-      auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
+      auto queue = std::make_shared<MessageQueue<rclcpp::SerializedMessage>>(queue_max_size, topic);
       queues_.push_back(queue);
       producers_.push_back(
         std::make_unique<ByteProducer>(
           c.producer_config,
           [] { /* empty lambda */},
-          [queue](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
+          [queue](std::shared_ptr<rclcpp::SerializedMessage> msg) {
             queue->push(msg);
           },
           [queue] {
@@ -178,10 +131,11 @@ void WriterBenchmark::create_writer()
       bag_config_.compression_format, rosbag2_compression::CompressionMode::MESSAGE,
       bag_config_.compression_queue_size, bag_config_.compression_threads};
 
-    writer_ = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-      compression_options);
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_compression::SequentialCompressionWriter>(compression_options));
   } else {
-    writer_ = std::make_shared<rosbag2_cpp::writers::SequentialWriter>();
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(
+      std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
   }
 
   // TODO(adamdbrw) generalize if converters are to be included in benchmarks
@@ -192,7 +146,7 @@ void WriterBenchmark::create_writer()
     rosbag2_storage::TopicMetadata topic;
     topic.name = queue->topic_name();
     // TODO(adamdbrw) - replace with something more general if needed
-    topic.type = "std_msgs::msgs::ByteMultiArray";
+    topic.type = "std_msgs/ByteMultiArray";
     topic.serialization_format = serialization_format;
     writer_->create_topic(topic);
   }

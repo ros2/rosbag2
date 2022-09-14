@@ -1,6 +1,6 @@
-# Rosbag2 writer benchmarking
+# Rosbag2 Performance Benchmarking
 
-The primary package to test performance of the rosbag2.
+A package to provide various benchmark tests to measure performance of rosbag2. Its purpose is to help track performance over time, as well as compare the performance of different settings or plugins.
 
 ## How it works
 
@@ -57,7 +57,14 @@ Note: this depends on parameters used and whatever else is running on your syste
 
 **Using fio**
 
-For more sophisticated & accurate benchmarks, see the `fio` command. An example for big data blocks is: `fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=write --size=500m --io_size=10g --blocksize=1024k --ioengine=libaio --fsync=10000 --iodepth=32 --direct=1 --numjobs=1 --runtime=60 --group_reporting`.
+For more sophisticated & accurate benchmarks, see the `fio` command. An example for big data blocks is:
+
+```
+fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=write \
+  --size=500m --io_size=10g --blocksize=1024k \
+  --ioengine=libaio --fsync=10000 --iodepth=32 --direct=1 \
+  --numjobs=1 --runtime=60 --group_reporting
+```
 
 #### Profiling bags I/O with tools
 

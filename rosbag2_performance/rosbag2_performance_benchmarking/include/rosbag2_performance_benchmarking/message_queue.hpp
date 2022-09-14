@@ -91,6 +91,4 @@ private:
   mutable std::mutex mutex_;
 };
 
-typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
-
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__MESSAGE_QUEUE_HPP_

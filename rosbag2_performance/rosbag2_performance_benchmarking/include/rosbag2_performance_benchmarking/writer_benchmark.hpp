@@ -22,7 +22,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rosbag2_compression/compression_options.hpp"
-#include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 #include "rosbag2_performance_benchmarking/message_queue.hpp"
@@ -48,8 +48,9 @@ private:
 
   std::vector<std::thread> producer_threads_;
   std::vector<std::unique_ptr<ByteProducer>> producers_;
-  std::vector<std::shared_ptr<ByteMessageQueue>> queues_;
-  std::shared_ptr<rosbag2_cpp::writers::SequentialWriter> writer_;
+  std::vector<std::shared_ptr<MessageQueue<rclcpp::SerializedMessage>>> queues_;
+  std::unique_ptr<rosbag2_cpp::Writer> writer_;
+  rclcpp::Clock system_clock_;
 };
 
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__WRITER_BENCHMARK_HPP_
