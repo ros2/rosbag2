@@ -1,0 +1,44 @@
+
+rosbag2_performance_benchmarking:
+  benchmark_node:
+    ros__parameters:
+      benchmark:
+        summary_result_file:  "results.csv"
+        root_folder: "rosbag2_performance_test_results"
+        repeat_each: 2
+        delete_bags: true
+        test_matrix:
+          max_cache_size: [0, 10000, 100000, 1000000, 10000000, 100000000]
+          storage_configs:
+            - [mcap, mcap_basic.yaml]
+            - [sqlite, ""]
+          producers:
+            - topics: 10
+              size_per_msg: 1000
+              messages_per_topic: 1000
+            - topics: 1
+              size_per_msg: 10000
+              messages_per_topic: 50
+
+
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups
+      publisher_groups: [ "10Mbs_many_frequent_small", "100Mbs_large" ]
+      wait_for_subscriptions: True
+      10Mbs_many_frequent_small:
+        publishers_count:   500
+        topic_root:         "benchmarking_small"
+        msg_size_bytes:     100
+        msg_count_each:     2000
+        rate_hz:            200
+      100Mbs_large:
+        publishers_count:   1
+        topic_root:         "benchmarking_large"
+        msg_size_bytes:     10000000
+        msg_count_each:     100
+        rate_hz:            10
+        qos:  # qos settings are ignored for writer only benchmarking
+          qos_depth:          5
+          qos_reliability:    "best_effort" # "reliable"
+          qos_durability:     "volatile" # "transient_local"
