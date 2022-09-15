@@ -246,6 +246,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
 
   ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
+  ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
 
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
