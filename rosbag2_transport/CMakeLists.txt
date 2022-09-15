@@ -40,6 +40,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/generic_subscription.cpp
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/recorder.cpp
+  src/rosbag2_transport/rmw_time.c
   src/rosbag2_transport/rosbag2_node.cpp
   src/rosbag2_transport/rosbag2_transport.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -115,6 +116,7 @@ function(create_tests_for_rmw_implementation)
     src/rosbag2_transport/generic_publisher.cpp
     src/rosbag2_transport/generic_subscription.cpp
     src/rosbag2_transport/qos.cpp
+    src/rosbag2_transport/rmw_time.c
     src/rosbag2_transport/recorder.cpp
     src/rosbag2_transport/rosbag2_node.cpp
     test/rosbag2_transport/test_rosbag2_node.cpp
@@ -138,6 +140,7 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_qos
     src/rosbag2_transport/qos.cpp
+    src/rosbag2_transport/rmw_time.c
     test/rosbag2_transport/test_qos.cpp
     INCLUDE_DIRS
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -163,6 +166,7 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_play
     src/rosbag2_transport/qos.cpp
+    src/rosbag2_transport/rmw_time.c
     test/rosbag2_transport/test_play.cpp
     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
     LINK_LIBS rosbag2_transport

@@ -20,6 +20,7 @@
 #include "rmw/types.h"
 
 #include "qos.hpp"
+#include "rmw_time.h"  // NOLINT
 
 TEST(TestQoS, serialization)
 {
@@ -104,7 +105,7 @@ TEST(TestQoS, translates_bad_infinity_values)
     {0x7FFFFFFFll, 0xFFFFFFFFll},  // fastrtps
     {0x7FFFFFFFll, 0x7FFFFFFFll}  // connext
   };
-  rmw_time_t infinity = RMW_DURATION_INFINITE;
+  rmw_time_t infinity = RMW_DURATION_UNSPECIFIED;
   const auto expected_qos = rosbag2_transport::Rosbag2QoS{}
   .default_history()
   .reliable()
