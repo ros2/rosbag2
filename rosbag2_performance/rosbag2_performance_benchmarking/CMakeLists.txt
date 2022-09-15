@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
-# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -72,7 +71,12 @@ add_executable(
 ament_target_dependencies(
   writer_throughput
   rclcpp
+  std_msgs
   rosbag2_cpp
+)
+target_include_directories(writer_benchmark
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
 install(

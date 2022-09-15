@@ -352,7 +352,9 @@ TEST_F(StorageTestFixture, storage_preset_profile_applies_over_defaults) {
 
   auto temp_dir = rcpputils::fs::path(temporary_dir_path_);
   const auto storage_uri = (temp_dir / "rosbag").string();
-  rosbag2_storage::StorageOptions options{storage_uri, kPluginID, 0, 0, 0, "", ""};
+  rosbag2_storage::StorageOptions options;
+  options.uri = storage_uri;
+  options.storage_id = kPluginID;
 
   options.storage_preset_profile = "resilient";
   writable_storage->open(options, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);

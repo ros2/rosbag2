@@ -1,21 +1,29 @@
-
-rosbag2_performance_benchmarking:
-  benchmark_node:
-    ros__parameters:
-      benchmark:
-        summary_result_file:  "results.csv"
-        root_folder: "rosbag2_performance_test_results"
-        repeat_each: 2
-        delete_bags: true
-        test_matrix:
-          max_cache_size: [0, 10000, 100000, 1000000, 10000000, 100000000]
-          storage_configs:
-            - [mcap, mcap_basic.yaml]
-            - [sqlite, ""]
-          producers:
-            - topics: 10
-              size_per_msg: 1000
-              messages_per_topic: 1000
-            - topics: 1
-              size_per_msg: 100000
-              messages_per_topic: 50
+summary_result_file:  "results.csv"
+root_folder: "rosbag2_throughput_results"
+delete_bags: true
+test_matrix:
+  max_cache_size: 0
+  storage_configs:
+    - [mcap, mcap_basic.yaml]
+    - [mcap, mcap_basic.yaml]
+    - [sqlite, sqlite_optimized.yaml]
+    - [sqlite, sqlite_resilient.yaml]
+  producers:
+    - topics: 0
+      size_per_msg: 0
+      messages_per_topic: 0
+    - topics: 1
+      messages_per_topic: 100
+      size_per_msg: 1000
+    - topics: 1
+      messages_per_topic: 1000
+      size_per_msg: 1000
+    - topics: 1
+      size_per_msg: 1000000
+      messages_per_topic: 1000
+    - topics: 10
+      size_per_msg: 1000
+      messages_per_topic: 1000
+    - topics: 100
+      size_per_msg: 1000
+      messages_per_topic: 100

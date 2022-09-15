@@ -154,8 +154,10 @@ public:
       out << config_yaml;
     }
 
-    rosbag2_storage::StorageOptions storage_options{storage_uri, plugin_id, 0, 0, 0,
-      "", yaml_config};
+    rosbag2_storage::StorageOptions storage_options;
+    storage_options.uri = storage_uri;
+    storage_options.storage_id = plugin_id;
+    storage_options.storage_config_uri = yaml_config;
     return storage_options;
   }
 
