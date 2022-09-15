@@ -245,6 +245,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)
 
+  ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
+
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
   target_link_libraries(test_record_options ${PROJECT_NAME})
