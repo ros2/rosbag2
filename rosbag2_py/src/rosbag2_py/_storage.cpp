@@ -28,35 +28,34 @@
 namespace
 {
 
-namespace py = pybind11;
 using pybind11::literals::operator""_a;
 
-template<typename T>
-py::object getDuration(const T & self)
+pybind11::object to_rclpy_duration(std::chrono::nanoseconds duration)
 {
-  py::object Duration = py::module_::import("rclpy.duration").attr("Duration");
-  return Duration("nanoseconds"_a = self.duration.count());
+  pybind11::object Duration = pybind11::module::import("rclpy.duration").attr("Duration");
+  return Duration("nanoseconds"_a = duration.count());
+}
+
+std::chrono::nanoseconds from_rclpy_duration(const pybind11::object & duration)
+{
+  pybind11::int_ nanos = duration.attr("nanoseconds");
+  return std::chrono::nanoseconds(nanos);
 }
 
 template<typename T>
-void setDuration(T & self, const py::object & value)
+pybind11::object to_rclpy_time(T time)
 {
-  py::int_ nanos = value.attr("nanoseconds");
-  self.duration = std::chrono::nanoseconds(nanos);
+  pybind11::object Time = pybind11::module::import("rclpy.time").attr("Time");
+  return Time(
+    "nanoseconds"_a = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      time.time_since_epoch()).count());
 }
 
-template<typename T>
-py::object getStartingTime(const T & self)
+std::chrono::time_point<std::chrono::high_resolution_clock> from_rclpy_time(
+  const pybind11::object & time)
 {
-  py::object Time = py::module_::import("rclpy.time").attr("Time");
-  return Time("nanoseconds"_a = self.starting_time.time_since_epoch().count());
-}
-
-template<typename T>
-void setStartingTime(T & self, const py::object & value)
-{
-  py::int_ nanos = value.attr("nanoseconds");
-  self.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+  pybind11::int_ nanos = time.attr("nanoseconds");
+  return std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(nanos));
 }
 
@@ -160,12 +159,20 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("path", &rosbag2_storage::FileInformation::path)
   .def_property(
     "starting_time",
-    &getStartingTime<rosbag2_storage::FileInformation>,
-    &setStartingTime<rosbag2_storage::FileInformation>)
+    [](const rosbag2_storage::FileInformation & self) {
+      return to_rclpy_time(self.starting_time);
+    },
+    [](rosbag2_storage::FileInformation & self, const pybind11::object & value) {
+      self.starting_time = from_rclpy_time(value);
+    })
   .def_property(
     "duration",
-    &getDuration<rosbag2_storage::FileInformation>,
-    &setDuration<rosbag2_storage::FileInformation>)
+    [](const rosbag2_storage::FileInformation & self) {
+      return to_rclpy_duration(self.duration);
+    },
+    [](rosbag2_storage::FileInformation & self, const pybind11::object & value) {
+      self.duration = from_rclpy_duration(value);
+    })
   .def_readwrite("duration", &rosbag2_storage::FileInformation::duration)
   .def_readwrite("message_count", &rosbag2_storage::FileInformation::message_count);
 
@@ -201,12 +208,20 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("files", &rosbag2_storage::BagMetadata::files)
   .def_property(
     "duration",
-    &getDuration<rosbag2_storage::BagMetadata>,
-    &setDuration<rosbag2_storage::BagMetadata>)
+    [](const rosbag2_storage::BagMetadata & self) {
+      return to_rclpy_duration(self.duration);
+    },
+    [](rosbag2_storage::BagMetadata & self, const pybind11::object & value) {
+      self.duration = from_rclpy_duration(value);
+    })
   .def_property(
     "starting_time",
-    &getStartingTime<rosbag2_storage::BagMetadata>,
-    &setStartingTime<rosbag2_storage::BagMetadata>)
+    [](const rosbag2_storage::BagMetadata & self) {
+      return to_rclpy_time(self.starting_time);
+    },
+    [](rosbag2_storage::BagMetadata & self, const pybind11::object & value) {
+      self.starting_time = from_rclpy_time(value);
+    })
   .def_readwrite("message_count", &rosbag2_storage::BagMetadata::message_count)
   .def_readwrite(
     "topics_with_message_count",
