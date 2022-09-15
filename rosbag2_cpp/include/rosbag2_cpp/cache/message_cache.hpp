@@ -71,11 +71,18 @@ class ROSBAG2_CPP_PUBLIC MessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit MessageCache(size_t max_buffer_size);
+  enum class OverflowMode {
+    Drop,
+    Block
+  };
+
+  explicit MessageCache(size_t max_buffer_size, OverflowMode overflow_mode = OverflowMode::Drop);
 
   ~MessageCache() override;
 
-  /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
+  /// Puts msg into primary buffer.
+  /// With full cache, overflow_mode Drop, message is dropped and return immediately.
+  /// With overflow_mode Block, wait until cache can take message
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Gets a consumer buffer.
@@ -128,6 +135,7 @@ private:
 
   /// Cache is no longer accepting messages and is in the process of flushing
   std::atomic_bool flushing_ {false};
+  OverflowMode overflow_mode_;
 };
 
 }  // namespace cache

@@ -40,6 +40,14 @@ public:
   virtual ~CacheBufferInterface() {}
 
   /**
+   * @brief Find out whether this cache buffer can accept a new message
+   *
+   * @return true if there is room in the buffer
+   * @return false if there is not
+   */
+  virtual bool can_accept() const = 0;
+
+  /**
    *   Pushes a SerializedBagMessage into the cache buffer.
    *
    *   \param msg SerializedBagMessage to add to the buffer.

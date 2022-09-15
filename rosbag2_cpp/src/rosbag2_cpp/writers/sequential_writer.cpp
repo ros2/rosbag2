@@ -133,8 +133,11 @@ void SequentialWriter::open(
       message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
         storage_options.max_cache_size);
     } else {
+      auto om = storage_options.no_cache_drop ?
+        cache::MessageCache::OverflowMode::Block :
+        cache::MessageCache::OverflowMode::Drop;
       message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
-        storage_options.max_cache_size);
+        storage_options.max_cache_size, om);
     }
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,

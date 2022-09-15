@@ -28,11 +28,13 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(size_t max_buffer_size)
+MessageCache::MessageCache(size_t max_buffer_size, MessageCache::OverflowMode overflow_mode)
 {
   producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
   consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
+  overflow_mode_ = overflow_mode;
 }
+
 
 MessageCache::~MessageCache()
 {

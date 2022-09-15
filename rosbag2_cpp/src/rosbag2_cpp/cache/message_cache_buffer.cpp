@@ -31,14 +31,14 @@ MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size)
 bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
 {
   bool pushed = false;
-  if (!drop_messages_) {
+  if (!full_) {
     buffer_bytes_size_ += msg->serialized_data->buffer_length;
     buffer_.push_back(msg);
     pushed = true;
   }
 
   if (buffer_bytes_size_ >= max_bytes_size_) {
-    drop_messages_ = true;
+    full_ = true;
   }
   return pushed;
 }
@@ -47,7 +47,7 @@ void MessageCacheBuffer::clear()
 {
   buffer_.clear();
   buffer_bytes_size_ = 0u;
-  drop_messages_ = false;
+  full_ = false;
 }
 
 size_t MessageCacheBuffer::size()

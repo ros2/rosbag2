@@ -53,6 +53,10 @@ public:
   MessageCacheCircularBuffer() = delete;
   explicit MessageCacheCircularBuffer(size_t max_cache_size);
 
+  bool can_accept() const override {
+    return true;
+  }
+
   /**
   * If buffer size has some space left, we push the message regardless of its size,
   *  but if this results in exceeding buffer size, we begin dropping old messages.

@@ -38,10 +38,20 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
-  // The cache size indiciates how many messages can maximally be hold in cache
-  // before these being written to disk.
+  // If false, when the incoming message cache buffer has reached maximum size, new messages
+  // will be dropped.
+  // This is necessary for recording use case, where data will keep coming no matter what and could
+  // back up infinitely if messages aren't dropped.
+  // However, for programmatic use cases, we may want batch, which max_cache_size > 0 enables, without
+  // ever dropping messages. Set this to true for programmatic use case, to guarantee all messages go through.
+  // Will cause `write` to block until space is available
+  // With `snapshot_mode=true` or max_cache_size=0, this option does nothing
+  bool no_cache_drop = false;
+
+  // Maximum data size, in bytes, of messages to hold in double-buffer cache
   // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
+
 
   // Preset storage configuration. Preset settings can be overriden with
   // corresponding settings specified through storage_config_uri file

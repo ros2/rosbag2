@@ -52,9 +52,8 @@ public:
   explicit MessageCacheBuffer(size_t max_cache_size);
 
   /**
-  * If buffer size got some space left, we push message regardless of its size, but if
-  * this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-  * This flag is cleared when buffers are swapped.
+  * If buffer size has any space, push message regardless of its size.
+  * If this results in exceeding buffer size, drop all new incoming messages.
   */
   bool push(CacheBufferInterface::buffer_element_t msg) override;
 
@@ -63,6 +62,10 @@ public:
 
   /// Get number of elements in the buffer
   size_t size() override;
+
+  bool can_accept() const override {
+    return !full_;
+  }
 
   /// Get buffer data
   const std::vector<CacheBufferInterface::buffer_element_t> & data() override;
@@ -73,7 +76,7 @@ private:
   const size_t max_bytes_size_;
 
   /// set when buffer is full and should drop messages instead of inserting them
-  std::atomic_bool drop_messages_ {false};
+  std::atomic_bool full_ {false};
 };
 
 }  // namespace cache
