@@ -115,7 +115,6 @@ public:
 protected:
   ROSBAG2_TRANSPORT_EXPORT
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
-  
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
