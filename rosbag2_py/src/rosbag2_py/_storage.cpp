@@ -190,17 +190,17 @@ PYBIND11_MODULE(_storage, m) {
       std::vector<rosbag2_storage::TopicInformation>,
       std::string,
       std::string>(),
-    pybind11::arg("version"),
-    pybind11::arg("bag_size"),
-    pybind11::arg("storage_identifier"),
-    pybind11::arg("relative_file_paths"),
-    pybind11::arg("files"),
-    pybind11::arg("duration"),
-    pybind11::arg("starting_time"),
-    pybind11::arg("message_count"),
-    pybind11::arg("topics_with_message_count"),
-    pybind11::arg("compression_format"),
-    pybind11::arg("compression_mode"))
+    pybind11::arg("version") = 6,
+    pybind11::arg("bag_size") = 0,
+    pybind11::arg("storage_identifier") = "",
+    pybind11::arg("relative_file_paths") = std::vector<std::string>(),
+    pybind11::arg("files") = std::vector<rosbag2_storage::FileInformation>(),
+    pybind11::arg("duration") = std::chrono::nanoseconds{0},
+    pybind11::arg("starting_time") = std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds{0}),
+    pybind11::arg("message_count") = 0,
+    pybind11::arg("topics_with_message_count") = std::vector<rosbag2_storage::TopicInformation>(),
+    pybind11::arg("compression_format") = "",
+    pybind11::arg("compression_mode") = "")
   .def_readwrite("version", &rosbag2_storage::BagMetadata::version)
   .def_readwrite("bag_size", &rosbag2_storage::BagMetadata::bag_size)
   .def_readwrite("storage_identifier", &rosbag2_storage::BagMetadata::storage_identifier)
