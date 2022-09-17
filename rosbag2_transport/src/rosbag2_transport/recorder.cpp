@@ -34,6 +34,7 @@
 
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/qos.hpp"
+#include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include "rosbag2_transport/topic_filter.hpp"
 
