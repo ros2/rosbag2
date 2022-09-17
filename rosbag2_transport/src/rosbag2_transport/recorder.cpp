@@ -43,7 +43,14 @@ namespace rosbag2_transport
 Recorder::Recorder(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+: Recorder(
+    std::move(
+      rosbag2_transport::ReaderWriterFactory::make_writer(
+        rosbag2_transport::RecordOptions())),
+    rosbag2_storage::StorageOptions(),
+    rosbag2_transport::RecordOptions(),
+    node_name,
+    node_options)
 {
   // TODO(karsten1987): Use this constructor later with parameter parsing.
   // The reader, storage_options as well as record_options can be loaded via parameter.
