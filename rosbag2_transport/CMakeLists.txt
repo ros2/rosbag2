@@ -231,6 +231,13 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
+  if(${rmw_implementation} MATCHES "rmw_cyclonedds(.*)")
+    ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
+  endif()
+
+  if(${rmw_implementation} MATCHES "rmw_fastrtps(.*)")
+    ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
+  endif()
 endfunction()
 
 if(BUILD_TESTING)
