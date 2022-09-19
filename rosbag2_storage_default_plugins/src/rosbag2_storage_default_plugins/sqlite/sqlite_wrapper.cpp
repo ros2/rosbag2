@@ -144,7 +144,7 @@ std::string SqliteWrapper::query_pragma_value(const std::string & key)
   return std::get<0>(pragma_value);
 }
 
-bool SqliteWrapper::is_field_exist(const std::string & table_name, const std::string & field_name)
+bool SqliteWrapper::field_exists(const std::string & table_name, const std::string & field_name)
 {
   auto query = "SELECT INSTR(sql, '" + field_name + "') FROM sqlite_master WHERE type='table' AND "
     "name='" + table_name + "';";
@@ -152,7 +152,7 @@ bool SqliteWrapper::is_field_exist(const std::string & table_name, const std::st
   auto query_result_begin = query_result.begin();
   if (query_result_begin == query_result.end()) {
     std::stringstream errmsg;
-    errmsg << "is_field_exist(..) failed. Table `" << table_name << "` doesn't exist!";
+    errmsg << "field_exists(..) failed. Table `" << table_name << "` doesn't exist!";
     throw SqliteException{errmsg.str()};
   }
   auto position = *(query_result_begin);

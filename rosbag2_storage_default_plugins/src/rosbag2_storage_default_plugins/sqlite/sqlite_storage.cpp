@@ -471,7 +471,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
 
-  if (database_->is_field_exist("topics", "offered_qos_profiles")) {
+  if (database_->field_exists("topics", "offered_qos_profiles")) {
     std::string query =
       "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
       "MAX(messages.timestamp), offered_qos_profiles "
