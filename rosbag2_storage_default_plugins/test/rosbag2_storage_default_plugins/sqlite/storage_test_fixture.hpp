@@ -26,6 +26,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "rcpputils/filesystem_helper.hpp"
 
@@ -35,6 +36,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 
 #include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
@@ -119,6 +121,84 @@ public:
     metadata_io_.write_metadata(temporary_dir_path_, rw_storage.get_metadata());
 
     return writable_storage;
+  }
+
+  void write_messages_to_sqlite_in_pre_foxy_format(
+    const std::vector<
+      std::tuple<std::string, int64_t, std::string, std::string, std::string>
+    > & messages)
+  {
+    auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+    std::string relative_path = db_file + ".db3";
+
+    // READ_WRITE requires the DB to not exist.
+    if (rcpputils::fs::path(relative_path).exists()) {
+      throw std::runtime_error(
+              "Failed to create bag: File '" + relative_path + "' already exists!");
+    }
+    using rosbag2_storage_plugins::SqliteWrapper;
+    using rosbag2_storage_plugins::SqliteException;
+    std::unordered_map<std::string, std::string> pragmas;
+
+    std::shared_ptr<SqliteWrapper> database;
+    try {
+      database = std::make_unique<SqliteWrapper>(
+        relative_path,
+        rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE,
+        std::move(pragmas));
+    } catch (const SqliteException & e) {
+      throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
+    }
+
+    // Init database
+    std::string create_stmt = "CREATE TABLE topics(" \
+      "id INTEGER PRIMARY KEY," \
+      "name TEXT NOT NULL," \
+      "type TEXT NOT NULL," \
+      "serialization_format TEXT NOT NULL);";
+    database->prepare_statement(create_stmt)->execute_and_reset();
+    create_stmt = "CREATE TABLE messages(" \
+      "id INTEGER PRIMARY KEY," \
+      "topic_id INTEGER NOT NULL," \
+      "timestamp INTEGER NOT NULL, " \
+      "data BLOB NOT NULL);";
+    database->prepare_statement(create_stmt)->execute_and_reset();
+    create_stmt = "CREATE INDEX timestamp_idx ON messages (timestamp ASC);";
+    database->prepare_statement(create_stmt)->execute_and_reset();
+
+    std::unordered_map<std::string, int> topics;
+
+    using SqliteStatement = std::shared_ptr<rosbag2_storage_plugins::SqliteStatementWrapper>;
+    SqliteStatement write_statement = database->prepare_statement(
+      "INSERT INTO messages (timestamp, topic_id, data) VALUES (?, ?, ?);");
+
+    for (const auto & msg : messages) {
+      std::string topic_name = std::get<2>(msg);
+      std::string type_name = std::get<3>(msg);
+      std::string rmw_format = std::get<4>(msg);
+
+      // Create topic in DB if message with new topic name
+      if (topics.find(topic_name) == std::end(topics)) {
+        auto insert_topic = database->prepare_statement(
+          "INSERT INTO topics (name, type, serialization_format) VALUES (?, ?, ?)");
+        insert_topic->bind(topic_name, type_name, rmw_format);
+        insert_topic->execute_and_reset();
+        topics.emplace(topic_name, static_cast<int>(database->get_last_insert_id()));
+      }
+
+      // Prepare rosbag2 serialized message to write
+      auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      message->serialized_data = make_serialized_message(std::get<0>(msg));
+      message->time_stamp = std::get<1>(msg);
+      message->topic_name = topic_name;
+      // Write message to DB
+      auto topic_entry = topics.find(topic_name);
+      if (topic_entry == end(topics)) {
+        throw SqliteException("Topic '" + topic_name + "' has not been created yet!");
+      }
+      write_statement->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+      write_statement->execute_and_reset();
+    }
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>
