@@ -468,27 +468,54 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   metadata.message_count = 0;
   metadata.topics_with_message_count = {};
 
-  auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
-    "MAX(messages.timestamp), offered_qos_profiles "
-    "FROM messages JOIN topics on topics.id = messages.topic_id "
-    "GROUP BY topics.name;");
-  auto query_results = statement->execute_query<
-    std::string, std::string, std::string, int, rcutils_time_point_value_t,
-    rcutils_time_point_value_t, std::string>();
-
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
-  for (auto result : query_results) {
-    metadata.topics_with_message_count.push_back(
-      {
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
-        static_cast<size_t>(std::get<3>(result))
-      });
 
-    metadata.message_count += std::get<3>(result);
-    min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
-    max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
+  if (database_->field_exists("topics", "offered_qos_profiles")) {
+    std::string query =
+      "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
+      "MAX(messages.timestamp), offered_qos_profiles "
+      "FROM messages JOIN topics on topics.id = messages.topic_id "
+      "GROUP BY topics.name;";
+
+    auto statement = database_->prepare_statement(query);
+    auto query_results = statement->execute_query<
+      std::string, std::string, std::string, int, rcutils_time_point_value_t,
+      rcutils_time_point_value_t, std::string>();
+
+    for (auto result : query_results) {
+      metadata.topics_with_message_count.push_back(
+        {
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
+          static_cast<size_t>(std::get<3>(result))
+        });
+
+      metadata.message_count += std::get<3>(result);
+      min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
+      max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
+    }
+  } else {
+    std::string query =
+      "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
+      "MAX(messages.timestamp) "
+      "FROM messages JOIN topics on topics.id = messages.topic_id "
+      "GROUP BY topics.name;";
+    auto statement = database_->prepare_statement(query);
+    auto query_results = statement->execute_query<
+      std::string, std::string, std::string, int, rcutils_time_point_value_t,
+      rcutils_time_point_value_t>();
+
+    for (auto result : query_results) {
+      metadata.topics_with_message_count.push_back(
+        {
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
+          static_cast<size_t>(std::get<3>(result))
+        });
+
+      metadata.message_count += std::get<3>(result);
+      min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
+      max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
+    }
   }
 
   if (metadata.message_count == 0) {
