@@ -34,7 +34,6 @@
 
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/qos.hpp"
-#include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include "rosbag2_transport/topic_filter.hpp"
 
@@ -44,18 +43,12 @@ namespace rosbag2_transport
 Recorder::Recorder(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
-: Recorder(
-    std::move(
-      rosbag2_transport::ReaderWriterFactory::make_writer(
-        rosbag2_transport::RecordOptions())),
-    rosbag2_storage::StorageOptions(),
-    rosbag2_transport::RecordOptions(),
-    node_name,
-    node_options)
+: rclcpp::Node(node_name, node_options)
 {
   // TODO(karsten1987): Use this constructor later with parameter parsing.
   // The reader, storage_options as well as record_options can be loaded via parameter.
   // That way, the recorder can be used as a simple component in a component manager.
+  throw rclcpp::exceptions::UnimplementedError();
 }
 
 Recorder::Recorder(
@@ -165,13 +158,13 @@ void Recorder::record()
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      {
-        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-        bag_split_info_ = info;
-        write_split_has_occurred_ = true;
-      }
-      event_publisher_thread_wake_cv_.notify_all();
-    };
+    {
+      std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+      bag_split_info_ = info;
+      write_split_has_occurred_ = true;
+    }
+    event_publisher_thread_wake_cv_.notify_all();
+  };
   writer_->add_event_callbacks(callbacks);
 
   serialization_format_ = record_options_.rmw_serialization_format;
