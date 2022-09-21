@@ -158,13 +158,13 @@ void Recorder::record()
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-    {
-      std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-      bag_split_info_ = info;
-      write_split_has_occurred_ = true;
-    }
-    event_publisher_thread_wake_cv_.notify_all();
-  };
+      {
+        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+        bag_split_info_ = info;
+        write_split_has_occurred_ = true;
+      }
+      event_publisher_thread_wake_cv_.notify_all();
+    };
   writer_->add_event_callbacks(callbacks);
 
   serialization_format_ = record_options_.rmw_serialization_format;
