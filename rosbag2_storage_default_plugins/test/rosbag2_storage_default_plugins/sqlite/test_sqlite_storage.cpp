@@ -232,6 +232,67 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(2)));
 }
 
+TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_for_prefoxy_db_schema) {
+  std::vector<std::string> string_messages = {"first message", "second message", "third message"};
+  std::vector<std::string> topics = {"topic1", "topic2"};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages =
+  {std::make_tuple(
+      string_messages[0], static_cast<int64_t>(1e9), topics[0], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[1], static_cast<int64_t>(2e9), topics[0], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[2], static_cast<int64_t>(3e9), topics[1], "type2", "rmw_format")};
+
+  write_messages_to_sqlite_in_pre_foxy_format(messages);
+
+  const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  const auto db_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
+
+  readable_storage->open(
+    {db_filename, kPluginID},
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  const auto metadata = readable_storage->get_metadata();
+
+  EXPECT_THAT(metadata.storage_identifier, Eq("sqlite3"));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({db_filename}));
+  EXPECT_THAT(
+    metadata.topics_with_message_count, ElementsAreArray(
+  {
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
+        "topic1", "type1", "rmw_format", ""}, 2u},
+    rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
+        "topic2", "type2", "rmw_format", ""}, 1u}
+  }));
+  EXPECT_THAT(metadata.message_count, Eq(3u));
+  EXPECT_THAT(
+    metadata.starting_time, Eq(
+      std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::seconds(1))
+  ));
+  EXPECT_THAT(metadata.duration, Eq(std::chrono::seconds(2)));
+}
+
+TEST_F(StorageTestFixture, messages_readable_for_prefoxy_db_schema) {
+  std::vector<std::string> string_messages = {"first message", "second message", "third message"};
+  std::vector<std::string> topics = {"topic1", "topic2", "topic3"};
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages =
+  {std::make_tuple(
+      string_messages[0], static_cast<int64_t>(1e9), topics[0], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[1], static_cast<int64_t>(2e9), topics[1], "type1", "rmw_format"),
+    std::make_tuple(
+      string_messages[2], static_cast<int64_t>(3e9), topics[2], "type2", "rmw_format")};
+
+  write_messages_to_sqlite_in_pre_foxy_format(messages);
+
+  auto read_messages = read_all_messages_from_sqlite();
+  ASSERT_THAT(read_messages, SizeIs(3));
+  for (size_t i = 0; i < 3; i++) {
+    EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
+    EXPECT_THAT(read_messages[i]->time_stamp, Eq(std::get<1>(messages[i])));
+    EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+  }
+}
+
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   write_messages_to_sqlite({});
 
