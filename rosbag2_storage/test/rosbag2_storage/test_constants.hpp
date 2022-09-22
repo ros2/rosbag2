@@ -20,8 +20,8 @@ namespace test_constants
 {
 constexpr const char * const READ_WRITE_PLUGIN_EXTENSION = ".rwplugin";
 constexpr const char * const READ_ONLY_PLUGIN_EXTENSION = ".roplugin";
-constexpr const char * const READ_WRITE_PLUGIN_IDENTIFIER = "ReadWritePlugin";
-constexpr const char * const READ_ONLY_PLUGIN_IDENTIFIER = "ReadOnlyPlugin";
+constexpr const char * const READ_WRITE_PLUGIN_IDENTIFIER = "my_test_plugin";
+constexpr const char * const READ_ONLY_PLUGIN_IDENTIFIER = "my_read_only_test_plugin";
 constexpr const char * const DUMMY_FILEPATH = "/path/to/storage";
 constexpr const uint64_t MAX_BAGFILE_SIZE = 0;
 constexpr const uint64_t MIN_SPLIT_FILE_SIZE = UINT64_MAX;

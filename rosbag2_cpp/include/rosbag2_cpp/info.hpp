@@ -30,7 +30,7 @@ public:
   virtual ~Info() = default;
 
   virtual rosbag2_storage::BagMetadata read_metadata(
-    const std::string & uri, const std::string & storage_id);
+    const std::string & uri, const std::string & storage_id = "");
 };
 
 }  // namespace rosbag2_cpp

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentTypeError
+from argparse import ArgumentParser, ArgumentTypeError
 import os
 from typing import Any
 from typing import Dict
@@ -24,6 +24,7 @@ from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSLivelinessPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+import rosbag2_py
 
 # This map needs to be updated when new policies are introduced
 _QOS_POLICY_FROM_SHORT_NAME = {
@@ -104,7 +105,7 @@ def check_path_exists(value: Any) -> str:
     try:
         if os.path.exists(value):
             return value
-        raise ArgumentTypeError("Bag file '{}' does not exist!".format(value))
+        raise ArgumentTypeError("Bag path '{}' does not exist!".format(value))
     except ValueError:
         raise ArgumentTypeError('{} is not the valid type (string)'.format(value))
 
@@ -118,3 +119,13 @@ def check_not_negative_int(arg: str) -> int:
         return value
     except ValueError:
         raise ArgumentTypeError('{} is not the valid type (int)'.format(value))
+
+
+def add_standard_reader_args(parser: ArgumentParser) -> None:
+    reader_choices = rosbag2_py.get_registered_readers()
+    parser.add_argument(
+        'bag_path', type=check_path_exists, help='Bag to open')
+    parser.add_argument(
+        '-s', '--storage', default='', choices=reader_choices,
+        help='Storage implementation of bag. '
+             'By default attempts to detect automatically - use this argument to override.')

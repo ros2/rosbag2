@@ -18,6 +18,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_storage/logging.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -28,25 +30,26 @@ namespace rosbag2_cpp
 rosbag2_storage::BagMetadata Info::read_metadata(
   const std::string & uri, const std::string & storage_id)
 {
+  const rcpputils::fs::path bag_path{uri};
+  if (!bag_path.exists()) {
+    throw std::runtime_error("Bag path " + uri + " does not exist.");
+  }
+
   rosbag2_storage::MetadataIo metadata_io;
   if (metadata_io.metadata_file_exists(uri)) {
     return metadata_io.read_metadata(uri);
   }
-  if (!storage_id.empty()) {
-    rosbag2_storage::StorageFactory factory;
-    std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage;
-    storage = factory.open_read_only({uri, storage_id});
-    if (!storage) {
-      throw std::runtime_error(
-              "The metadata.yaml file does not exist and the bag could not be "
-              "opened.");
-    }
-    auto bag_metadata = storage->get_metadata();
-    return bag_metadata;
+
+  if (bag_path.is_directory()) {
+    throw std::runtime_error("Could not find metadata in bag directory " + uri);
   }
-  throw std::runtime_error(
-          "The metadata.yaml file does not exist. Please specify a the "
-          "storage id of the bagfile to query it directly");
+
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_only({uri, storage_id});
+  if (!storage) {
+    throw std::runtime_error("No plugin detected that could open file " + uri);
+  }
+  return storage->get_metadata();
 }
 
 }  // namespace rosbag2_cpp
