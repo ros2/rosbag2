@@ -118,7 +118,7 @@ PYBIND11_MODULE(_storage, m) {
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(
     pybind11::init<std::vector<std::string>>(),
-    pybind11::arg("topics"))
+    pybind11::arg("topics") = std::vector<std::string>())
   .def_readwrite("topics", &rosbag2_storage::StorageFilter::topics);
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
@@ -148,14 +148,25 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::FileInformation>(m, "FileInformation")
   .def(
-    pybind11::init<std::string,
-    std::chrono::time_point<std::chrono::high_resolution_clock>,
-    std::chrono::nanoseconds,
-    size_t>(),
+    pybind11::init(
+      [](
+        std::string path,
+        pybind11::object starting_time,
+        pybind11::object duration,
+        size_t message_count)
+      {
+        return rosbag2_storage::FileInformation{
+          path,
+          from_rclpy_time(starting_time),
+          from_rclpy_duration(duration),
+          message_count
+        };
+      }),
     pybind11::arg("path"),
     pybind11::arg("starting_time"),
     pybind11::arg("duration"),
-    pybind11::arg("message_count"))
+    pybind11::arg("message_count")
+  )
   .def_readwrite("path", &rosbag2_storage::FileInformation::path)
   .def_property(
     "starting_time",
@@ -178,29 +189,49 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::BagMetadata>(m, "BagMetadata")
   .def(
-    pybind11::init<
-      int,
-      uint64_t,
-      std::string,
-      std::vector<std::string>,
-      std::vector<rosbag2_storage::FileInformation>,
-      std::chrono::nanoseconds,
-      std::chrono::time_point<std::chrono::high_resolution_clock>,
-      uint64_t,
-      std::vector<rosbag2_storage::TopicInformation>,
-      std::string,
-      std::string>(),
+    pybind11::init(
+      [](
+        int version,
+        uint64_t bag_size,
+        std::string storage_identifier,
+        std::vector<std::string> relative_file_paths,
+        std::vector<rosbag2_storage::FileInformation> files,
+        pybind11::object duration,
+        pybind11::object starting_time,
+        uint64_t message_count,
+        std::vector<rosbag2_storage::TopicInformation> topics_with_message_count,
+        std::string compression_format,
+        std::string compression_mode,
+        std::unordered_map<std::string, std::string> custom_data)
+      {
+        return rosbag2_storage::BagMetadata{
+          version,
+          bag_size,
+          storage_identifier,
+          relative_file_paths,
+          files,
+          from_rclpy_duration(duration),
+          from_rclpy_time(starting_time),
+          message_count,
+          topics_with_message_count,
+          compression_format,
+          compression_mode,
+          custom_data
+        };
+      }),
     pybind11::arg("version") = 6,
     pybind11::arg("bag_size") = 0,
     pybind11::arg("storage_identifier") = "",
     pybind11::arg("relative_file_paths") = std::vector<std::string>(),
     pybind11::arg("files") = std::vector<rosbag2_storage::FileInformation>(),
-    pybind11::arg("duration") = std::chrono::nanoseconds{0},
-    pybind11::arg("starting_time") = std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds{0}),
+    pybind11::arg("duration") = to_rclpy_duration(std::chrono::nanoseconds{0}),
+    pybind11::arg("starting_time") = to_rclpy_time(
+      std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds{0})),
     pybind11::arg("message_count") = 0,
     pybind11::arg("topics_with_message_count") = std::vector<rosbag2_storage::TopicInformation>(),
     pybind11::arg("compression_format") = "",
-    pybind11::arg("compression_mode") = "")
+    pybind11::arg("compression_mode") = "",
+    pybind11::arg("custom_data") = std::unordered_map<std::string, std::string>())
   .def_readwrite("version", &rosbag2_storage::BagMetadata::version)
   .def_readwrite("bag_size", &rosbag2_storage::BagMetadata::bag_size)
   .def_readwrite("storage_identifier", &rosbag2_storage::BagMetadata::storage_identifier)
@@ -228,6 +259,7 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::BagMetadata::topics_with_message_count)
   .def_readwrite("compression_format", &rosbag2_storage::BagMetadata::compression_format)
   .def_readwrite("compression_mode", &rosbag2_storage::BagMetadata::compression_mode)
+  .def_readwrite("custom_data", &rosbag2_storage::BagMetadata::custom_data)
   .def(
     "__repr__", [](const rosbag2_storage::BagMetadata & metadata) {
       return format_bag_meta_data(metadata);

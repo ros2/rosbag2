@@ -13,24 +13,14 @@
 # limitations under the License.
 
 import datetime
-import os
 from pathlib import Path
-import sys
 import threading
-
 
 from common import get_rosbag_options, wait_for
 import rclpy
 from rclpy.qos import QoSProfile
 import rosbag2_py
 from std_msgs.msg import String
-
-if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
-    # This is needed on Linux when compiling with clang/libc++.
-    # TL;DR This makes class_loader work when using a python extension compiled with libc++.
-    #
-    # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
-    sys.setdlopenflags(os.RTLD_GLOBAL | os.RTLD_LAZY)
 
 
 def test_options_qos_conversion():
