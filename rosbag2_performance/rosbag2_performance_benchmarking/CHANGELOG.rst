@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport galactic] Fix build of benchmarking package (`#881 <https://github.com/ros2/rosbag2/issues/881>`_, `#882 <https://github.com/ros2/rosbag2/issues/882>`_) (`#883 <https://github.com/ros2/rosbag2/issues/883>`_)
+* Contributors: Adam Dąbrowski
+
 0.9.1 (2021-07-08)
 ------------------
 

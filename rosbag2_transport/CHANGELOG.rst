@@ -2,6 +2,13 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* allow for implementation of composable recorder via inheritance (`#892 <https://github.com/ros2/rosbag2/issues/892>`_)
+* Fix discovery silently stops after unknown msg type is found. (`#848 <https://github.com/ros2/rosbag2/issues/848>`_) (`#858 <https://github.com/ros2/rosbag2/issues/858>`_)
+* [backport galactic] recording with --all and --exclude fix (`#765 <https://github.com/ros2/rosbag2/issues/765>`_) (`#825 <https://github.com/ros2/rosbag2/issues/825>`_)
+* Contributors: Bernd Pfrommer, Cameron Miller, Emerson Knapp
+
 0.9.1 (2021-07-08)
 ------------------
 * [backport galactic] Add delay option (`#789 <https://github.com/ros2/rosbag2/issues/789>`_) (`#812 <https://github.com/ros2/rosbag2/issues/812>`_)

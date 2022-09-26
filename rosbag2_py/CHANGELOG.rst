@@ -2,6 +2,12 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add stopRecording into rosbag2_py (`#854 <https://github.com/ros2/rosbag2/issues/854>`_) (`#995 <https://github.com/ros2/rosbag2/issues/995>`_)
+* [backport galactic] Fix `ros2 bag record` race at startup (`#911 <https://github.com/ros2/rosbag2/issues/911>`_)
+* Contributors: Afonso da Fonseca Braga, Ivan Santiago Paunovic
+
 0.9.1 (2021-07-08)
 ------------------
 * [backport galactic] Handle SIGTERM gracefully in recording (`#792 <https://github.com/ros2/rosbag2/issues/792>`_) (`#807 <https://github.com/ros2/rosbag2/issues/807>`_)

@@ -2,6 +2,13 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Enable sanitizers only if code actually can run (`#572 <https://github.com/ros2/rosbag2/issues/572>`_) (`#952 <https://github.com/ros2/rosbag2/issues/952>`_)
+* Add API samples for writing to bags programmatically (`#869 <https://github.com/ros2/rosbag2/issues/869>`_)
+* Fix discovery silently stops after unknown msg type is found. (`#848 <https://github.com/ros2/rosbag2/issues/848>`_) (`#858 <https://github.com/ros2/rosbag2/issues/858>`_)
+* Contributors: Emerson Knapp, Geoffrey Biggs, Jacob Perron
+
 0.9.1 (2021-07-08)
 ------------------
 
