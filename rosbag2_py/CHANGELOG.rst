@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.2 (2022-09-26)
+------------------
 * Add stopRecording into rosbag2_py (`#854 <https://github.com/ros2/rosbag2/issues/854>`_) (`#995 <https://github.com/ros2/rosbag2/issues/995>`_)
 * [backport galactic] Fix `ros2 bag record` race at startup (`#911 <https://github.com/ros2/rosbag2/issues/911>`_)
 * Contributors: Afonso da Fonseca Braga, Ivan Santiago Paunovic

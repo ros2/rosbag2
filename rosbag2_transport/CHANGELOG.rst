@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.2 (2022-09-26)
+------------------
 * allow for implementation of composable recorder via inheritance (`#892 <https://github.com/ros2/rosbag2/issues/892>`_)
 * Fix discovery silently stops after unknown msg type is found. (`#848 <https://github.com/ros2/rosbag2/issues/848>`_) (`#858 <https://github.com/ros2/rosbag2/issues/858>`_)
 * [backport galactic] recording with --all and --exclude fix (`#765 <https://github.com/ros2/rosbag2/issues/765>`_) (`#825 <https://github.com/ros2/rosbag2/issues/825>`_)
