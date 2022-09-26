@@ -212,6 +212,11 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     std::chrono::nanoseconds(message->time_stamp));
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
 
+<<<<<<< HEAD
+=======
+  metadata_.files.back().starting_time =
+    std::min(metadata_.files.back().starting_time, message_timestamp);
+>>>>>>> 626d69b (Fix issue where sequentialwriter only sets metadata duration to the duration of the final file (#1098))
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 

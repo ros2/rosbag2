@@ -184,6 +184,10 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_writer
     test/rosbag2_cpp/test_sequential_writer.cpp)
   if(TARGET test_sequential_writer)
+<<<<<<< HEAD
+=======
+    ament_target_dependencies(test_sequential_writer rosbag2_storage rosbag2_test_common test_msgs)
+>>>>>>> 626d69b (Fix issue where sequentialwriter only sets metadata duration to the duration of the final file (#1098))
     target_link_libraries(test_sequential_writer ${PROJECT_NAME})
   endif()
 
