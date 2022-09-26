@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -29,6 +30,8 @@
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
+
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -36,6 +39,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
+using rosbag2_test_common::TemporaryDirectoryFixture;
 
 class SequentialWriterTest : public Test
 {
@@ -561,4 +565,68 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
   EXPECT_EQ(closed_file, expected_closed.string());
   EXPECT_EQ(opened_file, fake_storage_uri_);
+}
+
+
+class ManualSplitWriter : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  // makes the method public for manual splitting
+  void split()
+  {
+    split_bagfile();
+  }
+};
+
+void write_sample_split_bag(
+  const std::string & uri,
+  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
+{
+  std::string msg_content = "Hello";
+  auto msg_length = msg_content.length();
+  std::shared_ptr<rcutils_uint8_array_t> fake_data = rosbag2_storage::make_serialized_message(
+    msg_content.c_str(), msg_length);
+  std::string topic_name = "testtopic";
+
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = uri;
+  storage_options.storage_id = "sqlite3";
+
+  ManualSplitWriter writer;
+  writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  writer.create_topic(
+  {
+    topic_name,
+    "test_msgs/ByteMultiArray",
+    "cdr",
+    ""
+  });
+  for (const auto & file_messages : message_timestamps_by_file) {
+    for (const auto time_stamp : file_messages) {
+      auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      msg->serialized_data = fake_data;
+      msg->time_stamp = time_stamp;
+      msg->topic_name = topic_name;
+      writer.write(msg);
+    }
+    writer.split();
+  }
+  writer.close();
+}
+
+
+TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
+  const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
+    {100, 300, 200},
+    {500, 400, 600}
+  };
+  std::string uri = (std::filesystem::path(temporary_dir_path_) / "split_duration_bag").string();
+  write_sample_split_bag(uri, message_timestamps_by_file);
+
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(uri);
+  ASSERT_EQ(
+    metadata.starting_time,
+    std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
+  ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
 }

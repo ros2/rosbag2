@@ -318,7 +318,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
   metadata_.files.back().starting_time =
     std::min(metadata_.files.back().starting_time, message_timestamp);
-  const auto duration = message_timestamp - metadata_.files.back().starting_time;
+  const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
   const auto file_duration = message_timestamp - metadata_.files.back().starting_time;
