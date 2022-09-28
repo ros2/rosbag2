@@ -619,7 +619,7 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     {100, 300, 200},
     {500, 400, 600}
   };
-  std::string uri = (std::filesystem::path(temporary_dir_path_) / "split_duration_bag").string();
+  std::string uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
   write_sample_split_bag(uri, message_timestamps_by_file);
 
   rosbag2_storage::MetadataIo metadata_io;
