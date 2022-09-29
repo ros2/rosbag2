@@ -12,12 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import sys
 import time
 from typing import Callable
 
-from rclpy.clock import Clock, ClockType
-from rclpy.duration import Duration
-import rosbag2_py
+if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
+    # This is needed on Linux when compiling with clang/libc++.
+    # TL;DR This makes class_loader work when using a python extension compiled with libc++.
+    #
+    # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
+    sys.setdlopenflags(os.RTLD_GLOBAL | os.RTLD_LAZY)
+
+from rclpy.clock import Clock, ClockType  # noqa
+from rclpy.duration import Duration  # noqa
+import rosbag2_py  # noqa
 
 
 def get_rosbag_options(path, serialization_format='cdr'):

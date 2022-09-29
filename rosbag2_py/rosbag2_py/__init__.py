@@ -25,6 +25,7 @@ with add_dll_directories_from_env('PATH'):
     )
     from rosbag2_py._storage import (
         ConverterOptions,
+        FileInformation,
         StorageFilter,
         StorageOptions,
         TopicMetadata,
@@ -56,6 +57,7 @@ with add_dll_directories_from_env('PATH'):
 __all__ = [
     'bag_rewrite',
     'ConverterOptions',
+    'FileInformation',
     'get_default_storage_id',
     'get_registered_readers',
     'get_registered_writers',
