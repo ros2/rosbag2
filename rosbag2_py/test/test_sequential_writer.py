@@ -12,22 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
+from common import get_rosbag_options
 
 from rclpy.serialization import deserialize_message, serialize_message
+import rosbag2_py
 from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
-
-if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
-    # This is needed on Linux when compiling with clang/libc++.
-    # TL;DR This makes class_loader work when using a python extension compiled with libc++.
-    #
-    # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
-    sys.setdlopenflags(os.RTLD_GLOBAL | os.RTLD_LAZY)
-
-from common import get_rosbag_options  # noqa
-import rosbag2_py  # noqa
 
 
 def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
