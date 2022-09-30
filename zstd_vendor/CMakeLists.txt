@@ -9,7 +9,8 @@ option(FORCE_BUILD_VENDOR_PKG
   OFF)
 
 if(NOT FORCE_BUILD_VENDOR_PKG)
-  find_package(zstd QUIET)
+  include(FindPkgConfig)
+  pkg_search_module(zstd libzstd)
 endif()
 
 macro(build_zstd)
@@ -64,7 +65,5 @@ if (NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
 else()
   message(STATUS "Found Zstd, skipping build.")
 endif()
-
-install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
 ament_package(CONFIG_EXTRAS zstd_vendor-extras.cmake)
