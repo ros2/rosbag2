@@ -25,6 +25,7 @@ jobs:
           rosbag2_compression
           rosbag2_compression_zstd
           rosbag2_cpp
+          rosbag2_examples_cpp
           rosbag2_interfaces
           rosbag2_py
           rosbag2_storage
