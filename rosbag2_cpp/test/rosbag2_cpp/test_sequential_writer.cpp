@@ -14,7 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -570,14 +569,18 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 
 
 TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
-  const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
-    {100, 300, 200},
-    {500, 400, 600}
+  const std::vector<std::pair<rcutils_time_point_value_t, uint32_t>> fake_messages {
+    {100, 1},
+    {300, 2},
+    {200, 3},
+    {500, 4},
+    {400, 5},
+    {600, 6}
   };
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
   storage_options.storage_id = "sqlite3";
-  write_sample_split_bag(storage_options, message_timestamps_by_file);
+  write_sample_split_bag(storage_options, fake_messages, 3);
 
   rosbag2_storage::MetadataIo metadata_io;
   auto metadata = metadata_io.read_metadata(storage_options.uri);

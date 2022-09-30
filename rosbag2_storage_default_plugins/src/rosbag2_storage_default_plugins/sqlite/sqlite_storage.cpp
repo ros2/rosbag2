@@ -292,16 +292,13 @@ void SqliteStorage::write(
 
 void SqliteStorage::set_read_order(rosbag2_storage::ReadOrder read_order)
 {
-  if (read_order == read_order_) {
-    return;
-  }
   read_order_ = read_order;
   read_statement_ = nullptr;
 
   if (read_order_.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
     throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
   }
-  if (read_order.reverse && seek_row_id_ == 0) {
+  if (read_order_.reverse && seek_row_id_ == 0) {
     seek_row_id_ = get_last_rowid();
   }
 }
@@ -329,7 +326,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   // set start time to current time
   // and set seek_row_id to the new row id up
   seek_time_ = bag_message->time_stamp;
-  seek_row_id_ = std::get<3>(*current_message_row_) + 1;
+  seek_row_id_ = std::get<3>(*current_message_row_) + (read_order_.reverse ? -1 : 1);
 
   ++current_message_row_;
   return bag_message;
@@ -444,6 +441,9 @@ void SqliteStorage::prepare_for_reading()
     where_conditions.push_back(
       "(messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ") ");
   } else {
+    // When doing timestamp ordering, we need a secondary ordering on message_id
+    // Timestamp is not required to be unique, but message_id is, so for messages with the same
+    // timestamp we order by the id to have a consistent and deterministic order.
     where_conditions.push_back(
       "(((timestamp = " + std::to_string(seek_time_) + ") "
       "AND (messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ")) "

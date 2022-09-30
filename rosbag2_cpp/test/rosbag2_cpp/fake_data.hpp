@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_CPP__FAKE_DATA_HPP_
 #define ROSBAG2_CPP__FAKE_DATA_HPP_
 
+#include <utility>
 #include <vector>
 
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
@@ -25,8 +26,10 @@ public:
   using rosbag2_cpp::writers::SequentialWriter::split_bagfile;
 };
 
+// Write vector of <timestamp, uint32_data_value> pairs to bag files, splitting every N messages
 void write_sample_split_bag(
   const rosbag2_storage::StorageOptions & storage_options,
-  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file);
+  const std::vector<std::pair<rcutils_time_point_value_t, uint32_t>> & fake_messages,
+  size_t split_every);
 
 #endif  // ROSBAG2_CPP__FAKE_DATA_HPP_
