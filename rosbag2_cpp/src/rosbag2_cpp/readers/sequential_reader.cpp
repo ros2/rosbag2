@@ -144,7 +144,6 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     bool current_storage_has_next = storage_->has_next();
     if (!current_storage_has_next && has_next_file()) {
-      // TODO(emersonknapp) has_next needs to roll to _previous_ file if necessary based on this
       load_next_file();
       // recursively call has_next again after rollover
       return has_next();

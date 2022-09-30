@@ -14,7 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
@@ -35,6 +34,7 @@
 
 #include "test_msgs/msg/basic_types.hpp"
 
+#include "fake_data.hpp"
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
@@ -238,51 +238,19 @@ TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
 }
 
 
-class OrderTestWriter : public rosbag2_cpp::writers::SequentialWriter
-{
-public:
-  // makes the method public for manual splitting
-  void split()
-  {
-    split_bagfile();
-  }
-};
-
-
 class ReadOrderTest : public TemporaryDirectoryFixture
 {
 public:
   ReadOrderTest()
   {
-    std::string msg_content = "Hello";
-    auto msg_length = msg_content.length();
-    fake_data = rosbag2_storage::make_serialized_message(
-      msg_content.c_str(), msg_length);
-
-    storage_options.uri = (std::filesystem::path(temporary_dir_path_) / "ordertest").string();
+    storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "ordertest").string();
     storage_options.storage_id = "sqlite3";
-
-    writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
-    writer.create_topic(
-    {
-      topic_name,
-      "test_msgs/ByteMultiArray",
-      "cdr",
-      ""
-    });
-
+    write_sample_split_bag(storage_options, message_timestamps_by_file);
     for (const auto & file_messages : message_timestamps_by_file) {
       for (const auto time_stamp : file_messages) {
         message_timestamps.push_back(time_stamp);
-        auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-        msg->serialized_data = fake_data;
-        msg->time_stamp = time_stamp;
-        msg->topic_name = topic_name;
-        writer.write(msg);
       }
-      writer.split();
     }
-    writer.close();
   }
 
   const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
@@ -290,17 +258,12 @@ public:
     {500, 400, 600}
   };
   std::vector<rcutils_time_point_value_t> message_timestamps;
-  const std::string topic_name = "testtopic";
-  OrderTestWriter writer;
-  rosbag2_cpp::readers::SequentialReader reader;
-  rosbag2_storage::StorageOptions storage_options;
-  std::shared_ptr<rcutils_uint8_array_t> fake_data;
+  rosbag2_cpp::readers::SequentialReader reader{};
+  rosbag2_storage::StorageOptions storage_options{};
 };
 
 TEST_F(ReadOrderTest, received_timestamp_order) {
-  rosbag2_storage::ReadOrder order;
-  order.sort_by = rosbag2_storage::ReadOrder::ReceivedTimestamp;
-  order.reverse = false;
+  rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, false);
   reader.set_read_order(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
 
@@ -314,9 +277,7 @@ TEST_F(ReadOrderTest, received_timestamp_order) {
 }
 
 TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
-  rosbag2_storage::ReadOrder order;
-  order.sort_by = rosbag2_storage::ReadOrder::ReceivedTimestamp;
-  order.reverse = true;
+  rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, true);
   reader.set_read_order(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
   auto metadata = reader.get_metadata();
@@ -333,8 +294,7 @@ TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
 }
 
 TEST_F(ReadOrderTest, file_order) {
-  rosbag2_storage::ReadOrder order;
-  order.sort_by = rosbag2_storage::ReadOrder::File;
+  rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::File, false);
   reader.set_read_order(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
 
@@ -348,8 +308,7 @@ TEST_F(ReadOrderTest, file_order) {
 }
 
 TEST_F(ReadOrderTest, reverse_file_order) {
-  rosbag2_storage::ReadOrder order;
-  order.sort_by = rosbag2_storage::ReadOrder::File;
+  rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::File, false);
   reader.set_read_order(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
   // Not knowing a better way to reach the "last message ID in all files",

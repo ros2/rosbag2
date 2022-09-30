@@ -124,7 +124,7 @@ private:
 
   rcutils_time_point_value_t seek_time_ = 0;
   int seek_row_id_ = 0;
-  rosbag2_storage::ReadOrder read_order_;
+  rosbag2_storage::ReadOrder read_order_{};
   rosbag2_storage::StorageFilter storage_filter_ {};
 
   // This mutex is necessary to protect:

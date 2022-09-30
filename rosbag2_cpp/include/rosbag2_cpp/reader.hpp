@@ -104,6 +104,8 @@ public:
    * read head timestamp.
    *
    * \param read_order Sorting criterion and direction to read messages in
+   * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
+   * or load_next_file() will cause undefined behavior
    */
   void set_read_order(rosbag2_storage::ReadOrder read_order);
 

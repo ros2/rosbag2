@@ -170,7 +170,7 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_sequential_reader
-    test/rosbag2_cpp/test_sequential_reader.cpp)
+    test/rosbag2_cpp/test_sequential_reader.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_reader)
     ament_target_dependencies(test_sequential_reader rosbag2_storage rosbag2_test_common test_msgs)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
@@ -221,7 +221,7 @@ if(BUILD_TESTING)
   endif()
 
   ament_add_gmock(test_sequential_writer
-    test/rosbag2_cpp/test_sequential_writer.cpp)
+    test/rosbag2_cpp/test_sequential_writer.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_writer)
     ament_target_dependencies(test_sequential_writer rosbag2_storage rosbag2_test_common test_msgs)
     target_link_libraries(test_sequential_writer ${PROJECT_NAME})

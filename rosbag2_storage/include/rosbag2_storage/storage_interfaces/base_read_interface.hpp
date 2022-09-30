@@ -40,11 +40,15 @@ struct ReadOrder
   // If true, changes sort order to descending
   bool reverse = false;
 
-  bool operator==(const ReadOrder & other)
-  {
-    return sort_by == other.sort_by && reverse == other.reverse;
-  }
+  ReadOrder(SortBy sort_by, bool reverse)
+  : sort_by(sort_by), reverse(reverse) {}
+  ReadOrder() {}
 };
+
+inline bool operator==(const ReadOrder & a, const ReadOrder & b)
+{
+  return a.sort_by == b.sort_by && a.reverse == b.reverse;
+}
 
 namespace storage_interfaces
 {

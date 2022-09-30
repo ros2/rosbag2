@@ -45,9 +45,9 @@ public:
 
   /// Return a tuple containing the topic name, the serialized ROS message, and
   /// the timestamp.
-  pybind11::tuple read_next_py()
+  pybind11::tuple read_next()
   {
-    const auto next = read_next();
+    const auto next = rosbag2_cpp::Reader::read_next();
     rcutils_uint8_array_t rcutils_data = *next->serialized_data.get();
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
@@ -87,7 +87,7 @@ PYBIND11_MODULE(_reader, m) {
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyReader::open))
   .def("set_read_order", &PyReader::set_read_order)
-  .def("read_next", &PyReader::read_next_py)
+  .def("read_next", &PyReader::read_next)
   .def("has_next", &PyReader::has_next)
   .def("get_metadata", &PyReader::get_metadata)
   .def("get_all_topics_and_types", &PyReader::get_all_topics_and_types)
@@ -104,7 +104,7 @@ PYBIND11_MODULE(_reader, m) {
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyCompressionReader::open))
   .def("set_read_order", &PyCompressionReader::set_read_order)
-  .def("read_next", &PyCompressionReader::read_next_py)
+  .def("read_next", &PyCompressionReader::read_next)
   .def("has_next", &PyCompressionReader::has_next)
   .def("get_metadata", &PyCompressionReader::get_metadata)
   .def("get_all_topics_and_types", &PyCompressionReader::get_all_topics_and_types)

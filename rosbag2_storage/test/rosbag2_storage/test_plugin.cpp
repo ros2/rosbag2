@@ -46,8 +46,9 @@ void TestPlugin::open(
   std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
-void TestPlugin::set_read_order(rosbag2_storage::ReadOrder)
+void TestPlugin::set_read_order(rosbag2_storage::ReadOrder order)
 {
+  std::cout << "Set read order " << order.sort_by << " " << order.reverse << std::endl;
 }
 
 bool TestPlugin::has_next()
