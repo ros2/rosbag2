@@ -4,6 +4,8 @@ project(zstd_vendor)
 
 find_package(ament_cmake REQUIRED)
 
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+
 option(FORCE_BUILD_VENDOR_PKG
   "Build zstd from source, even if system-installed package is available"
   OFF)
