@@ -195,7 +195,6 @@ void SqliteStorage::open(
   if (is_read_write(io_flag)) {
     initialize();
   }
-  set_read_order(read_order_);
 
   // Reset the read and write statements in case the database changed.
   // These will be reinitialized lazily on the first read or write.
@@ -292,15 +291,15 @@ void SqliteStorage::write(
 
 void SqliteStorage::set_read_order(rosbag2_storage::ReadOrder read_order)
 {
-  read_order_ = read_order;
-  read_statement_ = nullptr;
-
-  if (read_order_.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
+  if (read_order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
     throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
   }
-  if (read_order_.reverse && seek_row_id_ == 0) {
-    seek_row_id_ = get_last_rowid();
+  if (read_order.sort_by == rosbag2_storage::ReadOrder::File && read_order.reverse) {
+    throw std::runtime_error("Not Implemented - Reverse File read order");
   }
+
+  read_order_ = read_order;
+  read_statement_ = nullptr;
 }
 
 bool SqliteStorage::has_next()

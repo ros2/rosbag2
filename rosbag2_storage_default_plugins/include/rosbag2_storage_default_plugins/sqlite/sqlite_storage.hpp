@@ -64,6 +64,7 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
   override;
 
+  // Note: File-reverse order is not implemented
   void set_read_order(rosbag2_storage::ReadOrder) override;
 
   bool has_next() override;
@@ -105,7 +106,6 @@ private:
   void commit_transaction();
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
-
   int get_last_rowid();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<

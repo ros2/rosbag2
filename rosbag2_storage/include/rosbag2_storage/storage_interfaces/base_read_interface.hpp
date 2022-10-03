@@ -31,7 +31,7 @@ struct ReadOrder
   enum SortBy
   {
     ReceivedTimestamp,
-    PublishedTimestamp,  // NOTE: not yet implemented in ROS 2 core
+    PublishedTimestamp,  // NOTE: not implemented in ROS 2 core
     File
   };
 
@@ -59,7 +59,9 @@ public:
   virtual ~BaseReadInterface() = default;
 
   /// @brief Set the order to iterate messages in the storage.
-  ///   This affects the outcome of has_next and read_next
+  ///   This affects the outcome of has_next and read_next.
+  ///   Note that when setting to reverse order, this will not change the read head, so user
+  ///   must first seek() to the end in order to read messages from the end.
   /// @param read_order The order in which to return messages.
   virtual void set_read_order(ReadOrder read_order) = 0;
 

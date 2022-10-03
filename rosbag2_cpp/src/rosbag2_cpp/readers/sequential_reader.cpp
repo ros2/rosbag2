@@ -131,6 +131,12 @@ void SequentialReader::open(
 
 void SequentialReader::set_read_order(rosbag2_storage::ReadOrder order)
 {
+  if (order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
+    throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
+  }
+  if (order.sort_by == rosbag2_storage::ReadOrder::File && order.reverse) {
+    throw std::runtime_error("Not Implemented - Reverse File read order");
+  }
   read_order_ = order;
   if (storage_) {
     storage_->set_read_order(order);

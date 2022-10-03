@@ -347,6 +347,7 @@ TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
   reader.close();
 
   for (bool do_reset : {false, true}) {
+    printf("Testing with do_reset %d\n", do_reset);
     reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
     reader.seek(end_timestamp);
     check_against_sorted(do_reset);
@@ -367,17 +368,14 @@ TEST_F(ReadOrderTest, file_order) {
 }
 
 TEST_F(ReadOrderTest, reverse_file_order) {
-  sort_expected(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true));
-  for (bool do_reset : {false, true}) {
-    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, false));
-    reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
-    // Not knowing a better way to reach the "last message ID in all files",
-    // just iterate to end and turn around
-    while (reader.has_next()) {
-      reader.read_next();
-    }
-    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true));
-    check_against_sorted(do_reset);
-    reader.close();
-  }
+  EXPECT_THROW(
+    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true)),
+    std::runtime_error);
+}
+
+TEST_F(ReadOrderTest, published_timestamp_order) {
+  EXPECT_THROW(
+    reader.set_read_order(
+      rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::PublishedTimestamp, false)),
+    std::runtime_error);
 }
