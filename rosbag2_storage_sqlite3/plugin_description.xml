@@ -1,4 +1,4 @@
-<library path="rosbag2_storage_default_plugins">
+<library path="rosbag2_storage_sqlite3">
   <class
     name="sqlite3"
     type="rosbag2_storage_plugins::SqliteStorage"

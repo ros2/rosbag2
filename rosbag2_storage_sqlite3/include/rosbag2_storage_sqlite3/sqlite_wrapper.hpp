@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__SQLITE_WRAPPER_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__SQLITE_WRAPPER_HPP_
 
 #include <sqlite3.h>
 
@@ -24,8 +24,8 @@
 #include "rcutils/types.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp"
-#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_statement_wrapper.hpp"
+#include "rosbag2_storage_sqlite3/visibility_control.hpp"
 
 namespace rosbag2_storage_plugins
 {
@@ -68,4 +68,4 @@ private:
 
 }  // namespace rosbag2_storage_plugins
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_WRAPPER_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__SQLITE_WRAPPER_HPP_

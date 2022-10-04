@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__SQLITE_EXCEPTION_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__SQLITE_EXCEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
 
-#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+#include "rosbag2_storage_sqlite3/visibility_control.hpp"
 
 // ignore incorrect warning when deriving from standard library types
 #ifdef _WIN32
@@ -55,4 +55,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_EXCEPTION_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__SQLITE_EXCEPTION_HPP_
