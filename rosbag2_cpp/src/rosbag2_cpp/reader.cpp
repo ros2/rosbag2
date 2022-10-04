@@ -57,7 +57,7 @@ void Reader::close()
   reader_impl_->close();
 }
 
-void Reader::set_read_order(rosbag2_storage::ReadOrder order)
+void Reader::set_read_order(const rosbag2_storage::ReadOrder & order)
 {
   return reader_impl_->set_read_order(order);
 }

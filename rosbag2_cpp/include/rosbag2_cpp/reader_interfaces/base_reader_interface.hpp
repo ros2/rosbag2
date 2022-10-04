@@ -46,7 +46,7 @@ public:
 
   virtual void close() = 0;
 
-  virtual void set_read_order(rosbag2_storage::ReadOrder) = 0;
+  virtual void set_read_order(const rosbag2_storage::ReadOrder &) = 0;
 
   virtual bool has_next() = 0;
 

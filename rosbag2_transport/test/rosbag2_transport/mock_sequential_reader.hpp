@@ -36,10 +36,8 @@ public:
 
   void close() override {}
 
-  void set_read_order(rosbag2_storage::ReadOrder) override
-  {
-    // TODO(emersonknapp)
-  }
+  void set_read_order(const rosbag2_storage::ReadOrder &) override
+  {}
 
   bool has_next() override
   {

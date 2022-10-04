@@ -129,7 +129,7 @@ void SequentialReader::open(
     topics[0].topic_metadata.serialization_format);
 }
 
-void SequentialReader::set_read_order(rosbag2_storage::ReadOrder order)
+void SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
 {
   if (storage_) {
     storage_->set_read_order(order);

@@ -289,7 +289,7 @@ void SqliteStorage::write(
   commit_transaction();
 }
 
-void SqliteStorage::set_read_order(rosbag2_storage::ReadOrder read_order)
+void SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
 {
   if (read_order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
     throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");

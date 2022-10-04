@@ -64,8 +64,7 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
   override;
 
-  // Note: File-reverse order is not implemented
-  void set_read_order(rosbag2_storage::ReadOrder) override;
+  void set_read_order(const rosbag2_storage::ReadOrder &) override;
 
   bool has_next() override;
 
