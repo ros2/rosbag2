@@ -294,8 +294,8 @@ void SqliteStorage::set_read_order(rosbag2_storage::ReadOrder read_order)
   if (read_order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
     throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
   }
-  if (read_order.sort_by == rosbag2_storage::ReadOrder::File && read_order.reverse) {
-    throw std::runtime_error("Not Implemented - Reverse File read order");
+  if (read_order.sort_by == rosbag2_storage::ReadOrder::File) {
+    throw std::runtime_error("Not Implemented - File read order");
   }
 
   read_order_ = read_order;
@@ -436,18 +436,13 @@ void SqliteStorage::prepare_for_reading()
   const std::string order_direction = read_order_.reverse ? "DESC" : "ASC";
 
   // add seek head filter
-  if (read_order_.sort_by == rosbag2_storage::ReadOrder::File) {
-    where_conditions.push_back(
-      "(messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ") ");
-  } else {
-    // When doing timestamp ordering, we need a secondary ordering on message_id
-    // Timestamp is not required to be unique, but message_id is, so for messages with the same
-    // timestamp we order by the id to have a consistent and deterministic order.
-    where_conditions.push_back(
-      "(((timestamp = " + std::to_string(seek_time_) + ") "
-      "AND (messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ")) "
-      "OR (timestamp " + direction_op + " " + std::to_string(seek_time_) + ")) ");
-  }
+  // When doing timestamp ordering, we need a secondary ordering on message_id
+  // Timestamp is not required to be unique, but message_id is, so for messages with the same
+  // timestamp we order by the id to have a consistent and deterministic order.
+  where_conditions.push_back(
+    "(((timestamp = " + std::to_string(seek_time_) + ") "
+    "AND (messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ")) "
+    "OR (timestamp " + direction_op + " " + std::to_string(seek_time_) + ")) ");
 
   for (
     std::vector<std::string>::const_iterator it = where_conditions.begin();
@@ -460,20 +455,10 @@ void SqliteStorage::prepare_for_reading()
   }
 
   // add order by time then id
-  switch (read_order_.sort_by) {
-    case rosbag2_storage::ReadOrder::ReceivedTimestamp:
-      statement_str += "ORDER BY messages.timestamp " + order_direction;
-      statement_str += ", messages.id " + order_direction;
-      break;
-    case rosbag2_storage::ReadOrder::File:
-      statement_str += "ORDER BY messages.id " + order_direction;
-      break;
-    case rosbag2_storage::ReadOrder::PublishedTimestamp:
-      // not implemented
-      break;
-  }
-
+  statement_str += "ORDER BY messages.timestamp " + order_direction;
+  statement_str += ", messages.id " + order_direction;
   statement_str += ";";
+
   read_statement_ = database_->prepare_statement(statement_str);
   message_result_ = read_statement_->execute_query<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>();

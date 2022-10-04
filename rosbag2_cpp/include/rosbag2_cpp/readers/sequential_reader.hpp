@@ -66,7 +66,7 @@ public:
 
   void close() override;
 
-  /*
+  /**
    * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
    * or load_next_file() will cause undefined behavior
    */
@@ -147,7 +147,6 @@ protected:
     const std::vector<rosbag2_storage::TopicInformation> & topics);
 
   /**
-
   * Checks if the serialization format of the converter factory is the same as that of the storage
   * factory.
   * If not, changes the serialization format of the converter factory to use the serialization
