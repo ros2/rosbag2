@@ -83,6 +83,12 @@ bool Writer::take_snapshot()
   return writer_impl_->take_snapshot();
 }
 
+void Writer::split_bagfile()
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  return writer_impl_->split_bagfile();
+}
+
 void Writer::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
