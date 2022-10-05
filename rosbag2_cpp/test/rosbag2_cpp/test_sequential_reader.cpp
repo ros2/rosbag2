@@ -347,7 +347,6 @@ TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
   reader.close();
 
   for (bool do_reset : {false, true}) {
-    printf("Testing with do_reset %d\n", do_reset);
     reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
     reader.seek(end_timestamp);
     check_against_sorted(do_reset);
