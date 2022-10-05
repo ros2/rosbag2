@@ -73,6 +73,12 @@ public:
     return true;
   }
 
+  void split_bagfile() override
+  {
+    auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
+    callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
+  }
+
   void
   add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks) override
   {
