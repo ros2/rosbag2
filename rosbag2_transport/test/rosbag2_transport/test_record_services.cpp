@@ -22,6 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
+#include "rosbag2_interfaces/srv/split_bagfile.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
@@ -40,9 +41,11 @@ class RecordSrvsTest : public RecordIntegrationTestFixture
 {
 public:
   using Snapshot = rosbag2_interfaces::srv::Snapshot;
+  using SplitBagfile = rosbag2_interfaces::srv::SplitBagfile;
 
-  RecordSrvsTest()
-  : RecordIntegrationTestFixture()
+  explicit RecordSrvsTest(const bool snapshot_mode)
+  : RecordIntegrationTestFixture(),
+    snapshot_mode_(snapshot_mode)
   {}
 
   ~RecordSrvsTest() override
@@ -68,7 +71,7 @@ public:
 
     rosbag2_transport::RecordOptions record_options =
     {false, false, {test_topic_}, "rmw_format", 100ms};
-    storage_options_.snapshot_mode = true;
+    storage_options_.snapshot_mode = snapshot_mode_;
     storage_options_.max_cache_size = 200;
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer_), storage_options_, record_options, recorder_name_);
@@ -80,6 +83,7 @@ public:
 
     const std::string ns = "/" + recorder_name_;
     cli_snapshot_ = client_node_->create_client<Snapshot>(ns + "/snapshot");
+    cli_split_bagfile_ = client_node_->create_client<SplitBagfile>(ns + "/split_bagfile");
 
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
@@ -94,7 +98,10 @@ public:
     pub_manager.run_publishers();
 
     // Make sure expected service is present before starting test
-    ASSERT_TRUE(cli_snapshot_->wait_for_service(service_wait_timeout_));
+    if (snapshot_mode_) {
+      ASSERT_TRUE(cli_snapshot_->wait_for_service(service_wait_timeout_));
+    }
+    ASSERT_TRUE(cli_split_bagfile_->wait_for_service(service_wait_timeout_));
   }
 
   /// Send a service request, and expect it to successfully return within a reasonable timeout
@@ -135,9 +142,19 @@ public:
   // Service clients
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::Client<Snapshot>::SharedPtr cli_snapshot_;
+  rclcpp::Client<SplitBagfile>::SharedPtr cli_split_bagfile_;
+
+  bool snapshot_mode_;
 };
 
-TEST_F(RecordSrvsTest, trigger_snapshot)
+class RecordSrvsSnapshotTest : public RecordSrvsTest
+{
+protected:
+  RecordSrvsSnapshotTest()
+  : RecordSrvsTest(true /*snapshot_mode*/) {}
+};
+
+TEST_F(RecordSrvsSnapshotTest, trigger_snapshot)
 {
   auto & writer = recorder_->get_writer_handle();
   MockSequentialWriter & mock_writer =
@@ -151,4 +168,26 @@ TEST_F(RecordSrvsTest, trigger_snapshot)
 
   successful_service_request<Snapshot>(cli_snapshot_);
   EXPECT_THAT(mock_writer.get_messages().size(), Ne(0u));
+}
+
+class RecordSrvsSplitBagfileTest : public RecordSrvsTest
+{
+protected:
+  RecordSrvsSplitBagfileTest()
+  : RecordSrvsTest(false /*snapshot_mode*/) {}
+};
+
+TEST_F(RecordSrvsSplitBagfileTest, split_bagfile)
+{
+  auto & writer = recorder_->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  EXPECT_FALSE(mock_writer.split_bagfile_called());
+
+  std::chrono::duration<float> duration(2.0);
+  std::this_thread::sleep_for(duration);
+  EXPECT_FALSE(mock_writer.split_bagfile_called());
+
+  successful_service_request<SplitBagfile>(cli_split_bagfile_);
+  EXPECT_TRUE(mock_writer.split_bagfile_called());
 }

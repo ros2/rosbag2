@@ -76,7 +76,17 @@ public:
   void split_bagfile() override
   {
     auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
+    info->closed_file = "BagFile" + std::to_string(file_number_);
+    file_number_ += 1;
+    info->opened_file = "BagFile" + std::to_string(file_number_);
     callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
+    messages_per_file_ = 0;
+    split_bagfile_called_ = true;
+  }
+
+  bool split_bagfile_called()
+  {
+    return split_bagfile_called_;
   }
 
   void
@@ -125,6 +135,7 @@ private:
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
   const size_t max_messages_per_file_ = 5;
+  bool split_bagfile_called_ = false;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
