@@ -22,7 +22,7 @@
 
 #include "rcutils/types.h"
 
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"
 

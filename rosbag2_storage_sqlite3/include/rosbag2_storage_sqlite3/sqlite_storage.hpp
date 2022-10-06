@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__SQLITE_STORAGE_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__SQLITE_STORAGE_HPP_
 
 #include <atomic>
 #include <memory>
@@ -27,8 +27,8 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
-#include "rosbag2_storage_default_plugins/visibility_control.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
+#include "rosbag2_storage_sqlite3/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside
@@ -138,4 +138,4 @@ private:
 # pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_STORAGE_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__SQLITE_STORAGE_HPP_

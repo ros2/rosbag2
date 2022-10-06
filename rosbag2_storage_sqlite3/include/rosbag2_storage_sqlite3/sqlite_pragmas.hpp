@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_PRAGMAS_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_PRAGMAS_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__SQLITE_PRAGMAS_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__SQLITE_PRAGMAS_HPP_
 
 #include <memory>
 #include <string>
@@ -58,4 +58,4 @@ public:
 
 }  // namespace rosbag2_storage_plugins
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__SQLITE_PRAGMAS_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__SQLITE_PRAGMAS_HPP_

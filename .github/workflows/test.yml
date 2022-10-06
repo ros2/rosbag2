@@ -29,7 +29,7 @@ jobs:
           rosbag2_interfaces
           rosbag2_py
           rosbag2_storage
-          rosbag2_storage_default_plugins
+          rosbag2_storage_sqlite3
           rosbag2_test_common
           rosbag2_tests
           rosbag2_transport

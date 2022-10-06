@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__VISIBILITY_CONTROL_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__VISIBILITY_CONTROL_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__VISIBILITY_CONTROL_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__VISIBILITY_CONTROL_HPP_
 
 #ifdef __cplusplus
 extern "C"
@@ -55,4 +55,4 @@ extern "C"
 }
 #endif
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__VISIBILITY_CONTROL_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__VISIBILITY_CONTROL_HPP_

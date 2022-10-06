@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_
-#define ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_
+#ifndef ROSBAG2_STORAGE_SQLITE3__STORAGE_TEST_FIXTURE_HPP_
+#define ROSBAG2_STORAGE_SQLITE3__STORAGE_TEST_FIXTURE_HPP_
 
 #include <gtest/gtest.h>
 
@@ -35,8 +35,8 @@
 
 #include "rosbag2_storage/metadata_io.hpp"
 
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
@@ -70,7 +70,7 @@ public:
         delete msg;
         if (error != RCUTILS_RET_OK) {
           RCUTILS_LOG_ERROR_NAMED(
-            "rosbag2_storage_default_plugins", "Leaking memory %i", error);
+            "rosbag2_storage_sqlite3", "Leaking memory %i", error);
         }
       });
 
@@ -289,4 +289,4 @@ protected:
   const std::string plugin_id_ = "sqlite3";
 };
 
-#endif  // ROSBAG2_STORAGE_DEFAULT_PLUGINS__SQLITE__STORAGE_TEST_FIXTURE_HPP_
+#endif  // ROSBAG2_STORAGE_SQLITE3__STORAGE_TEST_FIXTURE_HPP_

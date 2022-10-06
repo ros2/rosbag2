@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>rosbag2</name>
+  <name>rosbag2_storage_sqlite3</name>
   <version>0.17.0</version>
-  <description>Meta package for rosbag2 related packages</description>
+  <description>ROSBag2 SQLite3 storage plugin</description>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
   <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
@@ -11,20 +11,17 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <exec_depend>ros2bag</exec_depend>
-  <exec_depend>rosbag2_compression</exec_depend>
-  <exec_depend>rosbag2_cpp</exec_depend>
-  <exec_depend>rosbag2_py</exec_depend>
-  <exec_depend>rosbag2_storage</exec_depend>
-  <exec_depend>rosbag2_transport</exec_depend>
-  <exec_depend>shared_queues_vendor</exec_depend>
+  <depend>pluginlib</depend>
+  <depend>rcpputils</depend>
+  <depend>rcutils</depend>
+  <depend>rosbag2_storage</depend>
+  <depend>sqlite3_vendor</depend>
+  <depend>yaml_cpp_vendor</depend>
 
-  <!-- Default plugins -->
-  <exec_depend>rosbag2_compression_zstd</exec_depend>
-  <exec_depend>rosbag2_storage_default_plugins</exec_depend>
-
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
-  <test_depend>rosbag2_tests</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

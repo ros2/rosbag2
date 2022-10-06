@@ -24,7 +24,7 @@
 // rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_storage_default_plugins/sqlite/sqlite_storage.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
