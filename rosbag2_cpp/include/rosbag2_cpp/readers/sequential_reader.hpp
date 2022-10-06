@@ -91,12 +91,13 @@ public:
   void seek(const rcutils_time_point_value_t & timestamp) override;
 
   /**
-   * Ask whether there is another database file to read from the list of relative
+   * Ask whether there is another storage file to read from the list of relative
    * file paths.
    *
+   * \param reverse Look for a previous file instead of a next file
    * \return true if there are still files to read in the list
    */
-  virtual bool has_next_file() const;
+  virtual bool has_next_file(bool reverse) const;
 
   /**
   * Return the relative file path pointed to by the current file iterator.
@@ -134,7 +135,7 @@ protected:
   * Expected usage:
   * if (has_next_file()) load_next_file();
   */
-  virtual void load_next_file();
+  virtual void load_next_file(bool reverse);
 
   /**
    * Checks if all topics in the bagfile have the same RMW serialization format.
