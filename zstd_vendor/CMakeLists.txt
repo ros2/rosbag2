@@ -4,12 +4,15 @@ project(zstd_vendor)
 
 find_package(ament_cmake REQUIRED)
 
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+
 option(FORCE_BUILD_VENDOR_PKG
   "Build zstd from source, even if system-installed package is available"
   OFF)
 
 if(NOT FORCE_BUILD_VENDOR_PKG)
-  find_package(zstd QUIET)
+  # We need at least VERSION 1.4.4, version check is done in Findzstd.cmake
+  find_package(zstd 1.4.4 QUIET)
 endif()
 
 macro(build_zstd)
@@ -59,7 +62,7 @@ macro(build_zstd)
     USE_SOURCE_PERMISSIONS)
 endmacro()
 
-if (NOT zstd_FOUND OR "${zstd_VERSION}" VERSION_LESS 1.4.4)
+if (NOT zstd_FOUND)
   build_zstd()
 else()
   message(STATUS "Found Zstd, skipping build.")
