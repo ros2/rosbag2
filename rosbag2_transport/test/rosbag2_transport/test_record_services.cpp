@@ -183,11 +183,6 @@ TEST_F(RecordSrvsSplitBagfileTest, split_bagfile)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
   EXPECT_FALSE(mock_writer.split_bagfile_called());
-
-  std::chrono::duration<float> duration(2.0);
-  std::this_thread::sleep_for(duration);
-  EXPECT_FALSE(mock_writer.split_bagfile_called());
-
   successful_service_request<SplitBagfile>(cli_split_bagfile_);
   EXPECT_TRUE(mock_writer.split_bagfile_called());
 }
