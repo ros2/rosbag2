@@ -66,6 +66,12 @@ public:
 
   void close() override;
 
+  /**
+   * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
+   * or load_next_file() will cause undefined behavior
+   */
+  void set_read_order(const rosbag2_storage::ReadOrder & order) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
@@ -141,7 +147,6 @@ protected:
     const std::vector<rosbag2_storage::TopicInformation> & topics);
 
   /**
-
   * Checks if the serialization format of the converter factory is the same as that of the storage
   * factory.
   * If not, changes the serialization format of the converter factory to use the serialization
@@ -187,6 +192,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 
   bag_events::EventCallbackManager callback_manager_;
+  rosbag2_storage::ReadOrder read_order_{};
 };
 
 }  // namespace readers

@@ -25,6 +25,31 @@
 
 namespace rosbag2_storage
 {
+
+struct ReadOrder
+{
+  enum SortBy
+  {
+    ReceivedTimestamp,
+    PublishedTimestamp,  // NOTE: not implemented in ROS 2 core
+    File
+  };
+
+  // Sorting criterion for reading out messages, ascending by default
+  SortBy sort_by = ReceivedTimestamp;
+  // If true, changes sort order to descending
+  bool reverse = false;
+
+  ReadOrder(SortBy sort_by, bool reverse)
+  : sort_by(sort_by), reverse(reverse) {}
+  ReadOrder() {}
+};
+
+inline bool operator==(const ReadOrder & a, const ReadOrder & b)
+{
+  return a.sort_by == b.sort_by && a.reverse == b.reverse;
+}
+
 namespace storage_interfaces
 {
 
@@ -32,6 +57,13 @@ class ROSBAG2_STORAGE_PUBLIC BaseReadInterface
 {
 public:
   virtual ~BaseReadInterface() = default;
+
+  /// @brief Set the order to iterate messages in the storage.
+  ///   This affects the outcome of has_next and read_next.
+  ///   Note that when setting to reverse order, this will not change the read head, so user
+  ///   must first seek() to the end in order to read messages from the end.
+  /// @param read_order The order in which to return messages.
+  virtual void set_read_order(const ReadOrder & read_order) = 0;
 
   virtual bool has_next() = 0;
 

@@ -52,7 +52,7 @@ class BaseReaderInterface;
 /**
  * The Reader allows opening and reading messages of a bag.
  */
-class ROSBAG2_CPP_PUBLIC Reader final
+class ROSBAG2_CPP_PUBLIC Reader
 {
 public:
   explicit Reader(
@@ -98,6 +98,16 @@ public:
    * Closing the reader instance.
    */
   void close();
+
+  /**
+   * Set the read order for continued iteration of messages, without changing the current
+   * read head timestamp.
+   *
+   * \param read_order Sorting criterion and direction to read messages in
+   * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
+   * or load_next_file() will cause undefined behavior
+   */
+  void set_read_order(const rosbag2_storage::ReadOrder & read_order);
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

@@ -18,6 +18,7 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -270,4 +271,17 @@ PYBIND11_MODULE(_storage, m) {
     "__repr__", [](const rosbag2_storage::BagMetadata & metadata) {
       return format_bag_meta_data(metadata);
     });
+
+  pybind11::enum_<rosbag2_storage::ReadOrder::SortBy>(m, "ReadOrderSortBy")
+  .value("ReceivedTimestamp", rosbag2_storage::ReadOrder::ReceivedTimestamp)
+  .value("PublishedTimestamp", rosbag2_storage::ReadOrder::PublishedTimestamp)
+  .value("File", rosbag2_storage::ReadOrder::File);
+
+  pybind11::class_<rosbag2_storage::ReadOrder>(m, "ReadOrder")
+  .def(
+    pybind11::init<rosbag2_storage::ReadOrder::SortBy, bool>(),
+    pybind11::arg("sort_by") = rosbag2_storage::ReadOrder{}.sort_by,
+    pybind11::arg("reverse") = rosbag2_storage::ReadOrder{}.reverse)
+  .def_readwrite("sort_by", &rosbag2_storage::ReadOrder::sort_by)
+  .def_readwrite("reverse", &rosbag2_storage::ReadOrder::reverse);
 }

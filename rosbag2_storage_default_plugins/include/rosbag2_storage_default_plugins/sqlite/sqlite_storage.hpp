@@ -64,6 +64,8 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
   override;
 
+  void set_read_order(const rosbag2_storage::ReadOrder &) override;
+
   bool has_next() override;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
@@ -103,6 +105,7 @@ private:
   void commit_transaction();
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
+  int get_last_rowid();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
@@ -120,6 +123,7 @@ private:
 
   rcutils_time_point_value_t seek_time_ = 0;
   int seek_row_id_ = 0;
+  rosbag2_storage::ReadOrder read_order_{};
   rosbag2_storage::StorageFilter storage_filter_ {};
 
   // This mutex is necessary to protect:

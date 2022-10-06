@@ -36,6 +36,9 @@ public:
 
   void close() override {}
 
+  void set_read_order(const rosbag2_storage::ReadOrder &) override
+  {}
+
   bool has_next() override
   {
     if (filter_.topics.empty()) {
