@@ -237,7 +237,7 @@ TEST_F(SequentialCompressionReaderTest, compression_called_when_loading_split_ba
     std::move(metadata_io_));
 
   compression_reader->open(storage_options_, converter_options_);
-  EXPECT_EQ(compression_reader->has_next_file(), true);
+  EXPECT_EQ(compression_reader->has_next_file(false), true);
   EXPECT_EQ(compression_reader->has_next(), true);  // false then true
   compression_reader->read_next();  // calls has_next true
 }
@@ -246,7 +246,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_v4_names)
 {
   auto reader = create_reader();
   reader->open(storage_options_, converter_options_);
-  EXPECT_TRUE(reader->has_next_file());
+  EXPECT_TRUE(reader->has_next_file(false));
 }
 
 TEST_F(SequentialCompressionReaderTest, throws_on_incorrect_filenames)
@@ -268,7 +268,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames)
   auto reader = create_reader();
 
   EXPECT_NO_THROW(reader->open(storage_options_, converter_options_));
-  EXPECT_TRUE(reader->has_next_file());
+  EXPECT_TRUE(reader->has_next_file(false));
 }
 
 TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_bag)
@@ -282,7 +282,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_b
   auto reader = create_reader();
 
   EXPECT_NO_THROW(reader->open(storage_options_, converter_options_));
-  EXPECT_TRUE(reader->has_next_file());
+  EXPECT_TRUE(reader->has_next_file(false));
 }
 
 TEST_F(SequentialCompressionReaderTest, does_not_decompress_again_on_seek)
