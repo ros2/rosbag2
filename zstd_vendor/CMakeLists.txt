@@ -11,8 +11,8 @@ option(FORCE_BUILD_VENDOR_PKG
   OFF)
 
 if(NOT FORCE_BUILD_VENDOR_PKG)
-  # We need at least VERSION 1.4.4, version check is done in Findzstd.cmake
-  find_package(zstd 1.4.4 QUIET)
+  # We need at least VERSION 1.5.2, version check is done in Findzstd.cmake
+  find_package(zstd 1.5.2 QUIET)
 endif()
 
 macro(build_zstd)
@@ -29,13 +29,13 @@ macro(build_zstd)
   endif()
   list(APPEND extra_cmake_args "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
-  set(zstd_version 1.4.4)
+  set(zstd_version 1.5.2)
   include(ExternalProject)
   # The CMakeLists.txt file for zstd is in a subdirectory.
   # We need to configure the CMake command to build from there instead.
-  ExternalProject_Add(zstd-${zstd_version}
+  externalproject_add(zstd-${zstd_version}
     GIT_REPOSITORY https://github.com/facebook/zstd.git
-    GIT_TAG 10f0e6993f9d2f682da6d04aa2385b7d53cbb4ee  # v${zstd_version}
+    GIT_TAG e47e674cd09583ff0503f0f6defd6d23d8b718d3 # v1.5.2
     GIT_CONFIG advice.detachedHead=false
     # Suppress git update due to https://gitlab.kitware.com/cmake/cmake/-/issues/16419
     # See https://github.com/ament/uncrustify_vendor/pull/22 for details
@@ -48,12 +48,6 @@ macro(build_zstd)
       -DZSTD_BUILD_SHARED=ON
       -DZSTD_BUILD_PROGRAMS=OFF
       ${extra_cmake_args}
-    # Note: zstd v1.4.6 will include the following fix. When that is released, upgrade and remove this patch.
-    PATCH_COMMAND
-      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> git apply -p1 --ignore-space-change --whitespace=nowarn
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake_minimum_required_2.8.12.patch &&
-      ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> git apply -p1 --ignore-space-change --whitespace=nowarn
-        ${CMAKE_CURRENT_SOURCE_DIR}/no_internal_headers.patch
   )
 
   install(
@@ -62,7 +56,7 @@ macro(build_zstd)
     USE_SOURCE_PERMISSIONS)
 endmacro()
 
-if (NOT zstd_FOUND)
+if(NOT zstd_FOUND)
   build_zstd()
 else()
   message(STATUS "Found Zstd, skipping build.")
