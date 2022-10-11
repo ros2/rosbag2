@@ -235,6 +235,16 @@ public:
   }
 };
 
+// Return a RecordOptions struct with defaults set for rewriting bags.
+rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
+{
+  rosbag2_transport::RecordOptions options{};
+  // We never want to drop messages when converting bags, so set the compression queue size to 0
+  // (unbounded).
+  options.compression_queue_size = 0;
+  return options;
+}
+
 // Simple wrapper to read the output config YAML into structs
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
@@ -254,8 +264,10 @@ void bag_rewrite(
   std::vector<
     std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>> output_options;
   for (const auto & bag_node : bag_nodes) {
-    auto storage_options = bag_node.as<rosbag2_storage::StorageOptions>();
-    auto record_options = bag_node.as<rosbag2_transport::RecordOptions>();
+    rosbag2_storage::StorageOptions storage_options{};
+    YAML::convert<rosbag2_storage::StorageOptions>::decode(bag_node, storage_options);
+    rosbag2_transport::RecordOptions record_options = bag_rewrite_default_record_options();
+    YAML::convert<rosbag2_transport::RecordOptions>::decode(bag_node, record_options);
     output_options.push_back(std::make_pair(storage_options, record_options));
   }
   rosbag2_transport::bag_rewrite(input_options, output_options);
