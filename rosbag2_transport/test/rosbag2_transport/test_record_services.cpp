@@ -26,11 +26,7 @@
 #include "rosbag2_transport/recorder.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
-#include "rosbag2_test_common/wait_for.hpp"
 
-#include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/msg/strings.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "record_integration_fixture.hpp"
@@ -43,7 +39,7 @@ public:
   using Snapshot = rosbag2_interfaces::srv::Snapshot;
   using SplitBagfile = rosbag2_interfaces::srv::SplitBagfile;
 
-  explicit RecordSrvsTest(const bool snapshot_mode)
+  explicit RecordSrvsTest(bool snapshot_mode = false)
   : RecordIntegrationTestFixture(),
     snapshot_mode_(snapshot_mode)
   {}
@@ -56,10 +52,6 @@ public:
   }
 
   void TearDown() override
-  {
-  }
-
-  void subscription_callback(const test_msgs::msg::Strings::SharedPtr)
   {
   }
 
@@ -79,7 +71,7 @@ public:
 
     auto string_message = get_messages_strings()[1];
     rosbag2_test_common::PublicationManager pub_manager;
-    pub_manager.setup_publisher(test_topic_, string_message, 50);
+    pub_manager.setup_publisher(test_topic_, string_message, 10);
 
     const std::string ns = "/" + recorder_name_;
     cli_snapshot_ = client_node_->create_client<Snapshot>(ns + "/snapshot");
@@ -131,7 +123,7 @@ public:
   // Basic configuration
   const std::string recorder_name_ = "rosbag2_recorder_for_test_srvs";
   const std::chrono::seconds service_wait_timeout_ {2};
-  const std::chrono::seconds service_call_timeout_ {1};
+  const std::chrono::seconds service_call_timeout_ {2};
   const std::string test_topic_ = "/recorder_srvs_test_topic";
 
   // Orchestration
@@ -157,32 +149,52 @@ protected:
 TEST_F(RecordSrvsSnapshotTest, trigger_snapshot)
 {
   auto & writer = recorder_->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
   EXPECT_THAT(mock_writer.get_messages().size(), Eq(0u));
 
-  // Sleep for 2 seconds to allow messages to accumulate in snapshot buffer
-  std::chrono::duration<float> duration(2.0);
-  std::this_thread::sleep_for(duration);
-  EXPECT_THAT(mock_writer.get_snapshot_buffer().size(), Gt(0u));
+  // Wait for messages to be appeared in snapshot_buffer
+  std::chrono::duration<int> timeout = std::chrono::seconds(10);
+  using clock = std::chrono::steady_clock;
+  auto start = clock::now();
+  while (mock_writer.get_snapshot_buffer().empty()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
+  }
+  EXPECT_THAT(mock_writer.get_messages().size(), Eq(0u));
 
   successful_service_request<Snapshot>(cli_snapshot_);
   EXPECT_THAT(mock_writer.get_messages().size(), Ne(0u));
 }
 
-class RecordSrvsSplitBagfileTest : public RecordSrvsTest
-{
-protected:
-  RecordSrvsSplitBagfileTest()
-  : RecordSrvsTest(false /*snapshot_mode*/) {}
-};
-
-TEST_F(RecordSrvsSplitBagfileTest, split_bagfile)
+TEST_F(RecordSrvsTest, split_bagfile)
 {
   auto & writer = recorder_->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-  EXPECT_FALSE(mock_writer.split_bagfile_called());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  bool callback_called = false;
+  std::string closed_file, opened_file;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_file = info.closed_file;
+      opened_file = info.opened_file;
+      callback_called = true;
+    };
+  mock_writer.add_event_callbacks(callbacks);
+
+  // Wait for messages to be appeared in writer buffer
+  std::chrono::duration<int> timeout = std::chrono::seconds(10);
+  using clock = std::chrono::steady_clock;
+  auto start = clock::now();
+  while (mock_writer.get_messages().empty()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
+  }
+
+  ASSERT_FALSE(callback_called);
   successful_service_request<SplitBagfile>(cli_split_bagfile_);
-  EXPECT_TRUE(mock_writer.split_bagfile_called());
+
+  // Confirm that the callback was called and the file names have been sent with the event
+  ASSERT_TRUE(callback_called);
+  EXPECT_EQ(closed_file, "BagFile0");
+  EXPECT_EQ(opened_file, "BagFile1");
 }
