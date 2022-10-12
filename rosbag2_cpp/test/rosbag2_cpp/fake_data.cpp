@@ -28,7 +28,7 @@ void write_sample_split_bag(
 {
   std::string topic_name = "testtopic";
 
-  ManualSplitSequentialWriter writer{};
+  rosbag2_cpp::writers::SequentialWriter writer{};
   writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
   writer.create_topic(
   {

@@ -121,6 +121,11 @@ public:
    */
   void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) override;
 
+  /**
+   * \brief Closes the current backed storage and opens the next bagfile.
+   */
+  void split_bagfile() override;
+
 protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
@@ -145,9 +150,6 @@ protected:
   std::mutex topics_info_mutex_;
 
   rosbag2_storage::BagMetadata metadata_;
-
-  // Closes the current backed storage and opens the next bagfile.
-  virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(

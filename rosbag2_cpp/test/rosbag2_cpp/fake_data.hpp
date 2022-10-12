@@ -20,12 +20,6 @@
 
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
-class ManualSplitSequentialWriter : public rosbag2_cpp::writers::SequentialWriter
-{
-public:
-  using rosbag2_cpp::writers::SequentialWriter::split_bagfile;
-};
-
 // Write vector of <timestamp, uint32_data_value> pairs to bag files, splitting every N messages
 void write_sample_split_bag(
   const rosbag2_storage::StorageOptions & storage_options,

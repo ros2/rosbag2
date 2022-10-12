@@ -31,6 +31,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
+#include "rosbag2_interfaces/srv/split_bagfile.hpp"
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
@@ -158,6 +159,7 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
+  rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
   std::atomic<bool> paused_ = false;
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;

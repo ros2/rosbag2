@@ -149,6 +149,16 @@ void Recorder::record()
       });
   }
 
+  srv_split_bagfile_ = create_service<rosbag2_interfaces::srv::SplitBagfile>(
+    "~/split_bagfile",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
+    {
+      writer_->split_bagfile();
+    });
+
   // Start the thread that will publish events
   event_publisher_thread_ = std::thread(&Recorder::event_publisher_thread_main, this);
 
