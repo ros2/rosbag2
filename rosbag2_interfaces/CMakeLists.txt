@@ -24,11 +24,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Seek.srv"
   "srv/SetRate.srv"
   "srv/Snapshot.srv"
-<<<<<<< HEAD
-=======
   "srv/SplitBagfile.srv"
   "srv/Stop.srv"
->>>>>>> e6f7fd7 (Add SplitBagfile recording service. (#1115))
   "srv/TogglePaused.srv"
   DEPENDENCIES builtin_interfaces
   ADD_LINTER_TESTS
