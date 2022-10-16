@@ -1,0 +1,5 @@
+output_bags:
+  - storage_id: mcap
+    uri: out/chunk_compressed_mcap
+    all: true
+    storage_config_uri: storage_config/chunk_compressed.yaml

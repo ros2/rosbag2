@@ -1,0 +1,7 @@
+output_bags:
+  - storage_id: sqlite3
+    uri: out/message_compressed_sqlite3
+    all: true
+    compression_mode: message
+    compression_format: zstd
+    compression_queue_size: 0

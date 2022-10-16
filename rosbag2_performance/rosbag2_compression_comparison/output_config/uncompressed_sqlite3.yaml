@@ -1,0 +1,4 @@
+output_bags:
+  - storage_id: sqlite3
+    uri: out/uncompressed_sqlite3
+    all: true

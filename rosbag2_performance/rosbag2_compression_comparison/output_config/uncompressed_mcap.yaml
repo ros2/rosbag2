@@ -1,0 +1,5 @@
+output_bags:
+  - storage_id: mcap
+    uri: out/uncompressed_mcap
+    all: true
+    storage_config_uri: storage_config/uncompressed.yaml

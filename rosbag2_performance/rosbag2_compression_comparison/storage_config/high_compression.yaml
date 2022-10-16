@@ -1,0 +1,3 @@
+compression: "Zstd"
+compressionLevel: "Slowest"
+chunkSize: 4194304 # 4 * 1024 * 1024

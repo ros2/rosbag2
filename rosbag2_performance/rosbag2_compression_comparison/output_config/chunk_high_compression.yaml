@@ -1,0 +1,5 @@
+output_bags:
+  - storage_id: mcap
+    uri: out/chunk_high_compression_mcap
+    all: true
+    storage_config_uri: storage_config/high_compression.yaml
