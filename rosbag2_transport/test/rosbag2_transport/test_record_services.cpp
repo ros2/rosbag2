@@ -21,6 +21,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
 #include "rosbag2_transport/recorder.hpp"
@@ -36,6 +38,8 @@ using namespace ::testing;  // NOLINT
 class RecordSrvsTest : public RecordIntegrationTestFixture
 {
 public:
+  using Pause = rosbag2_interfaces::srv::Pause;
+  using Resume = rosbag2_interfaces::srv::Resume;
   using Snapshot = rosbag2_interfaces::srv::Snapshot;
   using SplitBagfile = rosbag2_interfaces::srv::SplitBagfile;
 
@@ -74,9 +78,10 @@ public:
     pub_manager.setup_publisher(test_topic_, string_message, 10);
 
     const std::string ns = "/" + recorder_name_;
+    cli_pause_ = client_node_->create_client<Pause>(ns + "/pause");
+    cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
     cli_snapshot_ = client_node_->create_client<Snapshot>(ns + "/snapshot");
     cli_split_bagfile_ = client_node_->create_client<SplitBagfile>(ns + "/split_bagfile");
-
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
     exec_->add_node(recorder_);
@@ -133,6 +138,8 @@ public:
 
   // Service clients
   rclcpp::Node::SharedPtr client_node_;
+  rclcpp::Client<Pause>::SharedPtr cli_pause_;
+  rclcpp::Client<Resume>::SharedPtr cli_resume_;
   rclcpp::Client<Snapshot>::SharedPtr cli_snapshot_;
   rclcpp::Client<SplitBagfile>::SharedPtr cli_split_bagfile_;
 
@@ -197,4 +204,20 @@ TEST_F(RecordSrvsTest, split_bagfile)
   ASSERT_TRUE(callback_called);
   EXPECT_EQ(closed_file, "BagFile0");
   EXPECT_EQ(opened_file, "BagFile1");
+}
+
+class RecordSrvsPauseResumeTest : public RecordSrvsTest
+{
+protected:
+  RecordSrvsPauseResumeTest()
+  : RecordSrvsTest(false /*snapshot_mode*/) {}
+};
+
+TEST_F(RecordSrvsPauseResumeTest, pause_resume)
+{
+  EXPECT_FALSE(recorder_->is_paused());
+  successful_service_request<Pause>(cli_pause_);
+  EXPECT_TRUE(recorder_->is_paused());
+  successful_service_request<Resume>(cli_resume_);
+  EXPECT_FALSE(recorder_->is_paused());
 }
