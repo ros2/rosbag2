@@ -95,6 +95,21 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
+  rcpputils::fs::path db_path(storage_options.uri);
+  if (db_path.is_directory()) {
+    std::stringstream error;
+    error << "Database directory already exists (" << db_path.string() <<
+      "), can't overwrite existing database";
+    throw std::runtime_error{error.str()};
+  }
+
+  bool dir_created = rcpputils::fs::create_directories(db_path);
+  if (!dir_created) {
+    std::stringstream error;
+    error << "Failed to create database directory (" << db_path.string() << ").";
+    throw std::runtime_error{error.str()};
+  }
+
   const auto storage_uri = format_storage_uri(base_folder_, 0);
 
   storage_ = storage_factory_->open_read_write(storage_uri, storage_options.storage_id);
