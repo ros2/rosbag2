@@ -95,7 +95,7 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  rcpputils::fs::path db_path(storage_options.uri);
+  rcpputils::fs::path db_path(base_folder_);
   if (db_path.is_directory()) {
     std::stringstream error;
     error << "Database directory already exists (" << db_path.string() <<
