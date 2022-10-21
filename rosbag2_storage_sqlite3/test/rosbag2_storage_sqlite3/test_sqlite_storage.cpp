@@ -560,3 +560,21 @@ TEST_F(StorageTestFixture, read_next_returns_filtered_messages_topics_regex_to_e
   EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
   EXPECT_FALSE(readable_storage2->has_next());
 }
+
+TEST(StoragePresetProfileValidation, parse_storage_preset_profile_works) {
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile(""),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::WriteOptimized
+  );
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("none"),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::WriteOptimized
+  );
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("resilient"),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::Resilient
+  );
+  EXPECT_THROW(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("anything"),
+    std::runtime_error);
+}
