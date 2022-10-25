@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
@@ -44,8 +46,17 @@ public:
     storage_options_{},
     serialization_format_{"rmw_format"}
   {
+    rcpputils::fs::path dir(storage_options_.uri);
+    rcpputils::fs::remove_all(dir);
+
     ON_CALL(*storage_factory_, open_read_write(_, _)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_, _)).Times(AtLeast(0));
+  }
+
+  ~SequentialCompressionWriterTest()
+  {
+    rcpputils::fs::path dir(storage_options_.uri);
+    rcpputils::fs::remove_all(dir);
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
