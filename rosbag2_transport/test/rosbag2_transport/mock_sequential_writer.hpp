@@ -57,12 +57,7 @@ public:
     messages_per_topic_[message->topic_name] += 1;
     messages_per_file_ += 1;
     if (messages_per_file_ == max_messages_per_file_) {  // "Split" the bag every few messages
-      auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
-      info->closed_file = "BagFile" + std::to_string(file_number_);
-      file_number_ += 1;
-      info->opened_file = "BagFile" + std::to_string(file_number_);
-      callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
-      messages_per_file_ = 0;
+      this->split_bagfile();
     }
   }
 
@@ -71,6 +66,16 @@ public:
     std::swap(snapshot_buffer_, messages_);
     snapshot_buffer_.clear();
     return true;
+  }
+
+  void split_bagfile()
+  {
+    auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
+    info->closed_file = "BagFile" + std::to_string(file_number_);
+    file_number_ += 1;
+    info->opened_file = "BagFile" + std::to_string(file_number_);
+    callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
+    messages_per_file_ = 0;
   }
 
   void
@@ -103,6 +108,11 @@ public:
     return topics_;
   }
 
+  void set_max_messages_per_file(size_t max_messages_per_file)
+  {
+    max_messages_per_file_ = max_messages_per_file;
+  }
+
   size_t max_messages_per_file() const
   {
     return max_messages_per_file_;
@@ -117,7 +127,7 @@ private:
   bool snapshot_mode_ = false;
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
-  const size_t max_messages_per_file_ = 5;
+  size_t max_messages_per_file_ = 0;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
