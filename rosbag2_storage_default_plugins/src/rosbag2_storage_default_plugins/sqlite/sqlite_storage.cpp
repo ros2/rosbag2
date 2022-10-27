@@ -157,13 +157,32 @@ SqliteStorage::~SqliteStorage()
   }
 }
 
+SqliteStorage::PresetProfile SqliteStorage::parse_preset_profile(const std::string & profile_string)
+{
+  if (profile_string == "resilient") {
+    return SqliteStorage::PresetProfile::Resilient;
+  } else if (profile_string == "none" || profile_string == "") {
+    return SqliteStorage::PresetProfile::WriteOptimized;
+  } else {
+    throw std::runtime_error(
+            "Invalid storage preset profile string: " + profile_string + "\n"
+            "Valid options are:\n"
+            "'none': configure writer for maximum write throughput and to minimize dropped "
+            "messages.\n"
+            "'resilient': indicate preference for avoiding data corruption in case of crashes, "
+            "at the cost of performance. Setting this flag disables optimization settings for "
+            "storage."
+    );
+  }
+}
+
 void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
-  const bool resilient_preset = "resilient" == storage_options.storage_preset_profile;
+  const auto preset = parse_preset_profile(storage_options.storage_preset_profile);
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
-  if (resilient_preset && is_read_write(io_flag)) {
+  if (preset == PresetProfile::Resilient && is_read_write(io_flag)) {
     apply_resilient_storage_settings(pragmas);
   }
 

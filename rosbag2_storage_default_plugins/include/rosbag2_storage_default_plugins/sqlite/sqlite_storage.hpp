@@ -94,6 +94,13 @@ public:
    */
   SqliteWrapper & get_sqlite_database_wrapper();
 
+  enum class PresetProfile
+  {
+    Resilient,
+    WriteOptimized,
+  };
+  static PresetProfile parse_preset_profile(const std::string & profile_string);
+
 private:
   void initialize();
   void prepare_for_writing();
@@ -127,6 +134,7 @@ private:
   // b) topics_ collection - since we could be writing and reading it at the same time
   std::mutex database_write_mutex_;
 };
+
 
 }  // namespace rosbag2_storage_plugins
 
