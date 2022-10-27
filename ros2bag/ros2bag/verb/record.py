@@ -146,12 +146,9 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.'
         )
         parser.add_argument(
-            '--storage-preset-profile', type=str, default='none', choices=['none', 'resilient'],
-            help='Select a configuration preset for storage.'
-                 'resilient (sqlite3):'
-                 'indicate preference for avoiding data corruption in case of crashes,'
-                 'at the cost of performance. Setting this flag disables optimization settings '
-                 'for storage (the defaut). This flag settings can still be overriden by '
+            '--storage-preset-profile', type=str, default='',
+            help='Select a configuration preset for storage. '
+                 'This flag settings can still be overriden by '
                  'corresponding settings in the config passed with --storage-config-file.'
         )
         parser.add_argument(
