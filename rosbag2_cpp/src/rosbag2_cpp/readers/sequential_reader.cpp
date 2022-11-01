@@ -143,10 +143,15 @@ bool SequentialReader::has_next()
     // If there's no new message, check if there's at least another file to read and update storage
     // to read from there. Otherwise, check if there's another message.
     bool current_storage_has_next = storage_->has_next();
-    if (!current_storage_has_next && has_next_file(read_order_.reverse)) {
-      load_next_file(read_order_.reverse);
-      // recursively call has_next again after rollover
-      return has_next();
+    if (!current_storage_has_next) {
+      if (!read_order_.reverse && has_next_file()) {
+        load_next_file();
+        return has_next();
+      }
+      if (read_order_.reverse && has_prev_file()) {
+        load_prev_file();
+        return has_next();
+      }
     }
     return current_storage_has_next;
   }
@@ -210,13 +215,13 @@ void SequentialReader::seek(const rcutils_time_point_value_t & timestamp)
   auto start_time = metadata.starting_time.time_since_epoch().count();
   auto end_time = (metadata.starting_time + metadata.duration).time_since_epoch().count();
 
-  if (timestamp < start_time && has_next_file(true)) {
+  if (timestamp < start_time && has_prev_file()) {
     // Check back a file if the timestamp is before the beginning of the current file
-    load_next_file(true);
+    load_prev_file();
     return seek(timestamp);
-  } else if (timestamp > end_time && has_next_file(false)) {
+  } else if (timestamp > end_time && has_next_file()) {
     // Check forward a file if the timestamp is after the end of the current file
-    load_next_file(false);
+    load_next_file();
     return seek(timestamp);
   } else {
     // The timestamp lies in the range of this file, or there are no files left to go to
@@ -225,13 +230,14 @@ void SequentialReader::seek(const rcutils_time_point_value_t & timestamp)
   return;
 }
 
-bool SequentialReader::has_next_file(bool reverse) const
+bool SequentialReader::has_next_file() const
 {
-  if (reverse) {
-    return current_file_iterator_ != file_paths_.begin();
-  } else {
-    return (current_file_iterator_ + 1) != file_paths_.end();
-  }
+  return (current_file_iterator_ + 1) != file_paths_.end();
+}
+
+bool SequentialReader::has_prev_file() const
+{
+  return current_file_iterator_ != file_paths_.begin();
 }
 
 void SequentialReader::load_current_file()
@@ -254,16 +260,23 @@ void SequentialReader::load_current_file()
   set_filter(topics_filter_);
 }
 
-void SequentialReader::load_next_file(bool reverse)
+void SequentialReader::load_next_file()
 {
   assert(current_file_iterator_ != file_paths_.end());
   auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = get_current_file();
-  if (reverse) {
-    current_file_iterator_--;
-  } else {
-    current_file_iterator_++;
-  }
+  current_file_iterator_++;
+  info->opened_file = get_current_file();
+  load_current_file();
+  callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
+}
+
+void SequentialReader::load_prev_file()
+{
+  assert(current_file_iterator_ != file_paths_.begin());
+  auto info = std::make_shared<bag_events::BagSplitInfo>();
+  info->closed_file = get_current_file();
+  current_file_iterator_--;
   info->opened_file = get_current_file();
   load_current_file();
   callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
