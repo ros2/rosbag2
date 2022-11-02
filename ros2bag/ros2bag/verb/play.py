@@ -207,4 +207,7 @@ class PlayVerb(VerbExtension):
         play_options.disable_loan_message = args.disable_loan_message
 
         player = Player()
-        player.play(storage_options, play_options)
+        try:
+            player.play(storage_options, play_options)
+        except KeyboardInterrupt:
+            pass

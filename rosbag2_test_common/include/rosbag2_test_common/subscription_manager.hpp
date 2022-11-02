@@ -139,6 +139,15 @@ public:
       });
   }
 
+  void spin_subscriptions_sync()
+  {
+    rclcpp::executors::SingleThreadedExecutor exec;
+    auto start = std::chrono::high_resolution_clock::now();
+    while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start)) {
+      exec.spin_node_some(subscriber_node_);
+    }
+  }
+
 private:
   bool continue_spinning(
     const std::unordered_map<std::string, size_t> & expected_topics_with_sizes,

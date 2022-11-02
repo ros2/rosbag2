@@ -211,3 +211,27 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
 }
 */
+
+#ifndef _WIN32
+TEST_F(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+
+  // Start playback in child process
+  auto process_id = start_execution("ros2 bag play --loop " + database_path_ + "/cdr_test");
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_id]() {
+      stop_execution(process_id);
+    });
+
+  // Wait for a few messages to arrive. This way we deterministically check that playback has been
+  // successfully started at this point.
+  sub_->spin_subscriptions_sync();
+  auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+  ASSERT_THAT(primitive_messages, SizeIs(Ge(3u)));
+
+  // Send SIGINT to child process and check exit code
+  stop_execution(process_id, SIGINT);
+  cleanup_process_handle.cancel();
+}
+#endif  // #ifndef _WIN32
