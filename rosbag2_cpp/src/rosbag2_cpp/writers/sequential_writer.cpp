@@ -142,6 +142,7 @@ void SequentialWriter::open(
   }
 
   init_metadata();
+  storage_->update_metadata(metadata_);
 }
 
 void SequentialWriter::close()
@@ -154,6 +155,7 @@ void SequentialWriter::close()
 
   if (!base_folder_.empty()) {
     finalize_metadata();
+    storage_->update_metadata(metadata_);
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
@@ -242,10 +244,12 @@ void SequentialWriter::switch_to_next_storage()
     message_cache_->log_dropped();
   }
 
+  storage_->update_metadata(metadata_);
   storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
+  storage_->update_metadata(metadata_);
 
   if (!storage_) {
     std::stringstream errmsg;

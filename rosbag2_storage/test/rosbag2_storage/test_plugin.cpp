@@ -46,6 +46,12 @@ void TestPlugin::open(
   std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
+void TestPlugin::update_metadata(const rosbag2_storage::BagMetadata & metadata)
+{
+  std::cout << "Set metadata" << std::endl;
+  (void)metadata;
+}
+
 void TestPlugin::set_read_order(const rosbag2_storage::ReadOrder & order)
 {
   std::cout << "Set read order " << order.sort_by << " " << order.reverse << std::endl;
