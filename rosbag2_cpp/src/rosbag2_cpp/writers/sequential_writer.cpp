@@ -155,7 +155,9 @@ void SequentialWriter::close()
 
   if (!base_folder_.empty()) {
     finalize_metadata();
-    storage_->update_metadata(metadata_);
+    if (storage_) {
+      storage_->update_metadata(metadata_);
+    }
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
