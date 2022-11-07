@@ -2,6 +2,11 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.3 (2022-11-07)
+-------------------
+* Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_) (`#1037 <https://github.com/ros2/rosbag2/issues/1037>`_)
+* Contributors: Geoffrey Biggs
+
 0.15.2 (2022-05-11)
 -------------------
 

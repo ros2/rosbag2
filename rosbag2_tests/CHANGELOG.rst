@@ -2,6 +2,13 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.3 (2022-11-07)
+-------------------
+* Fix for ros2 bag play exit with non-zero code on SIGINT (`#1126 <https://github.com/ros2/rosbag2/issues/1126>`_) (`#1147 <https://github.com/ros2/rosbag2/issues/1147>`_)
+* Get rid from attempt to open DB file in `wait_for_db()` test fixture (`#1141 <https://github.com/ros2/rosbag2/issues/1141>`_) (`#1148 <https://github.com/ros2/rosbag2/issues/1148>`_)
+* Readers/info can accept a single bag storage file, and detect its storage id automatically (`#1072 <https://github.com/ros2/rosbag2/issues/1072>`_) (`#1077 <https://github.com/ros2/rosbag2/issues/1077>`_)
+* Contributors: mergify[bot]
+
 0.15.2 (2022-05-11)
 -------------------
 
