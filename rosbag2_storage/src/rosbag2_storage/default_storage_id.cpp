@@ -11,19 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#ifndef ROSBAG2_STORAGE__DEFAULT_STORAGE_ID_HPP_
-#define ROSBAG2_STORAGE__DEFAULT_STORAGE_ID_HPP_
-
-#include <string>
-
-#include "rosbag2_storage/visibility_control.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 
 namespace rosbag2_storage
 {
 
-ROSBAG2_STORAGE_PUBLIC std::string get_default_storage_id();
+std::string get_default_storage_id()
+{
+  return "sqlite3";
+}
 
 }  // namespace rosbag2_storage
-
-#endif  // ROSBAG2_STORAGE__DEFAULT_STORAGE_ID_HPP_
