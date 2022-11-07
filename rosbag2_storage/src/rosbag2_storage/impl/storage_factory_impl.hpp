@@ -116,9 +116,8 @@ get_interface_instance(
     registered_classes.begin(),
     registered_classes.end(), storage_options.storage_id);
   if (class_exists == registered_classes.end()) {
-    // This should not print a warning, because it can be used by open_read_only twice,
-    // legitimately expecting to fail for READ_ONLY but succeed for READ_WRITE
-    // The extra output is misleading to end users.
+    ROSBAG2_STORAGE_LOG_WARN_STREAM(
+      "No storage plugin found with id '" << storage_options.storage_id << "'.");
     return nullptr;
   }
 
