@@ -29,7 +29,8 @@ if(BUILD_ROSBAG2_BENCHMARKS)
 
   add_executable(benchmark_publishers
     src/benchmark_publishers.cpp
-    src/config_utils.cpp)
+    src/config_utils.cpp
+    src/msg_utils/helpers.cpp)
 
   add_executable(results_writer
     src/config_utils.cpp

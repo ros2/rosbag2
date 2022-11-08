@@ -1,0 +1,17 @@
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups 
+      publisher_groups: [ "Int64_message_type", "Float32_message_type" ]
+      wait_for_subscriptions: True
+      Int64_message_type:
+        publishers_count:   500
+        topic_root:         "benchmarking_Int64"
+        msg_type:           "std_msgs::msg::Int64"
+        msg_count_each:     2000
+        rate_hz:            200
+      Float32_message_type:
+        publishers_count:   500
+        topic_root:         "benchmarking_Float32"
+        msg_type:           "std_msgs::msg::Float32"
+        msg_count_each:     2000
+        rate_hz:            200

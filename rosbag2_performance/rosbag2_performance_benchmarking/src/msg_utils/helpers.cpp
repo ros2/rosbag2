@@ -1,4 +1,4 @@
-// Copyright 2020-2021, Robotec.ai sp. z o.o.
+// Copyright 2022 Apex.AI, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_
-#define ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_
+#include "msg_utils/helpers.hpp"
 
-#include <string>
+#include <cstdlib>
 
-struct ProducerConfig
+namespace msg_utils
 {
-  unsigned int frequency;
-  unsigned int max_count;
-  unsigned int message_size;
-  std::string message_type;
-};
-
-#endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_
+namespace helpers
+{
+void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size)
+{
+  array.data.reserve(size);
+  for (auto i = 0u; i < size; ++i) {
+    array.data.emplace_back(std::rand() % 255);
+  }
+}
+}  // namespace helpers
+}  // namespace msg_utils
