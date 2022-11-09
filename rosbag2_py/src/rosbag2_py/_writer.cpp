@@ -23,6 +23,7 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -141,4 +142,9 @@ PYBIND11_MODULE(_writer, m) {
     "get_registered_serializers",
     &rosbag2_py::get_registered_serializers,
     "Returns list of serialization format plugins available for rosbag2 recording");
+
+  m.def(
+    "get_default_storage_id",
+    &rosbag2_storage::get_default_storage_id,
+    "Returns the default storage ID used when unspecified in StorageOptions");
 }

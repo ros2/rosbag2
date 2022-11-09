@@ -37,6 +37,7 @@ with add_dll_directories_from_env('PATH'):
         get_registered_writers,
         get_registered_compressors,
         get_registered_serializers,
+        get_default_storage_id,
     )
     from rosbag2_py._info import (
         Info,
@@ -55,6 +56,11 @@ with add_dll_directories_from_env('PATH'):
 __all__ = [
     'bag_rewrite',
     'ConverterOptions',
+<<<<<<< HEAD
+=======
+    'FileInformation',
+    'get_default_storage_id',
+>>>>>>> c611a80 (rosbag2_storage: expose default storage ID as method (#1146))
     'get_registered_readers',
     'get_registered_writers',
     'get_registered_compressors',
