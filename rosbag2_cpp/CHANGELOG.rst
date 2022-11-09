@@ -2,6 +2,13 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.3 (2022-11-07)
+-------------------
+* Readers/info can accept a single bag storage file, and detect its storage id automatically (`#1072 <https://github.com/ros2/rosbag2/issues/1072>`_) (`#1077 <https://github.com/ros2/rosbag2/issues/1077>`_)
+* Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_) (`#1037 <https://github.com/ros2/rosbag2/issues/1037>`_)
+* Backport. Add use_sim_time option to record verb (`#1017 <https://github.com/ros2/rosbag2/issues/1017>`_)
+* Contributors: Geoffrey Biggs, Keisuke Shima, mergify[bot]
+
 0.15.2 (2022-05-11)
 -------------------
 

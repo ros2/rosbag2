@@ -2,6 +2,18 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.3 (2022-11-07)
+-------------------
+* Mark `test_play_services` as xfail for FastRTPS and CycloneDDS (`#1091 <https://github.com/ros2/rosbag2/issues/1091>`_) (`#1136 <https://github.com/ros2/rosbag2/issues/1136>`_)
+* Fix hangout in rosbag2 player and recorder when pressing `CTRL+C` (`#1081 <https://github.com/ros2/rosbag2/issues/1081>`_) (`#1085 <https://github.com/ros2/rosbag2/issues/1085>`_)
+* make writer and option variables private instead of protected (`#1097 <https://github.com/ros2/rosbag2/issues/1097>`_)
+* Revert "[humble] Backport. Added support for filtering topics via regular expressions (`#1034 <https://github.com/ros2/rosbag2/issues/1034>`_)- (`#1039 <https://github.com/ros2/rosbag2/issues/1039>`_)" (`#1069 <https://github.com/ros2/rosbag2/issues/1069>`_)
+* Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_) (`#1037 <https://github.com/ros2/rosbag2/issues/1037>`_)
+* Backport. Add use_sim_time option to record verb (`#1017 <https://github.com/ros2/rosbag2/issues/1017>`_)
+* Fix for rosbag2::Player freeze when ctrl+c in pause mode (`#1002 <https://github.com/ros2/rosbag2/issues/1002>`_) (`#1016 <https://github.com/ros2/rosbag2/issues/1016>`_)
+* Make unpublished topics unrecorded by default (`#968 <https://github.com/ros2/rosbag2/issues/968>`_) (`#1008 <https://github.com/ros2/rosbag2/issues/1008>`_)
+* Contributors: Bernardo Taveira, Esteve Fernandez, Geoffrey Biggs, Keisuke Shima, Michael Orlov, Sean Kelly, mergify[bot]
+
 0.15.2 (2022-05-11)
 -------------------
 * Make peek_next_message_from_queue return a SharedPtr. (`#993 <https://github.com/ros2/rosbag2/issues/993>`_)

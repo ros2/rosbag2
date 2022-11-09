@@ -2,6 +2,11 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.3 (2022-11-07)
+-------------------
+* Fix for ros2 bag play exit with non-zero code on SIGINT (`#1126 <https://github.com/ros2/rosbag2/issues/1126>`_) (`#1147 <https://github.com/ros2/rosbag2/issues/1147>`_)
+* Contributors: mergify[bot]
+
 0.15.2 (2022-05-11)
 -------------------
 
