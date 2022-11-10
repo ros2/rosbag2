@@ -96,6 +96,9 @@ public:
    */
   SqliteWrapper & get_sqlite_database_wrapper();
 
+  int get_db_schema_version() const;
+  std::string get_recorded_ros_distro() const;
+
   enum class PresetProfile
   {
     Resilient,
@@ -113,6 +116,7 @@ private:
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
   int get_last_rowid();
+  int read_db_schema_version();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
@@ -139,6 +143,7 @@ private:
   std::mutex database_write_mutex_;
 
   const int kDBSchemaVersion_ = 3;
+  int db_schema_version_ = -1;  //  Valid version number starting from 1
 };
 
 
