@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
@@ -368,21 +369,41 @@ uint64_t SqliteStorage::get_bagfile_size() const
 
 void SqliteStorage::initialize()
 {
-  std::string create_stmt = "CREATE TABLE topics(" \
+  std::string create_stmt = "CREATE TABLE schema(" \
+    "schema_version INTEGER PRIMARY KEY," \
+    "ros_distro TEXT NOT NULL);";
+  database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  create_stmt = "CREATE TABLE metadata(" \
+    "id INTEGER PRIMARY KEY," \
+    "metadata_version INTEGER NOT NULL," \
+    "metadata TEXT NOT NULL);";
+  database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  create_stmt = "CREATE TABLE topics(" \
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
     "serialization_format TEXT NOT NULL," \
     "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
     "topic_id INTEGER NOT NULL," \
     "timestamp INTEGER NOT NULL, " \
     "data BLOB NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
   create_stmt = "CREATE INDEX timestamp_idx ON messages (timestamp ASC);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  std::string ros_distro = rcpputils::get_env_var("ROS_DISTRO");
+  auto insert_db_schema =
+    database_->prepare_statement(
+    "INSERT INTO schema (schema_version, ros_distro) VALUES (?, ?)");
+  insert_db_schema->bind(kDBSchemaVersion_, ros_distro);
+  insert_db_schema->execute_and_reset();
 }
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)

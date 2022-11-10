@@ -137,6 +137,8 @@ private:
   // a) database access (this could also be done with FULLMUTEX), but see b)
   // b) topics_ collection - since we could be writing and reading it at the same time
   std::mutex database_write_mutex_;
+
+  const int kDBSchemaVersion_ = 3;
 };
 
 
