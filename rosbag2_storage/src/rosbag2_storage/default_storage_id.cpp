@@ -18,7 +18,7 @@ namespace rosbag2_storage
 
 std::string get_default_storage_id()
 {
-  return "sqlite3";
+  return "mcap";
 }
 
 }  // namespace rosbag2_storage
