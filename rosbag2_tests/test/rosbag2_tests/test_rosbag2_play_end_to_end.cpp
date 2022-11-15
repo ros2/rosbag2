@@ -120,6 +120,16 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
     error_output, HasSubstr("Could not find converter for format wrong_format"));
 }
 
+TEST_F(PlayEndToEndTestFixture, play_compressed_bag) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play compressed_bag", database_path_);
+
+  auto error_output = internal::GetCapturedStderr();
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(error_output, Not(HasSubstr("Failed")));
+}
+
 /*
 todo(tfoote) Disabling failing test. Ticketed to follow up at: https://github.com/ros2/rosbag2/issues/408
 TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
