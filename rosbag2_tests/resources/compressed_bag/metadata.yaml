@@ -1,0 +1,25 @@
+rosbag2_bagfile_information:
+  version: 4
+  storage_identifier: sqlite3
+  relative_file_paths:
+    - rosbag2_2022_11_15-12_29_50_0.db3.zstd
+  duration:
+    nanoseconds: 0
+  starting_time:
+    nanoseconds_since_epoch: 9223372036854775807
+  message_count: 0
+  topics_with_message_count:
+    - topic_metadata:
+        name: /parameter_events
+        type: rcl_interfaces/msg/ParameterEvent
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 2147483647\n    nsec: 4294967295\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
+      message_count: 0
+    - topic_metadata:
+        name: /rosout
+        type: rcl_interfaces/msg/Log
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 1\n  deadline:\n    sec: 2147483647\n    nsec: 4294967295\n  lifespan:\n    sec: 10\n    nsec: 0\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 2147483647\n    nsec: 4294967295\n  avoid_ros_namespace_conventions: false"
+      message_count: 0
+  compression_format: zstd
+  compression_mode: FILE

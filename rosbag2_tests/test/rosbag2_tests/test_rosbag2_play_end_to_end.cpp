@@ -211,3 +211,13 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
 }
 */
+
+TEST_F(PlayEndToEndTestFixture, play_compressed_bag) {
+  internal::CaptureStderr();
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play compressed_bag", database_path_);
+
+  auto error_output = internal::GetCapturedStderr();
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(error_output, Not(HasSubstr("Failed")));
+}
