@@ -15,13 +15,13 @@
 #ifndef MSG_UTILS__HELPERS_HPP_
 #define MSG_UTILS__HELPERS_HPP_
 
-#include <rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp>
+#include <std_msgs/msg/byte_multi_array.hpp>
 
 namespace msg_utils
 {
 namespace helpers
 {
-void generate_data(rosbag2_performance_benchmarking_msgs::msg::ByteArray & array, size_t size);
+void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size);
 }  // namespace helpers
 }  // namespace msg_utils
 

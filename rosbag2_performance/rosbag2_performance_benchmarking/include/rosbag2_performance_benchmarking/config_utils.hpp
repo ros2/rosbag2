@@ -25,7 +25,7 @@
 namespace config_utils
 {
 
-constexpr std::string_view DEFAULT_MESSAGE_TYPE = "rosbag2_performance_benchmarking_msgs::msg::ByteArray";
+constexpr std::string_view DEFAULT_MESSAGE_TYPE = "std_msgs::msg::ByteMultiArray";
 
 /// Helper function to fill group_config with qos parameters
 void load_qos_configuration(

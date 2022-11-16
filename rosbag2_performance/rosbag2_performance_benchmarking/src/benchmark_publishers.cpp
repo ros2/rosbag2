@@ -25,7 +25,7 @@
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
-#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
+#include "std_msgs/msg/byte_multi_array.hpp"
 
 
 class BenchmarkPublishers : public rclcpp::Node

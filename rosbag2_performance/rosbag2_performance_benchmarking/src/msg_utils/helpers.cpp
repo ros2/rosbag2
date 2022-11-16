@@ -20,7 +20,7 @@ namespace msg_utils
 {
 namespace helpers
 {
-void generate_data(rosbag2_performance_benchmarking_msgs::msg::ByteArray & array, size_t size)
+void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size)
 {
   array.data.reserve(size);
   for (auto i = 0u; i < size; ++i) {

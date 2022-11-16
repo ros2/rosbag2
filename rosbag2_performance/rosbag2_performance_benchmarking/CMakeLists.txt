@@ -19,7 +19,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rmw REQUIRED)
-  find_package(rosbag2_performance_benchmarking_msgs REQUIRED)
+  find_package(std_msgs REQUIRED)
   find_package(yaml_cpp_vendor REQUIRED)
 
   add_executable(writer_benchmark
@@ -39,7 +39,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
 
   ament_target_dependencies(writer_benchmark
     rclcpp
-    rosbag2_performance_benchmarking_msgs
+    std_msgs
     rosbag2_compression
     rosbag2_cpp
     rosbag2_storage
@@ -49,7 +49,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
   ament_target_dependencies(benchmark_publishers
     rclcpp
     rosbag2_storage
-    rosbag2_performance_benchmarking_msgs
+    std_msgs
     yaml_cpp_vendor
   )
 
