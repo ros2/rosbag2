@@ -91,12 +91,7 @@ void MessageProducer<T>::resize(size_t size)
 }
 
 template<>
-void MessageProducer<std_msgs::msg::ByteMultiArray>::resize(size_t size)
-{
-  helpers::generate_data(message_, size);
-}
-template<>
-void MessageProducer<std_msgs::msg::ByteMultiArray>::resize(size_t size)
+void MessageProducer<rosbag2_performance_benchmarking_msgs::msg::ByteArray>::resize(size_t size)
 {
   helpers::generate_data(message_, size);
 }

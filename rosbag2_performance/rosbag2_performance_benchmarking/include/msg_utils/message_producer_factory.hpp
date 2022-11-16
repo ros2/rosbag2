@@ -18,36 +18,7 @@
 #include <memory>
 #include <string>
 
-#include <std_msgs/msg/bool.hpp>
-#include <std_msgs/msg/byte.hpp>
-#include <std_msgs/msg/byte_multi_array.hpp>
-#include <std_msgs/msg/char.hpp>
-#include <std_msgs/msg/color_rgba.hpp>
-#include <std_msgs/msg/empty.hpp>
-#include <std_msgs/msg/float32.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
-#include <std_msgs/msg/float64.hpp>
-#include <std_msgs/msg/float64_multi_array.hpp>
-#include <std_msgs/msg/header.hpp>
-#include <std_msgs/msg/int16.hpp>
-#include <std_msgs/msg/int16_multi_array.hpp>
-#include <std_msgs/msg/int32.hpp>
-#include <std_msgs/msg/int32_multi_array.hpp>
-#include <std_msgs/msg/int64.hpp>
-#include <std_msgs/msg/int64_multi_array.hpp>
-#include <std_msgs/msg/int8.hpp>
-#include <std_msgs/msg/int8_multi_array.hpp>
-#include <std_msgs/msg/multi_array_dimension.hpp>
-#include <std_msgs/msg/multi_array_layout.hpp>
-#include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/u_int16.hpp>
-#include <std_msgs/msg/u_int16_multi_array.hpp>
-#include <std_msgs/msg/u_int32.hpp>
-#include <std_msgs/msg/u_int32_multi_array.hpp>
-#include <std_msgs/msg/u_int64.hpp>
-#include <std_msgs/msg/u_int64_multi_array.hpp>
-#include <std_msgs/msg/u_int8.hpp>
-#include <std_msgs/msg/u_int8_multi_array.hpp>
+#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
 
 #include "message_producer.hpp"
 
@@ -57,43 +28,14 @@
     return std::make_shared<MessageProducer<type>>(args ...); \
   } else  // NOLINT  not closed `if` in macro is on purpose
 
-#define ADD_STD_MSG(type) ADD_MSG(std_msgs, type)
+#define ADD_BENCHMARKING_MSG(type) ADD_MSG(rosbag2_performance_benchmarking_msgs, type)
 
 namespace msg_utils
 {
 template<typename ... Args>
 std::shared_ptr<ProducerBase> create(std::string key, Args & ... args)
 {
-  ADD_STD_MSG(Bool)
-  ADD_STD_MSG(Byte)
-  ADD_STD_MSG(ByteMultiArray)
-  ADD_STD_MSG(Char)
-  ADD_STD_MSG(ColorRGBA)
-  ADD_STD_MSG(Empty)
-  ADD_STD_MSG(Float32)
-  ADD_STD_MSG(Float32MultiArray)
-  ADD_STD_MSG(Float64)
-  ADD_STD_MSG(Float64MultiArray)
-  ADD_STD_MSG(Header)
-  ADD_STD_MSG(Int16)
-  ADD_STD_MSG(Int16MultiArray)
-  ADD_STD_MSG(Int32)
-  ADD_STD_MSG(Int32MultiArray)
-  ADD_STD_MSG(Int64)
-  ADD_STD_MSG(Int64MultiArray)
-  ADD_STD_MSG(Int8)
-  ADD_STD_MSG(Int8MultiArray)
-  ADD_STD_MSG(MultiArrayDimension)
-  ADD_STD_MSG(MultiArrayLayout)
-  ADD_STD_MSG(String)
-  ADD_STD_MSG(UInt16)
-  ADD_STD_MSG(UInt16MultiArray)
-  ADD_STD_MSG(UInt32)
-  ADD_STD_MSG(UInt32MultiArray)
-  ADD_STD_MSG(UInt64)
-  ADD_STD_MSG(UInt64MultiArray)
-  ADD_STD_MSG(UInt8)
-  ADD_STD_MSG(UInt8MultiArray)
+  ADD_BENCHMARKING_MSG(ByteArray)
 
   throw std::runtime_error("Unknown message type: " + key);
 }
