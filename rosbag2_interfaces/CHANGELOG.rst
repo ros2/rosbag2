@@ -2,8 +2,8 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.0 (2022-11-15)
+-------------------
 * Add SplitBagfile recording service. (`#1115 <https://github.com/ros2/rosbag2/issues/1115>`_)
 * Contributors: rshanor
 

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.0 (2022-11-15)
+-------------------
 * rosbag2_storage: expose default storage ID as method (`#1146 <https://github.com/ros2/rosbag2/issues/1146>`_)
 * Don't reopen file for every seek if we don't have to. Search directionally for the correct file (`#1117 <https://github.com/ros2/rosbag2/issues/1117>`_)
 * Reverse read order API and sqlite storage implementation (`#1083 <https://github.com/ros2/rosbag2/issues/1083>`_)

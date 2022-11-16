@@ -2,8 +2,8 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.0 (2022-11-15)
+-------------------
 * Bump zstd to 1.4.8 in zstd_vendor package (`#1132 <https://github.com/ros2/rosbag2/issues/1132>`_)
 * Fix/zstd vendor does not find system zstd (`#1111 <https://github.com/ros2/rosbag2/issues/1111>`_)
 * Contributors: DasRoteSkelett, Michael Orlov

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.18.0 (2022-11-15)
+-------------------
 * Add pause and resume service calls for rosbag2 recorder (`#1131 <https://github.com/ros2/rosbag2/issues/1131>`_)
 * Redesign record_services tests to make them more deterministic (`#1122 <https://github.com/ros2/rosbag2/issues/1122>`_)
 * Add SplitBagfile recording service. (`#1115 <https://github.com/ros2/rosbag2/issues/1115>`_)
