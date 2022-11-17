@@ -106,7 +106,9 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized from the inputs."};
     }
-    storage_->set_read_order(read_order_);
+    if (read_order_ != std::nullopt) {
+      storage_->set_read_order(*read_order_);
+    }
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
@@ -144,11 +146,11 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     bool current_storage_has_next = storage_->has_next();
     if (!current_storage_has_next) {
-      if (!read_order_.reverse && has_next_file()) {
+      if (read_order_ == std::nullopt || (!read_order_->reverse && has_next_file())) {
         load_next_file();
         return has_next();
       }
-      if (read_order_.reverse && has_prev_file()) {
+      if (read_order_->reverse && has_prev_file()) {
         load_prev_file();
         return has_next();
       }
@@ -255,7 +257,9 @@ void SequentialReader::load_current_file()
     throw std::runtime_error{"No storage could be initialized. Abort"};
   }
   // set filters
-  storage_->set_read_order(read_order_);
+  if (read_order_ != std::nullopt) {
+    storage_->set_read_order(*read_order_);
+  }
   storage_->seek(seek_time_);
   set_filter(topics_filter_);
 }

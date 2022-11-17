@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter.hpp"
@@ -208,7 +209,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 
   bag_events::EventCallbackManager callback_manager_;
-  rosbag2_storage::ReadOrder read_order_{};
+  std::optional<rosbag2_storage::ReadOrder> read_order_;
 };
 
 }  // namespace readers
