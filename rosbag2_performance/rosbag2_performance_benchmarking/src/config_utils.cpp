@@ -108,14 +108,6 @@ std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
         rclcpp::shutdown(nullptr, "msg_size parameter is zero or unset");
         return configurations;
       }
-    } else {
-      if (group_config.producer_config.message_size != 0) {
-        RCLCPP_ERROR(
-          node.get_logger(), "Message size is not compatible with message type."
-          "Please use one option or the other. Exiting.");
-        rclcpp::shutdown(nullptr, "msg_size parameter not compatible with msg_type");
-        return configurations;
-      }
     }
 
     config_utils::load_qos_configuration(node, group_config, group_prefix);

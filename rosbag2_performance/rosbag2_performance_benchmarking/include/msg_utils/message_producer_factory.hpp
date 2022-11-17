@@ -49,6 +49,12 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/u_int8_multi_array.hpp>
 
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/range.hpp>
+
 #include "message_producer.hpp"
 
 #define ADD_MSG(space, type) \
@@ -58,6 +64,7 @@
   } else  // NOLINT  not closed `if` in macro is on purpose
 
 #define ADD_STD_MSG(type) ADD_MSG(std_msgs, type)
+#define ADD_SENSOR_MSG(type) ADD_MSG(sensor_msgs, type)
 
 namespace msg_utils
 {
@@ -94,6 +101,11 @@ std::shared_ptr<ProducerBase> create(std::string key, Args & ... args)
   ADD_STD_MSG(UInt64MultiArray)
   ADD_STD_MSG(UInt8)
   ADD_STD_MSG(UInt8MultiArray)
+  ADD_SENSOR_MSG(Image)
+  ADD_SENSOR_MSG(PointCloud2)
+  ADD_SENSOR_MSG(NavSatFix)
+  ADD_SENSOR_MSG(Imu)
+  ADD_SENSOR_MSG(Range)
 
   throw std::runtime_error("Unknown message type: " + key);
 }

@@ -16,12 +16,18 @@
 #define MSG_UTILS__HELPERS_HPP_
 
 #include <std_msgs/msg/byte_multi_array.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace msg_utils
 {
 namespace helpers
 {
 void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size);
+
+// sensor messages
+void generate_data(sensor_msgs::msg::Image & msg, size_t size);
+void generate_data(sensor_msgs::msg::PointCloud2 & msg, size_t size);
 }  // namespace helpers
 }  // namespace msg_utils
 

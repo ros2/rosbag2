@@ -87,7 +87,9 @@ template<typename T>
 void MessageProducer<T>::resize(size_t size)
 {
   (void)size;
-  throw std::runtime_error("Resize not implemented for type: " + std::string(typeid(T).name()));
+  throw std::runtime_error(
+          "Resize not implemented for type: " +
+          std::string(rosidl_generator_traits::data_type<T>()));
 }
 
 template<>
@@ -95,8 +97,15 @@ void MessageProducer<std_msgs::msg::ByteMultiArray>::resize(size_t size)
 {
   helpers::generate_data(message_, size);
 }
+
 template<>
-void MessageProducer<std_msgs::msg::ByteMultiArray>::resize(size_t size)
+void MessageProducer<sensor_msgs::msg::Image>::resize(size_t size)
+{
+  helpers::generate_data(message_, size);
+}
+
+template<>
+void MessageProducer<sensor_msgs::msg::PointCloud2>::resize(size_t size)
 {
   helpers::generate_data(message_, size);
 }

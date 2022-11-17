@@ -27,5 +27,24 @@ void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size)
     array.data.emplace_back(std::rand() % 255);
   }
 }
+
+void generate_data(sensor_msgs::msg::Image & msg, size_t size)
+{
+  // TODO(carlossvg): calculate message base size to set total size
+  msg.data.reserve(size);
+  for (auto i = 0u; i < size; ++i) {
+    msg.data.emplace_back(std::rand() % 255);
+  }
+}
+
+void generate_data(sensor_msgs::msg::PointCloud2 & msg, size_t size)
+{
+  // TODO(carlossvg): calculate message base size to set total size
+  msg.data.reserve(size);
+  for (auto i = 0u; i < size; ++i) {
+    msg.data.emplace_back(std::rand() % 255);
+  }
+}
+
 }  // namespace helpers
 }  // namespace msg_utils
