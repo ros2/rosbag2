@@ -23,7 +23,7 @@
 #include <string>
 #include <utility>
 
-#include "std_msgs/msg/byte_multi_array.hpp"
+#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
 
 template<typename T>
 class MessageQueue
@@ -91,6 +91,6 @@ private:
   mutable std::mutex mutex_;
 };
 
-typedef MessageQueue<std_msgs::msg::ByteMultiArray> ByteMessageQueue;
+typedef MessageQueue<rosbag2_performance_benchmarking_msgs::msg::ByteArray> ByteMessageQueue;
 
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__MESSAGE_QUEUE_HPP_

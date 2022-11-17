@@ -15,7 +15,7 @@
 #ifndef MSG_UTILS__HELPERS_HPP_
 #define MSG_UTILS__HELPERS_HPP_
 
-#include <std_msgs/msg/byte_multi_array.hpp>
+#include <rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -23,7 +23,7 @@ namespace msg_utils
 {
 namespace helpers
 {
-void generate_data(std_msgs::msg::ByteMultiArray & array, size_t size);
+void generate_data(rosbag2_performance_benchmarking_msgs::msg::ByteArray & array, size_t size);
 
 // sensor messages
 void generate_data(sensor_msgs::msg::Image & msg, size_t size);
