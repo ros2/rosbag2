@@ -25,6 +25,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -35,9 +36,10 @@ using namespace ::testing;  // NOLINT
 using rosbag2_test_common::TemporaryDirectoryFixture;
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
+  const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
   const std::string bagfile = "rosbag2_bagfile_information:\n"
     "  version: 2\n"
-    "  storage_identifier: sqlite3\n"
+    "  storage_identifier: " + expected_storage_id + "\n"
     "  relative_file_paths:\n"
     "    - some_relative_path\n"
     "    - some_other_relative_path\n"
@@ -69,7 +71,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   const auto metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_EQ(metadata.version, 2);
-  EXPECT_EQ(metadata.storage_identifier, "sqlite3");
+  EXPECT_EQ(metadata.storage_identifier, expected_storage_id);
 
   const auto expected_paths =
     std::vector<std::string>{"some_relative_path", "some_other_relative_path"};
@@ -101,9 +103,10 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
 }
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
+  const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
   const std::string bagfile = "rosbag2_bagfile_information:\n"
     "  version: 6\n"
-    "  storage_identifier: sqlite3\n"
+    "  storage_identifier: " + expected_storage_id + "\n"
     "  relative_file_paths:\n"
     "    - some_relative_path\n"
     "    - some_other_relative_path\n"
@@ -149,7 +152,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
   const auto metadata = info.read_metadata(temporary_dir_path_);
 
   EXPECT_EQ(metadata.version, 6);
-  EXPECT_EQ(metadata.storage_identifier, "sqlite3");
+  EXPECT_EQ(metadata.storage_identifier, expected_storage_id);
 
   const auto expected_paths =
     std::vector<std::string>{"some_relative_path", "some_other_relative_path"};
@@ -199,10 +202,11 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
 }
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metadata_io_method) {
+  const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
   std::string bagfile(
     "rosbag2_bagfile_information:\n"
     "  version: 3\n"
-    "  storage_identifier: sqlite3\n"
+    "  storage_identifier: " + expected_storage_id + "\n"
     "  relative_file_paths:\n"
     "    - some_relative_path\n"
     "    - some_other_relative_path\n"
@@ -235,7 +239,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   rosbag2_cpp::Info info;
   auto read_metadata = info.read_metadata(temporary_dir_path_);
 
-  EXPECT_THAT(read_metadata.storage_identifier, Eq("sqlite3"));
+  EXPECT_EQ(read_metadata.storage_identifier, expected_storage_id);
   EXPECT_THAT(
     read_metadata.relative_file_paths,
     Eq(std::vector<std::string>({"some_relative_path", "some_other_relative_path"})));

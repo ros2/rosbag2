@@ -41,10 +41,6 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
   }
 
   bag_config_ = config_utils::bag_config_from_node_parameters(*this);
-  if (bag_config_.storage_options.storage_id != "sqlite3") {
-    RCLCPP_ERROR(get_logger(), "Benchmarking only supported for sqlite3 for now");
-    return;
-  }
 
   this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
   this->get_parameter("results_file", results_file_);

@@ -26,6 +26,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -244,7 +245,7 @@ public:
   ReadOrderTest()
   {
     storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "ordertest").string();
-    storage_options.storage_id = "sqlite3";
+    storage_options.storage_id = rosbag2_storage::get_default_storage_id();
     write_sample_split_bag(storage_options, fake_messages, split_every);
   }
 
