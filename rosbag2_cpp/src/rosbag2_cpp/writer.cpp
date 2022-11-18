@@ -53,7 +53,6 @@ void Writer::open(const std::string & uri)
 {
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
-  storage_options.storage_id = rosbag2_storage::get_default_storage_id();
 
   rosbag2_cpp::ConverterOptions converter_options{};
   return open(storage_options, converter_options);
