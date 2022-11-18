@@ -146,7 +146,7 @@ bool SequentialReader::has_next()
     // to read from there. Otherwise, check if there's another message.
     bool current_storage_has_next = storage_->has_next();
     if (!current_storage_has_next) {
-      if (read_order_ == std::nullopt || (!read_order_->reverse && has_next_file())) {
+      if ((read_order_ == std::nullopt || !read_order_->reverse) && has_next_file()) {
         load_next_file();
         return has_next();
       }
