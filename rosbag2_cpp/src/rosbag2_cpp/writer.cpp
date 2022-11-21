@@ -53,7 +53,10 @@ void Writer::open(const std::string & uri)
 {
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
+<<<<<<< HEAD
   storage_options.storage_id = kDefaultStorageID;
+=======
+>>>>>>> 5c4dafe (Reader and writer can use default storage by not specifying (#1167))
 
   rosbag2_cpp::ConverterOptions converter_options{};
   return open(storage_options, converter_options);
