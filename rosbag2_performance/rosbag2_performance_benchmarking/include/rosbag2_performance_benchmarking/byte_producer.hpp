@@ -21,22 +21,10 @@
 #include <functional>
 
 #include "rclcpp/utilities.hpp"
+#include "msg_utils/helpers.hpp"
 #include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
 
 #include "rosbag2_performance_benchmarking/producer_config.hpp"
-
-inline auto generate_random_message(const ProducerConfig & config)
-{
-  // Reuses the same random message
-  auto message = std::make_shared<rosbag2_performance_benchmarking_msgs::msg::ByteArray>();
-
-  message->data.reserve(config.message_size);
-  for (auto i = 0u; i < config.message_size; ++i) {
-    message->data.emplace_back(std::rand() % 255);
-  }
-
-  return message;
-}
 
 class ByteProducer
 {
@@ -57,8 +45,10 @@ public:
     producer_callback_(producer_callback),
     producer_finalize_(producer_finalize),
     sleep_time_(configuration_.frequency == 0 ? 1 : 1000 / configuration_.frequency),
-    message_(generate_random_message(configuration_))
-  {}
+    message_(std::make_shared<rosbag2_performance_benchmarking_msgs::msg::ByteArray>())
+  {
+    msg_utils::helpers::generate_data(*message_, configuration_.message_size);
+  }
 
   void run()
   {
