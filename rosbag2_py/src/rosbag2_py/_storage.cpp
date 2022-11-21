@@ -17,6 +17,7 @@
 
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -284,4 +285,9 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("reverse") = rosbag2_storage::ReadOrder{}.reverse)
   .def_readwrite("sort_by", &rosbag2_storage::ReadOrder::sort_by)
   .def_readwrite("reverse", &rosbag2_storage::ReadOrder::reverse);
+
+  m.def(
+    "get_default_storage_id",
+    &rosbag2_storage::get_default_storage_id,
+    "Returns the default storage ID used when unspecified in StorageOptions");
 }
