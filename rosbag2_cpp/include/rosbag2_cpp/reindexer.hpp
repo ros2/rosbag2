@@ -57,12 +57,8 @@ namespace rosbag2_cpp
 /**
  * Tool to reconstruct bag metadata files in the event of loss or corruption
  *
- * Reindexing is an operation where a bag that is missing a metadata.yaml file can have a new
- *   file created through parsing of the metadata stored within the actual files of the bag.
- *   For instance: Imagine we are working with SQL databases (.db3). We can open the individual
- *   .db3 files within the bag and read their metadata (not the messages themselves) to replicate
- *   a usable metadata.yaml file, so that the bag can once again be read by the standard read
- *   command.
+ * Reindexing recreates metadata.yaml for a bag that is missing that file.
+ * This is done by opening the storage directly and reading the contents to accumulate metadata.
  *
  * Reindexing has some limitations - It cannot perfectly replicate the original metadata file,
  *   since some information known by the program from the start up command cannot be found

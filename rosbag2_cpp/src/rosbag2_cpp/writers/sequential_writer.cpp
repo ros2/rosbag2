@@ -95,18 +95,18 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  rcpputils::fs::path db_path(storage_options.uri);
-  if (db_path.is_directory()) {
+  rcpputils::fs::path storage_path(storage_options.uri);
+  if (storage_path.is_directory()) {
     std::stringstream error;
-    error << "Database directory already exists (" << db_path.string() <<
-      "), can't overwrite existing database";
+    error << "Bag directory already exists (" << storage_path.string() <<
+      "), can't overwrite existing bag";
     throw std::runtime_error{error.str()};
   }
 
-  bool dir_created = rcpputils::fs::create_directories(db_path);
+  bool dir_created = rcpputils::fs::create_directories(storage_path);
   if (!dir_created) {
     std::stringstream error;
-    error << "Failed to create database directory (" << db_path.string() << ").";
+    error << "Failed to create bag directory (" << storage_path.string() << ").";
     throw std::runtime_error{error.str()};
   }
 

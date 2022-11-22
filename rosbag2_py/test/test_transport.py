@@ -71,7 +71,12 @@ def test_record_cancel(tmp_path):
 
     recorder.cancel()
 
-    metadata_path = Path(bag_path) / 'metadata.yaml'
-    db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
-    assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
+    metadata_io = rosbag2_py.MetadataIo()
+    assert wait_for(lambda: metadata_io.metadata_file_exists(bag_path),
+                    timeout=rclpy.duration.Duration(seconds=3))
+
+    metadata = metadata_io.read_metadata(bag_path)
+    assert(len(metadata.relative_file_paths))
+    storage_path = Path(metadata.relative_file_paths[0])
+    assert wait_for(lambda: storage_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))

@@ -104,6 +104,8 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
 
 TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
   const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
+  const auto expected_storage_file = "test.testbag";
+
   const std::string bagfile = "rosbag2_bagfile_information:\n"
     "  version: 6\n"
     "  storage_identifier: " + expected_storage_id + "\n"
@@ -131,7 +133,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
     "  compression_format: \"zstd\"\n"
     "  compression_mode: \"FILE\"\n"
     "  files:\n"
-    "    - path: test.db3\n"
+    "    - path: " + expected_storage_file + "\n"
     "      starting_time:\n"
     "        nanoseconds_since_epoch: 0\n"
     "      duration:\n"
@@ -176,7 +178,7 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_6) {
 
   {
     EXPECT_EQ(metadata.files.size(), 1U);
-    EXPECT_EQ(metadata.files[0].path, "test.db3");
+    EXPECT_EQ(metadata.files[0].path, expected_storage_file);
     EXPECT_EQ(metadata.files[0].starting_time.time_since_epoch().count(), 0U);
     EXPECT_EQ(metadata.files[0].duration, std::chrono::nanoseconds{100000000});
     EXPECT_EQ(metadata.files[0].message_count, 200U);
@@ -282,7 +284,6 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
 
 TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  const auto expected_bagfile_path = bag_path / "bag_0.db3";
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
@@ -290,11 +291,17 @@ TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
+  std::string first_storage_file_path;
+  {
+    rosbag2_storage::MetadataIo metadata_io;
+    auto metadata = metadata_io.read_metadata(bag_path.string());
+    first_storage_file_path = (bag_path / metadata.relative_file_paths[0]).string();
+  }
 
   rosbag2_cpp::Info info;
   rosbag2_storage::BagMetadata metadata;
   EXPECT_NO_THROW(
-    metadata = info.read_metadata(expected_bagfile_path.string())
+    metadata = info.read_metadata(first_storage_file_path)
   );
   EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
 }
