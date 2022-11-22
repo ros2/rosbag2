@@ -45,6 +45,7 @@ public:
   SqliteWrapper();
   ~SqliteWrapper();
 
+  bool table_exists(const std::string & table_name);
   bool field_exists(const std::string & table_name, const std::string & field_name);
   SqliteStatement prepare_statement(const std::string & query);
   std::string query_pragma_value(const std::string & key);

@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
@@ -212,7 +213,10 @@ void SqliteStorage::open(
 
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
+    db_schema_version_ = kDBSchemaVersion_;
     initialize();
+  } else {
+    db_schema_version_ = read_db_schema_version();
   }
 
   // Reset the read and write statements in case the database changed.
@@ -368,21 +372,41 @@ uint64_t SqliteStorage::get_bagfile_size() const
 
 void SqliteStorage::initialize()
 {
-  std::string create_stmt = "CREATE TABLE topics(" \
+  std::string create_stmt = "CREATE TABLE schema(" \
+    "schema_version INTEGER PRIMARY KEY," \
+    "ros_distro TEXT NOT NULL);";
+  database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  create_stmt = "CREATE TABLE metadata(" \
+    "id INTEGER PRIMARY KEY," \
+    "metadata_version INTEGER NOT NULL," \
+    "metadata TEXT NOT NULL);";
+  database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  create_stmt = "CREATE TABLE topics(" \
     "id INTEGER PRIMARY KEY," \
     "name TEXT NOT NULL," \
     "type TEXT NOT NULL," \
     "serialization_format TEXT NOT NULL," \
     "offered_qos_profiles TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
     "topic_id INTEGER NOT NULL," \
     "timestamp INTEGER NOT NULL, " \
     "data BLOB NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
   create_stmt = "CREATE INDEX timestamp_idx ON messages (timestamp ASC);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
+
+  std::string ros_distro = rcpputils::get_env_var("ROS_DISTRO");
+  auto insert_db_schema =
+    database_->prepare_statement(
+    "INSERT INTO schema (schema_version, ros_distro) VALUES (?, ?)");
+  insert_db_schema->bind(kDBSchemaVersion_, ros_distro);
+  insert_db_schema->execute_and_reset();
 }
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
@@ -619,11 +643,47 @@ SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
   return *database_;
 }
 
+int SqliteStorage::get_db_schema_version() const
+{
+  return db_schema_version_;
+}
+
+std::string SqliteStorage::get_recorded_ros_distro() const
+{
+  std::string ros_distro;
+  if (db_schema_version_ >= 3 && database_->table_exists("schema")) {
+    // Read schema version
+    auto statement = database_->prepare_statement("SELECT ros_distro from schema;");
+    auto query_results = statement->execute_query<std::string>();
+    ros_distro = std::get<0>(*query_results.begin());
+  }
+  return ros_distro;
+}
+
 int SqliteStorage::get_last_rowid()
 {
   auto statement = database_->prepare_statement("SELECT max(rowid) from messages;");
   auto query_results = statement->execute_query<int>();
   return std::get<0>(*query_results.begin());
+}
+
+int SqliteStorage::read_db_schema_version()
+{
+  int schema_version = -1;
+  if (database_->table_exists("schema")) {
+    // Read schema version
+    auto statement = database_->prepare_statement("SELECT schema_version from schema;");
+    auto query_results = statement->execute_query<int>();
+    schema_version = std::get<0>(*query_results.begin());
+  } else {
+    if (database_->field_exists("topics", "offered_qos_profiles")) {
+      schema_version = 2;
+    } else {
+      schema_version = 1;
+    }
+  }
+
+  return schema_version;
 }
 
 }  // namespace rosbag2_storage_plugins
