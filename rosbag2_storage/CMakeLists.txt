@@ -29,6 +29,7 @@ find_package(yaml_cpp_vendor REQUIRED)
 add_library(
   ${PROJECT_NAME}
   SHARED
+  src/rosbag2_storage/default_storage_id.cpp
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
   src/rosbag2_storage/storage_factory.cpp

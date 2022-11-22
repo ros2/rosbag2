@@ -163,3 +163,10 @@ TEST_F(SqliteWrapperTestFixture, field_exists) {
   EXPECT_THROW(
     db_.field_exists("non_existent_table", "data"), rosbag2_storage_plugins::SqliteException);
 }
+
+TEST_F(SqliteWrapperTestFixture, table_exists) {
+  db_.prepare_statement("CREATE TABLE test_table (timestamp INTEGER, data BLOB);")
+  ->execute_and_reset();
+  EXPECT_TRUE(db_.table_exists("test_table"));
+  EXPECT_FALSE(db_.table_exists("non_existent_table"));
+}

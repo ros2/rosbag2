@@ -2,6 +2,19 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.18.0 (2022-11-15)
+-------------------
+* rosbag2_storage: expose default storage ID as method (`#1146 <https://github.com/ros2/rosbag2/issues/1146>`_)
+* Don't reopen file for every seek if we don't have to. Search directionally for the correct file (`#1117 <https://github.com/ros2/rosbag2/issues/1117>`_)
+* Add SplitBagfile recording service. (`#1115 <https://github.com/ros2/rosbag2/issues/1115>`_)
+* Reverse read order API and sqlite storage implementation (`#1083 <https://github.com/ros2/rosbag2/issues/1083>`_)
+* Replace `std::filesystem::path(..)` with `rcpputils::fs::path(..)` (`#1104 <https://github.com/ros2/rosbag2/issues/1104>`_)
+* Fix issue where sequentialwriter only sets metadata duration to the duration of the final file (`#1098 <https://github.com/ros2/rosbag2/issues/1098>`_)
+* Delete obsolete compression_options.cpp from rosbag2_cpp (`#1078 <https://github.com/ros2/rosbag2/issues/1078>`_)
+* Readers/info can accept a single bag storage file, and detect its storage id automatically (`#1072 <https://github.com/ros2/rosbag2/issues/1072>`_)
+* Remove deprecated rosbag2_cpp/storage_options.hpp, for post-Humble releases (`#1064 <https://github.com/ros2/rosbag2/issues/1064>`_)
+* Contributors: Emerson Knapp, Michael Orlov, james-rms, rshanor
+
 0.17.0 (2022-07-30)
 -------------------
 * Speed optimization: Preparing copyless publish/subscribing by using const message for writing (`#1010 <https://github.com/ros2/rosbag2/issues/1010>`_)

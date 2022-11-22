@@ -32,13 +32,13 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 
 #include "rmw/rmw.h"
 
 namespace rosbag2_cpp
 {
 
-static constexpr char const * kDefaultStorageID = "sqlite3";
 
 Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl)
 : writer_impl_(std::move(writer_impl))
@@ -53,7 +53,6 @@ void Writer::open(const std::string & uri)
 {
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
-  storage_options.storage_id = kDefaultStorageID;
 
   rosbag2_cpp::ConverterOptions converter_options{};
   return open(storage_options, converter_options);

@@ -33,6 +33,7 @@ with add_dll_directories_from_env('PATH'):
         TopicMetadata,
         TopicInformation,
         BagMetadata,
+        get_default_storage_id,
     )
     from rosbag2_py._writer import (
         SequentialCompressionWriter,
@@ -59,6 +60,7 @@ __all__ = [
     'bag_rewrite',
     'ConverterOptions',
     'FileInformation',
+    'get_default_storage_id',
     'get_registered_readers',
     'get_registered_writers',
     'get_registered_compressors',

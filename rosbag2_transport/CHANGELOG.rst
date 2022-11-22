@@ -2,6 +2,19 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.18.0 (2022-11-15)
+-------------------
+* Add pause and resume service calls for rosbag2 recorder (`#1131 <https://github.com/ros2/rosbag2/issues/1131>`_)
+* Redesign record_services tests to make them more deterministic (`#1122 <https://github.com/ros2/rosbag2/issues/1122>`_)
+* Add SplitBagfile recording service. (`#1115 <https://github.com/ros2/rosbag2/issues/1115>`_)
+* Reverse read order API and sqlite storage implementation (`#1083 <https://github.com/ros2/rosbag2/issues/1083>`_)
+* make recorder node composable by inheritance (`#1093 <https://github.com/ros2/rosbag2/issues/1093>`_)
+* Mark `test_play_services` as xfail for FastRTPS and CycloneDDS (`#1091 <https://github.com/ros2/rosbag2/issues/1091>`_)
+* fixed typo (`#1057 <https://github.com/ros2/rosbag2/issues/1057>`_)
+* Fix hangout in rosbag2 player and recorder when pressing `CTRL+C` (`#1081 <https://github.com/ros2/rosbag2/issues/1081>`_)
+* Added support for excluding topics via regular expressions (`#1046 <https://github.com/ros2/rosbag2/issues/1046>`_)
+* Contributors: Bernardo Taveira, Cristóbal Arroyo, DensoADAS, Emerson Knapp, Esteve Fernandez, Michael Orlov, rshanor
+
 0.17.0 (2022-07-30)
 -------------------
 * Use a single variable for evaluating the filter regex (`#1053 <https://github.com/ros2/rosbag2/issues/1053>`_)
