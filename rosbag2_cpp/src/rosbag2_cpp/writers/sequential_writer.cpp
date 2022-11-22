@@ -29,13 +29,14 @@
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
-#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_cpp
 {
 namespace writers
 {
+
+static constexpr char const * kDefaultStorageID = "sqlite3";
 
 namespace
 {
@@ -85,7 +86,7 @@ void SequentialWriter::open(
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
   if (storage_options_.storage_id.empty()) {
-    storage_options_.storage_id = rosbag2_storage::get_default_storage_id();
+    storage_options_.storage_id = kDefaultStorageID;
   }
 
   if (converter_options.output_serialization_format !=
