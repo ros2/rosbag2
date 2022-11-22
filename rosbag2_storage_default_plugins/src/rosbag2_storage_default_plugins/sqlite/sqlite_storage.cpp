@@ -577,8 +577,6 @@ SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
   return *database_;
 }
 
-<<<<<<< HEAD:rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
-=======
 int SqliteStorage::get_db_schema_version() const
 {
   return db_schema_version_;
@@ -594,13 +592,6 @@ std::string SqliteStorage::get_recorded_ros_distro() const
     ros_distro = std::get<0>(*query_results.begin());
   }
   return ros_distro;
-}
-
-int SqliteStorage::get_last_rowid()
-{
-  auto statement = database_->prepare_statement("SELECT max(rowid) from messages;");
-  auto query_results = statement->execute_query<int>();
-  return std::get<0>(*query_results.begin());
 }
 
 int SqliteStorage::read_db_schema_version()
@@ -622,7 +613,6 @@ int SqliteStorage::read_db_schema_version()
   return schema_version;
 }
 
->>>>>>> 9498426 (Store db schema version and ROS_DISTRO name in db3 files (#1156)):rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
 }  // namespace rosbag2_storage_plugins
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
