@@ -101,33 +101,31 @@ public:
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
   {
-    const auto metadata_path = root_bag_path_ / "metadata.yaml";
+    rosbag2_storage::MetadataIo metadata_io;
     const auto start_time = std::chrono::steady_clock::now();
 
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (metadata_path.exists()) {
+      if (metadata_io.metadata_file_exists(root_bag_path_.string())) {
         return;
       }
       std::this_thread::sleep_for(50ms);
     }
-    // Final check for metadata if we timeout. Fail otherwise
-    ASSERT_EQ(metadata_path.exists(), true) << "Could not find metadata file: \"" <<
-      metadata_path.string() << "\"";
+    ASSERT_EQ(metadata_io.metadata_file_exists(root_bag_path_), true)
+      << "Could not find metadata file.";
   }
 
-  void wait_for_db(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
   {
-    const auto database_path = get_bag_file_path(0);
+    const auto storage_path = get_bag_file_path(0);
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (database_path.exists()) {
+      if (storage_path.exists()) {
         return;
       }
       std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
     }
-    // Final check for metadata if we timeout. Fail otherwise
-    ASSERT_EQ(database_path.exists(), true) << "Could not find database file: \"" <<
-      database_path.string() << "\"";
+    ASSERT_EQ(storage_path.exists(), true)
+      << "Could not find database file: \"" << storage_path.string() << "\"";
   }
 
   size_t count_stored_messages(
@@ -190,7 +188,7 @@ public:
     return table_msgs;
   }
 
-  std::string get_rwm_format_for_topic(
+  std::string get_rmw_format_for_topic(
     const std::string & topic_name, rosbag2_storage_plugins::SqliteWrapper & db)
   {
     auto topic_format = db.prepare_statement(

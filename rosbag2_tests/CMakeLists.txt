@@ -53,7 +53,6 @@ if(BUILD_TESTING)
       rosbag2_storage_sqlite3
       rosbag2_test_common
       test_msgs)
-    ament_add_test_label(test_rosbag2_record_end_to_end xfail)
   endif()
 
   ament_add_gmock(test_rosbag2_play_end_to_end
