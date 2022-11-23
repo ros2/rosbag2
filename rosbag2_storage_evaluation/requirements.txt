@@ -1,4 +1,0 @@
-jupyter~=1.0.0
-pandas~=0.20.0
-numpy~=1.14.0
-matplotlib~=2.2.0
