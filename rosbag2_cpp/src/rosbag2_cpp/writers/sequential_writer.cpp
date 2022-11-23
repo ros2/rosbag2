@@ -36,6 +36,8 @@ namespace rosbag2_cpp
 namespace writers
 {
 
+static constexpr char const * kDefaultStorageID = "sqlite3";
+
 namespace
 {
 std::string strip_parent_path(const std::string & relative_path)
@@ -83,6 +85,9 @@ void SequentialWriter::open(
 {
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
+  if (storage_options_.storage_id.empty()) {
+    storage_options_.storage_id = kDefaultStorageID;
+  }
 
   if (converter_options.output_serialization_format !=
     converter_options.input_serialization_format)
