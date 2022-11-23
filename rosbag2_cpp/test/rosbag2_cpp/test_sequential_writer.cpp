@@ -27,6 +27,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -680,8 +681,15 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     {100, 300, 200},
     {500, 400, 600}
   };
+<<<<<<< HEAD
   std::string uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
   write_sample_split_bag(uri, message_timestamps_by_file);
+=======
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
+  storage_options.storage_id = rosbag2_storage::get_default_storage_id();
+  write_sample_split_bag(storage_options, fake_messages, 3);
+>>>>>>> 3300a27 (Remove explicit sqlite3 from code (#1166))
 
   rosbag2_storage::MetadataIo metadata_io;
   auto metadata = metadata_io.read_metadata(uri);
