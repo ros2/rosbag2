@@ -38,6 +38,8 @@ public:
 
   virtual void write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
 
+  virtual void update_metadata(const BagMetadata & bag_metadata) = 0;
+
   virtual void create_topic(const TopicMetadata & topic) = 0;
 
   virtual void remove_topic(const TopicMetadata & topic) = 0;

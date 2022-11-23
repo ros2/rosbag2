@@ -27,6 +27,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 #include "rosbag2_storage_sqlite3/visibility_control.hpp"
 
@@ -53,6 +54,8 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     rosbag2_storage::storage_interfaces::IOFlag io_flag =
     rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
+
+  void update_metadata(const rosbag2_storage::BagMetadata & metadata) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
@@ -108,6 +111,7 @@ public:
 
 private:
   void initialize();
+  void read_metadata();
   void prepare_for_writing();
   void prepare_for_reading();
   void fill_topics_and_types();
@@ -136,6 +140,8 @@ private:
   int seek_row_id_ = 0;
   rosbag2_storage::ReadOrder read_order_{};
   rosbag2_storage::StorageFilter storage_filter_ {};
+  rosbag2_storage::storage_interfaces::IOFlag storage_mode_{
+    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE};
 
   // This mutex is necessary to protect:
   // a) database access (this could also be done with FULLMUTEX), but see b)
@@ -144,6 +150,7 @@ private:
 
   const int kDBSchemaVersion_ = 3;
   int db_schema_version_ = -1;  //  Valid version number starting from 1
+  rosbag2_storage::BagMetadata metadata_{};
 };
 
 

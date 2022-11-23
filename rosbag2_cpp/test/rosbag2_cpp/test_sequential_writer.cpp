@@ -64,11 +64,16 @@ public:
             fake_storage_uri_ = storage_options.uri;
           }),
         Return(storage_)));
-    EXPECT_CALL(
-      *storage_factory_, open_read_write(_)).Times(AtLeast(0));
+    EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
+
+    // intercept the metadata write so we can analyze it.
+    ON_CALL(*storage_, update_metadata).WillByDefault(
+      [this](const rosbag2_storage::BagMetadata & metadata) {
+        v_intercepted_update_metadata_.emplace_back(metadata);
+      });
   }
 
-  ~SequentialWriterTest()
+  ~SequentialWriterTest() override
   {
     rcpputils::fs::path dir(storage_options_.uri);
     rcpputils::fs::remove_all(dir);
@@ -83,6 +88,7 @@ public:
   std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
   rosbag2_storage::BagMetadata fake_metadata_;
+  std::vector<rosbag2_storage::BagMetadata> v_intercepted_update_metadata_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
 };
@@ -153,6 +159,73 @@ TEST_F(SequentialWriterTest, metadata_io_writes_metadata_file_in_destructor) {
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_.reset();
+}
+
+TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_open_and_destruction)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+  EXPECT_CALL(*storage_, update_metadata(_)).Times(2);
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({test_topic_name, test_topic_type, "", ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = test_topic_name;
+
+  const size_t kNumMessagesToWrite = 5;
+  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
+    writer_->write(message);
+  }
+  writer_.reset();  // reset will call writer destructor
+
+  EXPECT_EQ(v_intercepted_update_metadata_.size(), 2u);
+  EXPECT_TRUE(v_intercepted_update_metadata_[0].compression_mode.empty());
+  EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);
+  EXPECT_EQ(v_intercepted_update_metadata_[1].message_count, kNumMessagesToWrite);
+}
+
+TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_bag_split)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+  EXPECT_CALL(*storage_, update_metadata(_)).Times(4);
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({test_topic_name, test_topic_type, "", ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = test_topic_name;
+
+  const size_t kNumMessagesToWrite = 5;
+  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
+    writer_->write(message);
+  }
+
+  writer_->split_bagfile();
+
+  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
+    writer_->write(message);
+  }
+  writer_.reset();  // reset will call writer destructor
+
+  ASSERT_EQ(v_intercepted_update_metadata_.size(), 4u);
+  EXPECT_TRUE(v_intercepted_update_metadata_[0].compression_mode.empty());
+  EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);  // On opening first bag file
+  EXPECT_EQ(v_intercepted_update_metadata_[1].files.size(), 1u);   // On closing first bag file
+  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 1u);   // On opening second bag file
+  EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
+  EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
 }
 
 TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exist) {

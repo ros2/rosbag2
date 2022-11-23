@@ -206,6 +206,9 @@ void SequentialCompressionWriter::close()
     stop_compressor_threads();
 
     finalize_metadata();
+    if (storage_) {
+      storage_->update_metadata(metadata_);
+    }
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
