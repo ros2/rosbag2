@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
@@ -84,7 +85,7 @@ TEST_F(TestRewrite, test_noop_rewrite) {
 
   rosbag2_storage::StorageOptions output_storage;
   output_storage.uri = (output_dir_ / "unchanged").string();
-  output_storage.storage_id = "sqlite3";
+  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_bags_.push_back({output_storage, output_record});
@@ -105,7 +106,7 @@ TEST_F(TestRewrite, test_merge) {
 
   rosbag2_storage::StorageOptions output_storage;
   output_storage.uri = (output_dir_ / "merged").string();
-  output_storage.storage_id = "sqlite3";
+  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_bags_.push_back({output_storage, output_record});
@@ -137,7 +138,7 @@ TEST_F(TestRewrite, test_filter_split) {
   {
     rosbag2_storage::StorageOptions storage_opts;
     storage_opts.uri = (output_dir_ / "split1").string();
-    storage_opts.storage_id = "sqlite3";
+    storage_opts.storage_id = rosbag2_storage::get_default_storage_id();
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all = true;
     rec_opts.exclude = "basic";
@@ -146,7 +147,7 @@ TEST_F(TestRewrite, test_filter_split) {
   {
     rosbag2_storage::StorageOptions storage_opts;
     storage_opts.uri = (output_dir_ / "split2").string();
-    storage_opts.storage_id = "sqlite3";
+    storage_opts.storage_id = rosbag2_storage::get_default_storage_id();
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all = false;
     rec_opts.topics = {"b_basictypes"};
@@ -180,7 +181,7 @@ TEST_F(TestRewrite, test_compress) {
 
   rosbag2_storage::StorageOptions output_storage;
   output_storage.uri = (output_dir_ / "compressed").string();
-  output_storage.storage_id = "sqlite3";
+  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_record.compression_mode = "file";
