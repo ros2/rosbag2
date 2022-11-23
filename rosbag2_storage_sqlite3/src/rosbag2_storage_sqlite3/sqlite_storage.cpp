@@ -323,9 +323,11 @@ void SqliteStorage::write(
 bool SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
 {
   if (read_order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG("ReadOrder::PublishedTimestamp not implemented");
     return false;
   }
   if (read_order.sort_by == rosbag2_storage::ReadOrder::File) {
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG("ReadOrder::File not implemented");
     return false;
   }
 
