@@ -67,9 +67,9 @@ public:
   void close() override;
 
   /**
-   * \note set_read_order(order) should be called only after open(). Calling set_read_order(order)
-   * concurrently with has_next(), seek(t), has_next_file() or load_next_file() will cause
-   * undefined behavior.
+   * \throws runtime_error if the Reader is not open.
+   * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
+   * or load_next_file() will cause undefined behavior.
    */
   bool set_read_order(const rosbag2_storage::ReadOrder & order) override;
 

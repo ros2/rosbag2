@@ -62,8 +62,8 @@ public:
   ///   This affects the outcome of has_next and read_next.
   ///   Note that when setting to reverse order, this will not change the read head, so user
   ///   must first seek() to the end in order to read messages from the end.
-  ///   Also note that set_read_order should only be called after open() has been called.
   /// @param read_order The order in which to return messages.
+  /// @throws runtime_error if the reader is not open.
   /// @return true if the requested read order has been successfully set.
   virtual bool set_read_order(const ReadOrder & read_order) = 0;
 
