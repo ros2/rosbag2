@@ -67,7 +67,7 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
   override;
 
-  void set_read_order(const rosbag2_storage::ReadOrder &) override;
+  bool set_read_order(const rosbag2_storage::ReadOrder &) override;
 
   bool has_next() override;
 

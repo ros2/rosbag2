@@ -67,10 +67,11 @@ public:
   void close() override;
 
   /**
-   * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
-   * or load_next_file() will cause undefined behavior
+   * \note set_read_order(order) should be called only after open(). Calling set_read_order(order)
+   * concurrently with has_next(), seek(t), has_next_file() or load_next_file() will cause
+   * undefined behavior.
    */
-  void set_read_order(const rosbag2_storage::ReadOrder & order) override;
+  bool set_read_order(const rosbag2_storage::ReadOrder & order) override;
 
   bool has_next() override;
 

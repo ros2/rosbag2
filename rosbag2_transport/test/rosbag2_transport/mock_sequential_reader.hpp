@@ -36,8 +36,10 @@ public:
 
   void close() override {}
 
-  void set_read_order(const rosbag2_storage::ReadOrder &) override
-  {}
+  bool set_read_order(const rosbag2_storage::ReadOrder &) override
+  {
+    return true;
+  }
 
   bool has_next() override
   {
