@@ -357,8 +357,11 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
-  .def("record", &rosbag2_py::Recorder::record, py::arg("storage_options"),
-    py::arg("record_options"), py::arg("node_name") = "rosbag2_recorder")
+  .def(
+    "record", &rosbag2_py::Recorder::record,
+    py::arg("storage_options"),
+    py::arg("record_options"),
+    py::arg("node_name") = "rosbag2_recorder")
   .def("cancel", &rosbag2_py::Recorder::cancel)
   ;
 
