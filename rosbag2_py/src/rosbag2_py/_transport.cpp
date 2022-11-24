@@ -211,7 +211,7 @@ public:
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options,
-	std::string & node_name)
+    std::string & node_name)
   {
     if (record_options.rmw_serialization_format.empty()) {
       record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
@@ -358,7 +358,7 @@ PYBIND11_MODULE(_transport, m) {
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
   .def("record", &rosbag2_py::Recorder::record, py::arg("storage_options"),
-	py::arg("record_options"), py::arg("node_name") = "rosbag2_recorder")
+    py::arg("record_options"), py::arg("node_name") = "rosbag2_recorder")
   .def("cancel", &rosbag2_py::Recorder::cancel)
   ;
 
