@@ -20,6 +20,7 @@ jobs:
       uses: ros-tooling/action-ros-ci@v0.2
       with:
         package-name: |
+          mcap_vendor
           ros2bag
           rosbag2
           rosbag2_compression
@@ -29,6 +30,8 @@ jobs:
           rosbag2_interfaces
           rosbag2_py
           rosbag2_storage
+          rosbag2_storage_mcap
+          rosbag2_storage_mcap_testdata
           rosbag2_storage_sqlite3
           rosbag2_test_common
           rosbag2_tests
