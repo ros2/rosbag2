@@ -93,6 +93,7 @@ public:
       });
     EXPECT_CALL(*storage_, has_next_file()).WillRepeatedly(Return(true));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
 
     EXPECT_CALL(*storage_factory, open_read_only(_)).Times(AnyNumber());
     ON_CALL(*storage_factory, open_read_only).WillByDefault(

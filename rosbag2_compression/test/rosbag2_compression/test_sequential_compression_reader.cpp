@@ -68,6 +68,7 @@ public:
 
     ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
     ON_CALL(*storage_factory_, open_read_only(_)).WillByDefault(Return(storage_));
 
     initialize_dummy_storage_files();

@@ -69,6 +69,7 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
     metadata.topics_with_message_count = {topic_information};
 
     EXPECT_CALL(*storage_, get_metadata).Times(1).WillOnce(Return(metadata));
+    EXPECT_CALL(*storage_, set_read_order).Times(1).WillOnce(Return(true));
   }
 
   auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
