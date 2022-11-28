@@ -57,7 +57,7 @@ std::vector<std::string> resolve_relative_paths(
 }
 }  // namespace details
 
-const static rosbag2_storage::ReadOrder kFallbackOrder(rosbag2_storage::ReadOrder::SortBy::File,
+static const rosbag2_storage::ReadOrder kFallbackOrder(rosbag2_storage::ReadOrder::SortBy::File,
   false);
 
 SequentialReader::SequentialReader(
