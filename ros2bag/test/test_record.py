@@ -29,48 +29,67 @@ from launch_testing.asserts import EXIT_OK
 
 import pytest
 
+from rosbag2_py import get_registered_writers
+
 
 @pytest.mark.launch_test
 def generate_test_description():
     tmp_dir_name = tempfile.mkdtemp()
-    output_path = Path(tmp_dir_name) / 'ros2bag_test_record'
-    record_all_process = ExecuteProcess(
-        cmd=['ros2', 'bag', 'record', '-a', '--output', output_path.as_posix()],
-        name='ros2bag-cli',
-        output='screen',
-    )
+    output_paths = {}
+    processes = []
 
-    return LaunchDescription([
-        record_all_process,
-        launch_testing.actions.ReadyToTest()
-    ]), locals()
+    all_storage_ids = get_registered_writers()
+    assert len(all_storage_ids) > 0
+
+    for storage_id in all_storage_ids:
+        output_path = Path(tmp_dir_name) / f'ros2bag_test_record_{storage_id}'
+        recorder_process = ExecuteProcess(
+            cmd=[
+                'ros2', 'bag', 'record', '-s', storage_id, '-a', '--output', output_path.as_posix()
+            ],
+            name=f'ros2bag-cli-{storage_id}',
+            output='screen',
+        )
+        processes.append(recorder_process)
+        output_paths[storage_id] = output_path
+
+    return LaunchDescription(processes + [launch_testing.actions.ReadyToTest()]), {
+        'output_paths': output_paths,
+        'recorder_processes': processes,
+        'tmp_dir_name': tmp_dir_name,
+    }
 
 
 class TestRecord(unittest.TestCase):
 
-    def test_output(self, record_all_process, proc_output):
-        proc_output.assertWaitFor(
-            'Listening for topics...',
-            process=record_all_process
-        )
-        proc_output.assertWaitFor(
-            "Subscribed to topic '/rosout'",
-            process=record_all_process
-        )
+    def test_output(self, recorder_processes, proc_output):
+        for recorder_process in recorder_processes:
+            proc_output.assertWaitFor(
+                'Listening for topics...',
+                process=recorder_process
+            )
+            proc_output.assertWaitFor(
+                "Subscribed to topic '/rosout'",
+                process=recorder_process
+            )
 
 
 @launch_testing.post_shutdown_test()
 class TestRecordAfterShutdown(unittest.TestCase):
 
-    def test_exit_code(self, tmp_dir_name, record_all_process, proc_info):
+    def test_exit_code(self, tmp_dir_name, output_paths, recorder_processes, proc_info):
+        for storage_id, output_path in output_paths.items():
+            assert output_path.is_dir(), f'failed to create bag dir for storage ID {storage_id}'
+            assert (output_path / 'metadata.yaml').is_file(), f'no metadata.yaml for {storage_id}'
         # Cleanup
         shutil.rmtree(tmp_dir_name, ignore_errors=True)
 
         # Check that the process exited with code 0
-        launch_testing.asserts.assertExitCodes(
-            proc_info,
-            # SIGINT (2) is the typical exit code we see coming from rclcpp
-            # On Windows, we get value '1'
-            allowable_exit_codes=[EXIT_OK, 2] if os.name != 'nt' else [EXIT_OK, 1, 2],
-            process=record_all_process
-        )
+        for process in recorder_processes:
+            launch_testing.asserts.assertExitCodes(
+                proc_info,
+                # SIGINT (2) is the typical exit code we see coming from rclcpp
+                # On Windows, we get value '1'
+                allowable_exit_codes=[EXIT_OK, 2] if os.name != 'nt' else [EXIT_OK, 1, 2],
+                process=process
+            )
