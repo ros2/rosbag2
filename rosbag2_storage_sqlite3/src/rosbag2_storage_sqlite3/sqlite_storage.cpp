@@ -320,17 +320,20 @@ void SqliteStorage::write(
   commit_transaction();
 }
 
-void SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
+bool SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
 {
   if (read_order.sort_by == rosbag2_storage::ReadOrder::PublishedTimestamp) {
-    throw std::runtime_error("Not Implemented - PublishedTimestamp read order.");
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG("ReadOrder::PublishedTimestamp not implemented");
+    return false;
   }
   if (read_order.sort_by == rosbag2_storage::ReadOrder::File) {
-    throw std::runtime_error("Not Implemented - File read order");
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG("ReadOrder::File not implemented");
+    return false;
   }
 
   read_order_ = read_order;
   read_statement_ = nullptr;
+  return true;
 }
 
 bool SqliteStorage::has_next()

@@ -93,6 +93,7 @@ public:
       });
     EXPECT_CALL(*storage_, has_next_file()).WillRepeatedly(Return(true));
     EXPECT_CALL(*storage_, read_next()).WillRepeatedly(Return(message));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
 
     EXPECT_CALL(*storage_factory, open_read_only(_)).Times(AnyNumber());
     ON_CALL(*storage_factory, open_read_only).WillByDefault(
@@ -328,10 +329,10 @@ public:
 TEST_F(ReadOrderTest, received_timestamp_order) {
   rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, false);
   sort_expected(order);
-  reader.set_read_order(order);
 
   for (bool do_reset : {false, true}) {
     reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+    EXPECT_TRUE(reader.set_read_order(order));
     check_against_sorted(do_reset);
     reader.close();
   }
@@ -340,8 +341,8 @@ TEST_F(ReadOrderTest, received_timestamp_order) {
 TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
   rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, true);
   sort_expected(order);
-  reader.set_read_order(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  EXPECT_TRUE(reader.set_read_order(order));
   auto metadata = reader.get_metadata();
   // Seek to end before reading reverse messages
   auto end_timestamp = (metadata.starting_time + metadata.duration).time_since_epoch().count();
@@ -357,22 +358,19 @@ TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
 
 TEST_F(ReadOrderTest, file_order) {
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
-  EXPECT_THROW(
-    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, false)),
-    std::runtime_error);
+  EXPECT_FALSE(
+    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, false)));
 }
 
 TEST_F(ReadOrderTest, reverse_file_order) {
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
-  EXPECT_THROW(
-    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true)),
-    std::runtime_error);
+  EXPECT_FALSE(
+    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true)));
 }
 
 TEST_F(ReadOrderTest, published_timestamp_order) {
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
-  EXPECT_THROW(
+  EXPECT_FALSE(
     reader.set_read_order(
-      rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::PublishedTimestamp, false)),
-    std::runtime_error);
+      rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::PublishedTimestamp, false)));
 }

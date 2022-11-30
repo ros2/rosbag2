@@ -67,6 +67,7 @@ public:
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
     ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
     EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
 

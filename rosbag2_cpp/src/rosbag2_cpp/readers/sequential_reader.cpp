@@ -57,6 +57,9 @@ std::vector<std::string> resolve_relative_paths(
 }
 }  // namespace details
 
+static const rosbag2_storage::ReadOrder kFallbackOrder(rosbag2_storage::ReadOrder::SortBy::File,
+  false);
+
 SequentialReader::SequentialReader(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory,
@@ -106,7 +109,13 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized from the inputs."};
     }
-    storage_->set_read_order(read_order_);
+    if (!set_read_order(read_order_)) {
+      ROSBAG2_CPP_LOG_WARN(
+        "Could not set read order on open(), falling back to file order");
+      if (!set_read_order(kFallbackOrder)) {
+        throw std::runtime_error("Could not set read order on open()");
+      }
+    }
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
@@ -129,12 +138,13 @@ void SequentialReader::open(
     topics[0].topic_metadata.serialization_format);
 }
 
-void SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
+bool SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
 {
-  if (storage_) {
-    storage_->set_read_order(order);
+  if (!storage_) {
+    throw std::runtime_error("read order can only be set after open()");
   }
   read_order_ = order;
+  return storage_->set_read_order(read_order_);
 }
 
 bool SequentialReader::has_next()

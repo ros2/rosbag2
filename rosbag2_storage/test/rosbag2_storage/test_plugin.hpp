@@ -39,7 +39,7 @@ public:
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
-  void set_read_order(const rosbag2_storage::ReadOrder &) override;
+  bool set_read_order(const rosbag2_storage::ReadOrder &) override;
 
   bool has_next() override;
 

@@ -63,7 +63,9 @@ public:
   ///   Note that when setting to reverse order, this will not change the read head, so user
   ///   must first seek() to the end in order to read messages from the end.
   /// @param read_order The order in which to return messages.
-  virtual void set_read_order(const ReadOrder & read_order) = 0;
+  /// @throws runtime_error if the reader is not open.
+  /// @return true if the requested read order has been successfully set.
+  virtual bool set_read_order(const ReadOrder & read_order) = 0;
 
   virtual bool has_next() = 0;
 

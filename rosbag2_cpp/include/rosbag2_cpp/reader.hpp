@@ -104,10 +104,12 @@ public:
    * read head timestamp.
    *
    * \param read_order Sorting criterion and direction to read messages in
+   * \throws runtime_error if the Reader is not open.
+   * \return true if the requested read order has been successfully set.
    * \note Calling set_read_order(order) concurrently with has_next(), seek(t), has_next_file()
-   * or load_next_file() will cause undefined behavior
+   * or load_next_file() will cause undefined behavior.
    */
-  void set_read_order(const rosbag2_storage::ReadOrder & read_order);
+  bool set_read_order(const rosbag2_storage::ReadOrder & read_order);
 
   /**
    * Ask whether the underlying bagfile contains at least one more message.

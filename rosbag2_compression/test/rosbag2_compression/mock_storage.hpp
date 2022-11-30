@@ -36,7 +36,7 @@ public:
   MOCK_METHOD1(update_metadata, void(const rosbag2_storage::BagMetadata &));
   MOCK_METHOD1(create_topic, void(const rosbag2_storage::TopicMetadata &));
   MOCK_METHOD1(remove_topic, void(const rosbag2_storage::TopicMetadata &));
-  MOCK_METHOD1(set_read_order, void(const rosbag2_storage::ReadOrder &));
+  MOCK_METHOD1(set_read_order, bool(const rosbag2_storage::ReadOrder &));
   MOCK_METHOD0(has_next, bool());
   MOCK_METHOD0(read_next, std::shared_ptr<rosbag2_storage::SerializedBagMessage>());
   MOCK_METHOD1(write, void(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));

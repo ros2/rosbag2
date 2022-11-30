@@ -52,9 +52,10 @@ void TestPlugin::update_metadata(const rosbag2_storage::BagMetadata & metadata)
   (void)metadata;
 }
 
-void TestPlugin::set_read_order(const rosbag2_storage::ReadOrder & order)
+bool TestPlugin::set_read_order(const rosbag2_storage::ReadOrder & order)
 {
   std::cout << "Set read order " << order.sort_by << " " << order.reverse << std::endl;
+  return true;
 }
 
 bool TestPlugin::has_next()

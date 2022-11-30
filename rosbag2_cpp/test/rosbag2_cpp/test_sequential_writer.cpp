@@ -72,6 +72,7 @@ public:
       [this](const rosbag2_storage::BagMetadata & metadata) {
         v_intercepted_update_metadata_.emplace_back(metadata);
       });
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
   }
 
   ~SequentialWriterTest() override
