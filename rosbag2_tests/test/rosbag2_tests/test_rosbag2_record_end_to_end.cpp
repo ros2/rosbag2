@@ -311,7 +311,6 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
-
   const auto actual_splits = static_cast<int>(metadata.files.size());
 
   // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.

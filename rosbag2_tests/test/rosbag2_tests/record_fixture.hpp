@@ -99,13 +99,6 @@ public:
     return bag_file_name.str();
   }
 
-  rcpputils::fs::path get_relative_bag_file_path(int split_index)
-  {
-    const auto storage_id = GetParam();
-    const auto extension = storage_plugins_to_extension.at(storage_id);
-    return rcpputils::fs::path(get_bag_file_name(split_index) + extension);
-  }
-
   rcpputils::fs::path get_compressed_bag_file_path(int split_index)
   {
     return rcpputils::fs::path(get_bag_file_path(split_index).string() + ".zstd");
@@ -114,6 +107,13 @@ public:
   rcpputils::fs::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / get_relative_bag_file_path(split_index);
+  }
+
+  rcpputils::fs::path get_relative_bag_file_path(int split_index)
+  {
+    const auto storage_id = GetParam();
+    const auto extension = storage_plugins_to_extension.at(storage_id);
+    return rcpputils::fs::path(get_bag_file_name(split_index) + extension);
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
