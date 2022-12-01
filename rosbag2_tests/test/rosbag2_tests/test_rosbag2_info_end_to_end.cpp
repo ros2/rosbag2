@@ -18,6 +18,7 @@
 #include <string>
 #include <thread>
 
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -44,7 +45,7 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
     output, ContainsRegex(
       "\nFiles:             cdr_test_0\\.db3"
       "\nBag size:          .*B"
-      "\nStorage id:        sqlite3"
+      "\nStorage id:        " + rosbag2_storage::get_default_storage_id() +
       "\nDuration:          0\\.151s"
       "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
       "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"

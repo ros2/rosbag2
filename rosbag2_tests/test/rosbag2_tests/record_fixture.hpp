@@ -26,8 +26,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
-
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
@@ -103,14 +103,15 @@ public:
   {
     rosbag2_storage::MetadataIo metadata_io;
     const auto start_time = std::chrono::steady_clock::now();
+    const auto bag_path = root_bag_path_.string();
 
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (metadata_io.metadata_file_exists(root_bag_path_.string())) {
+      if (metadata_io.metadata_file_exists(bag_path)) {
         return;
       }
       std::this_thread::sleep_for(50ms);
     }
-    ASSERT_EQ(metadata_io.metadata_file_exists(root_bag_path_), true)
+    ASSERT_EQ(metadata_io.metadata_file_exists(bag_path), true)
       << "Could not find metadata file.";
   }
 
@@ -128,74 +129,35 @@ public:
       << "Could not find database file: \"" << storage_path.string() << "\"";
   }
 
-  size_t count_stored_messages(
-    rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
-  {
-    // protect against concurrent writes (from recording) that may make the count query throw.
-    while (true) {
-      try {
-        return count_stored_messages_in_db(db, topic_name);
-      } catch (const rosbag2_storage_plugins::SqliteException & e) {
-        (void) e;
-      }
-      std::this_thread::sleep_for(50ms);
-    }
-  }
-
-  size_t count_stored_messages_in_db(
-    rosbag2_storage_plugins::SqliteWrapper & db, const std::string & topic_name)
-  {
-    auto row = db.prepare_statement(
-      "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = 'topics';")
-      ->execute_query<int>().get_single_line();
-    if (std::get<0>(row) == 0) {
-      return 0;
-    }
-    auto message_count = db.prepare_statement(
-      "SELECT COUNT(*) "
-      "FROM messages LEFT JOIN topics ON messages.topic_id = topics.id "
-      "WHERE topics.name = ?;")->bind(topic_name)->execute_query<int>().get_single_line();
-    return static_cast<size_t>(std::get<0>(message_count));
-  }
-
   template<typename MessageT>
   std::vector<std::shared_ptr<MessageT>> get_messages_for_topic(const std::string & topic)
   {
-    auto all_messages = get_messages();
-    auto topic_messages = std::vector<std::shared_ptr<MessageT>>();
-    for (const auto & msg : all_messages) {
-      if (msg->topic_name == topic) {
-        topic_messages.push_back(
-          memory_management_.deserialize_message<MessageT>(msg->serialized_data));
-      }
+    auto filter = rosbag2_storage::StorageFilter{};
+    filter.topics.push_back(topic);
+    auto reader = rosbag2_cpp::Reader{};
+    reader.open(root_bag_path_.string());
+    reader.set_filter(filter);
+
+    auto messages = std::vector<std::shared_ptr<MessageT>>{};
+    while (reader.has_next()) {
+      auto msg = reader.read_next();
+      messages.push_back(memory_management_.deserialize_message<MessageT>(msg->serialized_data));
     }
-    return topic_messages;
+    return messages;
   }
 
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> get_messages()
+  std::string get_serialization_format_for_topic(const std::string & topic_name)
   {
-    std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> table_msgs;
-    auto storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-    const auto database_path = get_bag_file_path(0).string();
-    storage->open(
-      {database_path, "sqlite3"},
-      rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-
-    while (storage->has_next()) {
-      table_msgs.push_back(storage->read_next());
-    }
-
-    return table_msgs;
-  }
-
-  std::string get_rmw_format_for_topic(
-    const std::string & topic_name, rosbag2_storage_plugins::SqliteWrapper & db)
-  {
-    auto topic_format = db.prepare_statement(
-      "SELECT serialization_format "
-      "FROM topics "
-      "WHERE name = ?;")->bind(topic_name)->execute_query<std::string>().get_single_line();
-    return std::get<0>(topic_format);
+    auto reader = rosbag2_cpp::Reader{};
+    reader.open(root_bag_path_.string());
+    auto topics_and_types = reader.get_all_topics_and_types();
+    auto topic_it = std::find_if(
+      topics_and_types.begin(), topics_and_types.end(),
+      [&topic_name](const auto & tm) {
+        return topic_name == tm.name;
+      });
+    // ASSERT_TRUE(topic_it != topics_and_types.end());
+    return topic_it->serialization_format;
   }
 
   // relative path to the root of the bag file.

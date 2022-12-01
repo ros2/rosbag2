@@ -30,6 +30,10 @@
 
 #include "record_fixture.hpp"
 
+#ifdef _WIN32
+#define FAKE_METADATA_FOR_TEST
+#endif
+
 namespace
 {
 /**
@@ -150,6 +154,21 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
+  // TODO(Martin-Idel-SI): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef FAKE_METADATA_FOR_TEST
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 1;
+  metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_.string(), metadata);
+#endif
+
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
@@ -158,12 +177,12 @@ TEST_F(RecordFixture, record_end_to_end_test) {
     EXPECT_EQ(message->string_value, "test");
   }
 
-  const auto database_path = get_bag_file_path(0).string();
-  rosbag2_storage_plugins::SqliteWrapper db{
-    database_path, rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY};
-  EXPECT_THAT(get_rmw_format_for_topic("/test_topic", db), Eq(rmw_get_serialization_format()));
+  EXPECT_THAT(
+    get_serialization_format_for_topic("/test_topic"),
+    Eq(rmw_get_serialization_format()));
 
-  auto unrecorded_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>("/unrecorded_topic");
+  auto unrecorded_topic_messages = get_messages_for_topic<test_msgs::msg::BasicTypes>(
+    "/unrecorded_topic");
   EXPECT_THAT(unrecorded_topic_messages, IsEmpty());
 }
 
@@ -193,6 +212,21 @@ TEST_F(RecordFixture, record_end_to_end_test_start_paused) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
+  // TODO(Martin-Idel-SI): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef FAKE_METADATA_FOR_TEST
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 1;
+  metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_.string(), metadata);
+#endif
+
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, IsEmpty());
@@ -215,7 +249,7 @@ TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
 // TODO(zmichaels11): Fix and enable this test on Windows.
 // This tests depends on the ability to read the metadata file.
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
-#ifndef _WIN32
+#ifndef FAKE_METADATA_FOR_TEST
 TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const char first_topic_name[] = "/test_topic0";
@@ -308,6 +342,24 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   rosbag2_storage::MetadataIo metadata_io;
 
+#ifdef FAKE_METADATA_FOR_TEST
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 4;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+
+    // Loop until expected_splits in case it split or the bagfile doesn't exist.
+    for (int i = 0; i < expected_splits; ++i) {
+      const auto bag_file_path = get_relative_bag_file_path(i);
+      if (rcpputils::fs::exists(root_bag_path_ / bag_file_path)) {
+        metadata.relative_file_paths.push_back(bag_file_path.string());
+      }
+    }
+
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  }
+#endif
+
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
   const auto actual_splits = static_cast<int>(metadata.files.size());
@@ -364,6 +416,19 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 
   rosbag2_storage::MetadataIo metadata_io;
 
+// TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+// This is required since stop_execution hard kills the proces on Windows,
+// which prevents the metadata from being written.
+#ifdef FAKE_METADATA_FOR_TEST
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 4;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+    metadata.relative_file_paths = {get_bag_file_name(0) + ".db3"};
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  }
+#endif
+
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
@@ -415,6 +480,31 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
 
   rosbag2_storage::MetadataIo metadata_io;
 
+// TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+// This is required since stop_execution hard kills the proces on Windows,
+// which prevents the metadata from being written.
+#ifdef FAKE_METADATA_FOR_TEST
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 4;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+
+    for (int i = 0; i < expected_splits; ++i) {
+      const auto rel_bag_file_path = get_relative_bag_file_path(i);
+
+      // There is no guarantee that the bagfile split expected_split times
+      // due to possible io sync delays. Instead, assert that the bagfile split
+      // at least once
+      if (rcpputils::fs::exists(root_bag_path_ / rel_bag_file_path)) {
+        metadata.relative_file_paths.push_back(rel_bag_file_path.string());
+      }
+    }
+
+    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  }
+#endif
+
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
 
@@ -460,6 +550,24 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   cleanup_process_handle.cancel();
 
   rosbag2_storage::MetadataIo metadata_io;
+
+#ifdef FAKE_METADATA_FOR_TEST
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 4;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+
+    // Loop until expected_splits in case it split or the bagfile doesn't exist.
+    for (int i = 0; i < expected_splits; ++i) {
+      const auto bag_file_path = get_relative_bag_file_path(i);
+      if (rcpputils::fs::exists(root_bag_path_ / bag_file_path)) {
+        metadata.relative_file_paths.push_back(bag_file_path.string());
+      }
+    }
+
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  }
+#endif
 
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
@@ -508,6 +616,33 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   cleanup_process_handle.cancel();
 
   rosbag2_storage::MetadataIo metadata_io;
+
+  // TODO(zmichaels11): Remove when stop_execution properly SIGINT on Windows.
+  // This is required since stop_execution hard kills the proces on Windows,
+  // which prevents the metadata from being written.
+  #ifdef FAKE_METADATA_FOR_TEST
+  {
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 3;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+    metadata.compression_mode = "file";
+    metadata.compression_format = "zstd";
+
+    for (int i = 0; i < expected_splits; ++i) {
+      const auto compressed_bag_path = get_compressed_bag_file_path(i);
+
+      // There is no guarantee that the bagfile split expected_split times
+      // due to possible io sync delays. Instead, assert that the bagfile
+      // split at least once.
+      if (compressed_bag_path.exists()) {
+        metadata.relative_file_paths.push_back(compressed_bag_path.string());
+      }
+    }
+
+    ASSERT_GE(metadata.relative_file_paths.size(), 1) << "Bagfile never split!";
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  }
+  #endif
 
   wait_for_metadata();
   const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
@@ -593,6 +728,21 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
+
+  // TODO(Martin-Idel-SI): Find out how to correctly send a Ctrl-C signal on Windows
+  // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+#ifdef FAKE_METADATA_FOR_TEST
+  rosbag2_storage::BagMetadata metadata{};
+  metadata.version = 1;
+  metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+  metadata.relative_file_paths = {get_bag_file_path(0).string()};
+  metadata.duration = std::chrono::nanoseconds(0);
+  metadata.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+  metadata.message_count = 0;
+  rosbag2_storage::MetadataIo metadata_io;
+  metadata_io.write_metadata(root_bag_path_.string(), metadata);
+#endif
 
   wait_for_metadata();
   auto test_topic_messages =

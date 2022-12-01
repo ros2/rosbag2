@@ -35,7 +35,6 @@ if(BUILD_TESTING)
   find_package(rosbag2_compression REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
   find_package(rosbag2_storage REQUIRED)
-  find_package(rosbag2_storage_sqlite3 REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
   find_package(std_msgs REQUIRED)
@@ -50,7 +49,6 @@ if(BUILD_TESTING)
       rosbag2_compression
       rosbag2_compression_zstd
       rosbag2_storage
-      rosbag2_storage_sqlite3
       rosbag2_test_common
       test_msgs)
   endif()
@@ -62,7 +60,6 @@ if(BUILD_TESTING)
     ament_target_dependencies(test_rosbag2_play_end_to_end
       rclcpp
       rosbag2_storage
-      rosbag2_storage_sqlite3
       rosbag2_test_common
       test_msgs)
     ament_add_test_label(test_rosbag2_play_end_to_end xfail)

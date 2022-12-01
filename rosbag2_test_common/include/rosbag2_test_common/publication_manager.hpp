@@ -61,21 +61,22 @@ public:
     auto publisher = pub_node_->create_publisher<MsgT>(topic_name, qos);
 
     auto publisher_fcn = [publisher, message, repetition, interval](bool verbose = false) {
-        for (auto i = 0u; i < repetition && rclcpp::ok(); ++i) {
-          publisher->publish(message);
-          if (verbose) {
-            RCLCPP_INFO(
-              rclcpp::get_logger("publication_manager"),
-              "publish on topic %s", publisher->get_topic_name());
+        for (auto i = 0u; i < repetition; ++i) {
+          if (rclcpp::ok()) {
+            publisher->publish(message);
+            if (verbose) {
+              RCLCPP_INFO(
+                rclcpp::get_logger("publication_manager"),
+                "publish on topic %s", publisher->get_topic_name());
+            }
+            std::this_thread::sleep_for(interval);
           }
-          std::this_thread::sleep_for(interval);
         }
       };
 
     publishers_.push_back(std::make_pair(publisher, publisher_fcn));
   }
 
-  /// \brief Synchronously, sequentially run all setup publishers one at a time.
   void run_publishers(bool verbose = false) const
   {
     for (const auto & pub : publishers_) {
