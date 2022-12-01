@@ -45,16 +45,16 @@ class ReindexTestFixture : public Test
 public:
   ReindexTestFixture()
   {
-    database_path = rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / "reindex_test_bags";
-    target_dir = database_path / "target_metadata";
+    bags_path = rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / "reindex_test_bags";
+    target_dir = bags_path / "target_metadata";
   }
 
-  rcpputils::fs::path database_path;
+  rcpputils::fs::path bags_path;
   rcpputils::fs::path target_dir;
 };
 
 TEST_F(ReindexTestFixture, test_multiple_files) {
-  auto bag_dir = database_path / "multiple_files";
+  auto bag_dir = bags_path / "multiple_files";
   std::unique_ptr<rosbag2_cpp::Reindexer> reindexer =
     std::make_unique<rosbag2_cpp::Reindexer>();
 
