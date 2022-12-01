@@ -26,6 +26,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -84,19 +85,19 @@ public:
     return bag_file_name.str();
   }
 
+  rcpputils::fs::path get_relative_bag_file_path(int split_index)
+  {
+    return rcpputils::fs::path(get_bag_file_name(split_index) + ".db3");
+  }
+
   rcpputils::fs::path get_compressed_bag_file_path(int split_index)
   {
-    return root_bag_path_ / (get_bag_file_name(split_index) + ".db3.zstd");
+    return rcpputils::fs::path(get_bag_file_path(split_index).string() + ".zstd");
   }
 
   rcpputils::fs::path get_bag_file_path(int split_index)
   {
-    return root_bag_path_ / (get_bag_file_name(split_index) + ".db3");
-  }
-
-  rcpputils::fs::path get_relative_bag_file_path(int split_index)
-  {
-    return rcpputils::fs::path(get_bag_file_name(split_index) + ".db3");
+    return root_bag_path_ / get_relative_bag_file_path(split_index);
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
@@ -130,17 +131,25 @@ public:
   }
 
   template<typename MessageT>
-  std::vector<std::shared_ptr<MessageT>> get_messages_for_topic(const std::string & topic)
+  std::vector<std::shared_ptr<MessageT>> get_messages_for_topic(
+    const std::string & topic, const std::string & compression_plugin = "")
   {
     auto filter = rosbag2_storage::StorageFilter{};
     filter.topics.push_back(topic);
-    auto reader = rosbag2_cpp::Reader{};
-    reader.open(root_bag_path_.string());
-    reader.set_filter(filter);
+
+    std::unique_ptr<rosbag2_cpp::Reader> reader;
+    if (compression_plugin.empty()) {
+      reader = std::make_unique<rosbag2_cpp::Reader>();
+    } else {
+      reader = std::make_unique<rosbag2_cpp::Reader>(
+        std::make_unique<rosbag2_compression::SequentialCompressionReader>());
+    }
+    reader->open(root_bag_path_.string());
+    reader->set_filter(filter);
 
     auto messages = std::vector<std::shared_ptr<MessageT>>{};
-    while (reader.has_next()) {
-      auto msg = reader.read_next();
+    while (reader->has_next()) {
+      auto msg = reader->read_next();
       messages.push_back(memory_management_.deserialize_message<MessageT>(msg->serialized_data));
     }
     return messages;
@@ -158,6 +167,24 @@ public:
       });
     // ASSERT_TRUE(topic_it != topics_and_types.end());
     return topic_it->serialization_format;
+  }
+
+  void finalize_metadata_kludge()
+  {
+    // TODO(ros-tooling): Find out how to correctly send a Ctrl-C signal on Windows
+    // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
+  #ifdef _WIN32
+    rosbag2_storage::BagMetadata metadata{};
+    metadata.version = 4;
+    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+    metadata.relative_file_paths = {get_bag_file_path(0).string()};
+    metadata.duration = std::chrono::nanoseconds(0);
+    metadata.starting_time =
+      std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
+    metadata.message_count = 0;
+    rosbag2_storage::MetadataIo metadata_io;
+    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+  #endif
   }
 
   // relative path to the root of the bag file.

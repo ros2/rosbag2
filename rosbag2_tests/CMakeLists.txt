@@ -49,6 +49,7 @@ if(BUILD_TESTING)
       rosbag2_compression
       rosbag2_compression_zstd
       rosbag2_storage
+      rosbag2_storage_default_plugins
       rosbag2_test_common
       test_msgs)
   endif()
