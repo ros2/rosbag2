@@ -20,6 +20,7 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "rcpputils/filesystem_helper.hpp"
@@ -29,7 +30,6 @@
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
-#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -40,10 +40,22 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class RecordFixture : public TemporaryDirectoryFixture
+const std::unordered_map<std::string, std::string> storage_plugins_to_extension {
+  {"sqlite3", ".db3"}
+};
+
+class RecordFixture : public TestWithParam<std::string>
 {
 public:
-  RecordFixture() = default;
+  RecordFixture()
+  {
+    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
+  }
+
+  ~RecordFixture() override
+  {
+    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
+  }
 
   void SetUp() override
   {
@@ -73,8 +85,10 @@ public:
   std::string get_test_name() const
   {
     const auto * test_info = UnitTest::GetInstance()->current_test_info();
-
-    return test_info->name();
+    std::string test_name = test_info->name();
+    // Replace any slashes in the test name, since it is used in paths
+    std::replace(test_name.begin(), test_name.end(), '/', '_');
+    return test_name;
   }
 
   std::string get_bag_file_name(int split_index) const
@@ -87,7 +101,9 @@ public:
 
   rcpputils::fs::path get_relative_bag_file_path(int split_index)
   {
-    return rcpputils::fs::path(get_bag_file_name(split_index) + ".db3");
+    const auto storage_id = GetParam();
+    const auto extension = storage_plugins_to_extension.at(storage_id);
+    return rcpputils::fs::path(get_bag_file_name(split_index) + extension);
   }
 
   rcpputils::fs::path get_compressed_bag_file_path(int split_index)
@@ -165,7 +181,6 @@ public:
       [&topic_name](const auto & tm) {
         return topic_name == tm.name;
       });
-    // ASSERT_TRUE(topic_it != topics_and_types.end());
     return topic_it->serialization_format;
   }
 
@@ -207,6 +222,7 @@ public:
   #endif
   }
 
+  std::string temporary_dir_path_;
   // relative path to the root of the bag file.
   rcpputils::fs::path root_bag_path_;
 

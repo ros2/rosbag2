@@ -59,7 +59,7 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 }  // namespace
 
 #ifndef _WIN32
-TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
+TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   constexpr const char topic_name[] = "/test_topic";
   const auto compression_format = "zstd";
 
@@ -121,7 +121,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 }
 #endif
 
-TEST_F(RecordFixture, record_end_to_end_test) {
+TEST_P(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";
   size_t expected_test_messages = 3;
@@ -168,7 +168,7 @@ TEST_F(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(unrecorded_topic_messages, IsEmpty());
 }
 
-TEST_F(RecordFixture, record_end_to_end_test_start_paused) {
+TEST_P(RecordFixture, record_end_to_end_test_start_paused) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";
 
@@ -199,7 +199,7 @@ TEST_F(RecordFixture, record_end_to_end_test_start_paused) {
   EXPECT_THAT(test_topic_messages, IsEmpty());
 }
 
-TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
+TEST_P(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   const std::string topic_name = "/test_sigterm";
   auto message = get_messages_strings()[0];
   message->string_value = "test";
@@ -217,7 +217,7 @@ TEST_F(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
 // This tests depends on the ability to read the metadata file.
 // Stopping the process on Windows does a hard kill and the metadata file is not written.
 #ifndef _WIN32
-TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
+TEST_P(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const char first_topic_name[] = "/test_topic0";
   constexpr const char second_topic_name[] = "/test_topic1";
@@ -274,7 +274,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
 }
 #endif
 
-TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
+TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const int expected_splits = 3;
@@ -331,7 +331,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   }
 }
 
-TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
+TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const int message_size = 512 * 1024;  // 512KB
@@ -381,7 +381,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
     next_bag_file.string() << "\" to not exist!";
 }
 
-TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
+TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const int expected_splits = 4;
@@ -428,7 +428,7 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   }
 }
 
-TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) {
+TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_duration = 1000;   // 1 second
   constexpr const int expected_splits = 4;
@@ -474,7 +474,7 @@ TEST_F(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   }
 }
 
-TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compresses_files) {
+TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compresses_files) {
   constexpr const char topic_name[] = "/test_topic";
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const int expected_splits = 4;
@@ -526,7 +526,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   }
 }
 
-TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
+TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   auto bag_path = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
 
   internal::CaptureStderr();
@@ -538,7 +538,7 @@ TEST_F(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   EXPECT_THAT(error_output, HasSubstr("Output folder 'cdr_test' already exists"));
 }
 
-TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
+TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
   internal::CaptureStderr();
   auto exit_code =
     execute_and_wait_until_completion("ros2 bag record -a /some_topic", temporary_dir_path_);
@@ -548,7 +548,7 @@ TEST_F(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
   EXPECT_FALSE(error_output.empty());
 }
 
-TEST_F(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
+TEST_P(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
   internal::CaptureStderr();
   auto exit_code =
     execute_and_wait_until_completion("ros2 bag record", temporary_dir_path_);
@@ -558,7 +558,7 @@ TEST_F(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) 
   EXPECT_FALSE(output.empty());
 }
 
-TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
+TEST_P(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
     execute_and_wait_until_completion("ros2 bag record -a -f some_rmw", temporary_dir_path_);
@@ -569,7 +569,7 @@ TEST_F(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_
     error_output, HasSubstr("invalid choice: 'some_rmw'"));
 }
 
-TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
+TEST_P(RecordFixture, record_end_to_end_test_with_cache) {
   auto max_cache_size = 10;
   auto topic_name = "/rosbag2_cache_test_topic";
 
@@ -605,7 +605,7 @@ TEST_F(RecordFixture, record_end_to_end_test_with_cache) {
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
 }
 
-TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
+TEST_P(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const char first_topic_name[] = "/test_topic0";
   constexpr const char second_topic_name[] = "/test_topic1";
@@ -665,3 +665,8 @@ TEST_F(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   // stops thread
   sub->add_subscription<test_msgs::msg::Strings>(first_topic_name, 0);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  TestRecordEndToEnd,
+  RecordFixture,
+  ::testing::Values(std::string("sqlite3")));
