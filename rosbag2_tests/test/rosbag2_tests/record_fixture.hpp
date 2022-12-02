@@ -29,6 +29,7 @@
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 
