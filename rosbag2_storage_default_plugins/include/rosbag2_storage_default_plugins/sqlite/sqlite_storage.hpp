@@ -95,7 +95,15 @@ public:
   SqliteWrapper & get_sqlite_database_wrapper();
 
   int get_db_schema_version() const;
+
   std::string get_recorded_ros_distro() const;
+
+  enum class PresetProfile
+  {
+    Resilient,
+    WriteOptimized,
+  };
+  static PresetProfile parse_preset_profile(const std::string & profile_string);
 
 private:
   void initialize();
@@ -134,6 +142,7 @@ private:
   const int kDBSchemaVersion_ = 3;
   int db_schema_version_ = -1;  //  Valid version number starting from 1
 };
+
 
 }  // namespace rosbag2_storage_plugins
 

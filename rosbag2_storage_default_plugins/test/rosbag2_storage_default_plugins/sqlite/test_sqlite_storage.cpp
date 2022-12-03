@@ -510,3 +510,21 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
     }, writable_storage);
   });
 }
+
+TEST(StoragePresetProfileValidation, parse_storage_preset_profile_works) {
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile(""),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::WriteOptimized
+  );
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("none"),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::WriteOptimized
+  );
+  EXPECT_EQ(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("resilient"),
+    rosbag2_storage_plugins::SqliteStorage::PresetProfile::Resilient
+  );
+  EXPECT_THROW(
+    rosbag2_storage_plugins::SqliteStorage::parse_preset_profile("anything"),
+    std::runtime_error);
+}
