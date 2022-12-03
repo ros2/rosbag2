@@ -192,10 +192,10 @@ TEST_F(TestRewrite, test_compress) {
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
 
   rosbag2_storage::MetadataIo metadata_io;
-  auto metadata = metadata_io.read_metadata(out_bag);
+  auto metadata = metadata_io.read_metadata(out_bag.string());
   auto first_storage = out_bag / metadata.relative_file_paths[0];
 
-  EXPECT_EQ(first_storage.extension(), ".zstd");
+  EXPECT_EQ(first_storage.extension().string(), ".zstd");
   EXPECT_TRUE(first_storage.exists());
   EXPECT_TRUE(first_storage.is_regular_file());
 }
