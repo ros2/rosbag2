@@ -118,6 +118,14 @@ std::string SqliteWrapper::query_pragma_value(const std::string & key)
   return std::get<0>(pragma_value);
 }
 
+bool SqliteWrapper::table_exists(const std::string & table_name)
+{
+  auto query =
+    "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='" + table_name + "';";
+  auto query_result = prepare_statement(query)->execute_query<int>();
+  return std::get<0>(*query_result.begin());
+}
+
 bool SqliteWrapper::field_exists(const std::string & table_name, const std::string & field_name)
 {
   auto query = "SELECT INSTR(sql, '" + field_name + "') FROM sqlite_master WHERE type='table' AND "

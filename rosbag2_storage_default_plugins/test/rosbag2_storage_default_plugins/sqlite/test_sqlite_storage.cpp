@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/env.hpp"
+
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rcutils/snprintf.h"
@@ -291,6 +293,46 @@ TEST_F(StorageTestFixture, messages_readable_for_prefoxy_db_schema) {
     EXPECT_THAT(read_messages[i]->time_stamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
   }
+}
+
+TEST_F(StorageTestFixture, get_db_schema_version_returns_correct_value) {
+  auto writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
+  EXPECT_EQ(writable_storage->get_db_schema_version(), -1);
+
+  auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+  writable_storage->open({db_file, plugin_id_});
+
+  EXPECT_GE(writable_storage->get_db_schema_version(), 3);
+}
+
+TEST_F(StorageTestFixture, get_recorded_ros_distro_returns_correct_value) {
+  auto writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
+  EXPECT_TRUE(writable_storage->get_recorded_ros_distro().empty());
+
+  auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+  writable_storage->open({db_file, plugin_id_});
+
+  std::string current_ros_distro = rcpputils::get_env_var("ROS_DISTRO");
+  EXPECT_EQ(writable_storage->get_recorded_ros_distro(), current_ros_distro);
+}
+
+TEST_F(StorageTestFixture, check_backward_compatibility_with_schema_version_2) {
+  create_new_db3_file_with_schema_version_2();
+  std::unique_ptr<rosbag2_storage_plugins::SqliteStorage> readable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  EXPECT_EQ(readable_storage->get_db_schema_version(), -1);
+  EXPECT_TRUE(readable_storage->get_recorded_ros_distro().empty());
+
+  auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
+
+  readable_storage->open(
+    {db_file, plugin_id_},
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> read_messages;
+
+  EXPECT_EQ(readable_storage->get_db_schema_version(), 2);
+  EXPECT_TRUE(readable_storage->get_recorded_ros_distro().empty());
 }
 
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {

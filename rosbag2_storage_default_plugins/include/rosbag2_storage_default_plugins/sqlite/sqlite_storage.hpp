@@ -94,6 +94,10 @@ public:
    */
   SqliteWrapper & get_sqlite_database_wrapper();
 
+  int get_db_schema_version() const;
+
+  std::string get_recorded_ros_distro() const;
+
   enum class PresetProfile
   {
     Resilient,
@@ -110,6 +114,7 @@ private:
   void commit_transaction();
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
+  int read_db_schema_version();
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
@@ -133,6 +138,9 @@ private:
   // a) database access (this could also be done with FULLMUTEX), but see b)
   // b) topics_ collection - since we could be writing and reading it at the same time
   std::mutex database_write_mutex_;
+
+  const int kDBSchemaVersion_ = 3;
+  int db_schema_version_ = -1;  //  Valid version number starting from 1
 };
 
 
