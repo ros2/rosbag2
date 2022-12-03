@@ -18,6 +18,7 @@
 #include <string>
 #include <thread>
 
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 using namespace ::testing;  // NOLINT
@@ -27,15 +28,15 @@ class InfoEndToEndTestFixture : public Test
 public:
   InfoEndToEndTestFixture()
   {
-    database_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
+    bags_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
   }
 
-  std::string database_path_;
+  std::string bags_path_;
 };
 
 TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
   internal::CaptureStdout();
-  auto exit_code = execute_and_wait_until_completion("ros2 bag info cdr_test", database_path_);
+  auto exit_code = execute_and_wait_until_completion("ros2 bag info cdr_test", bags_path_);
   std::string output = internal::GetCapturedStdout();
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
@@ -44,7 +45,7 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
     output, ContainsRegex(
       "\nFiles:             cdr_test_0\\.db3"
       "\nBag size:          .*B"
-      "\nStorage id:        sqlite3"
+      "\nStorage id:        " + rosbag2_storage::get_default_storage_id() +
       "\nDuration:          0\\.151s"
       "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
       "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
@@ -64,7 +65,7 @@ TEST_F(InfoEndToEndTestFixture, info_end_to_end_test) {
 TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag info does_not_exist", database_path_);
+    execute_and_wait_until_completion("ros2 bag info does_not_exist", bags_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Ne(EXIT_SUCCESS));
@@ -74,7 +75,7 @@ TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_bag_does_not_exist) {
 TEST_F(InfoEndToEndTestFixture, info_fails_gracefully_if_metadata_yaml_file_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag info " + database_path_, database_path_);
+    execute_and_wait_until_completion("ros2 bag info " + bags_path_, bags_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
