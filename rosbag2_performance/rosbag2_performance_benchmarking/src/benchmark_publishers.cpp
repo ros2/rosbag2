@@ -56,17 +56,23 @@ public:
 private:
   struct BenchmarkProducer
   {
-    std::shared_ptr<msg_utils::ProducerBase> producer;
+    std::shared_ptr<msg_utils::ProducerBase> msg_producer;
     std::chrono::milliseconds period;
     size_t produced_messages = 0;
     size_t max_messages = 0;
+
+    void produce()
+    {
+      this->msg_producer->produce();
+      ++this->produced_messages;
+    }
   };
 
   void wait_for_subscriptions()
   {
     if (config_utils::wait_for_subscriptions_from_node_parameters(*this)) {
       for (auto producer : producers_) {
-        producer->producer->wait_for_matched();
+        producer->msg_producer->wait_for_matched();
       }
     }
   }
@@ -95,12 +101,13 @@ private:
     std::string topic,
     const PublisherGroupConfig & config)
   {
-    const auto & pConfig = config.producer_config;
+    const auto & producer_config = config.producer_config;
     auto producer = std::make_shared<BenchmarkProducer>();
 
-    producer->producer = msg_utils::create(pConfig.message_type, *this, topic, config);
-    producer->max_messages = pConfig.max_count;
-    producer->period = std::chrono::milliseconds(pConfig.frequency ? 1000 / pConfig.frequency : 1);
+    producer->msg_producer = msg_utils::create(producer_config.message_type, *this, topic, config);
+    producer->max_messages = producer_config.max_count;
+    producer->period = std::chrono::milliseconds(
+      producer_config.frequency ? 1000 / producer_config.frequency : 1);
 
     return producer;
   }
@@ -112,8 +119,7 @@ private:
         break;
       }
       std::this_thread::sleep_for(producer->period);
-      producer->producer->produce();
-      ++producer->produced_messages;
+      producer->produce();
     }
   }
 

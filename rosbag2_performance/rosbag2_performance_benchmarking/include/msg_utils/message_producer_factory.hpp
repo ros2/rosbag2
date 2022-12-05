@@ -50,46 +50,48 @@
 
 #include "message_producer.hpp"
 
-#define ADD_MSG(space, type) \
+#define IF_KEY_MATCH_TYPE_CREATE_MSG_PRODUCER_ELSE(space, type) \
   if (key == #space "::msg::"#type) { \
     using space::msg::type; \
     return std::make_shared<MessageProducer<type>>(args ...); \
   } else  // NOLINT  not closed `if` in macro is on purpose
 
-#define ADD_BENCHMARKING_MSG(type) ADD_MSG(rosbag2_performance_benchmarking_msgs, type)
-#define ADD_SENSOR_MSG(type) ADD_MSG(sensor_msgs, type)
+#define IF_KEY_MATCH_TYPE_CREATE_BENCHMARKING_MSG_PRODUCER_ELSE(type) \
+  IF_KEY_MATCH_TYPE_CREATE_MSG_PRODUCER_ELSE(rosbag2_performance_benchmarking_msgs, type)
+#define IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(type) \
+  IF_KEY_MATCH_TYPE_CREATE_MSG_PRODUCER_ELSE(sensor_msgs, type)
 
 namespace msg_utils
 {
 template<typename ... Args>
 std::shared_ptr<ProducerBase> create(std::string key, Args & ... args)
 {
-  ADD_BENCHMARKING_MSG(ByteArray)
+  IF_KEY_MATCH_TYPE_CREATE_BENCHMARKING_MSG_PRODUCER_ELSE(ByteArray)
 
-  ADD_SENSOR_MSG(BatteryState)
-  ADD_SENSOR_MSG(CameraInfo)
-  ADD_SENSOR_MSG(ChannelFloat32)
-  ADD_SENSOR_MSG(CompressedImage)
-  ADD_SENSOR_MSG(FluidPressure)
-  ADD_SENSOR_MSG(Illuminance)
-  ADD_SENSOR_MSG(Image)
-  ADD_SENSOR_MSG(Imu)
-  ADD_SENSOR_MSG(JointState)
-  ADD_SENSOR_MSG(Joy)
-  ADD_SENSOR_MSG(JoyFeedbackArray)
-  ADD_SENSOR_MSG(LaserEcho)
-  ADD_SENSOR_MSG(LaserScan)
-  ADD_SENSOR_MSG(MagneticField)
-  ADD_SENSOR_MSG(MultiDOFJointState)
-  ADD_SENSOR_MSG(MultiEchoLaserScan)
-  ADD_SENSOR_MSG(NavSatFix)
-  ADD_SENSOR_MSG(PointCloud)
-  ADD_SENSOR_MSG(PointCloud2)
-  ADD_SENSOR_MSG(PointField)
-  ADD_SENSOR_MSG(Range)
-  ADD_SENSOR_MSG(RelativeHumidity)
-  ADD_SENSOR_MSG(Temperature)
-  ADD_SENSOR_MSG(TimeReference)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(BatteryState)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(CameraInfo)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(ChannelFloat32)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(CompressedImage)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(FluidPressure)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Illuminance)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Image)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Imu)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(JointState)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Joy)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(JoyFeedbackArray)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(LaserEcho)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(LaserScan)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(MagneticField)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(MultiDOFJointState)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(MultiEchoLaserScan)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(NavSatFix)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(PointCloud)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(PointCloud2)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(PointField)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Range)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(RelativeHumidity)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(Temperature)
+  IF_KEY_MATCH_TYPE_CREATE_SENSOR_MSG_PRODUCER_ELSE(TimeReference)
 
   throw std::runtime_error("Unknown message type: " + key);
 }
