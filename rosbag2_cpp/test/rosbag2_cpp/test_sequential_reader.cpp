@@ -26,11 +26,11 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
@@ -43,7 +43,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
-using rosbag2_test_common::TemporaryDirectoryFixture;
+using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 
 class SequentialReaderTest : public Test
 {
@@ -221,13 +221,17 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   EXPECT_EQ(opened_file, bag_file_2_path_.string());
 }
 
-TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
+TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  const auto storage_id = GetParam();
 
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
-    writer.open(bag_path.string());
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path.string();
+    options.storage_id = storage_id;
+    writer.open(options);
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
@@ -241,14 +245,20 @@ TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
 }
 
+INSTANTIATE_TEST_SUITE_P(
+  BareFileTests,
+  ParametrizedTemporaryDirectoryFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
 
-class ReadOrderTest : public TemporaryDirectoryFixture
+
+class ReadOrderTest : public ParametrizedTemporaryDirectoryFixture
 {
 public:
   ReadOrderTest()
   {
     storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "ordertest").string();
-    storage_options.storage_id = rosbag2_storage::get_default_storage_id();
+    storage_options.storage_id = GetParam();
     write_sample_split_bag(storage_options, fake_messages, split_every);
   }
 
@@ -328,7 +338,7 @@ public:
   rosbag2_storage::StorageOptions storage_options{};
 };
 
-TEST_F(ReadOrderTest, received_timestamp_order) {
+TEST_P(ReadOrderTest, received_timestamp_order) {
   rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, false);
   sort_expected(order);
 
@@ -340,7 +350,7 @@ TEST_F(ReadOrderTest, received_timestamp_order) {
   }
 }
 
-TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
+TEST_P(ReadOrderTest, reverse_received_timestamp_order) {
   rosbag2_storage::ReadOrder order(rosbag2_storage::ReadOrder::ReceivedTimestamp, true);
   sort_expected(order);
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
@@ -358,21 +368,21 @@ TEST_F(ReadOrderTest, reverse_received_timestamp_order) {
   }
 }
 
-TEST_F(ReadOrderTest, file_order) {
-  reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
-  EXPECT_FALSE(
-    reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, false)));
-}
-
-TEST_F(ReadOrderTest, reverse_file_order) {
+TEST_P(ReadOrderTest, reverse_file_order) {
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
   EXPECT_FALSE(
     reader.set_read_order(rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::File, true)));
 }
 
-TEST_F(ReadOrderTest, published_timestamp_order) {
+TEST_P(ReadOrderTest, published_timestamp_order) {
   reader.open(storage_options, rosbag2_cpp::ConverterOptions{});
   EXPECT_FALSE(
     reader.set_read_order(
       rosbag2_storage::ReadOrder(rosbag2_storage::ReadOrder::PublishedTimestamp, false)));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ThisReadOrderTest,
+  ReadOrderTest,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

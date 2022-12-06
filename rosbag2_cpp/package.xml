@@ -26,7 +26,9 @@
   <depend>rosidl_typesupport_introspection_cpp</depend>
   <depend>shared_queues_vendor</depend>
 
-  <exec_depend>rosbag2_storage_default_plugins</exec_depend>
+  <test_depend>rosbag2_storage_default_plugins</test_depend>
+  <!-- TODO: remove dependency when rosbag2_storage_default_plugins depends on MCAP -->
+  <test_depend>rosbag2_storage_mcap</test_depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
