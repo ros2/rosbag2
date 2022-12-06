@@ -86,10 +86,10 @@ bool Reindexer::compare_relative_file(
     throw std::runtime_error(error_text.c_str());
   }
 
-  auto first_db_num = std::stoul(first_match.str(1), nullptr, 10);
-  auto second_db_num = std::stoul(second_match.str(1), nullptr, 10);
+  auto first_file_num = std::stoul(first_match.str(1), nullptr, 10);
+  auto second_file_num = std::stoul(second_match.str(1), nullptr, 10);
 
-  return first_db_num < second_db_num;
+  return first_file_num < second_file_num;
 }
 
 /// Retrieve bag storage files from the bag directory.
@@ -122,7 +122,7 @@ void Reindexer::get_bag_files(
     }
   } while (rcutils_dir_iter_next(dir_iter));
 
-  // Sort relative file path by database number
+  // Sort relative file path by number
   std::sort(
     output.begin(), output.end(),
     [&, this](rcpputils::fs::path a, rcpputils::fs::path b) {
@@ -169,7 +169,7 @@ void Reindexer::aggregate_metadata(
   // In order to most accurately reconstruct the metadata, we need to
   // visit each of the contained relative files files in the bag,
   // open them, read the info, and write it into an aggregated metadata object.
-  ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from database(s)");
+  ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from bag file(s)");
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
 
@@ -249,13 +249,13 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   std::vector<rcpputils::fs::path> files;
   get_bag_files(base_folder_, files);
   if (files.empty()) {
-    throw std::runtime_error("No database files found for reindexing. Abort");
+    throw std::runtime_error("No storage files found for reindexing. Abort");
   }
 
   init_metadata(files, storage_options);
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed init_metadata");
 
-  // Collect all metadata from database files
+  // Collect all metadata from files
   aggregate_metadata(files, bag_reader, storage_options);
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed aggregate_metadata");
 

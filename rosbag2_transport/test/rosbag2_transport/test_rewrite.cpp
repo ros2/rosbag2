@@ -180,7 +180,8 @@ TEST_F(TestRewrite, test_compress) {
   use_input_a();
 
   rosbag2_storage::StorageOptions output_storage;
-  output_storage.uri = (output_dir_ / "compressed").string();
+  auto out_bag = output_dir_ / "compressed";
+  output_storage.uri = out_bag.string();
   output_storage.storage_id = rosbag2_storage::get_default_storage_id();
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
@@ -190,7 +191,11 @@ TEST_F(TestRewrite, test_compress) {
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
 
-  auto compressed_bagfile = output_dir_ / "compressed" / "compressed_0.db3.zstd";
-  EXPECT_TRUE(compressed_bagfile.exists());
-  EXPECT_TRUE(compressed_bagfile.is_regular_file());
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(out_bag.string());
+  auto first_storage = out_bag / metadata.relative_file_paths[0];
+
+  EXPECT_EQ(first_storage.extension().string(), ".zstd");
+  EXPECT_TRUE(first_storage.exists());
+  EXPECT_TRUE(first_storage.is_regular_file());
 }

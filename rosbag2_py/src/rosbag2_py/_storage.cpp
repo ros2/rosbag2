@@ -18,6 +18,7 @@
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -290,4 +291,13 @@ PYBIND11_MODULE(_storage, m) {
     "get_default_storage_id",
     &rosbag2_storage::get_default_storage_id,
     "Returns the default storage ID used when unspecified in StorageOptions");
+
+  pybind11::class_<rosbag2_storage::MetadataIo>(m, "MetadataIo")
+  .def(pybind11::init<>())
+  .def("write_metadata", &rosbag2_storage::MetadataIo::write_metadata)
+  .def("read_metadata", &rosbag2_storage::MetadataIo::read_metadata)
+  .def("metadata_file_exists", &rosbag2_storage::MetadataIo::metadata_file_exists)
+  .def("serialize_metadata", &rosbag2_storage::MetadataIo::serialize_metadata)
+  .def("deserialize_metadata", &rosbag2_storage::MetadataIo::deserialize_metadata)
+  ;
 }
