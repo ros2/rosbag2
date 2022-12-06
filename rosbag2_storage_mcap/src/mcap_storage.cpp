@@ -220,8 +220,9 @@ private:
                  rosbag2_storage::storage_interfaces::IOFlag io_flag,
                  const std::string & storage_config_uri);
 
-  void reset_iterator(rcutils_time_point_value_t start_time = 0);
+  void reset_iterator();
   bool read_and_enqueue_message();
+  bool enqueued_message_is_already_read();
   bool message_indexes_present();
   void ensure_summary_read();
 
@@ -247,6 +248,9 @@ private:
   rosbag2_storage_mcap::internal::MessageDefinitionCache msgdef_cache_{};
 
   bool has_read_summary_ = false;
+  rcutils_time_point_value_t last_read_time_point_ = 0;
+  std::optional<mcap::RecordOffset> last_read_message_offset_;
+  std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
 };
 
 MCAPStorage::MCAPStorage()
@@ -318,6 +322,7 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
+      last_read_time_point_ = 0;
       reset_iterator();
       break;
     }
@@ -437,20 +442,18 @@ bool MCAPStorage::read_and_enqueue_message()
   if (!linear_iterator_) {
     return false;
   }
-  // Already have popped and queued the next message.
-  if (next_ != nullptr) {
-    return true;
-  }
 
   auto & it = *linear_iterator_;
 
   // At the end of the recording
   if (it == linear_view_->end()) {
+    next_ = nullptr;
     return false;
   }
 
   const auto & messageView = *it;
   auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  last_enqueued_message_offset_ = messageView.messageOffset;
   msg->time_stamp = rcutils_time_point_value_t(messageView.message.logTime);
   msg->topic_name = messageView.channel->topic;
   msg->serialized_data = rosbag2_storage::make_serialized_message(messageView.message.data,
@@ -463,11 +466,20 @@ bool MCAPStorage::read_and_enqueue_message()
   return true;
 }
 
-void MCAPStorage::reset_iterator(rcutils_time_point_value_t start_time)
+void MCAPStorage::reset_iterator()
 {
   ensure_summary_read();
   mcap::ReadMessageOptions options;
-  options.startTime = mcap::Timestamp(start_time);
+  if (read_order_ == mcap::ReadMessageOptions::ReadOrder::ReverseLogTimeOrder) {
+    options.startTime = 0;
+    // endTime is an exclusive range endpoint, but we want to start from `last_read_time_point_`.
+    // therefore, the time range we pass to the MCAP library is one nanosecond later than the
+    // seek point specified.
+    options.endTime = mcap::Timestamp(last_read_time_point_ + 1);
+  } else {
+    options.startTime = mcap::Timestamp(last_read_time_point_);
+    options.endTime = mcap::MaxTime;
+  }
   options.readOrder = read_order_;
   if (!storage_filter_.topics.empty()) {
     options.topicFilter = [this](std::string_view topic) {
@@ -492,6 +504,34 @@ void MCAPStorage::reset_iterator(rcutils_time_point_value_t start_time)
   linear_view_ =
     std::make_unique<mcap::LinearMessageView>(mcap_reader_->readMessages(OnProblem, options));
   linear_iterator_ = std::make_unique<mcap::LinearMessageView::Iterator>(linear_view_->begin());
+  if (!read_and_enqueue_message()) {
+    return;
+  }
+  while (enqueued_message_is_already_read()) {
+    if (!read_and_enqueue_message()) {
+      return;
+    }
+  }
+}
+
+bool MCAPStorage::enqueued_message_is_already_read()
+{
+  if (last_read_message_offset_ == std::nullopt) {
+    return false;
+  }
+  if (last_enqueued_message_offset_ == std::nullopt) {
+    return false;
+  }
+  if (next_ == nullptr) {
+    return false;
+  }
+  if (last_read_time_point_ != next_->time_stamp) {
+    return false;
+  }
+  if (read_order_ == mcap::ReadMessageOptions::ReadOrder::ReverseLogTimeOrder) {
+    return (*last_enqueued_message_offset_ >= *last_read_message_offset_);
+  }
+  return (*last_enqueued_message_offset_ <= *last_read_message_offset_);
 }
 
 void MCAPStorage::ensure_summary_read()
@@ -572,6 +612,8 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> MCAPStorage::read_next()
   if (!has_next()) {
     throw std::runtime_error{"No next message is available."};
   }
+  last_read_time_point_ = next_->time_stamp;
+  last_read_message_offset_ = last_enqueued_message_offset_;
   // Importantly, clear next_ via move so that a next message can be read.
   return std::move(next_);
 }
@@ -600,7 +642,11 @@ void MCAPStorage::reset_filter()
 
 void MCAPStorage::seek(const rcutils_time_point_value_t & time_stamp)
 {
-  reset_iterator(time_stamp);
+  if (time_stamp != last_read_time_point_) {
+    last_read_message_offset_ = std::nullopt;
+  }
+  last_read_time_point_ = time_stamp;
+  reset_iterator();
 }
 
 /** ReadWriteInterface **/
