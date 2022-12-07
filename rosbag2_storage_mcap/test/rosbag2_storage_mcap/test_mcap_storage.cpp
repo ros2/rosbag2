@@ -62,9 +62,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     msg.data = message_data;
 
     rosbag2_cpp::Writer writer{std::make_unique<rosbag2_cpp::writers::SequentialWriter>()};
-#ifndef ROSBAG2_STORAGE_MCAP_WRITER_CREATES_DIRECTORY
-    rcpputils::fs::create_directories(uri);
-#endif
     writer.open(options, rosbag2_cpp::ConverterOptions{});
     writer.create_topic(topic_metadata);
 
@@ -130,9 +127,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     msg.data = message_data;
 
     rosbag2_cpp::Writer writer{std::make_unique<rosbag2_cpp::writers::SequentialWriter>()};
-  #ifndef ROSBAG2_STORAGE_MCAP_WRITER_CREATES_DIRECTORY
-    rcpputils::fs::create_directories(uri);
-  #endif
     writer.open(options, rosbag2_cpp::ConverterOptions{});
     writer.create_topic(topic_metadata);
 
