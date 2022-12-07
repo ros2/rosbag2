@@ -23,17 +23,22 @@
 import os
 from pathlib import Path
 
-from common import get_rosbag_options
+from common import get_rosbag_options, TESTED_STORAGE_IDS
+
+import pytest
+
 import rosbag2_py
+
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 
 
-def test_reindexer_multiple_files():
-    bag_path = RESOURCES_PATH / 'reindex_test_bags' / 'multiple_files'
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_reindexer_multiple_files(storage_id):
+    bag_path = RESOURCES_PATH / storage_id / 'reindex_test_bags' / 'multiple_files'
     result_path = bag_path / 'metadata.yaml'
 
-    storage_options, converter_options = get_rosbag_options(str(bag_path))
+    storage_options, _ = get_rosbag_options(str(bag_path), storage_id=storage_id)
     reindexer = rosbag2_py.Reindexer()
     reindexer.reindex(storage_options)
 

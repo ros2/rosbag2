@@ -15,7 +15,9 @@
 import os
 from pathlib import Path
 
-from common import get_rosbag_options
+from common import get_rosbag_options, TESTED_STORAGE_IDS
+
+import pytest
 
 from rcl_interfaces.msg import Log
 from rclpy.serialization import deserialize_message
@@ -27,9 +29,10 @@ from std_msgs.msg import String
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 
 
-def test_sequential_reader():
-    bag_path = str(RESOURCES_PATH / 'talker')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_sequential_reader(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
@@ -75,9 +78,10 @@ def test_sequential_reader():
             msg_counter += 1
 
 
-def test_sequential_reader_seek():
-    bag_path = str(RESOURCES_PATH / 'talker')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_sequential_reader_seek(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)

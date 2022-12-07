@@ -20,7 +20,6 @@ import unittest
 import common  # noqa
 from rosbag2_py import (
     bag_rewrite,
-    get_default_storage_id,
     StorageOptions,
 )
 
@@ -65,29 +64,29 @@ output_bags:
     def test_basic_convert(self):
         # This test is just to test that the rosbag2_py wrapper parses input
         # It is not a comprehensive test of bag_rewrite.
-        storage_id = get_default_storage_id()
-        bag_a_path = RESOURCES_PATH / 'convert_a'
-        bag_b_path = RESOURCES_PATH / 'convert_b'
-        output_uri_1 = self.tmp_path / 'converted_1'
-        output_uri_2 = self.tmp_path / 'converted_2'
-        input_options = [
-            StorageOptions(uri=str(bag_a_path)),
-            StorageOptions(uri=str(bag_b_path)),
-        ]
-        output_options_path = self.tmp_path / 'simple_convert.yml'
-        output_options_content = f"""
-output_bags:
-- uri: {output_uri_1}
-  storage_id: {storage_id}
-  topics: [a_empty]
-- uri: {output_uri_2}
-  storage_id: {storage_id}
-  exclude: ".*empty.*"
-"""
-        with output_options_path.open('w') as f:
-            f.write(output_options_content)
-        bag_rewrite(input_options, str(output_options_path))
-        self.assertTrue(output_uri_1.exists() and output_uri_1.is_dir())
-        self.assertTrue((output_uri_1 / 'metadata.yaml').exists())
-        self.assertTrue(output_uri_2.exists() and output_uri_2.is_dir())
-        self.assertTrue((output_uri_2 / 'metadata.yaml').exists())
+        for storage_id in common.TESTED_STORAGE_IDS:
+            bag_a_path = RESOURCES_PATH / storage_id / 'convert_a'
+            bag_b_path = RESOURCES_PATH / storage_id / 'convert_b'
+            output_uri_1 = self.tmp_path / storage_id / 'converted_1'
+            output_uri_2 = self.tmp_path / storage_id / 'converted_2'
+            input_options = [
+                StorageOptions(uri=str(bag_a_path)),
+                StorageOptions(uri=str(bag_b_path)),
+            ]
+            output_options_path = self.tmp_path / 'simple_convert.yml'
+            output_options_content = f"""
+    output_bags:
+    - uri: {output_uri_1}
+      storage_id: {storage_id}
+      topics: [a_empty]
+    - uri: {output_uri_2}
+      storage_id: {storage_id}
+      exclude: ".*empty.*"
+    """
+            with output_options_path.open('w') as f:
+                f.write(output_options_content)
+            bag_rewrite(input_options, str(output_options_path))
+            self.assertTrue(output_uri_1.exists() and output_uri_1.is_dir())
+            self.assertTrue((output_uri_1 / 'metadata.yaml').exists())
+            self.assertTrue(output_uri_2.exists() and output_uri_2.is_dir())
+            self.assertTrue((output_uri_2 / 'metadata.yaml').exists())

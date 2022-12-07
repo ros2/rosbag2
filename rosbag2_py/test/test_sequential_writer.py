@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from common import get_rosbag_options
+from common import get_rosbag_options, TESTED_STORAGE_IDS
+
+import pytest
 
 from rclpy.serialization import deserialize_message, serialize_message
 import rosbag2_py
@@ -37,7 +39,8 @@ def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
     writer.create_topic(topic)
 
 
-def test_sequential_writer(tmp_path):
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_sequential_writer(tmp_path, storage_id):
     """
     Test for sequential writer.
 
@@ -45,7 +48,7 @@ def test_sequential_writer(tmp_path):
     """
     bag_path = str(tmp_path / 'tmp_write_test')
 
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     writer = rosbag2_py.SequentialWriter()
     writer.open(storage_options, converter_options)
@@ -63,7 +66,7 @@ def test_sequential_writer(tmp_path):
 
     # close bag and create new storage instance
     del writer
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     reader = rosbag2_py.SequentialReader()
     reader.open(storage_options, converter_options)
