@@ -40,12 +40,16 @@ macro(build_mcap_vendor)
   file(GLOB _lz4_srcs
     ${lz4_SOURCE_DIR}/lib/*.c)
 
+
   add_library(mcap SHARED
     src/main.cpp
     ${_lz4_srcs}
   )
 
   set(_mcap_include_dir ${mcap_SOURCE_DIR}/cpp/mcap/include)
+
+  file(GLOB _mcap_hdrs
+    ${_mcap_include_dir}/mcap/*.hpp)
 
   target_include_directories(mcap PRIVATE
     ${lz4_SOURCE_DIR}/lib
@@ -57,8 +61,8 @@ macro(build_mcap_vendor)
   ament_target_dependencies(mcap zstd)
 
   install(
-    DIRECTORY ${_mcap_include_dir}/mcap
-    DESTINATION include/${PROJECT_NAME}
+    FILES ${_mcap_hdrs}
+    DESTINATION include/${PROJECT_NAME}/mcap
   )
 
   install(
