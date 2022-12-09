@@ -29,14 +29,15 @@
 #include "rosbag2_storage/metadata_io.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT
-using rosbag2_test_common::TemporaryDirectoryFixture;
+using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 
-TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
-  const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
+TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_2) {
+  const auto expected_storage_id = GetParam();
   const std::string bagfile = "rosbag2_bagfile_information:\n"
     "  version: 2\n"
     "  storage_identifier: " + expected_storage_id + "\n"
@@ -102,8 +103,10 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_supports_version_2) {
   }
 }
 
-TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metadata_io_method) {
-  const auto expected_storage_id = rosbag2_storage::get_default_storage_id();
+TEST_P(
+  ParametrizedTemporaryDirectoryFixture,
+  read_metadata_makes_appropriate_call_to_metadata_io_method) {
+  const auto expected_storage_id = GetParam();
   std::string bagfile(
     "rosbag2_bagfile_information:\n"
     "  version: 3\n"
@@ -181,13 +184,17 @@ TEST_F(TemporaryDirectoryFixture, read_metadata_makes_appropriate_call_to_metada
   EXPECT_EQ(read_metadata.compression_mode, "FILE");
 }
 
-TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
+TEST_P(ParametrizedTemporaryDirectoryFixture, info_for_standalone_bagfile) {
+  const auto storage_id = GetParam();
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
   const auto expected_bagfile_path = bag_path / "bag_0.db3";
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
-    writer.open(bag_path.string());
+    rosbag2_storage::StorageOptions storage_options;
+    storage_options.storage_id = storage_id;
+    storage_options.uri = bag_path.string();
+    writer.open(storage_options);
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
@@ -199,3 +206,9 @@ TEST_F(TemporaryDirectoryFixture, info_for_standalone_bagfile) {
   );
   EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  RosbagInfoTests,
+  ParametrizedTemporaryDirectoryFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

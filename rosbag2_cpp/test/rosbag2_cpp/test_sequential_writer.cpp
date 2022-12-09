@@ -32,6 +32,7 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
@@ -40,7 +41,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
-using rosbag2_test_common::TemporaryDirectoryFixture;
+using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 
 class SequentialWriterTest : public Test
 {
@@ -569,6 +570,7 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   EXPECT_EQ(opened_file, fake_storage_uri_);
 }
 
+<<<<<<< HEAD
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 {
   const int message_count = 7;
@@ -672,14 +674,14 @@ void write_sample_split_bag(
 }
 
 
-TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
+TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
   const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
     {100, 300, 200},
     {500, 400, 600}
   };
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
-  storage_options.storage_id = rosbag2_storage::get_default_storage_id();
+  storage_options.storage_id = GetParam();
   write_sample_split_bag(storage_options, message_timestamps_by_file);
 
   rosbag2_storage::MetadataIo metadata_io;
@@ -689,3 +691,9 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
   ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  SplitMetadataTest,
+  ParametrizedTemporaryDirectoryFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
