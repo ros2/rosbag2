@@ -15,16 +15,9 @@
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/readers/sequential_reader.hpp"
-#include "rosbag2_cpp/writer.hpp"
-#include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
   #include "rosbag2_storage/storage_options.hpp"
-using StorageOptions = rosbag2_storage::StorageOptions;
-#else
-  #include "rosbag2_cpp/storage_options.hpp"
-using StorageOptions = rosbag2_cpp::StorageOptions;
 #endif
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -40,7 +33,7 @@ using TemporaryDirectoryFixture = rosbag2_test_common::TemporaryDirectoryFixture
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 {
   auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = uri / "bag_0.mcap";
+  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -51,9 +44,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   rclcpp::Serialization<std_msgs::msg::String> serialization;
 
   {
-    StorageOptions options;
-    options.uri = uri.string();
-    options.storage_id = storage_id;
     rosbag2_storage::TopicMetadata topic_metadata;
     topic_metadata.name = topic_name;
     topic_metadata.type = "std_msgs/msg/String";
@@ -61,12 +51,16 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     std_msgs::msg::String msg;
     msg.data = message_data;
 
-    rosbag2_cpp::Writer writer{std::make_unique<rosbag2_cpp::writers::SequentialWriter>()};
-#ifndef ROSBAG2_STORAGE_MCAP_WRITER_CREATES_DIRECTORY
-    rcpputils::fs::create_directories(uri);
+    rosbag2_storage::StorageFactory factory;
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
+    rosbag2_storage::StorageOptions options;
+    options.uri = uri.string();
+    options.storage_id = storage_id;
+    auto writer = factory.open_read_write(options);
+#else
+    auto writer = factory.open_read_write(uri.string(), storage_id);
 #endif
-    writer.open(options, rosbag2_cpp::ConverterOptions{});
-    writer.create_topic(topic_metadata);
+    writer->create_topic(topic_metadata);
 
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
     serialization.serialize_message(&msg, serialized_msg.get());
@@ -81,20 +75,24 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
       [](rcutils_uint8_array_t * /* data */) {});
     serialized_bag_msg->time_stamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
-    writer.write(serialized_bag_msg);
+    writer->write(serialized_bag_msg);
     EXPECT_TRUE(expected_bag.is_regular_file());
   }
   {
-    StorageOptions options;
+    rosbag2_storage::StorageFactory factory;
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
+    rosbag2_storage::StorageOptions options;
     options.uri = expected_bag.string();
     options.storage_id = storage_id;
-
-    rosbag2_cpp::Reader reader{std::make_unique<rosbag2_cpp::readers::SequentialReader>()};
-    reader.open(options, rosbag2_cpp::ConverterOptions{});
-    EXPECT_TRUE(reader.has_next());
+    auto reader = factory.open_read_only(options);
+#else
+    auto reader = factory.open_read_only(expected_bag.string(), storage_id);
+#endif
+    reader->open(options);
+    EXPECT_TRUE(reader->has_next());
 
     std_msgs::msg::String msg;
-    auto serialized_bag_msg = reader.read_next();
+    auto serialized_bag_msg = reader->read_next();
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);
@@ -106,19 +104,17 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 {
   auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = uri / "bag_0.mcap";
+  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
   const std::string message_data = "Test Message 1";
   const std::string storage_id = "mcap";
   const std::string config_path = _TEST_RESOURCES_DIR_PATH;
-  // COMPATIBILITY(foxy)
-  // using verbose APIs for Foxy compatibility which did not yet provide plain-message API
   rclcpp::Serialization<std_msgs::msg::String> serialization;
 
   {
-    StorageOptions options;
+    rosbag2_storage::StorageOptions options;
     options.uri = uri.string();
     options.storage_id = storage_id;
     options.storage_config_uri = config_path + "/mcap_writer_options_zstd.yaml";
@@ -129,12 +125,9 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     std_msgs::msg::String msg;
     msg.data = message_data;
 
-    rosbag2_cpp::Writer writer{std::make_unique<rosbag2_cpp::writers::SequentialWriter>()};
-  #ifndef ROSBAG2_STORAGE_MCAP_WRITER_CREATES_DIRECTORY
-    rcpputils::fs::create_directories(uri);
-  #endif
-    writer.open(options, rosbag2_cpp::ConverterOptions{});
-    writer.create_topic(topic_metadata);
+    rosbag2_storage::StorageFactory factory;
+    auto writer = factory.open_read_write(options);
+    writer->create_topic(topic_metadata);
 
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
     serialization.serialize_message(&msg, serialized_msg.get());
@@ -149,21 +142,21 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
       [](rcutils_uint8_array_t * /* data */) {});
     serialized_bag_msg->time_stamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
-    writer.write(serialized_bag_msg);
-    writer.write(serialized_bag_msg);
+    writer->write(serialized_bag_msg);
+    writer->write(serialized_bag_msg);
     EXPECT_TRUE(expected_bag.is_regular_file());
   }
   {
-    StorageOptions options;
+    rosbag2_storage::StorageOptions options;
     options.uri = expected_bag.string();
     options.storage_id = storage_id;
 
-    rosbag2_cpp::Reader reader{std::make_unique<rosbag2_cpp::readers::SequentialReader>()};
-    reader.open(options, rosbag2_cpp::ConverterOptions{});
-    EXPECT_TRUE(reader.has_next());
+    rosbag2_storage::StorageFactory factory;
+    auto reader = factory.open_read_only(options);
+    EXPECT_TRUE(reader->has_next());
 
     std_msgs::msg::String msg;
-    auto serialized_bag_msg = reader.read_next();
+    auto serialized_bag_msg = reader->read_next();
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);
