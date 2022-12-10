@@ -41,27 +41,27 @@ add_executable(results_writer
   src/result_utils.cpp
   src/results_writer.cpp)
 
-ament_target_dependencies(writer_benchmark
-  rclcpp
-  rosbag2_performance_benchmarking_msgs
-  sensor_msgs
-  rosbag2_compression
-  rosbag2_cpp
-  rosbag2_storage
-  yaml_cpp_vendor
+target_link_libraries(writer_benchmark
+  rclcpp::rclcpp
+  ${rosbag2_performance_benchmarking_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  rosbag2_compression::rosbag2_compression
+  rosbag2_cpp::rosbag2_cpp
+  rosbag2_storage::rosbag2_storage
+  ${YAML_CPP_LIBRARIES}
 )
 
-ament_target_dependencies(benchmark_publishers
-  rclcpp
-  rosbag2_storage
-  rosbag2_performance_benchmarking_msgs
-  sensor_msgs
-  yaml_cpp_vendor
+target_link_libraries(benchmark_publishers
+  rclcpp::rclcpp
+  rosbag2_storage::rosbag2_storage
+  ${rosbag2_performance_benchmarking_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${YAML_CPP_LIBRARIES}
 )
 
-ament_target_dependencies(results_writer
-  rclcpp
-  rosbag2_storage
+target_link_libraries(results_writer
+  rclcpp::rclcpp
+  rosbag2_storage::rosbag2_storage
 )
 
 target_include_directories(writer_benchmark

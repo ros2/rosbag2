@@ -37,13 +37,14 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_sqlite3/sqlite_storage.cpp
   src/rosbag2_storage_sqlite3/sqlite_statement_wrapper.cpp)
 
-ament_target_dependencies(${PROJECT_NAME}
-  pluginlib
-  rosbag2_storage
-  rcpputils
-  rcutils
-  SQLite3
-  yaml_cpp_vendor)
+target_link_libraries(${PROJECT_NAME}
+  pluginlib::pluginlib
+  rosbag2_storage::rosbag2_storage
+  rcpputils::rcpputils
+  rcutils::rcutils
+  SQLite::SQLite3
+  ${YAML_CPP_LIBRARIES}
+)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -82,10 +83,11 @@ if(BUILD_TESTING)
 
   set(TEST_LINK_LIBRARIES
     ${PROJECT_NAME}
-    ${rosbag2_storage_LIBRARIES}
-    ${rcutils_LIBRARIES}
-    ${SQLite3_LIBRARIES}
-    ${pluginlib_LIBRARIES}
+    rosbag2_storage::rosbag2_storage
+    rosbag2_test_common::rosbag2_test_common
+    rcutils::rcutils
+    SQLite::SQLite3
+    pluginlib::pluginlib
   )
 
   ament_add_gmock(test_sqlite_wrapper
@@ -93,7 +95,6 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_wrapper)
     target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
-    ament_target_dependencies(test_sqlite_wrapper rosbag2_storage rosbag2_test_common)
   endif()
 
   ament_add_gmock(test_sqlite_storage
@@ -101,7 +102,6 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_storage)
     target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
-    ament_target_dependencies(test_sqlite_storage rosbag2_storage rosbag2_test_common)
   endif()
 endif()
 
