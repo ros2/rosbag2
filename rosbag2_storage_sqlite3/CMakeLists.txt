@@ -21,6 +21,7 @@ if(WIN32)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
@@ -28,6 +29,8 @@ find_package(rosbag2_storage REQUIRED)
 find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 find_package(yaml_cpp_vendor REQUIRED)
+
+ament_python_install_package(${PROJECT_NAME})
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_sqlite3/sqlite_wrapper.cpp
