@@ -1,0 +1,27 @@
+rosbag2_bagfile_information:
+  version: 6
+  storage_identifier: mcap
+  duration:
+    nanoseconds: 400000000
+  starting_time:
+    nanoseconds_since_epoch: 1000000000
+  message_count: 5
+  topics_with_message_count:
+    - topic_metadata:
+        name: topic1
+        type: test_msgs/BasicTypes
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 5
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - test_bag_for_seek_0.mcap
+  files:
+    - path: test_bag_for_seek_0.mcap
+      starting_time:
+        nanoseconds_since_epoch: 1000000000
+      duration:
+        nanoseconds: 400000000
+      message_count: 5
+  custom_data: ~

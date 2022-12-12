@@ -265,7 +265,14 @@ if(BUILD_TESTING)
   ament_add_gmock(test_rewrite
     test/rosbag2_transport/test_rewrite.cpp)
   target_link_libraries(test_rewrite ${PROJECT_NAME})
-  ament_target_dependencies(test_rewrite keyboard_handler rcpputils rosbag2_cpp test_msgs)
+  ament_target_dependencies(
+    test_rewrite
+    keyboard_handler
+    rcpputils
+    rosbag2_cpp
+    rosbag2_test_common
+    test_msgs
+  )
 endif()
 
 ament_package()

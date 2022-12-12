@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_storage/default_storage_id.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
@@ -47,17 +47,21 @@ rewriter_b:
     - 50 messages
     - 1 offered QoS Profile
 */
-class TestRewrite : public Test
+class TestRewrite : public Test, public WithParamInterface<std::string>
 {
 public:
   TestRewrite()
   : output_dir_(rcpputils::fs::create_temp_directory("test_bag_rewrite"))
-  {}
+  {
+    storage_id_ = GetParam();
+    bags_path_ = rcpputils::fs::path{_SRC_RESOURCES_DIR_PATH} / storage_id_;
+  }
 
   void use_input_a()
   {
     rosbag2_storage::StorageOptions storage;
     storage.uri = (bags_path_ / "rewriter_a").string();
+    storage.storage_id = storage_id_;
     input_bags_.push_back(storage);
   }
 
@@ -65,6 +69,7 @@ public:
   {
     rosbag2_storage::StorageOptions storage;
     storage.uri = (bags_path_ / "rewriter_b").string();
+    storage.storage_id = storage_id_;
     input_bags_.push_back(storage);
   }
 
@@ -73,19 +78,20 @@ public:
     // rcpputils::fs::remove_all(output_dir_);
   }
 
-  const rcpputils::fs::path bags_path_{_SRC_RESOURCES_DIR_PATH};
   const rcpputils::fs::path output_dir_;
+  rcpputils::fs::path bags_path_{_SRC_RESOURCES_DIR_PATH};
+  std::string storage_id_;
   std::vector<rosbag2_storage::StorageOptions> input_bags_;
   std::vector<std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>>
   output_bags_;
 };
 
-TEST_F(TestRewrite, test_noop_rewrite) {
+TEST_P(TestRewrite, test_noop_rewrite) {
   use_input_a();
 
   rosbag2_storage::StorageOptions output_storage;
   output_storage.uri = (output_dir_ / "unchanged").string();
-  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
+  output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_bags_.push_back({output_storage, output_record});
@@ -100,13 +106,13 @@ TEST_F(TestRewrite, test_noop_rewrite) {
   EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.serialization_format, "cdr");
 }
 
-TEST_F(TestRewrite, test_merge) {
+TEST_P(TestRewrite, test_merge) {
   use_input_a();
   use_input_b();
 
   rosbag2_storage::StorageOptions output_storage;
   output_storage.uri = (output_dir_ / "merged").string();
-  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
+  output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_bags_.push_back({output_storage, output_record});
@@ -132,13 +138,13 @@ TEST_F(TestRewrite, test_merge) {
   }
 }
 
-TEST_F(TestRewrite, test_filter_split) {
+TEST_P(TestRewrite, test_filter_split) {
   use_input_a();
 
   {
     rosbag2_storage::StorageOptions storage_opts;
     storage_opts.uri = (output_dir_ / "split1").string();
-    storage_opts.storage_id = rosbag2_storage::get_default_storage_id();
+    storage_opts.storage_id = storage_id_;
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all = true;
     rec_opts.exclude = "basic";
@@ -147,7 +153,7 @@ TEST_F(TestRewrite, test_filter_split) {
   {
     rosbag2_storage::StorageOptions storage_opts;
     storage_opts.uri = (output_dir_ / "split2").string();
-    storage_opts.storage_id = rosbag2_storage::get_default_storage_id();
+    storage_opts.storage_id = storage_id_;
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all = false;
     rec_opts.topics = {"b_basictypes"};
@@ -176,13 +182,13 @@ TEST_F(TestRewrite, test_filter_split) {
   }
 }
 
-TEST_F(TestRewrite, test_compress) {
+TEST_P(TestRewrite, test_compress) {
   use_input_a();
 
   rosbag2_storage::StorageOptions output_storage;
   auto out_bag = output_dir_ / "compressed";
   output_storage.uri = out_bag.string();
-  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
+  output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_record.compression_mode = "file";
@@ -199,3 +205,9 @@ TEST_F(TestRewrite, test_compress) {
   EXPECT_TRUE(first_storage.exists());
   EXPECT_TRUE(first_storage.is_regular_file());
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedRewriteTests,
+  TestRewrite,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
