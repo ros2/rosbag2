@@ -30,6 +30,7 @@
   <test_depend>rosbag2_compression_zstd</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
+  <test_depend>rosbag2_storage_mcap</test_depend>
   <test_depend>test_msgs</test_depend>
 
   <export>
