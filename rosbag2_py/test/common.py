@@ -29,9 +29,6 @@ from rclpy.duration import Duration  # noqa
 import rosbag2_py  # noqa
 
 
-TESTED_STORAGE_IDS = ['sqlite3', 'mcap']
-
-
 def get_rosbag_options(path, storage_id, serialization_format='cdr'):
     storage_options = rosbag2_py.StorageOptions(
         uri=path, storage_id=storage_id)

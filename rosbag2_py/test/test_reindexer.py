@@ -23,11 +23,12 @@
 import os
 from pathlib import Path
 
-from common import get_rosbag_options, TESTED_STORAGE_IDS
+from common import get_rosbag_options
 
 import pytest
 
 import rosbag2_py
+from rosbag2_test_common import TESTED_STORAGE_IDS
 
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])

@@ -18,10 +18,9 @@ import tempfile
 import unittest
 
 import common  # noqa
-from rosbag2_py import (
-    bag_rewrite,
-    StorageOptions,
-)
+
+from rosbag2_py import bag_rewrite, StorageOptions
+from rosbag2_test_common import TESTED_STORAGE_IDS
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 
@@ -64,7 +63,7 @@ output_bags:
     def test_basic_convert(self):
         # This test is just to test that the rosbag2_py wrapper parses input
         # It is not a comprehensive test of bag_rewrite.
-        for storage_id in common.TESTED_STORAGE_IDS:
+        for storage_id in TESTED_STORAGE_IDS:
             bag_a_path = RESOURCES_PATH / storage_id / 'convert_a'
             bag_b_path = RESOURCES_PATH / storage_id / 'convert_b'
             output_uri_1 = self.tmp_path / storage_id / 'converted_1'

@@ -15,13 +15,14 @@
 import os
 from pathlib import Path
 
-from common import get_rosbag_options, TESTED_STORAGE_IDS
+from common import get_rosbag_options
 
 import pytest
 
 from rcl_interfaces.msg import Log
 from rclpy.serialization import deserialize_message
 import rosbag2_py
+from rosbag2_test_common import TESTED_STORAGE_IDS
 from rosidl_runtime_py.utilities import get_message
 from std_msgs.msg import String
 

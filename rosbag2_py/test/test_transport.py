@@ -16,13 +16,14 @@ import datetime
 from pathlib import Path
 import threading
 
-from common import get_rosbag_options, TESTED_STORAGE_IDS, wait_for
+from common import get_rosbag_options, wait_for
 
 import pytest
 
 import rclpy
 from rclpy.qos import QoSProfile
 import rosbag2_py
+from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
 
 

@@ -26,10 +26,8 @@ import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
 from launch_testing.asserts import EXIT_OK
-
 import pytest
-
-from rosbag2_py import get_registered_writers
+from rosbag2_test_common import TESTED_STORAGE_IDS
 
 
 @pytest.mark.launch_test
@@ -38,10 +36,7 @@ def generate_test_description():
     output_paths = {}
     processes = []
 
-    all_storage_ids = get_registered_writers()
-    assert len(all_storage_ids) > 0
-
-    for storage_id in all_storage_ids:
+    for storage_id in TESTED_STORAGE_IDS:
         output_path = Path(tmp_dir_name) / f'ros2bag_test_record_{storage_id}'
         recorder_process = ExecuteProcess(
             cmd=[
