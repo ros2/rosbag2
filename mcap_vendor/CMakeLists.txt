@@ -47,6 +47,7 @@ macro(build_mcap_vendor)
   )
 
   set(_mcap_include_dir ${mcap_SOURCE_DIR}/cpp/mcap/include)
+  file(GLOB _mcap_installed_headers ${_mcap_include_dir}/mcap/*.hpp)
 
   target_include_directories(mcap PRIVATE
     ${lz4_SOURCE_DIR}/lib
@@ -58,8 +59,8 @@ macro(build_mcap_vendor)
   ament_target_dependencies(mcap zstd)
 
   install(
-    DIRECTORY ${_mcap_include_dir}/mcap
-    DESTINATION include/${PROJECT_NAME}
+    FILES ${_mcap_installed_headers}
+    DESTINATION include/${PROJECT_NAME}/mcap
   )
 
   install(
