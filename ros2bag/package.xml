@@ -23,6 +23,9 @@
   <test_depend>launch_testing_ros</test_depend>
   <test_depend>python3-pytest</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
+  <!-- TODO: remove dependency when rosbag2_storage_default_plugins depends on MCAP -->
+  <test_depend>rosbag2_storage_mcap</test_depend>
+  <test_depend>rosbag2_test_common</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

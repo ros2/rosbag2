@@ -29,9 +29,9 @@ from rclpy.duration import Duration  # noqa
 import rosbag2_py  # noqa
 
 
-def get_rosbag_options(path, serialization_format='cdr'):
+def get_rosbag_options(path, storage_id, serialization_format='cdr'):
     storage_options = rosbag2_py.StorageOptions(
-        uri=path, storage_id=rosbag2_py.get_default_storage_id())
+        uri=path, storage_id=storage_id)
 
     converter_options = rosbag2_py.ConverterOptions(
         input_serialization_format=serialization_format,

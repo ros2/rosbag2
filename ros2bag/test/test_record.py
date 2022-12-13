@@ -29,13 +29,16 @@ from launch_testing.asserts import EXIT_OK
 
 import pytest
 
+from rosbag2_test_common import TESTED_STORAGE_IDS
+
 
 @pytest.mark.launch_test
-def generate_test_description():
+@launch_testing.parametrize('storage_id', TESTED_STORAGE_IDS)
+def generate_test_description(storage_id):
     tmp_dir_name = tempfile.mkdtemp()
     output_path = Path(tmp_dir_name) / 'ros2bag_test_record'
     record_all_process = ExecuteProcess(
-        cmd=['ros2', 'bag', 'record', '-a', '--output', output_path.as_posix()],
+        cmd=['ros2', 'bag', 'record', '-a', '-s', storage_id, '--output', output_path.as_posix()],
         name='ros2bag-cli',
         output='screen',
     )

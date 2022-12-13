@@ -1,0 +1,65 @@
+rosbag2_bagfile_information:
+  compression_format: ''
+  compression_mode: ''
+  duration:
+    nanoseconds: 411
+  message_count: 6074
+  relative_file_paths:
+  - wbag_0.mcap
+  - wbag_1.mcap
+  - wbag_2.mcap
+  - wbag_3.mcap
+  - wbag_4.mcap
+  starting_time:
+    nanoseconds_since_epoch: 2623
+  storage_identifier: mcap
+  topics_with_message_count:
+  - message_count: 726
+    topic_metadata:
+      name: HHH
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 731
+    topic_metadata:
+      name: GGG
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 772
+    topic_metadata:
+      name: FFF
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 804
+    topic_metadata:
+      name: EEE
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 742
+    topic_metadata:
+      name: CCC
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 753
+    topic_metadata:
+      name: DDD
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 742
+    topic_metadata:
+      name: BBB
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  - message_count: 804
+    topic_metadata:
+      name: AAA
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: std_msgs/msg/String
+  version: 4

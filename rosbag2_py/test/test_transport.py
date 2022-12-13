@@ -17,9 +17,13 @@ from pathlib import Path
 import threading
 
 from common import get_rosbag_options, wait_for
+
+import pytest
+
 import rclpy
 from rclpy.qos import QoSProfile
 import rosbag2_py
+from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
 
 
@@ -38,9 +42,10 @@ def test_options_qos_conversion():
     assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
-def test_record_cancel(tmp_path):
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_record_cancel(tmp_path, storage_id):
     bag_path = str(tmp_path / 'test_record_cancel')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     recorder = rosbag2_py.Recorder()
 
@@ -49,15 +54,16 @@ def test_record_cancel(tmp_path):
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
-    rclpy.init()
+    ctx = rclpy.Context()
+    ctx.init()
     record_thread = threading.Thread(
         target=recorder.record,
         args=(storage_options, record_options),
         daemon=True)
     record_thread.start()
 
-    node = rclpy.create_node('test_record_cancel')
-    executor = rclpy.executors.SingleThreadedExecutor()
+    node = rclpy.create_node('test_record_cancel', context=ctx)
+    executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
     executor.add_node(node)
     pub = node.create_publisher(String, 'chatter', 10)
 
