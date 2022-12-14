@@ -32,6 +32,8 @@
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -41,22 +43,10 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-const std::unordered_map<std::string, std::string> storage_plugins_to_extension {
-  {"sqlite3", ".db3"}
-};
 
-class RecordFixture : public TestWithParam<std::string>
+class RecordFixture : public ParametrizedTemporaryDirectoryFixture
 {
 public:
-  RecordFixture()
-  {
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
-  }
-
-  ~RecordFixture() override
-  {
-    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
-  }
 
   void SetUp() override
   {
@@ -113,8 +103,8 @@ public:
   rcpputils::fs::path get_relative_bag_file_path(int split_index)
   {
     const auto storage_id = GetParam();
-    const auto extension = storage_plugins_to_extension.at(storage_id);
-    return rcpputils::fs::path(get_bag_file_name(split_index) + extension);
+    return rcpputils::fs::path(rosbag2_test_common::bag_filename_for_storage_id(
+      get_bag_file_name(split_index), storage_id));
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const

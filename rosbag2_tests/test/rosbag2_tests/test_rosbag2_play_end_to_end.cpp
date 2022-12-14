@@ -34,7 +34,7 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class PlayEndToEndTestFixture : public Test
+class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::string>
 {
 public:
   PlayEndToEndTestFixture()

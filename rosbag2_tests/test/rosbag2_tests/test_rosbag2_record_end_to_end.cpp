@@ -668,4 +668,5 @@ TEST_P(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
 INSTANTIATE_TEST_SUITE_P(
   TestRecordEndToEnd,
   RecordFixture,
-  ::testing::Values(std::string("sqlite3")));
+  ::testing::ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
