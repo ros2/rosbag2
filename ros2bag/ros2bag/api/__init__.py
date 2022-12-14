@@ -140,14 +140,14 @@ def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
         default=rosbag2_py.get_default_storage_id(),
         choices=plugin_choices,
         help='Storage implementation of bag. '
-            'By default attempts to detect automatically - use this argument to override.')
+             'By default attempts to detect automatically - use this argument to override.')
     storage_parsed_args, _ = storage_parser.parse_known_args()
     plugin_id = storage_parsed_args.storage
 
     if plugin_id not in plugin_choices:
         raise ValueError(f'No storage plugin found with ID {plugin_id}')
 
-    pkg_name = f'rosbag2_storage_{plugin_id}'
+    pkg_name = rosbag2_py.get_package_for_registered_writer(plugin_id)
     try:
         storage_plugin = import_module(pkg_name)
     except ModuleNotFoundError:
@@ -164,7 +164,7 @@ def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
         '--compression-mode', type=str,
         default=default_compression_mode,
         choices=compression_modes,
-        help="Choose mode of compression for the storage. Default: %(default)s")
+        help='Choose mode of compression for the storage. Default: %(default)s')
 
     compression_formats = extension.get_compression_formats()
     if not compression_formats:
@@ -191,4 +191,4 @@ def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--storage-config-file', type=FileType('r'),
         help='Path to a yaml file defining storage specific configurations. '
-                'See storage plugin documentation for the format of this file.')
+             'See storage plugin documentation for the format of this file.')

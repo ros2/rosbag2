@@ -40,6 +40,7 @@ with add_dll_directories_from_env('PATH'):
         SequentialCompressionWriter,
         SequentialWriter,
         get_registered_writers,
+        get_package_for_registered_writer,
         get_registered_compressors,
         get_registered_serializers,
     )
@@ -64,6 +65,7 @@ __all__ = [
     'get_default_storage_id',
     'get_registered_readers',
     'get_registered_writers',
+    'get_package_for_registered_writer',
     'get_registered_compressors',
     'get_registered_serializers',
     'ReadOrder',
