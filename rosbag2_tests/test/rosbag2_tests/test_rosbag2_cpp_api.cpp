@@ -30,9 +30,16 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
+#include "rosbag2_test_common/tested_storage_ids.hpp"
+
 #include "test_msgs/msg/basic_types.hpp"
 
-TEST(TestRosbag2CPPAPI, minimal_writer_example)
+using namespace ::testing;  // NOLINT
+
+class TestRosbag2CPPAPI : public Test, public WithParamInterface<std::string>
+{};
+
+TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
 {
   using TestMsgT = test_msgs::msg::BasicTypes;
   TestMsgT test_msg;
@@ -48,7 +55,10 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
   {
     rosbag2_cpp::Writer writer;
-    writer.open(rosbag_directory.string());
+    rosbag2_storage::StorageOptions storage_options;
+    storage_options.storage_id = GetParam();
+    storage_options.uri = rosbag_directory.string();
+    writer.open(storage_options);
 
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     auto ret = rcutils_system_time_now(&bag_message->time_stamp);
@@ -129,3 +139,9 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   // remove the rosbag again after the test
   EXPECT_TRUE(rcpputils::fs::remove_all(rosbag_directory));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedRosbag2CPPAPITests,
+  TestRosbag2CPPAPI,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
