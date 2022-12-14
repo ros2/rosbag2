@@ -71,11 +71,10 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   pub_manager.setup_publisher(topic_name, message, expected_test_messages);
 
   std::stringstream cmd;
-  cmd << "ros2 bag record" <<
+  cmd << get_base_record_command() <<
     " --compression-mode file" <<
     " --compression-format " << compression_format <<
     " --max-cache-size 0" <<
-    " --output " << root_bag_path_.string() <<
     " " << topic_name;
 
   auto process_handle = start_execution(cmd.str());
@@ -134,7 +133,7 @@ TEST_P(RecordFixture, record_end_to_end_test) {
   pub_manager.setup_publisher("/unrecorded_topic", unrecorded_message, 3);
 
   auto process_handle = start_execution(
-    "ros2 bag record --max-cache-size 0 --output " + root_bag_path_.string() + " /test_topic");
+    get_base_record_command() + " --max-cache-size 0 /test_topic");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
@@ -176,8 +175,7 @@ TEST_P(RecordFixture, record_end_to_end_test_start_paused) {
   pub_manager.setup_publisher("/test_topic", message, 10);
 
   auto process_handle = start_execution(
-    "ros2 bag record --max-cache-size 0 --output " + root_bag_path_.string() +
-    " --start-paused /test_topic");
+    get_base_record_command() + " --max-cache-size 0 --start-paused /test_topic");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
@@ -206,7 +204,7 @@ TEST_P(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(topic_name, message, 10);
   auto process_handle = start_execution(
-    "ros2 bag record --output " + root_bag_path_.string() + " " + topic_name);
+    get_base_record_command() + " " + topic_name);
   wait_for_storage_file();
   pub_manager.run_publishers();
   stop_execution(process_handle, SIGTERM);
@@ -233,8 +231,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
   pub_manager.setup_publisher(second_topic_name, message, message_batch_size);
 
   std::stringstream command;
-  command << "ros2 bag record" <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " -a";
   auto process_handle = start_execution(command.str());
@@ -287,8 +284,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   pub_manager.setup_publisher(topic_name, message, message_count);
 
   std::stringstream command;
-  command << "ros2 bag record " <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " " << topic_name;
   auto process_handle = start_execution(command.str());
@@ -343,8 +339,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   pub_manager.setup_publisher(topic_name, message, message_count);
 
   std::stringstream command;
-  command << "ros2 bag record " <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " " << topic_name;
   auto process_handle = start_execution(command.str());
@@ -394,8 +389,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   pub_manager.setup_publisher(topic_name, message, message_count);
 
   std::stringstream command;
-  command << "ros2 bag record" <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " " << topic_name;
   auto process_handle = start_execution(command.str());
@@ -442,8 +436,7 @@ TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   pub_manager.setup_publisher(topic_name, message, message_count);
 
   std::stringstream command;
-  command << "ros2 bag record" <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " -d " << bagfile_split_duration <<
     " " << topic_name;
   auto process_handle = start_execution(command.str());
@@ -487,8 +480,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   pub_manager.setup_publisher(topic_name, message, message_count);
 
   std::stringstream command;
-  command << "ros2 bag record" <<
-    " --output " << root_bag_path_.string() <<
+  command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " --compression-mode file" <<
     " --compression-format zstd"
@@ -529,8 +521,8 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   auto bag_path = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
 
   internal::CaptureStderr();
-  auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record --output cdr_test -a", bag_path);
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag record --output cdr_test -a --storage " + GetParam(), bag_path);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
@@ -539,8 +531,8 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
 
 TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
   internal::CaptureStderr();
-  auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record -a /some_topic", temporary_dir_path_);
+  auto exit_code = execute_and_wait_until_completion(
+    get_base_record_command() + " -a /some_topic", temporary_dir_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
@@ -550,7 +542,7 @@ TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
 TEST_P(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
   internal::CaptureStderr();
   auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record", temporary_dir_path_);
+    execute_and_wait_until_completion(get_base_record_command(), temporary_dir_path_);
   auto output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
@@ -559,8 +551,8 @@ TEST_P(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) 
 
 TEST_P(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_not_exist) {
   internal::CaptureStderr();
-  auto exit_code =
-    execute_and_wait_until_completion("ros2 bag record -a -f some_rmw", temporary_dir_path_);
+  auto exit_code = execute_and_wait_until_completion(
+    get_base_record_command() + " -a -f some_rmw", temporary_dir_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Ne(EXIT_SUCCESS));
@@ -580,7 +572,8 @@ TEST_P(RecordFixture, record_end_to_end_test_with_cache) {
   pub_manager.setup_publisher(topic_name, message, expected_test_messages);
 
   auto process_handle = start_execution(
-    "ros2 bag record --output " + root_bag_path_.string() + " " + topic_name + " " +
+    get_base_record_command() +
+    " " + topic_name + " " +
     "--max-cache-size " + std::to_string(max_cache_size));
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
@@ -619,8 +612,7 @@ TEST_P(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   pub_manager.setup_publisher(second_topic_name, message, message_batch_size);
 
   std::stringstream command_record;
-  command_record << "ros2 bag record" <<
-    " --output " << root_bag_path_.string() <<
+  command_record << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
     " -a";
   auto process_handle = start_execution(command_record.str());
