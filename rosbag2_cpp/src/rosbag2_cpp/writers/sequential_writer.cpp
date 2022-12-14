@@ -169,7 +169,6 @@ void SequentialWriter::close()
   if (storage_) {
     auto info = std::make_shared<bag_events::BagSplitInfo>();
     info->closed_file = storage_->get_relative_file_path();
-    std::cout << "Closed file " << info->closed_file << std::endl;
     callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
   }
 
