@@ -97,6 +97,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void pause();
 
+  /// Stop the recording.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop();
+
   /// Resume recording.
   ROSBAG2_TRANSPORT_PUBLIC
   void resume();

@@ -30,6 +30,7 @@
 #include "rosbag2_cpp/logging.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
+#include <iostream>
 
 namespace rosbag2_cpp
 {
@@ -159,6 +160,13 @@ void SequentialWriter::close()
   if (!base_folder_.empty()) {
     finalize_metadata();
     metadata_io_->write_metadata(base_folder_, metadata_);
+  }
+
+  if (storage_) {
+    auto info = std::make_shared<bag_events::BagSplitInfo>();
+    info->closed_file = storage_->get_relative_file_path();
+    std::cout << "Closed file " << info->closed_file << std::endl;
+    callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
   }
 
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory

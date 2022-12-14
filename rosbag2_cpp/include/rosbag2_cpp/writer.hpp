@@ -88,6 +88,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const ConverterOptions & converter_options = ConverterOptions());
 
+  void close();
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
    * a message which is passed to write(...).

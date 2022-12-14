@@ -124,6 +124,10 @@ Recorder::~Recorder()
   }
 }
 
+void Recorder::stop() {
+  writer_->close();
+}
+
 void Recorder::record()
 {
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
@@ -158,6 +162,7 @@ void Recorder::record()
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
       {
+        RCLCPP_INFO(get_logger(), "Event publisher thread: Trigger");
         std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
         bag_split_info_ = info;
         write_split_has_occurred_ = true;
@@ -194,6 +199,7 @@ void Recorder::event_publisher_thread_main()
       auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = bag_split_info_.closed_file;
       message.opened_file = bag_split_info_.opened_file;
+      RCLCPP_INFO(get_logger(), "Event publisher thread: Publish");
       split_event_pub_->publish(message);
     }
 
