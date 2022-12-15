@@ -189,6 +189,7 @@ void Reindexer::aggregate_metadata(
     rosbag2_cpp::ConverterOptions blank_converter_options {};
     bag_reader->open(temp_so, blank_converter_options);
     auto temp_metadata = bag_reader->get_metadata();
+    metadata_.storage_identifier = temp_metadata.storage_identifier;
 
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
