@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}
   rcpputils::rcpputils
   rcutils::rcutils
   SQLite::SQLite3
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
 )
 
 target_include_directories(${PROJECT_NAME}

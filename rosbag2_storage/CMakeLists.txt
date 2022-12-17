@@ -44,7 +44,7 @@ target_link_libraries(${PROJECT_NAME}
   pluginlib::pluginlib
   rcpputils::rcpputils
   rcutils::rcutils
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,

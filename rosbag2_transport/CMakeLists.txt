@@ -63,7 +63,7 @@ target_link_libraries(${PROJECT_NAME}
   rosbag2_storage::rosbag2_storage
   shared_queues_vendor::singleproducerconsumer
   shared_queues_vendor::concurrentqueue
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,

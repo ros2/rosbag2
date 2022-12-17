@@ -48,7 +48,7 @@ target_link_libraries(writer_benchmark
   rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
 )
 
 target_link_libraries(benchmark_publishers
@@ -56,7 +56,7 @@ target_link_libraries(benchmark_publishers
   rosbag2_storage::rosbag2_storage
   ${rosbag2_performance_benchmarking_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
-  yaml-cpp::yaml-cpp
+  yaml-cpp
 )
 
 target_link_libraries(results_writer
