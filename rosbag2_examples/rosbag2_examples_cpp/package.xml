@@ -4,7 +4,9 @@
   <name>rosbag2_examples_cpp</name>
   <version>0.18.0</version>
   <description>rosbag2 C++ API tutorials and examples</description>
+  <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="gbiggs@killbots.net">geoff</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
