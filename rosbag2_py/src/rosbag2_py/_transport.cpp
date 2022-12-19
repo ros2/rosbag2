@@ -190,7 +190,8 @@ public:
 class Recorder
 {
 private:
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  static std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  static std::shared_ptr<rosbag2_transport::Recorder> recorder_;
 
 public:
   Recorder()
@@ -199,7 +200,8 @@ public:
     exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     std::signal(
       SIGTERM, [](int /* signal */) {
-        rclcpp::shutdown();
+        if (exec_) {exec_->cancel();}
+        if (recorder_) {recorder_->stop();}
       });
   }
 
@@ -218,11 +220,11 @@ public:
     }
 
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
-    recorder->record();
+    recorder_->record();
 
-    exec_->add_node(recorder);
+    exec_->add_node(recorder_);
     // Release the GIL for long-running record, so that calling Python code can use other threads
     {
       py::gil_scoped_release release;
@@ -235,6 +237,9 @@ public:
     exec_->cancel();
   }
 };
+
+std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> Recorder::exec_;
+std::shared_ptr<rosbag2_transport::Recorder> Recorder::recorder_;
 
 // Return a RecordOptions struct with defaults set for rewriting bags.
 rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
