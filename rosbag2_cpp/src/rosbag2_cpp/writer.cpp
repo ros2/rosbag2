@@ -65,8 +65,9 @@ void Writer::open(
   writer_impl_->open(storage_options, converter_options);
 }
 
-void Writer::close() {
- writer_impl_->close();
+void Writer::close()
+{
+  writer_impl_->close();
 }
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {

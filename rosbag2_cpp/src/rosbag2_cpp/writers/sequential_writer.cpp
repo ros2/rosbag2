@@ -31,7 +31,6 @@
 
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_options.hpp"
-#include <iostream>
 
 namespace rosbag2_cpp
 {
