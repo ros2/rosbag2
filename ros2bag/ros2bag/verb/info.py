@@ -23,7 +23,7 @@ class InfoVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         add_standard_reader_args(parser)
         parser.add_argument(
-            '-q', '--quiet', action='store_true',
+            '-t', '--topic_name', action='store_true',
             help='Only display topic names.'
         )
 
