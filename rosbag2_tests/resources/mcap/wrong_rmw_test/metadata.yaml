@@ -1,0 +1,33 @@
+rosbag2_bagfile_information:
+  version: 6
+  storage_identifier: mcap
+  duration:
+    nanoseconds: 151137181
+  starting_time:
+    nanoseconds_since_epoch: 1586406456763032325
+  message_count: 7
+  topics_with_message_count:
+    - topic_metadata:
+        name: /array_topic
+        type: test_msgs/msg/Arrays
+        serialization_format: wrong_format
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 0\n    nsec: 0\n  lifespan:\n    sec: 0\n    nsec: 0\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 0\n    nsec: 0\n  avoid_ros_namespace_conventions: false"
+      message_count: 4
+    - topic_metadata:
+        name: /test_topic
+        type: test_msgs/msg/BasicTypes
+        serialization_format: wrong_format
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 0\n    nsec: 0\n  lifespan:\n    sec: 0\n    nsec: 0\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 0\n    nsec: 0\n  avoid_ros_namespace_conventions: false"
+      message_count: 3
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - wrong_rmw_test_0.mcap
+  files:
+    - path: wrong_rmw_test_0.mcap
+      starting_time:
+        nanoseconds_since_epoch: 1586406456763032325
+      duration:
+        nanoseconds: 151137181
+      message_count: 7
+  custom_data: ~
