@@ -522,11 +522,11 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
 
   internal::CaptureStderr();
   auto exit_code = execute_and_wait_until_completion(
-    "ros2 bag record --output cdr_test -a --storage " + GetParam(), bag_path);
+    "ros2 bag record --output empty_dir -a --storage " + GetParam(), bag_path);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(error_output, HasSubstr("Output folder 'cdr_test' already exists"));
+  EXPECT_THAT(error_output, HasSubstr("Output folder 'empty_dir' already exists"));
 }
 
 TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
