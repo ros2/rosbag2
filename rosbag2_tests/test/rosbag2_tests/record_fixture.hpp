@@ -32,6 +32,8 @@
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -41,26 +43,14 @@ using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-const std::unordered_map<std::string, std::string> storage_plugins_to_extension {
-  {"sqlite3", ".db3"}
-};
 
-class RecordFixture : public TestWithParam<std::string>
+class RecordFixture : public ParametrizedTemporaryDirectoryFixture
 {
 public:
-  RecordFixture()
-  {
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
-  }
-
-  ~RecordFixture() override
-  {
-    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
-  }
-
   void SetUp() override
   {
-    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / get_test_name();
+    auto bag_name = get_test_name() + "_" + GetParam();
+    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / bag_name;
 
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
@@ -83,6 +73,11 @@ public:
     rclcpp::shutdown();
   }
 
+  std::string get_base_record_command() const
+  {
+    return "ros2 bag record --storage " + GetParam() + " --output " + root_bag_path_.string();
+  }
+
   std::string get_test_name() const
   {
     const auto * test_info = UnitTest::GetInstance()->current_test_info();
@@ -95,7 +90,7 @@ public:
   std::string get_bag_file_name(int split_index) const
   {
     std::stringstream bag_file_name;
-    bag_file_name << get_test_name() << "_" << split_index;
+    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
 
     return bag_file_name.str();
   }
@@ -113,8 +108,9 @@ public:
   rcpputils::fs::path get_relative_bag_file_path(int split_index)
   {
     const auto storage_id = GetParam();
-    const auto extension = storage_plugins_to_extension.at(storage_id);
-    return rcpputils::fs::path(get_bag_file_name(split_index) + extension);
+    return rcpputils::fs::path(
+      rosbag2_test_common::bag_filename_for_storage_id(
+        get_bag_file_name(split_index), storage_id));
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
@@ -223,7 +219,6 @@ public:
   #endif
   }
 
-  std::string temporary_dir_path_;
   // relative path to the root of the bag file.
   rcpputils::fs::path root_bag_path_;
 

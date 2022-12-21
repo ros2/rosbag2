@@ -42,7 +42,8 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_rosbag2_record_end_to_end
     test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    TIMEOUT 120)
   if(TARGET test_rosbag2_record_end_to_end)
     ament_target_dependencies(test_rosbag2_record_end_to_end
       rclcpp
@@ -96,7 +97,8 @@ if(BUILD_TESTING)
       rosbag2_cpp
       rosbag2_storage
       rosbag2_storage_default_plugins
-      rosbag2_test_common)
+      rosbag2_test_common
+      std_msgs)
   endif()
 
 

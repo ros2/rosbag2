@@ -24,8 +24,9 @@
 // rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
+#include "rosbag2_test_common/subscription_manager.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -34,12 +35,13 @@
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class PlayEndToEndTestFixture : public Test
+class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::string>
 {
 public:
   PlayEndToEndTestFixture()
   {
-    bags_path_ = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
+    // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
+    bags_path_ = (rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).string();
     sub_ = std::make_unique<SubscriptionManager>();
   }
 
@@ -58,7 +60,7 @@ public:
 };
 
 #ifndef _WIN32
-TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
+TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
 
@@ -96,7 +98,7 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_test) {
 }
 #endif
 
-TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
+TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
     execute_and_wait_until_completion("ros2 bag play does_not_exist", bags_path_);
@@ -107,7 +109,7 @@ TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
   EXPECT_THAT(error_output, HasSubstr("'does_not_exist' does not exist"));
 }
 
-TEST_F(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_does_not_exist) {
+TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_does_not_exist) {
   internal::CaptureStderr();
   auto exit_code =
     execute_and_wait_until_completion("ros2 bag play wrong_rmw_test", bags_path_);
@@ -211,7 +213,7 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 */
 
 #ifndef _WIN32
-TEST_F(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
+TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
 
@@ -233,3 +235,9 @@ TEST_F(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
   cleanup_process_handle.cancel();
 }
 #endif  // #ifndef _WIN32
+
+INSTANTIATE_TEST_SUITE_P(
+  TestPlayEndToEnd,
+  PlayEndToEndTestFixture,
+  ::testing::ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

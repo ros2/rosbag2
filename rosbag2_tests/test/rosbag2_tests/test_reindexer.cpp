@@ -28,48 +28,106 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
 #include "rcpputils/asserts.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reindexer.hpp"
+#include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
-using namespace testing;  // NOLINT
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
-class ReindexTestFixture : public Test
+#include "std_msgs/msg/string.hpp"
+
+using namespace testing;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
+
+
+class ReindexTestFixture : public ParametrizedTemporaryDirectoryFixture
 {
 public:
-  ReindexTestFixture()
+  void SetUp() override
   {
-    bags_path = rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / "reindex_test_bags";
-    target_dir = bags_path / "target_metadata";
+    auto bag_name = get_test_name() + "_" + GetParam();
+    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / bag_name;
   }
 
-  rcpputils::fs::path bags_path;
-  rcpputils::fs::path target_dir;
+  void TearDown() override
+  {
+    rcpputils::fs::remove_all(root_bag_path_);
+  }
+
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+    std::string test_name = test_info->name();
+    // Replace any slashes in the test name, since it is used in paths
+    std::replace(test_name.begin(), test_name.end(), '/', '_');
+    return test_name;
+  }
+
+  void create_test_bag(int messages_per_file, int num_files)
+  {
+    {
+      rosbag2_cpp::Writer writer;
+      rosbag2_storage::StorageOptions storage_options;
+      storage_options.storage_id = GetParam();
+      storage_options.uri = root_bag_path_.string();
+      writer.open(storage_options);
+      rosbag2_storage::TopicMetadata topic;
+      topic.name = "/test_topic";
+      topic.type = "std_msgs/msg/String";
+      writer.create_topic(topic);
+
+      std_msgs::msg::String msg;
+      rclcpp::Time stamp;
+      auto dt = rclcpp::Duration::from_nanoseconds(10 * 1000 * 1000);
+
+      for (int file_i = 0; file_i < num_files; file_i++) {
+        for (int msg_i = 0; msg_i < messages_per_file; msg_i++) {
+          std::stringstream ss;
+          ss << "file" << file_i << "msg" << msg_i;
+          msg.data = ss.str();
+          writer.write(msg, topic.name, stamp);
+          stamp += dt;
+        }
+        writer.split_bagfile();
+      }
+    }
+
+    rosbag2_storage::MetadataIo metadata_io;
+    original_metadata_ = metadata_io.read_metadata(root_bag_path_.string());
+    rcpputils::fs::remove(root_bag_path_ / "metadata.yaml");
+  }
+
+  rcpputils::fs::path root_bag_path_;
+  rosbag2_storage::BagMetadata original_metadata_;
 };
 
-TEST_F(ReindexTestFixture, test_multiple_files) {
-  auto bag_dir = bags_path / "multiple_files";
-  std::unique_ptr<rosbag2_cpp::Reindexer> reindexer =
-    std::make_unique<rosbag2_cpp::Reindexer>();
+TEST_P(ReindexTestFixture, test_multiple_files) {
+  create_test_bag(16, 3);
 
-  rosbag2_storage::StorageOptions storage_options = rosbag2_storage::StorageOptions();
-  storage_options.uri = bag_dir.string();
+  rosbag2_storage::MetadataIo metadata_io{};
+  rosbag2_cpp::Reindexer reindexer{};
 
-  reindexer->reindex(storage_options);
 
-  auto generated_file = rcpputils::fs::path(bag_dir) / "metadata.yaml";
-  EXPECT_TRUE(generated_file.exists());
+  rosbag2_storage::StorageOptions storage_options{};
+  storage_options.uri = root_bag_path_.string();
 
-  auto metadata_io = std::make_unique<rosbag2_storage::MetadataIo>();
-  auto generated_metadata = metadata_io->read_metadata(bag_dir.string());
-  auto target_metadata = metadata_io->read_metadata((target_dir / "multiple_files").string());
+  ASSERT_FALSE(metadata_io.metadata_file_exists(root_bag_path_.string()));
+  reindexer.reindex(storage_options);
+  ASSERT_TRUE(metadata_io.metadata_file_exists(root_bag_path_.string()));
 
+  auto generated_metadata = metadata_io.read_metadata(root_bag_path_.string());
+  auto target_metadata = original_metadata_;
+
+  EXPECT_EQ(generated_metadata.storage_identifier, GetParam());
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
 
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
@@ -79,13 +137,6 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
         target_metadata.relative_file_paths.end(),
         gen_rel_path) != target_metadata.relative_file_paths.end());
   }
-
-  // Disabled for now, since it may not be possible to 100% recreate
-  //   original starting time from metadata
-  // EXPECT_EQ(generated_metadata.starting_time, target_metadata.starting_time);
-
-  // Disabled for now, since I'm not sure how duration is created, and if it's correct (jhdcs)
-  // EXPECT_EQ(generated_metadata.duration, target_metadata.duration);
 
   EXPECT_EQ(generated_metadata.message_count, target_metadata.message_count);
 
@@ -105,8 +156,10 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
       ) != target_metadata.topics_with_message_count.end()
     );
   }
-
-  if (generated_file.exists()) {
-    remove(generated_file);
-  }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedReindexerTests,
+  ReindexTestFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
