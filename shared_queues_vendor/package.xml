@@ -4,6 +4,7 @@
   <name>shared_queues_vendor</name>
   <version>0.18.0</version>
   <description>Vendor package for concurrent queues from moodycamel</description>
+  <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
   <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
