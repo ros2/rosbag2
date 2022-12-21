@@ -30,8 +30,8 @@ Files:             empty_bag_0.db3
 Bag size:          49.1 KiB
 Storage id:        sqlite3
 Duration:          0.0s
-Start:             Apr 12 2262 08:47:16.854 (9223372036.854)
-End:               Apr 12 2262 08:47:16.854 (9223372036.854)
+Start:             Apr 11 2262 23:47:16.854 (9223372036.854)
+End:               Apr 11 2262 23:47:16.854 (9223372036.854)
 Messages:          0
 Topic information: Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent \
 | Count: 0 | Serialization Format: cdr
