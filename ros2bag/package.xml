@@ -6,6 +6,7 @@
   <description>
     Entry point for rosbag in ROS 2
   </description>
+  <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
   <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
