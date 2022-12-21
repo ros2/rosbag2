@@ -58,7 +58,10 @@ class TestRos2BagInfo(unittest.TestCase):
         def launch_bag_command(self, arguments, **kwargs):
             pkg_command_action = ExecuteProcess(
                 cmd=['ros2', 'bag', *arguments],
-                additional_env={'PYTHONUNBUFFERED': '1'},
+                additional_env={
+                    'PYTHONUNBUFFERED': '1',
+                    'TZ': 'UTC',
+                },
                 name='ros2bag-cli',
                 output='screen',
                 **kwargs
