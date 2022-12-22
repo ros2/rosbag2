@@ -73,15 +73,6 @@ class TestRos2BagInfo(unittest.TestCase):
                 yield pkg_command
         cls.launch_bag_command = launch_bag_command
 
-    def test_info_with_no_options(self):
-        """Test the output with no options."""
-        bag_path = RESOURCES_PATH / 'empty_bag'
-        arguments = ['info', bag_path.as_posix()]
-        with self.launch_bag_command(arguments=arguments) as bag_command:
-            bag_command.wait_for_shutdown(timeout=5)
-        assert normalize_lineseps(bag_command.output) == EXPECTED_OUTPUT, \
-            'ros2bag CLI did not produce the expected output'
-
     def test_info_with_topic_name_option(self):
         """Test the output with --topic-name options."""
         bag_path = RESOURCES_PATH / 'empty_bag'
