@@ -20,6 +20,7 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 import launch_testing
 import launch_testing.actions
+from launch_testing.tools.text import normalize_lineseps
 
 import pytest
 
@@ -78,7 +79,7 @@ class TestRos2BagInfo(unittest.TestCase):
         arguments = ['info', bag_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_shutdown(timeout=5)
-        assert bag_command.output == EXPECTED_OUTPUT, \
+        assert normalize_lineseps(bag_command.output) == EXPECTED_OUTPUT, \
             'ros2bag CLI did not produce the expected output'
 
     def test_info_with_topic_name_option(self):
@@ -87,5 +88,5 @@ class TestRos2BagInfo(unittest.TestCase):
         arguments = ['info', '--topic-name', bag_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_shutdown(timeout=5)
-        assert bag_command.output == EXPECTED_TOPIC_NAME_OUTPUT, \
+        assert normalize_lineseps(bag_command.output) == EXPECTED_TOPIC_NAME_OUTPUT, \
             'ros2bag CLI did not produce the expected output'
