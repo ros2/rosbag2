@@ -26,21 +26,7 @@ import pytest
 
 
 RESOURCES_PATH = Path(__file__).parent / 'resources'
-EXPECTED_OUTPUT = """
-Files:             empty_bag_0.db3
-Bag size:          49.1 KiB
-Storage id:        sqlite3
-Duration:          0.0s
-Start:             Apr 11 2262 23:47:16.854 (9223372036.854)
-End:               Apr 11 2262 23:47:16.854 (9223372036.854)
-Messages:          0
-Topic information: Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent \
-| Count: 0 | Serialization Format: cdr
-                   Topic: /rosout | Type: rcl_interfaces/msg/Log \
-| Count: 0 | Serialization Format: cdr
-
-"""
-EXPECTED_TOPIC_NAME_OUTPUT = """/parameter_events
+EXPECTED_OUTPUT = """/parameter_events
 /rosout
 """
 
@@ -79,5 +65,5 @@ class TestRos2BagInfo(unittest.TestCase):
         arguments = ['info', '--topic-name', bag_path.as_posix()]
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_shutdown(timeout=5)
-        assert normalize_lineseps(bag_command.output) == EXPECTED_TOPIC_NAME_OUTPUT, \
+        assert normalize_lineseps(bag_command.output) == EXPECTED_OUTPUT, \
             'ros2bag CLI did not produce the expected output'
