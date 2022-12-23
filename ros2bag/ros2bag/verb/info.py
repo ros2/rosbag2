@@ -22,7 +22,15 @@ class InfoVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         add_standard_reader_args(parser)
+        parser.add_argument(
+            '-t', '--topic-name', action='store_true',
+            help='Only display topic names.'
+        )
 
     def main(self, *, args):  # noqa: D102
         m = Info().read_metadata(args.bag_path, args.storage)
-        print(m)
+        if args.topic_name:
+            for topic_info in m.topics_with_message_count:
+                print(topic_info.topic_metadata.name)
+        else:
+            print(m)
