@@ -119,8 +119,8 @@ Storage configuration can be specified in a YAML file passed through the `--stor
 This can be used to optimize performance for specific use cases.
 
 See storage plugin documentation for more detail:
-* [sqlite3](rosbag2_storage_sqlite3/README.md#storage-configuration-file)
 * [mcap](rosbag2_storage_mcap/README.md#writer-configuration)
+* [sqlite3](rosbag2_storage_sqlite3/README.md#storage-configuration-file)
 
 
 ### Replaying data
@@ -320,7 +320,7 @@ $ ros2 launch record_all.launch.xml
 Looking at the output of the `ros2 bag info` command, we can see a field `Storage id:`.
 Rosbag2 was designed to support multiple storage formats to adapt to individual use cases.
 This repository provides two storage plugins, `mcap` and `sqlite3`.
-The default is `sqlite3`, which is provided to code by [`rosbag2_storage::get_default_storage_id()`](rosbag2_storage/include/rosbag2_storage/default_storage_id.hpp) and defined in [`default_storage_id.cpp`](rosbag2_storage/src/rosbag2_storage/default_storage_id.cpp#L21)
+The default is `mcap`, which is provided to code by [`rosbag2_storage::get_default_storage_id()`](rosbag2_storage/include/rosbag2_storage/default_storage_id.hpp) and defined in [`default_storage_id.cpp`](rosbag2_storage/src/rosbag2_storage/default_storage_id.cpp#L21)
 
 If not specified otherwise, rosbag2 will write data using the default plugin.
 
