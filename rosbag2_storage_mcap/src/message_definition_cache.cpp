@@ -45,9 +45,9 @@ static const std::unordered_set<std::string> PRIMITIVE_TYPES{
   "int16", "uint16", "int32", "uint32",  "int64",   "uint64", "string"};
 
 #ifdef _WIN32
-static const std::string SEPARATOR = "\\";
+static const char SEPARATOR[] = "\\";
 #else
-static const std::string SEPARATOR = "/";
+static const char SEPARATOR[] = "/";
 #endif
 
 static std::set<std::string> parse_msg_dependencies(const std::string & text,
