@@ -125,8 +125,9 @@ static std::string delimiter(const DefinitionIdentifier & definition_identifier)
   return result;
 }
 
-static std::vector<std::string> split_string(const std::string& str,
-                                             const std::string& delimiter = "\n") {
+static std::vector<std::string> split_string(const std::string & str,
+                                             const std::string & delimiter = "\n")
+{
   std::vector<std::string> strings;
   std::string::size_type pos = 0;
   std::string::size_type prev = 0;
@@ -176,7 +177,7 @@ const MessageSpec & MessageDefinitionCache::load_message_spec(
 
   // Find the first line that ends with the filename we're looking for
   const auto lines = split_string(index_contents);
-  const auto it = std::find_if(lines.begin(), lines.end(), [&filename](const std::string& line) {
+  const auto it = std::find_if(lines.begin(), lines.end(), [&filename](const std::string & line) {
     return line.size() >= filename.size() &&
            line.compare(line.size() - filename.size(), filename.size(), filename) == 0;
   });
