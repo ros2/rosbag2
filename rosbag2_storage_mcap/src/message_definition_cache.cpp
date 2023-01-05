@@ -27,6 +27,7 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
+#include <filesystem>
 
 namespace rosbag2_storage_mcap::internal
 {
@@ -43,12 +44,6 @@ static const std::regex IDL_FIELD_TYPE_REGEX{
 static const std::unordered_set<std::string> PRIMITIVE_TYPES{
   "bool",  "byte",   "char",  "float32", "float64", "int8",   "uint8",
   "int16", "uint16", "int32", "uint32",  "int64",   "uint64", "string"};
-
-#ifdef _WIN32
-static const char SEPARATOR[] = "\\";
-#else
-static const char SEPARATOR[] = "/";
-#endif
 
 static std::set<std::string> parse_msg_dependencies(const std::string & text,
                                                     const std::string & package_context)
@@ -178,15 +173,15 @@ const MessageSpec & MessageDefinitionCache::load_message_spec(
   // Find the first line that ends with the filename we're looking for
   const auto lines = split_string(index_contents);
   const auto it = std::find_if(lines.begin(), lines.end(), [&filename](const std::string & line) {
-    return line.size() >= filename.size() &&
-           line.compare(line.size() - filename.size(), filename.size(), filename) == 0;
+    std::filesystem::path filePath(line);
+    return filePath.filename() == filename;
   });
   if (it == lines.end()) {
     throw DefinitionNotFoundError(definition_identifier.package_resource_name);
   }
 
   // Read the file
-  const std::string full_path = share_dir + SEPARATOR + *it;
+  const std::string full_path = share_dir + std::filesystem::path::preferred_separator + *it;
   std::ifstream file{full_path};
 
   const std::string contents{std::istreambuf_iterator(file), {}};
