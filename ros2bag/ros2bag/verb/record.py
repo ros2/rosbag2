@@ -75,44 +75,44 @@ class RecordVerb(VerbExtension):
         # The rest. TODO(emersonknapp) organize these better by category
         parser.add_argument(
             '-o', '--output',
-            help='destination of the bagfile to create, \
-            defaults to a timestamped folder in the current directory')
+            help='Destination of the bagfile to create, \
+            defaults to a timestamped folder in the current directory.')
         parser.add_argument(
             '-s', '--storage', default=default_writer, choices=writer_choices,
-            help=f"storage identifier to be used, defaults to '{default_writer}'")
+            help=f"Storage identifier to be used, defaults to '{default_writer}'.")
         parser.add_argument(
             '-f', '--serialization-format', default='', choices=serialization_choices,
-            help='rmw serialization format in which the messages are saved, defaults to the'
-                 ' rmw currently in use')
+            help='The rmw serialization format in which the messages are saved, defaults to the'
+                 ' rmw currently in use.')
         parser.add_argument(
             '--no-discovery', action='store_true',
-            help='disables topic auto discovery during recording: only topics present at '
-                 'startup will be recorded')
+            help='Disables topic auto discovery during recording: only topics present at '
+                 'startup will be recorded.')
         parser.add_argument(
             '-p', '--polling-interval', type=int, default=100,
-            help='time in ms to wait between querying available topics for recording. '
+            help='Time in ms to wait between querying available topics for recording. '
                   'It has no effect if --no-discovery is enabled.'
         )
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
-            help='maximum size in bytes before the bagfile will be split. '
+            help='Maximum size in bytes before the bagfile will be split. '
                   'Default it is zero, recording written in single bagfile and splitting '
                   'is disabled.'
         )
         parser.add_argument(
             '-d', '--max-bag-duration', type=int, default=0,
-            help='maximum duration in seconds before the bagfile will be split. '
+            help='Maximum duration in seconds before the bagfile will be split. '
                   'Default is zero, recording written in single bagfile and splitting '
                   'is disabled. If both splitting by size and duration are enabled, '
                   'the bag will split at whichever threshold is reached first.'
         )
         parser.add_argument(
             '--max-cache-size', type=int, default=100*1024*1024,
-            help='maximum size (in bytes) of messages to hold in each buffer of cache.'
+            help='Maximum size in bytes of messages to hold in each buffer of cache. '
                  'Default is 100 mebibytes. The cache is handled through double buffering, '
-                 'which means that in pessimistic case up to twice the parameter value of memory'
-                 'is needed. A rule of thumb is to cache an order of magitude corresponding to'
-                 'about one second of total recorded data volume.'
+                 'which means that in pessimistic case up to twice the parameter value of memory '
+                 'is needed. A rule of thumb is to cache an order of magitude corresponding to '
+                 'about one second of total recorded data volume. '
                  'If the value specified is 0, then every message is directly written to disk.'
         )
         parser.add_argument(
