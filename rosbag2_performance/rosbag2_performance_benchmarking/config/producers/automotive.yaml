@@ -1,0 +1,50 @@
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups 
+      publisher_groups: [ "lidars_secondary_16MBps", "lidars_main_16MBps", "cameras_540MBps", "radars_400KBps", "gps_5KBps", "imu_40KBps", "ultrasonic_72KBps" ]
+      wait_for_subscriptions: True
+      lidars_secondary_16MBps:
+        publishers_count:   4
+        topic_root:         "lidar_secondary"
+        msg_size_bytes:     160000
+        msg_type:           "sensor_msgs::msg::PointCloud2"
+        msg_count_each:     250
+        rate_hz:            25
+      lidars_main_16MBps:
+        publishers_count:   1
+        topic_root:         "lidar_main"
+        msg_size_bytes:     640000
+        msg_type:           "sensor_msgs::msg::PointCloud2"
+        msg_count_each:     250
+        rate_hz:            25
+      cameras_540MBps:
+        publishers_count:   6
+        topic_root:         "camera"
+        msg_size_bytes:     3750000
+        msg_type:           "sensor_msgs::msg::Image"
+        msg_count_each:     240
+        rate_hz:            24
+      radars_400KBps:
+        publishers_count:   5
+        topic_root:         "radar"
+        msg_size_bytes:     1600
+        msg_count_each:     500
+        rate_hz:            50
+      gps_5KBps:
+        publishers_count:   1
+        topic_root:         "gps"
+        msg_type:           "sensor_msgs::msg::NavSatFix"
+        msg_count_each:     250
+        rate_hz:            25
+      imu_40KBps:
+        publishers_count:   1
+        topic_root:         "imu"
+        msg_type:           "sensor_msgs::msg::Imu"
+        msg_count_each:     1000
+        rate_hz:            100
+      ultrasonic_72KBps:
+        publishers_count:   12
+        topic_root:         "ultrasonic"
+        msg_type:           "sensor_msgs::msg::Range"
+        msg_count_each:     400
+        rate_hz:            40

@@ -15,11 +15,14 @@
 #ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_
 #define ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_
 
+#include <string>
+
 struct ProducerConfig
 {
   unsigned int frequency;
   unsigned int max_count;
   unsigned int message_size;
+  std::string message_type;
 };
 
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__PRODUCER_CONFIG_HPP_

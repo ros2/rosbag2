@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rosbag2_performance_benchmarking_msgs</name>
+  <version>1.0.0</version>
+  <description>A package containing rosbag2 performance benchmarking specific messages.</description>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
+  <maintainer email="adam.dabrowski@robotec.ai">Adam Dabrowski</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>rosidl_cmake</test_depend>
+  <test_depend>rosidl_typesupport_cpp</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

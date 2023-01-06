@@ -21,14 +21,14 @@
 #include <functional>
 
 #include "rclcpp/utilities.hpp"
-#include "std_msgs/msg/byte_multi_array.hpp"
+#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
 
 #include "rosbag2_performance_benchmarking/producer_config.hpp"
 
 inline auto generate_random_message(const ProducerConfig & config)
 {
   // Reuses the same random message
-  auto message = std::make_shared<std_msgs::msg::ByteMultiArray>();
+  auto message = std::make_shared<rosbag2_performance_benchmarking_msgs::msg::ByteArray>();
 
   message->data.reserve(config.message_size);
   for (auto i = 0u; i < config.message_size; ++i) {
@@ -43,7 +43,7 @@ class ByteProducer
 public:
   using producer_initialize_function_t = std::function<void ()>;
   using producer_callback_function_t = std::function<void (
-        std::shared_ptr<std_msgs::msg::ByteMultiArray>)>;
+        std::shared_ptr<rosbag2_performance_benchmarking_msgs::msg::ByteArray>)>;
 
   using producer_finalize_function_t = std::function<void ()>;
 
@@ -80,7 +80,7 @@ private:
   producer_finalize_function_t producer_finalize_;
   unsigned int sleep_time_;  // in milliseconds
   // for simplification, this pointer will be reused
-  std::shared_ptr<std_msgs::msg::ByteMultiArray> message_;
+  std::shared_ptr<rosbag2_performance_benchmarking_msgs::msg::ByteArray> message_;
 };
 
 #endif  // ROSBAG2_PERFORMANCE_BENCHMARKING__BYTE_PRODUCER_HPP_

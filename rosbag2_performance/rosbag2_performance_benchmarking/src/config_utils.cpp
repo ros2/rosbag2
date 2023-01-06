@@ -70,8 +70,9 @@ std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
     auto group_prefix = parameters_ns + "." + group_name;
     node.declare_parameter<int>(group_prefix + ".publishers_count");
     node.declare_parameter<std::string>(group_prefix + ".topic_root");
-    node.declare_parameter<int>(group_prefix + ".msg_size_bytes");
+    node.declare_parameter<int>(group_prefix + ".msg_size_bytes", 0);
     node.declare_parameter<int>(group_prefix + ".msg_count_each");
+    node.declare_parameter(group_prefix + ".msg_type", std::string(DEFAULT_MESSAGE_TYPE));
     node.declare_parameter<int>(group_prefix + ".rate_hz");
 
     PublisherGroupConfig group_config;
@@ -88,6 +89,9 @@ std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
       group_prefix + ".msg_count_each",
       group_config.producer_config.max_count);
     node.get_parameter(
+      group_prefix + ".msg_type",
+      group_config.producer_config.message_type);
+    node.get_parameter(
       group_prefix + ".rate_hz",
       group_config.producer_config.frequency);
 
@@ -95,6 +99,16 @@ std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
       RCLCPP_ERROR(node.get_logger(), "Frequency can't be 0. Exiting.");
       rclcpp::shutdown(nullptr, "Invalid frequency parameter");
       return configurations;
+    }
+
+    if (group_config.producer_config.message_type == DEFAULT_MESSAGE_TYPE) {
+      if (group_config.producer_config.message_size == 0) {
+        RCLCPP_ERROR(
+          node.get_logger(),
+          "Message size is zero or unset when using default message type. Exiting.");
+        rclcpp::shutdown(nullptr, "msg_size parameter is zero or unset");
+        return configurations;
+      }
     }
 
     config_utils::load_qos_configuration(node, group_config, group_prefix);

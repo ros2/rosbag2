@@ -20,11 +20,12 @@
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 #include "rosbag2_performance_benchmarking/config_utils.hpp"
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+#include "msg_utils/message_producer_factory.hpp"
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
-#include "std_msgs/msg/byte_multi_array.hpp"
+#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
 
 
 class BenchmarkPublishers : public rclcpp::Node
@@ -33,20 +34,18 @@ public:
   explicit BenchmarkPublishers(const std::string & name)
   : rclcpp::Node(name)
   {
-    configurations_ = config_utils::publisher_groups_from_node_parameters(*this);
-    if (configurations_.empty()) {
-      RCLCPP_ERROR(get_logger(), "No publishers/producers found in node parameters");
-      return;
-    }
-
-    create_benchmark_publishers_and_producers();
+    create_benchmark_producers();
+    wait_for_subscriptions();
   }
 
   void run()
   {
     std::vector<std::thread> producer_threads;
     for (auto & producer : producers_) {
-      producer_threads.push_back(std::thread(&ByteProducer::run, producer.get()));
+      producer_threads.emplace_back(
+        [this, producer]() {
+          this->producer_job(producer);
+        });
     }
 
     for (auto & thread : producer_threads) {
@@ -55,44 +54,76 @@ public:
   }
 
 private:
-  void create_benchmark_publishers_and_producers()
+  struct BenchmarkProducer
   {
-    const std::string topic_prefix(this->get_fully_qualified_name());
-    auto wait_for_subs = config_utils::wait_for_subscriptions_from_node_parameters(*this);
+    std::shared_ptr<msg_utils::ProducerBase> msg_producer;
+    std::chrono::milliseconds period;
+    size_t produced_messages = 0;
+    size_t max_messages = 0;
 
-    for (auto & c : configurations_) {
-      for (unsigned int i = 0; i < c.count; ++i) {
-        auto topic = topic_prefix + "/" + c.topic_root + "_" + std::to_string(i + 1);
-        auto pub = this->create_publisher<std_msgs::msg::ByteMultiArray>(topic, c.qos);
-        publishers_.push_back(pub);
-        producers_.push_back(
-          std::make_unique<ByteProducer>(
-            c.producer_config,
-            [this, topic, wait_for_subs] {
-              if (!wait_for_subs) {return;}
-              if (!rclcpp::ok()) {return;}
-              const double max_subscription_wait_time = 5.0;
-              auto start_time = std::chrono::high_resolution_clock::now();
-              while (!this->count_subscribers(topic)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                auto current_time = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<double> elapsed = current_time - start_time;
-                if (elapsed.count() >= max_subscription_wait_time) {
-                  throw std::runtime_error("Waited too long for " + topic);
-                }
-              }
-            },
-            [pub](std::shared_ptr<std_msgs::msg::ByteMultiArray> msg) {
-              pub->publish(*msg);
-            },
-            [] { /* empty lambda */}));
+    void produce()
+    {
+      this->msg_producer->produce();
+      ++this->produced_messages;
+    }
+  };
+
+  void wait_for_subscriptions()
+  {
+    if (config_utils::wait_for_subscriptions_from_node_parameters(*this)) {
+      for (auto producer : producers_) {
+        producer->msg_producer->wait_for_matched();
       }
     }
   }
 
-  std::vector<PublisherGroupConfig> configurations_;
-  std::vector<std::unique_ptr<ByteProducer>> producers_;
-  std::vector<std::shared_ptr<rclcpp::Publisher<std_msgs::msg::ByteMultiArray>>> publishers_;
+  void create_benchmark_producers()
+  {
+    const auto configurations = config_utils::publisher_groups_from_node_parameters(*this);
+
+    if (configurations.empty()) {
+      RCLCPP_ERROR(get_logger(), "No publishers/producers found in node parameters");
+      return;
+    }
+
+    const std::string node_name(get_fully_qualified_name());
+
+    for (auto & config : configurations) {
+      for (unsigned int i = 0; i < config.count; ++i) {
+        const std::string topic = node_name + "/" + config.topic_root + "_" + std::to_string(i + 1);
+        auto producer = create_benchmark_producer(topic, config);
+        producers_.push_back(producer);
+      }
+    }
+  }
+
+  std::shared_ptr<BenchmarkProducer> create_benchmark_producer(
+    std::string topic,
+    const PublisherGroupConfig & config)
+  {
+    const auto & producer_config = config.producer_config;
+    auto producer = std::make_shared<BenchmarkProducer>();
+
+    producer->msg_producer = msg_utils::create(producer_config.message_type, *this, topic, config);
+    producer->max_messages = producer_config.max_count;
+    producer->period = std::chrono::milliseconds(
+      producer_config.frequency ? 1000 / producer_config.frequency : 1);
+
+    return producer;
+  }
+
+  void producer_job(std::shared_ptr<BenchmarkProducer> producer)
+  {
+    for (auto i = 0u; i < producer->max_messages; ++i) {
+      if (!rclcpp::ok()) {
+        break;
+      }
+      std::this_thread::sleep_for(producer->period);
+      producer->produce();
+    }
+  }
+
+  std::vector<std::shared_ptr<BenchmarkProducer>> producers_;
 };
 
 
