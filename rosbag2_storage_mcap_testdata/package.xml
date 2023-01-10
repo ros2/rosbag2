@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rosbag2_storage_mcap_testdata</name>
-  <version>0.6.0</version>
+  <version>0.15.4</version>
   <description>message definition test fixtures for MCAP schema recording</description>
   <maintainer email="ros-tooling@foxglove.dev">Foxglove</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
