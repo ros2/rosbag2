@@ -2,6 +2,9 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+
 0.15.3 (2022-11-07)
 -------------------
 * Mark `test_play_services` as xfail for FastRTPS and CycloneDDS (`#1091 <https://github.com/ros2/rosbag2/issues/1091>`_) (`#1136 <https://github.com/ros2/rosbag2/issues/1136>`_)

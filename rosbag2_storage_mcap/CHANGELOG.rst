@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* rosbag2_storage_mcap: fix rosbag2_cpp tests (`#1205 <https://github.com/ros2/rosbag2/issues/1205>`_)
+* [Humble backport] rosbag2_storage_mcap: merge into rosbag2 repo (`#1163 <https://github.com/ros2/rosbag2/issues/1163>`_) (`#1189 <https://github.com/ros2/rosbag2/issues/1189>`_)
+* Contributors: james-rms
+
 0.6.0 (2022-11-28)
 ------------------
 * mcap_storage: 'none' is a valid storage preset profile (`#86 <https://github.com/ros-tooling/rosbag2_storage_mcap/issues/86>`_)

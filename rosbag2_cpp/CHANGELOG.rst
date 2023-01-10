@@ -2,6 +2,11 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* [Humble] Reader and writer can use default storage by not specifying (backport `#1167 <https://github.com/ros2/rosbag2/issues/1167>`_) (`#1174 <https://github.com/ros2/rosbag2/issues/1174>`_)
+* Contributors: mergify[bot]
+
 0.15.3 (2022-11-07)
 -------------------
 * Readers/info can accept a single bag storage file, and detect its storage id automatically (`#1072 <https://github.com/ros2/rosbag2/issues/1072>`_) (`#1077 <https://github.com/ros2/rosbag2/issues/1077>`_)

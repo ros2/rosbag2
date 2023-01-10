@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* ros2bag: move storage preset validation to sqlite3 plugin (`#1135 <https://github.com/ros2/rosbag2/issues/1135>`_) (`#1184 <https://github.com/ros2/rosbag2/issues/1184>`_)
+* [humble] Store db schema version and ROS_DISTRO name in db3 files (backport `#1156 <https://github.com/ros2/rosbag2/issues/1156>`_) (`#1175 <https://github.com/ros2/rosbag2/issues/1175>`_)
+* Contributors: Daisuke Nishimatsu, mergify[bot]
+
 0.15.3 (2022-11-07)
 -------------------
 * Add support for old db3 schema used on distros prior to Foxy (`#1090 <https://github.com/ros2/rosbag2/issues/1090>`_) (`#1094 <https://github.com/ros2/rosbag2/issues/1094>`_)

@@ -2,6 +2,11 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* [Humble backport] rosbag2_storage_mcap: merge into rosbag2 repo (`#1163 <https://github.com/ros2/rosbag2/issues/1163>`_) (`#1189 <https://github.com/ros2/rosbag2/issues/1189>`_)
+* Contributors: james-rms
+
 0.15.3 (2022-11-07)
 -------------------
 

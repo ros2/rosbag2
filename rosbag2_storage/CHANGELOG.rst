@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* Disable false message about plugin not found. (`#1219 <https://github.com/ros2/rosbag2/issues/1219>`_)
+* Contributors: Michael Orlov
+
 0.15.3 (2022-11-07)
 -------------------
 * Readers/info can accept a single bag storage file, and detect its storage id automatically (`#1072 <https://github.com/ros2/rosbag2/issues/1072>`_) (`#1077 <https://github.com/ros2/rosbag2/issues/1077>`_)
