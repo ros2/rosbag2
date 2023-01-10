@@ -2,6 +2,15 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.4 (2023-01-10)
+-------------------
+* [backport humble `#1208 <https://github.com/ros2/rosbag2/issues/1208>`_] Fixes policy CMP0135 warning for CMake >= 3.24 for mcap_vendor (`#1227 <https://github.com/ros2/rosbag2/issues/1227>`_)
+* mcap_vendor: only install public headers (backport `#1207 <https://github.com/ros2/rosbag2/issues/1207>`_) (`#1214 <https://github.com/ros2/rosbag2/issues/1214>`_)
+* rosbag2_storage_mcap: fix rosbag2_cpp tests (`#1205 <https://github.com/ros2/rosbag2/issues/1205>`_)
+* Use mcap tarball rather than git clone (`#1200 <https://github.com/ros2/rosbag2/issues/1200>`_)
+* [Humble backport] rosbag2_storage_mcap: merge into rosbag2 repo (`#1163 <https://github.com/ros2/rosbag2/issues/1163>`_) (`#1189 <https://github.com/ros2/rosbag2/issues/1189>`_)
+* Contributors: Michael Carroll, james-rms, mergify[bot]
+
 0.6.0 (2022-11-28)
 ------------------
 * Fix Windows build (`#73 <https://github.com/ros-tooling/rosbag2_storage_mcap/issues/73>`_)
