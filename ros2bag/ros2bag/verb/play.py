@@ -95,7 +95,7 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--playback-duration', type=float, default=-1.0,
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
-                 'Default: %(default)d. '
+                 'Default is %(default)d. '
                  'When positive, the maximum of `playback-until-*` and the one that this '
                  'attribute yields will be used to determine which one stops playback execution.')
 

@@ -61,22 +61,20 @@ public:
 
 std::unordered_set<std::string> get_registered_writers()
 {
-  rosbag2_cpp::plugins::PluginInfo<
-    rosbag2_storage::storage_interfaces::ReadWriteInterface> plugin_info;
-  return plugin_info.get_declared_classes();
+  return rosbag2_cpp::plugins::get_class_plugins<
+    rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 }
 
 std::string get_package_for_registered_writer(const std::string & class_name)
 {
-  rosbag2_cpp::plugins::PluginInfo<
-    rosbag2_storage::storage_interfaces::ReadWriteInterface> plugin_info;
-  return plugin_info.package_for_class(class_name);
+  return rosbag2_cpp::plugins::package_for_class_plugin<
+    rosbag2_storage::storage_interfaces::ReadWriteInterface>(class_name);
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
-  return rosbag2_cpp::plugins::get_class_plugins
-         <rosbag2_compression::BaseCompressorInterface>();
+  return rosbag2_cpp::plugins::get_class_plugins<
+    rosbag2_compression::BaseCompressorInterface>();
 }
 
 std::unordered_set<std::string> get_registered_serializers()
