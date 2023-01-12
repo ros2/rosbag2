@@ -96,30 +96,28 @@ class PlayVerb(VerbExtension):
             '--playback-duration', type=float, default=-1.0,
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
                  'Default is %(default)d. '
-                 'When positive, the maximum of `playback-until-*` and the one that this '
-                 'attribute yields will be used to determine which one stops playback execution.')
+                 'When positive, the maximum effective time between `playback-until-*` '
+                 'and this argument will determine when playback stops.')
 
         playback_until_arg_group = parser.add_mutually_exclusive_group()
         playback_until_arg_group.add_argument(
             '--playback-until-sec', type=float, default=-1.,
             help='Playback until timestamp, expressed in seconds since epoch. '
                  'Mutually exclusive argument with `--playback-until-nsec`. '
-                 'Use this argument when floating point to integer conversion error is not a '
-                 'problem for your application. Negative stamps disable this feature. '
+                 'Use when floating point to integer conversion error is not a concern. '
+                 'A negative value disables this feature. '
                  'Default is %(default)f. '
-                 'When positive, the maximum of the effective time that '
-                 '`--playback-duration` yields and this attribute will be used to determine which '
-                 'one stops playback execution.')
+                 'When positive, the maximum effective time between `--playback-duration` '
+                 'and this argument will determine when playback stops.')
         playback_until_arg_group.add_argument(
             '--playback-until-nsec', type=int, default=-1,
             help='Playback until timestamp, expressed in nanoseconds since epoch.  '
                  'Mutually exclusive argument with `--playback-until-sec`. '
-                 'Use this argument when floating point to integer conversion error matters for '
-                 'your application. Negative stamps disable this feature. '
+                 'Use when floating point to integer conversion error matters for your use case. '
+                 'A negative value disables this feature. '
                  'Default is %(default)s. '
-                 'When positive, the maximum of the effective time that `--playback-duration` '
-                 'yields and this attribute will be used to determine which one stops playback '
-                 'execution.')
+                 'When positive, the maximum effective time between `--playback-duration` '
+                 'and this argument will determine when playback stops.')
 
         parser.add_argument(
             '--disable-keyboard-controls', action='store_true',
