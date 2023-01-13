@@ -160,7 +160,7 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--storage-config-file', type=FileType('r'),
         help='Path to a yaml file defining storage specific configurations. '
-             'See storage plugin documentation for the format of this file.')
+             f'See {plugin_id} plugin documentation for the format of this file.')
 
     try:
         preset_profiles = extension.get_preset_profiles() or ['none']
@@ -171,6 +171,6 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--storage-preset-profile', type=str, default=default_preset_profile,
         choices=preset_profiles,
-        help='Select a preset configuration base for storage. '
+        help=f'Select a preset configuration for storage plugin "{plugin_id}". '
              'Settings in this profile can still be overriden by other explicit options '
              'and --storage-config-file. Default: %(default)s')
