@@ -195,10 +195,8 @@ class RecordVerb(VerbExtension):
         args.compression_mode = args.compression_mode.upper() if chose_compression_mode else ''
         args.compression_format = args.compression_format if chose_compression_format else ''
 
-
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
-
 
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:

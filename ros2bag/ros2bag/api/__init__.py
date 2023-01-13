@@ -154,7 +154,7 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
         extension = entry_points(group='ros2bag.storage_plugin_cli_extension')[plugin_id].load()
     except KeyError:
         print(f'No CLI extension module found for plugin name {plugin_id} '
-               'in entry_point group "ros2bag.storage_plugin_cli_extension".')
+              'in entry_point group "ros2bag.storage_plugin_cli_extension".')
         return
 
     parser.add_argument(
