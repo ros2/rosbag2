@@ -18,7 +18,7 @@ def get_preset_profiles():
 
 
 def get_compression_modes():
-    return ['none', 'chunk']
+    return ['none', 'chunk', 'file']
 
 
 def get_compression_formats():
