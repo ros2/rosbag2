@@ -26,24 +26,17 @@ namespace rosbag2_cpp
 {
 namespace plugins
 {
-
 template<typename InterfaceT>
 std::unordered_set<std::string> get_class_plugins()
 {
-  pluginlib::ClassLoader<InterfaceT> loader{
-    InterfaceT::get_package_name(), InterfaceT::get_base_class_name()};
-  const auto class_list = loader.getDeclaredClasses();
-  return std::unordered_set<std::string>(class_list.begin(), class_list.end());
-}
+  std::string package_name = InterfaceT::get_package_name();
+  std::string base_class = InterfaceT::get_base_class_name();
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader =
+    std::make_shared<pluginlib::ClassLoader<InterfaceT>>(package_name, base_class);
 
-template<typename InterfaceT>
-std::string package_for_class_plugin(const std::string & class_name)
-{
-  pluginlib::ClassLoader<InterfaceT> loader{
-    InterfaceT::get_package_name(), InterfaceT::get_base_class_name()};
-  return loader.getClassPackage(class_name);
+  std::vector<std::string> plugin_list = class_loader->getDeclaredClasses();
+  return std::unordered_set<std::string>(plugin_list.begin(), plugin_list.end());
 }
-
 }  // namespace plugins
 }  // namespace rosbag2_cpp
 

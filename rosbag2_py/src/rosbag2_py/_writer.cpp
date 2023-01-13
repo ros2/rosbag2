@@ -61,20 +61,14 @@ public:
 
 std::unordered_set<std::string> get_registered_writers()
 {
-  return rosbag2_cpp::plugins::get_class_plugins<
-    rosbag2_storage::storage_interfaces::ReadWriteInterface>();
-}
-
-std::string get_package_for_registered_writer(const std::string & class_name)
-{
-  return rosbag2_cpp::plugins::package_for_class_plugin<
-    rosbag2_storage::storage_interfaces::ReadWriteInterface>(class_name);
+  return rosbag2_cpp::plugins::get_class_plugins
+         <rosbag2_storage::storage_interfaces::ReadWriteInterface>();
 }
 
 std::unordered_set<std::string> get_registered_compressors()
 {
-  return rosbag2_cpp::plugins::get_class_plugins<
-    rosbag2_compression::BaseCompressorInterface>();
+  return rosbag2_cpp::plugins::get_class_plugins
+         <rosbag2_compression::BaseCompressorInterface>();
 }
 
 std::unordered_set<std::string> get_registered_serializers()
@@ -127,10 +121,6 @@ PYBIND11_MODULE(_writer, m) {
     "get_registered_writers",
     &rosbag2_py::get_registered_writers,
     "Returns list of discovered plugins that support rosbag2 recording");
-  m.def(
-    "get_package_for_registered_writer",
-    &rosbag2_py::get_package_for_registered_writer,
-    "Returns the name of the package that provides a given writer plugin.");
 
   m.def(
     "get_registered_compressors",
