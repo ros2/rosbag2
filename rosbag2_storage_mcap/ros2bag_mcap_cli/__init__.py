@@ -15,4 +15,3 @@
 
 def get_preset_profiles():
     return ['none', 'fastwrite', 'zstd_fast', 'zstd_small']
-

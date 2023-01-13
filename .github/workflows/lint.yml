@@ -102,3 +102,5 @@ jobs:
         package-name: |
             ros2bag
             rosbag2_py
+            rosbag2_storage_sqlite3
+            rosbag2_storage_mcap
