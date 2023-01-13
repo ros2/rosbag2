@@ -162,7 +162,7 @@ class RecordVerb(VerbExtension):
             '--compression-format', type=str, default='',
             choices=get_registered_compressors(),
             help='Choose the compression format/algorithm. '
-                'Has no effect if no compression mode is chosen. Default: %(default)s')
+                 'Has no effect if no compression mode is chosen. Default: %(default)s')
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true

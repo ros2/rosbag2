@@ -174,4 +174,3 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
         help='Select a preset configuration base for storage. '
              'Settings in this profile can still be overriden by other explicit options '
              'and --storage-config-file. Default: %(default)s')
-
