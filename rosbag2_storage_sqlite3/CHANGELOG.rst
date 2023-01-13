@@ -2,6 +2,15 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2023-01-13)
+-------------------
+* Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_)
+* Remove sqlite3-specific info from main README, make it more storage agnostic and point to plugin-specific README (`#1193 <https://github.com/ros2/rosbag2/issues/1193>`_)
+* set_read_order: return success (`#1177 <https://github.com/ros2/rosbag2/issues/1177>`_)
+* Add `update_metadata(BagMetadata)` API for storage plugin interface (`#1149 <https://github.com/ros2/rosbag2/issues/1149>`_)
+* Store db schema version and ROS_DISTRO name in db3 files (`#1156 <https://github.com/ros2/rosbag2/issues/1156>`_)
+* Contributors: Emerson Knapp, Michael Orlov, james-rms
+
 0.18.0 (2022-11-15)
 -------------------
 * ros2bag: move storage preset validation to sqlite3 plugin (`#1135 <https://github.com/ros2/rosbag2/issues/1135>`_)
