@@ -2,6 +2,16 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2023-01-13)
+-------------------
+* Fix up some of the wording in the record help text. (`#1228 <https://github.com/ros2/rosbag2/issues/1228>`_)
+* Add topic_name option to info verb (`#1217 <https://github.com/ros2/rosbag2/issues/1217>`_)
+* rosbag2_storage: set MCAP as default plugin (`#1160 <https://github.com/ros2/rosbag2/issues/1160>`_)
+* rosbag2_py: parametrize tests across storage plugins (`#1203 <https://github.com/ros2/rosbag2/issues/1203>`_)
+* Added option to change node name for the recorder from the Python API (`#1180 <https://github.com/ros2/rosbag2/issues/1180>`_)
+* rosbag2_cpp: test more than one storage plugin (`#1196 <https://github.com/ros2/rosbag2/issues/1196>`_)
+* Contributors: Chris Lalancette, Keisuke Shima, Michael Orlov, james-rms, ricardo-manriquez
+
 0.18.0 (2022-11-15)
 -------------------
 * rosbag2_storage: expose default storage ID as method (`#1146 <https://github.com/ros2/rosbag2/issues/1146>`_)

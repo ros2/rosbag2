@@ -2,6 +2,18 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2023-01-13)
+-------------------
+* Print "Hidden topics are not recorded" only once. (`#1225 <https://github.com/ros2/rosbag2/issues/1225>`_)
+* rosbag2_storage: set MCAP as default plugin (`#1160 <https://github.com/ros2/rosbag2/issues/1160>`_)
+* Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_)
+* rosbag2_transport: parametrize test_rewrite (`#1206 <https://github.com/ros2/rosbag2/issues/1206>`_)
+* rosbag2_cpp: test more than one storage plugin (`#1196 <https://github.com/ros2/rosbag2/issues/1196>`_)
+* Replace language for "db3"/"db"/"database" (`#1194 <https://github.com/ros2/rosbag2/issues/1194>`_)
+* set_read_order: return success (`#1177 <https://github.com/ros2/rosbag2/issues/1177>`_)
+* Remove explicit sqlite3 from code (`#1166 <https://github.com/ros2/rosbag2/issues/1166>`_)
+* Contributors: Emerson Knapp, Michael Orlov, james-rms, rshanor
+
 0.18.0 (2022-11-15)
 -------------------
 * Add pause and resume service calls for rosbag2 recorder (`#1131 <https://github.com/ros2/rosbag2/issues/1131>`_)

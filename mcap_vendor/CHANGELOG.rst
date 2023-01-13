@@ -2,6 +2,17 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.19.0 (2023-01-13)
+-------------------
+* mcap_vendor: add readme with versioning procedure (`#1230 <https://github.com/ros2/rosbag2/issues/1230>`_)
+* Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_)
+* mcap_vendor: only install public headers (`#1207 <https://github.com/ros2/rosbag2/issues/1207>`_)
+* Fixes policy CMP0135 warning for CMake >= 3.24 for mcap_vendor (`#1208 <https://github.com/ros2/rosbag2/issues/1208>`_)
+* mcap_vendor: download MCAP source via tarball (`#1204 <https://github.com/ros2/rosbag2/issues/1204>`_)
+* rosbag2_cpp: test more than one storage plugin (`#1196 <https://github.com/ros2/rosbag2/issues/1196>`_)
+* rosbag2_storage_mcap: merge into rosbag2 repo (`#1163 <https://github.com/ros2/rosbag2/issues/1163>`_)
+* Contributors: Cristóbal Arroyo, Michael Orlov, james-rms
+
 0.6.0 (2022-11-28)
 ------------------
 * Fix Windows build (`#73 <https://github.com/ros-tooling/rosbag2_storage_mcap/issues/73>`_)
