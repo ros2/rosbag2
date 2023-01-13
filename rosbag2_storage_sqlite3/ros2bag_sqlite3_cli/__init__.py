@@ -18,10 +18,3 @@ from rosbag2_py import get_registered_compressors
 def get_preset_profiles():
     return ['none', 'resilient']
 
-
-def get_compression_modes():
-    return ['none', 'message', 'file']
-
-
-def get_compression_formats():
-    return list(get_registered_compressors())

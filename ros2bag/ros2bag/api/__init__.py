@@ -175,27 +175,3 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
              'Settings in this profile can still be overriden by other explicit options '
              'and --storage-config-file. Default: %(default)s')
 
-    try:
-        compression_modes = extension.get_compression_modes() or ['none']
-    except AttributeError:
-        print(f'Storage plugin {plugin_id} does not provide function "get_compression_mode".')
-        compression_modes = ['none']
-    default_compression_mode = compression_modes[0]
-    parser.add_argument(
-        '--compression-mode', type=str,
-        default=default_compression_mode,
-        choices=compression_modes,
-        help='Choose mode of compression for the storage. Default: %(default)s')
-
-    try:
-        compression_formats = extension.get_compression_formats() or ['none']
-    except AttributeError:
-        print(f'Storage plugin {plugin_id} does not provide function "get_compression_formats".')
-        compression_formats = ['none']
-    default_compression_format = compression_formats[0]
-    parser.add_argument(
-        '--compression-format', type=str,
-        default=default_compression_format,
-        choices=compression_formats,
-        help='Choose the compression format/algorithm. '
-             'Has no effect if no compression mode is chosen. Default: %(default)s')

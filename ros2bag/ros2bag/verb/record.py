@@ -23,6 +23,7 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_default_storage_id
+from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
 from rosbag2_py import get_registered_writers
 from rosbag2_py import Recorder
@@ -144,7 +145,7 @@ class RecordVerb(VerbExtension):
         add_writer_storage_plugin_extensions(parser)
 
         # Core compression configuration
-        # TODO(emersonknapp) this configuration will be moved down to sqlite3 plugin
+        # TODO(emersonknapp) this configuration will be moved down to implementing plugins
         parser.add_argument(
             '--compression-queue-size', type=int, default=1,
             help='Number of files or messages that may be queued for compression '
@@ -153,6 +154,15 @@ class RecordVerb(VerbExtension):
             '--compression-threads', type=int, default=0,
             help='Number of files or messages that may be compressed in parallel. '
                  'Default is %(default)d, which will be interpreted as the number of CPU cores.')
+        parser.add_argument(
+            '--compression-mode', type=str, default='none',
+            choices=['none', 'file', 'message'],
+            help='Choose mode of compression for the storage. Default: %(default)s')
+        parser.add_argument(
+            '--compression-format', type=str, default='',
+            choices=get_registered_compressors(),
+            help='Choose the compression format/algorithm. '
+                'Has no effect if no compression mode is chosen. Default: %(default)s')
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
@@ -174,13 +184,14 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
 
-        chose_compression_mode = args.compression_mode and args.compression_mode != 'none'
-        if not chose_compression_mode:
-            args.compression_format = ''
-        args.compression_mode = args.compression_mode.upper() if chose_compression_mode else ''
+        if args.compression_format and args.compression_mode == 'none':
+            return print_error('Invalid choice: Cannot specify compression format '
+                               'without a compression mode.')
 
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
+
+        args.compression_mode = args.compression_mode.upper()
 
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:

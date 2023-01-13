@@ -16,10 +16,3 @@
 def get_preset_profiles():
     return ['none', 'fastwrite', 'zstd_fast', 'zstd_small']
 
-
-def get_compression_modes():
-    return ['none', 'chunk', 'file']
-
-
-def get_compression_formats():
-    return ['lz4', 'zstd']

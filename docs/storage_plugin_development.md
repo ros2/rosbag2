@@ -139,7 +139,4 @@ The exposed entrypoint can be installed as a Python module by any method, for ex
 The functions this entrypoint may provide:
 
 * `get_preset_profiles(): List[str]` - provide a list of names of preset profiles for writing storage files. The first item will be used as default, consider making this 'none'
-* `get_compression_modes(): List[str]` - provide a list of names of compression modes the plugin can perform. The first item will be used as default, consider making this 'none'
-* `get_compression_formats(): List[str]` - provide a list of compression formats/algorithms available for use, when compression mode is set. The first item will be used as a default. There is no need to provide a 'none', because compression should be disabled via compression mode instead.
-
 NOTE: For each of these lists, the string literal 'none' will be used to indicate the feature is disable/not used.
