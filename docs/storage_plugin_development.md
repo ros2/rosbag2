@@ -122,17 +122,18 @@ Plugins are recommended to document the expected format of this file so that use
 
 ### Extending CLI from a storage plugin
 
-It is expected that all specific parameters of the storage implementation can be specified via the `--storage-config-file`.
-However, commandline arguments can be a much more convenient way to expose configuration to users.
+Commandline arguments can be a much more convenient way to expose configuration to users than writing out a file.
 The `ros2bag` package, which creates the `ros2 bag` command, provides an entrypoint for plugins to extend the CLI.
 
-All a package needs to do is expose a Python setuptools entrypoint to the group `"ros2bag.storage_plugin_cli_extension"`, with an entrypoint of the name of the storage plugin. For example, here is `setup.cfg` from `rosbag2_storage_mcap` (which installs a python module `ros2bag_mcap_cli`):
+All a package needs to do is expose a Python setuptools entrypoint to the group `ros2bag.storage_plugin_cli_extension`, with an entrypoint keyed by the name of the storage plugin. For example, here is `setup.cfg` from `rosbag2_storage_mcap`:
 
 ```
 [options.entry_points]
 ros2bag.storage_plugin_cli_extension =
   mcap = ros2bag_mcap_cli
 ```
+
+This registers an entrypoint in group `ros2bag.storage_plugin_cli_extension`, for the plugin named `mcap`, that is implemented by a Python module called `rosbag2_mcap_cli`.
 
 The exposed entrypoint can be installed as a Python module by any method, for example via `ament_cmake_python`'s `ament_python_install_package` macro, or by having a pure-python `ament_python` package with a `setup.py`.
 
