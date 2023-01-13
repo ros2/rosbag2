@@ -174,14 +174,10 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
 
-        chose_compression_format = args.compression_format and args.compression_format != 'none'
         chose_compression_mode = args.compression_mode and args.compression_mode != 'none'
-        if chose_compression_format and not chose_compression_mode:
-            return print_error('Invalid choice: Cannot specify compression format '
-                               'without a compression mode.')
-
+        if not chose_compression_mode:
+            args.compression_format = ''
         args.compression_mode = args.compression_mode.upper() if chose_compression_mode else ''
-        args.compression_format = args.compression_format if chose_compression_format else ''
 
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
