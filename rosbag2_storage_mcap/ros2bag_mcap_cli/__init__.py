@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import get_registered_compressors
+
+def get_preset_profiles():
+    return ['none', 'fastwrite', 'zstd_fast', 'zstd_small']
 
 
-class BagCommandExtension():
+def get_compression_modes():
+    return ['none', 'chunk']
 
-    def get_compression_modes(self):
-        return ['none', 'message', 'file']
 
-    def get_compression_formats(self):
-        return list(get_registered_compressors())
-
-    def get_preset_profiles(self):
-        return ['none', 'resilient']
+def get_compression_formats():
+    return ['lz4', 'zstd']

@@ -26,7 +26,7 @@ find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 
-ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(ros2bag_mcap_cli)
 
 add_library(${PROJECT_NAME} SHARED
   src/mcap_storage.cpp

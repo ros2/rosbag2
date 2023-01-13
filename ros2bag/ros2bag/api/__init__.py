@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from argparse import ArgumentParser, ArgumentTypeError, FileType
-from importlib import import_module
+from importlib.metadata import entry_points
 import os
 from typing import Any
 from typing import Dict
@@ -132,7 +132,7 @@ def add_standard_reader_args(parser: ArgumentParser) -> None:
              'By default attempts to detect automatically - use this argument to override.')
 
 
-def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
+def _parse_cli_storage_plugin():
     plugin_choices = set(rosbag2_py.get_registered_writers())
     storage_parser = ArgumentParser(add_help=False)
     storage_parser.add_argument(
@@ -143,42 +143,29 @@ def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
              'By default attempts to detect automatically - use this argument to override.')
     storage_parsed_args, _ = storage_parser.parse_known_args()
     plugin_id = storage_parsed_args.storage
-
     if plugin_id not in plugin_choices:
         raise ValueError(f'No storage plugin found with ID {plugin_id}')
+    return plugin_id
 
-    pkg_name = rosbag2_py.get_package_for_registered_writer(plugin_id)
+
+def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
+    plugin_id = _parse_cli_storage_plugin()
     try:
-        storage_plugin = import_module(pkg_name)
-    except ModuleNotFoundError:
-        # no such module registered, plugin does not provide extra args
-        print('No CLI extension module found for plugin')
+        extension = entry_points(group='ros2bag.storage_plugin_cli_extension')[plugin_id].load()
+    except KeyError:
+        print(f'No CLI extension module found for plugin name {plugin_id} '
+               'in entry_point group "ros2bag.storage_plugin_cli_extension".')
         return
-    extension = storage_plugin.BagCommandExtension()
 
-    compression_modes = extension.get_compression_modes()
-    if not compression_modes:
-        compression_modes = ['none']
-    default_compression_mode = compression_modes[0]
     parser.add_argument(
-        '--compression-mode', type=str,
-        default=default_compression_mode,
-        choices=compression_modes,
-        help='Choose mode of compression for the storage. Default: %(default)s')
+        '--storage-config-file', type=FileType('r'),
+        help='Path to a yaml file defining storage specific configurations. '
+             'See storage plugin documentation for the format of this file.')
 
-    compression_formats = extension.get_compression_formats()
-    if not compression_formats:
-        compression_formats = ['none']
-    default_compression_format = compression_formats[0]
-    parser.add_argument(
-        '--compression-format', type=str,
-        default=default_compression_format,
-        choices=compression_formats,
-        help='Choose the compression format/algorithm. '
-             'Has no effect if no compression mode is chosen. Default: %(default)s')
-
-    preset_profiles = extension.get_preset_profiles()
-    if not preset_profiles:
+    try:
+        preset_profiles = extension.get_preset_profiles() or ['none']
+    except AttributeError:
+        print(f'Storage plugin {plugin_id} does not provide function "get_preset_profiles".')
         preset_profiles = ['none']
     default_preset_profile = preset_profiles[0]
     parser.add_argument(
@@ -188,7 +175,27 @@ def add_storage_plugin_extensions(parser: ArgumentParser) -> None:
              'Settings in this profile can still be overriden by other explicit options '
              'and --storage-config-file. Default: %(default)s')
 
+    try:
+        compression_modes = extension.get_compression_modes() or ['none']
+    except AttributeError:
+        print(f'Storage plugin {plugin_id} does not provide function "get_compression_mode".')
+        compression_modes = ['none']
+    default_compression_mode = compression_modes[0]
     parser.add_argument(
-        '--storage-config-file', type=FileType('r'),
-        help='Path to a yaml file defining storage specific configurations. '
-             'See storage plugin documentation for the format of this file.')
+        '--compression-mode', type=str,
+        default=default_compression_mode,
+        choices=compression_modes,
+        help='Choose mode of compression for the storage. Default: %(default)s')
+
+    try:
+        compression_formats = extension.get_compression_formats() or ['none']
+    except AttributeError:
+        print(f'Storage plugin {plugin_id} does not provide function "get_compression_formats".')
+        compression_formats = ['none']
+    default_compression_format = compression_formats[0]
+    parser.add_argument(
+        '--compression-format', type=str,
+        default=default_compression_format,
+        choices=compression_formats,
+        help='Choose the compression format/algorithm. '
+             'Has no effect if no compression mode is chosen. Default: %(default)s')

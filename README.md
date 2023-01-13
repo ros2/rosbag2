@@ -332,6 +332,8 @@ $ ros2 bag record --storage <storage_id>
 
 Bag reading commands can detect the storage plugin automatically, but if for any reason you want to force a specific plugin to read a bag, you can use the `--storage` option on any `ros2 bag` verb.
 
+To write your own Rosbag2 storage implementation, refer to [this document describing that process](docs/storage_plugin_development.md)
+
 
 ## Serialization format plugin architecture
 

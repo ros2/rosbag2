@@ -30,7 +30,7 @@ find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 find_package(yaml_cpp_vendor REQUIRED)
 
-ament_python_install_package(${PROJECT_NAME})
+ament_python_install_package(ros2bag_sqlite3_cli)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_sqlite3/sqlite_wrapper.cpp

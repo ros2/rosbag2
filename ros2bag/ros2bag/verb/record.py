@@ -17,7 +17,7 @@ import datetime
 import os
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import add_storage_plugin_extensions
+from ros2bag.api import add_writer_storage_plugin_extensions
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -153,9 +153,10 @@ class RecordVerb(VerbExtension):
                  'the "/rosbag2_recorder/snapshot" service is called.')
 
         # Storage configuration
-        add_storage_plugin_extensions(parser)
+        add_writer_storage_plugin_extensions(parser)
 
-        # Core compression configuration (TODO move this down to sqlite3 plugin level)
+        # Core compression configuration
+        # TODO(emersonknapp) this configuration will be moved down to sqlite3 plugin
         parser.add_argument(
             '--compression-queue-size', type=int, default=1,
             help='Number of files or messages that may be queued for compression '
@@ -185,14 +186,19 @@ class RecordVerb(VerbExtension):
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
 
-        if args.compression_format and args.compression_mode == 'none':
+        chose_compression_format = args.compression_format and args.compression_format != 'none'
+        chose_compression_mode = args.compression_mode and args.compression_mode != 'none'
+        if chose_compression_format and not chose_compression_mode:
             return print_error('Invalid choice: Cannot specify compression format '
                                'without a compression mode.')
+
+        args.compression_mode = args.compression_mode.upper() if chose_compression_mode else ''
+        args.compression_format = args.compression_format if chose_compression_format else ''
+
 
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
 
-        args.compression_mode = args.compression_mode.upper()
 
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:
