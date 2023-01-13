@@ -51,11 +51,11 @@ class RecordVerb(VerbExtension):
         # Base output
         parser.add_argument(
             '-o', '--output',
-            help='destination of the bagfile to create, \
+            help='Destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
             '-s', '--storage', default=default_writer, choices=writer_choices,
-            help=f"storage identifier to be used, defaults to '{default_writer}'")
+            help="Storage identifier to be used, defaults to '%(default)s'")
 
         # Topic filter arguments
         parser.add_argument(
@@ -76,31 +76,19 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '--include-unpublished-topics', action='store_true',
             help='Discover and record topics which have no publisher. '
-            'Subscriptions on such topics will be made with default QoS unless otherwise '
-            'specified in a QoS overrides file.')
+                 'Subscriptions on such topics will be made with default QoS unless otherwise '
+                 'specified in a QoS overrides file.')
         parser.add_argument(
             '--include-hidden-topics', action='store_true',
             help='Discover and record hidden topics as well. '
-            'These are topics used internally by ROS 2 implementation.')
-        # The rest. TODO(emersonknapp) organize these better by category
-        parser.add_argument(
-            '-o', '--output',
-            help='Destination of the bagfile to create, \
-            defaults to a timestamped folder in the current directory.')
-        parser.add_argument(
-            '-s', '--storage', default=default_writer, choices=writer_choices,
-            help=f"Storage identifier to be used, defaults to '{default_writer}'.")
-        parser.add_argument(
-            '-f', '--serialization-format', default='', choices=serialization_choices,
-            help='The rmw serialization format in which the messages are saved, defaults to the'
-                 ' rmw currently in use.')
+                 'These are topics used internally by ROS 2 implementation.')
         parser.add_argument(
             '--no-discovery', action='store_true',
             help='Disables topic auto discovery during recording: only topics present at '
                  'startup will be recorded.')
         parser.add_argument(
             '-p', '--polling-interval', type=int, default=100,
-            help='time in ms to wait between querying available topics for recording. '
+            help='Time in ms to wait between querying available topics for recording. '
                   'It has no effect if --no-discovery is enabled.')
         parser.add_argument(
             '--ignore-leaf-topics', action='store_true',
@@ -112,22 +100,22 @@ class RecordVerb(VerbExtension):
         # Core config
         parser.add_argument(
             '-f', '--serialization-format', default='', choices=serialization_choices,
-            help='rmw serialization format in which the messages are saved, defaults to the'
-                 ' rmw currently in use')
+            help='The rmw serialization format in which the messages are saved, defaults to the '
+                 'rmw currently in use')
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
-            help='maximum size in bytes before the bagfile will be split. '
+            help='Maximum size in bytes before the bagfile will be split. '
                   'Default: %(default)d, recording written in single bagfile and splitting '
                   'is disabled.')
         parser.add_argument(
             '-d', '--max-bag-duration', type=int, default=0,
-            help='maximum duration in seconds before the bagfile will be split. '
+            help='Maximum duration in seconds before the bagfile will be split. '
                   'Default: %(default)d, recording written in single bagfile and splitting '
                   'is disabled. If both splitting by size and duration are enabled, '
                   'the bag will split at whichever threshold is reached first.')
         parser.add_argument(
             '--max-cache-size', type=int, default=100*1024*1024,
-            help='maximum size (in bytes) of messages to hold in each buffer of cache.'
+            help='Maximum size (in bytes) of messages to hold in each buffer of cache.'
                  'Default: %(default)d. The cache is handled through double buffering, '
                  'which means that in pessimistic case up to twice the parameter value of memory'
                  'is needed. A rule of thumb is to cache an order of magitude corresponding to'
