@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from argparse import ArgumentParser, ArgumentTypeError, FileType
-from importlib.metadata import entry_points
 import os
 from typing import Any
 from typing import Dict
@@ -25,6 +24,7 @@ from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSLivelinessPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+from ros2cli.entry_points import get_entry_points
 import rosbag2_py
 
 # This map needs to be updated when new policies are introduced
@@ -151,7 +151,7 @@ def _parse_cli_storage_plugin():
 def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     plugin_id = _parse_cli_storage_plugin()
     try:
-        extension = entry_points(group='ros2bag.storage_plugin_cli_extension')[plugin_id].load()
+        extension = get_entry_points('ros2bag.storage_plugin_cli_extension')[plugin_id].load()
     except KeyError:
         print(f'No CLI extension module found for plugin name {plugin_id} '
               'in entry_point group "ros2bag.storage_plugin_cli_extension".')
