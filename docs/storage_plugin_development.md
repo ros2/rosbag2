@@ -137,7 +137,10 @@ This registers an entrypoint in group `ros2bag.storage_plugin_cli_extension`, fo
 
 The exposed entrypoint can be installed as a Python module by any method, for example via `ament_cmake_python`'s `ament_python_install_package` macro, or by having a pure-python `ament_python` package with a `setup.py`.
 
-The functions this entrypoint may provide:
+The functions this entry point may provide:
 
-* `get_preset_profiles(): List[str]` - provide a list of names of preset profiles for writing storage files. The first item will be used as default, consider making this 'none'
+* `get_preset_profiles(): List[str]` - provide a list of names of preset profiles for writing storage files. The first item will be used as default. Consider returning 'none' as the first element.
+
 NOTE: For each of these lists, the string literal 'none' will be used to indicate the feature is disable/not used.
+
+NOTE: Any entry point may exclude any of the extension functions, and a warning will be printed for each extention point omitted. When the function for a list of values is not provided, or returns `None`, by default `'none'` will be provided as the only option.
