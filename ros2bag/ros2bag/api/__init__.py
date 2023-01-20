@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentParser, ArgumentTypeError, FileType
+from argparse import (
+    ArgumentParser,
+    ArgumentTypeError,
+    FileType,
+    HelpFormatter,
+)
 import os
 from typing import Any
 from typing import Dict
@@ -36,6 +41,17 @@ _QOS_POLICY_FROM_SHORT_NAME = {
 }
 _DURATION_KEYS = ['deadline', 'lifespan', 'liveliness_lease_duration']
 _VALUE_KEYS = ['depth', 'avoid_ros_namespace_conventions']
+
+
+class SplitLineFormatter(HelpFormatter):
+    """Extend argparse HelpFormatter to allow for explicit newlines in help string."""
+
+    def _split_lines(self, text, width):
+        lines = text.splitlines()
+        result_lines = []
+        for line in lines:
+            result_lines.extend(HelpFormatter._split_lines(self, line, width))
+        return result_lines
 
 
 def print_error(string: str) -> str:
@@ -149,6 +165,7 @@ def _parse_cli_storage_plugin():
 
 
 def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
+
     plugin_id = _parse_cli_storage_plugin()
     try:
         extension = get_entry_points('ros2bag.storage_plugin_cli_extension')[plugin_id].load()
@@ -163,14 +180,16 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
              f'See {plugin_id} plugin documentation for the format of this file.')
 
     try:
-        preset_profiles = extension.get_preset_profiles() or ['none']
+        preset_profiles = extension.get_preset_profiles() or \
+            [('none', 'Default writer configuration.')]
     except AttributeError:
         print(f'Storage plugin {plugin_id} does not provide function "get_preset_profiles".')
         preset_profiles = ['none']
-    default_preset_profile = preset_profiles[0]
+    default_preset_profile = preset_profiles[0][0]
     parser.add_argument(
         '--storage-preset-profile', type=str, default=default_preset_profile,
-        choices=preset_profiles,
-        help=f'Select a preset configuration for storage plugin "{plugin_id}". '
+        choices=[preset[0] for preset in preset_profiles],
+        help=f'R|Select a preset configuration for storage plugin "{plugin_id}". '
              'Settings in this profile can still be overriden by other explicit options '
-             'and --storage-config-file. Default: %(default)s')
+             'and --storage-config-file. Profiles:\n' +
+             '\n'.join([f'{preset[0]}: {preset[1]}' for preset in preset_profiles]))

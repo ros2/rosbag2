@@ -20,6 +20,7 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
+from ros2bag.api import SplitLineFormatter
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_default_storage_id
@@ -36,6 +37,7 @@ class RecordVerb(VerbExtension):
     """Record ROS data to a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        parser.formatter_class = SplitLineFormatter
         writer_choices = get_registered_writers()
         default_storage_id = get_default_storage_id()
         default_writer = default_storage_id if default_storage_id in writer_choices else \

@@ -139,7 +139,7 @@ The exposed entrypoint can be installed as a Python module by any method, for ex
 
 The functions this entry point may provide:
 
-* `get_preset_profiles(): List[str]` - provide a list of names of preset profiles for writing storage files. The first item will be used as default. Consider returning 'none' as the first element.
+* `get_preset_profiles(): List[Tuple[str, str]]` - provide a list of string pairs containing (name, description) of _preset profiles_, or predefined configurations, for writing storage files. The first item will be used as default. Consider returning 'none' as the first profile.
 
 NOTE: For each of these lists, the string literal 'none' will be used to indicate the feature is disable/not used.
 

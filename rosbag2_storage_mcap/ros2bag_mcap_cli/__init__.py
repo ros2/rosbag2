@@ -14,4 +14,9 @@
 
 
 def get_preset_profiles():
-    return ['none', 'fastwrite', 'zstd_fast', 'zstd_small']
+    return [
+        ('none', 'Default profile, no special settings.'),
+        ('fastwrite', 'Disables CRC and chunking for faster writing.'),
+        ('zstd_fast', 'Use Zstd chunk compression on Fastest level.'),
+        ('zstd_small', 'Use Zstd chunk compression on Slowest level, for smallest file size.'),
+    ]

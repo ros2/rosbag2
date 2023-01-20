@@ -14,4 +14,7 @@
 
 
 def get_preset_profiles():
-    return ['none', 'resilient']
+    return [
+        ('none', 'Default profile, optimized for performance.'),
+        ('resilient', 'Avoid data corruption in case of crashes at the cost of performance.'),
+    ]
