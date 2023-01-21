@@ -160,7 +160,7 @@ def _parse_cli_storage_plugin():
     storage_parsed_args, _ = storage_parser.parse_known_args()
     plugin_id = storage_parsed_args.storage
     if plugin_id not in plugin_choices:
-        raise ValueError(f'No storage plugin found with ID {plugin_id}')
+        raise ValueError(f'No storage plugin found with ID "{plugin_id}". Found {plugin_choices}.')
     return plugin_id
 
 
