@@ -150,15 +150,20 @@ def add_standard_reader_args(parser: ArgumentParser) -> None:
 
 def _parse_cli_storage_plugin():
     plugin_choices = set(rosbag2_py.get_registered_writers())
+    default_storage = rosbag2_py.get_default_storage_id()
+    if default_storage not in plugin_choices:
+        default_storage = next(iter(plugin_choices))
+
     storage_parser = ArgumentParser(add_help=False)
     storage_parser.add_argument(
         '-s', '--storage',
-        default=rosbag2_py.get_default_storage_id(),
+        default=default_storage,
         choices=plugin_choices,
         help='Storage implementation of bag. '
              'By default attempts to detect automatically - use this argument to override.')
     storage_parsed_args, _ = storage_parser.parse_known_args()
     plugin_id = storage_parsed_args.storage
+
     if plugin_id not in plugin_choices:
         raise ValueError(f'No storage plugin found with ID "{plugin_id}". Found {plugin_choices}.')
     return plugin_id
