@@ -53,11 +53,7 @@ class BurstVerb(VerbExtension):
         parser.add_argument(
             '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations. '
-                 'For the default storage plugin settings are specified through syntax:'
-                 'read:'
-                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
-                 'Note that applicable settings are limited to read-only for ros2 bag play.'
-                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
+                 'See storage plugin documentation for the format of this file.')
         parser.add_argument(
             '--start-offset', type=check_positive_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
