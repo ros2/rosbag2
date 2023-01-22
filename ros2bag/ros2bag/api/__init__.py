@@ -177,7 +177,9 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     except KeyError:
         print(f'No CLI extension module found for plugin name {plugin_id} '
               'in entry_point group "ros2bag.storage_plugin_cli_extension".')
-        return
+        # Commandline arguments should still be added when no extension present
+        # None will throw AttributeError for all method calls
+        extension = None
 
     parser.add_argument(
         '--storage-config-file', type=FileType('r'),
