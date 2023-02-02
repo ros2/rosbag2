@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rcutils/logging_macros.h"
 #include "rcpputils/env.hpp"
+#include "rcutils/logging_macros.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -194,9 +194,6 @@ public:
   std::string get_relative_file_path() const override;
   uint64_t get_bagfile_size() const override;
   std::string get_storage_identifier() const override;
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_GET_RECORDED_ROS_DISTRO
-  std::string get_recorded_ros_distro() const override;
-#endif
 
   /** BaseReadInterface **/
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER
@@ -453,6 +450,10 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     metadata_.topics_with_message_count.push_back(topic_info);
   }
 
+#if ROSBAG2_MCAP_METADATA_HAS_ROS_DISTRO
+  metadata_.ros_distro = recorded_ros_distro_;
+#endif
+
   return metadata_;
 }
 
@@ -478,13 +479,6 @@ std::string MCAPStorage::get_storage_identifier() const
 {
   return "mcap";
 }
-
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_GET_RECORDED_ROS_DISTRO
-std::string MCAPStorage::get_recorded_ros_distro() const
-{
-  return recorded_ros_distro_;
-}
-#endif
 
 /** BaseReadInterface **/
 bool MCAPStorage::read_and_enqueue_message()

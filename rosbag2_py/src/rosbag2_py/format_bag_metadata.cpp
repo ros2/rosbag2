@@ -147,6 +147,7 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   info_stream << "Bag size:          " << format_file_size(
     metadata.bag_size) << std::endl;
   info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;
+  info_stream << "ROS Distro:        " << metadata.ros_distro << std::endl;
   info_stream << "Duration:          " << format_duration(
     metadata.duration)["time_in_sec"] << "s" << std::endl;
   info_stream << "Start:             " << format_time_point(start_time) <<

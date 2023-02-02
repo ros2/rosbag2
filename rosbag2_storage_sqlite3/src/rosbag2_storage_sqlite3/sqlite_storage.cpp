@@ -751,6 +751,13 @@ void SqliteStorage::read_metadata()
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(min_time));
   metadata_.duration = std::chrono::nanoseconds(max_time) - std::chrono::nanoseconds(min_time);
   metadata_.bag_size = get_bagfile_size();
+
+  if (db_schema_version_ >= 3 && database_->table_exists("schema")) {
+    // Read schema version
+    auto statement = database_->prepare_statement("SELECT ros_distro from schema;");
+    auto query_results = statement->execute_query<std::string>();
+    metadata_.ros_distro = std::get<0>(*query_results.begin());
+  }
 }
 
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
@@ -800,18 +807,6 @@ SqliteWrapper & SqliteStorage::get_sqlite_database_wrapper()
 int SqliteStorage::get_db_schema_version() const
 {
   return db_schema_version_;
-}
-
-std::string SqliteStorage::get_recorded_ros_distro() const
-{
-  std::string ros_distro;
-  if (db_schema_version_ >= 3 && database_->table_exists("schema")) {
-    // Read schema version
-    auto statement = database_->prepare_statement("SELECT ros_distro from schema;");
-    auto query_results = statement->execute_query<std::string>();
-    ros_distro = std::get<0>(*query_results.begin());
-  }
-  return ros_distro;
 }
 
 int SqliteStorage::get_last_rowid()

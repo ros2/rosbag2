@@ -127,12 +127,6 @@ std::string TestPlugin::get_storage_identifier() const
   return test_constants::READ_WRITE_PLUGIN_IDENTIFIER;
 }
 
-std::string TestPlugin::get_recorded_ros_distro() const
-{
-  std::cout << "\nreturning recorded ros distro\n";
-  return test_constants::RECORDED_ROS_DISTRO;
-}
-
 uint64_t TestPlugin::get_minimum_split_file_size() const
 {
   std::cout << "\nreturning minimum split file size\n";

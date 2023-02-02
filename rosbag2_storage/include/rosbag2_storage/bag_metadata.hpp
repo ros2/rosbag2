@@ -54,6 +54,7 @@ struct BagMetadata
   std::string compression_format;
   std::string compression_mode;
   std::unordered_map<std::string, std::string> custom_data;  // {key: value, ...}
+  std::string ros_distro;
 };
 
 }  // namespace rosbag2_storage

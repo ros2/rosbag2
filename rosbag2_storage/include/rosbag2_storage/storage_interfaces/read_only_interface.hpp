@@ -45,8 +45,6 @@ public:
 
   std::string get_storage_identifier() const override = 0;
 
-  std::string get_recorded_ros_distro() const override = 0;
-
   /**
   Sets filters on messages. This occurs in place, meaning that messages satisfying
   the filter that were already read before applying the filter will not be re-read

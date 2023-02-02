@@ -51,12 +51,6 @@ public:
    * \returns the identifier.
    */
   virtual std::string get_storage_identifier() const = 0;
-
-  /**
-   * Returns the ROS distro environment of the bagfile, if available.
-   * \returns the ROS_DISTRO variable, or empty string if not available
-   */
-  virtual std::string get_recorded_ros_distro() const = 0;
 };
 
 }  // namespace storage_interfaces
