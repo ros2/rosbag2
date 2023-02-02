@@ -42,6 +42,8 @@ public:
 
   std::string get_storage_identifier() const override = 0;
 
+  std::string get_recorded_ros_distro() const override = 0;
+
   virtual uint64_t get_minimum_split_file_size() const = 0;
 
   void set_filter(const StorageFilter & storage_filter) override = 0;

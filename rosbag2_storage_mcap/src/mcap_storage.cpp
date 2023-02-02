@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "rcutils/logging_macros.h"
+#include "rcpputils/env.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -193,6 +194,9 @@ public:
   std::string get_relative_file_path() const override;
   uint64_t get_bagfile_size() const override;
   std::string get_storage_identifier() const override;
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_GET_RECORDED_ROS_DISTRO
+  std::string get_recorded_ros_distro() const override;
+#endif
 
   /** BaseReadInterface **/
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER
@@ -262,6 +266,8 @@ private:
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
+
+  std::string recorded_ros_distro_;
 };
 
 MCAPStorage::MCAPStorage()
@@ -335,6 +341,20 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       }
       last_read_time_point_ = 0;
       reset_iterator();
+
+      bool done = false;
+      mcap::TypedRecordReader typedReader(*mcap_reader_->dataSource(), 8);
+      typedReader.onMetadata = [&](const mcap::Metadata & metadata, ByteOffset) {
+        if (metadata.name == "rosbag2") {
+          recorded_ros_distro_ = metadata.metadata.at("ROS_DISTRO");
+          done = true;
+        }
+      };
+      while (!done && typedReader.next()) {
+        if (!typedReader.status().ok()) {
+          throw std::runtime_error("Failed to read mcap metadata");
+        }
+      }
       break;
     }
     case rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE:
@@ -360,6 +380,15 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       }
 
       auto status = mcap_writer_->open(relative_path_, options);
+      if (!status.ok()) {
+        throw std::runtime_error(status.message);
+      }
+
+      recorded_ros_distro_ = rcpputils::get_env_var("ROS_DISTRO");
+      mcap::Metadata metadata;
+      metadata.name = "rosbag2";
+      metadata.metadata = {{"ROS_DISTRO", recorded_ros_distro_}};
+      status = mcap_writer_->write(metadata);
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
@@ -449,6 +478,13 @@ std::string MCAPStorage::get_storage_identifier() const
 {
   return "mcap";
 }
+
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_GET_RECORDED_ROS_DISTRO
+std::string MCAPStorage::get_recorded_ros_distro() const
+{
+  return recorded_ros_distro_;
+}
+#endif
 
 /** BaseReadInterface **/
 bool MCAPStorage::read_and_enqueue_message()

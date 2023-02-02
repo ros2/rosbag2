@@ -88,6 +88,8 @@ public:
 
   std::string get_storage_identifier() const override;
 
+  std::string get_recorded_ros_distro() const override;
+
   uint64_t get_minimum_split_file_size() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -105,7 +107,6 @@ public:
   SqliteWrapper & get_sqlite_database_wrapper();
 
   int get_db_schema_version() const;
-  std::string get_recorded_ros_distro() const;
 
   enum class PresetProfile
   {

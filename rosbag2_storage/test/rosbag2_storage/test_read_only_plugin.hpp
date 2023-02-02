@@ -49,6 +49,7 @@ public:
   uint64_t get_bagfile_size() const override;
 
   std::string get_storage_identifier() const override;
+  std::string get_recorded_ros_distro() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 

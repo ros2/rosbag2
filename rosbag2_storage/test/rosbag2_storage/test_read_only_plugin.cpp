@@ -93,6 +93,12 @@ std::string TestReadOnlyPlugin::get_storage_identifier() const
   return test_constants::READ_ONLY_PLUGIN_IDENTIFIER;
 }
 
+std::string TestReadOnlyPlugin::get_recorded_ros_distro() const
+{
+  std::cout << "\nreturning recorded ros distro\n";
+  return test_constants::RECORDED_ROS_DISTRO;
+}
+
 void TestReadOnlyPlugin::set_filter(
   const rosbag2_storage::StorageFilter & /*storage_filter*/)
 {
