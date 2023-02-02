@@ -263,8 +263,7 @@ private:
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
-
-  std::string recorded_ros_distro_;
+  bool wrote_ros_distro_ = false;
 };
 
 MCAPStorage::MCAPStorage()
@@ -343,7 +342,7 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       mcap::TypedRecordReader typedReader(*mcap_reader_->dataSource(), 8);
       typedReader.onMetadata = [&](const mcap::Metadata & metadata, ByteOffset) {
         if (metadata.name == "rosbag2") {
-          recorded_ros_distro_ = metadata.metadata.at("ROS_DISTRO");
+          metadata_.ros_distro = metadata.metadata.at("ROS_DISTRO");
           done = true;
         }
       };
@@ -377,15 +376,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       }
 
       auto status = mcap_writer_->open(relative_path_, options);
-      if (!status.ok()) {
-        throw std::runtime_error(status.message);
-      }
-
-      recorded_ros_distro_ = rcpputils::get_env_var("ROS_DISTRO");
-      mcap::Metadata metadata;
-      metadata.name = "rosbag2";
-      metadata.metadata = {{"ROS_DISTRO", recorded_ros_distro_}};
-      status = mcap_writer_->write(metadata);
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
@@ -449,10 +439,6 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
 
     metadata_.topics_with_message_count.push_back(topic_info);
   }
-
-#if ROSBAG2_MCAP_METADATA_HAS_ROS_DISTRO
-  metadata_.ros_distro = recorded_ros_distro_;
-#endif
 
   return metadata_;
 }
@@ -833,6 +819,18 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
   }
+#ifdef ROSBAG2_MCAP_METADATA_HAS_ROS_DISTRO
+  if (!wrote_ros_distro_) {
+    mcap::Metadata metadata;
+    metadata.name = "rosbag2";
+    metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro}};
+    auto status = mcap_writer_->write(metadata);
+    wrote_ros_distro_ = true;
+    if (!status.ok()) {
+      throw std::runtime_error(status.message);
+    }
+  }
+#endif
 }
 #endif
 

@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/info.hpp"
@@ -78,6 +79,7 @@ void SequentialWriter::init_metadata()
   file_info.message_count = 0;
   metadata_.custom_data = storage_options_.custom_data;
   metadata_.files = {file_info};
+  metadata_.ros_distro = rcpputils::get_env_var("ROS_DISTRO");
 }
 
 void SequentialWriter::open(
