@@ -40,7 +40,7 @@ public:
 
   void run()
   {
-    thread_pool_.start(std::thread::hardware_concurrency());
+    thread_pool_.start(number_of_threads_);
 
     for (auto & producer : producers_) {
       const auto finished_future = producer->promise_finished.get_future();
@@ -87,12 +87,20 @@ private:
     const std::string node_name(get_fully_qualified_name());
     const auto initial_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
 
+    size_t total_producer_number = 0U;
     for (auto & config : configurations) {
       for (unsigned int i = 0; i < config.count; ++i) {
         const std::string topic = node_name + "/" + config.topic_root + "_" + std::to_string(i + 1);
         auto producer = create_benchmark_producer(topic, config, initial_time);
         producers_.push_back(producer);
+        total_producer_number++;
       }
+    }
+
+    number_of_threads_ = config_utils::thread_number_from_node_parameters(*this);
+    // by default the number of threads is equal to the number of producers
+    if (number_of_threads_ == 0) {
+      number_of_threads_ = total_producer_number;
     }
   }
 
@@ -122,7 +130,6 @@ private:
     std::shared_ptr<BenchmarkProducer> producer)
   {
     std::this_thread::sleep_until(when);
-
     producer->produce();
 
     if (producer->produced_messages < producer->max_messages) {
@@ -137,6 +144,7 @@ private:
   }
 
   ThreadPool thread_pool_;
+  size_t number_of_threads_;
   std::vector<std::shared_ptr<BenchmarkProducer>> producers_;
 };
 
