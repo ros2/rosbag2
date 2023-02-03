@@ -263,7 +263,6 @@ private:
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
-  bool wrote_ros_distro_ = false;
 };
 
 MCAPStorage::MCAPStorage()
@@ -376,6 +375,14 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       }
 
       auto status = mcap_writer_->open(relative_path_, options);
+      if (!status.ok()) {
+        throw std::runtime_error(status.message);
+      }
+
+      mcap::Metadata metadata;
+      metadata.name = "rosbag2";
+      metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
+      status = mcap_writer_->write(metadata);
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
@@ -819,18 +826,6 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
   }
-#ifdef ROSBAG2_MCAP_METADATA_HAS_ROS_DISTRO
-  if (!wrote_ros_distro_) {
-    mcap::Metadata metadata;
-    metadata.name = "rosbag2";
-    metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro}};
-    auto status = mcap_writer_->write(metadata);
-    wrote_ros_distro_ = true;
-    if (!status.ok()) {
-      throw std::runtime_error(status.message);
-    }
-  }
-#endif
 }
 #endif
 

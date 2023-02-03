@@ -33,7 +33,7 @@ void MetadataIo::write_metadata(const std::string & uri, const BagMetadata & met
   YAML::Node metadata_node;
   metadata_node["rosbag2_bagfile_information"] = metadata;
   std::ofstream fout(get_metadata_file_name(uri));
-  fout << metadata_node << std::endl;
+  fout << metadata_node;
 }
 
 BagMetadata MetadataIo::read_metadata(const std::string & uri)
