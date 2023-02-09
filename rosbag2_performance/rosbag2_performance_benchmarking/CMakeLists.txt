@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
-if (NOT BUILD_ROSBAG2_BENCHMARKS)
+if(NOT BUILD_ROSBAG2_BENCHMARKS)
   return()
 endif()
 

@@ -58,7 +58,7 @@ bool wait_for_subscriptions_from_node_parameters(rclcpp::Node & node)
   return wait_for_subscriptions;
 }
 
-size_t thread_number_from_node_parameters(rclcpp::Node & node)
+size_t get_number_of_threads_from_node_parameters(rclcpp::Node & node)
 {
   const std::string parameters_ns = "publishers";
   node.declare_parameter<int>(parameters_ns + ".number_of_threads", 0);

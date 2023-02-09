@@ -50,15 +50,15 @@ public:
       throw std::invalid_argument("job is nullptr");
     }
 
-    std::lock_guard<std::mutex> l(mutex_);
-    jobs_.push(job);
-    cv_.notify_one();
+    std::lock_guard<std::mutex> l(jobs_queue_mutex_);
+    jobs_queue_.push(job);
+    jobs_queue_cv_.notify_one();
   }
 
   void terminate()
   {
     terminate_ = true;
-    cv_.notify_all();
+    jobs_queue_cv_.notify_all();
     for (auto & t : threads_) {
       if (t.joinable()) {t.join();}
     }
@@ -71,27 +71,27 @@ private:
     while (true) {
       job_type job;
       {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(
-          l, [this] {
-            return !jobs_.empty() || terminate_;
+        std::unique_lock<std::mutex> lock(jobs_queue_mutex_);
+        jobs_queue_cv_.wait(
+          lock, [this] {
+            return !jobs_queue_.empty() || terminate_;
           });
 
         if (terminate_) {
           break;
         }
 
-        job = jobs_.front();
-        jobs_.pop();
+        job = jobs_queue_.front();
+        jobs_queue_.pop();
       }
       job();
     }
   }
 
   bool terminate_ = false;
-  std::mutex mutex_;
-  std::queue<job_type> jobs_;
-  std::condition_variable cv_;
+  std::mutex jobs_queue_mutex_;
+  std::queue<job_type> jobs_queue_;
+  std::condition_variable jobs_queue_cv_;
   std::vector<std::thread> threads_;
 };
 

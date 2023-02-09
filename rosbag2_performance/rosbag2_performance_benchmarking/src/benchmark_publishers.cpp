@@ -85,22 +85,22 @@ private:
     }
 
     const std::string node_name(get_fully_qualified_name());
-    const auto initial_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
+    const auto when_to_start = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
 
     size_t total_producers_number = 0U;
     for (auto & config : configurations) {
       for (unsigned int i = 0; i < config.count; ++i) {
         const std::string topic = node_name + "/" + config.topic_root + "_" + std::to_string(i + 1);
-        auto producer = create_benchmark_producer(topic, config, initial_time);
+        auto producer = create_benchmark_producer(topic, config, when_to_start);
         producers_.push_back(producer);
-        total_producer_number++;
+        total_producers_number++;
       }
     }
 
-    number_of_threads_ = config_utils::thread_number_from_node_parameters(*this);
+    number_of_threads_ = config_utils::get_number_of_threads_from_node_parameters(*this);
     // by default the number of threads is equal to the number of producers
     if (number_of_threads_ == 0) {
-      number_of_threads_ = total_producer_number;
+      number_of_threads_ = total_producers_number;
     }
   }
 
@@ -117,10 +117,12 @@ private:
     producer->period = std::chrono::milliseconds(
       producer_config.frequency ? 1000 / producer_config.frequency : 1);
 
-    thread_pool_.queue(
-      [this, initial_time, producer] {
-        producer_job(initial_time, producer);
-      });
+    if (producer->max_messages > 0) {
+      thread_pool_.queue(
+        [this, initial_time, producer] {
+          producer_job(initial_time, producer);
+        });
+    }
 
     return producer;
   }
@@ -130,13 +132,17 @@ private:
     std::shared_ptr<BenchmarkProducer> producer)
   {
     std::this_thread::sleep_until(when);
+    if (!rclcpp::ok()) {
+      producer->promise_finished.set_value();
+      return;
+    }
     producer->produce();
 
     if (producer->produced_messages < producer->max_messages) {
       thread_pool_.queue(
-        [this, next = std::chrono::high_resolution_clock::now() + producer->period,
+        [this, next_timestamp = when + producer->period,
         producer] {
-          producer_job(next, producer);
+          producer_job(next_timestamp, producer);
         });
     } else {
       producer->promise_finished.set_value();
