@@ -87,7 +87,7 @@ private:
     const std::string node_name(get_fully_qualified_name());
     const auto initial_time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
 
-    size_t total_producer_number = 0U;
+    size_t total_producers_number = 0U;
     for (auto & config : configurations) {
       for (unsigned int i = 0; i < config.count; ++i) {
         const std::string topic = node_name + "/" + config.topic_root + "_" + std::to_string(i + 1);
