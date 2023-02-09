@@ -26,7 +26,10 @@ class ThreadPool
 {
 public:
   using job_type = std::function<void ()>;
-
+  ~ThreadPool()
+  {
+    this->terminate();
+  }
   void start(size_t size)
   {
     if (!threads_.empty()) {
