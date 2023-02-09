@@ -68,7 +68,7 @@ private:
     while (true) {
       job_type job;
       {
-        std::unique_lock<std::mutex> l(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         cv_.wait(
           l, [this] {
             return !jobs_.empty() || terminate_;
