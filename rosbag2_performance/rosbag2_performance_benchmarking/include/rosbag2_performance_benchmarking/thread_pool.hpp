@@ -57,7 +57,7 @@ public:
     terminate_ = true;
     cv_.notify_all();
     for (auto & t : threads_) {
-      t.join();
+      if (t.joinable()) {t.join();}
     }
     threads_.clear();
   }
