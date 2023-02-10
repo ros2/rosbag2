@@ -73,7 +73,6 @@ std::unordered_set<std::string> get_registered_readers()
 }  // namespace rosbag2_py
 
 using PyReader = rosbag2_py::Reader<rosbag2_cpp::readers::SequentialReader>;
-using PyCompressionReader = rosbag2_py::Reader<rosbag2_compression::SequentialCompressionReader>;
 
 PYBIND11_MODULE(_reader, m) {
   m.doc() = "Python wrapper of the rosbag2_cpp reader API";
@@ -94,25 +93,4 @@ PYBIND11_MODULE(_reader, m) {
   .def("set_filter", &PyReader::set_filter)
   .def("reset_filter", &PyReader::reset_filter)
   .def("seek", &PyReader::seek);
-
-  pybind11::class_<PyCompressionReader>(m, "SequentialCompressionReader")
-  .def(pybind11::init())
-  .def("open_uri", pybind11::overload_cast<const std::string &>(&PyCompressionReader::open))
-  .def(
-    "open",
-    pybind11::overload_cast<
-      const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
-    >(&PyCompressionReader::open))
-  .def("set_read_order", &PyCompressionReader::set_read_order)
-  .def("read_next", &PyCompressionReader::read_next)
-  .def("has_next", &PyCompressionReader::has_next)
-  .def("get_metadata", &PyCompressionReader::get_metadata)
-  .def("get_all_topics_and_types", &PyCompressionReader::get_all_topics_and_types)
-  .def("set_filter", &PyCompressionReader::set_filter)
-  .def("reset_filter", &PyCompressionReader::reset_filter)
-  .def("seek", &PyCompressionReader::seek);
-  m.def(
-    "get_registered_readers",
-    &rosbag2_py::get_registered_readers,
-    "Returns list of discovered plugins that support rosbag2 playback.");
 }

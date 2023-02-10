@@ -59,8 +59,6 @@ public:
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
     std::make_unique<rosbag2_storage::MetadataIo>());
 
-  virtual ~SequentialCompressionReader();
-
   void open(
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;

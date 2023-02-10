@@ -20,12 +20,12 @@
 #include <utility>
 #include <vector>
 
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
-#include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
@@ -144,7 +144,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>();
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options, play_options);
 
@@ -165,7 +165,7 @@ public:
     PlayOptions & play_options,
     size_t num_messages)
   {
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>();
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options, play_options);
 
@@ -217,7 +217,7 @@ public:
       record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
     }
 
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+    auto writer = std::make_unique<rosbag2_cpp::Writer>();
     auto recorder = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
     recorder->record();

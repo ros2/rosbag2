@@ -38,9 +38,6 @@ SequentialCompressionReader::SequentialCompressionReader(
   compression_factory_{std::move(compression_factory)}
 {}
 
-SequentialCompressionReader::~SequentialCompressionReader()
-{}
-
 void SequentialCompressionReader::setup_decompression()
 {
   if (decompressor_) {

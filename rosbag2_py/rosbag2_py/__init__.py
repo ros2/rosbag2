@@ -19,7 +19,6 @@ from rpyutils import add_dll_directories_from_env
 # See https://docs.python.org/3/whatsnew/3.8.html#bpo-36085-whatsnew
 with add_dll_directories_from_env('PATH'):
     from rosbag2_py._reader import (
-        SequentialCompressionReader,
         SequentialReader,
         get_registered_readers,
     )
@@ -69,7 +68,6 @@ __all__ = [
     'ReadOrder',
     'ReadOrderSortBy',
     'Reindexer',
-    'SequentialCompressionReader',
     'SequentialCompressionWriter',
     'SequentialReader',
     'SequentialWriter',

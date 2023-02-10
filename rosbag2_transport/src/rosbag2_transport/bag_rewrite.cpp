@@ -24,7 +24,6 @@
 
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
-#include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
@@ -176,7 +175,7 @@ void bag_rewrite(
   > output_bags;
 
   for (const auto & storage_options : input_options) {
-    auto reader = ReaderWriterFactory::make_reader(storage_options);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>();
     reader->open(storage_options);
     input_bags.push_back(std::move(reader));
   }
@@ -189,7 +188,7 @@ void bag_rewrite(
     // only when it is able to, which will likely require some new APIs.
     auto zero_cache_storage_options = storage_options;
     zero_cache_storage_options.max_cache_size = 0u;
-    auto writer = ReaderWriterFactory::make_writer(record_options);
+    auto writer = std::make_unique<rosbag2_cpp::Writer>();
     writer->open(zero_cache_storage_options);
     output_bags.push_back(std::make_pair(std::move(writer), record_options));
   }

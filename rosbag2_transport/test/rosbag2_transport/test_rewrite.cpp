@@ -19,9 +19,9 @@
 #include <utility>
 
 #include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
-#include "rosbag2_transport/reader_writer_factory.hpp"
 
 using namespace ::testing;  // NOLINT
 
@@ -98,7 +98,7 @@ TEST_P(TestRewrite, test_noop_rewrite) {
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
 
-  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>();
   reader->open(output_storage);
   const auto metadata = reader->get_metadata();
   EXPECT_EQ(metadata.message_count, 100u + 50u);
@@ -119,7 +119,7 @@ TEST_P(TestRewrite, test_merge) {
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
 
-  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>();
   reader->open(output_storage);
   const auto metadata = reader->get_metadata();
   EXPECT_EQ(metadata.message_count, 100u + 50u + 50u + 25u);
@@ -164,7 +164,7 @@ TEST_P(TestRewrite, test_filter_split) {
 
   {
     auto opts = output_bags_[0].first;
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(opts);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>();
     reader->open(opts);
     const auto metadata = reader->get_metadata();
     EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
@@ -173,7 +173,7 @@ TEST_P(TestRewrite, test_filter_split) {
   }
   {
     auto opts = output_bags_[1].first;
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(opts);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>();
     reader->open(opts);
     const auto metadata = reader->get_metadata();
     EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));

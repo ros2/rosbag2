@@ -16,6 +16,7 @@
   <depend>pluginlib</depend>
   <depend>rcpputils</depend>
   <depend>rcutils</depend>
+  <depend>rosbag2_compression_zstd</depend>
   <depend>rosbag2_storage</depend>
   <depend>sqlite3_vendor</depend>
   <depend>yaml_cpp_vendor</depend>

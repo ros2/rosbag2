@@ -149,14 +149,10 @@ public:
   {
     auto filter = rosbag2_storage::StorageFilter{};
     filter.topics.push_back(topic);
+    rosbag2_storage::StorageOptions opts;
+    opts.compression_format = compression_plugin;
 
-    std::unique_ptr<rosbag2_cpp::Reader> reader;
-    if (compression_plugin.empty()) {
-      reader = std::make_unique<rosbag2_cpp::Reader>();
-    } else {
-      reader = std::make_unique<rosbag2_cpp::Reader>(
-        std::make_unique<rosbag2_compression::SequentialCompressionReader>());
-    }
+    std::unique_ptr<rosbag2_cpp::Reader> reader = std::make_unique<rosbag2_cpp::Reader>();
     reader->open(root_bag_path_.string());
     reader->set_filter(filter);
 
