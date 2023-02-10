@@ -363,8 +363,13 @@ Recorder::create_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type](
+      std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo & message_info
+    ) {
       if (!paused_.load()) {
+        const auto & mi = message_info.get_rmw_message_info();
+        ROSBAG2_TRANSPORT_LOG_INFO_STREAM("MESSAGE INFO on " << topic_name << ": pubgid " << mi.publisher_gid.data);
         writer_->write(message, topic_name, topic_type, this->get_clock()->now());
       }
     });
