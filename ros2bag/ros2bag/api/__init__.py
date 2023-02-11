@@ -17,6 +17,7 @@ from argparse import (
     ArgumentTypeError,
     FileType,
     HelpFormatter,
+    Namespace,
 )
 import os
 from typing import Any
@@ -169,8 +170,15 @@ def _parse_cli_storage_plugin():
     return plugin_id
 
 
-def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
+def _try_call_extension(extension, api_name, default_value, args=[]):
+    try:
+        return extension.__attr__(api_name)(*args)
+    except AttributeError:
+        print(f'Storage plugin does not provide function "{api_name}".')
+        return default_value
 
+
+def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     plugin_id = _parse_cli_storage_plugin()
     try:
         extension = get_entry_points('ros2bag.storage_plugin_cli_extension')[plugin_id].load()
@@ -186,12 +194,9 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
         help='Path to a yaml file defining storage specific configurations. '
              f'See {plugin_id} plugin documentation for the format of this file.')
 
-    try:
-        preset_profiles = extension.get_preset_profiles() or \
-            [('none', 'Default writer configuration.')]
-    except AttributeError:
-        print(f'Storage plugin {plugin_id} does not provide function "get_preset_profiles".')
-        preset_profiles = ['none']
+    preset_profiles = [('none', 'Default writer configuration.')]
+    preset_profiles = _try_call_extension(
+        extension, 'get_preset_profiles', default_value=preset_profiles)
     default_preset_profile = preset_profiles[0][0]
     parser.add_argument(
         '--storage-preset-profile', type=str, default=default_preset_profile,
@@ -200,3 +205,31 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
              'Settings in this profile can still be overriden by other explicit options '
              'and --storage-config-file. Profiles:\n' +
              '\n'.join([f'{preset[0]}: {preset[1]}' for preset in preset_profiles]))
+
+    _try_call_extension(extension, 'add_custom_writer_arguments')
+    try:
+        extension.add_custom_writer_arguments(parser)
+    except AttributeError:
+        print(
+            f'Storage plugin {plugin_id} does not provide function "add_custom_writer_arguments".')
+
+
+def parse_plugin_arguments(args: Namespace) -> None:
+    plugin_id = args.storage
+    try:
+        extension = get_entry_points('ros2bag.storage_plugin_cli_extension')[plugin_id].load()
+    except KeyError:
+        print(f'No CLI extension module found for plugin name {plugin_id} '
+              'in entry_point group "ros2bag.storage_plugin_cli_extension".')
+        # Commandline arguments should still be added when no extension present
+        # None will throw AttributeError for all method calls
+        extension = None
+
+    try:
+        parsed_custom_config = extension.parse_custom_writer_arguments(args)
+    except AttributeError:
+        print(
+            f'Storage plugin {plugin_id} does not provide function "parse_custom_writer_arguments".')
+
+    if args.storage_config_file and
+    pass

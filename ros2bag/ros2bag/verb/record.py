@@ -18,6 +18,7 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
+from ros2bag.api import parse_plugin_arguments
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.api import SplitLineFormatter
