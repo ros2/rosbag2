@@ -42,6 +42,11 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
 
   bag_config_ = config_utils::bag_config_from_node_parameters(*this);
 
+  const auto number_of_threads = config_utils::get_number_of_threads_from_node_parameters(*this);
+  if (number_of_threads != 0) {
+    RCLCPP_WARN(get_logger(), "number_of_threads parameter is not used in writer_benchmark");
+  }
+
   this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
   this->get_parameter("results_file", results_file_);
 

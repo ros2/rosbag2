@@ -39,6 +39,12 @@ storage uri, which is used to read the bag metadata file.
 
 Note that while you can opt to select compression for benchmarking, the generated data is random so it is likely not representative for this specific case. To publish non-random data, you need to modify the ByteProducer.
 
+#### Number of publisher threads
+
+In the case of the `benchmark_publishers` binary, a pool of threads is created to run the publishers. By default,
+the number of threads is equal to the number of publishers. It is possible to change the number of threads
+using the optional `number_of_threads` parameter.
+
 ## Building
 
 To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)

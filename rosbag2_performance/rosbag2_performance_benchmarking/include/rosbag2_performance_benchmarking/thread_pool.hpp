@@ -30,6 +30,7 @@ public:
   {
     this->terminate();
   }
+
   void start(size_t size)
   {
     if (!threads_.empty()) {
