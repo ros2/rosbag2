@@ -2,6 +2,9 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.19.0 (2023-01-13)
 -------------------
 * Expose more Writer methods in python interface (`#1220 <https://github.com/ros2/rosbag2/issues/1220>`_)
@@ -27,20 +30,13 @@ Changelog for package rosbag2_py
 -------------------
 * Use a single variable for evaluating the filter regex (`#1053 <https://github.com/ros2/rosbag2/issues/1053>`_)
 * Add additional mode of publishing sim time updates triggered by replayed messages (`#1050 <https://github.com/ros2/rosbag2/issues/1050>`_)
- * When this mode is active, /clock updates are triggered whenever messages are replayed rather
-   than at a fixed rate. Optionally, a list of triggering topics can be set so that only a subset
-   of replayed messages will trigger the /clock update. This mode is most useful when replaying
-   applications which do some sanity checking or correlation of message data to system timestamps.
-   If the application does not need the sim time to be updated at a consistent rate, this mode can
-   substantially reduce the overhead of having sim time enabled in rosbag2.
 * Renamed --topics-regex to --regex and -e in Player class to be consistent with Recorder (`#1045 <https://github.com/ros2/rosbag2/issues/1045>`_)
 * Add the ability to record any key/value pair in 'custom' field in metadata.yaml (`#1038 <https://github.com/ros2/rosbag2/issues/1038>`_)
 * Added support for filtering topics via regular expressions on Playback (`#1034 <https://github.com/ros2/rosbag2/issues/1034>`_)
 * Adds play until timestamp functionality (`#1005 <https://github.com/ros2/rosbag2/issues/1005>`_)
 * Add CLI verb for burst mode of playback (`#980 <https://github.com/ros2/rosbag2/issues/980>`_)
 * Add play-for specified number of seconds functionality (`#960 <https://github.com/ros2/rosbag2/issues/960>`_)
-* Contributors: Agustin Alba Chicar, Esteve Fernandez, Geoffrey Biggs, Hunter L. Allen, kylemarcey,
-  Michael Orlov, Tony Peng
+* Contributors: Agustin Alba Chicar, Esteve Fernandez, Geoffrey Biggs, Hunter L. Allen, kylemarcey, Michael Orlov, Tony Peng
 
 0.16.0 (2022-05-11)
 -------------------

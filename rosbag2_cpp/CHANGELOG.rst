@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.19.0 (2023-01-13)
 -------------------
 * Expose more Writer methods in python interface (`#1220 <https://github.com/ros2/rosbag2/issues/1220>`_)
@@ -31,15 +34,11 @@ Changelog for package rosbag2
 0.17.0 (2022-07-30)
 -------------------
 * Speed optimization: Preparing copyless publish/subscribing by using const message for writing (`#1010 <https://github.com/ros2/rosbag2/issues/1010>`_)
- * Update compression to make copy instead of in-place operation
- * Get rid of extra data copying operation in writer by refrencing to received message
 * Add the ability to record any key/value pair in 'custom' field in metadata.yaml (`#1038 <https://github.com/ros2/rosbag2/issues/1038>`_)
 * Notification of significant events during bag recording and playback (`#908 <https://github.com/ros2/rosbag2/issues/908>`_)
-* Bugfix for "Playing the bags recorded with split by duration/size is playing only the last
-  recorded .db3." (`#1022 <https://github.com/ros2/rosbag2/issues/1022>`_)
+* Bugfix for "Playing the bags recorded with split by duration/size is playing only the last recorded .db3." (`#1022 <https://github.com/ros2/rosbag2/issues/1022>`_)
 * Improve test_time_controller test (`#1012 <https://github.com/ros2/rosbag2/issues/1012>`_)
-* Contributors: DensoADAS, Geoffrey Biggs, Hunter L. Allen, Jorge Perez, Kaju-Bubanja,
-  Michael Orlov, Joshua Hampp, Tony Peng
+* Contributors: DensoADAS, Geoffrey Biggs, Hunter L. Allen, Jorge Perez, Kaju-Bubanja, Michael Orlov, Joshua Hampp, Tony Peng
 
 0.16.0 (2022-05-11)
 -------------------
