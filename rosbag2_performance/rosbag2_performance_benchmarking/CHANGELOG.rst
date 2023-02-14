@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.20.0 (2023-02-14)
+-------------------
+* Skip ament_package() call when not building rosbag2_performance_benchmarking (`#1242 <https://github.com/ros2/rosbag2/issues/1242>`_)
+* Contributors: Shane Loretz
+
 0.19.0 (2023-01-13)
 -------------------
 * Add option to specify a message type (`#1153 <https://github.com/ros2/rosbag2/issues/1153>`_)

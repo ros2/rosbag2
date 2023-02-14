@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_mcap_testdata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.20.0 (2023-02-14)
+-------------------
+
 0.19.0 (2023-01-13)
 -------------------
 * Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_)

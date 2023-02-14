@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.20.0 (2023-02-14)
+-------------------
+* CLI: Get storage-specific values from plugin (`#1209 <https://github.com/ros2/rosbag2/issues/1209>`_)
+* Contributors: Emerson Knapp
+
 0.19.0 (2023-01-13)
 -------------------
 * Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_)

@@ -2,6 +2,9 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.20.0 (2023-02-14)
+-------------------
+
 0.19.0 (2023-01-13)
 -------------------
 * mcap_vendor: add readme with versioning procedure (`#1230 <https://github.com/ros2/rosbag2/issues/1230>`_)
