@@ -311,7 +311,7 @@ void SequentialReader::check_topics_serialization_formats(
   for (const auto & topic : topics) {
     if (topic.topic_metadata.serialization_format != storage_serialization_format) {
       throw std::runtime_error(
-              "Topics with different rmw serialization format have been found. "
+              "Topics with different rwm serialization format have been found. "
               "All topics must have the same serialization format.");
     }
   }
