@@ -98,8 +98,8 @@ if(BUILD_TESTING)
       rclcpp::rclcpp
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
-      rosbag2_storage_default_plugins::rosbag2_storage_default_plugins
       rosbag2_test_common::rosbag2_test_common
+      ${std_msgs_TARGETS}
     )
   endif()
 
