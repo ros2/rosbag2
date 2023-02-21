@@ -193,7 +193,7 @@ void WriterBenchmark::create_writer()
     rosbag2_storage::TopicMetadata topic;
     topic.name = queue->topic_name();
     // TODO(adamdbrw) - replace with something more general if needed
-    topic.type = "std_msgs::msgs::ByteMultiArray";
+    topic.type = "rosbag2_performance_benchmarking_msgs/msg/ByteArray";
     topic.serialization_format = serialization_format;
     writer_->create_topic(topic);
   }
