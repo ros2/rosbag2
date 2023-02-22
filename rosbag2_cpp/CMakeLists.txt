@@ -140,9 +140,9 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/serializer_test_plugin.cpp
     test/rosbag2_cpp/converter_test_plugin.cpp)
   target_link_libraries(converter_test_plugins
+    ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
   )
-  target_link_libraries(converter_test_plugins ${PROJECT_NAME})
   install(
     TARGETS converter_test_plugins
     ARCHIVE DESTINATION lib
