@@ -22,7 +22,11 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(example_interfaces REQUIRED)
 
 add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
-ament_target_dependencies(simple_bag_recorder rclcpp rosbag2_cpp example_interfaces)
+target_link_libraries(simple_bag_recorder
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  ${example_interfaces_TARGETS}
+)
 
 install(TARGETS
   simple_bag_recorder
@@ -30,7 +34,11 @@ install(TARGETS
 )
 
 add_executable(data_generator_node src/data_generator_node.cpp)
-ament_target_dependencies(data_generator_node rclcpp rosbag2_cpp example_interfaces)
+target_link_libraries(data_generator_node
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  ${example_interfaces_TARGETS}
+)
 
 install(TARGETS
   data_generator_node
@@ -38,7 +46,11 @@ install(TARGETS
 )
 
 add_executable(data_generator_executable src/data_generator_executable.cpp)
-ament_target_dependencies(data_generator_executable rclcpp rosbag2_cpp example_interfaces)
+target_link_libraries(data_generator_executable
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  ${example_interfaces_TARGETS}
+)
 
 install(TARGETS
   data_generator_executable

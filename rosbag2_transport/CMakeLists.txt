@@ -51,18 +51,19 @@ add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
-ament_target_dependencies(${PROJECT_NAME}
-  keyboard_handler
-  rcl
-  rclcpp
-  rcutils
-  rmw
-  rosbag2_compression
-  rosbag2_cpp
-  rosbag2_interfaces
-  rosbag2_storage
-  shared_queues_vendor
-  yaml_cpp_vendor
+target_link_libraries(${PROJECT_NAME}
+  keyboard_handler::keyboard_handler
+  rcl::rcl
+  rclcpp::rclcpp
+  rcutils::rcutils
+  rmw::rmw
+  rosbag2_compression::rosbag2_compression
+  rosbag2_cpp::rosbag2_cpp
+  ${rosbag2_interfaces_TARGETS}
+  rosbag2_storage::rosbag2_storage
+  shared_queues_vendor::singleproducerconsumer
+  shared_queues_vendor::concurrentqueue
+  yaml-cpp
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -171,11 +172,11 @@ function(create_tests_for_rmw_implementation)
       LINK_LIBS rosbag2_transport
       AMENT_DEPS test_msgs rosbag2_test_common)
 
-    rosbag2_transport_add_gmock(test_burst
-      test/rosbag2_transport/test_burst.cpp
-      INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
-      LINK_LIBS rosbag2_transport
-      AMENT_DEPS test_msgs rosbag2_test_common)
+  rosbag2_transport_add_gmock(test_burst
+    test/rosbag2_transport/test_burst.cpp
+    INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_qos
     test/rosbag2_transport/test_qos.cpp
@@ -260,18 +261,19 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_topic_filter.cpp)
   target_include_directories(test_topic_filter PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_topic_filter rosbag2_transport)
+  target_link_libraries(test_topic_filter
+    ${PROJECT_NAME}
+  )
 
   ament_add_gmock(test_rewrite
     test/rosbag2_transport/test_rewrite.cpp)
-  target_link_libraries(test_rewrite ${PROJECT_NAME})
-  ament_target_dependencies(
-    test_rewrite
-    keyboard_handler
-    rcpputils
-    rosbag2_cpp
-    rosbag2_test_common
-    test_msgs
+  target_link_libraries(test_rewrite
+    ${PROJECT_NAME}
+    keyboard_handler::keyboard_handler
+    rcpputils::rcpputils
+    rosbag2_cpp::rosbag2_cpp
+    rosbag2_test_common::rosbag2_test_common
+    ${test_msgs_TARGTES}
   )
 endif()
 

@@ -72,20 +72,20 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/writers/sequential_writer.cpp
   src/rosbag2_cpp/reindexer.cpp)
 
-ament_target_dependencies(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
   PUBLIC
-  ament_index_cpp
-  pluginlib
-  rclcpp
-  rcpputils
-  rcutils
-  rmw
-  rmw_implementation
-  rosbag2_storage
-  rosidl_runtime_c
-  rosidl_runtime_cpp
-  rosidl_typesupport_cpp
-  rosidl_typesupport_introspection_cpp
+  ament_index_cpp::ament_index_cpp
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rcpputils::rcpputils
+  rcutils::rcutils
+  rmw::rmw
+  rmw_implementation::rmw_implementation
+  rosbag2_storage::rosbag2_storage
+  rosidl_runtime_c::rosidl_runtime_c
+  rosidl_runtime_cpp::rosidl_runtime_cpp
+  rosidl_typesupport_cpp::rosidl_typesupport_cpp
+  rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -139,8 +139,10 @@ if(BUILD_TESTING)
     SHARED
     test/rosbag2_cpp/serializer_test_plugin.cpp
     test/rosbag2_cpp/converter_test_plugin.cpp)
-  ament_target_dependencies(converter_test_plugins rosbag2_storage)
-  target_link_libraries(converter_test_plugins ${PROJECT_NAME})
+  target_link_libraries(converter_test_plugins
+    ${PROJECT_NAME}
+    rosbag2_storage::rosbag2_storage
+  )
   install(
     TARGETS converter_test_plugins
     ARCHIVE DESTINATION lib
@@ -210,28 +212,35 @@ if(BUILD_TESTING)
     target_include_directories(test_ros2_message
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-    ament_target_dependencies(test_ros2_message
-      ament_index_cpp
-      rcpputils
-      rosbag2_storage
-      rosidl_runtime_cpp
-      rosidl_typesupport_introspection_cpp
-      rosidl_typesupport_cpp
-      test_msgs)
+    target_link_libraries(test_ros2_message
+      ament_index_cpp::ament_index_cpp
+      rcpputils::rcpputils
+      rosbag2_storage::rosbag2_storage
+      rosidl_runtime_cpp::rosidl_runtime_cpp
+      rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
+      rosidl_typesupport_cpp::rosidl_typesupport_cpp
+      ${test_msgs_TARGETS}
+    )
   endif()
 
   ament_add_gmock(test_sequential_writer
     test/rosbag2_cpp/test_sequential_writer.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_writer)
-    ament_target_dependencies(test_sequential_writer rosbag2_storage rosbag2_test_common test_msgs)
-    target_link_libraries(test_sequential_writer ${PROJECT_NAME})
+    target_link_libraries(test_sequential_writer
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+    )
   endif()
 
   ament_add_gmock(test_multifile_reader
     test/rosbag2_cpp/test_multifile_reader.cpp)
   if(TARGET test_multifile_reader)
-    ament_target_dependencies(test_multifile_reader rosbag2_storage)
-    target_link_libraries(test_multifile_reader ${PROJECT_NAME})
+    target_link_libraries(test_multifile_reader
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+    )
   endif()
 
   ament_add_gmock(test_time_controller_clock
