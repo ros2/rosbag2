@@ -3,6 +3,7 @@ rosbag2_performance_benchmarking_node:
     publishers: # publisher_groups parameter needs to include all the subsequent groups 
       publisher_groups: [ "lidars_secondary_16MBps", "lidars_main_16MBps", "cameras_540MBps", "radars_400KBps", "gps_5KBps", "imu_40KBps", "ultrasonic_72KBps" ]
       wait_for_subscriptions: True
+      # number_of_threads: 16
       lidars_secondary_16MBps:
         publishers_count:   4
         topic_root:         "lidar_secondary"

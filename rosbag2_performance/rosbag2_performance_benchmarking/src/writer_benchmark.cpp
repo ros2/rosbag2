@@ -42,6 +42,11 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
 
   bag_config_ = config_utils::bag_config_from_node_parameters(*this);
 
+  const auto number_of_threads = config_utils::get_number_of_threads_from_node_parameters(*this);
+  if (number_of_threads != 0) {
+    RCLCPP_WARN(get_logger(), "number_of_threads parameter is not used in writer_benchmark");
+  }
+
   this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
   this->get_parameter("results_file", results_file_);
 
@@ -188,7 +193,7 @@ void WriterBenchmark::create_writer()
     rosbag2_storage::TopicMetadata topic;
     topic.name = queue->topic_name();
     // TODO(adamdbrw) - replace with something more general if needed
-    topic.type = "std_msgs::msgs::ByteMultiArray";
+    topic.type = "rosbag2_performance_benchmarking_msgs/msg/ByteArray";
     topic.serialization_format = serialization_format;
     writer_->create_topic(topic);
   }

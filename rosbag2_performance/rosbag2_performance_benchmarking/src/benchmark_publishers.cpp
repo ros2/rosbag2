@@ -20,13 +20,13 @@
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
 #include "rosbag2_performance_benchmarking/config_utils.hpp"
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+#include "rosbag2_performance_benchmarking/thread_pool.hpp"
+
 #include "msg_utils/message_producer_factory.hpp"
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
-#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
-
 
 class BenchmarkPublishers : public rclcpp::Node
 {
@@ -40,24 +40,22 @@ public:
 
   void run()
   {
-    std::vector<std::thread> producer_threads;
+    thread_pool_.start(number_of_threads_);
+
     for (auto & producer : producers_) {
-      producer_threads.emplace_back(
-        [this, producer]() {
-          this->producer_job(producer);
-        });
+      const auto finished_future = producer->promise_finished.get_future();
+      finished_future.wait();
     }
 
-    for (auto & thread : producer_threads) {
-      thread.join();
-    }
+    thread_pool_.terminate();
   }
 
 private:
   struct BenchmarkProducer
   {
     std::shared_ptr<msg_utils::ProducerBase> msg_producer;
-    std::chrono::milliseconds period;
+    std::promise<void> promise_finished;
+    std::chrono::milliseconds period{0};
     size_t produced_messages = 0;
     size_t max_messages = 0;
 
@@ -71,7 +69,7 @@ private:
   void wait_for_subscriptions()
   {
     if (config_utils::wait_for_subscriptions_from_node_parameters(*this)) {
-      for (auto producer : producers_) {
+      for (const auto & producer : producers_) {
         producer->msg_producer->wait_for_matched();
       }
     }
@@ -87,19 +85,29 @@ private:
     }
 
     const std::string node_name(get_fully_qualified_name());
+    const auto when_to_start = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
 
+    size_t total_producers_number = 0U;
     for (auto & config : configurations) {
       for (unsigned int i = 0; i < config.count; ++i) {
         const std::string topic = node_name + "/" + config.topic_root + "_" + std::to_string(i + 1);
-        auto producer = create_benchmark_producer(topic, config);
+        auto producer = create_benchmark_producer(topic, config, when_to_start);
         producers_.push_back(producer);
+        total_producers_number++;
       }
+    }
+
+    number_of_threads_ = config_utils::get_number_of_threads_from_node_parameters(*this);
+    // by default the number of threads is equal to the number of producers
+    if (number_of_threads_ == 0) {
+      number_of_threads_ = total_producers_number;
     }
   }
 
   std::shared_ptr<BenchmarkProducer> create_benchmark_producer(
     std::string topic,
-    const PublisherGroupConfig & config)
+    const PublisherGroupConfig & config,
+    std::chrono::time_point<std::chrono::high_resolution_clock> initial_time)
   {
     const auto & producer_config = config.producer_config;
     auto producer = std::make_shared<BenchmarkProducer>();
@@ -109,20 +117,40 @@ private:
     producer->period = std::chrono::milliseconds(
       producer_config.frequency ? 1000 / producer_config.frequency : 1);
 
+    if (producer->max_messages > 0) {
+      thread_pool_.queue(
+        [this, initial_time, producer] {
+          producer_job(initial_time, producer);
+        });
+    }
+
     return producer;
   }
 
-  void producer_job(std::shared_ptr<BenchmarkProducer> producer)
+  void producer_job(
+    std::chrono::time_point<std::chrono::high_resolution_clock> when,
+    std::shared_ptr<BenchmarkProducer> producer)
   {
-    for (auto i = 0u; i < producer->max_messages; ++i) {
-      if (!rclcpp::ok()) {
-        break;
-      }
-      std::this_thread::sleep_for(producer->period);
-      producer->produce();
+    std::this_thread::sleep_until(when);
+    if (!rclcpp::ok()) {
+      producer->promise_finished.set_value();
+      return;
+    }
+    producer->produce();
+
+    if (producer->produced_messages < producer->max_messages) {
+      thread_pool_.queue(
+        [this, next_timestamp = when + producer->period,
+        producer] {
+          producer_job(next_timestamp, producer);
+        });
+    } else {
+      producer->promise_finished.set_value();
     }
   }
 
+  ThreadPool thread_pool_;
+  size_t number_of_threads_;
   std::vector<std::shared_ptr<BenchmarkProducer>> producers_;
 };
 

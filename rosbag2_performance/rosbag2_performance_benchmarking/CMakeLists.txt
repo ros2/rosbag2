@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
-if (NOT BUILD_ROSBAG2_BENCHMARKS)
+if(NOT BUILD_ROSBAG2_BENCHMARKS)
   return()
 endif()
 
@@ -26,10 +26,11 @@ find_package(rosbag2_performance_benchmarking_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-add_executable(writer_benchmark
-  src/config_utils.cpp
-  src/result_utils.cpp
-  src/writer_benchmark.cpp)
+  add_executable(writer_benchmark
+    src/config_utils.cpp
+    src/result_utils.cpp
+    src/writer_benchmark.cpp
+    src/msg_utils/helpers.cpp)
 
 add_executable(benchmark_publishers
   src/benchmark_publishers.cpp
