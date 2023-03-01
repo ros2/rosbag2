@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>bag_recorder_nodes_py</name>
+  <name>rosbag2_examples_py</name>
   <version>0.0.0</version>
   <description>Python bag writing tutorial</description>
   <maintainer email="gbiggs@killbots.net">geoff</maintainer>

@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'bag_recorder_nodes_py'
+package_name = 'rosbag2_examples_py'
 
 setup(
     name=package_name,
@@ -20,9 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'simple_bag_recorder = bag_recorder_nodes_py.simple_bag_recorder:main',
-            'data_generator_node = bag_recorder_nodes_py.data_generator_node:main',
-            'data_generator_executable = bag_recorder_nodes_py.data_generator_executable:main',
+            'simple_bag_recorder = rosbag2_examples_py.simple_bag_recorder:main',
+            'data_generator_node = rosbag2_examples_py.data_generator_node:main',
+            'data_generator_executable = rosbag2_examples_py.data_generator_executable:main',
         ],
     },
 )
