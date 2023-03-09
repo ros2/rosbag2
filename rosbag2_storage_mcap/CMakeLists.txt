@@ -10,13 +10,16 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 # Enable additional warnings and warnings as errors
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-
-# Get the ROS_DISTRO environment variable
-set(ROS_DISTRO $ENV{ROS_DISTRO})
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
