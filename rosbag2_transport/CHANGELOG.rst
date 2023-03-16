@@ -3,6 +3,9 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.3.9 (2022-02-03)
 ------------------
 * Fixed inability to record hidden topics (`#835 <https://github.com/ros2/rosbag2/issues/835>`_)

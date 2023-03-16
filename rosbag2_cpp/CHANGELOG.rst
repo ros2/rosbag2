@@ -3,6 +3,11 @@ Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+* Check & create database dirs before writing bags (`#1133 <https://github.com/ros2/rosbag2/issues/1133>`_)
+* Contributors: Homalozoa X
+
 0.3.9 (2022-02-03)
 ------------------
 * Enable sanitizers only if code actually can run (`#572 <https://github.com/ros2/rosbag2/issues/572>`_) (`#953 <https://github.com/ros2/rosbag2/issues/953>`_)
