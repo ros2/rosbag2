@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>sqlite3_vendor</name>
-  <version>0.3.9</version>
+  <version>0.3.10</version>
   <description>SQLite 3 vendor package</description>
   <maintainer email="karsten@openrobotics.org">Karsten Knese</maintainer>
   <maintainer email="michael.jeronimo@openrobotics.org">Michael Jeronimo</maintainer>

@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.10 (2023-03-16)
+-------------------
 * Check & create database dirs before writing bags (`#1133 <https://github.com/ros2/rosbag2/issues/1133>`_)
 * Contributors: Homalozoa X
 

@@ -2,8 +2,8 @@
 Changelog for package bag_recorder_nodes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.10 (2023-03-16)
+-------------------
 * Added changelog
 * Contributors: Dharini Dutia
 
