@@ -1,26 +1,28 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package zstd_vendor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package bag_recorder_nodes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.3.10 (2023-03-16)
 -------------------
+* Added changelog
+* Contributors: Dharini Dutia
 
 0.3.9 (2022-02-03)
 ------------------
+* 0.3.9 (`#957 <https://github.com/ros2/rosbag2/issues/957>`_)
+* Default to C++14 (`#878 <https://github.com/ros2/rosbag2/issues/878>`_)
+* Missing std_msgs depend in simple_bag_recorder sample (`#861 <https://github.com/ros2/rosbag2/issues/861>`_)
+* Add code samples for writing bag files in Foxy (`#800 <https://github.com/ros2/rosbag2/issues/800>`_)
+* Contributors: Geoffrey Biggs, Jacob Perron, Jose Luis Rivero
 
 0.3.8 (2021-07-19)
 ------------------
 
 0.3.7 (2021-02-15)
 ------------------
-* [foxy backport] Zstd should not install internal headers (`#631 <https://github.com/ros2/rosbag2/issues/631>`_) (`#653 <https://github.com/ros2/rosbag2/issues/653>`_)
-* Contributors: Emerson Knapp
 
 0.3.6 (2021-01-05)
 ------------------
-* Patch zstd 1.4.4 to include cmake_minimum_version bump to 2.8.12 (`#579 <https://github.com/ros2/rosbag2/issues/579>`_) (`#587 <https://github.com/ros2/rosbag2/issues/587>`_)
-* Update maintainer list for Foxy (`#551 <https://github.com/ros2/rosbag2/issues/551>`_)
-* Contributors: Emerson Knapp, Jacob Perron, Michael Jeronimo
 
 0.3.5 (2020-08-31)
 ------------------
@@ -36,13 +38,9 @@ Changelog for package zstd_vendor
 
 0.3.1 (2020-06-01)
 ------------------
-* Shared publisher handle (`#420 <https://github.com/ros2/rosbag2/issues/420>`_)
-* Contributors: Chris Lalancette
 
 0.3.0 (2020-05-26)
 ------------------
-* Export targets (`#403 <https://github.com/ros2/rosbag2/issues/403>`_)
-* Contributors: Karsten Knese
 
 0.2.8 (2020-05-18)
 ------------------
@@ -55,8 +53,6 @@ Changelog for package zstd_vendor
 
 0.2.5 (2020-04-30)
 ------------------
-* [Compression - 5] Add Zstd file compression (`#220 <https://github.com/ros2/rosbag2/issues/220>`_)
-* Contributors: Anas Abou Allaban, Zachary Michaels
 
 0.2.4 (2019-11-18 17:51)
 ------------------------
