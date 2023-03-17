@@ -65,6 +65,14 @@ void Writer::open(
   writer_impl_->open(storage_options, converter_options);
 }
 
+void Writer::register_message_definition(
+  const rosbag2_storage::MessageDefinition & message_definition
+)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->register_message_definition(message_definition);
+}
+
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
@@ -110,6 +118,9 @@ void Writer::write(
   tm.name = topic_name;
   tm.type = type_name;
   tm.serialization_format = serialization_format;
+  rosbag2_storage::MessageDefinition md;
+  md.name = type_name;
+  register_message_definition(md);
   create_topic(tm);
   write(message);
 }

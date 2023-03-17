@@ -31,6 +31,7 @@
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -81,6 +82,16 @@ public:
     const ConverterOptions & converter_options) override;
 
   void close() override;
+
+  /**
+   * Register a message definition with the writer. Should be called before any message of this
+   * type is passed to write(...).
+   *
+   * \param message_definition name and full text of message definition, including field types.
+   * \throws runtime_error if the Writer is not open.
+   */
+  void register_message_definition(const rosbag2_storage::MessageDefinition & message_definition)
+  override;
 
   /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
@@ -148,6 +159,10 @@ protected:
   // Used to track topic -> message count. If cache is present, it is updated by CacheConsumer
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
   std::mutex topics_info_mutex_;
+
+  // used to track message definitions written to the bag.
+  std::unordered_map<std::string,
+    rosbag2_storage::MessageDefinition> type_names_to_message_definitions_;
 
   rosbag2_storage::BagMetadata metadata_;
 

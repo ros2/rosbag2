@@ -89,6 +89,15 @@ public:
     const ConverterOptions & converter_options = ConverterOptions());
 
   /**
+   * Register a message definition with the writer. Should be called before any message of this
+   * type is passed to write(...).
+   *
+   * \param message_definition name and full text of message definition, including field types.
+   * \throws runtime_error if the Writer is not open.
+   */
+  void register_message_definition(const rosbag2_storage::MessageDefinition & message_definition);
+
+  /**
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
    * a message which is passed to write(...).
    *

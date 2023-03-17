@@ -169,6 +169,30 @@ void SequentialWriter::close()
   storage_factory_.reset();
 }
 
+void SequentialWriter::register_message_definition(
+  const rosbag2_storage::MessageDefinition & message_definition)
+{
+  if (type_names_to_message_definitions_.find(message_definition.name) !=
+    type_names_to_message_definitions_.end())
+  {
+    // message definition already registered.
+    return;
+  }
+
+  if (!storage_) {
+    throw std::runtime_error(
+            "Bag is not open. Call open() before registering a message definition.");
+  }
+
+  storage_->register_message_definition(message_definition);
+
+  type_names_to_message_definitions_.insert(
+    std::make_pair(
+      message_definition.name,
+      message_definition));
+  // TODO(james-rms) something with converters
+}
+
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   if (topics_names_to_info_.find(topic_with_type.name) !=
@@ -263,8 +287,10 @@ void SequentialWriter::switch_to_next_storage()
 
     throw std::runtime_error(errmsg.str());
   }
-
-  // Re-register all topics since we rolled-over to a new bagfile.
+  // re-register all message definitions and topics since we rolled over to a new bag file.
+  for (const auto & message_definition : type_names_to_message_definitions_) {
+    storage_->register_message_definition(message_definition.second);
+  }
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);
   }

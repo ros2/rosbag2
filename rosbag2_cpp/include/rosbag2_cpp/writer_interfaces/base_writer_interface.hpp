@@ -22,6 +22,7 @@
 #include "rosbag2_cpp/visibility_control.hpp"
 
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -40,6 +41,9 @@ public:
     const ConverterOptions & converter_options) = 0;
 
   virtual void close() = 0;
+
+  virtual void register_message_definition(
+    const rosbag2_storage::MessageDefinition & message_definition) = 0;
 
   virtual void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
 

@@ -29,6 +29,7 @@
 #include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/message_definitions/message_definition_cache.hpp"
 
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
@@ -184,6 +185,8 @@ private:
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
+
+  rosbag2_cpp::MessageDefinitionCache message_definition_cache_;
 };
 
 }  // namespace rosbag2_transport

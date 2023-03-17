@@ -35,6 +35,8 @@ public:
 
   void update_metadata(const rosbag2_storage::BagMetadata & metadata) override;
 
+  void register_message_definition(const rosbag2_storage::MessageDefinition & topic) override;
+
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;

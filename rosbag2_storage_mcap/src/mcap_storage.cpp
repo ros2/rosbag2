@@ -16,7 +16,6 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage_mcap/message_definition_cache.hpp"
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP
   #include "rosbag2_storage/yaml.hpp"
@@ -209,6 +208,7 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
   void write(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
+  void register_message_definition(const rosbag2_storage::MessageDefinition & message_definition) override;
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
@@ -245,7 +245,6 @@ private:
   std::unique_ptr<mcap::LinearMessageView::Iterator> linear_iterator_;
 
   std::unique_ptr<mcap::McapWriter> mcap_writer_;
-  rosbag2_storage_mcap::internal::MessageDefinitionCache msgdef_cache_{};
 
   bool has_read_summary_ = false;
   rcutils_time_point_value_t last_read_time_point_ = 0;
@@ -705,6 +704,18 @@ void MCAPStorage::write(
   }
 }
 
+void MCAPStorage::register_message_definition(const rosbag2_storage::MessageDefinition & message_definition)
+{
+    mcap::Schema schema;
+    schema.name = message_definition.name;
+    schema.encoding = message_definition.encoding_name();
+    const auto& full_text = message_definition.encoded_message_definition;
+    schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
+                        reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
+    mcap_writer_->addSchema(schema);
+    schema_ids_.emplace(message_definition.name, schema.id);
+}
+
 void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   auto topic_info = rosbag2_storage::TopicInformation{topic, 0};
@@ -721,25 +732,8 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   const auto schema_it = schema_ids_.find(datatype);
   mcap::SchemaId schema_id;
   if (schema_it == schema_ids_.end()) {
-    mcap::Schema schema;
-    schema.name = datatype;
-    try {
-      auto [format, full_text] = msgdef_cache_.get_full_text(datatype);
-      if (format == rosbag2_storage_mcap::internal::Format::MSG) {
-        schema.encoding = "ros2msg";
-      } else {
-        schema.encoding = "ros2idl";
-      }
-      schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
-                         reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
-    } catch (rosbag2_storage_mcap::internal::DefinitionNotFoundError & err) {
-      RCUTILS_LOG_ERROR_NAMED(LOG_NAME, "definition file(s) missing for %s: missing %s",
-                              datatype.c_str(), err.what());
-      schema.encoding = "";
-    }
-    mcap_writer_->addSchema(schema);
-    schema_ids_.emplace(datatype, schema.id);
-    schema_id = schema.id;
+    throw std::runtime_error{
+      "Schema not registered for topic " + topic_info.topic_metadata.name + "\n"};
   } else {
     schema_id = schema_it->second;
   }
