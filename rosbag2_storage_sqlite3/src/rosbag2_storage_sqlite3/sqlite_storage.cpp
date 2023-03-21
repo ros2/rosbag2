@@ -423,7 +423,7 @@ void SqliteStorage::initialize()
 void SqliteStorage::register_message_definition(const rosbag2_storage::MessageDefinition &)
 {
   // Do nothing
-};
+}
 
 void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 {

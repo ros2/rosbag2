@@ -27,6 +27,8 @@ struct TopicMetadata
   std::string serialization_format;
   // Serialized std::vector<rclcpp::QoS> as a YAML string
   std::string offered_qos_profiles;
+  // type hash, retrieved from subscription QoS metadata
+  std::string type_hash;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {
