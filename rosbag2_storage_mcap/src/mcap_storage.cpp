@@ -208,7 +208,8 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
   void write(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
-  void register_message_definition(const rosbag2_storage::MessageDefinition & message_definition) override;
+  void register_message_definition(
+    const rosbag2_storage::MessageDefinition & message_definition) override;
   void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
@@ -704,16 +705,17 @@ void MCAPStorage::write(
   }
 }
 
-void MCAPStorage::register_message_definition(const rosbag2_storage::MessageDefinition & message_definition)
+void MCAPStorage::register_message_definition(
+  const rosbag2_storage::MessageDefinition & message_definition)
 {
-    mcap::Schema schema;
-    schema.name = message_definition.name;
-    schema.encoding = message_definition.encoding_name();
-    const auto& full_text = message_definition.encoded_message_definition;
-    schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
-                        reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
-    mcap_writer_->addSchema(schema);
-    schema_ids_.emplace(message_definition.name, schema.id);
+  mcap::Schema schema;
+  schema.name = message_definition.name;
+  schema.encoding = message_definition.encoding_name();
+  const auto & full_text = message_definition.encoded_message_definition;
+  schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
+                     reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
+  mcap_writer_->addSchema(schema);
+  schema_ids_.emplace(message_definition.name, schema.id);
 }
 
 void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
@@ -732,8 +734,8 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   const auto schema_it = schema_ids_.find(datatype);
   mcap::SchemaId schema_id;
   if (schema_it == schema_ids_.end()) {
-    throw std::runtime_error{
-      "Schema not registered for topic " + topic_info.topic_metadata.name + "\n"};
+    throw std::runtime_error{"schema not registered for topic " + topic_info.topic_metadata.name +
+                             "\n"};
   } else {
     schema_id = schema_it->second;
   }
