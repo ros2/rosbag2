@@ -13,7 +13,7 @@ rosbag2_performance_benchmarking_node:
       100Mbs_large:
         publishers_count:   1
         topic_root:         "benchmarking_large"
-        msg_size_bytes:     10000000
+        msg_size_bytes:     5000000
         msg_count_each:     100
         rate_hz:            10
         qos:  # qos settings are ignored for writer only benchmarking
