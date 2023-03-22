@@ -54,8 +54,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
-  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos1"}, 100});
-  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos2"}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos1", {}}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos2", {}}, 200});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
@@ -105,7 +105,7 @@ TEST_F(MetadataFixture, metadata_reads_v3_check_offered_qos_profiles_empty)
   BagMetadata metadata{};
   metadata.version = 3;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, {}}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -124,7 +124,7 @@ TEST_F(MetadataFixture, metadata_reads_v4_fills_offered_qos_profiles)
   BagMetadata metadata{};
   metadata.version = 4;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, {}}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -145,4 +145,37 @@ TEST_F(MetadataFixture, metadata_reads_v6_custom_data)
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.custom_data, Eq(metadata.custom_data));
+}
+
+TEST_F(MetadataFixture, metadata_v7_reads_writes_message_definition)
+{
+  const std::string offered_qos_profiles = "qos_profile_string_data";
+  rosbag2_storage::MessageDefinition msg_definition_msg{
+    "topic name", "type hash", "encoded message_definition",
+    MessageDefinition::Encoding::ConcatenatedMsg};
+  rosbag2_storage::MessageDefinition msg_definition_idl{
+    "topic name", "type hash", "encoded message_definition",
+    MessageDefinition::Encoding::ConcatenatedIdl};
+  rosbag2_storage::MessageDefinition msg_definition_unknown{
+    "topic name", "type hash", "encoded message_definition", MessageDefinition::Encoding::Unknown};
+
+  BagMetadata metadata{};
+  metadata.version = 7;
+
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", offered_qos_profiles, msg_definition_msg}});
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", offered_qos_profiles, msg_definition_idl}});
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", offered_qos_profiles, msg_definition_unknown}});
+
+  metadata_io_->write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
+  ASSERT_THAT(
+    read_metadata.topics_with_message_count,
+    SizeIs(metadata.topics_with_message_count.size()));
+  const auto & topics = read_metadata.topics_with_message_count;
+  EXPECT_THAT(topics[0].topic_metadata.message_definition, Eq(msg_definition_msg));
+  EXPECT_THAT(topics[1].topic_metadata.message_definition, Eq(msg_definition_idl));
+  EXPECT_THAT(topics[2].topic_metadata.message_definition, Eq(msg_definition_unknown));
 }

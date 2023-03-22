@@ -16,6 +16,7 @@
 #define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
 #include <string>
+#include "rosbag2_storage/message_definition.hpp"
 
 namespace rosbag2_storage
 {
@@ -27,12 +28,13 @@ struct TopicMetadata
   std::string serialization_format;
   // Serialized std::vector<rclcpp::QoS> as a YAML string
   std::string offered_qos_profiles;
-  // type hash, retrieved from subscription QoS metadata
-  std::string type_hash;
+  rosbag2_storage::MessageDefinition message_definition;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {
-    return name == rhs.name && type == rhs.type && serialization_format == rhs.serialization_format;
+    return name == rhs.name && type == rhs.type &&
+           serialization_format == rhs.serialization_format &&
+           message_definition == rhs.message_definition;
   }
 };
 

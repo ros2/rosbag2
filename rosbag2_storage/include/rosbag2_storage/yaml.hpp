@@ -87,6 +87,31 @@ T decode_for_version(const Node & node, int version)
 }
 
 template<>
+struct convert<rosbag2_storage::MessageDefinition>
+{
+  static Node encode(const rosbag2_storage::MessageDefinition & msg_definition)
+  {
+    Node node;
+    node["name"] = msg_definition.name;
+    node["type_hash"] = msg_definition.type_hash;
+    node["encoded_message_definition"] = msg_definition.encoded_message_definition;
+    node["encoding"] = msg_definition.encoding_name();
+    return node;
+  }
+
+  static bool decode(const Node & node, rosbag2_storage::MessageDefinition & msg_definition)
+  {
+    msg_definition.name = node["name"].as<std::string>();
+    msg_definition.type_hash = node["type_hash"].as<std::string>();
+    msg_definition.encoded_message_definition =
+      node["encoded_message_definition"].as<std::string>();
+    auto encoding_str = node["encoding"].as<std::string>();
+    msg_definition.encoding = msg_definition.encoding_from_string(encoding_str);
+    return true;
+  }
+};
+
+template<>
 struct convert<rosbag2_storage::TopicMetadata>
 {
   static Node encode(const rosbag2_storage::TopicMetadata & topic)
@@ -96,6 +121,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
     node["offered_qos_profiles"] = topic.offered_qos_profiles;
+    node["message_definition"] = topic.message_definition;
     return node;
   }
 
@@ -108,6 +134,12 @@ struct convert<rosbag2_storage::TopicMetadata>
       topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
     } else {
       topic.offered_qos_profiles = "";
+    }
+    if (version >= 7) {
+      topic.message_definition =
+        node["message_definition"].as<rosbag2_storage::MessageDefinition>();
+    } else {
+      topic.message_definition.encoding = rosbag2_storage::MessageDefinition::Encoding::Unknown;
     }
     return true;
   }

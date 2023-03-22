@@ -392,6 +392,16 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     topic_info.topic_metadata.serialization_format = channel.messageEncoding;
     topic_info.topic_metadata.type = schema_ptr->name;
 
+    // Getting message definition
+    topic_info.topic_metadata.message_definition.name = topic_info.topic_metadata.name;
+    topic_info.topic_metadata.message_definition.encoding =
+      topic_info.topic_metadata.message_definition.encoding_from_string(schema_ptr->encoding);
+    //    std::string full_text(schema_ptr->data.begin(), schema_ptr->data.end());
+    //    std::basic_string<unsigned char> ustr(vec.begin(), vec.end());
+    std::string full_text(reinterpret_cast<const char *>(&schema_ptr->data[0]),
+                          schema_ptr->data.size());
+    topic_info.topic_metadata.message_definition.encoded_message_definition = full_text;
+
     // Look up the offered_qos_profiles metadata entry
     const auto metadata_it = channel.metadata.find("offered_qos_profiles");
     if (metadata_it != channel.metadata.end()) {
@@ -709,7 +719,8 @@ void MCAPStorage::register_message_definition(
   const rosbag2_storage::MessageDefinition & message_definition)
 {
   mcap::Schema schema;
-  schema.name = message_definition.name;
+  schema.name = message_definition.name;  // TODO(James:) it should be datatype. It doesn't align
+  // with the rest logic
   schema.encoding = message_definition.encoding_name();
   const auto & full_text = message_definition.encoded_message_definition;
   schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
@@ -731,11 +742,18 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
   // Create Schema for topic if it doesn't exist yet
   const auto & datatype = topic_info.topic_metadata.type;
-  const auto schema_it = schema_ids_.find(datatype);
+  auto schema_it = schema_ids_.find(datatype);
   mcap::SchemaId schema_id;
   if (schema_it == schema_ids_.end()) {
-    throw std::runtime_error{"schema not registered for topic " + topic_info.topic_metadata.name +
-                             "\n"};
+    mcap::Schema schema;
+    schema.name = datatype;
+    schema.encoding = topic.message_definition.encoding_name();
+    const auto & full_text = topic.message_definition.encoded_message_definition;
+    schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
+                       reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
+    mcap_writer_->addSchema(schema);
+    schema_ids_.emplace(datatype, schema.id);
+    schema_id = schema.id;
   } else {
     schema_id = schema_it->second;
   }
@@ -756,7 +774,12 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  topics_.erase(topic.name);
+  const auto topic_it = topics_.find(topic.name);
+  if (topic_it != topics_.end()) {
+    const auto & datatype = topic_it->second.topic_metadata.type;
+    schema_ids_.erase(datatype);
+    topics_.erase(topic.name);
+  }
 }
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA

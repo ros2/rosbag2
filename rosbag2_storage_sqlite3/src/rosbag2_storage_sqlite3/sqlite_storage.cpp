@@ -532,7 +532,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", {}});
   }
 }
 
@@ -577,7 +577,7 @@ void SqliteStorage::read_metadata()
     for (auto result : query_results) {
       metadata_.topics_with_message_count.push_back(
         {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result), {}},
           static_cast<size_t>(std::get<3>(result))
         });
 
@@ -599,7 +599,7 @@ void SqliteStorage::read_metadata()
     for (auto result : query_results) {
       metadata_.topics_with_message_count.push_back(
         {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", {}},
           static_cast<size_t>(std::get<3>(result))
         });
 
@@ -705,6 +705,22 @@ int SqliteStorage::read_db_schema_version()
   }
 
   return schema_version;
+}
+
+std::string
+SqliteStorage::serialize_msg_definition(const rosbag2_storage::MessageDefinition & msg_definition)
+{
+  auto node = YAML::convert<rosbag2_storage::MessageDefinition>().encode(msg_definition);
+  std::stringstream out;
+  out << node;
+  return out.str();
+}
+
+rosbag2_storage::MessageDefinition
+SqliteStorage::deserialize_msg_definition(const std::string & serialized_msg_definition)
+{
+  YAML::Node yaml = YAML::Load(serialized_msg_definition);
+  return yaml.as<rosbag2_storage::MessageDefinition>();
 }
 
 }  // namespace rosbag2_storage_plugins

@@ -124,6 +124,9 @@ private:
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
   int get_last_rowid();
   int read_db_schema_version();
+  std::string serialize_msg_definition(const rosbag2_storage::MessageDefinition & msg_definition);
+  rosbag2_storage::MessageDefinition
+  deserialize_msg_definition(const std::string & serialized_msg_definition);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;

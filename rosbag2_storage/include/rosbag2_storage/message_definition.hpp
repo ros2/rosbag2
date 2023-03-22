@@ -35,8 +35,11 @@ struct MessageDefinition
   std::string type_hash;
   /// @brief The full encoded message definition for this type.
   std::string encoded_message_definition;
-  enum class Encoding
+
+  enum class Encoding : uint8_t
   {
+    /// \brief Default value
+    Unknown = 0,
     /// @brief concatenated `.msg` files for this message definition and all dependent types.
     ConcatenatedMsg,
     /// @brief concatenated `.idl` files for this message definition and all dependent types.
@@ -45,8 +48,13 @@ struct MessageDefinition
   /// @brief The encoding technique used in `encoded_message_definition`.
   ///
   /// See docs/message_definition_encoding.md for details of each encoding.
-  Encoding encoding;
+  Encoding encoding{Encoding::Unknown};
 
+  bool operator==(const MessageDefinition & rhs) const
+  {
+    return rhs.encoding == encoding && rhs.name == name && rhs.type_hash == type_hash &&
+           rhs.encoded_message_definition == encoded_message_definition;
+  }
   /// @brief returns the name of the encoding technique as a string.
   std::string encoding_name() const
   {
@@ -56,8 +64,22 @@ struct MessageDefinition
       case Encoding::ConcatenatedMsg:
         return "ros2msg";
       default:
-        assert(false);
+        return "unknown";
     }
+  }
+
+  /// @brief returns the Encoding enum value corresponding to the encoding string
+  Encoding encoding_from_string(const std::string & encoding_str) const
+  {
+    Encoding encoding_value{Encoding::ConcatenatedMsg};
+    if (encoding_str == "ros2msg") {
+      encoding_value = Encoding::ConcatenatedMsg;
+    } else if (encoding_str == "ros2idl") {
+      encoding_value = Encoding::ConcatenatedIdl;
+    } else {
+      encoding_value = Encoding::Unknown;
+    }
+    return encoding_value;
   }
 };
 

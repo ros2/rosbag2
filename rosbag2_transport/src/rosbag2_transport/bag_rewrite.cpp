@@ -83,6 +83,7 @@ setup_topic_filtering(
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, YAML::Node> input_topics_qos_profiles;
   std::unordered_map<std::string, std::string> input_topics_serialization_format;
+  std::unordered_map<std::string, rosbag2_storage::MessageDefinition> input_topics_msg_definition;
 
   for (const auto & input_bag : input_bags) {
     auto bag_topics_and_types = input_bag->get_all_topics_and_types();
@@ -91,6 +92,7 @@ setup_topic_filtering(
       input_topics.try_emplace(topic_name);
       input_topics[topic_name].push_back(topic_metadata.type);
       input_topics_serialization_format[topic_name] = topic_metadata.serialization_format;
+      input_topics_msg_definition[topic_name] = topic_metadata.message_definition;
 
       // Gather all offered qos profiles from all inputs
       input_topics_qos_profiles.try_emplace(topic_name);
@@ -122,6 +124,7 @@ setup_topic_filtering(
       std::stringstream qos_profiles;
       qos_profiles << input_topics_qos_profiles[topic_name];
       topic_metadata.offered_qos_profiles = qos_profiles.str();
+      topic_metadata.message_definition = input_topics_msg_definition[topic_name];
       writer->create_topic(topic_metadata);
 
       filtered_outputs.try_emplace(topic_name);
