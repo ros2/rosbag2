@@ -158,8 +158,8 @@ def _rosbag_proc_exited(event, context):
     """
     global _producer_idx, _result_writers, _rosbag_pid
 
-    # ROS2 bag returns 2 if terminated with SIGINT, which we expect here
-    if event.returncode != 2:
+    # ROS2 bag returns 0 if terminated with SIGINT, which we expect here
+    if event.returncode != 0:
         _rosbag_pid = None
         return [
             launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark.'),
