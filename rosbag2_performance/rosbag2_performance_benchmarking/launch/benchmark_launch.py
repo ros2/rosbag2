@@ -162,7 +162,8 @@ def _rosbag_proc_exited(event, context):
     if event.returncode != 0:
         _rosbag_pid = None
         return [
-            launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark.'),
+            launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark. '
+                                       'Return code = ' + str(event.returncode)),
             launch.actions.EmitEvent(
                 event=launch.events.Shutdown(
                     reason='Rosbag2 record error'
