@@ -53,7 +53,7 @@ public:
     auto metadata = get_metadata();
 
     auto topic_with_type = rosbag2_storage::TopicMetadata{
-      "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
+      "topic", "test_msgs/BasicTypes", storage_serialization_format_, "", "type_hash"};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
     metadata.topics_with_message_count.push_back({topic_with_type, 10});
 

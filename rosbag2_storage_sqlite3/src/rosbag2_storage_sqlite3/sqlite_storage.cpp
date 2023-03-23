@@ -425,7 +425,9 @@ void SqliteStorage::register_message_definition(const rosbag2_storage::MessageDe
   // Do nothing
 }
 
-void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
+void SqliteStorage::create_topic(
+  const rosbag2_storage::TopicMetadata & topic,
+  const rosbag2_storage::MessageDefinition & message_definition)
 {
   std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
@@ -532,7 +534,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", "type_hash"});
   }
 }
 

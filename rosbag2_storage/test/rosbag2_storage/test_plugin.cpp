@@ -75,9 +75,12 @@ void TestPlugin::register_message_definition(
   std::cout << "Registered message definition for type " << message_definition.name << ".\n";
 }
 
-void TestPlugin::create_topic(const rosbag2_storage::TopicMetadata & topic)
+void TestPlugin::create_topic(
+  const rosbag2_storage::TopicMetadata & topic,
+  const rosbag2_storage::MessageDefinition & message_definition)
 {
-  std::cout << "Created topic with name =" << topic.name << " and type =" << topic.type << ".\n";
+  std::cout << "Created topic with name =" << topic.name << ", type =" << topic.type <<
+    " and type_hash=" << message_definition.type_hash << ".\n";
 }
 
 void TestPlugin::remove_topic(const rosbag2_storage::TopicMetadata & topic)

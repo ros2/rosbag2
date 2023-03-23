@@ -37,7 +37,9 @@ public:
 
   void register_message_definition(const rosbag2_storage::MessageDefinition & topic) override;
 
-  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
+  void create_topic(
+    const rosbag2_storage::TopicMetadata & topic,
+    const rosbag2_storage::MessageDefinition & message_definition) override;
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 

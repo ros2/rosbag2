@@ -45,7 +45,9 @@ public:
   virtual void register_message_definition(
     const rosbag2_storage::MessageDefinition & message_definition) = 0;
 
-  virtual void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
+  virtual void create_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition) = 0;
 
   virtual void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
 

@@ -73,10 +73,12 @@ void Writer::register_message_definition(
   writer_impl_->register_message_definition(message_definition);
 }
 
-void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
+void Writer::create_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  const rosbag2_storage::MessageDefinition & message_definition)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
-  writer_impl_->create_topic(topic_with_type);
+  writer_impl_->create_topic(topic_with_type, message_definition);
 }
 
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
@@ -118,10 +120,10 @@ void Writer::write(
   tm.name = topic_name;
   tm.type = type_name;
   tm.serialization_format = serialization_format;
-  rosbag2_storage::MessageDefinition md;
+  rosbag2_storage::MessageDefinition md;  // TODO(morlov) We need either add message difinition
+  // to the upper level API or figure out how to get it here. This is actually an open question
   md.name = type_name;
-  register_message_definition(md);
-  create_topic(tm);
+  create_topic(tm, md);
   write(message);
 }
 

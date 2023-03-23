@@ -210,7 +210,8 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
   void register_message_definition(
     const rosbag2_storage::MessageDefinition & message_definition) override;
-  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
+  void create_topic(const rosbag2_storage::TopicMetadata & topic,
+                    const rosbag2_storage::MessageDefinition & message_definition) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
   void update_metadata(const rosbag2_storage::BagMetadata &) override;
@@ -709,7 +710,8 @@ void MCAPStorage::register_message_definition(
   const rosbag2_storage::MessageDefinition & message_definition)
 {
   mcap::Schema schema;
-  schema.name = message_definition.name;
+  schema.name = message_definition.name;  // TODO(James:) it should be datatype. It doesn't align
+  // with the rest logic
   schema.encoding = message_definition.encoding_name();
   const auto & full_text = message_definition.encoded_message_definition;
   schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
@@ -718,7 +720,8 @@ void MCAPStorage::register_message_definition(
   schema_ids_.emplace(message_definition.name, schema.id);
 }
 
-void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
+void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
+                               const rosbag2_storage::MessageDefinition & message_definition)
 {
   auto topic_info = rosbag2_storage::TopicInformation{topic, 0};
   const auto topic_it = topics_.find(topic.name);
@@ -731,11 +734,20 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
   // Create Schema for topic if it doesn't exist yet
   const auto & datatype = topic_info.topic_metadata.type;
+  // TODO(james:) Could it be that we will have multiple topics with the same data type but with
+  //  different type_hash ?
   const auto schema_it = schema_ids_.find(datatype);
   mcap::SchemaId schema_id;
   if (schema_it == schema_ids_.end()) {
-    throw std::runtime_error{"schema not registered for topic " + topic_info.topic_metadata.name +
-                             "\n"};
+    mcap::Schema schema;
+    schema.name = datatype;
+    schema.encoding = message_definition.encoding_name();
+    const auto & full_text = message_definition.encoded_message_definition;
+    schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
+                       reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
+    mcap_writer_->addSchema(schema);
+    schema_ids_.emplace(datatype, schema.id);
+    schema_id = schema.id;
   } else {
     schema_id = schema_it->second;
   }
@@ -756,7 +768,12 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  topics_.erase(topic.name);
+  const auto topic_it = topics_.find(topic.name);
+  if (topic_it != topics_.end()) {
+    const auto & datatype = topic_it->second.topic_metadata.type;
+    schema_ids_.erase(datatype);
+    topics_.erase(topic.name);
+  }
 }
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA

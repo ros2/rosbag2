@@ -100,7 +100,9 @@ public:
    * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
-  void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
+  void create_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition) override;
 
   /**
    * Remove a new topic in the underlying storage.

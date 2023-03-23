@@ -35,7 +35,9 @@ public:
     void(const rosbag2_storage::StorageOptions &, rosbag2_storage::storage_interfaces::IOFlag));
   MOCK_METHOD1(update_metadata, void(const rosbag2_storage::BagMetadata &));
   MOCK_METHOD1(register_message_definition, void(const rosbag2_storage::MessageDefinition &));
-  MOCK_METHOD1(create_topic, void(const rosbag2_storage::TopicMetadata &));
+  MOCK_METHOD2(
+    create_topic, void(const rosbag2_storage::TopicMetadata &,
+    const rosbag2_storage::MessageDefinition &));
   MOCK_METHOD1(remove_topic, void(const rosbag2_storage::TopicMetadata &));
   MOCK_METHOD1(set_read_order, bool(const rosbag2_storage::ReadOrder &));
   MOCK_METHOD0(has_next, bool());

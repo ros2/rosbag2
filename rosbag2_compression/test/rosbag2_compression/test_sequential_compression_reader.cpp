@@ -54,7 +54,7 @@ public:
     rcpputils::fs::remove_all(tmp_dir_);
     storage_options_.uri = tmp_dir_.string();
     topic_with_type_ = rosbag2_storage::TopicMetadata{
-      "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
+      "topic", "test_msgs/BasicTypes", storage_serialization_format_, "", "type_hash"};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type_};
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type_.name;

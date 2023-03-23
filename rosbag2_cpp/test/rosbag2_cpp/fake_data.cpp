@@ -53,6 +53,20 @@ void write_sample_split_bag(
     "test_msgs/msg/ByteMultiArray",
     "cdr",
     ""
+  },
+  {
+    "test_msgs/msg/ByteMultiArray",
+    "RIHS01_bb56995ece1d87b157e740239fd7e92ed7c60c6326dfec09577dd5234359abe3",
+    "# This was originally provided as an example message.\n"
+    "# It is deprecated as of Foxy\n"
+    "# It is recommended to create your own semantically meaningful message.\n"
+    "\n"
+    "# Please look at the MultiArrayLayout message definition for\n"
+    "# documentation on all multiarrays.\n"
+    "\n"
+    "MultiArrayLayout  layout        # specification of data layout\n"
+    "byte[]            data          # array of data",
+    rosbag2_storage::MessageDefinition::Encoding::ConcatenatedMsg
   });
   for (size_t i = 0; i < fake_messages.size(); i++) {
     if (i > 0 && (i % split_every == 0)) {

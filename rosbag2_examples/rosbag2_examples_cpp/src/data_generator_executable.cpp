@@ -38,7 +38,7 @@ int main(int, char **)
     "example_interfaces/msg/Int32",
     rmw_get_serialization_format(),
     ""
-  });
+  }, {});
 
   rclcpp::Clock clock;
   rclcpp::Time time_stamp = clock.now();
