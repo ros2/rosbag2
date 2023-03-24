@@ -85,7 +85,7 @@ public:
       topic.name = "/test_topic";
       topic.type = "std_msgs/msg/String";
       rosbag2_storage::MessageDefinition md;
-      md.name = topic.name;
+      md.type_name = topic.type;
       writer.create_topic(topic, md);
 
       std_msgs::msg::String msg;

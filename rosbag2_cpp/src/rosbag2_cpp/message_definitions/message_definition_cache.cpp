@@ -216,7 +216,7 @@ rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
       break;
   }
   out.encoded_message_definition = result;
-  out.name = root_package_resource_name;
+  out.type_name = root_package_resource_name;
   return out;
 }
 }  // namespace rosbag2_cpp
