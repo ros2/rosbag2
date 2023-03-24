@@ -37,7 +37,6 @@ struct MessageDefinition
   std::string encoding;
   /// @brief The full encoded message definition for this type.
   std::string encoded_message_definition;
-
 };
 
 }  // namespace rosbag2_storage

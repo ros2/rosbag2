@@ -75,7 +75,7 @@ public:
    * Create a new topic in the underlying storage. Needs to be called for every topic used within
    * a message which is passed to write(...).
    *
-   * \param topicewith_type name and type identifier of topic to be created
+   * \param topic_with_type name and type identifier of topic to be created
    * \throws runtime_error if the Writer is not open.
    */
   void create_topic(
