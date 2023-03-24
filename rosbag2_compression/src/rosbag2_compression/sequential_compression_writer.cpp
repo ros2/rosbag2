@@ -228,13 +228,6 @@ void SequentialCompressionWriter::create_topic(
   SequentialWriter::create_topic(topic_with_type, message_definition);
 }
 
-void SequentialCompressionWriter::register_message_definition(
-  const rosbag2_storage::MessageDefinition & message_definition)
-{
-  std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  SequentialWriter::register_message_definition(message_definition);
-}
-
 void SequentialCompressionWriter::remove_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type)
 {

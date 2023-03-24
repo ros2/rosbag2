@@ -57,7 +57,6 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
       "test_msgs/BasicTypes",
       kRmwFormat,
       "",
-      "type_hash"
     };
 
     auto topic_information = rosbag2_storage::TopicInformation{

@@ -37,11 +37,9 @@ public:
 
   void close() override {}
 
-  void register_message_definition(const rosbag2_storage::MessageDefinition &) override {}
-
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
-    const rosbag2_storage::MessageDefinition & message_definition) override
+    const rosbag2_storage::MessageDefinition &) override
   {
     topics_.emplace(topic_with_type.name, topic_with_type);
   }

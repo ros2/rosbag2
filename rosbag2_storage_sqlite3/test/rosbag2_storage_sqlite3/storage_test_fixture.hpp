@@ -110,7 +110,7 @@ public:
       std::string topic_name = std::get<2>(msg);
       std::string type_name = std::get<3>(msg);
       std::string rmw_format = std::get<4>(msg);
-      rw_storage.create_topic({topic_name, type_name, rmw_format, "", "type_hash"}, {});
+      rw_storage.create_topic({topic_name, type_name, rmw_format, ""}, {});
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
       bag_message->time_stamp = std::get<1>(msg);

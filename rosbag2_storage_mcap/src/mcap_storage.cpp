@@ -208,8 +208,6 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
   void write(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
-  void register_message_definition(
-    const rosbag2_storage::MessageDefinition & message_definition) override;
   void create_topic(const rosbag2_storage::TopicMetadata & topic,
                     const rosbag2_storage::MessageDefinition & message_definition) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
@@ -706,20 +704,6 @@ void MCAPStorage::write(
   }
 }
 
-void MCAPStorage::register_message_definition(
-  const rosbag2_storage::MessageDefinition & message_definition)
-{
-  mcap::Schema schema;
-  schema.name = message_definition.name;  // TODO(James:) it should be datatype. It doesn't align
-  // with the rest logic
-  schema.encoding = message_definition.encoding_name();
-  const auto & full_text = message_definition.encoded_message_definition;
-  schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
-                     reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
-  mcap_writer_->addSchema(schema);
-  schema_ids_.emplace(message_definition.name, schema.id);
-}
-
 void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
                                const rosbag2_storage::MessageDefinition & message_definition)
 {
@@ -741,7 +725,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
   if (schema_it == schema_ids_.end()) {
     mcap::Schema schema;
     schema.name = datatype;
-    schema.encoding = message_definition.encoding_name();
+    schema.encoding = message_definition.encoding;
     const auto & full_text = message_definition.encoded_message_definition;
     schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
                        reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));

@@ -209,10 +209,10 @@ rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
   rosbag2_storage::MessageDefinition out;
   switch (format) {
     case Format::MSG:
-      out.encoding = rosbag2_storage::MessageDefinition::Encoding::ConcatenatedMsg;
+      out.encoding = "ros2msg";
       break;
     case Format::IDL:
-      out.encoding = rosbag2_storage::MessageDefinition::Encoding::ConcatenatedIdl;
+      out.encoding = "ros2idl";
       break;
   }
   out.encoded_message_definition = result;

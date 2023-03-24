@@ -52,7 +52,7 @@ TEST(test_message_definition_cache, can_find_msg_deps)
 {
   MessageDefinitionCache cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/ComplexMsg");
-  ASSERT_EQ(result.encoding, rosbag2_storage::MessageDefinition::Encoding::ConcatenatedMsg);
+  ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
     "rosbag2_storage_mcap_testdata/BasicMsg b\n"
@@ -66,7 +66,7 @@ TEST(test_message_definition_cache, can_find_idl_deps)
 {
   MessageDefinitionCache cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexIdl");
-  ASSERT_EQ(result.encoding, rosbag2_storage::MessageDefinition::Encoding::ConcatenatedIdl);
+  ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"
@@ -96,7 +96,7 @@ TEST(test_message_definition_cache, can_resolve_msg_with_idl_deps)
 {
   MessageDefinitionCache cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
-  ASSERT_EQ(result.encoding, rosbag2_storage::MessageDefinition::Encoding::ConcatenatedIdl);
+  ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"

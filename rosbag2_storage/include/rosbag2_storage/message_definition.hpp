@@ -30,35 +30,14 @@ struct MessageDefinition
   /// Should match the `name` in TopicMetadata for all topics using this message definition.
   std::string name;
   /// @brief  The type description hash of the type described by this MessageDefinition.
-  ///
-  /// Should match the `type_hash` in TopicMetadata for all topics using this message definition.
   std::string type_hash;
-  /// @brief The full encoded message definition for this type.
-  std::string encoded_message_definition;
-  enum class Encoding
-  {
-    /// @brief concatenated `.msg` files for this message definition and all dependent types.
-    ConcatenatedMsg,
-    /// @brief concatenated `.idl` files for this message definition and all dependent types.
-    ConcatenatedIdl,
-  };
   /// @brief The encoding technique used in `encoded_message_definition`.
   ///
   /// See docs/message_definition_encoding.md for details of each encoding.
-  Encoding encoding;
+  std::string encoding;
+  /// @brief The full encoded message definition for this type.
+  std::string encoded_message_definition;
 
-  /// @brief returns the name of the encoding technique as a string.
-  std::string encoding_name() const
-  {
-    switch (encoding) {
-      case Encoding::ConcatenatedIdl:
-        return "ros2idl";
-      case Encoding::ConcatenatedMsg:
-        return "ros2msg";
-      default:
-        assert(false);
-    }
-  }
 };
 
 }  // namespace rosbag2_storage

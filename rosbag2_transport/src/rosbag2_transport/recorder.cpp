@@ -341,7 +341,6 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
   auto message_definition = message_definition_cache_.get_full_text(topic.type);
-//  writer_->register_message_definition(message_definition);
   writer_->create_topic(topic, message_definition);
 
   Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};

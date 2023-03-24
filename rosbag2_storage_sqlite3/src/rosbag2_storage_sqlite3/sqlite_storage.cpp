@@ -420,11 +420,6 @@ void SqliteStorage::initialize()
   insert_db_schema->execute_and_reset();
 }
 
-void SqliteStorage::register_message_definition(const rosbag2_storage::MessageDefinition &)
-{
-  // Do nothing
-}
-
 void SqliteStorage::create_topic(
   const rosbag2_storage::TopicMetadata & topic,
   const rosbag2_storage::MessageDefinition & message_definition)
@@ -534,7 +529,7 @@ void SqliteStorage::fill_topics_and_types()
 
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", "type_hash"});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
   }
 }
 

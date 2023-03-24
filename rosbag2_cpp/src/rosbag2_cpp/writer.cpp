@@ -65,14 +65,6 @@ void Writer::open(
   writer_impl_->open(storage_options, converter_options);
 }
 
-void Writer::register_message_definition(
-  const rosbag2_storage::MessageDefinition & message_definition
-)
-{
-  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
-  writer_impl_->register_message_definition(message_definition);
-}
-
 void Writer::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type,
   const rosbag2_storage::MessageDefinition & message_definition)

@@ -130,7 +130,7 @@ TEST_F(
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
   writer_->open(storage_options_, {input_format, storage_serialization_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
   writer_->write(message);
 }
 
@@ -147,7 +147,7 @@ TEST_F(SequentialWriterTest, write_does_not_use_converters_if_input_and_output_f
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = "test_topic";
   writer_->open(storage_options_, {storage_serialization_format, storage_serialization_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
   writer_->write(message);
 }
 
@@ -175,7 +175,7 @@ TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_open_and_
 
   std::string rmw_format = "rmw_format";
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({test_topic_name, test_topic_type, "", "", "type_hash"}, {});
+  writer_->create_topic({test_topic_name, test_topic_type, "", ""}, {});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;
@@ -283,7 +283,7 @@ TEST_F(SequentialWriterTest, bagfile_size_is_checked_on_every_write) {
   storage_options_.max_bagfile_size = max_bagfile_size;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0; i < counter; ++i) {
     writer_->write(message);
@@ -333,7 +333,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   storage_options_.max_bagfile_size = max_bagfile_size;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0; i < message_count; ++i) {
     writer_->write(message);
@@ -411,7 +411,7 @@ TEST_F(
   storage_options_.snapshot_mode = false;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   auto timeout = std::chrono::seconds(2);
   for (auto i = 1u; i < message_count; ++i) {
@@ -491,7 +491,7 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   storage_options_.max_cache_size = max_cache_size;
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0u; i < counter; ++i) {
     writer_->write(message);
@@ -525,7 +525,7 @@ TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger)
     msg_content.c_str(), msg_length);
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0u; i < 100; ++i) {
     writer_->write(message);
@@ -561,7 +561,7 @@ TEST_F(SequentialWriterTest, snapshot_mode_not_triggered_no_storage_write)
     msg_content.c_str(), msg_length);
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0u; i < 100; ++i) {
     writer_->write(message);
@@ -630,7 +630,7 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   writer_->add_event_callbacks(callbacks);
 
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", "type_hash"}, {});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""}, {});
 
   for (auto i = 0; i < message_count; ++i) {
     writer_->write(message);

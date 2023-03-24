@@ -36,8 +36,9 @@ def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
     topic_name = topic_name
     topic = rosbag2_py.TopicMetadata(name=topic_name, type=topic_type,
                                      serialization_format=serialization_format)
+    definition = rosbag2_py.MessageDefinition()
 
-    writer.create_topic(topic, {})
+    writer.create_topic(topic, definition)
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
