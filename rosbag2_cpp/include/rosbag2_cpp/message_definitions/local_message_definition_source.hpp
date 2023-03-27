@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_CPP__MESSAGE_DEFINITIONS__MESSAGE_DEFINITION_CACHE_HPP_
-#define ROSBAG2_CPP__MESSAGE_DEFINITIONS__MESSAGE_DEFINITION_CACHE_HPP_
+#ifndef ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_
+#define ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_
 
 #include <set>
 #include <string>
@@ -44,7 +44,7 @@ public:
   }
 };
 
-class MessageDefinitionCache final
+class LocalMessageDefinitionSource final
 {
 public:
   /**
@@ -54,7 +54,7 @@ public:
    * Throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
    */
-  rosbag2_storage::MessageDefinition get_full_text(const std::string & package_resource_name);
+  rosbag2_storage::MessageDefinition get_full_text(const std::string & type_name);
 
   enum struct Format
   {
@@ -68,29 +68,54 @@ private:
     MessageSpec(Format format, std::string text, const std::string & package_context);
     const std::set<std::string> dependencies;
     const std::string text;
+    const std::string type_hash;
     Format format;
   };
 
   struct DefinitionIdentifier
   {
-    Format format;
-    std::string package_resource_name;
-
+    DefinitionIdentifier(std::string type_name, Format format)
+    : type_name_(type_name)
+      , format_(format)
+    {
+      size_t h1 = std::hash<Format>()(format_);
+      size_t h2 = std::hash<std::string>()(type_name_);
+      hash_ = h1 ^ h2;
+    }
     bool operator==(const DefinitionIdentifier & di) const
     {
-      return (format == di.format) && (package_resource_name == di.package_resource_name);
+      return (format_ == di.format_) && (type_name_ == di.type_name_);
     }
+
+    size_t hash() const
+    {
+      return hash_;
+    }
+
+    Format format() const
+    {
+      return format_;
+    }
+
+    std::string type_name() const
+    {
+      return type_name_;
+    }
+
+private:
+    std::string type_name_;
+    Format format_;
+    size_t hash_;
   };
 
   struct DefinitionIdentifierHash
   {
-    std::size_t operator()(const DefinitionIdentifier & di) const
+    size_t operator()(const DefinitionIdentifier & di) const
     {
-      std::size_t h1 = std::hash<Format>()(di.format);
-      std::size_t h2 = std::hash<std::string>()(di.package_resource_name);
-      return h1 ^ h2;
+      return di.hash();
     }
   };
+
   /**
    * Load and parse the message file referenced by the given datatype, or return it from
    * msg_specs_by_datatype
@@ -105,10 +130,10 @@ private:
 
 ROSBAG2_CPP_PUBLIC
 std::set<std::string> parse_definition_dependencies(
-  MessageDefinitionCache::Format format,
+  LocalMessageDefinitionSource::Format format,
   const std::string & text,
   const std::string & package_context);
 
 }  // namespace rosbag2_cpp
 
-#endif  // ROSBAG2_CPP__MESSAGE_DEFINITIONS__MESSAGE_DEFINITION_CACHE_HPP_
+#endif  // ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_

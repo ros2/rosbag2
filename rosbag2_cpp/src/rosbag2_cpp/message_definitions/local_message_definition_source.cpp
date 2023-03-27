@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_cpp/message_definitions/message_definition_cache.hpp"
+#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
 #include <rcutils/logging_macros.h>
 
@@ -80,37 +80,38 @@ static std::set<std::string> parse_idl_dependencies(const std::string & text)
 }
 
 std::set<std::string> parse_definition_dependencies(
-  MessageDefinitionCache::Format format,
+  LocalMessageDefinitionSource::Format format,
   const std::string & text,
   const std::string & package_context)
 {
   switch (format) {
-    case MessageDefinitionCache::Format::MSG:
+    case LocalMessageDefinitionSource::Format::MSG:
       return parse_msg_dependencies(text, package_context);
-    case MessageDefinitionCache::Format::IDL:
+    case LocalMessageDefinitionSource::Format::IDL:
       return parse_idl_dependencies(text);
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
 }
 
-static const char * extension_for_format(MessageDefinitionCache::Format format)
+static const char * extension_for_format(LocalMessageDefinitionSource::Format format)
 {
   switch (format) {
-    case MessageDefinitionCache::Format::MSG:
+    case LocalMessageDefinitionSource::Format::MSG:
       return ".msg";
-    case MessageDefinitionCache::Format::IDL:
+    case LocalMessageDefinitionSource::Format::IDL:
       return ".idl";
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
 }
 
-std::string MessageDefinitionCache::delimiter(const DefinitionIdentifier & definition_identifier)
+std::string LocalMessageDefinitionSource::delimiter(
+  const DefinitionIdentifier & definition_identifier)
 {
   std::string result =
     "================================================================================\n";
-  switch (definition_identifier.format) {
+  switch (definition_identifier.format()) {
     case Format::MSG:
       result += "MSG: ";
       break;
@@ -120,12 +121,12 @@ std::string MessageDefinitionCache::delimiter(const DefinitionIdentifier & defin
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
-  result += definition_identifier.package_resource_name;
+  result += definition_identifier.type_name();
   result += "\n";
   return result;
 }
 
-MessageDefinitionCache::MessageSpec::MessageSpec(
+LocalMessageDefinitionSource::MessageSpec::MessageSpec(
   Format format, std::string text,
   const std::string & package_context)
 : dependencies(parse_definition_dependencies(format, text, package_context))
@@ -134,7 +135,7 @@ MessageDefinitionCache::MessageSpec::MessageSpec(
 {
 }
 
-const MessageDefinitionCache::MessageSpec & MessageDefinitionCache::load_message_spec(
+const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::load_message_spec(
   const DefinitionIdentifier & definition_identifier)
 {
   if (auto it = msg_specs_by_definition_identifier_.find(definition_identifier);
@@ -143,20 +144,16 @@ const MessageDefinitionCache::MessageSpec & MessageDefinitionCache::load_message
     return it->second;
   }
   std::smatch match;
-  if (!std::regex_match(
-      definition_identifier.package_resource_name, match,
-      PACKAGE_TYPENAME_REGEX))
-  {
-    throw std::invalid_argument(
-            "Invalid package resource name: " +
-            definition_identifier.package_resource_name);
+  const auto type_name = definition_identifier.type_name();
+  if (!std::regex_match(type_name, match, PACKAGE_TYPENAME_REGEX)) {
+    throw std::invalid_argument("Invalid type_name: " + type_name);
   }
   std::string package = match[1];
   std::string share_dir = ament_index_cpp::get_package_share_directory(package);
   std::ifstream file{share_dir + "/msg/" + match[2].str() +
-    extension_for_format(definition_identifier.format)};
+    extension_for_format(definition_identifier.format())};
   if (!file.good()) {
-    throw DefinitionNotFoundError(definition_identifier.package_resource_name);
+    throw DefinitionNotFoundError(definition_identifier.type_name());
   }
 
   std::string contents{std::istreambuf_iterator(file), {}};
@@ -164,7 +161,7 @@ const MessageDefinitionCache::MessageSpec & MessageDefinitionCache::load_message
     msg_specs_by_definition_identifier_
     .emplace(
     definition_identifier,
-    MessageSpec(definition_identifier.format, std::move(contents), package))
+    MessageSpec(definition_identifier.format(), std::move(contents), package))
     .first->second;
 
   // "References and pointers to data stored in the container are only invalidated by erasing that
@@ -172,8 +169,8 @@ const MessageDefinitionCache::MessageSpec & MessageDefinitionCache::load_message
   return spec;
 }
 
-rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
-  const std::string & root_package_resource_name)
+rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
+  const std::string & root_type_name)
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
@@ -182,7 +179,7 @@ rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;
       for (const auto & dep_name : spec.dependencies) {
-        DefinitionIdentifier dep{definition_identifier.format, dep_name};
+        DefinitionIdentifier dep(dep_name, definition_identifier.format());
         bool inserted = seen_deps.insert(dep).second;
         if (inserted) {
           result += "\n";
@@ -196,14 +193,14 @@ rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
   std::string result;
   Format format = Format::MSG;
   try {
-    result = append_recursive(DefinitionIdentifier{format, root_package_resource_name});
+    result = append_recursive(DefinitionIdentifier(root_type_name, format));
   } catch (const DefinitionNotFoundError & err) {
     // log that we've fallen back
     RCUTILS_LOG_WARN_NAMED(
       "rosbag2_cpp", "no .msg definition for %s, falling back to IDL",
       err.what());
     format = Format::IDL;
-    DefinitionIdentifier root_definition_identifier{format, root_package_resource_name};
+    DefinitionIdentifier root_definition_identifier(root_type_name, format);
     result = delimiter(root_definition_identifier) + append_recursive(root_definition_identifier);
   }
   rosbag2_storage::MessageDefinition out;
@@ -216,7 +213,7 @@ rosbag2_storage::MessageDefinition MessageDefinitionCache::get_full_text(
       break;
   }
   out.encoded_message_definition = result;
-  out.type_name = root_package_resource_name;
+  out.type_name = root_type_name;
   return out;
 }
 }  // namespace rosbag2_cpp

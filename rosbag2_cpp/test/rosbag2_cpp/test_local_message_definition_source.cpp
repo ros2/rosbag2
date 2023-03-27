@@ -16,13 +16,13 @@
 #include <string>
 
 #include "gmock/gmock.h"
-#include "rosbag2_cpp/message_definitions/message_definition_cache.hpp"
+#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
-using rosbag2_cpp::MessageDefinitionCache;
+using rosbag2_cpp::LocalMessageDefinitionSource;
 using rosbag2_cpp::parse_definition_dependencies;
 using ::testing::UnorderedElementsAre;
 
-TEST(test_message_definition_cache, can_find_idl_includes)
+TEST(test_local_message_definition_source, can_find_idl_includes)
 {
   const char sample[] =
     R"r(
@@ -41,16 +41,16 @@ module rosbag2_storage_mcap_testdata {
 
   )r";
   std::set<std::string> dependencies = parse_definition_dependencies(
-    MessageDefinitionCache::Format::IDL, sample, "");
+    LocalMessageDefinitionSource::Format::IDL, sample, "");
   ASSERT_THAT(
     dependencies, UnorderedElementsAre(
       "rosbag2_storage_mcap_testdata/msg/BasicIdlA",
       "rosbag2_storage_mcap_testdata/msg/BasicIdlB"));
 }
 
-TEST(test_message_definition_cache, can_find_msg_deps)
+TEST(test_local_message_definition_source, can_find_msg_deps)
 {
-  MessageDefinitionCache cache;
+  LocalMessageDefinitionSource cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/ComplexMsg");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
@@ -62,9 +62,9 @@ TEST(test_message_definition_cache, can_find_msg_deps)
     "float32 c\n");
 }
 
-TEST(test_message_definition_cache, can_find_idl_deps)
+TEST(test_local_message_definition_source, can_find_idl_deps)
 {
-  MessageDefinitionCache cache;
+  LocalMessageDefinitionSource cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
@@ -92,9 +92,9 @@ TEST(test_message_definition_cache, can_find_idl_deps)
     "};\n");
 }
 
-TEST(test_message_definition_cache, can_resolve_msg_with_idl_deps)
+TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
 {
-  MessageDefinitionCache cache;
+  LocalMessageDefinitionSource cache;
   auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(

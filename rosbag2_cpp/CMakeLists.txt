@@ -62,7 +62,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
-  src/rosbag2_cpp/message_definitions/message_definition_cache.cpp
+  src/rosbag2_cpp/message_definitions/local_message_definition_source.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
   src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
@@ -188,10 +188,10 @@ if(BUILD_TESTING)
     target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
   endif()
 
-  ament_add_gmock(test_message_definition_cache
-    test/rosbag2_cpp/test_message_definition_cache.cpp)
-  if(TARGET test_message_definition_cache)
-    target_link_libraries(test_message_definition_cache ${PROJECT_NAME})
+  ament_add_gmock(test_local_message_definition_source
+    test/rosbag2_cpp/test_local_message_definition_source.cpp)
+  if(TARGET test_local_message_definition_source)
+    target_link_libraries(test_local_message_definition_source ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_message_cache
