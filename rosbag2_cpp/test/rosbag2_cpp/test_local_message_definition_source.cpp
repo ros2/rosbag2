@@ -50,8 +50,8 @@ module rosbag2_storage_mcap_testdata {
 
 TEST(test_local_message_definition_source, can_find_msg_deps)
 {
-  LocalMessageDefinitionSource cache;
-  auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/ComplexMsg");
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/ComplexMsg");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -64,8 +64,8 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
 
 TEST(test_local_message_definition_source, can_find_idl_deps)
 {
-  LocalMessageDefinitionSource cache;
-  auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexIdl");
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -94,8 +94,8 @@ TEST(test_local_message_definition_source, can_find_idl_deps)
 
 TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
 {
-  LocalMessageDefinitionSource cache;
-  auto result = cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
