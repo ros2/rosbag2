@@ -112,10 +112,7 @@ void Writer::write(
   tm.name = topic_name;
   tm.type = type_name;
   tm.serialization_format = serialization_format;
-  rosbag2_storage::MessageDefinition md;  // TODO(morlov) We need either add message difinition
-  // to the upper level API or figure out how to get it here. This is actually an open question
-  md.type_name = type_name;
-  create_topic(tm, md);
+  create_topic(tm, rosbag2_storage::MessageDefinition::empty_message_definition_for(type_name));
   write(message);
 }
 

@@ -345,9 +345,8 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
     writer_->create_topic(topic, message_definition);
   } catch (const rosbag2_cpp::DefinitionNotFoundError &) {
     // no definition available locally - leave the schema and definition encoding as empty strings.
-    rosbag2_storage::MessageDefinition message_definition;
-    message_definition.type_name = topic.type;
-    writer_->create_topic(topic, message_definition);
+    writer_->create_topic(
+      topic, rosbag2_storage::MessageDefinition::empty_message_definition_for(topic.type));
   }
 
   Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};

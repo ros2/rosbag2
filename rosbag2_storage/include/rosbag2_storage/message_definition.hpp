@@ -38,6 +38,17 @@ struct MessageDefinition
   std::string encoding;
   /// @brief The full encoded message definition for this type.
   std::string encoded_message_definition;
+
+  /// @brief used when no message definition is available for a given topic type.
+  static MessageDefinition empty_message_definition_for(std::string type_name)
+  {
+    MessageDefinition self;
+    self.type_name = type_name;
+    self.type_description_hash = "";
+    self.encoding = "";
+    self.encoded_message_definition = "";
+    return self;
+  }
 };
 
 }  // namespace rosbag2_storage
