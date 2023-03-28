@@ -718,8 +718,6 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
 
   // Create Schema for topic if it doesn't exist yet
   const auto & datatype = topic_info.topic_metadata.type;
-  // TODO(james:) Could it be that we will have multiple topics with the same data type but with
-  //  different type_hash ?
   const auto schema_it = schema_ids_.find(datatype);
   mcap::SchemaId schema_id;
   if (schema_it == schema_ids_.end()) {
