@@ -138,7 +138,9 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("encoding"),
     pybind11::arg("encoded_message_definition"))
   .def_readwrite("type_name", &rosbag2_storage::MessageDefinition::type_name)
-  .def_readwrite("type_description_hash", &rosbag2_storage::MessageDefinition::type_description_hash)
+  .def_readwrite(
+    "type_description_hash",
+    &rosbag2_storage::MessageDefinition::type_description_hash)
   .def_readwrite("encoding", &rosbag2_storage::MessageDefinition::encoding)
   .def_readwrite(
     "encoded_message_definition",
