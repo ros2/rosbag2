@@ -1,1 +1,1 @@
-rosbag2_storage_mcap_testdata/BasicMsg b
+rosbag2_test_msgdefs/BasicMsg b

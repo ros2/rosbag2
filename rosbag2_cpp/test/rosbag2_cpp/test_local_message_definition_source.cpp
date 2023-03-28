@@ -26,15 +26,15 @@ TEST(test_local_message_definition_source, can_find_idl_includes)
 {
   const char sample[] =
     R"r(
-#include "rosbag2_storage_mcap_testdata/msg/BasicIdlA.idl"
+#include "rosbag2_test_msgdefs/msg/BasicIdlA.idl"
 
-#include <rosbag2_storage_mcap_testdata/msg/BasicIdlB.idl>
+#include <rosbag2_test_msgdefs/msg/BasicIdlB.idl>
 
-module rosbag2_storage_mcap_testdata {
+module rosbag2_test_msgdefs {
   module msg {
     struct ComplexIdl {
-      rosbag2_storage_mcap_testdata::msg::BasicIdlA a;
-      rosbag2_storage_mcap_testdata::msg::BasicIdlB b;
+      rosbag2_test_msgdefs::msg::BasicIdlA a;
+      rosbag2_test_msgdefs::msg::BasicIdlB b;
     };
   };
 };
@@ -44,46 +44,46 @@ module rosbag2_storage_mcap_testdata {
     LocalMessageDefinitionSource::Format::IDL, sample, "");
   ASSERT_THAT(
     dependencies, UnorderedElementsAre(
-      "rosbag2_storage_mcap_testdata/msg/BasicIdlA",
-      "rosbag2_storage_mcap_testdata/msg/BasicIdlB"));
+      "rosbag2_test_msgdefs/msg/BasicIdlA",
+      "rosbag2_test_msgdefs/msg/BasicIdlB"));
 }
 
 TEST(test_local_message_definition_source, can_find_msg_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/ComplexMsg");
+  auto result = source.get_full_text("rosbag2_test_msgdefs/ComplexMsg");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
-    "rosbag2_storage_mcap_testdata/BasicMsg b\n"
+    "rosbag2_test_msgdefs/BasicMsg b\n"
     "\n"
     "================================================================================\n"
-    "MSG: rosbag2_storage_mcap_testdata/BasicMsg\n"
+    "MSG: rosbag2_test_msgdefs/BasicMsg\n"
     "float32 c\n");
 }
 
 TEST(test_local_message_definition_source, can_find_idl_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexIdl");
+  auto result = source.get_full_text("rosbag2_test_msgdefs/msg/ComplexIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"
-    "IDL: rosbag2_storage_mcap_testdata/msg/ComplexIdl\n"
-    "#include \"rosbag2_storage_mcap_testdata/msg/BasicIdl.idl\"\n"
+    "IDL: rosbag2_test_msgdefs/msg/ComplexIdl\n"
+    "#include \"rosbag2_test_msgdefs/msg/BasicIdl.idl\"\n"
     "\n"
-    "module rosbag2_storage_mcap_testdata {\n"
+    "module rosbag2_test_msgdefs {\n"
     "  module msg {\n"
     "    struct ComplexIdl {\n"
-    "      rosbag2_storage_mcap_testdata::msg::BasicIdl a;\n"
+    "      rosbag2_test_msgdefs::msg::BasicIdl a;\n"
     "    };\n"
     "  };\n"
     "};\n"
     "\n"
     "================================================================================\n"
-    "IDL: rosbag2_storage_mcap_testdata/msg/BasicIdl\n"
-    "module rosbag2_storage_mcap_testdata {\n"
+    "IDL: rosbag2_test_msgdefs/msg/BasicIdl\n"
+    "module rosbag2_test_msgdefs {\n"
     "  module msg {\n"
     "    struct BasicIdl {\n"
     "        float x;\n"
@@ -95,29 +95,29 @@ TEST(test_local_message_definition_source, can_find_idl_deps)
 TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
+  auto result = source.get_full_text("rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"
-    "IDL: rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl\n"
+    "IDL: rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl\n"
     "// generated from rosidl_adapter/resource/msg.idl.em\n"
-    "// with input from rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl.msg\n"
+    "// with input from rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl.msg\n"
     "// generated code does not contain a copyright notice\n"
     "\n"
-    "#include \"rosbag2_storage_mcap_testdata/msg/BasicIdl.idl\"\n"
+    "#include \"rosbag2_test_msgdefs/msg/BasicIdl.idl\"\n"
     "\n"
-    "module rosbag2_storage_mcap_testdata {\n"
+    "module rosbag2_test_msgdefs {\n"
     "  module msg {\n"
     "    struct ComplexMsgDependsOnIdl {\n"
-    "      rosbag2_storage_mcap_testdata::msg::BasicIdl a;\n"
+    "      rosbag2_test_msgdefs::msg::BasicIdl a;\n"
     "    };\n"
     "  };\n"
     "};\n"
     "\n"
     "================================================================================\n"
-    "IDL: rosbag2_storage_mcap_testdata/msg/BasicIdl\n"
-    "module rosbag2_storage_mcap_testdata {\n"
+    "IDL: rosbag2_test_msgdefs/msg/BasicIdl\n"
+    "module rosbag2_test_msgdefs {\n"
     "  module msg {\n"
     "    struct BasicIdl {\n"
     "        float x;\n"

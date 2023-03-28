@@ -134,7 +134,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
-  find_package(rosbag2_storage_mcap_testdata REQUIRED)
+  find_package(rosbag2_test_msgdefs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
