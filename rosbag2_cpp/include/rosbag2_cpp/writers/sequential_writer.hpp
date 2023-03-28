@@ -154,7 +154,7 @@ protected:
 
   // used to track message definitions written to the bag.
   std::unordered_map<std::string,
-    rosbag2_storage::MessageDefinition> type_names_to_message_definitions_;
+    rosbag2_storage::MessageDefinition> topic_names_to_message_definitions_;
 
   rosbag2_storage::BagMetadata metadata_;
 

@@ -187,25 +187,27 @@ void SequentialWriter::create_topic(
   rosbag2_storage::TopicInformation info{};
   info.topic_metadata = topic_with_type;
 
-  bool insert_succeded = false;
+  bool insert_succeeded = false;
   {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
     const auto insert_res = topics_names_to_info_.insert(
       std::make_pair(topic_with_type.name, info));
-    insert_succeded = insert_res.second;
+    insert_succeeded = insert_res.second;
   }
 
-  if (!insert_succeded) {
+  if (!insert_succeeded) {
     std::stringstream errmsg;
     errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
 
+  topic_names_to_message_definitions_.insert(
+    std::make_pair(topic_with_type.name, message_definition));
+
   storage_->create_topic(topic_with_type, message_definition);
 
   if (converter_) {
-    // TODO(James) Fx this
     converter_->add_topic(topic_with_type.name, topic_with_type.type);
   }
 }
@@ -267,7 +269,7 @@ void SequentialWriter::switch_to_next_storage()
     throw std::runtime_error(errmsg.str());
   }
   for (const auto & topic : topics_names_to_info_) {
-    auto const & md = type_names_to_message_definitions_[topic.first];
+    auto const & md = topic_names_to_message_definitions_[topic.first];
     storage_->create_topic(topic.second.topic_metadata, md);
   }
 
