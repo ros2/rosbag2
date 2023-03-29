@@ -74,7 +74,7 @@ void TestPlugin::create_topic(
   const rosbag2_storage::MessageDefinition & message_definition)
 {
   std::cout << "Created topic with name =" << topic.name << ", type =" << topic.type <<
-    " and type_description_hash=" << message_definition.type_description_hash << ".\n";
+    "and message definition encoding " << message_definition.encoding << ".\n";
 }
 
 void TestPlugin::remove_topic(const rosbag2_storage::TopicMetadata & topic)

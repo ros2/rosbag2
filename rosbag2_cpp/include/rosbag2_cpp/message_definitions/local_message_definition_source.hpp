@@ -68,7 +68,6 @@ private:
     MessageSpec(Format format, std::string text, const std::string & package_context);
     const std::set<std::string> dependencies;
     const std::string text;
-    const std::string type_description_hash;
     Format format;
   };
 

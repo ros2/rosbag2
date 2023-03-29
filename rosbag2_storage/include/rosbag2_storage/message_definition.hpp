@@ -29,9 +29,6 @@ struct MessageDefinition
   ///
   /// Should match the `name` in TopicMetadata for all topics using this message definition.
   std::string type_name;
-  /// @brief  The type description hash of the type described by this MessageDefinition.
-  /// an empty string indicates that no type hash could be calculated for this definition.
-  std::string type_description_hash;
   /// @brief The encoding technique used in `encoded_message_definition`.
   ///
   /// See docs/message_definition_encoding.md for details of each encoding.
@@ -44,7 +41,6 @@ struct MessageDefinition
   {
     MessageDefinition self;
     self.type_name = type_name;
-    self.type_description_hash = "";
     self.encoding = "";
     self.encoded_message_definition = "";
     return self;
