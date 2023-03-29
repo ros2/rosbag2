@@ -155,7 +155,7 @@ void WriterBenchmark::create_producers()
         " messages before terminating");
     const unsigned int queue_max_size = 10;
     for (unsigned int i = 0; i < c.count; ++i) {
-      std::string topic = c.topic_root + std::to_string(i);
+      std::string topic = c.topic_root + "_" + std::to_string(i + 1);
       auto queue = std::make_shared<ByteMessageQueue>(queue_max_size, topic);
       queues_.push_back(queue);
       producers_.push_back(
