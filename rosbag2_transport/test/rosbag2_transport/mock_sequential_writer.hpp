@@ -39,9 +39,9 @@ public:
 
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
-    const rosbag2_storage::MessageDefinition &) override
+    const rosbag2_storage::MessageDefinition & message_definition) override
   {
-    topics_.emplace(topic_with_type.name, topic_with_type);
+    topics_.emplace(topic_with_type.name, std::make_pair(topic_with_type, message_definition));
   }
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
@@ -106,7 +106,10 @@ public:
     return messages_per_topic_;
   }
 
-  const std::unordered_map<std::string, rosbag2_storage::TopicMetadata> & get_topics()
+  const std::unordered_map<
+    std::string,
+    std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
+  > & get_topics()
   {
     return topics_;
   }
@@ -122,7 +125,10 @@ public:
   }
 
 private:
-  std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_;
+  std::unordered_map<
+    std::string,
+    std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
+  > topics_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> messages_;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> snapshot_buffer_;
   std::unordered_map<std::string, size_t> messages_per_topic_;
