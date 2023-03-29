@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from example_interfaces.msg import Int32
 import rclpy
 from rclpy.node import Node
 from rclpy.serialization import serialize_message
-from example_interfaces.msg import Int32
-
 import rosbag2_py
 
 
 class DataGeneratorNode(Node):
+
     def __init__(self):
         super().__init__('data_generator_node')
         self.data = Int32()

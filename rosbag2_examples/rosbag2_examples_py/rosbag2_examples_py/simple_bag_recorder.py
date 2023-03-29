@@ -14,12 +14,12 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.serialization import serialize_message
-from std_msgs.msg import String
-
 import rosbag2_py
+from std_msgs.msg import String
 
 
 class SimpleBagRecorder(Node):
+
     def __init__(self):
         super().__init__('simple_bag_recorder')
         self.writer = rosbag2_py.SequentialWriter()

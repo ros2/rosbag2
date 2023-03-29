@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from example_interfaces.msg import Int32
 from rclpy.clock import Clock
 from rclpy.duration import Duration
 from rclpy.serialization import serialize_message
-from example_interfaces.msg import Int32
-
 import rosbag2_py
 
 
