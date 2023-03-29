@@ -19,38 +19,63 @@ jobs:
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.2
       with:
-        package-name: |
-          mcap_vendor
-          ros2bag
-          rosbag2
-          rosbag2_compression
-          rosbag2_compression_zstd
-          rosbag2_cpp
-          rosbag2_examples_cpp
-          rosbag2_interfaces
-          rosbag2_py
-          rosbag2_storage
-          rosbag2_storage_mcap
-          rosbag2_storage_sqlite3
-          rosbag2_test_common
-          rosbag2_test_msgdefs
-          rosbag2_tests
-          rosbag2_transport
-          shared_queues_vendor
-          sqlite3_vendor
-          zstd_vendor
         target-ros2-distro: rolling
         vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/rolling/ros2.repos
         colcon-defaults: |
           {
             "build": {
               "cmake-args": [
-                "-DCMAKE_CXX_FLAGS=\"-Werror\""
+                "-DCMAKE_CXX_FLAGS=\"-Werror\"",
+                "-DBUILD_ROSBAG2_BENCHMARKS=1"
+              ],
+              "packages-up-to": [
+                "mcap_vendor",
+                "ros2bag",
+                "rosbag2",
+                "rosbag2_compression",
+                "rosbag2_compression_zstd",
+                "rosbag2_cpp",
+                "rosbag2_examples_cpp",
+                "rosbag2_interfaces",
+                "rosbag2_performance_benchmarking",
+                "rosbag2_performance_benchmarking_msgs",
+                "rosbag2_py",
+                "rosbag2_storage",
+                "rosbag2_storage_mcap",
+                "rosbag2_storage_sqlite3",
+                "rosbag2_test_common",
+                "rosbag2_test_msgdefs",
+                "rosbag2_tests",
+                "rosbag2_transport",
+                "shared_queues_vendor",
+                "sqlite3_vendor",
+                "zstd_vendor"
               ]
             },
             "test": {
               "ctest-args": ["-LE", "xfail"],
-              "pytest-args": ["-m", "not xfail"]
+              "pytest-args": ["-m", "not xfail"],
+              "packages-select": [
+                "mcap_vendor",
+                "ros2bag",
+                "rosbag2",
+                "rosbag2_compression",
+                "rosbag2_compression_zstd",
+                "rosbag2_cpp",
+                "rosbag2_examples_cpp",
+                "rosbag2_interfaces",
+                "rosbag2_py",
+                "rosbag2_storage",
+                "rosbag2_storage_mcap",
+                "rosbag2_storage_sqlite3",
+                "rosbag2_test_common",
+                "rosbag2_test_msgdefs",
+                "rosbag2_tests",
+                "rosbag2_transport",
+                "shared_queues_vendor",
+                "sqlite3_vendor",
+                "zstd_vendor"
+              ]
             }
           }
     - name: Run xfail tests (not required to succeed)
