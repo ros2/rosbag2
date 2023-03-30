@@ -234,6 +234,7 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
   {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
     erased = topics_names_to_info_.erase(topic_with_type.name) > 0;
+    erased = erased && (topic_names_to_message_definitions_.erase(topic_with_type.name) > 0);
   }
 
   if (erased) {
