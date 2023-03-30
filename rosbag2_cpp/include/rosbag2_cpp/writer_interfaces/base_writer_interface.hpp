@@ -42,6 +42,8 @@ public:
 
   virtual void close() = 0;
 
+  virtual void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
+
   virtual void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
     const rosbag2_storage::MessageDefinition & message_definition) = 0;

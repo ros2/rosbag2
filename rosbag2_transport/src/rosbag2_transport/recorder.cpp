@@ -340,14 +340,7 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
-  try {
-    auto message_definition = local_message_definition_source_.get_full_text(topic.type);
-    writer_->create_topic(topic, message_definition);
-  } catch (const rosbag2_cpp::DefinitionNotFoundError &) {
-    // no definition available locally - leave the schema and definition encoding as empty strings.
-    writer_->create_topic(
-      topic, rosbag2_storage::MessageDefinition::empty_message_definition_for(topic.type));
-  }
+  writer_->create_topic(topic);
 
   Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);

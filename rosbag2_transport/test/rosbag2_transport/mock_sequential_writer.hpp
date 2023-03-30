@@ -37,6 +37,13 @@ public:
 
   void close() override {}
 
+  void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
+  {
+    auto message_definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(
+      topic_with_type.type);
+    topics_.emplace(topic_with_type.name, std::make_pair(topic_with_type, message_definition));
+  }
+
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
     const rosbag2_storage::MessageDefinition & message_definition) override

@@ -169,6 +169,18 @@ void SequentialWriter::close()
   storage_factory_.reset();
 }
 
+void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
+{
+  rosbag2_storage::MessageDefinition definition;
+  const std::string & type_name = topic_with_type.name;
+  try {
+    definition = message_definitions_.get_full_text(type_name);
+  } catch (DefinitionNotFoundError &) {
+    definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(type_name);
+  }
+  create_topic(topic_with_type, definition);
+}
+
 void SequentialWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type,
   const rosbag2_storage::MessageDefinition & message_definition)
