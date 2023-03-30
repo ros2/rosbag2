@@ -5,9 +5,7 @@ describes how message definitions can be encoded within a bag.
 
 ## Background
 
-When playing a bag with `ros2 bag play`, messages are not deserialized by the player. Instead, they
-are passed directly to subscribers, which deserialize them using code generated at build time.
-Therefore the message definitions in the bag are not used for bag playback. However, some
+The message definitions in the bag are not used for bag playback. However, some
 bag analysis tools are not aware of all message definitions ahead of time, and need to
 generate a deserializer using the message definitions at run-time.
 
