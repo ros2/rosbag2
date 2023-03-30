@@ -205,6 +205,8 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   }
   rosbag2_storage::MessageDefinition out;
   switch (format) {
+    case Format::UNKNOWN:
+      throw std::runtime_error{"could not determine format of message definition for type " + root_type_name};
     case Format::MSG:
       out.encoding = "ros2msg";
       break;

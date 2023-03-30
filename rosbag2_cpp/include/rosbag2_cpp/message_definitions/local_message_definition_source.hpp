@@ -58,8 +58,9 @@ public:
 
   enum struct Format
   {
-    MSG,
-    IDL,
+    UNKNOWN = 0,
+    MSG = 1,
+    IDL = 2,
   };
 
 private:
@@ -68,11 +69,12 @@ private:
     MessageSpec(Format format, std::string text, const std::string & package_context);
     const std::set<std::string> dependencies;
     const std::string text;
-    Format format;
+    Format format{Format::UNKNOWN};
   };
 
   struct DefinitionIdentifier
   {
+    DefinitionIdentifier() = delete;
     DefinitionIdentifier(std::string type_name, Format format)
     : type_name_(type_name)
       , format_(format)
