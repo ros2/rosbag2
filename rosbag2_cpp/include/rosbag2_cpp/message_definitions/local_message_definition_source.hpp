@@ -75,7 +75,7 @@ private:
   struct DefinitionIdentifier
   {
     DefinitionIdentifier() = delete;
-    DefinitionIdentifier(std::string type_name, Format format)
+    DefinitionIdentifier(const std::string & type_name, Format format)
     : type_name_(type_name)
       , format_(format)
     {
