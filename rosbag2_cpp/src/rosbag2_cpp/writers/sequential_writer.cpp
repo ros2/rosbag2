@@ -280,6 +280,7 @@ void SequentialWriter::switch_to_next_storage()
 
     throw std::runtime_error(errmsg.str());
   }
+  // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     auto const & md = topic_names_to_message_definitions_[topic.first];
     storage_->create_topic(topic.second.topic_metadata, md);
