@@ -171,6 +171,12 @@ void SequentialWriter::close()
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  if (topics_names_to_info_.find(topic_with_type.name) !=
+    topics_names_to_info_.end())
+  {
+    // nothing to do, topic already created
+    return;
+  }
   rosbag2_storage::MessageDefinition definition;
   const std::string & topic_type = topic_with_type.type;
   try {

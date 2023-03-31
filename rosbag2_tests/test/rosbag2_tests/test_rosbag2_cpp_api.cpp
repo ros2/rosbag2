@@ -70,7 +70,7 @@ TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
     tm.name = "/my/test/topic";
     tm.type = "test_msgs/msg/BasicTypes";
     tm.serialization_format = "cdr";
-    writer.create_topic(tm, {});
+    writer.create_topic(tm);
 
     bag_message->topic_name = tm.name;
     bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(

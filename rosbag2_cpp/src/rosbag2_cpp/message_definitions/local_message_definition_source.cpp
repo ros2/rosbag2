@@ -26,8 +26,6 @@
 #include <utility>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <ament_index_cpp/get_resource.hpp>
-#include <ament_index_cpp/get_resources.hpp>
 
 namespace rosbag2_cpp
 {
@@ -157,12 +155,9 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   }
 
   std::string contents{std::istreambuf_iterator(file), {}};
-  const MessageSpec & spec =
-    msg_specs_by_definition_identifier_
-    .emplace(
+  const MessageSpec & spec = msg_specs_by_definition_identifier_.emplace(
     definition_identifier,
-    MessageSpec(definition_identifier.format(), std::move(contents), package))
-    .first->second;
+    MessageSpec(definition_identifier.format(), std::move(contents), package)).first->second;
 
   // "References and pointers to data stored in the container are only invalidated by erasing that
   // element, even when the corresponding iterator is invalidated."
@@ -177,7 +172,8 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
       if (depth <= 0) {
-        throw DefinitionNotFoundError(definition_identifier.topic_type());
+        throw std::runtime_error{
+                "Reached max recursion depth resolving definition of " + root_topic_type};
       }
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;

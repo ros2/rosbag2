@@ -84,7 +84,7 @@ public:
       std::make_unique<rosbag2_cpp::writers::SequentialWriter>();
 
     writer->open(storage_options_, converter_options);
-    writer->create_topic(topic_types_[0], {});
+    writer->create_topic(topic_types_[0]);
 
     for (auto const & message : messages) {
       writer->write(message);

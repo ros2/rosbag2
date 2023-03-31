@@ -195,7 +195,7 @@ void WriterBenchmark::create_writer()
     // TODO(adamdbrw) - replace with something more general if needed
     topic.type = "rosbag2_performance_benchmarking_msgs/msg/ByteArray";
     topic.serialization_format = serialization_format;
-    writer_->create_topic(topic, {});
+    writer_->create_topic(topic);
   }
 }
 
