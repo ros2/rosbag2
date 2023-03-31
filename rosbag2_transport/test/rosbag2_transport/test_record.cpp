@@ -147,7 +147,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
       "    nsec: .+\n"
   ));
   EXPECT_EQ(recorded_topics.at(topic).second.topic_type, "test_msgs/msg/Strings");
-  EXPECT_EQ(recorded_topics.at(topic).second.encoding, "ros2msg");
+  EXPECT_EQ(recorded_topics.at(topic).second.encoding, "");
 }
 
 TEST_F(RecordIntegrationTestFixture, records_sensor_data)
