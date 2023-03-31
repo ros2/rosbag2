@@ -123,7 +123,7 @@ setup_topic_filtering(
       qos_profiles << input_topics_qos_profiles[topic_name];
       topic_metadata.offered_qos_profiles = qos_profiles.str();
       // TODO(morlov:) Get message definition for topic from input storage
-      writer->create_topic(topic_metadata, {});
+      writer->create_topic(topic_metadata);
 
       filtered_outputs.try_emplace(topic_name);
       filtered_outputs[topic_name].push_back(writer.get());
