@@ -15,6 +15,10 @@
 #ifndef ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_
 #define ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_
 
+#ifndef ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH
+#define ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH 50
+#endif
+
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -54,7 +58,7 @@ public:
    * Throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
    */
-  rosbag2_storage::MessageDefinition get_full_text(const std::string & type_name);
+  rosbag2_storage::MessageDefinition get_full_text(const std::string & root_topic_type);
 
   enum struct Format
   {
@@ -75,17 +79,17 @@ private:
   struct DefinitionIdentifier
   {
     DefinitionIdentifier() = delete;
-    DefinitionIdentifier(const std::string & type_name, Format format)
-    : type_name_(type_name)
+    DefinitionIdentifier(const std::string & topic_type, Format format)
+    : topic_type_(topic_type)
       , format_(format)
     {
       size_t h1 = std::hash<Format>()(format_);
-      size_t h2 = std::hash<std::string>()(type_name_);
+      size_t h2 = std::hash<std::string>()(topic_type_);
       hash_ = h1 ^ h2;
     }
     bool operator==(const DefinitionIdentifier & di) const
     {
-      return (format_ == di.format_) && (type_name_ == di.type_name_);
+      return (format_ == di.format_) && (topic_type_ == di.topic_type_);
     }
 
     size_t hash() const
@@ -98,13 +102,13 @@ private:
       return format_;
     }
 
-    std::string type_name() const
+    std::string topic_type() const
     {
-      return type_name_;
+      return topic_type_;
     }
 
 private:
-    std::string type_name_;
+    std::string topic_type_;
     Format format_;
     size_t hash_;
   };

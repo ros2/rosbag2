@@ -27,8 +27,8 @@ struct MessageDefinition
 {
   /// @brief  The name of the type.
   ///
-  /// Should match the `name` in TopicMetadata for all topics using this message definition.
-  std::string type_name;
+  /// Should match the `type` in TopicMetadata for all topics using this message definition.
+  std::string topic_type;
   /// @brief The encoding technique used in `encoded_message_definition`.
   ///
   /// See docs/message_definition_encoding.md for details of each encoding.
@@ -37,10 +37,10 @@ struct MessageDefinition
   std::string encoded_message_definition;
 
   /// @brief used when no message definition is available for a given topic type.
-  static MessageDefinition empty_message_definition_for(std::string type_name)
+  static MessageDefinition empty_message_definition_for(std::string topic_type)
   {
     MessageDefinition self;
-    self.type_name = type_name;
+    self.topic_type = topic_type;
     self.encoding = "";
     self.encoded_message_definition = "";
     return self;

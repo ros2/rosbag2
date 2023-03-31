@@ -121,7 +121,7 @@ std::string LocalMessageDefinitionSource::delimiter(
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
-  result += definition_identifier.type_name();
+  result += definition_identifier.topic_type();
   result += "\n";
   return result;
 }
@@ -144,16 +144,16 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     return it->second;
   }
   std::smatch match;
-  const auto type_name = definition_identifier.type_name();
-  if (!std::regex_match(type_name, match, PACKAGE_TYPENAME_REGEX)) {
-    throw std::invalid_argument("Invalid type_name: " + type_name);
+  const auto topic_type = definition_identifier.topic_type();
+  if (!std::regex_match(topic_type, match, PACKAGE_TYPENAME_REGEX)) {
+    throw std::invalid_argument("Invalid topic_type: " + topic_type);
   }
   std::string package = match[1];
   std::string share_dir = ament_index_cpp::get_package_share_directory(package);
   std::ifstream file{share_dir + "/msg/" + match[2].str() +
     extension_for_format(definition_identifier.format())};
   if (!file.good()) {
-    throw DefinitionNotFoundError(definition_identifier.type_name());
+    throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
 
   std::string contents{std::istreambuf_iterator(file), {}};
@@ -170,12 +170,15 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
 }
 
 rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
-  const std::string & root_type_name)
+  const std::string & root_topic_type)
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
-  std::function<std::string(const DefinitionIdentifier &)> append_recursive =
-    [&](const DefinitionIdentifier & definition_identifier) {
+  std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
+    [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
+      if (depth <= 0) {
+        throw DefinitionNotFoundError(definition_identifier.topic_type());
+      }
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;
       for (const auto & dep_name : spec.dependencies) {
@@ -184,7 +187,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         if (inserted) {
           result += "\n";
           result += delimiter(dep);
-          result += append_recursive(dep);
+          result += append_recursive(dep, depth - 1);
         }
       }
       return result;
@@ -192,21 +195,24 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
 
   std::string result;
   Format format = Format::MSG;
+  int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
   try {
-    result = append_recursive(DefinitionIdentifier(root_type_name, format));
+    result = append_recursive(DefinitionIdentifier(root_topic_type, format), max_recursion_depth);
   } catch (const DefinitionNotFoundError & err) {
     // log that we've fallen back
     RCUTILS_LOG_WARN_NAMED(
       "rosbag2_cpp", "no .msg definition for %s, falling back to IDL",
       err.what());
     format = Format::IDL;
-    DefinitionIdentifier root_definition_identifier(root_type_name, format);
-    result = delimiter(root_definition_identifier) + append_recursive(root_definition_identifier);
+    DefinitionIdentifier root_definition_identifier(root_topic_type, format);
+    result = (delimiter(root_definition_identifier) +
+      append_recursive(root_definition_identifier, max_recursion_depth));
   }
   rosbag2_storage::MessageDefinition out;
   switch (format) {
     case Format::UNKNOWN:
-      throw std::runtime_error{"could not determine format of message definition for type " + root_type_name};
+      throw std::runtime_error{"could not determine format of message definition for type " +
+              root_topic_type};
     case Format::MSG:
       out.encoding = "ros2msg";
       break;
@@ -215,7 +221,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       break;
   }
   out.encoded_message_definition = result;
-  out.type_name = root_type_name;
+  out.topic_type = root_topic_type;
   return out;
 }
 }  // namespace rosbag2_cpp
