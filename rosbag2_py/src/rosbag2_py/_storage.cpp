@@ -133,10 +133,10 @@ PYBIND11_MODULE(_storage, m) {
   pybind11::class_<rosbag2_storage::MessageDefinition>(m, "MessageDefinition")
   .def(
     pybind11::init<std::string, std::string, std::string>(),
-    pybind11::arg("type_name"),
+    pybind11::arg("topic_type"),
     pybind11::arg("encoding"),
     pybind11::arg("encoded_message_definition"))
-  .def_readwrite("type_name", &rosbag2_storage::MessageDefinition::type_name)
+  .def_readwrite("topic_type", &rosbag2_storage::MessageDefinition::topic_type)
   .def_readwrite("encoding", &rosbag2_storage::MessageDefinition::encoding)
   .def_readwrite(
     "encoded_message_definition",

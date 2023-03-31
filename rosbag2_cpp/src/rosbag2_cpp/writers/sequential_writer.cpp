@@ -172,11 +172,11 @@ void SequentialWriter::close()
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   rosbag2_storage::MessageDefinition definition;
-  const std::string & type_name = topic_with_type.name;
+  const std::string & topic_type = topic_with_type.type;
   try {
-    definition = message_definitions_.get_full_text(type_name);
+    definition = message_definitions_.get_full_text(topic_type);
   } catch (DefinitionNotFoundError &) {
-    definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(type_name);
+    definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   }
   create_topic(topic_with_type, definition);
 }
