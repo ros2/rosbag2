@@ -42,7 +42,7 @@ struct FileInformation
 
 struct BagMetadata
 {
-  int version = 6;  // upgrade this number when changing the content of the struct
+  int version = 7;  // upgrade this number when changing the content of the struct
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;

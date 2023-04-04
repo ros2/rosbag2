@@ -54,12 +54,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
-  metadata.topics_with_message_count.push_back(
-  {
-    {"topic1", "type1", "rmw1", "qos1"}, 100});
-  metadata.topics_with_message_count.push_back(
-  {
-    {"topic2", "type2", "rmw2", "qos2"}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos1", ""}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos2", ""}, 200});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
@@ -109,7 +105,7 @@ TEST_F(MetadataFixture, metadata_reads_v3_check_offered_qos_profiles_empty)
   BagMetadata metadata{};
   metadata.version = 3;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, ""}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -128,7 +124,7 @@ TEST_F(MetadataFixture, metadata_reads_v4_fills_offered_qos_profiles)
   BagMetadata metadata{};
   metadata.version = 4;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, ""}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -149,4 +145,23 @@ TEST_F(MetadataFixture, metadata_reads_v6_custom_data)
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
 
   EXPECT_THAT(read_metadata.custom_data, Eq(metadata.custom_data));
+}
+
+TEST_F(MetadataFixture, metadata_reads_v7_topic_type_hash)
+{
+  const std::string type_description_hash = "hash";
+
+  BagMetadata metadata{};
+  metadata.version = 7;
+  metadata.topics_with_message_count.push_back(
+    {{"topic", "type", "rmw", "", type_description_hash}, 1});
+
+  metadata_io_->write_metadata(temporary_dir_path_, metadata);
+  auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
+
+  ASSERT_THAT(
+    read_metadata.topics_with_message_count,
+    SizeIs(metadata.topics_with_message_count.size()));
+  auto actual_first_topic = read_metadata.topics_with_message_count[0];
+  EXPECT_THAT(actual_first_topic.topic_metadata.type_description_hash, Eq(type_description_hash));
 }

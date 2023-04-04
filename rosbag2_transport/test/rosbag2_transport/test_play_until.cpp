@@ -69,7 +69,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_none_are_played_due_to_timestamp)
   primitive_message2->int32_value = 2;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
+    {kTopic1Name_, "test_msgs/BasicTypes", "", "", ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -112,7 +112,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
   primitive_message2->int32_value = 2;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
+    {kTopic1Name_, "test_msgs/BasicTypes", "", "", ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -180,7 +180,7 @@ TEST_F(
 TEST_F(RosBag2PlayUntilTestFixture, play_should_return_false_when_interrupted)
 {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
+    {kTopic1Name_, "test_msgs/BasicTypes", "", "", ""}};
 
   auto primitive_message = get_messages_basic_types()[0];
   primitive_message->int32_value = kIntValue;
@@ -268,7 +268,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_is_equal_to_the_total_duration)
   primitive_message2->int32_value = 2;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {kTopic1Name_, "test_msgs/BasicTypes", "", ""}};
+    {kTopic1Name_, "test_msgs/BasicTypes", "", "", ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {

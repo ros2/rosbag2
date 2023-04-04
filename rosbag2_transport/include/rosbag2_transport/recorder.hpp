@@ -152,6 +152,9 @@ private:
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
 
+  // Retrieve the type description hash from endpoint info.
+  std::string type_description_hash_for_topic(const std::string & topic_name) const;
+
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
   std::unique_ptr<TopicFilter> topic_filter_;
@@ -185,6 +188,8 @@ private:
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
 };
+
+std::string type_hash_to_string(const rosidl_type_hash_t & type_hash);
 
 }  // namespace rosbag2_transport
 

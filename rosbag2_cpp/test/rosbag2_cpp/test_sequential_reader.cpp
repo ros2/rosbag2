@@ -59,6 +59,7 @@ public:
     topic_with_type.name = "topic";
     topic_with_type.type = "test_msgs/BasicTypes";
     topic_with_type.serialization_format = storage_serialization_format_;
+    topic_with_type.type_description_hash = "";
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
 
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();

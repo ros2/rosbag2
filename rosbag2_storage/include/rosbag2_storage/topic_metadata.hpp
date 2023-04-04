@@ -27,10 +27,15 @@ struct TopicMetadata
   std::string serialization_format;
   // Serialized std::vector<rclcpp::QoS> as a YAML string
   std::string offered_qos_profiles;
+  // REP-2011 type description hash if available for topic, "" otherwise.
+  std::string type_description_hash;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {
-    return name == rhs.name && type == rhs.type && serialization_format == rhs.serialization_format;
+    return name == rhs.name &&
+           type == rhs.type &&
+           serialization_format == rhs.serialization_format &&
+           type_description_hash == rhs.type_description_hash;
   }
 };
 

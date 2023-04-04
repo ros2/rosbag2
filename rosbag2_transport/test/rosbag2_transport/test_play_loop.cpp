@@ -52,7 +52,7 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   primitive_message1->int32_value = test_value;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"loop_test_topic", "test_msgs/BasicTypes", "", ""}
+    {"loop_test_topic", "test_msgs/BasicTypes", "", "", ""}
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages(num_messages,
@@ -114,7 +114,7 @@ TEST_F(RosBag2PlayTestFixture, messages_played_in_loop) {
   primitive_message1->int32_value = test_value;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"loop_test_topic", "test_msgs/BasicTypes", "", ""}
+    {"loop_test_topic", "test_msgs/BasicTypes", "", "", ""}
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages(num_messages,

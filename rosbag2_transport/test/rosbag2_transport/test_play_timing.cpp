@@ -49,7 +49,7 @@ protected:
     auto primitive_message2 = get_messages_strings()[0];
     primitive_message2->string_value = "Hello World 2";
 
-    topics_and_types = {{"topic1", "test_msgs/Strings", "", ""}};
+    topics_and_types = {{"topic1", "test_msgs/Strings", "", "", ""}};
     messages = {
       serialize_test_message("topic1", 0, primitive_message1),
       serialize_test_message("topic1", 0, primitive_message2)

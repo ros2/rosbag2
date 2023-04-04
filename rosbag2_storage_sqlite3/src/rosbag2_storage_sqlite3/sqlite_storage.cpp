@@ -527,9 +527,11 @@ void SqliteStorage::fill_topics_and_types()
     "SELECT name, type, serialization_format FROM topics ORDER BY id;");
   auto query_results = statement->execute_query<std::string, std::string, std::string>();
 
+  std::string type_description_hash = "";  // TODO(james-rms) populate type description hash
+
   for (auto result : query_results) {
     all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", type_description_hash});
   }
 }
 
@@ -571,10 +573,13 @@ void SqliteStorage::read_metadata()
       std::string, std::string, std::string, int, rcutils_time_point_value_t,
       rcutils_time_point_value_t, std::string>();
 
+    std::string type_description_hash = "";  // TODO(james-rms) populate type description hash
+
     for (auto result : query_results) {
       metadata_.topics_with_message_count.push_back(
         {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(
+              result), type_description_hash},
           static_cast<size_t>(std::get<3>(result))
         });
 
@@ -593,10 +598,13 @@ void SqliteStorage::read_metadata()
       std::string, std::string, std::string, int, rcutils_time_point_value_t,
       rcutils_time_point_value_t>();
 
+    std::string type_description_hash = "";  // TODO(james-rms) populate type description hash
+
     for (auto result : query_results) {
       metadata_.topics_with_message_count.push_back(
         {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
+          {std::get<0>(result), std::get<1>(result), std::get<2>(
+              result), "", type_description_hash},
           static_cast<size_t>(std::get<3>(result))
         });
 
