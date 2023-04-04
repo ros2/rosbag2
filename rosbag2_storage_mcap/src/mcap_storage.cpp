@@ -16,6 +16,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage_mcap/visibility_control.hpp"
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP
   #include "rosbag2_storage/yaml.hpp"
@@ -47,6 +48,14 @@
 #include <vector>
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
   #include <regex>
+#endif
+
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+  #pragma warning(push)
+  #pragma warning(disable : 4251)
 #endif
 
 #define DECLARE_YAML_VALUE_MAP(KEY_TYPE, VALUE_TYPE, ...)                   \
@@ -159,7 +168,8 @@ static void OnProblem(const mcap::Status & status)
 /**
  * A storage implementation for the MCAP file format.
  */
-class MCAPStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
+class ROSBAG2_STORAGE_MCAP_PUBLIC MCAPStorage
+    : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
   MCAPStorage();
@@ -774,3 +784,7 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::MCAPStorage,
                        rosbag2_storage::storage_interfaces::ReadWriteInterface)
+
+#ifdef _WIN32
+  #pragma warning(pop)
+#endif

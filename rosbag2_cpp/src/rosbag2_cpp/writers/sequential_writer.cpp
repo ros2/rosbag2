@@ -55,6 +55,7 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   topics_names_to_info_(),
+  message_definitions_(),
   metadata_()
 {}
 

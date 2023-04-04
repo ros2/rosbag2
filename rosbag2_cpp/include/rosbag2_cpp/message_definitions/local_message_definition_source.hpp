@@ -28,6 +28,14 @@
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_storage/message_definition.hpp"
 
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+# pragma warning(push)
+# pragma warning(disable:4251)
+#endif
+
 namespace rosbag2_cpp
 {
 
@@ -48,7 +56,7 @@ public:
   }
 };
 
-class LocalMessageDefinitionSource final
+class ROSBAG2_CPP_PUBLIC LocalMessageDefinitionSource final
 {
 public:
   /**
@@ -66,6 +74,11 @@ public:
     MSG = 1,
     IDL = 2,
   };
+
+  explicit LocalMessageDefinitionSource() = default;
+
+  LocalMessageDefinitionSource(const LocalMessageDefinitionSource &) = delete;
+  LocalMessageDefinitionSource(const LocalMessageDefinitionSource &&) = delete;
 
 private:
   struct MessageSpec
@@ -140,5 +153,9 @@ std::set<std::string> parse_definition_dependencies(
   const std::string & package_context);
 
 }  // namespace rosbag2_cpp
+
+#ifdef _WIN32
+# pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_CPP__MESSAGE_DEFINITIONS__LOCAL_MESSAGE_DEFINITION_SOURCE_HPP_
