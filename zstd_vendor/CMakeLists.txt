@@ -35,7 +35,7 @@ macro(build_zstd)
   # We need to configure the CMake command to build from there instead.
   externalproject_add(zstd-${zstd_version}
     GIT_REPOSITORY https://github.com/facebook/zstd.git
-    GIT_TAG 97a3da1df009d4dc67251de0c4b1c9d7fe286fc1 # v1.4.8
+    GIT_TAG 63779c798237346c2b245c546c40b72a5a5913fe # v1.5.5
     GIT_CONFIG advice.detachedHead=false
     # Suppress git update due to https://gitlab.kitware.com/cmake/cmake/-/issues/16419
     # See https://github.com/ament/uncrustify_vendor/pull/22 for details
