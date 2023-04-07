@@ -71,6 +71,14 @@ void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type
   writer_impl_->create_topic(topic_with_type);
 }
 
+void Writer::create_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  const rosbag2_storage::MessageDefinition & message_definition)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->create_topic(topic_with_type, message_definition);
+}
+
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);

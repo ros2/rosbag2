@@ -19,6 +19,7 @@
 
 #include "fake_data.hpp"
 
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 
 void write_sample_split_bag(
@@ -30,12 +31,26 @@ void write_sample_split_bag(
 
   rosbag2_cpp::writers::SequentialWriter writer{};
   writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
+
   writer.create_topic(
   {
     topic_name,
-    "test_msgs/ByteMultiArray",
+    "test_msgs/msg/ByteMultiArray",
     "cdr",
     ""
+  },
+  {
+    "test_msgs/msg/ByteMultiArray",
+    "ros2msg",
+    "# This was originally provided as an example message.\n"
+    "# It is deprecated as of Foxy\n"
+    "# It is recommended to create your own semantically meaningful message.\n"
+    "\n"
+    "# Please look at the MultiArrayLayout message definition for\n"
+    "# documentation on all multiarrays.\n"
+    "\n"
+    "MultiArrayLayout  layout        # specification of data layout\n"
+    "byte[]            data          # array of data"
   });
   for (size_t i = 0; i < fake_messages.size(); i++) {
     if (i > 0 && (i % split_every == 0)) {

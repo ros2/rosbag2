@@ -16,7 +16,7 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage_mcap/message_definition_cache.hpp"
+#include "rosbag2_storage_mcap/visibility_control.hpp"
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP
   #include "rosbag2_storage/yaml.hpp"
@@ -48,6 +48,14 @@
 #include <vector>
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
   #include <regex>
+#endif
+
+// This is necessary because of using stl types here. It is completely safe, because
+// a) the member is not accessible from the outside
+// b) there are no inline functions.
+#ifdef _WIN32
+  #pragma warning(push)
+  #pragma warning(disable : 4251)
 #endif
 
 #define DECLARE_YAML_VALUE_MAP(KEY_TYPE, VALUE_TYPE, ...)                   \
@@ -160,7 +168,8 @@ static void OnProblem(const mcap::Status & status)
 /**
  * A storage implementation for the MCAP file format.
  */
-class MCAPStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
+class ROSBAG2_STORAGE_MCAP_PUBLIC MCAPStorage
+    : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
 public:
   MCAPStorage();
@@ -209,7 +218,8 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
   void write(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
-  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
+  void create_topic(const rosbag2_storage::TopicMetadata & topic,
+                    const rosbag2_storage::MessageDefinition & message_definition) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
   void update_metadata(const rosbag2_storage::BagMetadata &) override;
@@ -245,7 +255,6 @@ private:
   std::unique_ptr<mcap::LinearMessageView::Iterator> linear_iterator_;
 
   std::unique_ptr<mcap::McapWriter> mcap_writer_;
-  rosbag2_storage_mcap::internal::MessageDefinitionCache msgdef_cache_{};
 
   bool has_read_summary_ = false;
   rcutils_time_point_value_t last_read_time_point_ = 0;
@@ -705,7 +714,8 @@ void MCAPStorage::write(
   }
 }
 
-void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
+void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
+                               const rosbag2_storage::MessageDefinition & message_definition)
 {
   auto topic_info = rosbag2_storage::TopicInformation{topic, 0};
   const auto topic_it = topics_.find(topic.name);
@@ -723,20 +733,10 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
   if (schema_it == schema_ids_.end()) {
     mcap::Schema schema;
     schema.name = datatype;
-    try {
-      auto [format, full_text] = msgdef_cache_.get_full_text(datatype);
-      if (format == rosbag2_storage_mcap::internal::Format::MSG) {
-        schema.encoding = "ros2msg";
-      } else {
-        schema.encoding = "ros2idl";
-      }
-      schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
-                         reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
-    } catch (rosbag2_storage_mcap::internal::DefinitionNotFoundError & err) {
-      RCUTILS_LOG_ERROR_NAMED(LOG_NAME, "definition file(s) missing for %s: missing %s",
-                              datatype.c_str(), err.what());
-      schema.encoding = "";
-    }
+    schema.encoding = message_definition.encoding;
+    const auto & full_text = message_definition.encoded_message_definition;
+    schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
+                       reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
     mcap_writer_->addSchema(schema);
     schema_ids_.emplace(datatype, schema.id);
     schema_id = schema.id;
@@ -760,7 +760,12 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  topics_.erase(topic.name);
+  const auto topic_it = topics_.find(topic.name);
+  if (topic_it != topics_.end()) {
+    const auto & datatype = topic_it->second.topic_metadata.type;
+    schema_ids_.erase(datatype);
+    topics_.erase(topic.name);
+  }
 }
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
@@ -779,3 +784,7 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::MCAPStorage,
                        rosbag2_storage::storage_interfaces::ReadWriteInterface)
+
+#ifdef _WIN32
+  #pragma warning(pop)
+#endif

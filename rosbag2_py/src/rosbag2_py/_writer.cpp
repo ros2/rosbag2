@@ -98,7 +98,9 @@ PYBIND11_MODULE(_writer, m) {
     >(&PyWriter::open))
   .def("write", &PyWriter::write)
   .def("remove_topic", &PyWriter::remove_topic)
-  .def("create_topic", &PyWriter::create_topic)
+  .def(
+    "create_topic",
+    pybind11::overload_cast<const rosbag2_storage::TopicMetadata &>(&PyWriter::create_topic))
   .def("take_snapshot", &PyWriter::take_snapshot)
   .def("split_bagfile", &PyWriter::split_bagfile)
   ;
@@ -112,7 +114,11 @@ PYBIND11_MODULE(_writer, m) {
     >(&PyCompressionWriter::open))
   .def("write", &PyCompressionWriter::write)
   .def("remove_topic", &PyCompressionWriter::remove_topic)
-  .def("create_topic", &PyCompressionWriter::create_topic)
+  .def(
+    "create_topic",
+    pybind11::overload_cast<
+      const rosbag2_storage::TopicMetadata &
+    >(&PyCompressionWriter::create_topic))
   .def("take_snapshot", &PyCompressionWriter::take_snapshot)
   .def("split_bagfile", &PyCompressionWriter::split_bagfile)
   ;

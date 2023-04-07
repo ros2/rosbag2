@@ -33,7 +33,6 @@ ament_python_install_package(ros2bag_mcap_cli)
 
 add_library(${PROJECT_NAME} SHARED
   src/mcap_storage.cpp
-  src/message_definition_cache.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -114,8 +113,6 @@ if(BUILD_TESTING)
   )
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
-  ament_add_gmock(test_message_definition_cache test/rosbag2_storage_mcap/test_message_definition_cache.cpp)
-  target_link_libraries(test_message_definition_cache ${PROJECT_NAME})
 endif()
 
 

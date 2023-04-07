@@ -25,7 +25,6 @@
   <test_depend>rcpputils</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>std_msgs</test_depend>
-  <test_depend>rosbag2_storage_mcap_testdata</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

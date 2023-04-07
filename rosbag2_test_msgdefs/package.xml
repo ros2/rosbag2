@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rosbag2_storage_mcap_testdata</name>
+  <name>rosbag2_test_msgdefs</name>
   <version>0.20.0</version>
-  <description>message definition test fixtures for MCAP schema recording</description>
+  <description>message definition test fixtures for rosbag2 schema recording</description>
   <maintainer email="ros-tooling@foxglove.dev">Foxglove</maintainer>
   <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>

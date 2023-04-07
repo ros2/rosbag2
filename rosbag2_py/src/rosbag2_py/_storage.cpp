@@ -130,6 +130,18 @@ PYBIND11_MODULE(_storage, m) {
     "topics_regex_to_exclude",
     &rosbag2_storage::StorageFilter::topics_regex_to_exclude);
 
+  pybind11::class_<rosbag2_storage::MessageDefinition>(m, "MessageDefinition")
+  .def(
+    pybind11::init<std::string, std::string, std::string>(),
+    pybind11::arg("topic_type"),
+    pybind11::arg("encoding"),
+    pybind11::arg("encoded_message_definition"))
+  .def_readwrite("topic_type", &rosbag2_storage::MessageDefinition::topic_type)
+  .def_readwrite("encoding", &rosbag2_storage::MessageDefinition::encoding)
+  .def_readwrite(
+    "encoded_message_definition",
+    &rosbag2_storage::MessageDefinition::encoded_message_definition);
+
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
     pybind11::init<std::string, std::string, std::string, std::string>(),

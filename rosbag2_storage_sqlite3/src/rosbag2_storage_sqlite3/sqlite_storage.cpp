@@ -420,7 +420,9 @@ void SqliteStorage::initialize()
   insert_db_schema->execute_and_reset();
 }
 
-void SqliteStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
+void SqliteStorage::create_topic(
+  const rosbag2_storage::TopicMetadata & topic,
+  const rosbag2_storage::MessageDefinition &)
 {
   std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {

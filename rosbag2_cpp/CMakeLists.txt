@@ -62,6 +62,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
+  src/rosbag2_cpp/message_definitions/local_message_definition_source.cpp
   src/rosbag2_cpp/reader.cpp
   src/rosbag2_cpp/readers/sequential_reader.cpp
   src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
@@ -133,6 +134,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(rosbag2_test_msgdefs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
@@ -184,6 +186,12 @@ if(BUILD_TESTING)
   if(TARGET test_storage_without_metadata_file)
     ament_target_dependencies(test_storage_without_metadata_file rosbag2_storage)
     target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_local_message_definition_source
+    test/rosbag2_cpp/test_local_message_definition_source.cpp)
+  if(TARGET test_local_message_definition_source)
+    target_link_libraries(test_local_message_definition_source ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_message_cache

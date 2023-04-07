@@ -174,8 +174,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
   writable_storage->open({read_write_filename, kPluginID});
-  writable_storage->create_topic({"topic1", "type1", "rmw1", ""});
-  writable_storage->create_topic({"topic2", "type2", "rmw2", ""});
+  writable_storage->create_topic({"topic1", "type1", "rmw1", ""}, {});
+  writable_storage->create_topic({"topic2", "type2", "rmw2", ""}, {});
 
   const auto read_only_filename = writable_storage->get_relative_file_path();
 
@@ -365,7 +365,7 @@ TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
   const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
 
   writable_storage->open({read_write_filename, kPluginID});
-  writable_storage->create_topic({"topic1", "type1", "rmw1", ""});
+  writable_storage->create_topic({"topic1", "type1", "rmw1", ""}, {});
   writable_storage->remove_topic({"topic1", "type1", "rmw1", ""});
 
   const auto read_only_filename = writable_storage->get_relative_file_path();

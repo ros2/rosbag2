@@ -60,7 +60,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 #else
     auto writer = factory.open_read_write(uri.string(), storage_id);
 #endif
-    writer->create_topic(topic_metadata);
+    writer->create_topic(topic_metadata, {});
 
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
     serialization.serialize_message(&msg, serialized_msg.get());
@@ -127,7 +127,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
     rosbag2_storage::StorageFactory factory;
     auto writer = factory.open_read_write(options);
-    writer->create_topic(topic_metadata);
+    writer->create_topic(topic_metadata, {});
 
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
     serialization.serialize_message(&msg, serialized_msg.get());

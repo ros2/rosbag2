@@ -59,7 +59,9 @@ public:
 
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
 
-  void create_topic(const rosbag2_storage::TopicMetadata & topic) override;
+  void create_topic(
+    const rosbag2_storage::TopicMetadata & topic,
+    const rosbag2_storage::MessageDefinition & message_definition) override;
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 

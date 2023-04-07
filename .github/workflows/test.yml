@@ -31,9 +31,9 @@ jobs:
           rosbag2_py
           rosbag2_storage
           rosbag2_storage_mcap
-          rosbag2_storage_mcap_testdata
           rosbag2_storage_sqlite3
           rosbag2_test_common
+          rosbag2_test_msgdefs
           rosbag2_tests
           rosbag2_transport
           shared_queues_vendor

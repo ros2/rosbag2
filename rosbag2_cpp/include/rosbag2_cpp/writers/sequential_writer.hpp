@@ -27,10 +27,12 @@
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -92,6 +94,18 @@ public:
   void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
 
   /**
+   * Create a new topic in the underlying storage. Needs to be called for every topic used within
+   * a message which is passed to write(...).
+   *
+   * \param topic_with_type name and type identifier of topic to be created
+   * \param message_definition message definition content for this topic's type
+   * \throws runtime_error if the Writer is not open.
+   */
+  void create_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition) override;
+
+  /**
    * Remove a new topic in the underlying storage.
    * If creation of subscription fails remove the topic
    * from the db (more of cleanup)
@@ -148,6 +162,11 @@ protected:
   // Used to track topic -> message count. If cache is present, it is updated by CacheConsumer
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
   std::mutex topics_info_mutex_;
+
+  LocalMessageDefinitionSource message_definitions_;
+  // used to track message definitions written to the bag.
+  std::unordered_map<std::string,
+    rosbag2_storage::MessageDefinition> topic_names_to_message_definitions_;
 
   rosbag2_storage::BagMetadata metadata_;
 
