@@ -399,13 +399,13 @@ std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
     return "";
   }
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
-  char * stringified_type_hash = NULL;
+  char * stringified_type_hash = nullptr;
   rcutils_ret_t status = rosidl_stringify_type_hash(&type_hash, allocator, &stringified_type_hash);
   std::string result = "";
   if (status == RCUTILS_RET_OK) {
     result = stringified_type_hash;
   }
-  if (stringified_type_hash != NULL) {
+  if (stringified_type_hash != nullptr) {
     allocator.deallocate(stringified_type_hash, allocator.state);
   }
   return result;
@@ -426,10 +426,7 @@ std::string Recorder::type_description_hash_for_topic(const std::string & topic_
       result_hash = endpoint_hash;
       continue;
     }
-    bool difference_detected = false;
-    if (endpoint_hash.version != result_hash.version) {
-      difference_detected = true;
-    }
+    bool difference_detected = (endpoint_hash.version != result_hash.version);
     for (int i = 0; i < ROSIDL_TYPE_HASH_SIZE; ++i) {
       if (result_hash.value[i] != endpoint_hash.value[i]) {
         difference_detected = true;

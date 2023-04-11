@@ -406,6 +406,10 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     if (metadata_it != channel.metadata.end()) {
       topic_info.topic_metadata.offered_qos_profiles = metadata_it->second;
     }
+    const auto type_hash_it = channel.metadata.find("topic_type_hash");
+    if (type_hash_it != channel.metadata.end()) {
+      topic_info.topic_metadata.type_description_hash = type_hash_it->second;
+    }
 
     // Look up the message count for this Channel
     const auto message_count_it = stats.channelMessageCounts.find(channel_id);
@@ -753,6 +757,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
     channel.schemaId = schema_id;
     channel.metadata.emplace("offered_qos_profiles",
                              topic_info.topic_metadata.offered_qos_profiles);
+    channel.metadata.emplace("topic_type_hash", topic_info.topic_metadata.type_description_hash);
     mcap_writer_->addChannel(channel);
     channel_ids_.emplace(topic.name, channel.id);
   }
