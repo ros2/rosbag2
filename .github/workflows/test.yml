@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - humble
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
@@ -13,7 +13,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-latest
     steps:
     - name: Build and run tests
       id: action-ros-ci
@@ -38,8 +38,8 @@ jobs:
           shared_queues_vendor
           sqlite3_vendor
           zstd_vendor
-        target-ros2-distro: rolling
-        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
+        target-ros2-distro: humble
+        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/humble/ros2.repos
         colcon-defaults: |
           {
             "build": {
@@ -57,7 +57,7 @@ jobs:
       run: |
         rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
         rosbag2_packages=$(colcon list -n --base-paths ${rosbag2_path})
-        source /opt/ros/rolling/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
+        source /opt/ros/humble/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
     - uses: actions/upload-artifact@v1
