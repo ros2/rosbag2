@@ -25,10 +25,10 @@ if (NOT SQLite3_FOUND)
   endif()
 
   include(ExternalProject)
-  ExternalProject_Add(sqlite3-3.24.0
-    PREFIX sqlite3-3.24.0
-    URL https://www.sqlite.org/2018/sqlite-amalgamation-3240000.zip
-    URL_MD5 4ea1e0c6e7e82cb0490d4753d6878698
+  ExternalProject_Add(sqlite3-3.37.2
+    PREFIX sqlite3-3.27.2
+    URL https://www.sqlite.org/2022/sqlite-amalgamation-3370200.zip
+    URL_MD5 8d9b74229cec934c4fcb61f57aa01ff8
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite3_install
       ${extra_cmake_args}
