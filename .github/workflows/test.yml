@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - rolling
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
@@ -40,7 +40,7 @@ jobs:
           sqlite3_vendor
           zstd_vendor
         target-ros2-distro: rolling
-        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
+        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/rolling/ros2.repos
         colcon-defaults: |
           {
             "build": {
