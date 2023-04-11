@@ -38,6 +38,7 @@
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/qos.hpp"
 
+#include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
@@ -387,8 +388,14 @@ std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::strin
 
 std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
 {
-  if (type_hash.version != 1) {
-    // version is either unset or a later version we don't know how to serialize.
+  if (type_hash.version == 0) {
+    // version is unset, this is an empty type hash.
+    return "";
+  }
+  if (type_hash.version > 1) {
+    // this is a version we don't know how to serialize
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "attempted to stringify type hash with unknown version " << type_hash.version);
     return "";
   }
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
@@ -399,9 +406,9 @@ std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
     result = stringified_type_hash;
   }
   if (stringified_type_hash != NULL) {
-    allocator.deallocate(output, allocator.state);
+    allocator.deallocate(stringified_type_hash, allocator.state);
   }
-  return string_output;
+  return result;
 }
 
 std::string Recorder::type_description_hash_for_topic(const std::string & topic_name) const
@@ -420,11 +427,11 @@ std::string Recorder::type_description_hash_for_topic(const std::string & topic_
       continue;
     }
     bool difference_detected = false;
-    if (this_type_description_hash.version != result_hash.version) {
+    if (endpoint_hash.version != result_hash.version) {
       difference_detected = true;
     }
     for (int i = 0; i < ROSIDL_TYPE_HASH_SIZE; ++i) {
-      if (result_hash[i] != endpoint_hash[i]) {
+      if (result_hash.value[i] != endpoint_hash.value[i]) {
         difference_detected = true;
       }
     }
@@ -433,8 +440,8 @@ std::string Recorder::type_description_hash_for_topic(const std::string & topic_
       std::string endpoint_string = type_hash_to_string(endpoint_hash);
       RCLCPP_WARN_STREAM(
         this->get_logger(),
-        "type description hashes for topic '" << topic_name << "'conflict: " <<
-          result_string << " != " << endpoint_string);
+        "type description hashes for topic '" << topic_name << "'conflict: '" <<
+          result_string << "' != '" << endpoint_string << "'");
       return "";
     }
   }

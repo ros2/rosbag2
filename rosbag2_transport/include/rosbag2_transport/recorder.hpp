@@ -189,7 +189,7 @@ private:
   bool event_publisher_thread_should_wake();
 };
 
-std::string type_hash_to_string(const rosidl_type_hash_t & type_hash);
+ROSBAG2_TRANSPORT_PUBLIC std::string type_hash_to_string(const rosidl_type_hash_t & type_hash);
 
 }  // namespace rosbag2_transport
 
