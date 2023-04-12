@@ -324,6 +324,9 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
     };
   writer_->add_event_callbacks(callbacks);
 
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+  mock_writer.set_max_messages_per_file(5);
+
   rosbag2_transport::RecordOptions record_options =
   {false, false, {string_topic}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
@@ -333,8 +336,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   start_async_spin(recorder);
 
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   const size_t expected_messages = mock_writer.max_messages_per_file() + 1;
 
