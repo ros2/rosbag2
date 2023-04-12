@@ -244,7 +244,7 @@ PYBIND11_MODULE(_storage, m) {
           custom_data
         };
       }),
-    pybind11::arg("version") = 6,
+    pybind11::arg("version") = 7,
     pybind11::arg("bag_size") = 0,
     pybind11::arg("storage_identifier") = "",
     pybind11::arg("relative_file_paths") = std::vector<std::string>(),
