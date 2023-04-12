@@ -2,6 +2,12 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.0 (2023-04-12)
+-------------------
+* Update to sqlite3 3.37.2 (`#1274 <https://github.com/ros2/rosbag2/issues/1274>`_)
+  This matches version distributed in Ubuntu Jammy.
+* Contributors: Scott K Logan
+
 0.20.0 (2023-02-14)
 -------------------
 
