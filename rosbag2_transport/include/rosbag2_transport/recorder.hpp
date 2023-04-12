@@ -119,12 +119,12 @@ public:
 protected:
   ROSBAG2_TRANSPORT_EXPORT
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
+private:
+
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
   std::atomic<bool> stop_discovery_;
-
-private:
   void topics_discovery();
 
   std::unordered_map<std::string, std::string>
@@ -184,6 +184,7 @@ private:
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
+
 };
 
 }  // namespace rosbag2_transport
