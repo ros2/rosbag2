@@ -36,6 +36,7 @@
 #include "rosbag2_transport/qos.hpp"
 
 #include "rosbag2_transport/topic_filter.hpp"
+#include "recorder_impl.hpp"
 
 namespace rosbag2_transport
 {
@@ -81,6 +82,7 @@ Recorder::Recorder(
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
     .start_parameter_event_publisher(false)
     .parameter_overrides({rclcpp::Parameter("use_sim_time", record_options.use_sim_time)})),
+  impl_(std::make_unique<RecorderImpl>()),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),

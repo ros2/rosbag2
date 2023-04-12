@@ -52,6 +52,8 @@ class Writer;
 namespace rosbag2_transport
 {
 
+class RecorderImpl;
+
 class Recorder : public rclcpp::Node
 {
 public:
@@ -120,6 +122,7 @@ protected:
   ROSBAG2_TRANSPORT_EXPORT
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 private:
+  std::unique_ptr<RecorderImpl> impl_;
 
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
@@ -184,7 +187,6 @@ private:
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
-
 };
 
 }  // namespace rosbag2_transport
