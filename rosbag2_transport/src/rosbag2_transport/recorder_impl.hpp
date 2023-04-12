@@ -12,10 +12,142 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace rosbag2_transport {
+#ifndef ROSBAG2_TRANSPORT__RECORDER_IMPL_HPP_
+#define ROSBAG2_TRANSPORT__RECORDER_IMPL_HPP_
 
-class RecorderImpl {
+#include <future>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
+#include "keyboard_handler/keyboard_handler.hpp"
+
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos.hpp"
+
+#include "rosbag2_cpp/writer.hpp"
+
+#include "rosbag2_interfaces/srv/is_paused.hpp"
+#include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/resume.hpp"
+#include "rosbag2_interfaces/srv/snapshot.hpp"
+#include "rosbag2_interfaces/srv/split_bagfile.hpp"
+
+#include "rosbag2_interfaces/msg/write_split_event.hpp"
+
+#include "rosbag2_storage/topic_metadata.hpp"
+
+#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
+
+
+namespace rosbag2_transport
+{
+
+class RecorderImpl
+{
+public:
+  RecorderImpl(
+    std::shared_ptr<rosbag2_cpp::Writer> writer,
+    std::shared_ptr<KeyboardHandler> keyboard_handler,
+    const rosbag2_storage::StorageOptions & storage_options,
+    const rosbag2_transport::RecordOptions & record_options,
+    rclcpp::Node * node,
+    KeyboardHandler::KeyCode pause_resume_toggle_key
+  );
+
+  virtual ~RecorderImpl();
+
+  void record();
+
+  const rosbag2_cpp::Writer & get_writer_handle();
+
+  /// Pause the recording.
+  void pause();
+
+  /// Resume recording.
+  void resume();
+
+  /// Pause if it was recording, continue recording if paused.
+  void toggle_paused();
+
+  /// Return the current paused state.
+  bool is_paused();
+
+  std::unordered_map<std::string, std::string> get_requested_or_available_topics();
+
+private:
+  std::shared_ptr<rosbag2_cpp::Writer> writer_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::RecordOptions record_options_;
+  rclcpp::Node * node_;
+
+  std::atomic<bool> stop_discovery_;
+  void topics_discovery();
+
+  std::unordered_map<std::string, std::string>
+  get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
+
+  void subscribe_topics(
+    const std::unordered_map<std::string, std::string> & topics_and_types);
+
+  void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
+
+  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
+    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
+
+  /**
+   * Find the QoS profile that should be used for subscribing.
+   *
+   * Uses the override from record_options, if it is specified for this topic.
+   * Otherwise, falls back to Rosbag2QoS::adapt_request_to_offers
+   *
+   *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
+   *   \return The QoS profile to be used for subscribing.
+   */
+  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
+
+  // Serialize all currently offered QoS profiles for a topic into a YAML list.
+  std::string serialized_offered_qos_profiles_for_topic(const std::string & topic_name);
+
+  void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
+
+  std::unique_ptr<TopicFilter> topic_filter_;
+  std::future<void> discovery_future_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
+  std::unordered_set<std::string> topics_warned_about_incompatibility_;
+  std::string serialization_format_;
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
+  std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
+  rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
+  rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
+  rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
+  rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
+  std::atomic<bool> paused_ = false;
+  // Keyboard handler
+  std::shared_ptr<KeyboardHandler> keyboard_handler_;
+  // Toogle paused key callback handle
+  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
+    KeyboardHandler::invalid_handle;
+
+  // Variables for event publishing
+  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
+  bool event_publisher_thread_should_exit_ = false;
+  bool write_split_has_occurred_ = false;
+  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
+  std::mutex event_publisher_thread_mutex_;
+  std::condition_variable event_publisher_thread_wake_cv_;
+  std::thread event_publisher_thread_;
+
+  void event_publisher_thread_main();
+  bool event_publisher_thread_should_wake();
 };
 
-}
+}  // namespace rosbag2_transport
+
+#endif  // ROSBAG2_TRANSPORT__RECORDER_IMPL_HPP_
