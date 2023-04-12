@@ -47,6 +47,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/qos.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
+  src/rosbag2_transport/recorder_impl.cpp
   src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC

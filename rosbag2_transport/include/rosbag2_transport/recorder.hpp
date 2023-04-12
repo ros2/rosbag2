@@ -85,18 +85,6 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void record();
 
-  const std::unordered_set<std::string> &
-  topics_using_fallback_qos() const
-  {
-    return topics_warned_about_incompatibility_;
-  }
-
-  const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
-  subscriptions() const
-  {
-    return subscriptions_;
-  }
-
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_cpp::Writer & get_writer_handle();
 
