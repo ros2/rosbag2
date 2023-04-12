@@ -531,12 +531,12 @@ void SqliteStorage::prepare_for_reading()
 void SqliteStorage::fill_topics_and_types()
 {
   if (database_->field_exists("topics", "offered_qos_profiles")) {
-    if (dataase_->field_exists("topics", "type_description_hash")) {
+    if (database_->field_exists("topics", "type_description_hash")) {
       auto statement = database_->prepare_statement(
         "SELECT name, type, serialization_format, offered_qos_profiles, type_description_hash"
         " FROM topics ORDER BY id;");
       auto query_results = statement->execute_query<
-        std::string, std::string, std::string, std : string, std::string>();
+        std::string, std::string, std::string, std::string, std::string>();
 
       for (auto result : query_results) {
         all_topics_and_types_.push_back(
@@ -551,7 +551,7 @@ void SqliteStorage::fill_topics_and_types()
       auto statement = database_->prepare_statement(
         "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
       auto query_results = statement->execute_query<
-        std::string, std::string, std::string, std : string>();
+        std::string, std::string, std::string, std::string>();
 
       for (auto result : query_results) {
         all_topics_and_types_.push_back(
