@@ -14,13 +14,7 @@
 
 #include <gmock/gmock.h>
 
-#include <algorithm>
-#include <future>
-#include <map>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 #include "rosbag2_transport/recorder.hpp"
 
