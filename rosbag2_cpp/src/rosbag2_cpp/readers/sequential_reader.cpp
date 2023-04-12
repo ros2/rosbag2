@@ -190,7 +190,8 @@ const rosbag2_storage::BagMetadata & SequentialReader::get_metadata() const
   return metadata_;
 }
 
-std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and_types() const
+std::vector<std::pair<rosbag2_storage::TopicMetadata,
+  rosbag2_storage::MessageDefinition>> SequentialReader::get_all_topics_and_types() const
 {
   rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
   return topics_metadata_;
@@ -329,7 +330,8 @@ void SequentialReader::check_converter_serialization_format(
       converter_serialization_format,
       converter_factory_);
     auto topics = storage_->get_all_topics_and_types();
-    for (const auto & topic_with_type : topics) {
+    for (const auto & [topic_with_type, message_definition] : topics) {
+      (void) message_definition;
       converter_->add_topic(topic_with_type.name, topic_with_type.type);
     }
   }
@@ -341,7 +343,10 @@ void SequentialReader::fill_topics_metadata()
   topics_metadata_.clear();
   topics_metadata_.reserve(metadata_.topics_with_message_count.size());
   for (const auto & topic_information : metadata_.topics_with_message_count) {
-    topics_metadata_.push_back(topic_information.topic_metadata);
+    topics_metadata_.push_back(
+      std::make_pair(
+        topic_information.topic_metadata,
+        rosbag2_storage::MessageDefinition{}));
   }
 }
 

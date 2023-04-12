@@ -75,7 +75,8 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
@@ -134,7 +135,8 @@ private:
   ReadQueryResult::Iterator current_message_row_ {
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
   std::unordered_map<std::string, int> topics_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
-  std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
 

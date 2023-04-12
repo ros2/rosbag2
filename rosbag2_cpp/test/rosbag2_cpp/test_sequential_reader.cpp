@@ -56,10 +56,11 @@ public:
     default_storage_options_({storage_uri_, "mock_storage"})
   {
     rosbag2_storage::TopicMetadata topic_with_type;
+    rosbag2_storage::MessageDefinition message_definition{};
     topic_with_type.name = "topic";
     topic_with_type.type = "test_msgs/BasicTypes";
     topic_with_type.serialization_format = storage_serialization_format_;
-    auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
+    auto topics_and_types = std::vector<std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>>{{topic_with_type, message_definition}};
 
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type.name;

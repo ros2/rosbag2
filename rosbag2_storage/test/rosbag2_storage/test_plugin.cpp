@@ -95,10 +95,12 @@ void TestPlugin::write(
   std::cout << "\nwriting multiple\n";
 }
 
-std::vector<rosbag2_storage::TopicMetadata> TestPlugin::get_all_topics_and_types()
+std::vector<std::pair<rosbag2_storage::TopicMetadata,
+  rosbag2_storage::MessageDefinition>> TestPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::vector<rosbag2_storage::TopicMetadata>();
+  return std::vector<std::pair<rosbag2_storage::TopicMetadata,
+           rosbag2_storage::MessageDefinition>>();
 }
 
 rosbag2_storage::BagMetadata TestPlugin::get_metadata()

@@ -54,7 +54,8 @@ public:
 
     auto topic_with_type = rosbag2_storage::TopicMetadata{
       "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
-    auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
+    auto topics_and_types = std::vector<std::pair<rosbag2_storage::TopicMetadata,
+        rosbag2_storage::MessageDefinition>>{{topic_with_type, {}}};
     metadata.topics_with_message_count.push_back({topic_with_type, 10});
 
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();

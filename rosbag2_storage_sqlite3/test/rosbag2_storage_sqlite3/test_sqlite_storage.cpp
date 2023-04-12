@@ -190,8 +190,12 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   EXPECT_THAT(
     topics_and_types, ElementsAreArray(
   {
-    rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", ""},
-    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", ""}
+    std::make_pair(
+      rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", ""},
+      rosbag2_storage::MessageDefinition{}),
+    std::make_pair(
+      rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", ""},
+      rosbag2_storage::MessageDefinition{})
   }));
 }
 

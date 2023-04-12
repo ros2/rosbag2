@@ -86,7 +86,8 @@ setup_topic_filtering(
 
   for (const auto & input_bag : input_bags) {
     auto bag_topics_and_types = input_bag->get_all_topics_and_types();
-    for (const auto & topic_metadata : bag_topics_and_types) {
+    for (const auto & [topic_metadata, message_definition] : bag_topics_and_types) {
+      (void) message_definition;
       const std::string & topic_name = topic_metadata.name;
       input_topics.try_emplace(topic_name);
       input_topics[topic_name].push_back(topic_metadata.type);

@@ -37,7 +37,8 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_all_topics_and_types() override;
 
   rosbag2_storage::BagMetadata get_metadata() override;
 

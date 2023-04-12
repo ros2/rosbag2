@@ -196,8 +196,9 @@ private:
     auto message = get_messages_basic_types()[0];
     message->int32_value = 42;
 
-    auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-      {test_topic_, "test_msgs/BasicTypes", "", ""},
+    auto topic_types = std::vector<std::pair<rosbag2_storage::TopicMetadata,
+        rosbag2_storage::MessageDefinition>>{
+      {{test_topic_, "test_msgs/BasicTypes", "", ""}, {}},
     };
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
     for (size_t i = 0; i < num_msgs_to_publish_; i++) {

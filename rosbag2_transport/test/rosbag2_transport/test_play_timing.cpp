@@ -49,7 +49,7 @@ protected:
     auto primitive_message2 = get_messages_strings()[0];
     primitive_message2->string_value = "Hello World 2";
 
-    topics_and_types = {{"topic1", "test_msgs/Strings", "", ""}};
+    topics_and_types = {{{"topic1", "test_msgs/Strings", "", ""}, {}}};
     messages = {
       serialize_test_message("topic1", 0, primitive_message1),
       serialize_test_message("topic1", 0, primitive_message2)
@@ -69,7 +69,8 @@ protected:
   }
 
   rclcpp::Clock clock{RCL_STEADY_TIME};
-  std::vector<rosbag2_storage::TopicMetadata> topics_and_types;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> topics_and_types;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
   rclcpp::Duration message_time_difference = {1, 0};
   std::unique_ptr<MockSequentialReader> prepared_mock_reader;

@@ -176,7 +176,7 @@ public:
     auto topic_it = std::find_if(
       topics_and_types.begin(), topics_and_types.end(),
       [&topic_name](const auto & tm) {
-        return topic_name == tm.name;
+        return topic_name == tm.first.name;
       });
     return topic_it->serialization_format;
   }

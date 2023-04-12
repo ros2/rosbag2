@@ -41,7 +41,7 @@ def test_sequential_reader(storage_id):
     topic_types = reader.get_all_topics_and_types()
 
     # Create a map for quicker lookup
-    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+    type_map = {topic_types[i][0].name: topic_types[i][0].type for i in range(len(topic_types))}
 
     # Set filter for topic of string type
     storage_filter = rosbag2_py.StorageFilter(topics=['/topic'])
@@ -90,7 +90,7 @@ def test_sequential_reader_seek(storage_id):
     topic_types = reader.get_all_topics_and_types()
 
     # Create a map for quicker lookup
-    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+    type_map = {topic_types[i][0].name: topic_types[i][0].type for i in range(len(topic_types))}
 
     # Seek No Filter
     reader = rosbag2_py.SequentialReader()

@@ -39,7 +39,8 @@ public:
     rclcpp::init(0, nullptr);
 
     auto topics_and_types =
-      std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
+      std::vector<std::pair<rosbag2_storage::TopicMetadata,
+        rosbag2_storage::MessageDefinition>>{{{"topic1", "test_msgs/Strings", "", ""}, {}}};
 
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
     messages.reserve(num_test_messages_);

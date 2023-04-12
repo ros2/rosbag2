@@ -77,7 +77,8 @@ public:
     return metadata_;
   }
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_all_topics_and_types() const override
   {
     return topics_;
   }
@@ -110,7 +111,8 @@ public:
 
   void prepare(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
-    std::vector<rosbag2_storage::TopicMetadata> topics)
+    std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> topics)
   {
     metadata_.message_count = messages.size();
     if (!messages.empty()) {
@@ -130,7 +132,8 @@ public:
 private:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
   rosbag2_storage::BagMetadata metadata_;
-  std::vector<rosbag2_storage::TopicMetadata> topics_;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> topics_;
   size_t num_read_;
   rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter filter_;

@@ -75,7 +75,7 @@ def test_sequential_writer(tmp_path, storage_id):
     topic_types = reader.get_all_topics_and_types()
 
     # Create a map for quicker lookup
-    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+    type_map = {topic_types[i][0].name: topic_types[i][0].type for i in range(len(topic_types))}
 
     msg_counter = 0
     while reader.has_next():

@@ -79,7 +79,8 @@ public:
 
   const rosbag2_storage::BagMetadata & get_metadata() const override;
 
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_all_topics_and_types() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
@@ -196,7 +197,8 @@ protected:
   rosbag2_storage::BagMetadata metadata_{};
   rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter topics_filter_{};
-  std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> topics_metadata_{};
   std::vector<std::string> file_paths_{};
   std::vector<std::string>::iterator current_file_iterator_{};
   std::unordered_set<std::string> preprocessed_file_paths_;

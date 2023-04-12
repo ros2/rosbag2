@@ -89,10 +89,11 @@ public:
             testing::ElementsAre(kBool1Value, kBool2Value, kBool3Value)))));
   }
 
-  std::vector<rosbag2_storage::TopicMetadata> get_topic_types()
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_topic_types()
   {
-    return {{kTopic1Name_, "test_msgs/BasicTypes", "", ""},
-      {kTopic2Name_, "test_msgs/Arrays", "", ""}};
+    return {{{kTopic1Name_, "test_msgs/BasicTypes", "", ""}, {}},
+      {{kTopic2Name_, "test_msgs/Arrays", "", ""}, {}}};
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>

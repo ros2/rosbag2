@@ -60,10 +60,13 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
-std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_and_types()
+std::vector<
+  std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
+> TestReadOnlyPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
-  return std::vector<rosbag2_storage::TopicMetadata>();
+  return std::vector<std::pair<rosbag2_storage::TopicMetadata,
+           rosbag2_storage::MessageDefinition>>();
 }
 
 std::string TestReadOnlyPlugin::get_relative_file_path() const

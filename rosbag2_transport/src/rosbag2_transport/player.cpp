@@ -642,7 +642,8 @@ void Player::prepare_publishers()
   // Create topic publishers
   auto topics = reader_->get_all_topics_and_types();
   std::string topic_without_support_acked;
-  for (const auto & topic : topics) {
+  for (const auto & [topic, message_definition] : topics) {
+    (void) message_definition;
     if (publishers_.find(topic.name) != publishers_.end()) {
       continue;
     }

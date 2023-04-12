@@ -167,7 +167,8 @@ public:
    * \return vector of topics with topic name and type as std::string
    * \throws runtime_error if the Reader is not open.
    */
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata,
+    rosbag2_storage::MessageDefinition>> get_all_topics_and_types() const;
 
   /**
    * Set filters to adhere to during reading.

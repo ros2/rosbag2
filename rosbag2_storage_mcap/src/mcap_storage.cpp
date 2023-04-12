@@ -200,7 +200,8 @@ public:
 #endif
   bool has_next() override;
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
-  std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>>
+  get_all_topics_and_types() override;
 
   /** ReadOnlyInterface **/
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -627,12 +628,13 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> MCAPStorage::read_next()
   return std::move(next_);
 }
 
-std::vector<rosbag2_storage::TopicMetadata> MCAPStorage::get_all_topics_and_types()
+std::vector<std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>>
+MCAPStorage::get_all_topics_and_types()
 {
   auto metadata = get_metadata();
-  std::vector<rosbag2_storage::TopicMetadata> out;
+  std::vector<std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>> out;
   for (const auto & topic : metadata.topics_with_message_count) {
-    out.push_back(topic.topic_metadata);
+    out.push_back(std::make_pair(topic.topic_metadata, rosbag2_storage::MessageDefinition{}));
   }
   return out;
 }

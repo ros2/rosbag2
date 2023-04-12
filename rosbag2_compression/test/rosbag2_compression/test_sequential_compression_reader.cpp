@@ -55,7 +55,8 @@ public:
     storage_options_.uri = tmp_dir_.string();
     topic_with_type_ = rosbag2_storage::TopicMetadata{
       "topic", "test_msgs/BasicTypes", storage_serialization_format_, ""};
-    auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type_};
+    auto topics_and_types = std::vector<std::pair<rosbag2_storage::TopicMetadata,
+        rosbag2_storage::MessageDefinition>>{{topic_with_type_, {}}};
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = topic_with_type_.name;
 
