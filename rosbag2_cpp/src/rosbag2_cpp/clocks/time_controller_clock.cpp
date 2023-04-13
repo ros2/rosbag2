@@ -166,6 +166,16 @@ rcutils_time_point_value_t TimeControllerClock::now() const
   return impl_->ros_now();
 }
 
+/// @brief Convert an arbitrary ROSTime to a SteadyTime, based on the current reference snapshot.
+/// @param ros_time - time point in ROSTime
+/// @return time point in steady clock i.e. std::chrono::steady_clock
+std::chrono::steady_clock::time_point
+TimeControllerClock::ros_to_steady(rcutils_time_point_value_t ros_time) const
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  return impl_->ros_to_steady(ros_time);
+}
+
 bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
   {

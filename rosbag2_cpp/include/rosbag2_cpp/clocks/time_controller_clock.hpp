@@ -60,6 +60,15 @@ public:
   rcutils_time_point_value_t now() const override;
 
   /**
+   * @brief Convert an arbitrary ROSTime to a SteadyTime, based on the current reference snapshot.
+   * @param ros_time - time point in ROSTime
+   * @return time point in steady clock i.e. std::chrono::steady_clock
+   */
+  ROSBAG2_CPP_PUBLIC
+  std::chrono::steady_clock::time_point
+  ros_to_steady(rcutils_time_point_value_t ros_time) const override;
+
+  /**
    * Try to sleep (non-busy) the current thread until the provided time is reached - according to this Clock
    *
    * Return true if the time has been reached, false if it was not successfully reached after sleeping
