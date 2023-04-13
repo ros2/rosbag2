@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "rcutils/allocator.h"
-#include "rosidl_runtime_c/type_hash.h"
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
@@ -329,13 +328,14 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
+    auto endpoint_infos = this->get_publishers_info_by_topic(topic_with_type.first);
     subscribe_topic(
       {
         topic_with_type.first,
         topic_with_type.second,
         serialization_format_,
-        serialized_offered_qos_profiles_for_topic(topic_with_type.first),
-        type_description_hash_for_topic(topic_with_type.first),
+        serialized_offered_qos_profiles_for_topic(endpoint_infos),
+        type_description_hash_for_topic(endpoint_infos),
       });
   }
 }
@@ -376,10 +376,10 @@ Recorder::create_subscription(
   return subscription;
 }
 
-std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)
+std::string Recorder::serialized_offered_qos_profiles_for_topic(
+  const std::vector<rclcpp::TopicEndpointInfo> & endpoints) const
 {
   YAML::Node offered_qos_profiles;
-  auto endpoints = this->get_publishers_info_by_topic(topic_name);
   for (const auto & info : endpoints) {
     offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
   }
@@ -411,14 +411,14 @@ std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
   return result;
 }
 
-std::string Recorder::type_description_hash_for_topic(const std::string & topic_name) const
+std::string type_description_hash_for_topic(
+  const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
 {
-  auto endpoints = this->get_publishers_info_by_topic(topic_name);
   rosidl_type_hash_t result_hash = rosidl_get_zero_initialized_type_hash();
   for (const auto & info : endpoints) {
     // If all endpoint infos provide the same type hash, return it. Otherwise return an empty
     // string to signal that the type description hash for this topic cannot be determined.
-    const auto endpoint_hash = info.topic_type_hash();
+    rosidl_type_hash_t endpoint_hash = info.topic_type_hash();
     if (endpoint_hash.version == 0) {
       continue;
     }
@@ -427,17 +427,13 @@ std::string Recorder::type_description_hash_for_topic(const std::string & topic_
       continue;
     }
     bool difference_detected = (endpoint_hash.version != result_hash.version);
-    for (int i = 0; i < ROSIDL_TYPE_HASH_SIZE; ++i) {
-      if (result_hash.value[i] != endpoint_hash.value[i]) {
-        difference_detected = true;
-      }
-    }
+    difference_detected |= (
+      0 != memcmp(endpoint_hash.value, result_hash.value, ROSIDL_TYPE_HASH_SIZE));
     if (difference_detected) {
       std::string result_string = type_hash_to_string(result_hash);
       std::string endpoint_string = type_hash_to_string(endpoint_hash);
-      RCLCPP_WARN_STREAM(
-        this->get_logger(),
-        "type description hashes for topic '" << topic_name << "'conflict: '" <<
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "type description hashes for topic type '" << info.topic_type() << "' conflict: '" <<
           result_string << "' != '" << endpoint_string << "'");
       return "";
     }
