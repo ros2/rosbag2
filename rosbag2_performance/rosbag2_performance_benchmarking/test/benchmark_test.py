@@ -29,6 +29,8 @@ import yaml
 
 # Postprocess and PostprocessStorageConfig classes have been adapted from report_gen.py script
 # to make easier results processing
+# TODO(morlov:) Refactor report_gen.py and benchmark_test.py to split in a library and
+#  executables with common access to the Postprocess and PostprocessStorageConfig
 
 
 class Postprocess:
@@ -342,7 +344,9 @@ def generate_test_description():
     benchmark_path = os.path.join(config_path, 'benchmarks/test')
     producers_path = os.path.join(config_path, 'producers')
 
+    # TODO(morlov:) Read bag_root_folder from benchmark yaml file inside BenchmarkResultsChecker
     bag_root_folder = '/tmpfs/rosbag2_performance_test'
+    # TODO(morlov:) Add benchmarks and producers in some yaml config file
     benchmarks = [
         'test_no_transport',
         'test_benchmark_producers'
@@ -356,6 +360,7 @@ def generate_test_description():
 
     for benchmark in benchmarks:
         for producer in producers:
+            # TODO(morlov:) Add expectations in some yaml config file
             checker.set_expectations(benchmark, producer, {'avg': 0.95, 'min': 0.95, 'max': 0.95})
 
     # Create benchmarks launch actions list
