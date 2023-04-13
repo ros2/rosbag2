@@ -8,18 +8,21 @@ rosbag2_performance_benchmarking_node:
         publishers_count:   4
         topic_root:         "lidar_secondary"
         msg_size_bytes:     160000
+        msg_type:           "sensor_msgs::msg::PointCloud2"
         msg_count_each:     250
         rate_hz:            25
       lidars_main_16MBps:
         publishers_count:   1
         topic_root:         "lidar_main"
         msg_size_bytes:     640000
+        msg_type:           "sensor_msgs::msg::PointCloud2"
         msg_count_each:     250
         rate_hz:            25
       cameras_540MBps:
         publishers_count:   6
         topic_root:         "camera"
         msg_size_bytes:     3750000
+        msg_type:           "sensor_msgs::msg::Image"
         msg_count_each:     240
         rate_hz:            24
       radars_400KBps:
