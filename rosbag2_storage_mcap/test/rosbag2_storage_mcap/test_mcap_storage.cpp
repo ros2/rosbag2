@@ -101,8 +101,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 #else
     auto reader = factory.open_read_only(expected_bag.string(), storage_id);
 #endif
-    reader->open(options);
-
     auto topics_and_types = reader->get_all_topics_and_types();
 
     EXPECT_THAT(topics_and_types,
