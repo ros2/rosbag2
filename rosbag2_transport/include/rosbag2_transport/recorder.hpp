@@ -151,7 +151,7 @@ private:
 
   // Serialize all currently offered QoS profiles for a topic into a YAML list.
   std::string serialized_offered_qos_profiles_for_topic(
-    const std::vector<rclcpp::TopicEndpointInfo> & endpoints) const;
+    const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const;
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
@@ -190,7 +190,7 @@ private:
 ROSBAG2_TRANSPORT_PUBLIC std::string type_hash_to_string(const rosidl_type_hash_t & type_hash);
 // Retrieve the type description hash from endpoint info.
 ROSBAG2_TRANSPORT_PUBLIC std::string type_description_hash_for_topic(
-  const std::vector<rclcpp::TopicEndpointInfo> & endpoints);
+  const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info);
 
 }  // namespace rosbag2_transport
 

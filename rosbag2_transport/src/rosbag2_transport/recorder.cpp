@@ -377,10 +377,10 @@ Recorder::create_subscription(
 }
 
 std::string Recorder::serialized_offered_qos_profiles_for_topic(
-  const std::vector<rclcpp::TopicEndpointInfo> & endpoints) const
+  const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const
 {
   YAML::Node offered_qos_profiles;
-  for (const auto & info : endpoints) {
+  for (const auto & info : topics_endpoint_info) {
     offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
   }
   return YAML::Dump(offered_qos_profiles);
@@ -412,10 +412,10 @@ std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
 }
 
 std::string type_description_hash_for_topic(
-  const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
+  const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info)
 {
   rosidl_type_hash_t result_hash = rosidl_get_zero_initialized_type_hash();
-  for (const auto & info : endpoints) {
+  for (const auto & info : topics_endpoint_info) {
     // If all endpoint infos provide the same type hash, return it. Otherwise return an empty
     // string to signal that the type description hash for this topic cannot be determined.
     rosidl_type_hash_t endpoint_hash = info.topic_type_hash();

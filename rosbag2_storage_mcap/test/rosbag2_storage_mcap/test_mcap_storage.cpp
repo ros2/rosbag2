@@ -32,12 +32,10 @@ using TemporaryDirectoryFixture = rosbag2_test_common::TemporaryDirectoryFixture
 
 namespace rosbag2_storage
 {
-
 bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 {
   return lhs.topic_metadata == rhs.topic_metadata && lhs.message_count == rhs.message_count;
 }
-
 }  // namespace rosbag2_storage
 
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
