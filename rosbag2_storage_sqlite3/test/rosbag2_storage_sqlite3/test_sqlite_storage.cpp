@@ -228,9 +228,9 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
     metadata.topics_with_message_count, ElementsAreArray(
   {
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
-        "topic1", "type1", "rmw_format", "qos_profile1", "type_hash1"}, 2u},
+        "topic1", "type1", "rmw1", "qos_profile1", "type_hash1"}, 2u},
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
-        "topic2", "type2", "rmw_format", "qos_profile1", "type_hash2"}, 1u}
+        "topic2", "type2", "rmw2", "qos_profile1", "type_hash2"}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
   EXPECT_THAT(
