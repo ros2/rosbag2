@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type_hash": {
+      "description": "The REP-2011 RIHS string for this type",
+      "type": "string"
+    },
+    "type_sources": {
+      "description": "Array of type definition sources in either IDL or MSG format.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type_name": {
+            "description": "ROS interface type name, in PACKAGE/NAMESPACE/TYPENAME format.",
+            "type": "string"
+          },
+          "encoding": {
+            "description": "The type of the original source file, typically matching the file extension.",
+            "type": "string",
+            "enum": ["msg", "idl"]
+          },
+          "raw_file_contents": {
+            "description": "Dumped contents of the interface definition source file.",
+            "type": "string"
+          }
+        },
+        "required": ["type_name", "encoding", "raw_file_contents"]
+      }
+    },
+    "type_description": {
+        "$ref": "#/$defs/TypeDescription"
+    }
+  },
+  "$defs": {
+    "TypeDescription": {
+      "type": "object",
+      "properties": {
+        "type_description": {"$ref": "#/$defs/IndividualTypeDescription"},
+        "referenced_type_descriptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/IndividualTypeDescription" }
+        }
+      },
+      "required": ["type_description", "referenced_type_descriptions"],
+      "additionalProperties": false
+    },
+    "IndividualTypeDescription": {
+      "type": "object",
+      "properties": {
+        "type_name": {"type": "string", "maxLength": 255},
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Field" }
+        }
+      },
+      "required": ["type_name", "fields"],
+      "additionalProperties": false
+    },
+    "Field": {
+      "type": "object",
+      "properties": {
+        "default_value": {"type": "string"},
+        "name": {"type": "string"},
+        "type": {"$ref": "#/$defs/FieldType"}
+      },
+      "required": ["name", "type"],
+      "additionalProperties": false
+    },
+    "FieldType": {
+      "type": "object",
+      "properties": {
+        "type_id": {"type": "integer", "minimum": 0, "maximum": 255},
+        "capacity": {"type": "integer", "minimum": 0},
+        "string_capacity": {"type": "integer", "minimum": 0},
+        "nested_type_name": {"type": "string", "maxLength": 255}
+      },
+      "required": ["type_id", "capacity", "string_capacity", "nested_type_name"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -81,16 +81,10 @@ module my_msgs {
 };
 ```
 
-## FAQ
+### `ros2_type_description` encoding
 
-### Why store message definitions in human-readable form?
+Stores all message definitions in their *original* source format, either IDL or MSG. Also stores
+the [Type Description](https://github.com/ros2/rcl_interfaces/blob/rolling/type_description_interfaces/msg/TypeDescription.msg) as JSON, which can be used to provide type information at runtime.
 
-These formats are designed to be updated as rarely as possible. Definitions in bags recorded now
-should ideally be parseable years in the future with no format migrations. MSG and OMG IDL 4.2 are
-both well-known formats for ROS 2 message definitions, and no additional knowledge besides their
-specifications are required for readers to deserialize messages.
-
-### Why do these examples include comments?
-
-The `.msg` and `.idl` message definitions are encoded according to their specifications, which
-include comments as valid syntax. Bag writers may strip comments out or leave them in.
+`ros2_type_description` encoding is defined as a structured JSON object, conforming to the
+[jsonschema](https://json-schema.org/) defined in `docs/schemas/ros2_type_description.schema.json`.
