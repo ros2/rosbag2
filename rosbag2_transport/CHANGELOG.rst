@@ -2,6 +2,14 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.0 (2023-04-12)
+-------------------
+* rosbag2_cpp: move local message definition source out of MCAP plugin (`#1265 <https://github.com/ros2/rosbag2/issues/1265>`_)
+* Use RMW methods to initialize endpoint info instead of brace initializer to guard against upcoming struct change (`#1257 <https://github.com/ros2/rosbag2/issues/1257>`_)
+* Update rosbag2 to C++17. (`#1238 <https://github.com/ros2/rosbag2/issues/1238>`_)
+* Use target_link_libraries instead of ament_target_dependencies (`#1202 <https://github.com/ros2/rosbag2/issues/1202>`_)
+* Contributors: Chris Lalancette, Daisuke Nishimatsu, Emerson Knapp, Michael Orlov, james-rms
+
 0.20.0 (2023-02-14)
 -------------------
 

@@ -2,6 +2,14 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.0 (2023-04-12)
+-------------------
+* Fix expectations for rosbag2 return code in rosbag2_performance_benchmarking (`#1267 <https://github.com/ros2/rosbag2/issues/1267>`_)
+* Update rosbag2 to C++17. (`#1238 <https://github.com/ros2/rosbag2/issues/1238>`_)
+* Use thread pool to run benchmark publishers in rosbag2_performance_benchmarking (`#1250 <https://github.com/ros2/rosbag2/issues/1250>`_)
+* Use target_link_libraries instead of ament_target_dependencies (`#1202 <https://github.com/ros2/rosbag2/issues/1202>`_)
+* Contributors: Chris Lalancette, Daisuke Nishimatsu, Michael Orlov, Shane Loretz, carlossvg
+
 0.20.0 (2023-02-14)
 -------------------
 * Skip ament_package() call when not building rosbag2_performance_benchmarking (`#1242 <https://github.com/ros2/rosbag2/issues/1242>`_)

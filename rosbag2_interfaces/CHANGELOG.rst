@@ -2,6 +2,11 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.21.0 (2023-04-12)
+-------------------
+* Update rosbag2 to C++17. (`#1238 <https://github.com/ros2/rosbag2/issues/1238>`_)
+* Contributors: Chris Lalancette
+
 0.20.0 (2023-02-14)
 -------------------
 
