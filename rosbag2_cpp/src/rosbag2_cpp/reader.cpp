@@ -81,6 +81,12 @@ std::vector<rosbag2_storage::TopicMetadata> Reader::get_all_topics_and_types() c
   return reader_impl_->get_all_topics_and_types();
 }
 
+void Reader::get_all_message_definitions(
+  std::vector<rosbag2_storage::MessageDefinition> & definitions)
+{
+  return reader_impl_->get_all_message_definitions(definitions);
+}
+
 void Reader::set_filter(const rosbag2_storage::StorageFilter & storage_filter)
 {
   reader_impl_->set_filter(storage_filter);

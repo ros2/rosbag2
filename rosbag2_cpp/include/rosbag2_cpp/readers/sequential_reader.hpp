@@ -81,6 +81,8 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
 
+  void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> &) override;
+
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
 
   void reset_filter() override;

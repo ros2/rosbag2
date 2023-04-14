@@ -170,6 +170,14 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
 
   /**
+   * Ask bagfile for all message definitions that were recorded.
+   *
+   * \param vector of message definitions to fill.
+   * \throws runtime_error if the Reader is not open.
+   */
+  void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> &);
+
+  /**
    * Set filters to adhere to during reading.
    *
    * \param storage_filter Filter to apply to reading
