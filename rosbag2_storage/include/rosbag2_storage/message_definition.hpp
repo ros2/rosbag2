@@ -45,6 +45,12 @@ struct MessageDefinition
     self.encoded_message_definition = "";
     return self;
   }
+
+  bool operator==(const MessageDefinition & rhs) const
+  {
+    return topic_type == rhs.topic_type && encoding == rhs.encoding &&
+           encoded_message_definition == rhs.encoded_message_definition;
+  }
 };
 
 }  // namespace rosbag2_storage

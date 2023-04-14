@@ -36,12 +36,6 @@ bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 {
   return lhs.topic_metadata == rhs.topic_metadata && lhs.message_count == rhs.message_count;
 }
-
-bool operator==(const MessageDefinition & a, const MessageDefinition & b)
-{
-  return a.topic_type == b.topic_type && a.encoding == b.encoding &&
-         a.encoded_message_definition == b.encoded_message_definition;
-}
 }  // namespace rosbag2_storage
 
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)

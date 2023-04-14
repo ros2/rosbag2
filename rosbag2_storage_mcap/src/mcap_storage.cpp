@@ -652,7 +652,7 @@ void MCAPStorage::get_all_message_definitions(
   definitions.reserve(schema_map.size());
   for (const auto & [id, schema_ptr] : schema_map) {
     std::string encoded_message_definition = "";
-    if (schema_ptr->data.size() != 0) {
+    if (!schema_ptr->data.empty()) {
       encoded_message_definition = std::string(
         reinterpret_cast<const char *>(&(schema_ptr->data[0])), schema_ptr->data.size());
     }

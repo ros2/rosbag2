@@ -377,7 +377,7 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 void SqliteStorage::get_all_message_definitions(
   std::vector<rosbag2_storage::MessageDefinition> & definitions)
 {
-  // TODO(james-rms): implement message definition storage
+  // TODO(morlov): implement message definition storage
   definitions.clear();
 }
 
