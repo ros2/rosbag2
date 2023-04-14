@@ -195,6 +195,41 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
   }));
 }
 
+TEST_F(StorageTestFixture, get_all_message_definitions_returns_the_correct_vector) {
+  const rosbag2_storage::MessageDefinition msg_definition =
+  {"type1", "ros2msg", "string data"};
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  // extension is omitted since storage is being created; io_flag = READ_WRITE
+  const auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+
+  writable_storage->open({read_write_filename, kPluginID});
+  writable_storage->create_topic(
+    {"topic1", "type1", "rmw1", "qos_profile1", "type_hash1"},
+    msg_definition);
+  writable_storage->create_topic(
+    {"topic2", "type2", "rmw2", "qos_profile2", "type_hash2"},
+    msg_definition);
+
+  const auto read_only_filename = writable_storage->get_relative_file_path();
+
+  writable_storage.reset();
+
+  auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+  readable_storage->open(
+    {read_only_filename, kPluginID},
+    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+
+  std::vector<rosbag2_storage::MessageDefinition> msg_definitions;
+  readable_storage->get_all_message_definitions(msg_definitions);
+
+  EXPECT_EQ(msg_definitions.size(), 1u);
+  EXPECT_THAT(msg_definitions, ElementsAreArray({msg_definition})) <<
+    msg_definition.topic_type << " " << msg_definition.encoding << " " <<
+    msg_definition.encoded_message_definition;
+}
+
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   auto writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
   auto read_write_filename = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
