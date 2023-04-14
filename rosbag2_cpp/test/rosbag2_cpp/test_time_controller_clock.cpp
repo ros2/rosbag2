@@ -153,8 +153,9 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
   clock.pause();
   clock.resume();
 
-  auto sleep_until_timestamp = clock.now() + RCUTILS_S_TO_NS(1);
-  auto start = std::chrono::steady_clock::now();
+  auto ros_time_now = clock.now();
+  auto sleep_until_timestamp = ros_time_now + RCUTILS_S_TO_NS(1);
+  auto start = clock.ros_to_steady(ros_time_now);
   bool sleep_result = clock.sleep_until(sleep_until_timestamp);
   // clock.sleep_until can spuriously wake up and return false.
   // Check it until true and use a timeout to avoid a hang
