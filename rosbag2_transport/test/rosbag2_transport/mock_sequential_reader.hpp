@@ -82,6 +82,12 @@ public:
     return topics_;
   }
 
+  void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> & definitions)
+  override
+  {
+    definitions.clear();
+  }
+
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override
   {
     filter_ = storage_filter;

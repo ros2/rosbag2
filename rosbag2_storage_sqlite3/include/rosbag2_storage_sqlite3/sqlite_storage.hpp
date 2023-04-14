@@ -77,6 +77,9 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
 
+  void get_all_message_definitions(
+    std::vector<rosbag2_storage::MessageDefinition> & definitons) override;
+
   rosbag2_storage::BagMetadata get_metadata() override;
 
   std::string get_relative_file_path() const override;

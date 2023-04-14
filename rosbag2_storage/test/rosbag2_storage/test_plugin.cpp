@@ -101,6 +101,8 @@ std::vector<rosbag2_storage::TopicMetadata> TestPlugin::get_all_topics_and_types
   return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
+void TestPlugin::get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> &) {}
+
 rosbag2_storage::BagMetadata TestPlugin::get_metadata()
 {
   std::cout << "\nreturning metadata\n";

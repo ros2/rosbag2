@@ -79,6 +79,32 @@ def test_sequential_reader(storage_id):
             msg_counter += 1
 
 
+def test_get_message_definitions():
+    # TODO(morlov): store message definitions in sqlite3 storage plugin
+    storage_id = 'mcap'
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
+
+    reader = rosbag2_py.SequentialReader()
+    reader.open(storage_options, converter_options)
+
+    message_definitions = reader.get_all_message_definitions()
+    message_definitions.sort(key=lambda d: d.topic_type)
+    log_msg, parameter_event_msg, string_msg = message_definitions
+
+    assert log_msg.topic_type == 'rcl_interfaces/msg/Log'
+    assert log_msg.encoding == 'ros2msg'
+    assert 'uint8 level' in log_msg.encoded_message_definition
+
+    assert parameter_event_msg.topic_type == 'rcl_interfaces/msg/ParameterEvent'
+    assert parameter_event_msg.encoding == 'ros2msg'
+    assert 'Parameter[] new_parameters' in parameter_event_msg.encoded_message_definition
+
+    assert string_msg.topic_type == 'std_msgs/msg/String'
+    assert string_msg.encoding == 'ros2msg'
+    assert 'string data' in string_msg.encoded_message_definition
+
+
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_sequential_reader_seek(storage_id):
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')

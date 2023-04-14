@@ -73,6 +73,8 @@ public:
   virtual std::shared_ptr<SerializedBagMessage> read_next() = 0;
 
   virtual std::vector<TopicMetadata> get_all_topics_and_types() = 0;
+
+  virtual void get_all_message_definitions(std::vector<MessageDefinition> & definitions) = 0;
 };
 
 }  // namespace storage_interfaces

@@ -66,6 +66,9 @@ std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_a
   return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
+void TestReadOnlyPlugin::get_all_message_definitions(
+  std::vector<rosbag2_storage::MessageDefinition> &) {}
+
 std::string TestReadOnlyPlugin::get_relative_file_path() const
 {
   std::cout << "\nreturning relative path\n";

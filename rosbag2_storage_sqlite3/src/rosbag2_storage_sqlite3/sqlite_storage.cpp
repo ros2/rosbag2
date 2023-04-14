@@ -374,6 +374,13 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
   return all_topics_and_types_;
 }
 
+void SqliteStorage::get_all_message_definitions(
+  std::vector<rosbag2_storage::MessageDefinition> & definitions)
+{
+  // TODO(morlov): implement message definition storage
+  definitions.clear();
+}
+
 uint64_t SqliteStorage::get_bagfile_size() const
 {
   const auto bag_path = rcpputils::fs::path{get_relative_file_path()};

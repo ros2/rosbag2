@@ -201,6 +201,8 @@ public:
   bool has_next() override;
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
+  void get_all_message_definitions(
+    std::vector<rosbag2_storage::MessageDefinition> & definitions) override;
 
   /** ReadOnlyInterface **/
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -639,6 +641,27 @@ std::vector<rosbag2_storage::TopicMetadata> MCAPStorage::get_all_topics_and_type
     out.push_back(topic.topic_metadata);
   }
   return out;
+}
+
+void MCAPStorage::get_all_message_definitions(
+  std::vector<rosbag2_storage::MessageDefinition> & definitions)
+{
+  ensure_summary_read();
+  auto schema_map = mcap_reader_->schemas();
+  definitions.clear();
+  definitions.reserve(schema_map.size());
+  for (const auto & [id, schema_ptr] : schema_map) {
+    std::string encoded_message_definition = "";
+    if (!schema_ptr->data.empty()) {
+      encoded_message_definition = std::string(
+        reinterpret_cast<const char *>(&(schema_ptr->data[0])), schema_ptr->data.size());
+    }
+    definitions.push_back({
+      schema_ptr->name,
+      schema_ptr->encoding,
+      encoded_message_definition,
+    });
+  }
 }
 
 /** ReadOnlyInterface **/
