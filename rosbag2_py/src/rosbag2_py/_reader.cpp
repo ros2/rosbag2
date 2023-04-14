@@ -91,6 +91,12 @@ PYBIND11_MODULE(_reader, m) {
   .def("has_next", &PyReader::has_next)
   .def("get_metadata", &PyReader::get_metadata)
   .def("get_all_topics_and_types", &PyReader::get_all_topics_and_types)
+  .def(
+    "get_all_message_definitions", [](PyReader & reader) {
+      std::vector<rosbag2_storage::MessageDefinition> definitions;
+      reader.get_all_message_definitions(definitions);
+      return definitions;
+    })
   .def("set_filter", &PyReader::set_filter)
   .def("reset_filter", &PyReader::reset_filter)
   .def("seek", &PyReader::seek);
@@ -108,6 +114,12 @@ PYBIND11_MODULE(_reader, m) {
   .def("has_next", &PyCompressionReader::has_next)
   .def("get_metadata", &PyCompressionReader::get_metadata)
   .def("get_all_topics_and_types", &PyCompressionReader::get_all_topics_and_types)
+  .def(
+    "get_all_message_definitions", [](PyCompressionReader & reader) {
+      std::vector<rosbag2_storage::MessageDefinition> definitions;
+      reader.get_all_message_definitions(definitions);
+      return definitions;
+    })
   .def("set_filter", &PyCompressionReader::set_filter)
   .def("reset_filter", &PyCompressionReader::reset_filter)
   .def("seek", &PyCompressionReader::seek);
