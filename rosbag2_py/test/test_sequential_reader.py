@@ -79,9 +79,8 @@ def test_sequential_reader(storage_id):
             msg_counter += 1
 
 
-def test_get_message_definitions():
-    # TODO(morlov): store message definitions in sqlite3 storage plugin
-    storage_id = 'mcap'
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_get_message_definitions(storage_id):
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
