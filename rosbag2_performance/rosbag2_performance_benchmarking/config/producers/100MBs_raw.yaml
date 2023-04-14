@@ -1,0 +1,13 @@
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers: # publisher_groups parameter needs to include all the subsequent groups
+      publisher_groups: [ "100MBs" ]
+      wait_for_subscriptions: True
+      100MBs:
+        publishers_count:   20
+        topic_root:         "benchmarking_100"
+        msg_size_bytes:     200000
+        msg_count_each:     1000
+        rate_hz:            25
+        qos:
+          qos_durability:     "transient_local"

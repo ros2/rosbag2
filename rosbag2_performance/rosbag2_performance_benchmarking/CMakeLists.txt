@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
+option(BUILD_ROSBAG2_BENCHMARKS "Build rosbag2 performance benchmarks" OFF)
+
 if(NOT BUILD_ROSBAG2_BENCHMARKS)
   return()
 endif()
@@ -93,6 +95,14 @@ install(DIRECTORY
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(launch_testing_ament_cmake)
+  add_launch_test(
+      test/benchmark_test.py
+      TARGET rosbag2_benchmark_test
+      ENV
+      TIMEOUT 600
+  )
 endif()
 
 ament_package()

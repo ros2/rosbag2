@@ -34,18 +34,18 @@ rosbag2_performance_benchmarking_node:
       gps_5KBps:
         publishers_count:   1
         topic_root:         "gps"
-        msg_type:           "sensor_msgs::msg::NavSatFix"
+        msg_size_bytes:     200
         msg_count_each:     250
         rate_hz:            25
       imu_40KBps:
         publishers_count:   1
         topic_root:         "imu"
-        msg_type:           "sensor_msgs::msg::Imu"
+        msg_size_bytes:     400
         msg_count_each:     1000
         rate_hz:            100
       ultrasonic_72KBps:
         publishers_count:   12
         topic_root:         "ultrasonic"
-        msg_type:           "sensor_msgs::msg::Range"
+        msg_size_bytes:     150
         msg_count_each:     400
         rate_hz:            40
