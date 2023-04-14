@@ -27,6 +27,7 @@
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 
 class MockStorage : public rosbag2_storage::storage_interfaces::ReadWriteInterface
 {
@@ -48,6 +49,7 @@ public:
     write,
     void(const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &));
   MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicMetadata>());
+  MOCK_METHOD1(get_all_message_definitions, void(std::vector<rosbag2_storage::MessageDefinition> &));
   MOCK_METHOD0(get_metadata, rosbag2_storage::BagMetadata());
   MOCK_METHOD0(reset_filter, void());
   MOCK_METHOD1(set_filter, void(const rosbag2_storage::StorageFilter &));
