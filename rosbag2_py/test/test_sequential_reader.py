@@ -89,6 +89,25 @@ def test_sequential_reader_seek(storage_id):
 
     topic_types = reader.get_all_topics_and_types()
 
+    message_definitions = reader.get_all_message_definitions()
+    message_definitions.sort(key=lambda d: d.topic_type)
+    if storage_id == 'mcap':
+        log_msg, parameter_event_msg, string_msg = message_definitions
+
+        assert log_msg.topic_type == 'rcl_interfaces/msg/Log'
+        assert log_msg.encoding == 'ros2msg'
+        assert 'uint8 level' in log_msg.encoded_message_definition
+
+        assert parameter_event_msg.topic_type == 'rcl_interfaces/msg/ParameterEvent'
+        assert parameter_event_msg.encoding == 'ros2msg'
+        assert 'Parameter[] new_parameters' in parameter_event_msg.encoded_message_definition
+
+        assert string_msg.topic_type == 'std_msgs/msg/String'
+        assert string_msg.encoding == 'ros2msg'
+        assert 'string data' in string_msg.encoded_message_definition
+    else:
+        assert len(message_definitions) == 0
+
     # Create a map for quicker lookup
     type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
 
