@@ -88,11 +88,6 @@ def test_get_message_definitions(storage_id):
     reader.open(storage_options, converter_options)
 
     message_definitions = reader.get_all_message_definitions()
-    if storage_id == 'sqlite3':
-        # TODO(morlov): Rewrite /resources/talker/talker.db3 with new format with message
-        #  definitions
-        assert len(message_definitions) == 0
-        return
     message_definitions.sort(key=lambda d: d.topic_type)
     log_msg, parameter_event_msg, string_msg = message_definitions
 
