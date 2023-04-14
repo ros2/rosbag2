@@ -172,7 +172,7 @@ public:
   /**
    * Ask bagfile for all message definitions that were recorded.
    *
-   * \param vector of message definitions to fill.
+   * \param[out] vector of message definitions to fill. Existing data will be overwritten.
    * \throws runtime_error if the Reader is not open.
    */
   void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> &);
