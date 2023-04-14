@@ -258,6 +258,10 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_record_options.cpp)
   target_link_libraries(test_record_options ${PROJECT_NAME})
 
+  ament_add_gmock(test_type_description_hash
+    test/rosbag2_transport/test_type_description_hash.cpp)
+  target_link_libraries(test_type_description_hash ${PROJECT_NAME})
+
   ament_add_gmock(test_topic_filter
     test/rosbag2_transport/test_topic_filter.cpp)
   target_include_directories(test_topic_filter PRIVATE

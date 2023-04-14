@@ -45,7 +45,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   primitive_message1->int32_value = test_value;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {original_topic, "test_msgs/BasicTypes", "", ""}
+    {original_topic, "test_msgs/BasicTypes", "", "", ""}
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;

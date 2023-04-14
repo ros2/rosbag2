@@ -150,7 +150,7 @@ private:
   // b) topics_ collection - since we could be writing and reading it at the same time
   std::mutex database_write_mutex_;
 
-  const int kDBSchemaVersion_ = 3;
+  const int kDBSchemaVersion_ = 4;
   int db_schema_version_ = -1;  //  Valid version number starting from 1
   rosbag2_storage::BagMetadata metadata_{};
 };

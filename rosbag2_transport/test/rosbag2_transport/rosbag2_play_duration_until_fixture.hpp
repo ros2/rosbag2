@@ -91,8 +91,8 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_topic_types()
   {
-    return {{kTopic1Name_, "test_msgs/BasicTypes", "", ""},
-      {kTopic2Name_, "test_msgs/Arrays", "", ""}};
+    return {{kTopic1Name_, "test_msgs/BasicTypes", "", "", ""},
+      {kTopic2Name_, "test_msgs/Arrays", "", "", ""}};
   }
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>

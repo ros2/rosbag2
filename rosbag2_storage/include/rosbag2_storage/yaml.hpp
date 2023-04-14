@@ -96,6 +96,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
     node["offered_qos_profiles"] = topic.offered_qos_profiles;
+    node["type_description_hash"] = topic.type_description_hash;
     return node;
   }
 
@@ -108,6 +109,11 @@ struct convert<rosbag2_storage::TopicMetadata>
       topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
     } else {
       topic.offered_qos_profiles = "";
+    }
+    if (version >= 7) {
+      topic.type_description_hash = node["type_description_hash"].as<std::string>();
+    } else {
+      topic.type_description_hash = "";
     }
     return true;
   }

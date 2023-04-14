@@ -43,7 +43,7 @@ public:
   {
     // Fake bag setup
     auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-      {"topic1", "test_msgs/BasicTypes", "", ""},
+      {"topic1", "test_msgs/BasicTypes", "", "", ""},
     };
 
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;

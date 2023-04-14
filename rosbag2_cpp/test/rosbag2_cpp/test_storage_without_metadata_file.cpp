@@ -56,6 +56,7 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
       "topic",
       "test_msgs/BasicTypes",
       kRmwFormat,
+      "",
       ""
     };
 

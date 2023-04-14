@@ -98,7 +98,7 @@ TEST_F(RosBag2PlayTestFixture, invalid_keybindings)
 
   auto message_time_difference = rclcpp::Duration(1, 0);
   auto topics_and_types =
-    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
+    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", "", ""}};
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 0, primitive_message1),
     serialize_test_message("topic1", 0, primitive_message2)};
@@ -132,7 +132,7 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
 
   auto message_time_difference = rclcpp::Duration(1, 0);
   auto topics_and_types =
-    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", ""}};
+    std::vector<rosbag2_storage::TopicMetadata>{{"topic1", "test_msgs/Strings", "", "", ""}};
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 0, primitive_message1),
     serialize_test_message("topic1", 0, primitive_message2),

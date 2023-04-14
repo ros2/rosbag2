@@ -42,7 +42,7 @@ public:
   : RosBag2PlayTestFixture()
   {
     topic_types_ = std::vector<rosbag2_storage::TopicMetadata>{
-      {"topic1", "test_msgs/BasicTypes", rmw_get_serialization_format(), ""}};
+      {"topic1", "test_msgs/BasicTypes", rmw_get_serialization_format(), "", ""}};
 
     const rcpputils::fs::path base{_SRC_RESOURCES_DIR_PATH};
     const rcpputils::fs::path bag_path = base / GetParam() / "test_bag_for_seek";

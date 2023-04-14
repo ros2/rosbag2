@@ -37,6 +37,7 @@ void write_sample_split_bag(
     topic_name,
     "test_msgs/msg/ByteMultiArray",
     "cdr",
+    "",
     ""
   },
   {

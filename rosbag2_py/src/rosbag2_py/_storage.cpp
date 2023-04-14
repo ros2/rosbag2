@@ -144,11 +144,12 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
-    pybind11::init<std::string, std::string, std::string, std::string>(),
+    pybind11::init<std::string, std::string, std::string, std::string, std::string>(),
     pybind11::arg("name"),
     pybind11::arg("type"),
     pybind11::arg("serialization_format"),
-    pybind11::arg("offered_qos_profiles") = "")
+    pybind11::arg("offered_qos_profiles") = "",
+    pybind11::arg("type_description_hash") = "")
   .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
   .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
   .def_readwrite(
@@ -157,6 +158,9 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "offered_qos_profiles",
     &rosbag2_storage::TopicMetadata::offered_qos_profiles)
+  .def_readwrite(
+    "type_description_hash",
+    &rosbag2_storage::TopicMetadata::type_description_hash)
   .def("equals", &rosbag2_storage::TopicMetadata::operator==);
 
   pybind11::class_<rosbag2_storage::TopicInformation>(m, "TopicInformation")
@@ -240,7 +244,7 @@ PYBIND11_MODULE(_storage, m) {
           custom_data
         };
       }),
-    pybind11::arg("version") = 6,
+    pybind11::arg("version") = 7,
     pybind11::arg("bag_size") = 0,
     pybind11::arg("storage_identifier") = "",
     pybind11::arg("relative_file_paths") = std::vector<std::string>(),

@@ -24,6 +24,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcutils/allocator.h"
+
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
 
@@ -35,6 +37,7 @@
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/qos.hpp"
 
+#include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
@@ -325,12 +328,14 @@ void Recorder::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
+    auto endpoint_infos = this->get_publishers_info_by_topic(topic_with_type.first);
     subscribe_topic(
       {
         topic_with_type.first,
         topic_with_type.second,
         serialization_format_,
-        serialized_offered_qos_profiles_for_topic(topic_with_type.first)
+        serialized_offered_qos_profiles_for_topic(endpoint_infos),
+        type_description_hash_for_topic(endpoint_infos),
       });
   }
 }
@@ -371,14 +376,69 @@ Recorder::create_subscription(
   return subscription;
 }
 
-std::string Recorder::serialized_offered_qos_profiles_for_topic(const std::string & topic_name)
+std::string Recorder::serialized_offered_qos_profiles_for_topic(
+  const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const
 {
   YAML::Node offered_qos_profiles;
-  auto endpoints = this->get_publishers_info_by_topic(topic_name);
-  for (const auto & info : endpoints) {
+  for (const auto & info : topics_endpoint_info) {
     offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
   }
   return YAML::Dump(offered_qos_profiles);
+}
+
+std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
+{
+  if (type_hash.version == 0) {
+    // version is unset, this is an empty type hash.
+    return "";
+  }
+  if (type_hash.version > 1) {
+    // this is a version we don't know how to serialize
+    ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      "attempted to stringify type hash with unknown version " << type_hash.version);
+    return "";
+  }
+  rcutils_allocator_t allocator = rcutils_get_default_allocator();
+  char * stringified_type_hash = nullptr;
+  rcutils_ret_t status = rosidl_stringify_type_hash(&type_hash, allocator, &stringified_type_hash);
+  std::string result = "";
+  if (status == RCUTILS_RET_OK) {
+    result = stringified_type_hash;
+  }
+  if (stringified_type_hash != nullptr) {
+    allocator.deallocate(stringified_type_hash, allocator.state);
+  }
+  return result;
+}
+
+std::string type_description_hash_for_topic(
+  const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info)
+{
+  rosidl_type_hash_t result_hash = rosidl_get_zero_initialized_type_hash();
+  for (const auto & info : topics_endpoint_info) {
+    // If all endpoint infos provide the same type hash, return it. Otherwise return an empty
+    // string to signal that the type description hash for this topic cannot be determined.
+    rosidl_type_hash_t endpoint_hash = info.topic_type_hash();
+    if (endpoint_hash.version == 0) {
+      continue;
+    }
+    if (result_hash.version == 0) {
+      result_hash = endpoint_hash;
+      continue;
+    }
+    bool difference_detected = (endpoint_hash.version != result_hash.version);
+    difference_detected |= (
+      0 != memcmp(endpoint_hash.value, result_hash.value, ROSIDL_TYPE_HASH_SIZE));
+    if (difference_detected) {
+      std::string result_string = type_hash_to_string(result_hash);
+      std::string endpoint_string = type_hash_to_string(endpoint_hash);
+      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+        "type description hashes for topic type '" << info.topic_type() << "' conflict: '" <<
+          result_string << "' != '" << endpoint_string << "'");
+      return "";
+    }
+  }
+  return type_hash_to_string(result_hash);
 }
 
 rclcpp::QoS Recorder::subscription_qos_for_topic(const std::string & topic_name) const
