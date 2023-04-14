@@ -55,9 +55,6 @@ public:
 
   ~RecorderImpl();
 
-  //////////////////////////////////////
-  // Public/protected interface mirrors
-
   void record();
 
   const rosbag2_cpp::Writer & get_writer_handle();
@@ -76,9 +73,15 @@ public:
 
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
-  ////////////////////////////
-  // Implementation helpers
+  /// Public members for access by wrapper
+  std::unordered_set<std::string> topics_warned_about_incompatibility_;
+  std::shared_ptr<rosbag2_cpp::Writer> writer_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::RecordOptions record_options_;
+  std::atomic<bool> stop_discovery_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
 
+private:
   void topics_discovery();
 
   std::unordered_map<std::string, std::string>
@@ -109,16 +112,12 @@ public:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
-  rclcpp::Node * node;
-  std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_storage::StorageOptions storage_options_;
-  rosbag2_transport::RecordOptions record_options_;
-  std::atomic<bool> stop_discovery_;
+  void event_publisher_thread_main();
+  bool event_publisher_thread_should_wake();
 
+  rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   std::future<void> discovery_future_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
-  std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
@@ -141,9 +140,6 @@ public:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
-
-  void event_publisher_thread_main();
-  bool event_publisher_thread_should_wake();
 };
 
 RecorderImpl::RecorderImpl(
@@ -152,11 +148,11 @@ RecorderImpl::RecorderImpl(
   std::shared_ptr<KeyboardHandler> keyboard_handler,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::RecordOptions & record_options)
-: node(owner),
-  writer_(std::move(writer)),
+: writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
   stop_discovery_(record_options_.is_discovery_disabled),
+  node(owner),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
