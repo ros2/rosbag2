@@ -377,8 +377,17 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 void SqliteStorage::get_all_message_definitions(
   std::vector<rosbag2_storage::MessageDefinition> & definitions)
 {
-  // TODO(morlov): implement message definition storage
   definitions.clear();
+  if (db_schema_version_ < 4) {return;}
+  auto statement = database_->prepare_statement(
+    "SELECT topic_type, encoding, encoded_message_definition FROM message_definitions "
+    "ORDER BY id;");
+  auto query_results = statement->execute_query<std::string, std::string, std::string>();
+
+  for (auto result : query_results) {
+    definitions.push_back(
+      {std::get<0>(result), std::get<1>(result), std::get<2>(result)});
+  }
 }
 
 uint64_t SqliteStorage::get_bagfile_size() const
@@ -410,6 +419,14 @@ void SqliteStorage::initialize()
     "type_description_hash TEXT NOT NULL);";
   database_->prepare_statement(create_stmt)->execute_and_reset();
 
+  create_stmt = "CREATE TABLE message_definitions(" \
+    "id INTEGER PRIMARY KEY," \
+    "topic_type TEXT NOT NULL," \
+    "encoding TEXT NOT NULL," \
+    "encoded_message_definition TEXT NOT NULL," \
+    "type_description_hash TEXT NOT NULL);";
+  database_->prepare_statement(create_stmt)->execute_and_reset();
+
   create_stmt = "CREATE TABLE messages(" \
     "id INTEGER PRIMARY KEY," \
     "topic_id INTEGER NOT NULL," \
@@ -432,7 +449,6 @@ void SqliteStorage::create_topic(
   const rosbag2_storage::TopicMetadata & topic,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
-  (void) message_definition;
   std::lock_guard<std::mutex> db_lock(database_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
@@ -448,6 +464,25 @@ void SqliteStorage::create_topic(
       topic.type_description_hash);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
+
+    // TODO(morlov): Add topic.type_description_hash when it will be really calculated or getting
+    //  from service. Currently dummy hashes causing tests failure
+    std::string topic_type_and_hash = message_definition.topic_type;
+    if (!topic_type_and_hash.empty() &&
+      msg_definitions_.find(topic_type_and_hash) == std::end(msg_definitions_))
+    {
+      auto insert_msg_definition =
+        database_->prepare_statement(
+        "INSERT INTO message_definitions (topic_type, encoding, encoded_message_definition, "
+        "type_description_hash) VALUES (?, ?, ?, ?)");
+      insert_msg_definition->bind(
+        message_definition.topic_type, message_definition.encoding,
+        message_definition.encoded_message_definition, topic.type_description_hash);
+      insert_msg_definition->execute_and_reset();
+      msg_definitions_.emplace(
+        topic_type_and_hash,
+        static_cast<int>(database_->get_last_insert_id()));
+    }
   }
 }
 
