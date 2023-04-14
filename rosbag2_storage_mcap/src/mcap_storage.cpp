@@ -201,7 +201,8 @@ public:
   bool has_next() override;
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
-  void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> &);
+  void get_all_message_definitions(
+    std::vector<rosbag2_storage::MessageDefinition> & definitions) override;
 
   /** ReadOnlyInterface **/
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
