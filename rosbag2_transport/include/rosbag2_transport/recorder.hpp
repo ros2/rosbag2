@@ -52,6 +52,8 @@ class Writer;
 namespace rosbag2_transport
 {
 
+class RecorderImpl;
+
 class Recorder : public rclcpp::Node
 {
 public:
@@ -83,17 +85,13 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void record();
 
+  ROSBAG2_TRANSPORT_PUBLIC
   const std::unordered_set<std::string> &
-  topics_using_fallback_qos() const
-  {
-    return topics_warned_about_incompatibility_;
-  }
+  topics_using_fallback_qos() const;
 
+  ROSBAG2_TRANSPORT_PUBLIC
   const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
-  subscriptions() const
-  {
-    return subscriptions_;
-  }
+  subscriptions() const;
 
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_cpp::Writer & get_writer_handle();
@@ -117,74 +115,23 @@ public:
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
 protected:
-  ROSBAG2_TRANSPORT_EXPORT
+  ROSBAG2_TRANSPORT_PUBLIC
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
-  std::shared_ptr<rosbag2_cpp::Writer> writer_;
-  rosbag2_storage::StorageOptions storage_options_;
-  rosbag2_transport::RecordOptions record_options_;
-  std::atomic<bool> stop_discovery_;
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  rosbag2_cpp::Writer & get_writer();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  rosbag2_storage::StorageOptions & get_storage_options();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  rosbag2_transport::RecordOptions & get_record_options();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop_discovery();
 
 private:
-  void topics_discovery();
-
-  std::unordered_map<std::string, std::string>
-  get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
-
-  void subscribe_topics(
-    const std::unordered_map<std::string, std::string> & topics_and_types);
-
-  void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
-
-  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
-
-  /**
-   * Find the QoS profile that should be used for subscribing.
-   *
-   * Uses the override from record_options, if it is specified for this topic.
-   * Otherwise, falls back to Rosbag2QoS::adapt_request_to_offers
-   *
-   *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
-   *   \return The QoS profile to be used for subscribing.
-   */
-  rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
-
-  // Serialize all currently offered QoS profiles for a topic into a YAML list.
-  std::string serialized_offered_qos_profiles_for_topic(
-    const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const;
-
-  void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
-
-  std::unique_ptr<TopicFilter> topic_filter_;
-  std::future<void> discovery_future_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
-  std::unordered_set<std::string> topics_warned_about_incompatibility_;
-  std::string serialization_format_;
-  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
-  std::unordered_set<std::string> topic_unknown_types_;
-  rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
-  rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
-  rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
-  rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
-  rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
-  std::atomic<bool> paused_ = false;
-  // Keyboard handler
-  std::shared_ptr<KeyboardHandler> keyboard_handler_;
-  // Toogle paused key callback handle
-  KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
-    KeyboardHandler::invalid_handle;
-
-  // Variables for event publishing
-  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
-  bool event_publisher_thread_should_exit_ = false;
-  bool write_split_has_occurred_ = false;
-  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
-  std::mutex event_publisher_thread_mutex_;
-  std::condition_variable event_publisher_thread_wake_cv_;
-  std::thread event_publisher_thread_;
-
-  void event_publisher_thread_main();
-  bool event_publisher_thread_should_wake();
+  std::unique_ptr<RecorderImpl> pimpl_;
 };
 
 ROSBAG2_TRANSPORT_PUBLIC std::string type_hash_to_string(const rosidl_type_hash_t & type_hash);
