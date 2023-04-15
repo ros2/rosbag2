@@ -35,21 +35,25 @@ struct MessageDefinition
   std::string encoding;
   /// @brief The full encoded message definition for this type.
   std::string encoded_message_definition;
+  /// @brief  REP-2011 type description hash if available for topic, "" otherwise.
+  std::string type_hash;
 
   /// @brief used when no message definition is available for a given topic type.
-  static MessageDefinition empty_message_definition_for(std::string topic_type)
+  static MessageDefinition empty_message_definition_for(const std::string & topic_type)
   {
     MessageDefinition self;
     self.topic_type = topic_type;
     self.encoding = "";
     self.encoded_message_definition = "";
+    self.type_hash = "";
     return self;
   }
 
   bool operator==(const MessageDefinition & rhs) const
   {
     return topic_type == rhs.topic_type && encoding == rhs.encoding &&
-           encoded_message_definition == rhs.encoded_message_definition;
+           encoded_message_definition == rhs.encoded_message_definition &&
+           type_hash == rhs.type_hash;
   }
 };
 

@@ -48,7 +48,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   const std::string message_data = "Test Message 1";
   const std::string storage_id = "mcap";
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
-                                                         "string data"};
+                                                         "string data", ""};
   // COMPATIBILITY(foxy)
   // using verbose APIs for Foxy compatibility which did not yet provide plain-message API
   rclcpp::Serialization<std_msgs::msg::String> serialization;
@@ -144,7 +144,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
   const std::string storage_id = "mcap";
   const std::string config_path = _TEST_RESOURCES_DIR_PATH;
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
-                                                         "string data"};
+                                                         "string data", ""};
   rclcpp::Serialization<std_msgs::msg::String> serialization;
 
   {

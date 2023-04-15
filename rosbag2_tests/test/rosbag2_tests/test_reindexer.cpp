@@ -84,9 +84,8 @@ public:
       rosbag2_storage::TopicMetadata topic;
       topic.name = "/test_topic";
       topic.type = "std_msgs/msg/String";
-      rosbag2_storage::MessageDefinition md;
-      md.topic_type = topic.type;
-      writer.create_topic(topic, md);
+      topic.type_description_hash = "type_hash_msg_string";
+      writer.create_topic(topic);
 
       std_msgs::msg::String msg;
       rclcpp::Time stamp;
