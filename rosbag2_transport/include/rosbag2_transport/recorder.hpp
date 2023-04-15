@@ -85,6 +85,11 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void record();
 
+  /// @brief Stopping recording and closing writer.
+  /// The record() can be called again after stop().
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop();
+
   ROSBAG2_TRANSPORT_PUBLIC
   const std::unordered_set<std::string> &
   topics_using_fallback_qos() const;

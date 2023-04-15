@@ -57,6 +57,10 @@ public:
 
   void record();
 
+  /// @brief Stopping recording and closing writer.
+  /// The record() can be called again after stop().
+  void stop();
+
   const rosbag2_cpp::Writer & get_writer_handle();
 
   /// Pause the recording.
@@ -193,6 +197,11 @@ RecorderImpl::~RecorderImpl()
   if (event_publisher_thread_.joinable()) {
     event_publisher_thread_.join();
   }
+}
+
+void RecorderImpl::stop()
+{
+  writer_->close();
 }
 
 void RecorderImpl::record()
@@ -615,10 +624,14 @@ Recorder::Recorder(
 Recorder::~Recorder()
 {}
 
-void
-Recorder::record()
+void Recorder::record()
 {
   pimpl_->record();
+}
+
+void Recorder::stop()
+{
+  pimpl_->stop();
 }
 
 const std::unordered_set<std::string> &
