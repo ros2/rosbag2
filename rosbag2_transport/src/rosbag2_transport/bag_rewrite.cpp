@@ -83,6 +83,8 @@ setup_topic_filtering(
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, YAML::Node> input_topics_qos_profiles;
   std::unordered_map<std::string, std::string> input_topics_serialization_format;
+  // message_definitions_map mapping topic_type to message_definition
+  std::unordered_map<std::string, rosbag2_storage::MessageDefinition> message_definitions_map;
 
   for (const auto & input_bag : input_bags) {
     auto bag_topics_and_types = input_bag->get_all_topics_and_types();
@@ -99,6 +101,12 @@ setup_topic_filtering(
       for (auto qos : offered_qos_profiles) {
         all_offered.push_back(qos);
       }
+    }
+    // Fill message_definitions_map
+    std::vector<rosbag2_storage::MessageDefinition> msg_definitions;
+    input_bag->get_all_message_definitions(msg_definitions);
+    for (const auto & msg_definition : msg_definitions) {
+      message_definitions_map[msg_definition.topic_type] = msg_definition;
     }
   }
 
@@ -122,9 +130,14 @@ setup_topic_filtering(
       std::stringstream qos_profiles;
       qos_profiles << input_topics_qos_profiles[topic_name];
       topic_metadata.offered_qos_profiles = qos_profiles.str();
-      // TODO(morlov:) Get message definition for topic from input storage
-      writer->create_topic(topic_metadata);
 
+      auto message_definition_ptr = message_definitions_map.find(topic_type);
+      if (message_definition_ptr != message_definitions_map.end()) {
+        writer->create_topic(topic_metadata, message_definition_ptr->second);
+      } else {
+        // Give a chance to find message definition in local environment
+        writer->create_topic(topic_metadata);
+      }
       filtered_outputs.try_emplace(topic_name);
       filtered_outputs[topic_name].push_back(writer.get());
     }
