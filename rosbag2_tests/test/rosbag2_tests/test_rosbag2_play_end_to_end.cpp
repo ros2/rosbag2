@@ -39,6 +39,9 @@ class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::stri
 {
 public:
   PlayEndToEndTestFixture()
+  : sub_qos_(rclcpp::QoS{10}
+      .reliability(rclcpp::ReliabilityPolicy::Reliable)
+      .durability(rclcpp::DurabilityPolicy::TransientLocal))
   {
     // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
     bags_path_ = (rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).string();
@@ -55,14 +58,15 @@ public:
     rclcpp::shutdown();
   }
 
+  rclcpp::QoS sub_qos_;
   std::string bags_path_;
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
 #ifndef _WIN32
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 4, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
 
   auto subscription_future = sub_->spin_subscriptions();
 
@@ -80,7 +84,7 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
     primitive_messages,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::int32_value, 123))));
 
-  EXPECT_THAT(array_messages, SizeIs(Ge(2u)));
+  EXPECT_THAT(array_messages, SizeIs(Ge(4u)));
   EXPECT_THAT(
     array_messages,
     Each(
@@ -129,8 +133,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   const unsigned int num_array_msgs = 1u;
 
   // Play a specific topic
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
 
   auto subscription_future = sub_->spin_subscriptions();
 
@@ -150,8 +154,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   // Play a different topic
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -171,8 +175,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   // Play all topics
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -192,8 +196,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
   // Play a non-existent topic
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
 
   subscription_future = sub_->spin_subscriptions();
 
@@ -214,8 +218,8 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
 
 #ifndef _WIN32
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2, sub_qos_);
 
   // Start playback in child process
   auto process_id = start_execution("ros2 bag play --loop " + bags_path_ + "/cdr_test");
