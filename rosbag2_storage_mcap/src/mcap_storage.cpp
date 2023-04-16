@@ -651,16 +651,14 @@ void MCAPStorage::get_all_message_definitions(
   definitions.clear();
   definitions.reserve(schema_map.size());
   for (const auto & [id, schema_ptr] : schema_map) {
-    std::string encoded_message_definition = "";
+    std::string encoded_message_definition;
     if (!schema_ptr->data.empty()) {
       encoded_message_definition = std::string(
         reinterpret_cast<const char *>(&(schema_ptr->data[0])), schema_ptr->data.size());
     }
-    definitions.push_back({
-      schema_ptr->name,
-      schema_ptr->encoding,
-      encoded_message_definition,
-    });
+    std::string type_hash;  // TODO(jrms): save and get type_hash in mcap schema
+    definitions.push_back(
+      {schema_ptr->name, schema_ptr->encoding, encoded_message_definition, type_hash});
   }
 }
 
@@ -764,6 +762,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
     const auto & full_text = message_definition.encoded_message_definition;
     schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
                        reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
+    // TODO(jrms): save message_definition.type_hash in mcap schema
     mcap_writer_->addSchema(schema);
     schema_ids_.emplace(datatype, schema.id);
     schema_id = schema.id;

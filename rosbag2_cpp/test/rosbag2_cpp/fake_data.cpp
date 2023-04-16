@@ -51,7 +51,8 @@ void write_sample_split_bag(
     "# documentation on all multiarrays.\n"
     "\n"
     "MultiArrayLayout  layout        # specification of data layout\n"
-    "byte[]            data          # array of data"
+    "byte[]            data          # array of data",
+    "type_hash1"
   });
   for (size_t i = 0; i < fake_messages.size(); i++) {
     if (i > 0 && (i % split_every == 0)) {

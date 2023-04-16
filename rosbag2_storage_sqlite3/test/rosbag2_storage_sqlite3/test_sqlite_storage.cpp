@@ -197,7 +197,7 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
 
 TEST_F(StorageTestFixture, get_all_message_definitions_returns_the_correct_vector) {
   const rosbag2_storage::MessageDefinition msg_definition =
-  {"type1", "ros2msg", "string data"};
+  {"type1", "ros2msg", "string data", ""};
   std::unique_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> writable_storage =
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
@@ -225,9 +225,13 @@ TEST_F(StorageTestFixture, get_all_message_definitions_returns_the_correct_vecto
   readable_storage->get_all_message_definitions(msg_definitions);
 
   EXPECT_EQ(msg_definitions.size(), 1u);
-  EXPECT_THAT(msg_definitions, ElementsAreArray({msg_definition})) <<
-    msg_definition.topic_type << " " << msg_definition.encoding << " " <<
-    msg_definition.encoded_message_definition;
+  EXPECT_THAT(
+    msg_definitions,
+    ElementsAreArray(
+  {
+    rosbag2_storage::MessageDefinition{"type1", "ros2msg", "string data", "type_hash1"}
+  })) << msg_definition.topic_type << " " << msg_definition.encoding << " " <<
+    msg_definition.encoded_message_definition << " " << msg_definition.type_hash;
 }
 
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
