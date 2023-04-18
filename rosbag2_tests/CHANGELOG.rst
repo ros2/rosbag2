@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2023-04-18)
+-------------------
 * Add type_hash in MessageDefinition struct (`#1296 <https://github.com/ros2/rosbag2/issues/1296>`_)
 * Contributors: Michael Orlov
 

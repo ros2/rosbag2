@@ -2,8 +2,8 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2023-04-18)
+-------------------
 * Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
 * rosbag2_storage: add type description hash to topic metadata (`#1272 <https://github.com/ros2/rosbag2/issues/1272>`_)
 * Contributors: james-rms

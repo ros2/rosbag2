@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2023-04-18)
+-------------------
 * Add type_hash in MessageDefinition struct (`#1296 <https://github.com/ros2/rosbag2/issues/1296>`_)
 * Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
 * rosbag2_storage: add type description hash to topic metadata (`#1272 <https://github.com/ros2/rosbag2/issues/1272>`_)

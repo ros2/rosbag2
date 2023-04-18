@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2023-04-18)
+-------------------
 * Read message definitions from input files in bag_rewrite (`#1295 <https://github.com/ros2/rosbag2/issues/1295>`_)
 * Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
 * Move rosbag2_transport::Recorder implementation to pimpl (`#1291 <https://github.com/ros2/rosbag2/issues/1291>`_)

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.0 (2023-04-18)
+-------------------
 * Add type_hash in MessageDefinition struct (`#1296 <https://github.com/ros2/rosbag2/issues/1296>`_)
 * Store message definitions in SQLite3 storage plugin (`#1293 <https://github.com/ros2/rosbag2/issues/1293>`_)
 * Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
