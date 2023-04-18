@@ -2,6 +2,14 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add type_hash in MessageDefinition struct (`#1296 <https://github.com/ros2/rosbag2/issues/1296>`_)
+* Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
+* rosbag2_storage: add type description hash to topic metadata (`#1272 <https://github.com/ros2/rosbag2/issues/1272>`_)
+* Fix for flaky `TimeControllerClockTest::unpaused_sleep_returns_true` test (`#1290 <https://github.com/ros2/rosbag2/issues/1290>`_)
+* Contributors: Michael Orlov, james-rms
+
 0.21.0 (2023-04-12)
 -------------------
 * rosbag2_cpp: move local message definition source out of MCAP plugin (`#1265 <https://github.com/ros2/rosbag2/issues/1265>`_)

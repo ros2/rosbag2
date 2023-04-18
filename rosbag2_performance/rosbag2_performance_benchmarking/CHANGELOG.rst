@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add tests for rosbag2_performance_benchmarking pkg (`#1268 <https://github.com/ros2/rosbag2/issues/1268>`_)
+* Contributors: Michael Orlov
+
 0.21.0 (2023-04-12)
 -------------------
 * Fix expectations for rosbag2 return code in rosbag2_performance_benchmarking (`#1267 <https://github.com/ros2/rosbag2/issues/1267>`_)

@@ -2,6 +2,9 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.21.0 (2023-04-12)
 -------------------
 * Update to sqlite3 3.37.2 (`#1274 <https://github.com/ros2/rosbag2/issues/1274>`_)

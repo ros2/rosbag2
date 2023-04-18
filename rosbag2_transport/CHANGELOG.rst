@@ -2,6 +2,14 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Read message definitions from input files in bag_rewrite (`#1295 <https://github.com/ros2/rosbag2/issues/1295>`_)
+* Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)
+* Move rosbag2_transport::Recorder implementation to pimpl (`#1291 <https://github.com/ros2/rosbag2/issues/1291>`_)
+* rosbag2_storage: add type description hash to topic metadata (`#1272 <https://github.com/ros2/rosbag2/issues/1272>`_)
+* Contributors: Emerson Knapp, Michael Orlov, james-rms
+
 0.21.0 (2023-04-12)
 -------------------
 * rosbag2_cpp: move local message definition source out of MCAP plugin (`#1265 <https://github.com/ros2/rosbag2/issues/1265>`_)
