@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.0 (2023-04-18)
+-------------------
+
 0.21.0 (2023-04-12)
 -------------------
 * Add API samples for Python [rebased] (`#1253 <https://github.com/ros2/rosbag2/issues/1253>`_)
