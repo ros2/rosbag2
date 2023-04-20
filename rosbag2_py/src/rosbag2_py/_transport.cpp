@@ -190,16 +190,23 @@ public:
 class Recorder
 {
 private:
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  static std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  std::shared_ptr<rosbag2_transport::Recorder> recorder_;
 
 public:
   Recorder()
   {
-    rclcpp::init(0, nullptr);
+    auto init_options = rclcpp::InitOptions();
+    init_options.shutdown_on_signal = false;
+    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::None);
     exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     std::signal(
       SIGTERM, [](int /* signal */) {
-        rclcpp::shutdown();
+        rosbag2_py::Recorder::cancel();
+      });
+    std::signal(
+      SIGINT, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
       });
   }
 
@@ -218,23 +225,38 @@ public:
     }
 
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
-    recorder->record();
+    recorder_->record();
 
-    exec_->add_node(recorder);
+    exec_->add_node(recorder_);
     // Release the GIL for long-running record, so that calling Python code can use other threads
     {
       py::gil_scoped_release release;
-      exec_->spin();
+      while (!exit_) {
+        exec_->spin_all(std::chrono::milliseconds(30));
+      }
+      if (recorder_) {
+        recorder_->stop();
+        // Need to spin once to be able to send notifications about bag split and close
+        exec_->spin_some(std::chrono::milliseconds(30));
+      }
     }
   }
 
-  void cancel()
+  static void cancel()
   {
-    exec_->cancel();
+    exit_ = true;
+    if (exec_) {
+      exec_->cancel();
+    }
   }
+
+  static std::atomic_bool exit_;
 };
+
+std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> Recorder::exec_;
+std::atomic_bool Recorder::exit_{false};
 
 // Return a RecordOptions struct with defaults set for rewriting bags.
 rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
@@ -360,7 +382,7 @@ PYBIND11_MODULE(_transport, m) {
   .def(
     "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"),
     py::arg("node_name") = "rosbag2_recorder")
-  .def("cancel", &rosbag2_py::Recorder::cancel)
+  .def_static("cancel", &rosbag2_py::Recorder::cancel)
   ;
 
   m.def(
