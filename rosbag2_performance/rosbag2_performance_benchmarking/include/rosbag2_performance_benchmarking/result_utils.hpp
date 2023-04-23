@@ -34,7 +34,8 @@ void write_benchmark_results(
   const BagConfig & bag_config,
   const std::string & results_file,
   float producer_cpu_usage = 0,
-  float recorder_cpu_usage = 0);
+  float recorder_cpu_usage = 0,
+  const std::vector<double> & cpu_usage_per_core = {});
 
 /// this version works with a standalone node using node parameters
 void write_benchmark_results(rclcpp::Node & node);

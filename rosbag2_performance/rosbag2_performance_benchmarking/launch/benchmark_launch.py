@@ -74,6 +74,7 @@ _producer_process = None
 
 _parameters = []
 
+_cpu_usage_per_core = []
 _producer_cpu_usage = 0.0
 _recorder_cpu_usage = 0.0
 
@@ -201,10 +202,13 @@ def _results_writer_exited(event, context):
 def _producer_node_started(event, context):
     """Log current benchmark progress on producer start."""
     global _producer_idx, _producer_pid, _producer_process, _producer_cpu_usage
+    global _cpu_usage_per_core
     _producer_pid = event.pid
     _producer_process = psutil.Process(_producer_pid)
     _producer_process.cpu_percent()
     _producer_cpu_usage = 0.0
+    psutil.cpu_percent(None, True)
+    _cpu_usage_per_core = []
     return launch.actions.LogInfo(
         msg='-----------{}/{}-----------'.format(_producer_idx + 1, len(_producer_nodes))
     )
@@ -236,11 +240,12 @@ def _producer_node_exited(event, context):
 
     Handles clearing of bags.
     """
-    global _producer_idx, _producer_nodes, _rosbag_pid, _recorder_cpu_usage, _rosbag_process, \
-        _producer_cpu_usage
+    global _producer_idx, _producer_nodes, _rosbag_pid, _recorder_cpu_usage, _rosbag_process
+    global _producer_cpu_usage, _cpu_usage_per_core
     parameters = _parameters[_producer_idx]
     node_params = _producer_nodes[_producer_idx]['parameters']
     transport = node_params['transport']
+    _cpu_usage_per_core = psutil.cpu_percent(None, True)
 
     # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
     if _rosbag_pid is not None and transport:
@@ -321,6 +326,7 @@ def _producer_node_exited(event, context):
         ]
 
     # Add cpu load as parameters
+    parameters.append({'cpu_usage_per_core': _cpu_usage_per_core})
     if transport:
         parameters.append({'producer_cpu_usage': _producer_cpu_usage})
         parameters.append({'recorder_cpu_usage': _recorder_cpu_usage})

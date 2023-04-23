@@ -56,7 +56,8 @@ void write_benchmark_results(
   const BagConfig & bag_config,
   const std::string & results_file,
   float producer_cpu_usage,
-  float recorder_cpu_usage)
+  float recorder_cpu_usage,
+  const std::vector<double> & cpu_usage_per_core)
 {
   bool new_file = false;
   { // test if file exists - we want to write a csv header after creation if not
@@ -79,7 +80,11 @@ void write_benchmark_results(
     output_file << "max_bagfile_size storage_config ";
     output_file << "compression compression_queue compression_threads ";
     output_file << "total_produced total_recorded_count ";
-    output_file << "producer_cpu_usage recorder_cpu_usage\n";
+    output_file << "producer_cpu_usage recorder_cpu_usage";
+    for (size_t i = 0; i < cpu_usage_per_core.size(); i++) {
+      output_file << " core_" << i;
+    }
+    output_file << std::endl;
   }
 
   int total_recorded_count = get_message_count_from_metadata(bag_config.storage_options.uri);
@@ -106,7 +111,11 @@ void write_benchmark_results(
     output_file << std::fixed;               // Fix the number of decimal digits
     output_file << std::setprecision(2);  // to 2
     output_file << std::setw(4) << producer_cpu_usage << " ";
-    output_file << std::setw(4) << recorder_cpu_usage << std::endl;
+    output_file << std::setw(4) << recorder_cpu_usage;
+    for (auto cpu_core_usage : cpu_usage_per_core) {
+      output_file << " " << std::setw(4) << cpu_core_usage;
+    }
+    output_file << std::endl;
   }
 }
 
@@ -128,10 +137,12 @@ void write_benchmark_results(rclcpp::Node & node)
   node.declare_parameter("producer_cpu_usage", 0.0);
   node.get_parameter("producer_cpu_usage", producer_cpu_usage);
 
+  node.declare_parameter("cpu_usage_per_core", std::vector<double>{});
+  auto cpu_usage_per_core = node.get_parameter("cpu_usage_per_core").as_double_array();
 
   write_benchmark_results(
     configurations, bag_config, results_file,
-    producer_cpu_usage, recorder_cpu_usage);
+    producer_cpu_usage, recorder_cpu_usage, cpu_usage_per_core);
 }
 
 }  // namespace result_utils
