@@ -47,7 +47,11 @@ public:
       finished_future.wait();
     }
 
+    // Let running parent benchmark_launch.py know that producers finished
+    RCLCPP_INFO(get_logger(), "Producer threads finished");
     thread_pool_.terminate();
+    // Wait for 1 second to let benchmark_launch.py measure CPU load
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
 private:

@@ -39,11 +39,8 @@ private:
   void create_producers();
   void create_writer();
   void start_producers();
-  void write_results() const;
-  int get_message_count_from_metadata() const;
 
   std::vector<PublisherGroupConfig> configurations_;
-  std::string results_file_;
   BagConfig bag_config_;
 
   std::vector<std::thread> producer_threads_;

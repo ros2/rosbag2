@@ -47,9 +47,6 @@ WriterBenchmark::WriterBenchmark(const std::string & name)
     RCLCPP_WARN(get_logger(), "number_of_threads parameter is not used in writer_benchmark");
   }
 
-  this->declare_parameter("results_file", bag_config_.storage_options.uri + "/results.csv");
-  this->get_parameter("results_file", results_file_);
-
   RCLCPP_INFO(get_logger(), "configuration parameters processed");
 
   create_producers();
@@ -137,9 +134,13 @@ void WriterBenchmark::start_benchmark()
   for (auto & prod_thread : producer_threads_) {
     prod_thread.join();
   }
-  writer_->close();
 
-  result_utils::write_benchmark_results(configurations_, bag_config_, results_file_);
+  // Let running parent benchmark_launch.py know that producers finished
+  RCLCPP_INFO(get_logger(), "Producer threads finished");
+  // Wait for 1 second to let benchmark_launch.py measure CPU load
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  writer_->close();
 }
 
 void WriterBenchmark::create_producers()

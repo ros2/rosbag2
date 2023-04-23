@@ -32,7 +32,9 @@ int get_message_count_from_metadata(const std::string & uri);
 void write_benchmark_results(
   const std::vector<PublisherGroupConfig> & publisher_groups_config,
   const BagConfig & bag_config,
-  const std::string & results_file);
+  const std::string & results_file,
+  float producer_cpu_usage = 0,
+  float recorder_cpu_usage = 0);
 
 /// this version works with a standalone node using node parameters
 void write_benchmark_results(rclcpp::Node & node);
