@@ -78,6 +78,9 @@ _cpu_usage_per_core = []
 _producer_cpu_usage = 0.0
 _recorder_cpu_usage = 0.0
 
+_producer_cpu_affinity = []
+_recorder_cpu_affinity = []
+
 
 def _parse_arguments(args=sys.argv[4:]):
     """Parse benchmark and producers config file paths."""
@@ -141,9 +144,11 @@ def _launch_sequence(transport):
 
 def _rosbag_proc_started(event, context):
     """Register current rosbag2 PID so we can terminate it when producer exits."""
-    global _rosbag_pid, _rosbag_process
+    global _rosbag_pid, _rosbag_process, _recorder_cpu_affinity
     _rosbag_pid = event.pid
     _rosbag_process = psutil.Process(_rosbag_pid)
+    if len(_recorder_cpu_affinity) > 0:
+        _rosbag_process.cpu_affinity(_recorder_cpu_affinity)
 
 
 def _rosbag_ready_check(event):
@@ -202,9 +207,11 @@ def _results_writer_exited(event, context):
 def _producer_node_started(event, context):
     """Log current benchmark progress on producer start."""
     global _producer_idx, _producer_pid, _producer_process, _producer_cpu_usage
-    global _cpu_usage_per_core
+    global _cpu_usage_per_core, _producer_cpu_affinity
     _producer_pid = event.pid
     _producer_process = psutil.Process(_producer_pid)
+    if len(_producer_cpu_affinity) > 0:
+        _producer_process.cpu_affinity(_producer_cpu_affinity)
     _producer_process.cpu_percent()
     _producer_cpu_usage = 0.0
     psutil.cpu_percent(None, True)
@@ -357,6 +364,7 @@ def _producer_node_exited(event, context):
 def generate_launch_description():
     """Generate launch description for ros2 launch system."""
     global _producer_nodes, _bench_cfg_path, _producers_cfg_path
+    global _producer_cpu_affinity, _recorder_cpu_affinity
     _bench_cfg_path, _producers_cfg_path = _parse_arguments()
 
     # Parse yaml config for benchmark
@@ -375,6 +383,17 @@ def generate_launch_description():
     summary_result_file = benchmark_params.get('summary_result_file')
     transport = not benchmark_params.get('no_transport')
     preserve_bags = benchmark_params.get('preserve_bags')
+
+    # CPU affinity for producers and recorder
+    _producer_cpu_affinity = benchmark_params.get('producers_cpu_affinity', [])
+    _recorder_cpu_affinity = benchmark_params.get('recorder_cpu_affinity', [])
+    if not transport:
+        _producer_cpu_affinity = _recorder_cpu_affinity
+        print('Warning! With no_transport = True, producer_cpu_affinity will be ignored')
+
+    if len(_producer_cpu_affinity) > 0:
+        # Set CPU affinity for current process to avoid impact on the recorder
+        psutil.Process().cpu_affinity(_producer_cpu_affinity)
 
     # Producers options
     producers_params = bench_cfg['benchmark']['parameters']
@@ -577,7 +596,8 @@ def generate_launch_description():
                     'sigkill_timeout', default=60),
                 sigterm_timeout=launch.substitutions.LaunchConfiguration(
                     'sigterm_timeout', default=60),
-                cmd=['ros2', 'bag', 'record', '-e', r'\/.*_benchmarking_node\/.*'] + rosbag_args
+                cmd=['ros2', 'bag', 'record', '-e',
+                     r'\/.*_benchmarking_node\/.*'] + rosbag_args
             )
 
             # Fill up list with rosbag record process and result writers actions
