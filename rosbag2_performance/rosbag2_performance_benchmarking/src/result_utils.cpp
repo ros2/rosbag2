@@ -50,6 +50,31 @@ int get_message_count_from_metadata(const std::string & uri)
   return total_recorded_count;
 }
 
+size_t get_messages_recorded(
+  const rosbag2_storage::BagMetadata & metadata,
+  const PublisherGroupConfig & pub_config)
+{
+  size_t messages_recorded = 0;
+  for (unsigned int i = 0; i < pub_config.count; ++i) {
+    const std::string topic_without_node_name =
+      pub_config.topic_root + "_" + std::to_string(i + 1);
+
+    for (const auto & topic_info : metadata.topics_with_message_count) {
+      const auto & topic_name_with_node_name = topic_info.topic_metadata.name;
+      if (topic_name_with_node_name.size() < topic_without_node_name.size()) {
+        continue;
+      }
+      if (topic_name_with_node_name.compare(
+          topic_name_with_node_name.size() - topic_without_node_name.size(),
+          topic_without_node_name.size(), topic_without_node_name) == 0)
+      {
+        messages_recorded += topic_info.message_count;
+      }
+    }
+  }
+  return messages_recorded;
+}
+
 /// Based on configuration and metadata from completed benchmark, write results
 void write_benchmark_results(
   const std::vector<PublisherGroupConfig> & publisher_groups_config,
@@ -87,7 +112,8 @@ void write_benchmark_results(
     output_file << std::endl;
   }
 
-  int total_recorded_count = get_message_count_from_metadata(bag_config.storage_options.uri);
+  rosbag2_storage::MetadataIo metadata_io;
+  rosbag2_storage::BagMetadata metadata = metadata_io.read_metadata(bag_config.storage_options.uri);
 
   for (const auto & c : publisher_groups_config) {
     output_file << bag_config.storage_options.storage_id << " ";
@@ -102,12 +128,10 @@ void write_benchmark_results(
     output_file << bag_config.compression_queue_size << " ";
     output_file << bag_config.compression_threads << " ";
 
-    // TODO(adamdbrw) - this is a result for the entire group,
-    // but we don't yet have per-group stats.
-    // For now, these need to be summed for each group
     auto total_messages_produced = c.producer_config.max_count * c.count;
+    size_t total_messages_recorded = get_messages_recorded(metadata, c);
     output_file << total_messages_produced << " ";
-    output_file << total_recorded_count << " ";
+    output_file << total_messages_recorded << " ";
     output_file << std::fixed;               // Fix the number of decimal digits
     output_file << std::setprecision(2);  // to 2
     output_file << std::setw(4) << producer_cpu_usage << " ";

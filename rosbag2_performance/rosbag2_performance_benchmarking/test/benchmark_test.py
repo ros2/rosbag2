@@ -86,42 +86,41 @@ class PostprocessStorageConfig(Postprocess):
                            compression_threads_selected,
                            max_bagfile_size_selected):
             for storage_cfg_name, data in splitted_data.items():
-                cache_samples = {}
-                for sample in data:
+                cache_size_pub_groups_percentage = {}
+                for pub_groups in data:
                     # Single sample contains multiple rows
-                    if len(sample) != len(producers_config_publishers['publisher_groups']):
+                    if len(pub_groups) != len(producers_config_publishers['publisher_groups']):
                         raise RuntimeError('Invalid number of records in results detected.')
 
                     # These parameters are same for all rows in sample
                     # (multiple publishers in publisher group)
-                    if sample[0]['compression'] != compression_selected:
+                    if pub_groups[0]['compression'] != compression_selected:
                         continue
-                    if int(sample[0]['compression_queue']) != compression_queue_size_selected:
+                    if int(pub_groups[0]['compression_queue']) != compression_queue_size_selected:
                         continue
-                    if int(sample[0]['compression_threads']) != compression_threads_selected:
+                    if int(pub_groups[0]['compression_threads']) != compression_threads_selected:
                         continue
-                    if int(sample[0]['max_bagfile_size']) != max_bagfile_size_selected:
+                    if int(pub_groups[0]['max_bagfile_size']) != max_bagfile_size_selected:
                         continue
 
-                    if sample[0]['cache_size'] not in cache_samples.keys():
-                        cache_samples.update({sample[0]['cache_size']: []})
+                    if pub_groups[0]['cache_size'] not in cache_size_pub_groups_percentage.keys():
+                        cache_size_pub_groups_percentage.update({pub_groups[0]['cache_size']: []})
 
-                    # TODO(piotr.jaroszek) WARNING, currently results in 'total_produced' column
-                    # are correct (per publisher group), but 'total_recorded' is already summed
-                    # for all the publisher groups!
-                    sample_total_produced = 0
-                    for row in sample:
-                        sample_total_produced += int(row['total_produced'])
-                    cache_samples[sample[0]['cache_size']].append(
-                        int(sample[0]['total_recorded_count']) / sample_total_produced)
+                    for pub_group in pub_groups:
+                        if pub_group['cache_size'] not in cache_size_pub_groups_percentage.keys():
+                            cache_size_pub_groups_percentage.update({pub_group['cache_size']: []})
+                        total_produced = int(pub_group['total_produced'])
+                        total_recorded = int(pub_group['total_recorded_count'])
+                        cache_size_pub_groups_percentage[pub_group['cache_size']].append(
+                            total_recorded / total_produced)
 
                 cache_recorded_percentage_stats = {
                     cache: {
-                        'avg': statistics.mean(samples),
-                        'min': min(samples),
-                        'max': max(samples)
+                        'avg': statistics.mean(pub_groups),
+                        'min': min(pub_groups),
+                        'max': max(pub_groups)
                     }
-                    for cache, samples in cache_samples.items()
+                    for cache, pub_groups in cache_size_pub_groups_percentage.items()
                 }
                 cache_data_per_storage_conf.update(
                     {storage_cfg_name: cache_recorded_percentage_stats}
@@ -153,6 +152,7 @@ class PostprocessStorageConfig(Postprocess):
                         percent_recorded['min'],
                         percent_recorded['avg'],
                         percent_recorded['max']))
+            print('======================== end of report ========================')
             return result
 
         results = [
@@ -302,11 +302,11 @@ class BenchmarkResultsChecker:
         """Process the benchmark results and generates a report."""
         self.find_benchmark_directories()
         for (benchmark, producer), result in self.results.items():
-            print('read_results')
+            print('Reading results for ' + benchmark + ' ' + producer)
             if not result.directory:
                 print('No results found for ' + benchmark + ' ' + producer)
             else:
-                print('Generate report for: ' + result.directory)
+                print('Generating report for: ' + result.directory)
                 report = Report(result.directory)
                 result.reports = report.generate()
 
@@ -314,7 +314,6 @@ class BenchmarkResultsChecker:
         """Check the generated report against the expected results and stores the result."""
         self.load_results()
 
-        print(self.results.items())
         for (benchmark, producer), result in self.results.items():
             if not result.reports:
                 print('No results found for ' + benchmark + ' ' + producer)
