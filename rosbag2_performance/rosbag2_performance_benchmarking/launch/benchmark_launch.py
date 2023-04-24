@@ -51,11 +51,11 @@ import pathlib
 import shutil
 import signal
 import sys
-import psutil
 
 from ament_index_python import get_package_share_directory
 import launch
 import launch_ros
+import psutil
 from rosbag2_py import get_default_storage_id
 
 import yaml
@@ -253,7 +253,7 @@ def _producer_node_exited(event, context):
         if not psutil.pid_exists(_rosbag_pid):
             return [
                 launch.actions.LogInfo(msg="Rosbag2 process doesn't exist. "
-                                           "Shutting down benchmark."),
+                                           'Shutting down benchmark.'),
                 launch.actions.EmitEvent(
                     event=launch.events.Shutdown(reason="Rosbag2 process doesn't exist")
                 )
@@ -279,29 +279,28 @@ def _producer_node_exited(event, context):
         storage_id = node_params['storage_id']
     if storage_id == 'sqlite3' or storage_id == 'mcap':
         file_ext_mask = '*.mcap' if storage_id == 'mcap' else '*.db3'
-        bag_files = pathlib.Path.cwd().joinpath(node_params['db_folder']).glob(file_ext_mask)
+        bag_files = pathlib.Path.cwd().joinpath(node_params['bag_folder']).glob(file_ext_mask)
         #  Raise error if bag_files is empty.
         if not bag_files:
             return [
-                launch.actions.LogInfo(msg="Error! Rosbag2 files not found. "
-                                           "Shutting down benchmark."),
+                launch.actions.LogInfo(msg='Error! Rosbag2 files not found. '
+                                           'Shutting down benchmark.'),
                 launch.actions.EmitEvent(
-                    event=launch.events.Shutdown(reason="Rosbag2 files not found.")
+                    event=launch.events.Shutdown(reason='Rosbag2 files not found.')
                 )
             ]
     else:
         return [
-            launch.actions.LogInfo(msg=f"Unsupported storage_id = {storage_id}"
-                                       "Shutting down benchmark."),
+            launch.actions.LogInfo(msg=f'Unsupported storage_id = {storage_id}'
+                                       'Shutting down benchmark.'),
             launch.actions.EmitEvent(
-                event=launch.events.Shutdown(reason=f"Unsupported storage_id = {storage_id}")
+                event=launch.events.Shutdown(reason=f'Unsupported storage_id = {storage_id}')
             )
         ]
 
     # Handle clearing bag files
     if not node_params['preserve_bags']:
-        stats_path = pathlib.Path.cwd().joinpath(node_params['db_folder'],
-                                                 'bagfiles_info.yaml')
+        stats_path = pathlib.Path.cwd().joinpath(node_params['bag_folder'], 'bagfiles_info.yaml')
         stats = {
             'total_size': 0,
             'bagfiles': []
