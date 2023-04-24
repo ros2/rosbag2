@@ -54,11 +54,9 @@ import sys
 import time
 
 from ament_index_python import get_package_share_directory
-from rosbag2_py import get_default_storage_id
-
 import launch
-
 import launch_ros
+from rosbag2_py import get_default_storage_id
 
 import yaml
 
