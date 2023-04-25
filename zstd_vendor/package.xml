@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>zstd_vendor</name>
-  <version>0.15.4</version>
+  <version>0.15.5</version>
   <description>Zstd compression vendor package, providing a dependency for Zstd.</description>
   <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
