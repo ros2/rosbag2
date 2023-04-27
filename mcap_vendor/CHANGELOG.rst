@@ -2,6 +2,11 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.5 (2023-04-25)
+-------------------
+* Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_) (`#1224 <https://github.com/ros2/rosbag2/issues/1224>`_)
+* Contributors: mergify[bot]
+
 0.15.4 (2023-01-10)
 -------------------
 * [backport humble `#1208 <https://github.com/ros2/rosbag2/issues/1208>`_] Fixes policy CMP0135 warning for CMake >= 3.24 for mcap_vendor (`#1227 <https://github.com/ros2/rosbag2/issues/1227>`_)

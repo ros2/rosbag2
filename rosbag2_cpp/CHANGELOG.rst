@@ -2,6 +2,14 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.5 (2023-04-25)
+-------------------
+* Replace `std::filesystem::path(..)` with `rcpputils::fs::path(..)` (`#1104 <https://github.com/ros2/rosbag2/issues/1104>`_) (`#1280 <https://github.com/ros2/rosbag2/issues/1280>`_)
+* Fix issue where sequentialwriter only sets metadata duration to the duration of the final file (`#1098 <https://github.com/ros2/rosbag2/issues/1098>`_) (`#1101 <https://github.com/ros2/rosbag2/issues/1101>`_)
+* Delete obsolete compression_options.cpp from rosbag2_cpp (`#1078 <https://github.com/ros2/rosbag2/issues/1078>`_) (`#1259 <https://github.com/ros2/rosbag2/issues/1259>`_)
+* Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_) (`#1224 <https://github.com/ros2/rosbag2/issues/1224>`_)
+* Contributors: mergify[bot]
+
 0.15.4 (2023-01-10)
 -------------------
 * [Humble] Reader and writer can use default storage by not specifying (backport `#1167 <https://github.com/ros2/rosbag2/issues/1167>`_) (`#1174 <https://github.com/ros2/rosbag2/issues/1174>`_)
