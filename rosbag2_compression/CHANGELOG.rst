@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.0 (2023-04-28)
+-------------------
+
 0.22.0 (2023-04-18)
 -------------------
 * Add message definition read API (`#1292 <https://github.com/ros2/rosbag2/issues/1292>`_)

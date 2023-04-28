@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.23.0 (2023-04-28)
+-------------------
+
 0.22.0 (2023-04-18)
 -------------------
 * rosbag2_storage: add type description hash to topic metadata (`#1272 <https://github.com/ros2/rosbag2/issues/1272>`_)
