@@ -325,7 +325,12 @@ Recorder::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, this->get_clock()->now());
+        auto time = this->get_clock()->now();
+        bool time_is_zero = time.nanoseconds() == 0 && time.seconds() == 0;
+        if (record_options_.use_sim_time && time_is_zero) {
+          return;
+        }
+        writer_->write(message, topic_name, topic_type, time);
       }
     });
   return subscription;
