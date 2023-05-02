@@ -71,6 +71,7 @@ void write_benchmark_results(
   }
 
   if (new_file) {
+    output_file << "storage_id ";
     output_file << "instances frequency message_size total_messages_sent cache_size ";
     output_file << "max_bagfile_size storage_config ";
     output_file << "compression compression_queue compression_threads ";
@@ -80,6 +81,7 @@ void write_benchmark_results(
   int total_recorded_count = get_message_count_from_metadata(bag_config.storage_options.uri);
 
   for (const auto & c : publisher_groups_config) {
+    output_file << bag_config.storage_options.storage_id << " ";
     output_file << c.count << " ";
     output_file << c.producer_config.frequency << " ";
     output_file << c.producer_config.message_size << " ";
