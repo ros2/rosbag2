@@ -8,7 +8,12 @@ rosbag2_performance_benchmarking:
         no_transport:         True  # Whether to run storage-only or end-to-end (including transport) benchmark
         preserve_bags:        False # Whether to leave bag files after experiment (and between runs). Some configurations can take lots of space!
         parameters:                 # Each combination of parameters in this section will be benchmarked
+<<<<<<< HEAD:rosbag2_performance/rosbag2_performance_benchmarking/config/benchmarks/test.yaml
           max_cache_size:         [10000000, 100000000]
+=======
+          storage_id:             ["mcap", "sqlite3"]
+          max_cache_size:         [100000000]
+>>>>>>> 4b8a898 (Add config option to use storage_id parameter in benchmark_launch.py (#1303)):rosbag2_performance/rosbag2_performance_benchmarking/config/benchmarks/test/test_no_transport.yaml
           max_bag_size:           [0]
           compression:            ["", "zstd"]
           compression_queue_size: [1]
