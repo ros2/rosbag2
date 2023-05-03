@@ -57,6 +57,10 @@ public:
 
   void record();
 
+  /// @brief Stopping recording and closing writer.
+  /// The record() can be called again after stop().
+  void stop();
+
   const rosbag2_cpp::Writer & get_writer_handle();
 
   /// Pause the recording.
@@ -178,12 +182,19 @@ RecorderImpl::RecorderImpl(
 RecorderImpl::~RecorderImpl()
 {
   keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
+  stop();
+}
+
+
+void RecorderImpl::stop()
+{
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     discovery_future_.wait();
   }
-
+  paused_ = true;
   subscriptions_.clear();
+  writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
   {
     std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
@@ -197,6 +208,7 @@ RecorderImpl::~RecorderImpl()
 
 void RecorderImpl::record()
 {
+  paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
@@ -615,10 +627,14 @@ Recorder::Recorder(
 Recorder::~Recorder()
 {}
 
-void
-Recorder::record()
+void Recorder::record()
 {
   pimpl_->record();
+}
+
+void Recorder::stop()
+{
+  pimpl_->stop();
 }
 
 const std::unordered_set<std::string> &
