@@ -63,7 +63,6 @@ public:
   std::unique_ptr<SubscriptionManager> sub_;
 };
 
-#ifndef _WIN32
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 4, sub_qos_);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
@@ -100,7 +99,6 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
           &test_msgs::msg::Arrays::string_values,
           ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
 }
-#endif
 
 TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
@@ -124,35 +122,29 @@ TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
     error_output, HasSubstr("Could not find converter for format wrong_format"));
 }
 
-/*
-todo(tfoote) Disabling failing test. Ticketed to follow up at: https://github.com/ros2/rosbag2/issues/408
-TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
-  // Due to a problem related to the subscriber, we play many (3) messages but make the subscriber
-  // node spin only until 2 have arrived. Hence the 2 as `launch_subscriber()` argument.
-  const unsigned int num_basic_msgs = 2u;
-  const unsigned int num_array_msgs = 1u;
-
+TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
+  const unsigned int num_basic_msgs = 3u;
+  const unsigned int num_array_msgs = 4u;
   // Play a specific topic
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
 
   auto subscription_future = sub_->spin_subscriptions();
 
-  auto exit_code = execute_and_wait_until_completion(
-    "ros2 bag play cdr_test --topics /test_topic",
-    bags_path_);
+  // Play with filter for `/test_topic` topic
+  auto exit_code =
+    execute_and_wait_until_completion("ros2 bag play cdr_test --topics /test_topic", bags_path_);
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
   auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
-
   EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
+  EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
 
-  // Play a different topic
+  // Play with filter for `/array_topic` topic
   sub_ = std::make_unique<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0, sub_qos_);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
@@ -162,18 +154,17 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   exit_code = execute_and_wait_until_completion(
     "ros2 bag play --topics /array_topic -- cdr_test",
     bags_path_);
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   subscription_future.get();
 
   primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
   array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
-
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(0u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
   EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
 
-  // Play all topics
+  // Play with filter for both topics
   sub_ = std::make_unique<SubscriptionManager>();
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
@@ -183,38 +174,35 @@ TEST_F(PlayEndToEndTestFixture, play_filters_by_topic) {
   exit_code = execute_and_wait_until_completion(
     "ros2 bag play --topics /test_topic /array_topic -- cdr_test",
     bags_path_);
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   subscription_future.get();
 
   primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
   array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
-
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
   EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
 
   // Play a non-existent topic
   sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0, sub_qos_);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 1, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1, sub_qos_);
 
-  subscription_future = sub_->spin_subscriptions();
+  subscription_future = sub_->spin_subscriptions(std::chrono::seconds(2));
 
   exit_code = execute_and_wait_until_completion(
     "ros2 bag play --topics /nonexistent_topic -- cdr_test", bags_path_);
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   subscription_future.get();
 
   primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
   array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
-
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(0u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(0u)));
+  EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
+  EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
 }
-*/
 
 #ifndef _WIN32
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
