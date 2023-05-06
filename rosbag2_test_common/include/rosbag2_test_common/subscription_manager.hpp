@@ -59,14 +59,14 @@ public:
     auto options = rclcpp::SubscriptionOptions();
     options.use_intra_process_comm = rclcpp::IntraProcessSetting::Disable;
 
-    subscriptions_.push_back(
+    subscriptions_[topic_name] =
       subscriber_node_->create_subscription<MessageT>(
-        topic_name,
-        qos,
-        [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> msg) {
-          subscribed_messages_[topic_name].push_back(msg);
-        },
-        options));
+      topic_name,
+      qos,
+      [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> msg) {
+        subscribed_messages_[topic_name].push_back(msg);
+      },
+      options);
   }
 
   template<typename MessageT>
@@ -127,6 +127,48 @@ public:
     return matched;
   }
 
+  /// @brief Wait until publishers will be connected to the subscriptions or timeout occur.
+  /// @param topic_names List of topic names
+  /// @param timeout Maximum time duration during which discovery should happen.
+  /// @param n_publishers_to_match Number of publishers each subscription should have for match.
+  /// @return true if subscriptions have specified number of publishers, otherwise false.
+  bool spin_and_wait_for_matched(
+    const std::vector<std::string> & topic_names,
+    std::chrono::duration<double> timeout = std::chrono::seconds(10),
+    size_t n_publishers_to_match = 1)
+  {
+    // Sanity check that we have valid input
+    if (topic_names.empty()) {
+      throw std::invalid_argument("List of topic names is empty");
+    }
+    for (const auto & topic_name : topic_names) {
+      if (subscriptions_.find(topic_name) == subscriptions_.end()) {
+        throw std::invalid_argument(
+                "Publisher's topic name = `" + topic_name + "` not found in expected topics list");
+      }
+    }
+
+    using clock = std::chrono::steady_clock;
+    auto start = clock::now();
+
+    rclcpp::executors::SingleThreadedExecutor exec;
+    bool matched = false;
+    while (!matched && ((clock::now() - start) < timeout)) {
+      exec.spin_node_some(subscriber_node_);
+
+      matched = true;
+      for (const auto & topic_name : topic_names) {
+        if (subscriptions_.find(topic_name) == subscriptions_.end() ||
+          subscriptions_[topic_name]->get_publisher_count() < n_publishers_to_match)
+        {
+          matched = false;
+          break;
+        }
+      }
+    }
+    return matched;
+  }
+
   std::future<void> spin_subscriptions(
     std::chrono::duration<double> timeout = std::chrono::seconds(10))
   {
@@ -171,7 +213,7 @@ private:
     return false;
   }
 
-  std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
+  std::unordered_map<std::string, rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
   std::unordered_map<std::string,
     std::vector<std::shared_ptr<rclcpp::SerializedMessage>>> subscribed_messages_;
   std::unordered_map<std::string, size_t> expected_topics_with_size_;

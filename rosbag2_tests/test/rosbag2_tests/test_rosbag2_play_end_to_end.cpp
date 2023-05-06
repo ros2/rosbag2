@@ -24,13 +24,14 @@
 // rclcpp must be included before process_execution_helpers.hpp
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/message_fixtures.hpp"
+//  #include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
@@ -38,6 +39,8 @@ using namespace rosbag2_test_common;  // NOLINT
 class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::string>
 {
 public:
+  using Resume = rosbag2_interfaces::srv::Resume;
+
   PlayEndToEndTestFixture()
   : sub_qos_(rclcpp::QoS{10}
       .reliability(rclcpp::ReliabilityPolicy::Reliable)
@@ -46,6 +49,20 @@ public:
     // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
     bags_path_ = (rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).string();
     sub_ = std::make_unique<SubscriptionManager>();
+    client_node_ = std::make_shared<rclcpp::Node>("test_record_client");
+    cli_resume_ = client_node_->create_client<Resume>("/rosbag2_player/resume");
+    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    exec_->add_node(client_node_);
+    spin_thread_ = std::thread(
+      [this]() {
+        exec_->spin();
+      });
+  }
+
+  ~PlayEndToEndTestFixture() override
+  {
+    exec_->cancel();
+    if (spin_thread_.joinable()) {spin_thread_.join();}
   }
 
   static void SetUpTestCase()
@@ -58,25 +75,61 @@ public:
     rclcpp::shutdown();
   }
 
+  /// Send a service request, and expect it to successfully return within a reasonable timeout
+  template<typename Srv>
+  typename Srv::Response::SharedPtr successful_service_request(
+    typename rclcpp::Client<Srv>::SharedPtr cli,
+    typename Srv::Request::SharedPtr request)
+  {
+    auto future = cli->async_send_request(request);
+    EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready);
+    EXPECT_TRUE(future.valid());
+    auto result = std::make_shared<typename Srv::Response>();
+    EXPECT_NO_THROW({result = future.get();});
+    EXPECT_TRUE(result);
+    return result;
+  }
+
+  template<typename Srv>
+  typename Srv::Response::SharedPtr successful_service_request(
+    typename rclcpp::Client<Srv>::SharedPtr cli)
+  {
+    auto request = std::make_shared<typename Srv::Request>();
+    return successful_service_request<Srv>(cli, request);
+  }
+
   rclcpp::QoS sub_qos_;
   std::string bags_path_;
   std::unique_ptr<SubscriptionManager> sub_;
+  rclcpp::Node::SharedPtr client_node_;
+  rclcpp::Client<Resume>::SharedPtr cli_resume_;
+  std::thread spin_thread_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  const std::chrono::seconds service_call_timeout_ {4};
 };
 
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 4, sub_qos_);
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
 
+  // Start ros2 bag play in pause mode
+  auto process_id = start_execution("ros2 bag play -p " + bags_path_ + "/cdr_test");
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_id]() {
+      stop_execution(process_id);
+    });
+
+  EXPECT_TRUE(sub_->spin_and_wait_for_matched({"/test_topic", "/array_topic"}));
+
+  // Send resume service call for player
+  ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+  successful_service_request<Resume>(cli_resume_);
+
   auto subscription_future = sub_->spin_subscriptions();
-
-  auto exit_code = execute_and_wait_until_completion("ros2 bag play cdr_test", bags_path_);
-
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
   auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
-
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
   EXPECT_THAT(primitive_messages, SizeIs(Ge(3u)));
   EXPECT_THAT(
@@ -98,6 +151,8 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
         Field(
           &test_msgs::msg::Arrays::string_values,
           ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
+  stop_execution(process_id);
+  cleanup_process_handle.cancel();
 }
 
 TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
@@ -125,83 +180,105 @@ TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
 TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
   const unsigned int num_basic_msgs = 3u;
   const unsigned int num_array_msgs = 4u;
-  // Play a specific topic
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
 
-  auto subscription_future = sub_->spin_subscriptions();
+  {  // Play with filter for `/test_topic` only
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
+    sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 0, sub_qos_);
 
-  // Play with filter for `/test_topic` topic
-  auto exit_code =
-    execute_and_wait_until_completion("ros2 bag play cdr_test --topics /test_topic", bags_path_);
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+    // Start ros2 bag play in pause mode
+    auto process_id =
+      start_execution("ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic");
+    auto cleanup_process_handle = rcpputils::make_scope_exit(
+      [process_id]() {
+        stop_execution(process_id);
+      });
 
-  subscription_future.get();
+    EXPECT_TRUE(sub_->spin_and_wait_for_matched({"/test_topic"}));
+    auto subscription_future = sub_->spin_subscriptions();
 
-  auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
+    // Send resume service call for player
+    ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+    successful_service_request<Resume>(cli_resume_);
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
-  EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
+    subscription_future.get();
 
-  // Play with filter for `/array_topic` topic
-  sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 0, sub_qos_);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
+    auto primitive_messages =
+      sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+    auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
-  subscription_future = sub_->spin_subscriptions();
-
-  exit_code = execute_and_wait_until_completion(
-    "ros2 bag play --topics /array_topic -- cdr_test",
-    bags_path_);
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
-
-  subscription_future.get();
-
-  primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
-
-  EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
+    EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
+    EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
+    stop_execution(process_id);
+    cleanup_process_handle.cancel();
+  }
 
   // Play with filter for both topics
-  sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
+  {
+    sub_ = std::make_unique<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", num_basic_msgs, sub_qos_);
+    sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
 
-  subscription_future = sub_->spin_subscriptions();
+    // Start ros2 bag play in pause mode
+    auto process_id = start_execution(
+      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic /array_topic");
+    auto cleanup_process_handle = rcpputils::make_scope_exit(
+      [process_id]() {
+        stop_execution(process_id);
+      });
 
-  exit_code = execute_and_wait_until_completion(
-    "ros2 bag play --topics /test_topic /array_topic -- cdr_test",
-    bags_path_);
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+    EXPECT_TRUE(sub_->spin_and_wait_for_matched({"/test_topic", "/array_topic"}));
+    auto subscription_future = sub_->spin_subscriptions();
 
-  subscription_future.get();
+    // Send resume service call for player
+    ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+    successful_service_request<Resume>(cli_resume_);
 
-  primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
+    subscription_future.get();
 
-  EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
-  EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
+    auto primitive_messages =
+      sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+    auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
 
-  // Play a non-existent topic
-  sub_ = std::make_unique<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 1, sub_qos_);
-  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1, sub_qos_);
+    EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
+    EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
+    stop_execution(process_id);
+    cleanup_process_handle.cancel();
+  }
 
-  subscription_future = sub_->spin_subscriptions(std::chrono::seconds(2));
+  // Play with filter for non-existent topic
+  {
+    sub_ = std::make_unique<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 1, sub_qos_);
+    sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1, sub_qos_);
 
-  exit_code = execute_and_wait_until_completion(
-    "ros2 bag play --topics /nonexistent_topic -- cdr_test", bags_path_);
-  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+    // Start ros2 bag play in pause mode
+    auto process_id = start_execution(
+      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /nonexistent_topic");
+    auto cleanup_process_handle = rcpputils::make_scope_exit(
+      [process_id]() {
+        stop_execution(process_id);
+      });
 
-  subscription_future.get();
+    EXPECT_FALSE(
+      sub_->spin_and_wait_for_matched(
+        std::vector<std::string>{"/test_topic", "/array_topic"}, std::chrono::seconds(1)));
+    auto subscription_future = sub_->spin_subscriptions(std::chrono::seconds(1));
 
-  primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
-  array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
+    // Send resume service call for player
+    ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+    successful_service_request<Resume>(cli_resume_);
 
-  EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
-  EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
+    subscription_future.get();
+
+    auto primitive_messages =
+      sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
+    auto array_messages = sub_->get_received_messages<test_msgs::msg::Arrays>("/array_topic");
+
+    EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
+    EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
+    stop_execution(process_id);
+    cleanup_process_handle.cancel();
+  }
 }
 
 #ifndef _WIN32
