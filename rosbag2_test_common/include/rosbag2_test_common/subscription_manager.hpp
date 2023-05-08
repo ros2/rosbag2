@@ -113,7 +113,6 @@ public:
     bool matched = false;
     while (!matched && ((clock::now() - start) < timeout)) {
       exec.spin_node_some(subscriber_node_);
-
       matched = true;
       for (const auto publisher_ptr : publishers) {
         if (publisher_ptr->get_subscription_count() +
@@ -123,6 +122,8 @@ public:
           break;
         }
       }
+      // Sleep for a few milliseconds to avoid busy loop
+      std::this_thread::sleep_for(sleep_per_loop_);
     }
     return matched;
   }
@@ -155,7 +156,6 @@ public:
     bool matched = false;
     while (!matched && ((clock::now() - start) < timeout)) {
       exec.spin_node_some(subscriber_node_);
-
       matched = true;
       for (const auto & topic_name : topic_names) {
         if (subscriptions_.find(topic_name) == subscriptions_.end() ||
@@ -165,6 +165,8 @@ public:
           break;
         }
       }
+      // Sleep for a few milliseconds to avoid busy loop
+      std::this_thread::sleep_for(sleep_per_loop_);
     }
     return matched;
   }
@@ -178,6 +180,8 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start, timeout)) {
           exec.spin_node_some(subscriber_node_);
+          // Sleep for a few milliseconds to avoid busy loop
+          std::this_thread::sleep_for(sleep_per_loop_);
         }
       });
   }
@@ -188,6 +192,8 @@ public:
     auto start = std::chrono::high_resolution_clock::now();
     while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start)) {
       exec.spin_node_some(subscriber_node_);
+      // Sleep for a few milliseconds to avoid busy loop
+      std::this_thread::sleep_for(sleep_per_loop_);
     }
   }
 
@@ -218,6 +224,7 @@ private:
     std::vector<std::shared_ptr<rclcpp::SerializedMessage>>> subscribed_messages_;
   std::unordered_map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
+  const std::chrono::milliseconds sleep_per_loop_ = std::chrono::milliseconds(2);
 };
 
 }  // namespace rosbag2_test_common
