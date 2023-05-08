@@ -16,13 +16,9 @@
 
 #include <cstdlib>
 #include <future>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-
-// rclcpp must be included before process_execution_helpers.hpp
-#include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
@@ -31,7 +27,6 @@
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
-//  #include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
