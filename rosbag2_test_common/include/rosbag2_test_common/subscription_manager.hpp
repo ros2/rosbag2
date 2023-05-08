@@ -143,7 +143,7 @@ public:
       throw std::invalid_argument("List of topic names is empty");
     }
     for (const auto & topic_name : topic_names) {
-      if (subscriptions_.find(topic_name) == subscriptions_.end()) {
+      if (subscriptions_.count(topic_name) == 0) {
         throw std::invalid_argument(
                 "Publisher's topic name = `" + topic_name + "` not found in expected topics list");
       }
