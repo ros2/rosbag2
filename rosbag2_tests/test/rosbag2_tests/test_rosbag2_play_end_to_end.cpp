@@ -115,12 +115,12 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
     });
 
   EXPECT_TRUE(sub_->spin_and_wait_for_matched({"/test_topic", "/array_topic"}));
+  auto subscription_future = sub_->spin_subscriptions();
 
   // Send resume service call for player
   ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
   successful_service_request<Resume>(cli_resume_);
 
-  auto subscription_future = sub_->spin_subscriptions();
   subscription_future.get();
 
   auto primitive_messages = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/test_topic");
@@ -146,8 +146,7 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
         Field(
           &test_msgs::msg::Arrays::string_values,
           ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
-  stop_execution(process_id);
-  cleanup_process_handle.cancel();
+  EXPECT_TRUE(wait_until_completion(process_id));
 }
 
 TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
@@ -168,8 +167,7 @@ TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_needed_coverter_plugin_
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_THAT(
-    error_output, HasSubstr("Could not find converter for format wrong_format"));
+  EXPECT_THAT(error_output, HasSubstr("Could not find converter for format wrong_format"));
 }
 
 TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
@@ -203,8 +201,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
     EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
-    stop_execution(process_id);
-    cleanup_process_handle.cancel();
+    EXPECT_TRUE(wait_until_completion(process_id));
   }
 
   // Play with filter for both topics
@@ -236,8 +233,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     EXPECT_THAT(primitive_messages, SizeIs(Ge(num_basic_msgs)));
     EXPECT_THAT(array_messages, SizeIs(Ge(num_array_msgs)));
-    stop_execution(process_id);
-    cleanup_process_handle.cancel();
+    EXPECT_TRUE(wait_until_completion(process_id));
   }
 
   // Play with filter for non-existent topic
@@ -271,8 +267,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     EXPECT_THAT(primitive_messages, SizeIs(Eq(0u)));
     EXPECT_THAT(array_messages, SizeIs(Eq(0u)));
-    stop_execution(process_id);
-    cleanup_process_handle.cancel();
+    EXPECT_TRUE(wait_until_completion(process_id));
   }
 }
 

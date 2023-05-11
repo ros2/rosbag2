@@ -180,8 +180,6 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start, timeout)) {
           exec.spin_node_some(subscriber_node_);
-          // Sleep for a few milliseconds to avoid busy loop
-          std::this_thread::sleep_for(sleep_per_loop_);
         }
       });
   }
@@ -192,8 +190,6 @@ public:
     auto start = std::chrono::high_resolution_clock::now();
     while (rclcpp::ok() && continue_spinning(expected_topics_with_size_, start)) {
       exec.spin_node_some(subscriber_node_);
-      // Sleep for a few milliseconds to avoid busy loop
-      std::this_thread::sleep_for(sleep_per_loop_);
     }
   }
 
@@ -213,6 +209,8 @@ private:
 
     for (const auto & topic_expected : expected_topics_with_sizes) {
       if (subscribed_messages_[topic_expected.first].size() < topic_expected.second) {
+        // Sleep for a few milliseconds to avoid busy loop
+        std::this_thread::sleep_for(sleep_per_loop_);
         return true;
       }
     }
