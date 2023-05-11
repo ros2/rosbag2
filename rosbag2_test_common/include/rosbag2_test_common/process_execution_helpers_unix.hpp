@@ -94,6 +94,29 @@ ProcessHandle start_execution(const std::string & command)
   return process_id;
 }
 
+/// @brief Wait for process to finish with timeout
+/// @param process_id Process ID
+/// @param timeout Timeout in fraction of seconds
+/// @return true if process has finished during timeout and false if timeout was reached and
+/// process is still running
+bool wait_until_completion(
+  const ProcessHandle & process_id,
+  std::chrono::duration<double> timeout = std::chrono::seconds(5))
+{
+  pid_t wait_ret_code = 0;
+  int status = EXIT_FAILURE;
+  std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
+  // Wait for process to finish with timeout
+  while (wait_ret_code == 0 && std::chrono::steady_clock::now() - start < timeout) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // WNOHANG - wait for processes without causing the caller to be blocked
+    wait_ret_code = waitpid(process_id, &status, WNOHANG);
+  }
+  EXPECT_NE(wait_ret_code, -1);
+  EXPECT_EQ(wait_ret_code, process_id) << "status = " << status;
+  return wait_ret_code != 0;
+}
+
 /// @brief Force to stop process with signal if it's currently running
 /// @param process_id Process ID
 /// @param signum Signal to use for stopping process. The default is SIGINT.
@@ -128,29 +151,6 @@ void stop_execution(
     EXPECT_EQ(WIFSIGNALED(status), false) << "Process terminated by signal: " << WTERMSIG(status);
     EXPECT_EQ(WEXITSTATUS(status), EXIT_SUCCESS) << "status = " << status;
   }
-}
-
-/// @brief Wait for process to finish with timeout
-/// @param process_id Process ID
-/// @param timeout Timeout in fraction of seconds
-/// @return true if process has finished during timeout and false if timeout was reached and
-/// process is still running
-bool wait_until_completion(
-  const ProcessHandle & process_id,
-  std::chrono::duration<double> timeout = std::chrono::seconds(5))
-{
-  pid_t wait_ret_code = 0;
-  int status = EXIT_FAILURE;
-  std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
-  // Wait for process to finish with timeout
-  while (wait_ret_code == 0 && std::chrono::steady_clock::now() - start < timeout) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // WNOHANG - wait for processes without causing the caller to be blocked
-    wait_ret_code = waitpid(process_id, &status, WNOHANG);
-  }
-  EXPECT_NE(wait_ret_code, -1);
-  EXPECT_EQ(wait_ret_code, process_id) << "status = " << status;
-  return wait_ret_code != 0;
 }
 
 #endif  // ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_UNIX_HPP_

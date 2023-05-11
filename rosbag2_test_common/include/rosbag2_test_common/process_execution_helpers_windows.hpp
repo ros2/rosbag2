@@ -105,6 +105,26 @@ ProcessHandle start_execution(const std::string & command)
   return process;
 }
 
+/// @brief Wait for process to finish with timeout
+/// @param process_id Process ID
+/// @param timeout Timeout in fraction of seconds
+/// @return true if process has finished during timeout and false if timeout was reached and
+/// process is still running
+bool wait_until_completion(
+  const ProcessHandle & process_id,
+  std::chrono::duration<double> timeout = std::chrono::seconds(5))
+{
+  DWORD exit_code = 0;
+  std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
+  EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
+  // 259 indicates that the process is still active
+  while (exit_code == 259 && std::chrono::steady_clock::now() - start < timeout) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
+  }
+  return exit_code != 259;
+}
+
 /// @brief Force to stop process with signal if it's currently running
 /// @param process_id Process ID
 /// @param signum Not uses for Windows version
@@ -132,26 +152,6 @@ void stop_execution(
   }
   close_process_handles(handle.process_info);
   CloseHandle(handle.job_handle);
-}
-
-/// @brief Wait for process to finish with timeout
-/// @param process_id Process ID
-/// @param timeout Timeout in fraction of seconds
-/// @return true if process has finished during timeout and false if timeout was reached and
-/// process is still running
-bool wait_until_completion(
-  const ProcessHandle & process_id,
-  std::chrono::duration<double> timeout = std::chrono::seconds(5))
-{
-  DWORD exit_code = 0;
-  std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
-  EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  // 259 indicates that the process is still active
-  while (exit_code == 259 && std::chrono::steady_clock::now() - start < timeout) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  }
-  return exit_code != 259;
 }
 
 #endif  // ROSBAG2_TEST_COMMON__PROCESS_EXECUTION_HELPERS_WINDOWS_HPP_
