@@ -106,12 +106,12 @@ ProcessHandle start_execution(const std::string & command)
 }
 
 /// @brief Wait for process to finish with timeout
-/// @param process_id Process ID
+/// @param handle Process handle returned from start_execution(command)
 /// @param timeout Timeout in fraction of seconds
 /// @return true if process has finished during timeout and false if timeout was reached and
 /// process is still running
 bool wait_until_completion(
-  const ProcessHandle & process_id,
+  const ProcessHandle & handle,
   std::chrono::duration<double> timeout = std::chrono::seconds(5))
 {
   DWORD exit_code = 0;
@@ -126,7 +126,7 @@ bool wait_until_completion(
 }
 
 /// @brief Force to stop process with signal if it's currently running
-/// @param process_id Process ID
+/// @param handle Process handle returned from start_execution(command)
 /// @param signum Not uses for Windows version
 /// @param timeout Timeout in fraction of seconds
 void stop_execution(
@@ -142,7 +142,7 @@ void stop_execution(
   // still running properly before killing it.
   if (exit_code == 259) {
     EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId));
-    bool process_finished = wait_until_completion(timeout);
+    bool process_finished = wait_until_completion(handle, timeout);
     if (!process_finished) {
       std::cerr << "Testing process " << handle.process_info.hProcess <<
         " hangout. Killing it with TerminateProcess(..) \n";
