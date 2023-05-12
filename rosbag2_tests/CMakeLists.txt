@@ -35,6 +35,7 @@ if(BUILD_TESTING)
   find_package(rcpputils REQUIRED)
   find_package(rosbag2_compression REQUIRED)
   find_package(rosbag2_cpp REQUIRED)
+  find_package(rosbag2_interfaces REQUIRED)
   find_package(rosbag2_storage REQUIRED)
   find_package(rosbag2_storage_default_plugins REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
@@ -63,11 +64,11 @@ if(BUILD_TESTING)
   if(TARGET test_rosbag2_play_end_to_end)
     target_link_libraries(test_rosbag2_play_end_to_end
       rclcpp::rclcpp
+      ${rosbag2_interfaces_TARGETS}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
       ${test_msgs_TARGETS}
     )
-    ament_add_test_label(test_rosbag2_play_end_to_end xfail)
   endif()
 
   ament_add_gmock(test_rosbag2_info_end_to_end
@@ -78,7 +79,6 @@ if(BUILD_TESTING)
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
     )
-    ament_add_test_label(test_rosbag2_info_end_to_end xfail)
   endif()
 
   ament_add_gmock(test_converter
