@@ -196,7 +196,7 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--storage-preset-profile', type=str, default=default_preset_profile,
         choices=[preset[0] for preset in preset_profiles],
-        help=f'R|Select a preset configuration for storage plugin "{plugin_id}". '
-             'Settings in this profile can still be overriden by other explicit options '
+        help=f'Select a preset configuration for storage plugin "{plugin_id}". '
+             'Settings in this profile can still be overridden by other explicit options '
              'and --storage-config-file. Profiles:\n' +
              '\n'.join([f'{preset[0]}: {preset[1]}' for preset in preset_profiles]))
