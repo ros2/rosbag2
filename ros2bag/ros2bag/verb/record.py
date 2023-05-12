@@ -121,7 +121,7 @@ class RecordVerb(VerbExtension):
             help='Maximum size (in bytes) of messages to hold in each buffer of cache. '
                  'Default: %(default)d. The cache is handled through double buffering, '
                  'which means that in pessimistic case up to twice the parameter value of memory '
-                 'is needed. A rule of thumb is to cache an order of magitude corresponding to '
+                 'is needed. A rule of thumb is to cache an order of magnitude corresponding to '
                  'about one second of total recorded data volume. '
                  'If the value specified is 0, then every message is directly written to disk.')
         parser.add_argument(
