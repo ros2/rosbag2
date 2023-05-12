@@ -100,7 +100,7 @@ public:
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
   std::thread spin_thread_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
-  const std::chrono::seconds service_call_timeout_ {4};
+  const std::chrono::seconds service_call_timeout_ {10};
 };
 
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {

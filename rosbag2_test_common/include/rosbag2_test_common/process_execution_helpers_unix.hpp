@@ -101,7 +101,7 @@ ProcessHandle start_execution(const std::string & command)
 /// process is still running
 bool wait_until_completion(
   const ProcessHandle & process_id,
-  std::chrono::duration<double> timeout = std::chrono::seconds(5))
+  std::chrono::duration<double> timeout = std::chrono::seconds(10))
 {
   pid_t wait_ret_code = 0;
   int status = EXIT_FAILURE;

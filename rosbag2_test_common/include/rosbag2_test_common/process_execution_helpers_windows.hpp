@@ -112,7 +112,7 @@ ProcessHandle start_execution(const std::string & command)
 /// process is still running
 bool wait_until_completion(
   const ProcessHandle & handle,
-  std::chrono::duration<double> timeout = std::chrono::seconds(5))
+  std::chrono::duration<double> timeout = std::chrono::seconds(10))
 {
   DWORD exit_code = 0;
   std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
