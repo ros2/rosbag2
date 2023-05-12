@@ -205,6 +205,10 @@ TEST_P(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   pub_manager.setup_publisher(topic_name, message, 10);
   auto process_handle = start_execution(
     get_base_record_command() + " " + topic_name);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name.c_str())) <<
+    "Expected find rosbag subscription";
+
   wait_for_storage_file();
   pub_manager.run_publishers();
   stop_execution(process_handle, SIGTERM);

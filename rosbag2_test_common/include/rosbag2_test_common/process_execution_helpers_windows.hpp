@@ -75,7 +75,7 @@ int execute_and_wait_until_completion(const std::string & command, const std::st
   auto process = create_process(command_char, path.c_str());
   DWORD exit_code = 259;  // 259 is the code one gets if the process is still active.
   while (exit_code == 259) {
-    GetExitCodeProcess(process.hProcess, &exit_code);
+    EXPECT_TRUE(GetExitCodeProcess(process.hProcess, &exit_code));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   close_process_handles(process);
@@ -105,16 +105,51 @@ ProcessHandle start_execution(const std::string & command)
   return process;
 }
 
-void stop_execution(const ProcessHandle & handle, int signum = SIGINT)
+/// @brief Wait for process to finish with timeout
+/// @param handle Process handle returned from start_execution(command)
+/// @param timeout Timeout in fraction of seconds
+/// @return true if process has finished during timeout and false if timeout was reached and
+/// process is still running
+bool wait_until_completion(
+  const ProcessHandle & handle,
+  std::chrono::duration<double> timeout = std::chrono::seconds(10))
+{
+  DWORD exit_code = 0;
+  std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
+  EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
+  // 259 indicates that the process is still active
+  while (exit_code == 259 && std::chrono::steady_clock::now() - start < timeout) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
+  }
+  return exit_code != 259;
+}
+
+/// @brief Force to stop process with signal if it's currently running
+/// @param handle Process handle returned from start_execution(command)
+/// @param signum Not uses for Windows version
+/// @param timeout Timeout in fraction of seconds
+void stop_execution(
+  const ProcessHandle & handle,
+  int signum = SIGINT,
+  std::chrono::duration<double> timeout = std::chrono::seconds(10))
 {
   // Match the Unix version by allowing for int signum argument - however Windows does not have
   // Linux signals in the same way, so there isn't a 1:1 mapping to dispatch e.g. SIGTERM
   DWORD exit_code;
-  GetExitCodeProcess(handle.process_info.hProcess, &exit_code);
+  EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
   // 259 indicates that the process is still active: we want to make sure that the process is
   // still running properly before killing it.
-  ASSERT_THAT(exit_code, Eq(259));
-  GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId);
+  if (exit_code == 259) {
+    EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId));
+    bool process_finished = wait_until_completion(handle, timeout);
+    if (!process_finished) {
+      std::cerr << "Testing process " << handle.process_info.hProcess <<
+        " hangout. Killing it with TerminateProcess(..) \n";
+      EXPECT_TRUE(TerminateProcess(handle.process_info.hProcess, 2));
+      EXPECT_TRUE(process_finished);
+    }
+  }
   close_process_handles(handle.process_info);
   CloseHandle(handle.job_handle);
 }
