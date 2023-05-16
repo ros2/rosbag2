@@ -193,3 +193,33 @@ TEST_F(TestRewrite, test_compress) {
   EXPECT_TRUE(compressed_bagfile.exists());
   EXPECT_TRUE(compressed_bagfile.is_regular_file());
 }
+
+TEST_F(TestRewrite, test_compress_multiple_output) {
+  // In this test, check the rewriter perform correctly when there are multiple
+  // outputs with compression(message compression_mode).
+
+  use_input_a();
+
+  rosbag2_storage::StorageOptions output_storage1;
+  output_storage1.uri = (output_dir_ / "output1_compressed").string();
+  output_storage1.storage_id = "sqlite3";
+  rosbag2_transport::RecordOptions output_record;
+  output_record.all = true;
+  output_record.compression_mode = "message";
+  output_record.compression_format = "zstd";
+
+  rosbag2_storage::StorageOptions output_storage2(output_storage1);
+  output_storage2.uri = (output_dir_ / "output2_compressed").string();
+
+  output_bags_.push_back({output_storage1, output_record});
+  output_bags_.push_back({output_storage2, output_record});
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto compressed_bagfile1 = output_dir_ / "output1_compressed" / "output1_compressed_0.db3";
+  auto compressed_bagfile2 = output_dir_ / "output2_compressed" / "output2_compressed_0.db3";
+  EXPECT_TRUE(compressed_bagfile1.exists());
+  EXPECT_TRUE(compressed_bagfile1.is_regular_file());
+  EXPECT_TRUE(compressed_bagfile2.exists());
+  EXPECT_TRUE(compressed_bagfile2.is_regular_file());
+}

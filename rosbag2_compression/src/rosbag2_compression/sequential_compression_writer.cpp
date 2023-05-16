@@ -313,11 +313,49 @@ void SequentialCompressionWriter::write(
   if (compression_options_.compression_mode == CompressionMode::FILE) {
     SequentialWriter::write(message);
   } else {
+    // since the compression operation will manipulate memory inplace, thus
+    // if there are multiple writers with message compression, different manipulation
+    // on the same memory address will cause problem. This problem is
+    // described in issue: https://github.com/ros2/rosbag2/issues/1262
+    // To solve the problem, deepcopy message before sendin to compressor
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message_copy =
+      std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    // initialize buffer
+    message_copy->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+      new rcutils_uint8_array_t,
+      [this](rcutils_uint8_array_t * msg) {
+        auto fini_return = rcutils_uint8_array_fini(msg);
+        delete msg;
+        if (fini_return != RCUTILS_RET_OK) {
+          ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+            "Failed to destroy serialized message: " << rcutils_get_error_string().str);
+        }
+      });
+    rcutils_allocator_t allocator = rcutils_get_default_allocator();
+    auto ret = rcutils_uint8_array_init(
+      message_copy->serialized_data.get(),
+      message->serialized_data->buffer_capacity,
+      &allocator);
+    if (ret != RCUTILS_RET_OK) {
+      ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
+        "Failed to initialize memory when copy message: " << rcutils_get_error_string().str);
+    }
+
+    // deepcopy message
+    memcpy(
+      message_copy->serialized_data->buffer,
+      message->serialized_data->buffer,
+      message->serialized_data->buffer_length);
+    message_copy->topic_name = message->topic_name;
+    message_copy->time_stamp = message->time_stamp;
+    message_copy->serialized_data->buffer_capacity = message->serialized_data->buffer_capacity;
+    message_copy->serialized_data->buffer_length = message->serialized_data->buffer_length;
+
     std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
       compressor_message_queue_.pop();
     }
-    compressor_message_queue_.push(message);
+    compressor_message_queue_.push(message_copy);
     compressor_condition_.notify_one();
   }
 }
