@@ -40,6 +40,8 @@
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
+#include "rosidl_typesupport_cpp/identifier.hpp"
+
 namespace rosbag2_transport
 {
 
@@ -96,7 +98,7 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
-  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
+  std::shared_ptr<rclcpp::SubscriptionBase> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   /**
@@ -439,19 +441,37 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
-std::shared_ptr<rclcpp::GenericSubscription>
+std::shared_ptr<rclcpp::SubscriptionBase>
 RecorderImpl::create_subscription(
-  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
+  const std::string & topic_name, const std::string & topic_type_name, const rclcpp::QoS & qos)
 {
-  auto subscription = node->create_generic_subscription(
+  auto typesupport_lib = rclcpp::get_typesupport_library(
+    topic_type_name,
+    rosidl_typesupport_cpp::typesupport_identifier);
+  const rosidl_message_type_support_t * message_typesupport = rclcpp::get_typesupport_handle(
+    topic_type_name,
+    rosidl_typesupport_cpp::typesupport_identifier,
+    *typesupport_lib);
+  const rosidl_runtime_c__type_description__TypeDescription * type_description =
+    message_typesupport->get_type_description_func(message_typesupport);
+  auto dynamic_typesupport =
+    rclcpp::dynamic_typesupport::DynamicMessageTypeSupport::make_shared(*type_description);
+
+  auto subscription = std::make_shared<rclcpp::DynamicSubscription>(
+    node->get_node_base_interface().get(),
+    dynamic_typesupport,
     topic_name,
-    topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type_name](
+      std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo & message_info
+    ) {
+      (void)message_info;
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, node->get_clock()->now());
+        writer_->write(message, topic_name, topic_type_name, node->get_clock()->now());
       }
-    });
+    },
+    rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>>());
   return subscription;
 }
 
