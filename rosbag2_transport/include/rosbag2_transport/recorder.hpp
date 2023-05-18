@@ -96,7 +96,7 @@ public:
   topics_using_fallback_qos() const;
 
   ROSBAG2_TRANSPORT_PUBLIC
-  const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
+  const std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> &
   subscriptions() const;
 
   ROSBAG2_TRANSPORT_PUBLIC
