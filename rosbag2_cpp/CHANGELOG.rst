@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.1 (2023-05-18)
+-------------------
 * Add recorder stop() API (`#1300 <https://github.com/ros2/rosbag2/issues/1300>`_) (`#1334 <https://github.com/ros2/rosbag2/issues/1334>`_)
 * Contributors: mergify[bot]
 
