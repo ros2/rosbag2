@@ -83,7 +83,7 @@ public:
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
   std::atomic<bool> stop_discovery_;
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> subscriptions_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
 private:
   void topics_discovery();
@@ -643,7 +643,7 @@ Recorder::topics_using_fallback_qos() const
   return pimpl_->topics_warned_about_incompatibility_;
 }
 
-const std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericSubscription>> &
+const std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> &
 Recorder::subscriptions() const
 {
   return pimpl_->subscriptions_;
