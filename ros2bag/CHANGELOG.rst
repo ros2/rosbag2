@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.1 (2023-05-18)
+-------------------
+* Cleanup the help text for ros2 bag record. (`#1329 <https://github.com/ros2/rosbag2/issues/1329>`_) (`#1333 <https://github.com/ros2/rosbag2/issues/1333>`_)
+* Contributors: mergify[bot]
+
 0.22.0 (2023-04-18)
 -------------------
 
