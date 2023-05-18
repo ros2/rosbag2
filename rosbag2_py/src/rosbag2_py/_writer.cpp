@@ -97,6 +97,7 @@ PYBIND11_MODULE(_writer, m) {
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyWriter::open))
   .def("write", &PyWriter::write)
+  .def("close", &PyWriter::close)
   .def("remove_topic", &PyWriter::remove_topic)
   .def(
     "create_topic",
