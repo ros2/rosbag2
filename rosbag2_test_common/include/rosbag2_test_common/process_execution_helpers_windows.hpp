@@ -18,7 +18,7 @@
 #include <gmock/gmock.h>
 
 #include <direct.h>
-#include <Windows.h>
+#include <windows.h>
 
 #include <chrono>
 #include <csignal>
@@ -46,7 +46,10 @@ PROCESS_INFORMATION create_process(TCHAR * command, const char * path = nullptr)
     nullptr,
     nullptr,
     false,
-    0,
+    // Create process suspended and resume it after adding to the newly created job. Otherwise,
+    // there is a potential race condition where newly created process starts a subprocess
+    // before we've called AssignProcessToJobObject();
+    CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED,
     nullptr,
     path,
     &start_up_info,
@@ -73,8 +76,9 @@ int execute_and_wait_until_completion(const std::string & command, const std::st
   const_char_to_tchar(command.c_str(), command_char);
 
   auto process = create_process(command_char, path.c_str());
-  DWORD exit_code = 259;  // 259 is the code one gets if the process is still active.
-  while (exit_code == 259) {
+  ResumeThread(process.hThread);
+  DWORD exit_code = STILL_ACTIVE;
+  while (exit_code == STILL_ACTIVE) {
     EXPECT_TRUE(GetExitCodeProcess(process.hProcess, &exit_code));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -97,6 +101,7 @@ ProcessHandle start_execution(const std::string & command)
   auto process_info = create_process(command_char);
 
   AssignProcessToJobObject(h_job, process_info.hProcess);
+  ResumeThread(process_info.hThread);
   Process process;
   process.process_info = process_info;
   process.job_handle = h_job;
@@ -117,12 +122,12 @@ bool wait_until_completion(
   DWORD exit_code = 0;
   std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
   EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  // 259 indicates that the process is still active
-  while (exit_code == 259 && std::chrono::steady_clock::now() - start < timeout) {
+  while (exit_code == STILL_ACTIVE && std::chrono::steady_clock::now() - start < timeout) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
   }
-  return exit_code != 259;
+  EXPECT_EQ(exit_code, 0);
+  return exit_code != STILL_ACTIVE;
 }
 
 /// @brief Force to stop process with signal if it's currently running
@@ -135,16 +140,37 @@ void stop_execution(
   std::chrono::duration<double> timeout = std::chrono::seconds(10))
 {
   // Match the Unix version by allowing for int signum argument - however Windows does not have
-  // Linux signals in the same way, so there isn't a 1:1 mapping to dispatch e.g. SIGTERM
-  DWORD exit_code;
+  // Linux signals in the same way, so there isn't a 1:1 mapping to dispatch e.g. SIGINT or SIGTERM
+  DWORD exit_code = STILL_ACTIVE;
   EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  // 259 indicates that the process is still active: we want to make sure that the process is
-  // still running properly before killing it.
-  if (exit_code == 259) {
-    EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId));
+  // Make sure that the process is still running properly before stopping it.
+  if (exit_code == STILL_ACTIVE) {
+    switch (signum) {
+      // According to the
+      // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/signal?view=msvc-170
+      // SIGINT and SIGBREAK is not supported for any Win32 application.
+      // Need to use native Windows control event instead.
+      case SIGINT:
+        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwProcessId));
+        break;
+      case SIGBREAK:
+        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, handle.process_info.dwProcessId));
+        break;
+      case SIGTERM:
+      // The CTRL_CLOSE_EVENT is analog of the SIGTERM from POSIX. Windows sends CTRL_CLOSE_EVENT
+      // to all processes attached to a console when the user closes the console (either by
+      // clicking Close on the console window's window menu, or by clicking the End Task
+      // button command from Task Manager). Although according to the
+      // https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent the
+      // GenerateConsoleCtrlEvent doesn't support sending CTRL_CLOSE_EVENT. There are no way to
+      // directly send CTRL_CLOSE_EVENT to the process in the same console application.
+      // Therefore, adding SIGTERM to the unsupported events.
+      default:
+        throw std::runtime_error("Unsupported signum: " + std::to_string(signum));
+    }
     bool process_finished = wait_until_completion(handle, timeout);
     if (!process_finished) {
-      std::cerr << "Testing process " << handle.process_info.hProcess <<
+      std::cerr << "Testing process " << handle.process_info.dwProcessId <<
         " hangout. Killing it with TerminateProcess(..) \n";
       EXPECT_TRUE(TerminateProcess(handle.process_info.hProcess, 2));
       EXPECT_TRUE(process_finished);
