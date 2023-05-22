@@ -95,7 +95,7 @@ class RecordVerb(VerbExtension):
                  'It has no effect if --no-discovery is enabled.')
         parser.add_argument(
             '--ignore-leaf-topics', action='store_true',
-            help='Ignore topics without a publisher.')
+            help='Ignore topics without a subscription.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
