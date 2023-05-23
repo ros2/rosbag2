@@ -1,0 +1,13 @@
+// -*- jsonc -*-
+{
+    "git.alwaysSignOff": true,
+
+    // https://github.com/microsoft/vscode-cpptools/issues/722
+    "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.default.cppStandard": "c++17",
+
+    "[cpp]": {
+        "editor.formatOnSave": true
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}",
+}
