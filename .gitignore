@@ -1,7 +1,10 @@
 .idea/
 .ipynb_checkpoints/
+.vscode/
 cmake-build-debug/
 cmake-build-release/
-build/
+build
+install
+log
 venv/
 **/.pytest_cache/
