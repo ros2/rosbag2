@@ -54,10 +54,9 @@ import sys
 import time
 
 from ament_index_python import get_package_share_directory
-
 import launch
-
 import launch_ros
+from rosbag2_py import get_default_storage_id
 
 import yaml
 
@@ -197,24 +196,31 @@ def _producer_node_exited(event, context):
 
     # Handle clearing bag files
     if not node_params['preserve_bags']:
-        bag_files = pathlib.Path.cwd().joinpath(node_params['bag_folder']).glob('*.db3')
-        stats_path = pathlib.Path.cwd().joinpath(node_params['bag_folder'], 'bagfiles_info.yaml')
-        stats = {
-            'total_size': 0,
-            'bagfiles': []
-        }
+        storage_id = get_default_storage_id()
+        if node_params['storage_id'] != '':
+            storage_id = node_params['storage_id']
+        if storage_id == 'sqlite3' or storage_id == 'mcap':
+            file_ext_mask = '*.mcap' if storage_id == 'mcap' else '*.db3'
+            bag_files = pathlib.Path.cwd().joinpath(node_params['bag_folder']).glob(file_ext_mask)
+            stats_path = pathlib.Path.cwd().joinpath(node_params['bag_folder'],
+                                                     'bagfiles_info.yaml')
+            stats = {
+                'total_size': 0,
+                'bagfiles': []
+            }
 
-        # Delete rosbag files
-        for f in bag_files:
-            filesize = f.stat().st_size
-            f.unlink()
-            stats['bagfiles'].append({f.name: {'size': filesize}})
-            stats['total_size'] += filesize
+            # Delete rosbag files
+            for f in bag_files:
+                filesize = f.stat().st_size
+                f.unlink()
+                stats['bagfiles'].append({f.name: {'size': filesize}})
+                stats['total_size'] += filesize
 
-        # Dump files size information
-        with open(stats_path, 'w') as stats_file:
-            yaml.dump(stats, stats_file)
-
+            # Dump files size information
+            with open(stats_path, 'w') as stats_file:
+                yaml.dump(stats, stats_file)
+        else:
+            print(f"Can't delete bag files. Unsupported storage_id = {storage_id}")
     # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
     if _rosbag_pid is not None and transport:
         os.kill(_rosbag_pid, signal.SIGINT)
@@ -270,6 +276,7 @@ def generate_launch_description():
     # Producers options
     producers_params = bench_cfg['benchmark']['parameters']
 
+    storage_id = producers_params.get('storage_id', [''])
     max_cache_size_params = producers_params.get('max_cache_size')
     max_bag_size_params = producers_params.get('max_bag_size')
     compression_params = producers_params.get('compression')
@@ -298,7 +305,8 @@ def generate_launch_description():
                                            compression_queue_size,
                                            compression_threads,
                                            storage_config,
-                                           max_bag_size):
+                                           max_bag_size,
+                                           storage):
         # Storage conf parameter for each producer
         st_conf_filename = storage_config.replace('.yaml', '')
         storage_conf_path = ''
@@ -315,8 +323,9 @@ def generate_launch_description():
 
         # Generates unique title for producer
         node_title = 'run_' + \
-            '{i}_{cache}_{comp}_{comp_q}_{comp_t}_{st_conf}_{bag_size}'.format(
+            '{i}_{storage}_{cache}_{comp}_{comp_q}_{comp_t}_{st_conf}_{bag_size}'.format(
                 i=i,
+                storage=storage,
                 cache=cache,
                 comp=compression if compression else 'default_compression',
                 comp_q=compression_queue_size,
@@ -351,7 +360,8 @@ def generate_launch_description():
                 'compression_threads': compression_threads,
                 'storage_config_file': str(storage_conf_path),
                 'config_file': str(_producers_cfg_path),
-                'max_bag_size': max_bag_size
+                'max_bag_size': max_bag_size,
+                'storage_id': str(storage)
             }
         )
 
@@ -364,7 +374,8 @@ def generate_launch_description():
             compression_queue_size,
             compression_threads,
             storage_config,
-            max_bag_size)
+            max_bag_size,
+            storage)
         for i in range(0, repeat_each)
         for cache in max_cache_size_params
         for compression in compression_params
@@ -372,6 +383,7 @@ def generate_launch_description():
         for compression_threads in compression_threads_params
         for storage_config in storage_config_file_params
         for max_bag_size in max_bag_size_params
+        for storage in storage_id
     ]
 
     ld = launch.LaunchDescription()
@@ -391,6 +403,8 @@ def generate_launch_description():
             {'compression_threads': producer_param['compression_threads']}
         ]
 
+        if producer_param['storage_id'] != '':
+            parameters.append({'storage_id': producer_param['storage_id']})
         if producer_param['storage_config_file'] != '':
             parameters.append({'storage_config_file': producer_param['storage_config_file']})
         if producer_param['compression_format'] != '':
@@ -415,6 +429,11 @@ def generate_launch_description():
 
             # ROS2 bag process for recording messages
             rosbag_args = []
+            if producer_param['storage_id']:
+                rosbag_args += [
+                    '-s',
+                    str(producer_param['storage_id'])
+                ]
             if producer_param['storage_config_file']:
                 rosbag_args += [
                     '--storage-config-file',

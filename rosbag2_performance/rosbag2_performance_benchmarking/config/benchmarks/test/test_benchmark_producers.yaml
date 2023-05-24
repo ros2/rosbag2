@@ -8,6 +8,7 @@ rosbag2_performance_benchmarking:
         no_transport:         False # Whether to run storage-only or end-to-end (including transport) benchmark
         preserve_bags:        False # Whether to leave bag files after experiment (and between runs). Some configurations can take lots of space!
         parameters:                 # Each combination of parameters in this section will be benchmarked
+          storage_id:             ["mcap", "sqlite3"]
           max_cache_size:         [100000000]
           max_bag_size:           [0]
           compression:            [""]
