@@ -222,18 +222,21 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     ROSBAG2_CPP_LOG_ERROR(
       "Message type name '%s' not understood by type definition search, "
       "definition will be left empty in bag.", err.what());
+    format = Format::UNKNOWN;
   }
   rosbag2_storage::MessageDefinition out;
   switch (format) {
     case Format::UNKNOWN:
-      throw std::runtime_error{"could not determine format of message definition for type " +
-              root_topic_type};
+      out.encoding = "unknown";
+      break;
     case Format::MSG:
       out.encoding = "ros2msg";
       break;
     case Format::IDL:
       out.encoding = "ros2idl";
       break;
+    default:
+      throw std::runtime_error("switch is not exhaustive");
   }
   out.encoded_message_definition = result;
   out.topic_type = root_topic_type;
