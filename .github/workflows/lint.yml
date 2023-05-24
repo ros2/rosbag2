@@ -82,27 +82,6 @@ jobs:
             rosbag2_transport
             shared_queues_vendor
 
-  ament_lint_clang_format: # Linters applicable to C++ packages formatted with clang-format
-    name: ament_${{ matrix.linter }}
-    runs-on: ubuntu-latest
-    container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
-    strategy:
-      fail-fast: false
-      matrix:
-          linter: [cppcheck, cpplint, clang_format]
-          include:
-          - linter: clang_format
-            arguments: "--config rosbag2_storage_mcap/.clang-format"
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
-      with:
-        linter: ${{ matrix.linter }}
-        arguments: ${{ matrix.arguments }}
-        distribution: rolling
-        package-name: rosbag2_storage_mcap
-
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest

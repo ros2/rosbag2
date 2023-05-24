@@ -1,1 +1,0 @@
-rosbag2_storage_mcap_testdata/BasicMsg b

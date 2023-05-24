@@ -1,9 +1,0 @@
-#include "rosbag2_storage_mcap_testdata/msg/BasicIdl.idl"
-
-module rosbag2_storage_mcap_testdata {
-  module msg {
-    struct ComplexIdl {
-      rosbag2_storage_mcap_testdata::msg::BasicIdl a;
-    };
-  };
-};
