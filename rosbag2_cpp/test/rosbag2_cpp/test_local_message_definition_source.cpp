@@ -125,3 +125,14 @@ TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
     "  };\n"
     "};\n");
 }
+
+TEST(test_local_message_definition_source, no_crash_on_bad_name)
+{
+  LocalMessageDefinitionSource source;
+  rosbag2_storage::MessageDefinition result;
+  ASSERT_NO_THROW(
+  {
+    result = source.get_full_text("rosbag2_test_msgdefs/srv/BasicSrv_Request");
+  });
+  ASSERT_EQ(result.encoding, "unknown");
+}

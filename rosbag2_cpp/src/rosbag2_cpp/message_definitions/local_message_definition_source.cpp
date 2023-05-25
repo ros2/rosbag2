@@ -14,8 +14,6 @@
 
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
-#include <rcutils/logging_macros.h>
-
 #include <fstream>
 #include <functional>
 #include <optional>
@@ -27,8 +25,28 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include "rosbag2_cpp/logging.hpp"
+
 namespace rosbag2_cpp
 {
+
+/// A type name did not match expectations, so a definition could not be looked for.
+class TypenameNotUnderstoodError : public std::exception
+{
+private:
+  std::string name_;
+
+public:
+  explicit TypenameNotUnderstoodError(std::string name)
+  : name_(std::move(name))
+  {}
+
+  const char * what() const noexcept override
+  {
+    return name_.c_str();
+  }
+};
+
 // Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
 static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/)?([a-zA-Z0-9_]+)$)"};
 
@@ -144,7 +162,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   std::smatch match;
   const auto topic_type = definition_identifier.topic_type();
   if (!std::regex_match(topic_type, match, PACKAGE_TYPENAME_REGEX)) {
-    throw std::invalid_argument("Invalid topic_type: " + topic_type);
+    throw TypenameNotUnderstoodError(topic_type);
   }
   std::string package = match[1];
   std::string share_dir = ament_index_cpp::get_package_share_directory(package);
@@ -195,26 +213,30 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   try {
     result = append_recursive(DefinitionIdentifier(root_topic_type, format), max_recursion_depth);
   } catch (const DefinitionNotFoundError & err) {
-    // log that we've fallen back
-    RCUTILS_LOG_WARN_NAMED(
-      "rosbag2_cpp", "no .msg definition for %s, falling back to IDL",
-      err.what());
+    ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
     format = Format::IDL;
     DefinitionIdentifier root_definition_identifier(root_topic_type, format);
     result = (delimiter(root_definition_identifier) +
       append_recursive(root_definition_identifier, max_recursion_depth));
+  } catch (const TypenameNotUnderstoodError & err) {
+    ROSBAG2_CPP_LOG_ERROR(
+      "Message type name '%s' not understood by type definition search, "
+      "definition will be left empty in bag.", err.what());
+    format = Format::UNKNOWN;
   }
   rosbag2_storage::MessageDefinition out;
   switch (format) {
     case Format::UNKNOWN:
-      throw std::runtime_error{"could not determine format of message definition for type " +
-              root_topic_type};
+      out.encoding = "unknown";
+      break;
     case Format::MSG:
       out.encoding = "ros2msg";
       break;
     case Format::IDL:
       out.encoding = "ros2idl";
       break;
+    default:
+      throw std::runtime_error("switch is not exhaustive");
   }
   out.encoded_message_definition = result;
   out.topic_type = root_topic_type;
