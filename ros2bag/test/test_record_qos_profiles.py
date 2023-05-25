@@ -15,6 +15,7 @@
 import contextlib
 from pathlib import Path
 import re
+import sys
 import tempfile
 
 import unittest
@@ -30,6 +31,12 @@ import launch_testing.tools
 
 import pytest
 
+
+_is_windows = sys.platform.lower().startswith('win')
+
+if _is_windows:
+    raise unittest.SkipTest('Skipping test_record_qos_profiles on Windows since they are '
+                            'known to be flaky')
 
 PROFILE_PATH = Path(__file__).parent / 'resources'
 TEST_NODE = 'ros2bag_record_qos_profile_test_node'
@@ -62,6 +69,7 @@ class TestRos2BagRecord(unittest.TestCase):
                 yield pkg_command
         cls.launch_bag_command = launch_bag_command
 
+    @unittest.skipIf(_is_windows, 'Skipped due to the https://github.com/ros2/rosbag2/issues/454')
     def test_qos_simple(self):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -74,6 +82,7 @@ class TestRos2BagRecord(unittest.TestCase):
             matches = expected_string_regex.search(bag_command.output)
             assert not matches, print('ros2bag CLI did not produce the expected output')
 
+    @unittest.skipIf(_is_windows, 'Skipped due to the https://github.com/ros2/rosbag2/issues/454')
     def test_incomplete_qos_profile(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -86,6 +95,7 @@ class TestRos2BagRecord(unittest.TestCase):
             matches = expected_string_regex.search(bag_command.output)
             assert not matches, print('ros2bag CLI did not produce the expected output')
 
+    @unittest.skipIf(_is_windows, 'Skipped due to the https://github.com/ros2/rosbag2/issues/454')
     def test_incomplete_qos_duration(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_duration.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -99,6 +109,7 @@ class TestRos2BagRecord(unittest.TestCase):
             matches = expected_string_regex.search(bag_command.output)
             assert matches, print('ros2bag CLI did not produce the expected output')
 
+    @unittest.skipIf(_is_windows, 'Skipped due to the https://github.com/ros2/rosbag2/issues/454')
     def test_nonexistent_qos_profile(self):
         profile_path = PROFILE_PATH / 'foobar.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
