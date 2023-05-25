@@ -229,8 +229,8 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     // Already warned about this topic
     return;
   }
-  const auto qos_profile = existing_subscription->second->qos_profile();
-  const auto & used_profile = qos_profile.get_rmw_qos_profile();
+  const auto actual_qos = existing_subscription->second->get_actual_qos();
+  const auto & used_profile = actual_qos.get_rmw_qos_profile();
   auto publishers_info = node_->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
     auto new_profile = info.qos_profile().get_rmw_qos_profile();
