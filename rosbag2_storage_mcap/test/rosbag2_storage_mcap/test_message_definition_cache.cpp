@@ -101,7 +101,7 @@ TEST(test_message_definition_cache, can_resolve_msg_with_idl_deps)
             R"r(================================================================================
 IDL: rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl
 // generated from rosidl_adapter/resource/msg.idl.em
-// with input from rosbag2_storage_mcap_testdata/msg\\ComplexMsgDependsOnIdl.msg
+// with input from rosbag2_storage_mcap_testdata/msg\ComplexMsgDependsOnIdl.msg
 // generated code does not contain a copyright notice
 
 #include "rosbag2_storage_mcap_testdata/msg/BasicIdl.idl"
