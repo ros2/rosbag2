@@ -20,6 +20,7 @@
 #include "rmw/types.h"
 
 #include "qos.hpp"
+#include "rmw_time.h"  // NOLINT
 
 TEST(TestQoS, serialization)
 {
@@ -96,6 +97,53 @@ TEST(TestQoS, detect_new_qos_fields)
   EXPECT_EQ(profile.history, RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT);  // fix "unused variable"
 }
 
+TEST(TestQoS, translates_bad_infinity_values)
+{
+  // Copied from hidden symbols in qos.cpp
+  const rmw_time_t bad_infinities[3] {
+    rmw_time_from_nsec(0x7FFFFFFFFFFFFFFFll),  // cyclone
+    {0x7FFFFFFFll, 0xFFFFFFFFll},  // fastrtps
+    {0x7FFFFFFFll, 0x7FFFFFFFll}  // connext
+  };
+  rmw_time_t infinity = RMW_DURATION_UNSPECIFIED;
+  const auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  .default_history()
+  .reliable()
+  .durability_volatile()
+  .deadline(infinity)
+  .lifespan(infinity)
+  .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
+  .liveliness_lease_duration(infinity)
+  .get_rmw_qos_profile();
+
+  for (const auto & infinity : bad_infinities) {
+    std::ostringstream serialized_profile;
+    serialized_profile <<
+      "history: 1\n"
+      "depth: 10\n"
+      "reliability: 1\n"
+      "durability: 2\n"
+      "deadline:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "lifespan:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "liveliness: 0\n"
+      "liveliness_lease_duration:\n"
+      "  sec: " << infinity.sec << "\n"
+      "  nsec: " << infinity.nsec << "\n"
+      "avoid_ros_namespace_conventions: false\n";
+    const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
+    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS>();
+    const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
+    EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
+    EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));
+    EXPECT_TRUE(
+      rmw_time_equal(
+        actual_qos.liveliness_lease_duration, expected_qos.liveliness_lease_duration));
+  }
+}
 
 using rosbag2_transport::Rosbag2QoS;  // NOLINT
 class AdaptiveQoSTest : public ::testing::Test

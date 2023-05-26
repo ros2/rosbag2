@@ -113,7 +113,7 @@ class TestRos2BagRecord(unittest.TestCase):
     def test_nonexistent_qos_profile(self):
         profile_path = PROFILE_PATH / 'foobar.yaml'
         with tempfile.TemporaryDirectory() as tmpdirname:
-            output_path = Path(tmpdirname) / 'ros2bag_test_incomplete'
+            output_path = Path(tmpdirname) / 'ros2bag_test_nonexistent_qos'
             arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                          '--output', output_path.as_posix()]
             with self.launch_bag_command(arguments=arguments) as bag_command:
