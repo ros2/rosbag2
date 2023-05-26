@@ -1,9 +1,0 @@
-<library path="rosbag2_storage_mcap">
-  <class
-    name="mcap"
-    type="rosbag2_storage_plugins::MCAPStorage"
-    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
-  >
-    <description>rosbag2 storage plugin using the MCAP file format</description>
-  </class>
-</library>

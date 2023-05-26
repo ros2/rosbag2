@@ -1,7 +1,0 @@
-module rosbag2_storage_mcap_testdata {
-  module msg {
-    struct BasicIdl {
-        float x;
-    };
-  };
-};
