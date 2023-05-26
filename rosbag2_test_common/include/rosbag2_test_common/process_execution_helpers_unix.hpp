@@ -60,13 +60,17 @@ int execute_and_wait_until_completion(const std::string & command, const std::st
   if (ret_ch_dir != 0) {
     return EXIT_FAILURE;
   }
-  auto exitcode = std::system(command.c_str());
+  auto status = std::system(command.c_str());
   ret_ch_dir = chdir(previous_dir);
   if (ret_ch_dir != 0) {
     return EXIT_FAILURE;
   }
-
-  return WEXITSTATUS(exitcode);
+  EXPECT_EQ(WIFEXITED(status), true) << "status = " << status;
+  if (WIFSIGNALED(status)) {
+    // Process terminated by signal
+    return WTERMSIG(status);
+  }
+  return WEXITSTATUS(status);
 }
 
 ProcessHandle start_execution(const std::string & command)
