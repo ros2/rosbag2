@@ -12,6 +12,11 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-psutil</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
   <depend>rclcpp</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_py</depend>
