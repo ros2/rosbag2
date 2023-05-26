@@ -96,6 +96,35 @@ TEST(test_message_definition_cache, can_resolve_msg_with_idl_deps)
   auto [format, content] =
     cache.get_full_text("rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl");
   EXPECT_EQ(format, Format::IDL);
+#ifdef _WIN32  // Known issue in ROSIDL https://github.com/ros2/rosidl/pull/745
+  EXPECT_EQ(content,
+            R"r(================================================================================
+IDL: rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from rosbag2_storage_mcap_testdata/msg\\ComplexMsgDependsOnIdl.msg
+// generated code does not contain a copyright notice
+
+#include "rosbag2_storage_mcap_testdata/msg/BasicIdl.idl"
+
+module rosbag2_storage_mcap_testdata {
+  module msg {
+    struct ComplexMsgDependsOnIdl {
+      rosbag2_storage_mcap_testdata::msg::BasicIdl a;
+    };
+  };
+};
+
+================================================================================
+IDL: rosbag2_storage_mcap_testdata/msg/BasicIdl
+module rosbag2_storage_mcap_testdata {
+  module msg {
+    struct BasicIdl {
+        float x;
+    };
+  };
+};
+)r");
+#else
   EXPECT_EQ(content,
             R"r(================================================================================
 IDL: rosbag2_storage_mcap_testdata/msg/ComplexMsgDependsOnIdl
@@ -123,4 +152,5 @@ module rosbag2_storage_mcap_testdata {
   };
 };
 )r");
+#endif
 }
