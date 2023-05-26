@@ -449,7 +449,11 @@ RecorderImpl::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, node->get_clock()->now());
+        auto now = node->get_clock()->now();
+        // When using sim time, do not record messages before receiving first /clock
+        if (!(record_options_.use_sim_time && now.nanoseconds() == 0)) {
+          writer_->write(message, topic_name, topic_type, now);
+        }
       }
     });
   return subscription;
