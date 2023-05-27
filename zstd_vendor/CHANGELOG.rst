@@ -2,8 +2,8 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.11 (2023-05-27)
+-------------------
 * Revert "[Foxy] rosbag2_storage_mcap: merge into rosbag2 repo (backport `#1163 <https://github.com/ros2/rosbag2/issues/1163>`_) (`#1198 <https://github.com/ros2/rosbag2/issues/1198>`_)" (`#1347 <https://github.com/ros2/rosbag2/issues/1347>`_)
 * [Foxy] rosbag2_storage_mcap: merge into rosbag2 repo (backport `#1163 <https://github.com/ros2/rosbag2/issues/1163>`_) (`#1198 <https://github.com/ros2/rosbag2/issues/1198>`_)
 * Contributors: james-rms, Michael Orlov

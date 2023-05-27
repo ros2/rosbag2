@@ -3,8 +3,8 @@ Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Forthcoming
------------
+0.3.11 (2023-05-27)
+-------------------
 * [foxy] Fix YAML_CPP_DLL warnings on Windows (`#1353 <https://github.com/ros2/rosbag2/issues/1353>`_)
 * [backport foxy] Add QoS decoding translation for infinite durations to RMW_DURATION_INFINITE (backport `#684 <https://github.com/ros2/rosbag2/issues/684>`_) (`#1088 <https://github.com/ros2/rosbag2/issues/1088>`_)
 * Copy recorder QoS profile to local variable so that temporary value isn't cleared (`#803 <https://github.com/ros2/rosbag2/issues/803>`_) (`#1335 <https://github.com/ros2/rosbag2/issues/1335>`_)
