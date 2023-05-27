@@ -337,19 +337,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       last_read_time_point_ = 0;
       reset_iterator();
 
-      bool done = false;
-      mcap::TypedRecordReader typedReader(*mcap_reader_->dataSource(), 8);
-      typedReader.onMetadata = [&](const mcap::Metadata & metadata, ByteOffset) {
-        if (metadata.name == "rosbag2") {
-          metadata_.ros_distro = metadata.metadata.at("ROS_DISTRO");
-          done = true;
-        }
-      };
-      while (!done && typedReader.next()) {
-        if (!typedReader.status().ok()) {
-          throw std::runtime_error("Failed to read mcap metadata");
-        }
-      }
       break;
     }
     case rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE:
@@ -379,13 +366,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
         throw std::runtime_error(status.message);
       }
 
-      mcap::Metadata metadata;
-      metadata.name = "rosbag2";
-      metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
-      status = mcap_writer_->write(metadata);
-      if (!status.ok()) {
-        throw std::runtime_error(status.message);
-      }
       break;
     }
   }
@@ -445,6 +425,31 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     }
 
     metadata_.topics_with_message_count.push_back(topic_info);
+  }
+
+  const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
+  auto range = mcap_metadatas.equal_range("rosbag2");
+  mcap::Status status;
+  mcap::Record mcap_record;
+  mcap::Metadata mcap_metadata;
+  for (auto i = range.first; i != range.second; ++i) {
+    status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    status = mcap::McapReader::ParseMetadata(mcap_record, &mcap_metadata);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    try {
+      metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
+    } catch (const std::out_of_range & err) {
+      RCUTILS_LOG_ERROR_NAMED(
+        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
+    }
+    break;
   }
 
   return metadata_;
@@ -825,6 +830,14 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
     throw std::runtime_error(
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
+  }
+
+  mcap::Metadata metadata;
+  metadata.name = "rosbag2";
+  metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
+  mcap::Status status = mcap_writer_->write(metadata);
+  if (!status.ok()) {
+    OnProblem(status);
   }
 }
 #endif
