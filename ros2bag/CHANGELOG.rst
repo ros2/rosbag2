@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [backport foxy] Add QoS decoding translation for infinite durations to RMW_DURATION_INFINITE (backport `#684 <https://github.com/ros2/rosbag2/issues/684>`_) (`#1088 <https://github.com/ros2/rosbag2/issues/1088>`_)
+* [foxy] Disable test_record_qos_profiles tests on Windows (`#1349 <https://github.com/ros2/rosbag2/issues/1349>`_)
+* Contributors: Emerson Knapp, Michael Orlov
+
 0.3.10 (2023-03-16)
 -------------------
 * Check & create database dirs before writing bags (`#1133 <https://github.com/ros2/rosbag2/issues/1133>`_)
