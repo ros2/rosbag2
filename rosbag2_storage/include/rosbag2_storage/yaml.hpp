@@ -244,7 +244,6 @@ struct convert<rosbag2_storage::BagMetadata>
     node["files"] = metadata.files;
     node["custom_data"] = metadata.custom_data;
     node["ros_distro"] = metadata.ros_distro;
-
     return node;
   }
 

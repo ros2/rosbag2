@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rcpputils/env.hpp"
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -832,7 +831,7 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
 
   mcap::Metadata metadata;
   metadata.name = "rosbag2";
-  metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
+  metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro}};
   mcap::Status status = mcap_writer_->write(metadata);
   if (!status.ok()) {
     OnProblem(status);
