@@ -336,7 +336,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       }
       last_read_time_point_ = 0;
       reset_iterator();
-
       break;
     }
     case rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE:
@@ -365,7 +364,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
-
       break;
     }
   }

@@ -274,11 +274,9 @@ struct convert<rosbag2_storage::BagMetadata>
     if (metadata.version >= 6) {
       metadata.custom_data = node["custom_data"].as<std::unordered_map<std::string, std::string>>();
     }
-
-    if (metadata.version >= 7) {
+    if (metadata.version >= 8) {
       metadata.ros_distro = node["ros_distro"].as<std::string>();
     }
-
     return true;
   }
 };
