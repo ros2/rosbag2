@@ -32,8 +32,8 @@ endif()
 macro(build_mcap_vendor)
   include(FetchContent)
   fetchcontent_declare(mcap
-    URL https://github.com/foxglove/mcap/archive/refs/tags/releases/cpp/v0.8.0.tar.gz
-    URL_HASH SHA1=b44637791da2c9c1cec61a3ba6994f1ef63a228c # v0.8.0
+    URL https://github.com/foxglove/mcap/archive/refs/tags/releases/cpp/v1.1.0.tar.gz
+    URL_HASH SHA1=3220ddd900d987575ae1066254dd97cdec877a26 # v1.1.0
   )
   fetchcontent_makeavailable(mcap)
 
