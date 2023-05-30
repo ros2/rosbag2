@@ -618,7 +618,7 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
     .start_parameter_event_publisher(false)
-    .append_parameter_overrides("use_sim_time", record_options.use_sim_time)),
+    .append_parameter_override("use_sim_time", record_options.use_sim_time)),
   pimpl_(std::make_unique<RecorderImpl>(
       this, std::move(writer), keyboard_handler,
       storage_options, record_options))
