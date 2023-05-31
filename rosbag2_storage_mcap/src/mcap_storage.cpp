@@ -442,7 +442,7 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     }
     try {
       metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
-    } catch (const std::out_of_range & err) {
+    } catch (const std::out_of_range & /* err */) {
       RCUTILS_LOG_ERROR_NAMED(
         LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
     }
