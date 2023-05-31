@@ -39,7 +39,13 @@ SequentialCompressionReader::SequentialCompressionReader(
 {}
 
 SequentialCompressionReader::~SequentialCompressionReader()
-{}
+{
+  // Fix for https://github.com/ros2/rosbag2/issues/1278
+  // Explicitly deconstruct in the correct order to avoid severe warning message.
+  // Humble ABI stability does not allow changing the class declaration order.
+  decompressor_.reset();
+  compression_factory_.reset();
+}
 
 void SequentialCompressionReader::setup_decompression()
 {
