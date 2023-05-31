@@ -43,6 +43,7 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
   std::string output = internal::GetCapturedStdout();
   auto expected_storage = GetParam();
   auto expected_file = rosbag2_test_common::bag_filename_for_storage_id("cdr_test_0", GetParam());
+  std::string expected_ros_distro = "unknown";
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   // The bag size depends on the os and is not asserted, the time is asserted time zone independent
@@ -51,6 +52,7 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nFiles:             " + expected_file +
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
+      "\nROS Distro:        " + expected_ros_distro +
       "\nDuration:          0\\.151s"
       "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
       "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"

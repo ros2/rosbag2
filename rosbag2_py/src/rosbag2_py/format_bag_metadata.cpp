@@ -140,6 +140,10 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   auto end_time = start_time + metadata.duration;
   std::stringstream info_stream;
   int indentation_spaces = 19;  // The longest info field (Topics with Type:) plus one space.
+  std::string ros_distro = metadata.ros_distro;
+  if (ros_distro.empty()) {
+    ros_distro = "unknown";
+  }
 
   info_stream << std::endl;
   info_stream << "Files:             ";
@@ -147,7 +151,7 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   info_stream << "Bag size:          " << format_file_size(
     metadata.bag_size) << std::endl;
   info_stream << "Storage id:        " << metadata.storage_identifier << std::endl;
-  info_stream << "ROS Distro:        " << metadata.ros_distro << std::endl;
+  info_stream << "ROS Distro:        " << ros_distro << std::endl;
   info_stream << "Duration:          " << format_duration(
     metadata.duration)["time_in_sec"] << "s" << std::endl;
   info_stream << "Start:             " << format_time_point(start_time) <<

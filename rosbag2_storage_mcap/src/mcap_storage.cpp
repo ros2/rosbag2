@@ -426,9 +426,9 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
 
   const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
   auto range = mcap_metadatas.equal_range("rosbag2");
-  mcap::Status status;
-  mcap::Record mcap_record;
-  mcap::Metadata mcap_metadata;
+  mcap::Status status{};
+  mcap::Record mcap_record{};
+  mcap::Metadata mcap_metadata{};
   for (auto i = range.first; i != range.second; ++i) {
     status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
     if (!status.ok()) {
