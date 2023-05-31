@@ -3,6 +3,11 @@ Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+0.3.11 (2023-05-27)
+-------------------
+* [foxy] Fix YAML_CPP_DLL warnings on Windows (`#1353 <https://github.com/ros2/rosbag2/issues/1353>`_)
+* Contributors: Emerson Knapp
+
 0.3.10 (2023-03-16)
 -------------------
 
