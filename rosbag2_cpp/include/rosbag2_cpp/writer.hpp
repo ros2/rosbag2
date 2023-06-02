@@ -211,6 +211,11 @@ public:
    */
   void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks);
 
+  /**
+   * \brief Close the current bag file and write metadata.yaml file
+   */
+  void close();
+
 private:
   std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;

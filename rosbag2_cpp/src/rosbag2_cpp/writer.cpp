@@ -188,4 +188,9 @@ void Writer::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
   writer_impl_->add_event_callbacks(callbacks);
 }
 
+void Writer::close()
+{
+  writer_impl_->close();
+}
+
 }  // namespace rosbag2_cpp
