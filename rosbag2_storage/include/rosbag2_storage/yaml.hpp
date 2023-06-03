@@ -243,7 +243,7 @@ struct convert<rosbag2_storage::BagMetadata>
     node["relative_file_paths"] = metadata.relative_file_paths;
     node["files"] = metadata.files;
     node["custom_data"] = metadata.custom_data;
-
+    node["ros_distro"] = metadata.ros_distro;
     return node;
   }
 
@@ -273,7 +273,9 @@ struct convert<rosbag2_storage::BagMetadata>
     if (metadata.version >= 6) {
       metadata.custom_data = node["custom_data"].as<std::unordered_map<std::string, std::string>>();
     }
-
+    if (metadata.version >= 8) {
+      metadata.ros_distro = node["ros_distro"].as<std::string>();
+    }
     return true;
   }
 };

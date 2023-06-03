@@ -14,6 +14,7 @@
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
@@ -52,6 +53,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   // COMPATIBILITY(foxy)
   // using verbose APIs for Foxy compatibility which did not yet provide plain-message API
   rclcpp::Serialization<std_msgs::msg::String> serialization;
+  rosbag2_storage::StorageFactory factory;
 
   {
     rosbag2_storage::TopicMetadata topic_metadata;
@@ -64,7 +66,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     std_msgs::msg::String msg;
     msg.data = message_data;
 
-    rosbag2_storage::StorageFactory factory;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
     options.uri = uri.string();
@@ -89,10 +90,9 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     serialized_bag_msg->time_stamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
-    EXPECT_TRUE(expected_bag.is_regular_file());
   }
+  EXPECT_TRUE(expected_bag.is_regular_file());
   {
-    rosbag2_storage::StorageFactory factory;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
     options.uri = expected_bag.string();
@@ -117,6 +117,9 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
                                                  "qos_profile1", "type_hash1"},
                   1u}}));
     EXPECT_THAT(metadata.message_count, Eq(1u));
+
+    const auto current_distro = rcpputils::get_env_var("ROS_DISTRO");
+    EXPECT_EQ(metadata.ros_distro, current_distro);
 
     EXPECT_TRUE(reader->has_next());
 

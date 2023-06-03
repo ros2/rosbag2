@@ -424,6 +424,31 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     metadata_.topics_with_message_count.push_back(topic_info);
   }
 
+  const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
+  auto range = mcap_metadatas.equal_range("rosbag2");
+  mcap::Status status{};
+  mcap::Record mcap_record{};
+  mcap::Metadata mcap_metadata{};
+  for (auto i = range.first; i != range.second; ++i) {
+    status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    status = mcap::McapReader::ParseMetadata(mcap_record, &mcap_metadata);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    try {
+      metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
+    } catch (const std::out_of_range & /* err */) {
+      RCUTILS_LOG_ERROR_NAMED(
+        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
+    }
+    break;
+  }
+
   return metadata_;
 }
 
@@ -802,6 +827,14 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
     throw std::runtime_error(
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
+  }
+
+  mcap::Metadata metadata;
+  metadata.name = "rosbag2";
+  metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro}};
+  mcap::Status status = mcap_writer_->write(metadata);
+  if (!status.ok()) {
+    OnProblem(status);
   }
 }
 #endif

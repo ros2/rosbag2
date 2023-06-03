@@ -42,7 +42,7 @@ struct FileInformation
 
 struct BagMetadata
 {
-  int version = 7;  // upgrade this number when changing the content of the struct
+  int version = 8;  // upgrade this number when changing the content of the struct
   uint64_t bag_size = 0;  // Will not be serialized
   std::string storage_identifier;
   std::vector<std::string> relative_file_paths;
@@ -54,6 +54,7 @@ struct BagMetadata
   std::string compression_format;
   std::string compression_mode;
   std::unordered_map<std::string, std::string> custom_data;  // {key: value, ...}
+  std::string ros_distro;
 };
 
 }  // namespace rosbag2_storage

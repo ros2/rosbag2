@@ -105,7 +105,6 @@ public:
   SqliteWrapper & get_sqlite_database_wrapper();
 
   int get_db_schema_version() const;
-  std::string get_recorded_ros_distro() const;
 
   enum class PresetProfile
   {
