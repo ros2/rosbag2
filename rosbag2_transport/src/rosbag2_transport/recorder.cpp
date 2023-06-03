@@ -80,8 +80,7 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
     .start_parameter_event_publisher(false)
-<<<<<<< HEAD
-    .parameter_overrides({rclcpp::Parameter("use_sim_time", record_options.use_sim_time)})),
+    .append_parameter_override("use_sim_time", record_options.use_sim_time)),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
@@ -104,13 +103,6 @@ Recorder::Recorder(
     topic = rclcpp::expand_topic_or_service_name(topic, get_name(), get_namespace(), false);
   }
 }
-=======
-    .append_parameter_override("use_sim_time", record_options.use_sim_time)),
-  pimpl_(std::make_unique<RecorderImpl>(
-      this, std::move(writer), keyboard_handler,
-      storage_options, record_options))
-{}
->>>>>>> 13f5151 ([bugfix] for parameters not passing to recorder's node from child component (#1360))
 
 Recorder::~Recorder()
 {
