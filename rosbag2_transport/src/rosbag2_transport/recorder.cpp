@@ -80,7 +80,7 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, rclcpp::NodeOptions(node_options)
     .start_parameter_event_publisher(false)
-    .parameter_overrides({rclcpp::Parameter("use_sim_time", record_options.use_sim_time)})),
+    .append_parameter_override("use_sim_time", record_options.use_sim_time)),
   writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
