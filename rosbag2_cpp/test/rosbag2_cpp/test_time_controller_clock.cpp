@@ -165,6 +165,8 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
     sleep_result = clock.sleep_until(sleep_until_timestamp);
   }
   auto end = std::chrono::steady_clock::now();
+  EXPECT_FALSE(clock.is_paused());
+  EXPECT_TRUE(rclcpp::ok());
   EXPECT_TRUE(end - start < std::chrono::milliseconds(1200));
   EXPECT_TRUE(end - start >= std::chrono::seconds(1));
   EXPECT_TRUE(sleep_result);
