@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rcpputils/env.hpp"
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -237,6 +238,7 @@ private:
   bool enqueued_message_is_already_read();
   bool message_indexes_present();
   void ensure_summary_read();
+  void ensure_rosdistro_metadata_added();
 
   std::optional<rosbag2_storage::storage_interfaces::IOFlag> opened_as_;
   std::string relative_path_;
@@ -363,6 +365,7 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
+      ensure_rosdistro_metadata_added();
       break;
     }
   }
@@ -805,6 +808,21 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
   }
 }
 #endif
+
+void MCAPStorage::ensure_rosdistro_metadata_added()
+{
+  static bool already_added = false;
+  if (!already_added) {
+    mcap::Metadata metadata;
+    metadata.name = "rosbag2";
+    metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
+    mcap::Status status = mcap_writer_->write(metadata);
+    if (!status.ok()) {
+      OnProblem(status);
+    }
+  }
+  already_added = true;
+}
 
 }  // namespace rosbag2_storage_plugins
 
