@@ -29,6 +29,7 @@
 
 namespace rosbag2_cpp
 {
+
 /// A type name did not match expectations, so a definition could not be looked for.
 class TypenameNotUnderstoodError : public std::exception
 {

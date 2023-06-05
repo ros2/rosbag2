@@ -132,7 +132,7 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   rosbag2_storage::MessageDefinition result;
   ASSERT_NO_THROW(
   {
-    result = source.get_full_text("rosbag2_test_msgdefs/srv/BasicSrv_Request");
+    result = source.get_full_text("rosbag2_test_msgdefs/action/BasicAction_SetGoal_Request");
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
