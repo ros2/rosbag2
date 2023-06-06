@@ -364,6 +364,18 @@ bool RecorderImpl::is_paused()
 
 void RecorderImpl::topics_discovery()
 {
+  // If using sim time - wait until /clock topic received before even creating subscriptions
+  if (record_options_.use_sim_time) {
+    RCLCPP_INFO(
+      node->get_logger(),
+      "use_sim_time set, waiting for /clock before starting recording...");
+    while (rclcpp::ok()) {
+      if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+        break;
+      }
+    }
+    RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
+  }
   while (rclcpp::ok() && stop_discovery_ == false) {
     auto topics_to_subscribe =
       get_requested_or_available_topics();
@@ -449,11 +461,7 @@ RecorderImpl::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        auto now = node->get_clock()->now();
-        // When using sim time, do not record messages before receiving first /clock
-        if (!(record_options_.use_sim_time && now.nanoseconds() == 0)) {
-          writer_->write(message, topic_name, topic_type, now);
-        }
+        writer_->write(message, topic_name, topic_type, node->get_clock()->now());
       }
     });
   return subscription;
