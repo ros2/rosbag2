@@ -2,6 +2,14 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.6 (2023-06-05)
+-------------------
+* Deconstruct compression classloader factory in correct order with classes loaded (`#1362 <https://github.com/ros2/rosbag2/issues/1362>`_)
+* Fx memory issue when multiple writers with message compression_mode required (`#1331 <https://github.com/ros2/rosbag2/issues/1331>`_)
+  - Deep copy message when sequential compression writer is writing
+  Co-authored-by: zeal <ziyaolin.zeal@gmail.com>
+* Contributors: Emerson Knapp, zeal-up
+
 0.15.5 (2023-04-25)
 -------------------
 * Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_) (`#1224 <https://github.com/ros2/rosbag2/issues/1224>`_)

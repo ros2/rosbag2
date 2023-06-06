@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.6 (2023-06-05)
+-------------------
+
 0.15.5 (2023-04-25)
 -------------------
 * Enable document generation using rosdoc2 for ament_python pkgs (`#1260 <https://github.com/ros2/rosbag2/issues/1260>`_) (`#1261 <https://github.com/ros2/rosbag2/issues/1261>`_)

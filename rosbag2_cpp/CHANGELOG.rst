@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.6 (2023-06-05)
+-------------------
+* Added close to writer (`#1363 <https://github.com/ros2/rosbag2/issues/1363>`_)
+  Co-authored-by: Bernat <bernat.gaston@movvo.eu>
+* Contributors: Bernat
+
 0.15.5 (2023-04-25)
 -------------------
 * Replace `std::filesystem::path(..)` with `rcpputils::fs::path(..)` (`#1104 <https://github.com/ros2/rosbag2/issues/1104>`_) (`#1280 <https://github.com/ros2/rosbag2/issues/1280>`_)

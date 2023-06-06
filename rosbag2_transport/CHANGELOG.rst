@@ -2,6 +2,27 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.6 (2023-06-05)
+-------------------
+* [Humble] Bugfix for parameters not passing to recorder's node from child component (backport `#1360 <https://github.com/ros2/rosbag2/issues/1360>`_) (`#1368 <https://github.com/ros2/rosbag2/issues/1368>`_)
+  * Bugfix for parameters not passing to recorder's node from child component (`#1360 <https://github.com/ros2/rosbag2/issues/1360>`_)
+  * Update recorder.cpp
+  * Regression test
+  * Fix test for composable recorder with parameter override option
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 13f51510342e9f06327ae1146820780baee06c4a)
+  ---------
+  Co-authored-by: Patrick Roncagliolo <ronca.pat@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Fix memory issue when multiple writers with message compression_mode required (`#1331 <https://github.com/ros2/rosbag2/issues/1331>`_)
+  - Deep copy message when sequential compression writer is writing
+  Co-authored-by: zeal <ziyaolin.zeal@gmail.com>
+* Print "Hidden topics are not recorded" only once. (`#1225 <https://github.com/ros2/rosbag2/issues/1225>`_) (`#1323 <https://github.com/ros2/rosbag2/issues/1323>`_)
+  (cherry picked from commit a640adaeeee3bbffaa6cd73cde3f3e8781f12e89)
+  Co-authored-by: rshanor <rickshanor@gmail.com>
+* Contributors: zeal-up, Michael Orlov, Patrick Roncagliolo, rshanor
+
 0.15.5 (2023-04-25)
 -------------------
 * [humble] Redesign record_services tests to make them more deterministic (`#1122 <https://github.com/ros2/rosbag2/issues/1122>`_) (`#1142 <https://github.com/ros2/rosbag2/issues/1142>`_)
