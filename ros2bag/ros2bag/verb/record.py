@@ -205,6 +205,11 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        if args.use_sim_time and args.no_discovery:
+            return print_error(
+                '--use-sim-time and --no-discovery both set, but are incompatible settings. '
+                'The /clock topic needs to be discovered to record with sim time.')
+
         # Prepare custom_data dictionary
         custom_data = {}
         if args.custom_data:

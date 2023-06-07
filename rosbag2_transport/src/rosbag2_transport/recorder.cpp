@@ -161,6 +161,12 @@ RecorderImpl::RecorderImpl(
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
+  if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
+    throw std::runtime_error(
+      "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
+      "The /clock topic needs to be discovered to record with sim time.");
+  }
+
   std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
   toggle_paused_key_callback_handle_ =
     keyboard_handler_->add_key_press_callback(
@@ -223,6 +229,7 @@ void RecorderImpl::record()
     return;
   }
   paused_ = record_options_.start_paused;
+  stop_discovery_ = record_options_.is_discovery_disabled;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
@@ -304,9 +311,9 @@ void RecorderImpl::record()
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(node->get_logger(), "Listening for topics...");
-  subscribe_topics(get_requested_or_available_topics());
-
-  if (!record_options_.is_discovery_disabled) {
+  if (record_options_.is_discovery_disabled) {
+    subscribe_topics(get_requested_or_available_topics());
+  } else {
     discovery_future_ =
       std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
   }
