@@ -14,6 +14,7 @@
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
@@ -21,6 +22,8 @@
 #endif
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "std_msgs/msg/string.hpp"
+
+#include <mcap/mcap.hpp>
 
 #include <gmock/gmock.h>
 
@@ -200,3 +203,40 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
   }
 }
 #endif  // #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
+
+TEST_F(TemporaryDirectoryFixture, mcap_contains_ros_distro)
+{
+  // const auto expected_file = rcpputils::fs::path(temporary_dir_path_) / "rosdistro_bag.mcap";
+  const auto expected_file = rcpputils::fs::path("rosdistro_bag.mcap");
+  const auto uri = rcpputils::fs::remove_extension(expected_file);
+  const std::string storage_id = "mcap";
+  const std::string current_ros_distro = rcpputils::get_env_var("ROS_DISTRO");
+  ASSERT_FALSE(current_ros_distro.empty());
+  std::string read_metadata_ros_distro = "";
+
+  // Open writer to create no-data file and then delete the writer to close
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.uri = uri.string();
+  options.storage_id = storage_id;
+  auto writer = factory.open_read_write(options);
+  writer.reset();
+  ASSERT_TRUE(expected_file.is_regular_file());
+
+  // Open created mcap file, read all metadata records to find rosbag2.ROS_DISTRO value
+  mcap::Status status{};
+  std::ifstream input{expected_file.string(), std::ios::binary};
+  mcap::FileStreamReader data_source{input};
+  mcap::TypedRecordReader typed_reader(data_source, 8);
+  bool done = false;
+  typed_reader.onMetadata = [&](const mcap::Metadata & metadata, mcap::ByteOffset) {
+    if (metadata.name == "rosbag2") {
+      read_metadata_ros_distro = metadata.metadata.at("ROS_DISTRO");
+      done = true;
+    }
+  };
+  while (!done && typed_reader.next()) {
+    EXPECT_TRUE(typed_reader.status().ok());
+  }
+  EXPECT_EQ(read_metadata_ros_distro, current_ros_distro);
+}

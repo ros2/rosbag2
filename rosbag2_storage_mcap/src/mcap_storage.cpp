@@ -261,6 +261,7 @@ private:
   std::unique_ptr<mcap::McapWriter> mcap_writer_;
 
   bool has_read_summary_ = false;
+  bool has_added_ros_distro_metadata_ = false;
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
@@ -806,13 +807,13 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
   }
+  ensure_rosdistro_metadata_added();
 }
 #endif
 
 void MCAPStorage::ensure_rosdistro_metadata_added()
 {
-  static bool already_added = false;
-  if (!already_added) {
+  if (!has_added_ros_distro_metadata_) {
     mcap::Metadata metadata;
     metadata.name = "rosbag2";
     metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
@@ -821,7 +822,7 @@ void MCAPStorage::ensure_rosdistro_metadata_added()
       OnProblem(status);
     }
   }
-  already_added = true;
+  has_added_ros_distro_metadata_ = true;
 }
 
 }  // namespace rosbag2_storage_plugins
