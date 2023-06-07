@@ -206,12 +206,13 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
 TEST_F(TemporaryDirectoryFixture, mcap_contains_ros_distro)
 {
-  // const auto expected_file = rcpputils::fs::path(temporary_dir_path_) / "rosdistro_bag.mcap";
-  const auto expected_file = rcpputils::fs::path("rosdistro_bag.mcap");
+  // Guarantee env var set for mcap to use - in a full-build testing environment it may not be.
+  const std::string current_ros_distro = "rolling";
+  ASSERT_TRUE(rcpputils::set_env_var("ROS_DISTRO", current_ros_distro.c_str()));
+
+  const auto expected_file = rcpputils::fs::path(temporary_dir_path_) / "rosdistro_bag.mcap";
   const auto uri = rcpputils::fs::remove_extension(expected_file);
   const std::string storage_id = "mcap";
-  const std::string current_ros_distro = rcpputils::get_env_var("ROS_DISTRO");
-  ASSERT_FALSE(current_ros_distro.empty());
   std::string read_metadata_ros_distro = "";
 
   // Open writer to create no-data file and then delete the writer to close
