@@ -364,18 +364,6 @@ bool RecorderImpl::is_paused()
 
 void RecorderImpl::topics_discovery()
 {
-  // If using sim time - wait until /clock topic received before even creating subscriptions
-  if (record_options_.use_sim_time) {
-    RCLCPP_INFO(
-      node->get_logger(),
-      "use_sim_time set, waiting for /clock before starting recording...");
-    while (rclcpp::ok()) {
-      if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
-        break;
-      }
-    }
-    RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
-  }
   while (rclcpp::ok() && stop_discovery_ == false) {
     auto topics_to_subscribe =
       get_requested_or_available_topics();
