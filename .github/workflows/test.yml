@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - rolling
+      - iron
   schedule:
     # Run every hour. This helps detect flakiness,
     # and broken external dependencies.
@@ -19,8 +19,8 @@ jobs:
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.3
       with:
-        target-ros2-distro: rolling
-        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/rolling/ros2.repos
+        target-ros2-distro: iron
+        vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/iron/ros2.repos
         colcon-defaults: |
           {
             "build": {
@@ -85,7 +85,7 @@ jobs:
       run: |
         rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
         rosbag2_packages=$(colcon list -n --base-paths ${rosbag2_path})
-        source /opt/ros/rolling/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
+        source /opt/ros/iron/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
     - uses: actions/upload-artifact@v1
