@@ -129,8 +129,7 @@ class RecordVerb(VerbExtension):
             help='Start the recorder in a paused state.')
         parser.add_argument(
             '--use-sim-time', action='store_true', default=False,
-            help='Use simulation time for message timestamps by subscribing to the /clock topic. '
-                 'Until first /clock message is received, no messages will be written to bag.')
+            help='Use simulation time.')
         parser.add_argument(
             '--node-name', type=str, default='rosbag2_recorder',
             help='Specify the recorder node name. Default is %(default)s.')

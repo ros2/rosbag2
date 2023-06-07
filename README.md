@@ -93,15 +93,6 @@ In the same fashion, this auto discovery can be disabled with `--no-discovery`.
 If not further specified, `ros2 bag record` will create a new folder named to the current time stamp and stores all data within this folder.
 A user defined name can be given with `-o, --output`.
 
-#### Simulation time
-
-In ROS 2, "simulation time" refers to publishing a clock value on the `/clock` topic, instead of using the system clock to tell time.
-By passing `--use-sim-time` argument to `ros2 bag record`, we turn on this option for the recording node.
-Messages written to the bag will use the latest received value of `/clock` for the timestamp of the recorded message.
-
-Note: Until the first `/clock` message is received, the recorder will not write any messages.
-Before that message is received, the time is 0, which leads to a significant time jump once simulation time begins, making the bag essentially unplayable if messages are written first with time 0 and then time N from `/clock`.
-
 #### Splitting recorded bag files
 
 rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
