@@ -205,8 +205,8 @@ void RecorderImpl::stop()
   {
     std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
     event_publisher_thread_should_exit_ = true;
-    event_publisher_thread_wake_cv_.notify_all();
   }
+  event_publisher_thread_wake_cv_.notify_all();
   if (event_publisher_thread_.joinable()) {
     event_publisher_thread_.join();
   }
