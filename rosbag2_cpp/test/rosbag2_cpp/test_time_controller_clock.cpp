@@ -146,24 +146,35 @@ TEST_F(TimeControllerClockTest, is_paused)
 
 TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 {
-  const std::chrono::milliseconds test_timeout{2000};
-  const std::chrono::milliseconds test_sleep_duration{1000};
-
+  const float error_ratio = 1.2;
+  const std::chrono::nanoseconds test_timeout{RCUTILS_S_TO_NS(2)};
+  const std::chrono::nanoseconds sleep_duration{RCUTILS_S_TO_NS(1)};
   rosbag2_cpp::TimeControllerClock clock(ros_start_time);
-  clock.resume();
 
-  const auto steady_start = std::chrono::steady_clock::now();
-  const auto sleep_until = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    test_sleep_duration).count();
-  bool sleep_result = false;
+  // Run the whole thing twice to make sure everything also works properly after pause and resume
+  for (int i = 0; i < 2; i++) {
+    clock.resume();
+    auto ros_start = clock.now();
+    auto sleep_until_timestamp = ros_start + sleep_duration.count();
+    auto steady_start = clock.ros_to_steady(ros_start);
+    bool sleep_result = false;
+    while (!sleep_result && (std::chrono::steady_clock::now() - steady_start) < test_timeout) {
+      sleep_result = clock.sleep_until(sleep_until_timestamp);
+    }
+    const auto ros_end = clock.now();
+    const auto steady_end = clock.ros_to_steady(ros_end);
+    EXPECT_TRUE(sleep_result);
+    EXPECT_GE(steady_end - steady_start, sleep_duration);
+    EXPECT_LT(steady_end - steady_start, sleep_duration * error_ratio);
+    EXPECT_GE(ros_end - ros_start, sleep_duration.count());
+    EXPECT_LT(ros_end - ros_start, sleep_duration.count() * error_ratio);
 
-  while (!sleep_result && (std::chrono::steady_clock::now() - steady_start) < test_timeout) {
-    sleep_result = clock.sleep_until(sleep_until);
+    clock.pause();
+    // Sleep long enough between runs that ros time and steady time are diverged by an error bound
+    if (i == 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
   }
-  const auto steady_end = std::chrono::steady_clock::now();
-  EXPECT_TRUE(sleep_result);
-  EXPECT_LT(steady_end - steady_start, test_timeout);
-  EXPECT_GE(steady_end - steady_start, test_sleep_duration);
 }
 
 TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
