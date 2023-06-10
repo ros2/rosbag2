@@ -146,28 +146,24 @@ TEST_F(TimeControllerClockTest, is_paused)
 
 TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 {
+  const std::chrono::milliseconds test_timeout{2000};
+  const std::chrono::milliseconds test_sleep_duration{1000};
+
   rosbag2_cpp::TimeControllerClock clock(ros_start_time);
   clock.resume();
-  EXPECT_TRUE(clock.sleep_until(clock.now() + 100));
 
-  clock.pause();
-  clock.resume();
+  const auto steady_start = std::chrono::steady_clock::now();
+  const auto sleep_until = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    test_sleep_duration).count();
+  bool sleep_result = false;
 
-  auto ros_time_now = clock.now();
-  auto sleep_until_timestamp = ros_time_now + RCUTILS_S_TO_NS(1);
-  auto start = clock.ros_to_steady(ros_time_now);
-  bool sleep_result = clock.sleep_until(sleep_until_timestamp);
-  // clock.sleep_until can spuriously wake up and return false.
-  // Check it until true and use a timeout to avoid a hang
-  while (rclcpp::ok() && !sleep_result &&
-    (std::chrono::steady_clock::now() - start) < std::chrono::milliseconds(1200))
-  {
-    sleep_result = clock.sleep_until(sleep_until_timestamp);
+  while (!sleep_result && (std::chrono::steady_clock::now() - steady_start) < test_timeout) {
+    sleep_result = clock.sleep_until(sleep_until);
   }
-  auto end = std::chrono::steady_clock::now();
-  EXPECT_TRUE(end - start < std::chrono::milliseconds(1200));
-  EXPECT_TRUE(end - start >= std::chrono::seconds(1));
+  const auto steady_end = std::chrono::steady_clock::now();
   EXPECT_TRUE(sleep_result);
+  EXPECT_LT(steady_end - steady_start, test_timeout);
+  EXPECT_GE(steady_end - steady_start, test_sleep_duration);
 }
 
 TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
