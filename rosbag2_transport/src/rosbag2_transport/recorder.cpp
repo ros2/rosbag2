@@ -163,8 +163,8 @@ RecorderImpl::RecorderImpl(
 {
   if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
     throw std::runtime_error(
-      "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
-      "The /clock topic needs to be discovered to record with sim time.");
+            "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
+            "The /clock topic needs to be discovered to record with sim time.");
   }
 
   std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
@@ -311,9 +311,10 @@ void RecorderImpl::record()
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(node->get_logger(), "Listening for topics...");
-  if (record_options_.is_discovery_disabled) {
+  if (!record_options_.use_sim_time) {
     subscribe_topics(get_requested_or_available_topics());
-  } else {
+  }
+  if (!record_options_.is_discovery_disabled) {
     discovery_future_ =
       std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
   }
