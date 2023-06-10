@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
 #define ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
