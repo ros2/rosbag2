@@ -84,7 +84,7 @@ class TestRos2BagRecord(unittest.TestCase):
         output_path = Path(self.tmpdir.name) / 'ros2bag_test_basic'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
-        expected_output = 'Listening for topics...'
+        expected_output = 'Recording...'
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_output in output,
@@ -99,7 +99,7 @@ class TestRos2BagRecord(unittest.TestCase):
         output_path = Path(self.tmpdir.name) / 'ros2bag_test_incomplete'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
-        expected_output = 'Listening for topics...'
+        expected_output = 'Recording...'
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_output in output,
