@@ -328,13 +328,7 @@ void RecorderImpl::event_publisher_thread_main()
       auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = bag_split_info_.closed_file;
       message.opened_file = bag_split_info_.opened_file;
-      try {
-        split_event_pub_->publish(message);
-      } catch (const std::exception & e) {
-        RCLCPP_ERROR_STREAM(
-          node->get_logger(),
-          "Failed to publish message on '/events/write_split' topic. \nError: " << e.what());
-      }
+      split_event_pub_->publish(message);
     }
   }
   RCLCPP_INFO(node->get_logger(), "Event publisher thread: Exiting");
@@ -379,7 +373,8 @@ bool RecorderImpl::is_paused()
 void RecorderImpl::topics_discovery()
 {
   while (rclcpp::ok() && stop_discovery_ == false) {
-    auto topics_to_subscribe = get_requested_or_available_topics();
+    auto topics_to_subscribe =
+      get_requested_or_available_topics();
     for (const auto & topic_and_type : topics_to_subscribe) {
       warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
     }
@@ -399,13 +394,7 @@ void RecorderImpl::topics_discovery()
 std::unordered_map<std::string, std::string>
 RecorderImpl::get_requested_or_available_topics()
 {
-  std::map<std::string, std::vector<std::string>> all_topics_and_types;
-  try {
-    all_topics_and_types = node->get_topic_names_and_types();
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR_STREAM(
-      node->get_logger(), "Failed to get topic names and types from node \nError: " << e.what());
-  }
+  auto all_topics_and_types = node->get_topic_names_and_types();
   return topic_filter_->filter_topics(all_topics_and_types);
 }
 
@@ -426,16 +415,7 @@ void RecorderImpl::subscribe_topics(
   const std::unordered_map<std::string, std::string> & topics_and_types)
 {
   for (const auto & topic_with_type : topics_and_types) {
-    std::vector<rclcpp::TopicEndpointInfo> endpoint_infos;
-    try {
-      endpoint_infos = node->get_publishers_info_by_topic(topic_with_type.first);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(
-        node->get_logger(), "Failed to get publishers info for '" << topic_with_type.first <<
-          "' topic. \nError: " << e.what());
-      continue;
-    }
-
+    auto endpoint_infos = node->get_publishers_info_by_topic(topic_with_type.first);
     subscribe_topic(
       {
         topic_with_type.first,
@@ -455,19 +435,13 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   writer_->create_topic(topic);
 
   Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
-  try {
-    auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
-    if (subscription) {
-      subscriptions_.insert({topic.name, subscription});
-      RCLCPP_INFO_STREAM(node->get_logger(), "Subscribed to topic '" << topic.name << "'");
-    } else {
-      writer_->remove_topic(topic);
-      subscriptions_.erase(topic.name);
-    }
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR_STREAM(
-      node->get_logger(), "Failed to create subscription for '" << topic.name <<
-        "' topic. \nError: " << e.what());
+  auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
+  if (subscription) {
+    subscriptions_.insert({topic.name, subscription});
+    RCLCPP_INFO_STREAM(
+      node->get_logger(),
+      "Subscribed to topic '" << topic.name << "'");
+  } else {
     writer_->remove_topic(topic);
     subscriptions_.erase(topic.name);
   }
@@ -579,16 +553,7 @@ void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topi
   }
   const auto actual_qos = existing_subscription->second->get_actual_qos();
   const auto & used_profile = actual_qos.get_rmw_qos_profile();
-
-  std::vector<rclcpp::TopicEndpointInfo> publishers_info;
-  try {
-    publishers_info = node->get_publishers_info_by_topic(topic_name);
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR_STREAM(
-      node->get_logger(), "Failed to get publishers info for '" << topic_name <<
-        "' topic \nError: " << e.what());
-  }
-
+  auto publishers_info = node->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
     auto new_profile = info.qos_profile().get_rmw_qos_profile();
     bool incompatible_reliability =
