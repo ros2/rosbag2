@@ -28,6 +28,32 @@
 
 using namespace ::testing;  // NOLINT
 
+namespace
+{
+std::string get_last_error_str()
+{
+  LPVOID lp_msg_buf;
+  DWORD err_code = GetLastError();
+  std::string result_str("Error code:" + std::to_string(err_code) + ". Error message: ");
+
+  DWORD buff_len = FormatMessage(
+    FORMAT_MESSAGE_ALLOCATE_BUFFER |
+    FORMAT_MESSAGE_FROM_SYSTEM |
+    FORMAT_MESSAGE_IGNORE_INSERTS,
+    NULL,
+    err_code,
+    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+    (LPTSTR) &lp_msg_buf,
+    0, NULL);
+  if (buff_len) {
+    LPCSTR lpc_msg_str = (LPCSTR)(lp_msg_buf);
+    result_str.append(std::string(lpc_msg_str, lpc_msg_str + buff_len));
+  }
+  LocalFree(lp_msg_buf);
+  return result_str;
+}
+}  // namespace
+
 struct Process
 {
   PROCESS_INFORMATION process_info;
@@ -148,13 +174,15 @@ void stop_execution(
     switch (signum) {
       // According to the
       // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/signal?view=msvc-170
-      // SIGINT and SIGBREAK is not supported for any Win32 application.
+      // SIGINT is not supported for any Win32 application.
       // Need to use native Windows control event instead.
       case SIGINT:
-        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwProcessId));
+        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwProcessId)) <<
+          get_last_error_str();
         break;
       case SIGBREAK:
-        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, handle.process_info.dwProcessId));
+        EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, handle.process_info.dwProcessId)) <<
+          get_last_error_str();
         break;
       case SIGTERM:
       // The CTRL_CLOSE_EVENT is analog of the SIGTERM from POSIX. Windows sends CTRL_CLOSE_EVENT
