@@ -162,9 +162,49 @@ class RecordVerb(VerbExtension):
             help='Start the recorder in a paused state.')
         parser.add_argument(
             '--use-sim-time', action='store_true', default=False,
+<<<<<<< HEAD
             help='Use simulation time.'
         )
         self._subparser = parser
+=======
+            help='Use simulation time for message timestamps by subscribing to the /clock topic. '
+                 'Until first /clock message is received, no messages will be written to bag.')
+        parser.add_argument(
+            '--node-name', type=str, default='rosbag2_recorder',
+            help='Specify the recorder node name. Default is %(default)s.')
+        parser.add_argument(
+            '--custom-data', type=str, metavar='KEY=VALUE', nargs='*',
+            help='Store the custom data in metadata.yaml '
+                 'under "rosbag2_bagfile_information/custom_data". The key=value pair can '
+                 'appear more than once. The last value will override the former ones.')
+        parser.add_argument(
+            '--snapshot-mode', action='store_true',
+            help='Enable snapshot mode. Messages will not be written to the bagfile until '
+                 'the "/rosbag2_recorder/snapshot" service is called.')
+
+        # Storage configuration
+        add_writer_storage_plugin_extensions(parser)
+
+        # Core compression configuration
+        # TODO(emersonknapp) this configuration will be moved down to implementing plugins
+        parser.add_argument(
+            '--compression-queue-size', type=int, default=1,
+            help='Number of files or messages that may be queued for compression '
+                 'before being dropped.  Default is %(default)d.')
+        parser.add_argument(
+            '--compression-threads', type=int, default=0,
+            help='Number of files or messages that may be compressed in parallel. '
+                 'Default is %(default)d, which will be interpreted as the number of CPU cores.')
+        parser.add_argument(
+            '--compression-mode', type=str, default='none',
+            choices=['none', 'file', 'message'],
+            help='Choose mode of compression for the storage. Default: %(default)s.')
+        parser.add_argument(
+            '--compression-format', type=str, default='',
+            choices=get_registered_compressors(),
+            help='Choose the compression format/algorithm. '
+                 'Has no effect if no compression mode is chosen. Default: %(default)s.')
+>>>>>>> d52ddbb (When using sim time, wait for /clock before beginning recording (#1378))
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
@@ -204,6 +244,20 @@ class RecordVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+<<<<<<< HEAD
+=======
+        if args.use_sim_time and args.no_discovery:
+            return print_error(
+                '--use-sim-time and --no-discovery both set, but are incompatible settings. '
+                'The /clock topic needs to be discovered to record with sim time.')
+
+        # Prepare custom_data dictionary
+        custom_data = {}
+        if args.custom_data:
+            key_value_pairs = [pair.split('=') for pair in args.custom_data]
+            custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
+
+>>>>>>> d52ddbb (When using sim time, wait for /clock before beginning recording (#1378))
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
