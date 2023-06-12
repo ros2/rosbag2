@@ -99,8 +99,18 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gmock(test_mcap_storage test/rosbag2_storage_mcap/test_mcap_storage.cpp)
+<<<<<<< HEAD
   target_link_libraries(test_mcap_storage ${PROJECT_NAME})
   ament_target_dependencies(test_mcap_storage rosbag2_storage rosbag2_test_common std_msgs)
+=======
+  target_link_libraries(test_mcap_storage
+    ${PROJECT_NAME}
+    mcap_vendor::mcap
+    rosbag2_storage::rosbag2_storage
+    rosbag2_test_common::rosbag2_test_common
+    ${std_msgs_TARGETS}
+  )
+>>>>>>> 33edccf ([iron] Add ROS_DISTRO metadata record to mcap file when opening for writing (#1371))
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
   ament_add_gmock(test_message_definition_cache test/rosbag2_storage_mcap/test_message_definition_cache.cpp)
