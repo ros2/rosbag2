@@ -146,7 +146,7 @@ TEST_F(TimeControllerClockTest, is_paused)
 
 TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
 {
-  const float error_ratio = 1.2;
+  const float error_ratio = 1.2f;
   const std::chrono::nanoseconds test_timeout{RCUTILS_S_TO_NS(2)};
   const std::chrono::nanoseconds sleep_duration{RCUTILS_S_TO_NS(1)};
   rosbag2_cpp::TimeControllerClock clock(ros_start_time);
