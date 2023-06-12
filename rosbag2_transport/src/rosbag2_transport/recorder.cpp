@@ -255,7 +255,7 @@ void Recorder::topics_discovery()
       this->get_logger(),
       "use_sim_time set, waiting for /clock before starting recording...");
     while (rclcpp::ok() && stop_discovery_ == false) {
-      if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+      if (this->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
         break;
       }
     }
