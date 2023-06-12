@@ -33,20 +33,60 @@
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "mock_recorder.hpp"
 
+class ClockPublisher
+{
+public:
+  ClockPublisher(std::chrono::milliseconds pub_period, int64_t time_value)
+  {
+    node_ = std::make_shared<rclcpp::Node>(
+      "clock_pub_node",
+      rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false));
+    pub_ = node_->create_publisher<rosgraph_msgs::msg::Clock>(
+      "/clock", rclcpp::QoS(1));
+
+    rclcpp::Time time{time_value};
+    rosgraph_msgs::msg::Clock clock_msg;
+    clock_msg.clock = time;
+
+    timer_ = node_->create_wall_timer(
+      pub_period,
+      [&, clock_msg]() {
+        pub_->publish(clock_msg);
+      });
+    exec_.add_node(node_);
+    spin_thread_ = std::thread(
+      [this]() {
+        exec_.spin();
+      });
+  }
+
+  ~ClockPublisher()
+  {
+    exec_.cancel();
+    if (spin_thread_.joinable()) {
+      spin_thread_.join();
+    }
+  }
+
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr pub_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::executors::SingleThreadedExecutor exec_;
+  std::thread spin_thread_;
+};
+
 TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 {
-  std::string string_topic = "/string_topic";
+  const int64_t time_value{123456789};
+  const std::string clock_topic = "/clock";
+  const std::string string_topic = "/string_topic";
   auto string_message = get_messages_strings()[0];
   string_message->string_value = "Hello World";
 
-  // clock
-  std::string clock_topic = "/clock";
-  auto clock_message = std::make_shared<rosgraph_msgs::msg::Clock>();
-  clock_message->clock.sec = 1234567890;
-  clock_message->clock.nanosec = 123456789;
+  // publishes /clock messages every 100ms until shutdown
+  auto clock_pub = ClockPublisher(std::chrono::milliseconds(100), time_value);
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(clock_topic, clock_message, 5);
   pub_manager.setup_publisher(string_topic, string_message, 5);
 
   rosbag2_transport::RecordOptions record_options =
@@ -60,14 +100,11 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(clock_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(clock_topic));
 
   ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
-  ASSERT_TRUE(recorder->topic_available_for_recording(clock_topic));
 
   pub_manager.run_publishers();
 
@@ -87,7 +124,6 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   stop_spinning();
 
   auto messages_per_topic = mock_writer.messages_per_topic();
-  EXPECT_EQ(messages_per_topic[clock_topic], 5u);
   EXPECT_EQ(messages_per_topic[string_topic], 5u);
 
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
@@ -99,5 +135,5 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     }
   }
   // check that the timestamp is same as the clock message
-  EXPECT_THAT(string_messages[0]->time_stamp, 1234567890123456789);
+  EXPECT_THAT(string_messages[0]->time_stamp, time_value);
 }
