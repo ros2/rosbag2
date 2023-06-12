@@ -150,11 +150,6 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
   const std::chrono::nanoseconds sleep_duration{RCUTILS_S_TO_NS(1)};
   rosbag2_cpp::TimeControllerClock clock(ros_start_time);
 
-<<<<<<< HEAD
-  clock.pause();
-  clock.resume();
-  EXPECT_TRUE(clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(1)));
-=======
   // Run the whole thing twice to make sure everything also works properly after pause and resume
   for (int i = 0; i < 2; i++) {
     clock.resume();
@@ -179,7 +174,6 @@ TEST_F(TimeControllerClockTest, unpaused_sleep_returns_true)
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
   }
->>>>>>> 38e9c96 (Rewrite TimeControllerClockTest.unpaused_sleep_returns_true to be correct (#1384))
 }
 
 TEST_F(TimeControllerClockTest, paused_sleep_returns_false_quickly)
