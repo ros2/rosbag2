@@ -37,6 +37,60 @@
 
 #include "topic_filter.hpp"
 
+namespace
+{
+
+// Inline backports from https://github.com/ros2/rclcpp/pull/2040
+bool clock_started(rclcpp::Clock::SharedPtr clock)
+{
+  rcl_clock_t * clock_handle = clock->get_clock_handle();
+  if (!rcl_clock_valid(clock_handle)) {
+    throw std::runtime_error("clock is not rcl_clock_valid");
+  }
+  rcl_time_point_value_t query_now;
+  if (rcl_clock_get_now(clock_handle, &query_now) == RCL_RET_OK) {
+    return query_now > 0;
+  }
+  return false;
+}
+
+bool clock_wait_until_started(
+  rclcpp::Clock::SharedPtr clock,
+  Context::SharedPtr context = rclcpp::contexts::get_global_default_context())
+{
+  if (!context || !context->is_valid()) {
+    throw std::runtime_error("context cannot be slept with because it's invalid");
+  }
+  rcl_clock_t * clock_handle = clock->get_clock_handle();
+  if (!rcl_clock_valid(clock_handle)) {
+    throw std::runtime_error("clock cannot be waited on as it is not rcl_clock_valid");
+  }
+  rclcpp::Clock timeout_clock = rclcpp::Clock(RCL_STEADY_TIME);
+  rclcpp::Time start = timeout_clock.now();
+
+  // CHeck if the clock has started every wait_tick_ns nanoseconds
+  // Context check checks for rclpp::shutdown()
+  while (!clock_started(clock) && context->is_valid()) {
+    if (timeout < wait_tick_ns) {
+      timeout_clock.sleep_for(timeout);
+    } else {
+      rclcpp::Duration time_left = start + timeout - timeout_clock.now();
+      if (time_left > wait_tick_ns) {
+        timeout_clock.sleep_for(rclcpp::Duration(wait_tick_ns));
+      } else {
+        timeout_clock.sleep_for(time_left);
+      }
+    }
+
+    if (timeout_clock.now() - start > timeout) {
+      return clock_started(clock);
+    }
+  }
+  return clock_started(clock);
+}
+
+}  // namespace
+
 namespace rosbag2_transport
 {
 
@@ -255,11 +309,11 @@ void Recorder::topics_discovery()
       this->get_logger(),
       "use_sim_time set, waiting for /clock before starting recording...");
     while (rclcpp::ok() && stop_discovery_ == false) {
-      if (this->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+      if (clock_wait_until_started(this->get_clock(), record_options_.topic_polling_interval)) {
         break;
       }
     }
-    if (this->get_clock()->started()) {
+    if (clock_started(this->get_clock())) {
       RCLCPP_INFO(this->get_logger(), "Sim time /clock found, starting recording.");
     }
   }
