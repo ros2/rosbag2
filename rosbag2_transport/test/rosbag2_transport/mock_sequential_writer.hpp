@@ -33,9 +33,13 @@ public:
     snapshot_mode_ = storage_options.snapshot_mode;
     (void) storage_options;
     (void) converter_options;
+    writer_close_called_ = false;
   }
 
-  void close() override {}
+  void close() override
+  {
+    writer_close_called_ = true;
+  }
 
   void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override
   {
@@ -118,6 +122,11 @@ public:
     return max_messages_per_file_;
   }
 
+  bool closed_was_called() const
+  {
+    return writer_close_called_;
+  }
+
 private:
   std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_;
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
@@ -128,6 +137,7 @@ private:
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
   size_t max_messages_per_file_ = 0;
+  bool writer_close_called_{false};
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
