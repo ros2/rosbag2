@@ -81,7 +81,19 @@ def test_record_cancel(tmp_path):
 
     recorder.cancel()
 
+<<<<<<< HEAD
     metadata_path = Path(bag_path) / 'metadata.yaml'
     db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
     assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
+=======
+    metadata_io = rosbag2_py.MetadataIo()
+    assert wait_for(lambda: metadata_io.metadata_file_exists(bag_path),
+                    timeout=rclpy.duration.Duration(seconds=3))
+    record_thread.join()
+
+    metadata = metadata_io.read_metadata(bag_path)
+    assert(len(metadata.relative_file_paths))
+    storage_path = Path(metadata.relative_file_paths[0])
+    assert wait_for(lambda: storage_path.is_file(),
+>>>>>>> 46a23e9 (Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (#1301))
                     timeout=rclpy.duration.Duration(seconds=3))

@@ -141,17 +141,20 @@ public:
 
 class Recorder
 {
-private:
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
-
 public:
   Recorder()
   {
-    rclcpp::init(0, nullptr);
-    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    auto init_options = rclcpp::InitOptions();
+    init_options.shutdown_on_signal = false;
+    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::None);
+
     std::signal(
       SIGTERM, [](int /* signal */) {
-        rclcpp::shutdown();
+        rosbag2_py::Recorder::cancel();
+      });
+    std::signal(
+      SIGINT, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
       });
   }
 
@@ -164,6 +167,8 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options)
   {
+    exit_ = false;
+    auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     if (record_options.rmw_serialization_format.empty()) {
       record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
     }
@@ -173,20 +178,55 @@ public:
       std::move(writer), storage_options, record_options);
     recorder->record();
 
-    exec_->add_node(recorder);
-    // Release the GIL for long-running record, so that calling Python code can use other threads
+    exec->add_node(recorder);
+    // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
+    // recorder->stop() to be able to send notifications about bag split and close.
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec->spin();
+      });
     {
+      // Release the GIL for long-running record, so that calling Python code can use other threads
       py::gil_scoped_release release;
-      exec_->spin();
+      std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
+      wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
+      recorder->stop();
     }
+    exec->cancel();
+    if (spin_thread.joinable()) {
+      spin_thread.join();
+    }
+    exec->remove_node(recorder);
   }
 
-  void cancel()
+  static void cancel()
   {
-    exec_->cancel();
+    exit_ = true;
+    wait_for_exit_cv_.notify_all();
   }
+
+protected:
+  static std::atomic_bool exit_;
+  static std::condition_variable wait_for_exit_cv_;
+  std::mutex wait_for_exit_mutex_;
 };
 
+<<<<<<< HEAD
+=======
+std::atomic_bool Recorder::exit_{false};
+std::condition_variable Recorder::wait_for_exit_cv_{};
+
+// Return a RecordOptions struct with defaults set for rewriting bags.
+rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
+{
+  rosbag2_transport::RecordOptions options{};
+  // We never want to drop messages when converting bags, so set the compression queue size to 0
+  // (unbounded).
+  options.compression_queue_size = 0;
+  return options;
+}
+
+>>>>>>> 46a23e9 (Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (#1301))
 // Simple wrapper to read the output config YAML into structs
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
@@ -283,8 +323,15 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
+<<<<<<< HEAD
   .def("record", &rosbag2_py::Recorder::record)
   .def("cancel", &rosbag2_py::Recorder::cancel)
+=======
+  .def(
+    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"),
+    py::arg("node_name") = "rosbag2_recorder")
+  .def_static("cancel", &rosbag2_py::Recorder::cancel)
+>>>>>>> 46a23e9 (Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (#1301))
   ;
 
   m.def(
