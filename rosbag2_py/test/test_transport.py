@@ -80,6 +80,7 @@ def test_record_cancel(tmp_path, storage_id):
     metadata_io = rosbag2_py.MetadataIo()
     assert wait_for(lambda: metadata_io.metadata_file_exists(bag_path),
                     timeout=rclpy.duration.Duration(seconds=3))
+    record_thread.join()
 
     metadata = metadata_io.read_metadata(bag_path)
     assert(len(metadata.relative_file_paths))
