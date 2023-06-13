@@ -65,15 +65,31 @@ class RecordVerb(VerbExtension):
             'topics', nargs='*', default=None, help='List of topics to record.')
         parser.add_argument(
             '-a', '--all', action='store_true',
-            help='Record all topics. Required if no explicit topic list or regex filters.')
+            help='Record all topics and services (Exclude hidden topic).')
+        parser.add_argument(
+            '--all-topics', action='store_true',
+            help='Record all topics (Exclude hidden topic).')
+        parser.add_argument(
+            '--all-services', action='store_true',
+            help='Record all services via service event topics.')
         parser.add_argument(
             '-e', '--regex', default='',
-            help='Record only topics containing provided regular expression. '
-                 'Overrides --all, applies on top of topics list.')
+            help='Record only topics and services containing provided regular expression. '
+                 'Overrides --all, --all-topics and --all-services, applies on top of '
+                 'topics list and service list.')
         parser.add_argument(
-            '-x', '--exclude', default='',
+            '--exclude-topics', default='',
             help='Exclude topics containing provided regular expression. '
-                 'Works on top of --all, --regex, or topics list.')
+                 'Works on top of --all, --all-topics, or --regex.')
+        parser.add_argument(
+            '--exclude-services', default='',
+            help='Exclude services containing provided regular expression. '
+                 'Works on top of --all, --all-services, or --regex.')
+
+        # Enable to record service
+        parser.add_argument(
+            '--services', type=str, metavar='ServiceName', nargs='+',
+            help='List of services to record.')
 
         # Discovery behavior
         parser.add_argument(
@@ -168,19 +184,34 @@ class RecordVerb(VerbExtension):
                  'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
     def main(self, *, args):  # noqa: D102
-        # both all and topics cannot be true
-        if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
-            return print_error('Must specify only one option out of topics, --regex or --all')
-        # one out of "all", "topics" and "regex" must be true
-        if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
-            return print_error('Invalid choice: Must specify topic(s), --regex or --all')
+        # One options out of --all, --all-topics, --all-services, --services, topics or --regex
+        # must be used
+        if not (args.all or args.all_topics or args.all_services or
+           args.services or (args.topics and len(args.topics) > 0) or args.regex):
+            return print_error('Must specify only one option out of --all, --all-topics, '
+                               '--all-services, --services, topics and --regex')
 
-        if args.topics and args.exclude:
-            return print_error('--exclude argument cannot be used when specifying a list '
-                               'of topics explicitly')
+        # Only one option out of --all, --all-services --services or --regex can be used
+        if (args.all and args.all_services) or \
+           ((args.all or args.all_services) and args.regex) or \
+           ((args.all or args.all_services or args.regex) and args.services):
+            return print_error('Must specify only one option out of --all, --all-services, '
+                               '--services or --regex')
 
-        if args.exclude and not(args.regex or args.all):
-            return print_error('--exclude argument requires either --all or --regex')
+        # Only one option out of --all, --all-topics, topics or --regex can be used
+        if (args.all and args.all_topics) or \
+           ((args.all or args.all_topics) and args.regex) or \
+           ((args.all or args.all_topics or args.regex) and args.topics):
+            return print_error('Must specify only one option out of --all, --all-topics, '
+                               'topics or --regex')
+
+        if args.exclude_topics and not (args.regex or args.all or args.all_topics):
+            return print_error('--exclude-topics argument requires either --all, --all-topics '
+                               'or --regex')
+
+        if args.exclude_services and not (args.regex or args.all or args.all_services):
+            return print_error('--exclude-services argument requires either --all, --all-services '
+                               'or --regex')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
@@ -232,14 +263,15 @@ class RecordVerb(VerbExtension):
             custom_data=custom_data
         )
         record_options = RecordOptions()
-        record_options.all = args.all
+        record_options.all_topics = args.all_topics or args.all
         record_options.is_discovery_disabled = args.no_discovery
         record_options.topics = args.topics
         record_options.rmw_serialization_format = args.serialization_format
         record_options.topic_polling_interval = datetime.timedelta(
             milliseconds=args.polling_interval)
         record_options.regex = args.regex
-        record_options.exclude = args.exclude
+        record_options.exclude_topics = args.exclude_topics
+        record_options.exclude_services = args.exclude_services
         record_options.node_prefix = NODE_NAME_PREFIX
         record_options.compression_mode = args.compression_mode
         record_options.compression_format = args.compression_format
@@ -251,6 +283,15 @@ class RecordVerb(VerbExtension):
         record_options.start_paused = args.start_paused
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
         record_options.use_sim_time = args.use_sim_time
+        record_options.all_services = args.all_services or args.all
+
+        # Convert service name to service event topic name
+        services = []
+        if args.services and len(args.services) != 0:
+            for s in args.services:
+                name = '/' + s if s[0] != '/' else s
+                services.append(name + '/_service_event')
+        record_options.services = services
 
         recorder = Recorder()
 

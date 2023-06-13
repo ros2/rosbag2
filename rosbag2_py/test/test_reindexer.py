@@ -43,7 +43,7 @@ def test_reindexer_multiple_files(storage_id):
     reindexer = rosbag2_py.Reindexer()
     reindexer.reindex(storage_options)
 
-    assert(result_path.exists())
+    assert result_path.exists()
 
     try:
         result_path.unlink()

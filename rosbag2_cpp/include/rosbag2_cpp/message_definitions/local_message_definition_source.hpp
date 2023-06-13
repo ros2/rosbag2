@@ -61,18 +61,20 @@ class ROSBAG2_CPP_PUBLIC LocalMessageDefinitionSource final
 public:
   /**
    * Concatenate the message definition with its dependencies into a self-contained schema.
-   * The format is different for MSG and IDL definitions, and is described fully in
+   * The format is different for MSG/SRV and IDL definitions, and is described fully in
    * docs/message_definition_encoding.md
+   * For SRV type, root_type must include a string '/srv/'.
    * Throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
    */
-  rosbag2_storage::MessageDefinition get_full_text(const std::string & root_topic_type);
+  rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
 
   enum struct Format
   {
     UNKNOWN = 0,
     MSG = 1,
     IDL = 2,
+    SRV = 3,
   };
 
   explicit LocalMessageDefinitionSource() = default;

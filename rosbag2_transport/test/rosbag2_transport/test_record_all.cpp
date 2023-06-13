@@ -22,9 +22,11 @@
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
+#include "rosbag2_test_common/service_client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -47,7 +49,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(array_topic, array_message, 2);
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
-  rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
+  rosbag2_transport::RecordOptions record_options =
+  {true, false, false, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -84,4 +87,84 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(string_messages[0]->string_value, Eq("Hello World"));
   EXPECT_THAT(array_messages[0]->bool_values, ElementsAre(true, false, true));
   EXPECT_THAT(array_messages[0]->float32_values, ElementsAre(40.0f, 2.0f, 0.0f));
+}
+
+TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_are_recorded)
+{
+  auto service_client_manager_1 =
+    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+    "test_service_1");
+
+  auto service_client_manager_2 =
+    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+    "test_service_2");
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, true, false, {}, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+
+  ASSERT_TRUE(service_client_manager_1->check_service_ready());
+
+  ASSERT_TRUE(service_client_manager_2->check_service_ready());
+
+  // By default, only client introspection is enable.
+  // For one request, service event topic get 2 messages.
+  ASSERT_TRUE(service_client_manager_1->send_request());
+  ASSERT_TRUE(service_client_manager_2->send_request());
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  size_t expected_messages = 4;
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
+}
+
+TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_are_recorded)
+{
+  auto service_client_manager_1 =
+    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+    "test_service");
+
+  auto string_message = get_messages_strings()[0];
+  string_message->string_value = "Hello World";
+  std::string string_topic = "/string_topic";
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(string_topic, string_message, 1);
+
+  rosbag2_transport::RecordOptions record_options =
+  {true, true, false, {}, {}, "rmw_format", 100ms};
+  record_options.exclude_topics = "rosout";
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+  ASSERT_TRUE(service_client_manager_1->check_service_ready());
+
+  pub_manager.run_publishers();
+
+  // By default, only client introspection is enable.
+  // For one request, service event topic get 2 messages.
+  ASSERT_TRUE(service_client_manager_1->send_request());
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  size_t expected_messages = 3;
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
 }

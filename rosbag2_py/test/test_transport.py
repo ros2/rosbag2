@@ -50,7 +50,7 @@ def test_record_cancel(tmp_path, storage_id):
     recorder = rosbag2_py.Recorder()
 
     record_options = rosbag2_py.RecordOptions()
-    record_options.all = True
+    record_options.all_topics = True
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
@@ -83,7 +83,7 @@ def test_record_cancel(tmp_path, storage_id):
     record_thread.join()
 
     metadata = metadata_io.read_metadata(bag_path)
-    assert(len(metadata.relative_file_paths))
+    assert len(metadata.relative_file_paths)
     storage_path = Path(metadata.relative_file_paths[0])
     assert wait_for(lambda: storage_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))

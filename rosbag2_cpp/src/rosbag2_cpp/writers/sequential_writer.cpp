@@ -29,6 +29,7 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -195,7 +196,17 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
     return;
   }
   rosbag2_storage::MessageDefinition definition;
-  const std::string & topic_type = topic_with_type.type;
+
+  std::string topic_type;
+  if (is_service_event_topic(topic_with_type.name, topic_with_type.type)) {
+    // change service event type to service type for next step to get message definition
+    topic_type = topic_with_type.type.substr(
+      0,
+      topic_with_type.type.length() - strlen("_Event"));
+  } else {
+    topic_type = topic_with_type.type;
+  }
+
   try {
     definition = message_definitions_.get_full_text(topic_type);
   } catch (DefinitionNotFoundError &) {

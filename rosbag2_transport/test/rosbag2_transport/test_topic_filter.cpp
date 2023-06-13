@@ -35,7 +35,10 @@ protected:
     {"/invalidated_topic", {"invalidated_topic_type"}},
     {"/localization", {"localization_topic_type"}},
     {"/invisible", {"invisible_topic_type"}},
-    {"/status", {"status_topic_type"}}
+    {"/status", {"status_topic_type"}},
+    {"/invalid_service/_service_event", {"service/srv/invalid_service_Event"}},
+    {"/invalidated_service/_service_event", {"service/srv/invalidated_service_Event"}},
+    {"/planning_service/_service_event", {"service/srv/planning_service_Event"}}
   };
 };
 
@@ -58,6 +61,7 @@ TEST(TestTopicFilter, filter_hidden_topics) {
   }
   {
     rosbag2_transport::RecordOptions record_options;
+    record_options.all_topics = true;
     record_options.include_hidden_topics = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
@@ -72,8 +76,9 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
     {"topic/c", {"type_c", "type_c2"}},
     {"topic/d", {"type_d", "type_d", "type_d2"}},
   };
-
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr, true};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   EXPECT_THAT(filtered_topics, SizeIs(2));
   for (const auto & topic :
@@ -89,8 +94,9 @@ TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
     {"topic/b", {"type_b"}},
     {"topic/c", {"type_c"}}
   };
-
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(0u, filtered_topics.size());
 }
@@ -101,7 +107,9 @@ TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
     {"topic/b", {"test_msgs/BasicTypes"}},
     {"topic/c", {"test_msgs/BasicTypes"}}
   };
-  rosbag2_transport::TopicFilter filter{rosbag2_transport::RecordOptions{}, nullptr};
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr};
   auto filtered_topics = filter.filter_topics(topics_and_types);
   ASSERT_EQ(3u, filtered_topics.size());
 }
@@ -110,7 +118,10 @@ TEST(TestTopicFilter, filter_topics) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"type_a"}},
     {"topic/b", {"type_b"}},
-    {"topic/c", {"type_c"}}
+    {"topic/c", {"type_c"}},
+    {"/service/a/_service_event", {"service/srv/type_a_Event"}},
+    {"/service/b/_service_event", {"service/srv/type_b_Event"}},
+    {"/service/c/_service_event", {"service/srv/type_c_Event"}},
   };
 
   {
@@ -151,13 +162,38 @@ TEST(TestTopicFilter, filter_topics) {
       EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
     }
   }
+
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.services = {"/service/a/_service_event"};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(1u, filtered_topics.size());
+    EXPECT_EQ("/service/a/_service_event", filtered_topics.begin()->first);
+  }
+
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.services = {
+      "/service/a/_service_event",
+      "/service/b/_service_event",
+      "/service/d/_service_event"};
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(2u, filtered_topics.size());
+    for (const auto & topic :
+      {"/service/a/_service_event", "/service/b/_service_event"})
+    {
+      EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
+    }
+  }
 }
 
-TEST_F(RegexFixture, regex_all_and_exclude)
+TEST_F(RegexFixture, regex_all_topics_and_exclude_topics)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.exclude = "/inv.*";
-  record_options.all = true;
+  record_options.exclude_topics = "/inv.*";
+  record_options.all_topics = true;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
@@ -167,38 +203,100 @@ TEST_F(RegexFixture, regex_all_and_exclude)
   }
 }
 
-TEST_F(RegexFixture, regex_filter_exclude)
+TEST_F(RegexFixture, regex_all_services_and_exclude_services)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.regex = "/invalid.*";
-  record_options.exclude = ".invalidated.*";
-  record_options.all = false;
+  record_options.exclude_services = "/inv.*";
+  record_options.all_services = true;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
   EXPECT_THAT(filtered_topics, SizeIs(1));
+  EXPECT_EQ("/planning_service/_service_event", filtered_topics.begin()->first);
+}
+
+TEST_F(RegexFixture, regex_all_topics_all_services_and_exclude_topics_and_services)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.exclude_topics = "/inv.*";
+  record_options.all_topics = true;
+  record_options.exclude_services = "/inv.*";
+  record_options.all_services = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(4));
+  for (const auto & topic :
+    {"/planning", "/localization", "/status", "/planning_service/_service_event"})
+  {
+    EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
+  }
+}
+
+TEST_F(RegexFixture, regex_filter_exclude_topics)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/invalid.*";
+  record_options.exclude_topics = ".invalidated.*";  // Only affect topics
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(3));
   EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalidated_service/_service_event") != filtered_topics.end());
+}
+
+TEST_F(RegexFixture, regex_filter_exclude_services)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/invalid.*";
+  record_options.exclude_services = ".invalidated.*";  // Only affect services
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(3));
+  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalidated_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+}
+
+TEST_F(RegexFixture, regex_filter_exclude_topics_and_services)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/invalid.*";
+  record_options.exclude_topics = ".invalidated.*";
+  record_options.exclude_services = ".invalidated.*";
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(2));
+  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
 }
 
 TEST_F(RegexFixture, regex_filter)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "^/inval";
-  record_options.all = false;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
-  EXPECT_THAT(filtered_topics, SizeIs(2));
-  for (const auto & topic : {"/invalid_topic", "/invalidated_topic"}) {
+  EXPECT_THAT(filtered_topics, SizeIs(4));
+  for (const auto & topic :
+    {"/invalid_topic", "/invalidated_topic", "/invalid_service/_service_event",
+      "/invalidated_service/_service_event"})
+  {
     EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
   }
 }
 
-TEST_F(RegexFixture, regex_all_and_filter)
+TEST_F(RegexFixture, regex_all_topics_and_filter)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/status";
-  record_options.all = true;
+  record_options.all_topics = true;
+  record_options.exclude_services = ".*";  //  Not include services
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
   EXPECT_THAT(filtered_topics, SizeIs(6));
@@ -240,4 +338,26 @@ TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_se
       test_output.find(
         "Topic '/planning' has unknown type 'planning_topic_type'") != std::string::npos);
   }
+}
+
+TEST_F(RegexFixture, regex_all_services_and_filter)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/status";
+  record_options.all_services = true;
+  record_options.exclude_topics = ".*";  // Not include topics
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+  EXPECT_THAT(filtered_topics, SizeIs(3));
+}
+
+TEST_F(RegexFixture, regex_all_topics_all_services_and_filter)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/status";
+  record_options.all_topics = true;
+  record_options.all_services = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+  EXPECT_THAT(filtered_topics, SizeIs(9));
 }
