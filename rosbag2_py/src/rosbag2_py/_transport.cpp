@@ -211,22 +211,9 @@ protected:
   std::mutex wait_for_exit_mutex_;
 };
 
-<<<<<<< HEAD
-=======
 std::atomic_bool Recorder::exit_{false};
 std::condition_variable Recorder::wait_for_exit_cv_{};
 
-// Return a RecordOptions struct with defaults set for rewriting bags.
-rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
-{
-  rosbag2_transport::RecordOptions options{};
-  // We never want to drop messages when converting bags, so set the compression queue size to 0
-  // (unbounded).
-  options.compression_queue_size = 0;
-  return options;
-}
-
->>>>>>> 46a23e9 (Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (#1301))
 // Simple wrapper to read the output config YAML into structs
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
@@ -323,15 +310,9 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init())
-<<<<<<< HEAD
-  .def("record", &rosbag2_py::Recorder::record)
-  .def("cancel", &rosbag2_py::Recorder::cancel)
-=======
   .def(
-    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"),
-    py::arg("node_name") = "rosbag2_recorder")
+    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"))
   .def_static("cancel", &rosbag2_py::Recorder::cancel)
->>>>>>> 46a23e9 (Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (#1301))
   ;
 
   m.def(
