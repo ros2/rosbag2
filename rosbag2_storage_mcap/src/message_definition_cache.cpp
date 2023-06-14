@@ -28,10 +28,32 @@
 #include <unordered_set>
 #include <utility>
 
+#define MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH 50
+
 namespace rosbag2_storage_mcap::internal
 {
+
+/// A type name did not match expectations, so a definition could not be looked for.
+class TypenameNotUnderstoodError : public std::exception
+{
+private:
+  std::string name_;
+
+public:
+  explicit TypenameNotUnderstoodError(std::string name)
+      : name_(std::move(name))
+  {
+  }
+
+  const char * what() const noexcept override
+  {
+    return name_.c_str();
+  }
+};
+
 // Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
-static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/)?([a-zA-Z0-9_]+)$)"};
+static const std::regex PACKAGE_TYPENAME_REGEX{
+  R"(^([a-zA-Z][a-zA-Z0-9_]*)/((?:msg|srv)/)?([a-zA-Z][a-zA-Z0-9_]*)$)"};
 
 // Match field types from .msg definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
 static const std::regex MSG_FIELD_TYPE_REGEX{R"((?:^|\n)\s*([a-zA-Z0-9_/]+)(?:\[[^\]]*\])?\s+)"};
@@ -136,12 +158,16 @@ const MessageSpec & MessageDefinitionCache::load_message_spec(
   std::smatch match;
   if (!std::regex_match(definition_identifier.package_resource_name, match,
                         PACKAGE_TYPENAME_REGEX)) {
-    throw std::invalid_argument("Invalid package resource name: " +
-                                definition_identifier.package_resource_name);
+    throw TypenameNotUnderstoodError(definition_identifier.package_resource_name);
   }
-  std::string package = match[1];
+  const std::string package = match[1];
+  std::string namespace_name = match[2];
+  if (namespace_name.empty()) {
+    namespace_name = "msg";
+  }
+  const std::string type_name = match[3];
   std::string share_dir = ament_index_cpp::get_package_share_directory(package);
-  std::ifstream file{share_dir + "/msg/" + match[2].str() +
+  std::ifstream file{share_dir + "/" + namespace_name + "/" + type_name +
                      extension_for_format(definition_identifier.format)};
   if (!file.good()) {
     throw DefinitionNotFoundError(definition_identifier.package_resource_name);
@@ -164,8 +190,12 @@ std::pair<Format, std::string> MessageDefinitionCache::get_full_text(
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
-  std::function<std::string(const DefinitionIdentifier &)> append_recursive =
-    [&](const DefinitionIdentifier & definition_identifier) {
+  std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
+    [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
+      if (depth <= 0) {
+        throw std::runtime_error{"Reached max recursion depth resolving definition of " +
+                                 root_package_resource_name};
+      }
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;
       for (const auto & dep_name : spec.dependencies) {
@@ -174,7 +204,7 @@ std::pair<Format, std::string> MessageDefinitionCache::get_full_text(
         if (inserted) {
           result += "\n";
           result += delimiter(dep);
-          result += append_recursive(dep);
+          result += append_recursive(dep, depth - 1);
         }
       }
       return result;
@@ -182,15 +212,32 @@ std::pair<Format, std::string> MessageDefinitionCache::get_full_text(
 
   std::string result;
   Format format = Format::MSG;
+  int32_t max_recursion_depth = MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
   try {
-    result = append_recursive(DefinitionIdentifier{format, root_package_resource_name});
-  } catch (const DefinitionNotFoundError & err) {
-    // log that we've fallen back
-    RCUTILS_LOG_WARN_NAMED("rosbag2_storage_mcap", "no .msg definition for %s, falling back to IDL",
-                           err.what());
-    format = Format::IDL;
-    DefinitionIdentifier root_definition_identifier{format, root_package_resource_name};
-    result = delimiter(root_definition_identifier) + append_recursive(root_definition_identifier);
+    try {
+      result = append_recursive(DefinitionIdentifier{format, root_package_resource_name},
+                                max_recursion_depth);
+    } catch (const DefinitionNotFoundError & err) {
+      // log that we've fallen back
+      RCUTILS_LOG_WARN_NAMED("rosbag2_storage_mcap",
+                             "no .msg definition for %s, falling back to IDL", err.what());
+      format = Format::IDL;
+      DefinitionIdentifier root_definition_identifier{format, root_package_resource_name};
+      result = delimiter(root_definition_identifier) +
+               append_recursive(root_definition_identifier, max_recursion_depth);
+    }
+  } catch (const TypenameNotUnderstoodError & err) {
+    RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_mcap",
+                            "Message type name '%s' is not understood by type definition search, "
+                            "definition wll be left empty.",
+                            err.what());
+    format = Format::UNKNOWN;
+  } catch (const std::runtime_error & err) {
+    RCUTILS_LOG_ERROR_NAMED("rosbag2_storage_mcap",
+                            "Unexpected error occurred finding message definition, "
+                            "will be left empty: %s",
+                            err.what());
+    format = Format::UNKNOWN;
   }
   return std::make_pair(format, result);
 }
