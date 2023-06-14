@@ -100,7 +100,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_mcap_storage test/rosbag2_storage_mcap/test_mcap_storage.cpp)
   target_link_libraries(test_mcap_storage ${PROJECT_NAME})
-  ament_target_dependencies(test_mcap_storage rosbag2_storage rosbag2_test_common std_msgs)
+  ament_target_dependencies(test_mcap_storage mcap_vendor rosbag2_storage rosbag2_test_common std_msgs)
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
   ament_add_gmock(test_message_definition_cache test/rosbag2_storage_mcap/test_message_definition_cache.cpp)
