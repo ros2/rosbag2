@@ -162,8 +162,8 @@ class RecordVerb(VerbExtension):
             help='Start the recorder in a paused state.')
         parser.add_argument(
             '--use-sim-time', action='store_true', default=False,
-            help='Use simulation time.'
-        )
+            help='Use simulation time for message timestamps by subscribing to the /clock topic. '
+                 'Until first /clock message is received, no messages will be written to bag.')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -203,6 +203,11 @@ class RecordVerb(VerbExtension):
                     qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
+
+        if args.use_sim_time and args.no_discovery:
+            return print_error(
+                '--use-sim-time and --no-discovery both set, but are incompatible settings. '
+                'The /clock topic needs to be discovered to record with sim time.')
 
         storage_config_file = ''
         if args.storage_config_file:

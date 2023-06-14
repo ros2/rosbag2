@@ -88,6 +88,12 @@ Recorder::Recorder(
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
+  if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
+    throw std::runtime_error(
+            "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
+            "The /clock topic needs to be discovered to record with sim time.");
+  }
+
   std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
   toggle_paused_key_callback_handle_ =
     keyboard_handler_->add_key_press_callback(
@@ -133,6 +139,7 @@ void Recorder::stop()
 
 void Recorder::record()
 {
+  stop_discovery_ = record_options_.is_discovery_disabled;
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
@@ -176,8 +183,9 @@ void Recorder::record()
 
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(this->get_logger(), "Listening for topics...");
-  subscribe_topics(get_requested_or_available_topics());
-
+  if (!record_options_.use_sim_time) {
+    subscribe_topics(get_requested_or_available_topics());
+  }
   if (!record_options_.is_discovery_disabled) {
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
@@ -249,6 +257,20 @@ bool Recorder::is_paused()
 
 void Recorder::topics_discovery()
 {
+  // If using sim time - wait until /clock topic received before even creating subscriptions
+  if (record_options_.use_sim_time) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "use_sim_time set, waiting for /clock before starting recording...");
+    while (rclcpp::ok() && stop_discovery_ == false) {
+      if (this->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+        break;
+      }
+    }
+    if (this->get_clock()->started()) {
+      RCLCPP_INFO(this->get_logger(), "Sim time /clock found, starting recording.");
+    }
+  }
   while (rclcpp::ok() && stop_discovery_ == false) {
     auto topics_to_subscribe =
       get_requested_or_available_topics();
