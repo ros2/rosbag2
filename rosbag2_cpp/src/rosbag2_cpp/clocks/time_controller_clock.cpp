@@ -259,4 +259,11 @@ rclcpp::JumpHandler::SharedPtr TimeControllerClock::create_jump_callback(
   return nullptr;
 }
 
+std::chrono::steady_clock::time_point
+TimeControllerClock::ros_to_steady(rcutils_time_point_value_t ros_time) const
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  return impl_->ros_to_steady(ros_time);
+}
+
 }  // namespace rosbag2_cpp

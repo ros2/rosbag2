@@ -136,6 +136,16 @@ public:
     rclcpp::JumpHandler::post_callback_t post_callback,
     const rcl_jump_threshold_t & threshold) override;
 
+  /**
+   * @brief Convert an arbitrary ROSTime to a SteadyTime, based on the current reference snapshot.
+   * @note Backported as non-virtual to Humble to maintain ABI
+   * @param ros_time - time point in ROSTime
+   * @return time point in steady clock i.e. std::chrono::steady_clock
+   */
+  ROSBAG2_CPP_PUBLIC
+  std::chrono::steady_clock::time_point
+  ros_to_steady(rcutils_time_point_value_t ros_time) const;
+
 private:
   std::unique_ptr<TimeControllerClockImpl> impl_;
 };

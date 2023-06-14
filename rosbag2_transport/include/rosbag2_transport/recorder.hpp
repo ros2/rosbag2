@@ -90,10 +90,17 @@ public:
     return subscriptions_;
   }
 
+  /// @brief Stopping recording.
+  /// @details The stop() is opposite to the record() operation. It will stop recording, dump
+  /// all buffers to the disk and close writer. The record() can be called again after stop().
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop();
+
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_cpp::Writer & get_writer_handle();
 
-  /// Pause the recording.
+  /// @brief Pause the recording.
+  /// @details Will keep writer open and skip messages upon arrival on subscriptions.
   ROSBAG2_TRANSPORT_PUBLIC
   void pause();
 
