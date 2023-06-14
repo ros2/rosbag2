@@ -136,3 +136,19 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
+
+TEST(test_local_message_definition_source, get_service_message_definitions)
+{
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/BasicSrv_Request");
+  ASSERT_EQ(result.encoding, "ros2msg");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "string req\n");
+
+  result = source.get_full_text("rosbag2_test_msgdefs/srv/BasicSrv_Response");
+  ASSERT_EQ(result.encoding, "ros2msg");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "\nstring resp\n");
+}

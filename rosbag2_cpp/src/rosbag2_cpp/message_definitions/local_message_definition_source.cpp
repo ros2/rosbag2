@@ -47,6 +47,11 @@ public:
   }
 };
 
+// package_name / optionally 'msg' or 'srv' / interface name
+static const std::regex INTERFACE_IDENTIFIER_REGEX{
+  R"(^([a-zA-Z][a-zA-Z0-9_]*)/((?:msg|srv)/)?([a-zA-Z][a-zA-Z0-9_]*)$)"
+};
+
 // Match field types from .msg definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
 static const std::regex MSG_FIELD_TYPE_REGEX{R"((?:^|\n)\s*([a-zA-Z0-9_/]+)(?:\[[^\]]*\])?\s+)"};
 
@@ -157,27 +162,17 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     return it->second;
   }
   std::smatch match;
-  const std::string topic_type = definition_identifier.topic_type();
-
-  static const std::string valid_first_chars{"a-zA-Z"};
-  static const std::string valid_nonfirst_chars{"a-zA-Z0-9_"};
-  static const std::string ros_name = "[" + valid_first_chars + "][" + valid_nonfirst_chars + "]*";
-  const std::regex no_namespace_regex{"^(" + ros_name + ")/(" + ros_name + ")$"};
-  const std::regex with_namespace_regex{
-    "^(" + ros_name + ")/(" + ros_name + ")/(" + ros_name + ")$"};
-
-  std::string package_name, namespace_name, type_name;
-  if (std::regex_match(topic_type, match, no_namespace_regex)) {
-    package_name = match[1];
-    namespace_name = "msg";
-    type_name = match[2];
-  } else if (std::regex_match(topic_type, match, with_namespace_regex)) {
-    package_name = match[1];
-    namespace_name = match[2];
-    type_name = match[3];
-  } else {
-    throw std::invalid_argument("Invalid topic_type: " + topic_type);
+  const auto topic_type = definition_identifier.topic_type();
+  if (!std::regex_match(topic_type, match, INTERFACE_IDENTIFIER_REGEX)) {
+    throw TypenameNotUnderstoodError(topic_type);
   }
+
+  std::string package_name = match[1];
+  std::string namespace_name = match[2];
+  if (namespace_name.empty()) {
+    namespace_name = "msg";
+  }
+  std::string type_name = match[3];
 
   std::string share_dir = ament_index_cpp::get_package_share_directory(package_name);
   std::ifstream file{share_dir + "/" + namespace_name + "/" + type_name +
