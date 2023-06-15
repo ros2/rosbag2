@@ -175,10 +175,11 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   std::string type_name = match[3];
 
   std::string share_dir = ament_index_cpp::get_package_share_directory(package_name);
-  std::ifstream file{share_dir + "/" + namespace_name + "/" + type_name +
-    extension_for_format(definition_identifier.format())};
+  std::string filename = share_dir + "/" + namespace_name + "/" +
+                         type_name + extension_for_format(definition_identifier.format());
+  std::ifstream file{filename};
   if (!file.good()) {
-    throw DefinitionNotFoundError(definition_identifier.topic_type());
+    throw DefinitionNotFoundError(filename);
   }
 
   std::string contents{std::istreambuf_iterator(file), {}};

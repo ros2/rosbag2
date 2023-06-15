@@ -191,7 +191,9 @@ if(BUILD_TESTING)
   ament_add_gmock(test_local_message_definition_source
     test/rosbag2_cpp/test_local_message_definition_source.cpp)
   if(TARGET test_local_message_definition_source)
-    target_link_libraries(test_local_message_definition_source ${PROJECT_NAME})
+    target_link_libraries(test_local_message_definition_source
+      ${PROJECT_NAME}
+      ${rosbag2_test_msgdefs_TARGETS})
   endif()
 
   ament_add_gmock(test_message_cache
