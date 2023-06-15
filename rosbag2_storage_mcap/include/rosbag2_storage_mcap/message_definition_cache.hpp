@@ -29,6 +29,7 @@ enum struct Format
 {
   IDL,
   MSG,
+  UNKNOWN,
 };
 
 struct MessageSpec

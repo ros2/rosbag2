@@ -124,3 +124,26 @@ module rosbag2_storage_mcap_testdata {
 };
 )r");
 }
+
+TEST(test_local_message_definition_source, no_crash_on_bad_name)
+{
+  MessageDefinitionCache source;
+  std::pair<Format, std::string> result;
+  ASSERT_NO_THROW({
+    result =
+      source.get_full_text("rosbag2_storage_mcap_testdata/action/BasicAction_SetGoal_Request");
+  });
+  ASSERT_EQ(result.first, rosbag2_storage_mcap::internal::Format::UNKNOWN);
+}
+
+TEST(test_message_definition_cache, get_service_message_definitions)
+{
+  MessageDefinitionCache source;
+  auto result = source.get_full_text("rosbag2_storage_mcap_testdata/srv/BasicSrv_Request");
+  ASSERT_EQ(result.first, rosbag2_storage_mcap::internal::Format::MSG);
+  ASSERT_EQ(result.second, "string req\n");
+
+  result = source.get_full_text("rosbag2_storage_mcap_testdata/srv/BasicSrv_Response");
+  ASSERT_EQ(result.first, rosbag2_storage_mcap::internal::Format::MSG);
+  ASSERT_EQ(result.second, "\nstring resp\n");
+}

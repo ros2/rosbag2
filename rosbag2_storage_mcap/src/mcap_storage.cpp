@@ -725,10 +725,18 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic)
     schema.name = datatype;
     try {
       auto [format, full_text] = msgdef_cache_.get_full_text(datatype);
-      if (format == rosbag2_storage_mcap::internal::Format::MSG) {
-        schema.encoding = "ros2msg";
-      } else {
-        schema.encoding = "ros2idl";
+      switch (format) {
+        case rosbag2_storage_mcap::internal::Format::UNKNOWN:
+          schema.encoding = "unknown";
+          break;
+        case rosbag2_storage_mcap::internal::Format::MSG:
+          schema.encoding = "ros2msg";
+          break;
+        case rosbag2_storage_mcap::internal::Format::IDL:
+          schema.encoding = "ros2idl";
+          break;
+        default:
+          throw std::runtime_error("switch is not exhaustive");
       }
       schema.data.assign(reinterpret_cast<const std::byte *>(full_text.data()),
                          reinterpret_cast<const std::byte *>(full_text.data() + full_text.size()));
