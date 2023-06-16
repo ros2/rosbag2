@@ -40,7 +40,7 @@ Add 3 parameters.
 
 - `--all-topics`
 
-    Record all topics. Hidden topic are excluded (include service event topics).
+    Record all topics. Hidden topics including service event topics are excluded.
 
 - `--all-services`
 
