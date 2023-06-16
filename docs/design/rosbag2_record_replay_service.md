@@ -26,15 +26,17 @@ Service event topic is saved like general topic. But they should use different p
   
   [NameSpace/]ServiceName/_service_event
 
-So if the string ends with `/_service_event` in topic name, it should be service event topic. Of course, it is possible that hidden topic has the same name. So message type is used for further check. The message type for service event topic must include `/srv/` and ends with `_Event` (e.g. example_interfaces/srv/AddTwoInts_Event). Therefore, service event topic can be identified.
+The following criteria will be used to determine a service event topic:
+1. The topic ends with `/_service_event`
+2. The topic type name matches  `*/srv/*_Event` (e.g. `example_interfaces/srv/AddTwoInts_Event`)
 
 ### Expand the 'record' command
 
 Add 3 parameters.
 
-- `-S SerivceName1 [ServiceName2 ...]` or `--services SerivceName1 [ServiceName2 ...]`
+- `-S ServiceName1 [ServiceName2 ...]` or `--services ServiceName1 [ServiceName2 ...]`
   
-    If the user doesn't specify service names, all service event topics are recorded.
+    Specify which services will be recorded. User must specify at least one service.
 
 - `--all-topics`
 
