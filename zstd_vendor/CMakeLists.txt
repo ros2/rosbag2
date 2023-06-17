@@ -52,7 +52,7 @@ macro(build_zstd)
 
   install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/opt/zstd_vendor
     USE_SOURCE_PERMISSIONS)
 endmacro()
 
@@ -64,4 +64,4 @@ endif()
 
 install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
-ament_package(CONFIG_EXTRAS zstd_vendor-extras.cmake)
+ament_package(CONFIG_EXTRAS zstd_vendor-extras.cmake.in)
