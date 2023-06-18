@@ -163,12 +163,12 @@ void Recorder::record()
       });
   }
 
+  split_event_pub_ =
+    create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
+
   // Start the thread that will publish events
   event_publisher_thread_ = std::thread(&Recorder::event_publisher_thread_main, this);
 
-  split_event_pub_ = create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
-    "events/write_split",
-    1);
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
@@ -210,7 +210,17 @@ void Recorder::event_publisher_thread_main()
       auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = bag_split_info_.closed_file;
       message.opened_file = bag_split_info_.opened_file;
-      split_event_pub_->publish(message);
+      try {
+        split_event_pub_->publish(message);
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(
+          get_logger(),
+          "Failed to publish message on '/events/write_split' topic. \nError: " << e.what());
+      } catch (...) {
+        RCLCPP_ERROR_STREAM(
+          get_logger(),
+          "Failed to publish message on '/events/write_split' topic.");
+      }
     }
 
     should_exit = event_publisher_thread_should_exit_;
@@ -272,19 +282,26 @@ void Recorder::topics_discovery()
     }
   }
   while (rclcpp::ok() && stop_discovery_ == false) {
-    auto topics_to_subscribe =
-      get_requested_or_available_topics();
-    for (const auto & topic_and_type : topics_to_subscribe) {
-      warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
-    }
-    auto missing_topics = get_missing_topics(topics_to_subscribe);
-    subscribe_topics(missing_topics);
+    try {
+      auto topics_to_subscribe = get_requested_or_available_topics();
+      for (const auto & topic_and_type : topics_to_subscribe) {
+        warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
+      }
+      auto missing_topics = get_missing_topics(topics_to_subscribe);
+      subscribe_topics(missing_topics);
 
-    if (!record_options_.topics.empty() && subscriptions_.size() == record_options_.topics.size()) {
-      RCLCPP_INFO(
-        this->get_logger(),
-        "All requested topics are subscribed. Stopping discovery...");
-      return;
+      if (!record_options_.topics.empty() &&
+        subscriptions_.size() == record_options_.topics.size())
+      {
+        RCLCPP_INFO(
+          get_logger(),
+          "All requested topics are subscribed. Stopping discovery...");
+        return;
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failure in topics discovery.\nError: " << e.what());
+    } catch (...) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failure in topics discovery.");
     }
     std::this_thread::sleep_for(record_options_.topic_polling_interval);
   }
