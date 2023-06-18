@@ -141,18 +141,11 @@ void Recorder::stop()
   if (event_publisher_thread_.joinable()) {
     event_publisher_thread_.join();
   }
-  in_recording_ = false;
   RCLCPP_INFO(get_logger(), "Recording stopped");
 }
 
 void Recorder::record()
 {
-  if (in_recording_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      get_logger(),
-      "Called Recorder::record() while already in recording, dismissing request.");
-    return;
-  }
   stop_discovery_ = record_options_.is_discovery_disabled;
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;

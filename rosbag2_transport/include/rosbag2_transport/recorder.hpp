@@ -164,7 +164,7 @@ private:
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   std::atomic<bool> paused_ = false;
-  std::atomic<bool> in_recording_ = false;
+
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   // Toogle paused key callback handle
