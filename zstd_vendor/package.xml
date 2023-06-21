@@ -15,7 +15,7 @@
   <url type="website">https://facebook.github.io/zstd/</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>git</buildtool_depend>
+  <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
 
   <depend>libzstd-dev</depend>
 

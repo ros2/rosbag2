@@ -1,0 +1,16 @@
+diff -uNr a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	1969-12-31 16:00:00.000000000 -0800
++++ b/CMakeLists.txt	2022-11-16 16:44:12.322210922 -0800
+@@ -0,0 +1,12 @@
++cmake_minimum_required(VERSION 3.5)
++project(sqlite3)
++set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # for Linux, since the library will be used in a shared lib
++add_library(sqlite3 sqlite3.c)
++set_target_properties(sqlite3 PROPERTIES
++  INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib)
++
++install(TARGETS sqlite3
++        LIBRARY DESTINATION lib
++        ARCHIVE DESTINATION lib
++        RUNTIME DESTINATION bin)
++install(FILES sqlite3.h sqlite3ext.h DESTINATION include)
