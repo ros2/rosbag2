@@ -32,9 +32,9 @@ The following criteria will be used to determine a service event topic:
 
 ### Expand the 'record' command
 
-Add 3 parameters.
+Add 5 parameters.
 
-- `-S ServiceName1 [ServiceName2 ...]` or `--services ServiceName1 [ServiceName2 ...]`
+- `--services ServiceName1 [ServiceName2 ...]`
   
     Specify which services will be recorded. User must specify at least one service.
 
@@ -46,6 +46,14 @@ Add 3 parameters.
 
     Record all service event topics.
 
+- `--exclude-topics`
+
+    Rename from `--exclude`. Exclude topics containing provided regular expression.
+
+- `--exclude-services`
+
+    Exclude services containing provided regular expression.
+
 The description of the relevant parameter behavior.
 
 | Parameter | Description |
@@ -53,8 +61,11 @@ The description of the relevant parameter behavior.
 |--include-hidden-topics| Record all hidden topics. Include service event topic. |
 |--services ServiceName1 [ServiceName2 ...] | Record services (service event topics) with specified service names. |
 | --all | Record all topics and service event topics. Other hidden topics are excluded. |
-| --all-topics | Record all topics. Hidden topic are excluded (include service event topic). |
+| --all-topics | Record all topics. Hidden topics including service event topics are excluded. |
 | --all-services | Only record all service event topics. |
+| --exclude-topics | Exclude topics containing provided regular expression. |
+| --exclude-services | Exclude services containing provided regular expression. |
+| -e REGEX, --regex REGEX | Record only topics and service containing provided regular expression. |
 
 ### Change output of 'Info' command
 
