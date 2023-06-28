@@ -164,6 +164,7 @@ private:
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   std::atomic<bool> paused_ = false;
+
   // Keyboard handler
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   // Toogle paused key callback handle
@@ -172,8 +173,8 @@ private:
 
   // Variables for event publishing
   rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
-  bool event_publisher_thread_should_exit_ = false;
-  bool write_split_has_occurred_ = false;
+  std::atomic<bool> event_publisher_thread_should_exit_ = false;
+  std::atomic<bool> write_split_has_occurred_ = false;
   rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;

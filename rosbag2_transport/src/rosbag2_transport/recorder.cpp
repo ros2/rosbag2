@@ -121,7 +121,13 @@ void Recorder::stop()
 {
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
-    discovery_future_.wait();
+    auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
+    if (status != std::future_status::ready) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
+          ") return status: " << (status == std::future_status::timeout ? "timeout" : "deferred"));
+    }
   }
   paused_ = true;
   subscriptions_.clear();
@@ -135,6 +141,7 @@ void Recorder::stop()
   if (event_publisher_thread_.joinable()) {
     event_publisher_thread_.join();
   }
+  RCLCPP_INFO(get_logger(), "Recording stopped");
 }
 
 void Recorder::record()
@@ -190,15 +197,13 @@ void Recorder::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
+  RCLCPP_INFO(get_logger(), "Recording...");
 }
 
 void Recorder::event_publisher_thread_main()
 {
   RCLCPP_INFO(get_logger(), "Event publisher thread: Starting");
-
-  bool should_exit = false;
-
-  while (!should_exit) {
+  while (!event_publisher_thread_should_exit_.load()) {
     std::unique_lock<std::mutex> lock(event_publisher_thread_mutex_);
     event_publisher_thread_wake_cv_.wait(
       lock,
@@ -222,10 +227,7 @@ void Recorder::event_publisher_thread_main()
           "Failed to publish message on '/events/write_split' topic.");
       }
     }
-
-    should_exit = event_publisher_thread_should_exit_;
   }
-
   RCLCPP_INFO(get_logger(), "Event publisher thread: Exiting");
 }
 
