@@ -73,7 +73,7 @@ A new parameter is added.
 
 - `-v` or `--verbose`
 
-    This parameter only affect service event topic. if `-v` or `--verbose` is set, info command shows the number of request and response for each services based on service event. Otherwise, only show the number of service event. Note that parsing the number of request and response need spent time. The duration of the parsing is related to the number of recorded service events.
+    This parameter only affects the service event topic. if `-v` or `--verbose` is set, the info command shows the number of requests and responses for each service based on the service event. Otherwise, only show the number of service events. Note that parsing the number of request and response need spent time. The duration of the parsing is related to the number of recorded service events.
 
 
 Without `-v` or `--verbose` parameter, info command shows as below example.
@@ -120,12 +120,12 @@ Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX |
 ### Expand the 'play' command
 
 Add 2 parameters.  
-- `-S [ServiceName1 ...]` or `--services [ServiceName1 ...]` (TBD: Not sure whether this is needed.)
-    
-    Replay service events. If there is no service name set, all recorded service events are played.  User can use `ros2 service echo ServiceName` to check different service events. 
+- `--services ServiceName1 [[ServiceName2 ...]`
 
-- `--services-requests [ServiceName1 ...]`
+    Decide which services will be played.
 
-    Replay request with recorded sequence and interval. If there is no service name set, all recorded service request are sent.
+- `--service-request-mode`
 
-Other parameters need to be checked one by one. If it is unsuitable for playing service event, the description of parameter should be updated to mention this limitation.  
+    Replay service request with recorded sequence and interval instead of playing service event message.
+
+Other parameters need to be checked one by one. If it is unsuitable for playing service event, the description of parameter should be updated to mention this limitation.
