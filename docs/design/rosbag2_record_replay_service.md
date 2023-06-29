@@ -58,7 +58,6 @@ The description of the relevant parameter behavior.
 
 | Parameter | Description |
 | :-- | :--|
-|--include-hidden-topics| Record all hidden topics. Include service event topic. |
 |--services ServiceName1 [ServiceName2 ...] | Record services (service event topics) with specified service names. |
 | --all | Record all topics and service event topics. Other hidden topics are excluded. |
 | --all-topics | Record all topics. Hidden topics including service event topics are excluded. |
@@ -119,13 +118,9 @@ Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX |
 
 ### Expand the 'play' command
 
-Add 2 parameters.  
+Add 1 parameters.
 - `--services ServiceName1 [[ServiceName2 ...]`
 
-    Decide which services will be played.
-
-- `--service-request-mode`
-
-    Replay service request with recorded sequence and interval instead of playing service event message.
+    Determine which service's requests are played.
 
 Other parameters need to be checked one by one. If it is unsuitable for playing service event, the description of parameter should be updated to mention this limitation.
