@@ -42,8 +42,26 @@ install(
   DESTINATION include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(rcpputils REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  add_executable(loop_with_ctrl_c_handler test/rosbag2_test_common/loop_with_ctrl_c_handler.cpp)
+  install(
+      TARGETS loop_with_ctrl_c_handler
+      EXPORT export_loop_with_ctrl_c_handler
+      ARCHIVE DESTINATION lib
+      LIBRARY DESTINATION lib
+      RUNTIME DESTINATION bin
+  )
+
+  ament_add_gmock(test_process_execution_helpers
+    test/rosbag2_test_common/test_process_execution_helpers.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_process_execution_helpers)
+    target_link_libraries(test_process_execution_helpers ${PROJECT_NAME})
+  endif()
 endif()
 
 ament_python_install_package(${PROJECT_NAME})
