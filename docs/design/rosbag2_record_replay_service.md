@@ -62,6 +62,7 @@ The description of the relevant parameter behavior.
 | --all | Record all topics and service event topics. Other hidden topics are excluded. |
 | --all-topics | Record all topics. Hidden topics including service event topics are excluded. |
 | --all-services | Only record all service event topics. |
+| --include-hidden-topics | Record all hidden topics. Include service event topic. |
 | --exclude-topics | Exclude topics containing provided regular expression. |
 | --exclude-services | Exclude services containing provided regular expression. |
 | -e REGEX, --regex REGEX | Record only topics and service containing provided regular expression. |
@@ -118,9 +119,25 @@ Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX |
 
 ### Expand the 'play' command
 
-Add 1 parameters.
+Add 3 parameters.
 - `--services ServiceName1 [[ServiceName2 ...]`
 
     Determine which service's requests are played.
 
-Other parameters need to be checked one by one. If it is unsuitable for playing service event, the description of parameter should be updated to mention this limitation.
+- `--exclude-topics`
+
+    Rename from `--exclude`. Exclude topics containing provided regular expression.
+
+- `--exclude-services`
+
+    Exclude services containing provided regular expression.
+
+`-e REGEX, --regex REGEX` affects both topics and services.
+
+## Implementation Staging
+
+Implementation is going to be split into two phases.  
+On phase 1 is expected to be implemented all functionality which is related to the service events recording.  
+On phase 2 the rest functionality related to the service requests playback.  
+The service requests playback is not straightforward to implement since we don't have API from rclcpp layer to be able to publish service requests with dynamically created type support. We will need to create an analog of the `GenericPublisher` i.e. `GenericClient` on the `rclcpp` layer to be able to do this. To facilitate implementation of the `GenericClient` we likely will need to update get_typesupport_handle() to support service [ros2/rclcpp#2209](https://github.com/ros2/rclcpp/pull/2209).  
+Therefore, phase 2 will be implemented when the required new rclcpp API will be ready.
