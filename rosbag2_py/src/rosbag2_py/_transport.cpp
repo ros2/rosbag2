@@ -146,7 +146,8 @@ public:
   {
     auto init_options = rclcpp::InitOptions();
     init_options.shutdown_on_signal = false;
-    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::None);
+    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::SigInt);
+    rclcpp::uninstall_signal_handlers();
 
     std::signal(
       SIGTERM, [](int /* signal */) {
@@ -160,6 +161,7 @@ public:
 
   virtual ~Recorder()
   {
+//    rclcpp::install_signal_handlers(rclcpp::SignalHandlerOptions::SigTerm);
     rclcpp::shutdown();
   }
 
