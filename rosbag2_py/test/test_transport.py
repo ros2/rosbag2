@@ -85,3 +85,4 @@ def test_record_cancel(tmp_path):
     db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
     assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))
+    record_thread.join()
