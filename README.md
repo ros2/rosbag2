@@ -100,14 +100,6 @@ See storage plugin documentation for more detail:
 * [mcap](rosbag2_storage_mcap/README.md#writer-configuration)
 * [sqlite3](rosbag2_storage_sqlite3/README.md#storage-configuration-file)
 
-#### Snapshot mode
-
-The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
-This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
-
-The snapshot is taken by calling the `~/snapshot` service on the recorder.
-See the later section on recording services for more information on these.
-
 #### Controlling recordings via services
 
 The rosbag2 recorder provides the following services for remote control, which can be called via `ros2 service` commandline, or from your nodes:
@@ -122,6 +114,13 @@ The rosbag2 recorder provides the following services for remote control, which c
   * Triggers a split to a new file, even if none of the configured split criteria (such as `--max-bag-size` or `--max-bag-duration`) have been met yet
 * `~/snapshot [rosbag2_interfaces/srv/Snapshot]`
   * enabled if `--snapshot-mode` is specified. Takes no arguments, triggers a snapshot.
+
+#### Snapshot mode
+
+The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
+This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
+
+The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
 
 ### Replaying data
 
