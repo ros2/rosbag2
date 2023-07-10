@@ -4,70 +4,39 @@
 
 Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md).
 
-## Installation instructions
+## Installation
 
-## Debian packages
+### Debian packages
 
-rosbag2 packages are available via debian packages and thus can be installed via
-
-```
-$ export CHOOSE_ROS_DISTRO=crystal # rosbag2 is available starting from crystal
-$ sudo apt-get install ros-$CHOOSE_ROS_DISTRO-ros2bag ros-$CHOOSE_ROS_DISTRO-rosbag2*
-```
-
-Note that the above command installs all packages related to rosbag2.
-This also includes the plugin for [reading ROS1 bag files](https://github.com/ros2/rosbag2_bag_v2), which brings a hard dependency on the [ros1_bridge](https://github.com/ros2/ros1_bridge) with it and therefore ROS1 packages.
-If you want to install only the ROS2 related packages for rosbag, please use the following command:
+rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
 
 ```
-$ export CHOOSE_ROS_DISTRO=crystal # rosbag2 is available starting from crystal
-$ sudo apt-get install ros-$CHOOSE_ROS_DISTRO-ros2bag ros-$CHOOSE_ROS_DISTRO-rosbag2-transport
+$ export ROS_DISTRO=humble
+$ sudo apt-get install ros-$ROS_DISTRO-rosbag2
 ```
 
-## Build from source
+### Other binaries
 
-It is recommended to create a new overlay workspace on top of your current ROS 2 installation.
+You can follow the instructions at http://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Install-Binary.html (or for your chosen distro), and Rosbag2 will be included in that installation.
 
-```
-$ mkdir -p ~/rosbag_ws/src
-$ cd ~/rosbag_ws/src
-```
+### Build from source
 
-Clone this repository into the source folder:
-
-```
-$ git clone https://github.com/ros2/rosbag2.git
-```
-**[Note]**: if you are only building rosbag2 on top of a Debian Installation of ROS2, please git clone the branch following your current ROS2 distribution.
-
-Then build all the packages with this command:
-
-```
-$ colcon build [--merge-install]
-```
-
-The `--merge-install` flag is optional and installs all packages into one folder rather than isolated folders for each package.
-
-#### Executing tests
-
-The tests can be run using the following commands:
-
-```
-$ colcon test [--merge-install]
-$ colcon test-result --verbose
-```
-
-The first command executes the test and the second command displays the errors (if any).
+To build from source, follow the instructions in [](DEVELOPING.md)
 
 ## Using rosbag2
 
-rosbag2 is part of the ROS 2 command line interfaces.
-This repo introduces a new verb called `bag` and thus serves as the entry point of using rosbag2.
-As of the time of writing, there are three commands available for `ros2 bag`:
+rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
+These verbs are available for `ros2 bag`:
 
-* record
-* play
-* info
+* `ros2 bag burst`
+* `ros2 bag convert`
+* `ros2 bag info`
+* `ros2 bag list`
+* `ros2 bag play`
+* `ros2 bag record`
+* `ros2 bag reindex`
+
+For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
 
 ### Recording data
 
@@ -102,7 +71,7 @@ Messages written to the bag will use the latest received value of `/clock` for t
 Note: Until the first `/clock` message is received, the recorder will not write any messages.
 Before that message is received, the time is 0, which leads to a significant time jump once simulation time begins, making the bag essentially unplayable if messages are written first with time 0 and then time N from `/clock`.
 
-#### Splitting recorded bag files
+#### Splitting files during recording
 
 rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
 
@@ -131,16 +100,66 @@ See storage plugin documentation for more detail:
 * [mcap](rosbag2_storage_mcap/README.md#writer-configuration)
 * [sqlite3](rosbag2_storage_sqlite3/README.md#storage-configuration-file)
 
+#### Controlling recordings via services
+
+The rosbag2 recorder provides the following services for remote control, which can be called via `ros2 service` commandline, or from your nodes:
+
+* `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
+  * Returns whether recording is currently paused.
+* `~/pause [rosbag2_interfaces/srv/Pause]`
+  * Pauses recording. All messages that have already arrived will be written, but all messages that arrive after pausing will be discarded. Has no effect if already paused. Takes no arguments.
+* `~/resume [rosbag2_interfaces/srv/Resume]`
+  * Resume recording if paused. Has no effect if not paused. Takes no arguments.
+* `~/split_bagfile [rosbag2_interfaces/srv/SplitBagfile]`
+  * Triggers a split to a new file, even if none of the configured split criteria (such as `--max-bag-size` or `--max-bag-duration`) have been met yet
+* `~/snapshot [rosbag2_interfaces/srv/Snapshot]`
+  * enabled if `--snapshot-mode` is specified. Takes no arguments, triggers a snapshot.
+
+#### Snapshot mode
+
+The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
+This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
+
+The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
 
 ### Replaying data
 
-After recording data, the next logical step is to replay this data:
+When you have a recorded bag, you can use Rosbag2 to play it back:
 
 ```
-$ ros2 bag play <bag_file>
+$ ros2 bag play <bag>
 ```
 
-The bag file is by default set to the folder name where the data was previously recorded in.
+The bag argument can be a directory containing `metadata.yaml` and one or more storage files, or to a single storage file such as `.mcap` or `.db3`.
+The Player will automatically detect which storage implementation to use for playing.
+
+#### Controlling playback via services
+
+The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,
+
+* `~/burst [rosbag2_interfaces/srv/Burst]`
+  * Can only be used while player is paused, publishes `num_messages` in order as fast as possible, moving forward the play head.
+* `~/get_rate [rosbag2_interfaces/srv/GetRate]`
+  * Return the current playback rate.
+* `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
+  * Return whether playback is paused.
+* `~/pause [rosbag2_interfaces/srv/Pause]`
+  * Pause playback. Has no effect if already paused.
+* `~/play [rosbag2_interfaces/srv/Play]`
+  * Play from a starting offset timestamp, either until the end, an ending timestamp or for a set duration. Only works when stopped (not paused).
+* `~/play_next [rosbag2_interfaces/srv/PlayNext]`
+  * Play a single next message from the bag. Only works while paused.
+* `~/resume [rosbag2_interfaces/srv/Resume]`
+  * Resume playback if paused.
+* `~/seek [rosbag2_interfaces/srv/Seek]`
+  * Change the play head to the specified timestamp. Can be forward or backward in time, the next played message is the next immediately after the seeked timestamp.
+* `~/set_rate [rosbag2_interfaces/srv/SetRate]`
+  * Sets the rate of playback, for example 2.0 will play messages twice as fast.
+* `~/stop [rosbag2_interfaces/srv/Stop]`
+  * Stop the player, putting the play head in "undefined position" outside the bag. Must call `play` before other operations can be done.
+* `~/toggle_paused [rosbag2_interfaces/srv/TogglePaused]`
+  * Pause if playing, resume if paused.
+
 
 ### Analyzing data
 
@@ -254,7 +273,7 @@ output_bags:
 
 ### Overriding QoS Profiles
 
-When starting a recording or playback workflow, you can pass a YAML file that contains QoS profile settings for a specific topic.
+When starting a recording or playback, you can pass a YAML file that contains QoS profile settings for a specific topic.
 The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy.
 Below is an example profile set to the default ROS2 QoS settings.
 
@@ -341,7 +360,7 @@ $ ros2 bag record --storage <storage_id>
 
 Bag reading commands can detect the storage plugin automatically, but if for any reason you want to force a specific plugin to read a bag, you can use the `--storage` option on any `ros2 bag` verb.
 
-To write your own Rosbag2 storage implementation, refer to [this document describing that process](docs/storage_plugin_development.md)
+To write your own Rosbag2 storage implementation, refer to [Storage Plugin Development](docs/storage_plugin_development.md)
 
 
 ## Serialization format plugin architecture
