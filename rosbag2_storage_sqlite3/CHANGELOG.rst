@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.24.0 (2023-07-11)
+-------------------
+* Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)
+* Store metadata in db3 file (`#1294 <https://github.com/ros2/rosbag2/issues/1294>`_)
+* Contributors: Emerson Knapp, Michael Orlov
+
 0.23.0 (2023-04-28)
 -------------------
 

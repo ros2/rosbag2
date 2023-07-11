@@ -2,6 +2,14 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.24.0 (2023-07-11)
+-------------------
+* Rewrite TimeControllerClockTest.unpaused_sleep_returns_true to be correct (`#1384 <https://github.com/ros2/rosbag2/issues/1384>`_)
+* Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)
+* Don't crash when type definition cannot be found (`#1350 <https://github.com/ros2/rosbag2/issues/1350>`_)
+* Add recorder stop() API (`#1300 <https://github.com/ros2/rosbag2/issues/1300>`_)
+* Contributors: Emerson Knapp, Michael Orlov
+
 0.23.0 (2023-04-28)
 -------------------
 

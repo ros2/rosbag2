@@ -2,6 +2,13 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.24.0 (2023-07-11)
+-------------------
+* Set CPU affinity for producers and recorder from benchmark parameters (`#1305 <https://github.com/ros2/rosbag2/issues/1305>`_)
+* Add CPU usage to rosbag2_performance_benchmarking results report (`#1304 <https://github.com/ros2/rosbag2/issues/1304>`_)
+* Add config option to use storage_id parameter in benchmark_launch.py (`#1303 <https://github.com/ros2/rosbag2/issues/1303>`_)
+* Contributors: Michael Orlov
+
 0.23.0 (2023-04-28)
 -------------------
 
