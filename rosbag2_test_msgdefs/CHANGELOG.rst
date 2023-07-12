@@ -2,6 +2,12 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.24.0 (2023-07-11)
+-------------------
+* Don't crash when type definition cannot be found (`#1350 <https://github.com/ros2/rosbag2/issues/1350>`_)
+  * Don't fail when type definition cannot be found
+* Contributors: Emerson Knapp
+
 0.23.0 (2023-04-28)
 -------------------
 

@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.24.0 (2023-07-11)
+-------------------
+* Fix missing cstdint include (`#1383 <https://github.com/ros2/rosbag2/issues/1383>`_)
+* Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)
+* Contributors: Emerson Knapp, Zac Stanton
+
 0.23.0 (2023-04-28)
 -------------------
 
