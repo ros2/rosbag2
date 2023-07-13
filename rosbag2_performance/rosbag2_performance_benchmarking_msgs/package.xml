@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rosbag2_performance_benchmarking_msgs</name>
-  <version>0.22.1</version>
+  <version>0.22.2</version>
   <description>A package containing rosbag2 performance benchmarking specific messages.</description>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <maintainer email="adam.dabrowski@robotec.ai">Adam Dabrowski</maintainer>

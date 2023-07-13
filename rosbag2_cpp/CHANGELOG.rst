@@ -2,8 +2,8 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.2 (2023-07-14)
+-------------------
 * Rewrite TimeControllerClockTest.unpaused_sleep_returns_true to be correct (`#1389 <https://github.com/ros2/rosbag2/issues/1389>`_)
 * Don't crash when type definition cannot be found (`#1352 <https://github.com/ros2/rosbag2/issues/1352>`_)
 * Contributors: Emerson Knapp

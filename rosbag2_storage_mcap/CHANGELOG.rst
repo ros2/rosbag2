@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.2 (2023-07-14)
+-------------------
 * Add ROS_DISTRO metadata record to mcap file when opening for writing (`#1371 <https://github.com/ros2/rosbag2/issues/1371>`_)
 * Contributors: Emerson Knapp
 

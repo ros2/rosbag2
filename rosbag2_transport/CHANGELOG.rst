@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.2 (2023-07-14)
+-------------------
 * Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (`#1402 <https://github.com/ros2/rosbag2/issues/1402>`_)
 * Fix for possible freeze in Recorder::stop() (`#1387 <https://github.com/ros2/rosbag2/issues/1387>`_)
 * Wait for /clock before beginning recording when using sim time (`#1391 <https://github.com/ros2/rosbag2/issues/1391>`_)

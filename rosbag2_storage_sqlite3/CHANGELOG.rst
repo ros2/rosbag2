@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_sqlite3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.2 (2023-07-14)
+-------------------
 * Store metadata in db3 file (`#1319 <https://github.com/ros2/rosbag2/issues/1319>`_)
 * Contributors: Michael Orlov
 
