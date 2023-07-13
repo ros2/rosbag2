@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.22.1 (2023-05-18)
 -------------------
 * Fix a warning from python setuptools. (`#1312 <https://github.com/ros2/rosbag2/issues/1312>`_) (`#1314 <https://github.com/ros2/rosbag2/issues/1314>`_)
