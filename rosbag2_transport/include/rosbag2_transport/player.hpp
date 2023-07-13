@@ -199,6 +199,9 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+private:
+  void finish_constructor();
+
 protected:
   struct play_msg_callback_data
   {
@@ -238,9 +241,6 @@ public:
       return publisher_;
     }
 
-
-private:
-  void finish_constructor();
 private:
     std::shared_ptr<rclcpp::GenericPublisher> publisher_;
     std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
