@@ -92,10 +92,83 @@ constexpr Player::callback_handle_t Player::invalid_callback_handle;
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  // TODO(karsten1987): Use this constructor later with parameter parsing.
-  // The reader, storage_options as well as play_options can be loaded via parameter.
-  // That way, the player can be used as a simple component in a component manager.
-  throw rclcpp::exceptions::UnimplementedError();
+  rosbag2_storage::StorageOptions storage_options;
+  rosbag2_transport::PlayOptions play_options;
+  
+  // TODO check if positive
+  auto read_ahead_queue_size_ = declare_parameter<int64_t>("play.read_ahead_queue_size", 1000);
+  play_options.read_ahead_queue_size = static_cast<uint64_t>(read_ahead_queue_size_);
+
+  play_options.node_prefix = declare_parameter<std::string>("play.node_prefix", "");
+  play_options.rate = declare_parameter<float>("play.rate", 1.0);
+  play_options.topics_to_filter = declare_parameter<std::vector<std::string>>("play.topics_to_filter", {});
+  play_options.topics_regex_to_filter = declare_parameter<std::string>("play.topics_regex_to_filter","");
+  play_options.topics_regex_to_exclude = declare_parameter<std::string>("play.topics_regex_to_exclude","");
+
+  // TODO(roncapat)
+  // std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
+
+  play_options.loop = declare_parameter<bool>("play.loop", false);
+  
+  // Use classic CLI/launchfile remap instead
+  // play_options.topic_remapping_options = declare_parameter<std::vector<std::string>>("play.topic_remapping_options", {});
+  
+  play_options.clock_publish_frequency = declare_parameter<double>("play.clock_publish_frequency", 0.0);
+  play_options.clock_publish_on_topic_publish = declare_parameter<bool>("play.clock_publish_on_topic_publish", false);
+  play_options.clock_trigger_topics = declare_parameter<std::vector<std::string>>("play.clock_trigger_topics", {});
+
+  auto playback_duration_ = declare_parameter<double>("play.playback_duration", -1);
+  play_options.playback_duration = rclcpp::Duration::from_seconds(seconds);
+
+  play_options.playback_until_timestamp = declare_parameter<int64_t>("play.playback_until_timestamp", -1);
+  play_options.start_paused = declare_parameter<bool>("play.start_paused", false);
+  play_options.start_offset = declare_parameter<int64_t>("play.start_offset", 0);
+  play_options.disable_keyboard_controls = declare_parameter<bool>("play.disable_keyboard_controls", false);
+
+  // TODO(roncapat)
+  // KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;
+  // KeyboardHandler::KeyCode play_next_key = KeyboardHandler::KeyCode::CURSOR_RIGHT;
+  // KeyboardHandler::KeyCode increase_rate_key = KeyboardHandler::KeyCode::CURSOR_UP;
+  // KeyboardHandler::KeyCode decrease_rate_key = KeyboardHandler::KeyCode::CURSOR_DOWN;
+
+  play_options.wait_acked_timeout = declare_parameter<int64_t>("play.wait_acked_timeout", -1);
+
+  play_options.disable_loan_message = declare_parameter<bool>("play.disable_loan_message", false);
+
+  storage_options.uri = declare_parameter<std::string>("storage.uri", "");
+  storage_options.storage_id = declare_parameter<std::string>("storage.storage_id", "");
+
+
+  auto max_bagfile_size_ = declare_parameter<int64_t>("storage.max_bagfile_size", 0);
+  storage_options.max_bagfile_size = static_cast<uint64_t>(max_bagfile_size_);
+
+  auto max_bagfile_duration_ = declare_parameter<int64_t>("storage.max_bagfile_duration", 0);
+  storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration_);
+
+  auto max_cache_size_ = declare_parameter<int64_t>("storage.max_cache_size", 0);
+  storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
+
+  storage_options.storage_preset_profile = declare_parameter<std::string>("storage.preset_profile", "");
+  storage_options.storage_config_uri = declare_parameter<std::string>("storage.config_uri", "");
+  storage_options.snapshot_mode = declare_parameter<bool>("storage.snapshot_mode", false);
+
+  // TODO(roncapat)
+  // std::unordered_map<std::string, std::string> custom_data{};
+
+  #ifndef _WIN32
+    keyboard_handler_ = std::make_shared<KeyboardHandler>(false),
+  #else
+    // We don't have signal handler option in constructor for windows version
+    keyboard_handler_ = std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+  #endif
+
+  {
+    std::lock_guard<std::mutex> lk(reader_mutex_);
+    reader_ = std::make_unique<rosbag2_cpp::Reader>();
+    init();
+  }
+  create_control_services();
+  add_keyboard_callbacks();
 }
 
 Player::Player(
@@ -143,32 +216,35 @@ Player::Player(
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     reader_ = std::move(reader);
-    // keep reader open until player is destroyed
-    reader_->open(storage_options_, {"", rmw_get_serialization_format()});
-    auto metadata = reader_->get_metadata();
-    starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      metadata.starting_time.time_since_epoch()).count();
-    // If a non-default (positive) starting time offset is provided in PlayOptions,
-    // then add the offset to the starting time obtained from reader metadata
-    if (play_options_.start_offset < 0) {
-      RCLCPP_WARN_STREAM(
-        get_logger(),
-        "Invalid start offset value: " <<
-          RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
-          ". Negative start offset ignored.");
-    } else {
-      starting_time_ += play_options_.start_offset;
-    }
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
-      starting_time_, std::chrono::steady_clock::now,
-      std::chrono::milliseconds{100}, play_options_.start_paused);
-    set_rate(play_options_.rate);
-    topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
-    prepare_publishers();
-    configure_play_until_timestamp();
+    init();
   }
   create_control_services();
   add_keyboard_callbacks();
+}
+
+void Player::init(){
+  reader_->open(storage_options_, {"", rmw_get_serialization_format()});
+  auto metadata = reader_->get_metadata();
+  starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    metadata.starting_time.time_since_epoch()).count();
+  // If a non-default (positive) starting time offset is provided in PlayOptions,
+  // then add the offset to the starting time obtained from reader metadata
+  if (play_options_.start_offset < 0) {
+    RCLCPP_WARN_STREAM(
+      get_logger(),
+      "Invalid start offset value: " <<
+        RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
+        ". Negative start offset ignored.");
+  } else {
+    starting_time_ += play_options_.start_offset;
+  }
+  clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
+    starting_time_, std::chrono::steady_clock::now,
+    std::chrono::milliseconds{100}, play_options_.start_paused);
+  set_rate(play_options_.rate);
+  topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
+  prepare_publishers();
+  configure_play_until_timestamp();
 }
 
 Player::~Player()
