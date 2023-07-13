@@ -238,6 +238,9 @@ public:
       return publisher_;
     }
 
+
+private:
+  void init();
 private:
     std::shared_ptr<rclcpp::GenericPublisher> publisher_;
     std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
