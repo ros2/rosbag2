@@ -158,10 +158,10 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   // std::unordered_map<std::string, std::string> custom_data{};
 
   #ifndef _WIN32
-    keyboard_handler_ = std::make_shared<KeyboardHandler>(false),
+    keyboard_handler_ = std::make_shared<KeyboardHandler>(false);
   #else
     // We don't have signal handler option in constructor for windows version
-    keyboard_handler_ = std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
+    keyboard_handler_ = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
   #endif
 
   {
