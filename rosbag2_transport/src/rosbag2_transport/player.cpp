@@ -94,14 +94,16 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 {
   rosbag2_storage::StorageOptions storage_options;
   rosbag2_transport::PlayOptions play_options;
-  
+
+  const std::vector<std::string> empty_str_list;
+
   // TODO check if positive
   auto read_ahead_queue_size_ = declare_parameter<int64_t>("play.read_ahead_queue_size", 1000);
   play_options.read_ahead_queue_size = static_cast<uint64_t>(read_ahead_queue_size_);
 
   play_options.node_prefix = declare_parameter<std::string>("play.node_prefix", "");
   play_options.rate = declare_parameter<float>("play.rate", 1.0);
-  play_options.topics_to_filter = declare_parameter<std::vector<std::string>>("play.topics_to_filter", {});
+  play_options.topics_to_filter = declare_parameter<std::vector<std::string>>("play.topics_to_filter", empty_str_list);
   play_options.topics_regex_to_filter = declare_parameter<std::string>("play.topics_regex_to_filter","");
   play_options.topics_regex_to_exclude = declare_parameter<std::string>("play.topics_regex_to_exclude","");
 
@@ -111,14 +113,14 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   play_options.loop = declare_parameter<bool>("play.loop", false);
   
   // Use classic CLI/launchfile remap instead
-  // play_options.topic_remapping_options = declare_parameter<std::vector<std::string>>("play.topic_remapping_options", {});
+  // play_options.topic_remapping_options = declare_parameter<std::vector<std::string>>("play.topic_remapping_options", empty_str_list);
   
   play_options.clock_publish_frequency = declare_parameter<double>("play.clock_publish_frequency", 0.0);
   play_options.clock_publish_on_topic_publish = declare_parameter<bool>("play.clock_publish_on_topic_publish", false);
-  play_options.clock_trigger_topics = declare_parameter<std::vector<std::string>>("play.clock_trigger_topics", {});
+  play_options.clock_trigger_topics = declare_parameter<std::vector<std::string>>("play.clock_trigger_topics", empty_str_list);
 
   auto playback_duration_ = declare_parameter<double>("play.playback_duration", -1);
-  play_options.playback_duration = rclcpp::Duration::from_seconds(seconds);
+  play_options.playback_duration = rclcpp::Duration::from_seconds(playback_duration_);
 
   play_options.playback_until_timestamp = declare_parameter<int64_t>("play.playback_until_timestamp", -1);
   play_options.start_paused = declare_parameter<bool>("play.start_paused", false);
