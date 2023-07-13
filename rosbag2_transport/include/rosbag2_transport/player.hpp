@@ -82,6 +82,9 @@ public:
   static constexpr callback_handle_t invalid_callback_handle = 0;
 
   ROSBAG2_TRANSPORT_PUBLIC
+  explicit Player(const rclcpp::NodeOptions & node_options);
+
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());

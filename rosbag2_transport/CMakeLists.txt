@@ -31,6 +31,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
@@ -47,7 +48,11 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
-  src/rosbag2_transport/topic_filter.cpp)
+  src/rosbag2_transport/topic_filter.cpp
+  src/rosbag2_transport/play_options_from_node_params.cpp
+  src/rosbag2_transport/record_options_from_node_params.cpp
+  src/rosbag2_transport/storage_options_from_node_params.cpp
+  src/rosbag2_transport/utils/param_utils.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
@@ -55,6 +60,7 @@ target_link_libraries(${PROJECT_NAME}
   keyboard_handler::keyboard_handler
   rcl::rcl
   rclcpp::rclcpp
+  ${rclcpp_components_TARGETS}
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
@@ -89,6 +95,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_export_dependencies(
+  rclcpp_components
   keyboard_handler
   rosbag2_cpp
   rosbag2_compression

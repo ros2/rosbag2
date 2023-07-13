@@ -38,6 +38,8 @@
 #include "rosbag2_storage/qos.hpp"
 
 #include "logging.hpp"
+#include "rosbag2_transport/storage_options_from_node_params.hpp"
+#include "rosbag2_transport/record_options_from_node_params.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
@@ -626,15 +628,31 @@ void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topi
 ///////////////////////////////
 // Recorder public interface
 
+Recorder::Recorder(const rclcpp::NodeOptions & node_options)
+: Recorder("rosbag2_recorder", node_options) {}
+
 Recorder::Recorder(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  // TODO(karsten1987): Use this constructor later with parameter parsing.
-  // The reader, storage_options as well as record_options can be loaded via parameter.
-  // That way, the recorder can be used as a simple component in a component manager.
-  throw rclcpp::exceptions::UnimplementedError();
+  rosbag2_storage::StorageOptions storage_options =
+    get_storage_options_from_node_params(shared_from_this());
+
+  RecordOptions record_options = get_record_options_from_node_params(shared_from_this());
+
+  #ifndef _WIN32
+  auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
+  #else
+  // We don't have signal handler option in constructor for windows version
+  auto keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+  #endif
+
+  auto writer = std::make_unique<rosbag2_cpp::Writer>();
+
+  pimpl_ = std::make_unique<RecorderImpl>(
+    this, std::move(writer), keyboard_handler,
+    storage_options, record_options);
 }
 
 Recorder::Recorder(
@@ -758,3 +776,10 @@ Recorder::stop_discovery()
 }
 
 }  // namespace rosbag2_transport
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader.
+// This acts as a sort of entry point, allowing the component to be
+// discoverable when its library is being loaded into a running process.
+RCLCPP_COMPONENTS_REGISTER_NODE(rosbag2_transport::Recorder)
