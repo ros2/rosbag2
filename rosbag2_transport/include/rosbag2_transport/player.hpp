@@ -240,7 +240,7 @@ public:
 
 
 private:
-  void init();
+  void finish_constructor();
 private:
     std::shared_ptr<rclcpp::GenericPublisher> publisher_;
     std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
