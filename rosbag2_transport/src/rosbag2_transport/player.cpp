@@ -167,7 +167,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     reader_ = std::make_unique<rosbag2_cpp::Reader>();
-    finish_constructor();
+    init(storage_options, play_options);
   }
   create_control_services();
   add_keyboard_callbacks();
@@ -218,13 +218,17 @@ Player::Player(
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     reader_ = std::move(reader);
-    finish_constructor();
+    init(storage_options, play_options);
   }
   create_control_services();
   add_keyboard_callbacks();
 }
 
-void Player::finish_constructor(){
+void Player::init(const rosbag2_storage::StorageOptions & storage_options,
+  const rosbag2_transport::PlayOptions & play_options) 
+{
+  storage_options_ = storage_options;
+  play_options_ = play_options;
   reader_->open(storage_options_, {"", rmw_get_serialization_format()});
   auto metadata = reader_->get_metadata();
   starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
