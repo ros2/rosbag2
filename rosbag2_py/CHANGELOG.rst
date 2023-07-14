@@ -2,6 +2,11 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.2 (2023-07-14)
+-------------------
+* Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (`#1394 <https://github.com/ros2/rosbag2/issues/1394>`_)
+* Contributors: Michael Orlov
+
 0.22.1 (2023-05-18)
 -------------------
 * Add binding to close the writer (`#1339 <https://github.com/ros2/rosbag2/issues/1339>`_) (`#1340 <https://github.com/ros2/rosbag2/issues/1340>`_)

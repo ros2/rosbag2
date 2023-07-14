@@ -1,6 +1,11 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rosbag2_storage_default_plugins
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package rosbag2_storage_sqlite3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.22.2 (2023-07-14)
+-------------------
+* Store metadata in db3 file (`#1319 <https://github.com/ros2/rosbag2/issues/1319>`_)
+* Contributors: Michael Orlov
 
 0.22.1 (2023-05-18)
 -------------------

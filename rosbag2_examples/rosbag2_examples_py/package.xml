@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rosbag2_examples_py</name>
-  <version>0.22.1</version>
+  <version>0.22.2</version>
   <description>Python bag writing tutorial</description>
   <maintainer email="gbiggs@killbots.net">geoff</maintainer>
   <license>Apache License 2.0</license>

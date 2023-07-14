@@ -2,6 +2,11 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.2 (2023-07-14)
+-------------------
+* Add config option to use storage_id parameter in benchmark_launch.py (`#1318 <https://github.com/ros2/rosbag2/issues/1318>`_)
+* Contributors: Michael Orlov
+
 0.22.1 (2023-05-18)
 -------------------
 
