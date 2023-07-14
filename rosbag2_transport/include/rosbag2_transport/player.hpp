@@ -199,9 +199,9 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
-
 protected:
-  void init(const rosbag2_storage::StorageOptions & storage_options,
+  void init(
+    const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options);
 
   struct play_msg_callback_data
