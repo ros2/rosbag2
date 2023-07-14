@@ -118,11 +118,11 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   rcl_interfaces::msg::FloatingPointRange range_rate{};
   range_rate.from_value = 0.000001;
   range_rate.to_value = std::numeric_limits<float>::max();
-  range_rate.floating_point_range.push_back(range_rate);
+  desc_rate.floating_point_range.push_back(range_rate);
   play_options.rate = declare_parameter<float>(
     "play.rate",
     1.0,
-    range_rate);
+    desc_rate);
   play_options.topics_to_filter = declare_parameter<std::vector<std::string>>(
     "play.topics_to_filter",
     empty_str_list);
