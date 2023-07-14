@@ -84,7 +84,10 @@ rclcpp::QoS publisher_qos_for_topic(
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
 
-rcl_interfaces::msg::ParameterDescriptor int_param_description(std::string description, int64_t min, int64_t max){
+rcl_interfaces::msg::ParameterDescriptor int_param_description(
+  std::string description, int64_t min,
+  int64_t max)
+{
   rcl_interfaces::msg::ParameterDescriptor d{};
   rcl_interfaces::msg::IntegerRange r{};
   d.description = description;
@@ -94,7 +97,10 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(std::string descr
   return d;
 }
 
-rcl_interfaces::msg::ParameterDescriptor float_param_description(std::string description, float min, float max){
+rcl_interfaces::msg::ParameterDescriptor float_param_description(
+  std::string description, float min,
+  float max)
+{
   rcl_interfaces::msg::ParameterDescriptor d{};
   rcl_interfaces::msg::FloatingPointRange r{};
   d.description = description;
