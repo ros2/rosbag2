@@ -83,6 +83,26 @@ rclcpp::QoS publisher_qos_for_topic(
   const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
+
+rcl_interfaces::msg::ParameterDescriptor int_param_description(std::string description, int64_t min, int64_t max){
+  rcl_interfaces::msg::ParameterDescriptor d{};
+  rcl_interfaces::msg::IntegerRange r{};
+  d.description = description;
+  r.from_value = min;
+  r.to_value = max;
+  d.integer_range.push_back(r);
+  return d;
+}
+
+rcl_interfaces::msg::ParameterDescriptor float_param_description(std::string description, float min, float max){
+  rcl_interfaces::msg::ParameterDescriptor d{};
+  rcl_interfaces::msg::FloatingPointRange r{};
+  d.description = description;
+  r.from_value = min;
+  r.to_value = max;
+  d.floating_point_range.push_back(r);
+  return d;
+}
 }  // namespace
 
 namespace rosbag2_transport
@@ -97,12 +117,10 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 
   const std::vector<std::string> empty_str_list;
 
-  rcl_interfaces::msg::ParameterDescriptor desc_raqs{};
-  desc_raqs.description = "Read ahead queue size";
-  rcl_interfaces::msg::IntegerRange range_raqs{};
-  range_raqs.from_value = 1;
-  range_raqs.to_value = std::numeric_limits<int64_t>::max();
-  desc_raqs.integer_range.push_back(range_raqs);
+  auto desc_raqs = int_param_description(
+    "Read ahead queue size (messages)",
+    1,
+    std::numeric_limits<int64_t>::max());
   auto read_ahead_queue_size_ = declare_parameter<int64_t>(
     "play.read_ahead_queue_size",
     1000,
@@ -113,22 +131,23 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
     "play.node_prefix",
     "");
 
-  rcl_interfaces::msg::ParameterDescriptor desc_rate{};
-  desc_rate.description = "Read ahead queue size";
-  rcl_interfaces::msg::FloatingPointRange range_rate{};
-  range_rate.from_value = 0.000001;
-  range_rate.to_value = std::numeric_limits<float>::max();
-  desc_rate.floating_point_range.push_back(range_rate);
+  auto desc_rate = float_param_description(
+    "Playback rate (hz)",
+    0.000001,
+    std::numeric_limits<float>::max());
   play_options.rate = declare_parameter<float>(
     "play.rate",
     1.0,
     desc_rate);
+
   play_options.topics_to_filter = declare_parameter<std::vector<std::string>>(
     "play.topics_to_filter",
     empty_str_list);
+
   play_options.topics_regex_to_filter = declare_parameter<std::string>(
     "play.topics_regex_to_filter",
     "");
+
   play_options.topics_regex_to_exclude = declare_parameter<std::string>(
     "play.topics_regex_to_exclude",
     "");
@@ -147,9 +166,11 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   play_options.clock_publish_frequency = declare_parameter<double>(
     "play.clock_publish_frequency",
     0.0);
+
   play_options.clock_publish_on_topic_publish = declare_parameter<bool>(
     "play.clock_publish_on_topic_publish",
     false);
+
   play_options.clock_trigger_topics = declare_parameter<std::vector<std::string>>(
     "play.clock_trigger_topics",
     empty_str_list);
@@ -162,12 +183,15 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   play_options.playback_until_timestamp = declare_parameter<int64_t>(
     "play.playback_until_timestamp",
     -1);
+
   play_options.start_paused = declare_parameter<bool>(
     "play.start_paused",
     false);
+
   play_options.start_offset = declare_parameter<int64_t>(
     "play.start_offset",
     0);
+
   play_options.disable_keyboard_controls = declare_parameter<bool>(
     "play.disable_keyboard_controls",
     false);
@@ -190,44 +214,42 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   storage_options.uri = declare_parameter<std::string>(
     "storage.uri",
     "");
+
   storage_options.storage_id = declare_parameter<std::string>(
     "storage.storage_id",
     "");
 
   // FIXME(roncapat): actually not useful for Play, only for Record
-  rcl_interfaces::msg::ParameterDescriptor desc_mbs{};
-  desc_mbs.description = "Max bagfile size (bytes)";
-  rcl_interfaces::msg::IntegerRange range_mbs{};
-  range_mbs.from_value = 1;
-  range_mbs.to_value = std::numeric_limits<int64_t>::max();
-  desc_mbs.integer_range.push_back(range_mbs);
+  auto desc_mbs = int_param_description(
+    "Max bagfile size (bytes)",
+    1,
+    std::numeric_limits<int64_t>::max());
   auto max_bagfile_size_ = declare_parameter<int64_t>(
     "storage.max_bagfile_size",
-    0);
+    0,
+    desc_mbs);
   storage_options.max_bagfile_size = static_cast<uint64_t>(max_bagfile_size_);
 
   // FIXME(roncapat): actually not useful for Play, only for Record
-  rcl_interfaces::msg::ParameterDescriptor desc_mbd{};
-  desc_mbd.description = "Max bagfile duration (nanoseconds)";
-  rcl_interfaces::msg::IntegerRange range_mbd{};
-  range_mbd.from_value = 1;
-  range_mbd.to_value = std::numeric_limits<int64_t>::max();
-  desc_mbd.integer_range.push_back(range_mbd);
+  auto desc_mbd = int_param_description(
+    "Max bagfile duration (nanoseconds)",
+    1,
+    std::numeric_limits<int64_t>::max());
   auto max_bagfile_duration_ = declare_parameter<int64_t>(
     "storage.max_bagfile_duration",
-    0);
+    0,
+    desc_mbd);
   storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration_);
 
   // FIXME(roncapat): actually not useful for Play, only for Record
-  rcl_interfaces::msg::ParameterDescriptor desc_mcs{};
-  desc_mcs.description = "MAx chache size (messages)";
-  rcl_interfaces::msg::IntegerRange range_mcs{};
-  range_mcs.from_value = 1;
-  range_mcs.to_value = std::numeric_limits<int64_t>::max();
-  desc_mcs.integer_range.push_back(range_mcs);
+  auto desc_mcs = int_param_description(
+    "Max chache size (messages)",
+    1,
+    std::numeric_limits<int64_t>::max());
   auto max_cache_size_ = declare_parameter<int64_t>(
     "storage.max_cache_size",
-    0);
+    0,
+    desc_mcs);
   storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
 
   // FIXME(roncapat): actually not useful for Play, only for Record
