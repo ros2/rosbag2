@@ -49,7 +49,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   const std::string message_data = "Test Message 1";
   const std::string storage_id = "mcap";
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
-    "string data", ""};
+                                                         "string data", ""};
   // COMPATIBILITY(foxy)
   // using verbose APIs for Foxy compatibility which did not yet provide plain-message API
   rclcpp::Serialization<std_msgs::msg::String> serialization;
@@ -103,23 +103,19 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 #endif
     auto topics_and_types = reader->get_all_topics_and_types();
 
-    EXPECT_THAT(
-      topics_and_types,
-      ElementsAreArray(
-        {rosbag2_storage::TopicMetadata{
-            topic_name, "std_msgs/msg/String", "cdr", "qos_profile1", "type_hash1"}}));
+    EXPECT_THAT(topics_and_types,
+                ElementsAreArray({rosbag2_storage::TopicMetadata{
+                  topic_name, "std_msgs/msg/String", "cdr", "qos_profile1", "type_hash1"}}));
 
     const auto metadata = reader->get_metadata();
 
     EXPECT_THAT(metadata.storage_identifier, Eq("mcap"));
     EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.string()}));
-    EXPECT_THAT(
-      metadata.topics_with_message_count,
-      ElementsAreArray(
-        {rosbag2_storage::TopicInformation{
-            rosbag2_storage::TopicMetadata{topic_name, "std_msgs/msg/String", "cdr",
-              "qos_profile1", "type_hash1"},
-            1u}}));
+    EXPECT_THAT(metadata.topics_with_message_count,
+                ElementsAreArray({rosbag2_storage::TopicInformation{
+                  rosbag2_storage::TopicMetadata{topic_name, "std_msgs/msg/String", "cdr",
+                                                 "qos_profile1", "type_hash1"},
+                  1u}}));
     EXPECT_THAT(metadata.message_count, Eq(1u));
 
     const auto current_distro = rcpputils::get_env_var("ROS_DISTRO");
@@ -151,7 +147,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
   const std::string storage_id = "mcap";
   const std::string config_path = _TEST_RESOURCES_DIR_PATH;
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
-    "string data", ""};
+                                                         "string data", ""};
   rclcpp::Serialization<std_msgs::msg::String> serialization;
 
   {
