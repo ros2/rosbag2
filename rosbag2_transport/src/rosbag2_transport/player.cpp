@@ -97,12 +97,24 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 
   const std::vector<std::string> empty_str_list;
 
-  // TODO check if positive
-  auto read_ahead_queue_size_ = declare_parameter<int64_t>("play.read_ahead_queue_size", 1000);
+  rcl_interfaces::msg::ParameterDescriptor desc_raqs{};
+  desc_raqs.description = "Read ahead queue size";
+  rcl_interfaces::msg::IntegerRange range_raqs{};
+  range_raqs.from_value = 1;
+  range_raqs.to_value = std::numeric_limits<int64_t>::max();
+  desc_raqs.integer_range.push_back(range_raqs);
+  auto read_ahead_queue_size_ = declare_parameter<int64_t>("play.read_ahead_queue_size", 1000, desc_raqs);
   play_options.read_ahead_queue_size = static_cast<uint64_t>(read_ahead_queue_size_);
 
   play_options.node_prefix = declare_parameter<std::string>("play.node_prefix", "");
-  play_options.rate = declare_parameter<float>("play.rate", 1.0);
+
+  rcl_interfaces::msg::ParameterDescriptor desc_rate{};
+  desc_rate.description = "Read ahead queue size";
+  rcl_interfaces::msg::FloatingPointRange range_rate{};
+  range_rate.from_value = 0.000001;
+  range_rate.to_value = std::numeric_limits<float>::max();
+  range_rate.floating_point_range.push_back(range_rate);
+  play_options.rate = declare_parameter<float>("play.rate", 1.0, range_rate);
   play_options.topics_to_filter = declare_parameter<std::vector<std::string>>("play.topics_to_filter", empty_str_list);
   play_options.topics_regex_to_filter = declare_parameter<std::string>("play.topics_regex_to_filter","");
   play_options.topics_regex_to_exclude = declare_parameter<std::string>("play.topics_regex_to_exclude","");
@@ -112,7 +124,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 
   play_options.loop = declare_parameter<bool>("play.loop", false);
   
-  // Use classic CLI/launchfile remap instead
+  // TODO(roncapat): but I think it's worth to use classic CLI/launchfile remap instead
   // play_options.topic_remapping_options = declare_parameter<std::vector<std::string>>("play.topic_remapping_options", empty_str_list);
   
   play_options.clock_publish_frequency = declare_parameter<double>("play.clock_publish_frequency", 0.0);
@@ -127,7 +139,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   play_options.start_offset = declare_parameter<int64_t>("play.start_offset", 0);
   play_options.disable_keyboard_controls = declare_parameter<bool>("play.disable_keyboard_controls", false);
 
-  // TODO(roncapat)
+  // TODO(roncapat): but these are never set in ros2 bag play verb. May we skip also here?
   // KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;
   // KeyboardHandler::KeyCode play_next_key = KeyboardHandler::KeyCode::CURSOR_RIGHT;
   // KeyboardHandler::KeyCode increase_rate_key = KeyboardHandler::KeyCode::CURSOR_UP;
@@ -137,24 +149,50 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 
   play_options.disable_loan_message = declare_parameter<bool>("play.disable_loan_message", false);
 
+  // TODO(roncapat): check if file can be read
   storage_options.uri = declare_parameter<std::string>("storage.uri", "");
   storage_options.storage_id = declare_parameter<std::string>("storage.storage_id", "");
 
-
+  // FIXME(roncapat): actually not useful for Play, only for Record
+  rcl_interfaces::msg::ParameterDescriptor desc_mbs{};
+  desc_mbs.description = "Max bagfile size (bytes)";
+  rcl_interfaces::msg::IntegerRange range_mbs{};
+  range_mbs.from_value = 1;
+  range_mbs.to_value = std::numeric_limits<int64_t>::max();
+  desc_mbs.integer_range.push_back(range_mbs);
   auto max_bagfile_size_ = declare_parameter<int64_t>("storage.max_bagfile_size", 0);
   storage_options.max_bagfile_size = static_cast<uint64_t>(max_bagfile_size_);
 
+  // FIXME(roncapat): actually not useful for Play, only for Record
+  rcl_interfaces::msg::ParameterDescriptor desc_mbd{};
+  desc_mbd.description = "Max bagfile duration (nanoseconds)";
+  rcl_interfaces::msg::IntegerRange range_mbd{};
+  range_mbd.from_value = 1;
+  range_mbd.to_value = std::numeric_limits<int64_t>::max();
+  desc_mbd.integer_range.push_back(range_mbd);
   auto max_bagfile_duration_ = declare_parameter<int64_t>("storage.max_bagfile_duration", 0);
   storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration_);
 
+  // FIXME(roncapat): actually not useful for Play, only for Record
+  rcl_interfaces::msg::ParameterDescriptor desc_mcs{};
+  desc_mcs.description = "MAx chache size (messages)";
+  rcl_interfaces::msg::IntegerRange range_mcs{};
+  range_mcs.from_value = 1;
+  range_mcs.to_value = std::numeric_limits<int64_t>::max();
+  desc_mcs.integer_range.push_back(range_mcs);
   auto max_cache_size_ = declare_parameter<int64_t>("storage.max_cache_size", 0);
   storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
 
+  // FIXME(roncapat): actually not useful for Play, only for Record
   storage_options.storage_preset_profile = declare_parameter<std::string>("storage.preset_profile", "");
+
+  // TODO(roncapat): check if file can be read
   storage_options.storage_config_uri = declare_parameter<std::string>("storage.config_uri", "");
+
+  // FIXME(roncapat): actually not useful for Play, only for Record
   storage_options.snapshot_mode = declare_parameter<bool>("storage.snapshot_mode", false);
 
-  // TODO(roncapat)
+  // FIXME(roncapat): actually not useful for Play, only for Record
   // std::unordered_map<std::string, std::string> custom_data{};
 
   #ifndef _WIN32
