@@ -141,7 +141,8 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
     false);
 
   // TODO(roncapat): but I think it's worth to use classic CLI/launchfile remap instead
-  // play_options.topic_remapping_options = declare_parameter<std::vector<std::string>>("play.topic_remapping_options", empty_str_list);
+  // play_options.topic_remapping_options =
+  //    declare_parameter<std::vector<std::string>>("play.topic_remapping_options", empty_str_list);
 
   play_options.clock_publish_frequency = declare_parameter<double>(
     "play.clock_publish_frequency",
