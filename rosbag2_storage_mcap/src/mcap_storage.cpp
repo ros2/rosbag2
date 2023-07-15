@@ -228,6 +228,7 @@ public:
 #endif
 
 private:
+  void read_metadata();
   void open_impl(const std::string & uri, const std::string & preset_profile,
                  rosbag2_storage::storage_interfaces::IOFlag io_flag,
                  const std::string & storage_config_uri);
@@ -370,12 +371,44 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
   metadata_.relative_file_paths = {get_relative_file_path()};
 }
 
-/** BaseInfoInterface **/
-rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
+void MCAPStorage::read_metadata()
 {
   ensure_summary_read();
+  const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
+  auto range = mcap_metadatas.equal_range("rosbag2");
+  mcap::Status status{};
+  mcap::Record mcap_record{};
+  mcap::Metadata mcap_metadata{};
+  for (auto i = range.first; i != range.second; ++i) {
+    status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    status = mcap::McapReader::ParseMetadata(mcap_record, &mcap_metadata);
+    if (!status.ok()) {
+      OnProblem(status);
+      continue;
+    }
+    std::string serialized_metadata;
+    try {
+      serialized_metadata = mcap_metadata.metadata.at("serialized_metadata");
+    } catch (const std::out_of_range & /* err */) {
+      RCUTILS_LOG_WARN_NAMED(
+        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'serialized_metadata'.");
+    }
+    if (!serialized_metadata.empty()) {
+      YAML::Node metadata_node = YAML::Load(serialized_metadata);
+      YAML::convert<rosbag2_storage::BagMetadata>::decode(metadata_node, metadata_);
+    }
+    try {
+      metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
+    } catch (const std::out_of_range & /* err */) {
+      RCUTILS_LOG_ERROR_NAMED(
+        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
+    }
+  }
 
-  metadata_.version = 2;
   metadata_.storage_identifier = get_storage_identifier();
   metadata_.bag_size = get_bagfile_size();
   metadata_.relative_file_paths = {get_relative_file_path()};
@@ -420,35 +453,16 @@ rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
     } else {
       topic_info.message_count = 0;
     }
-
     metadata_.topics_with_message_count.push_back(topic_info);
   }
+}
 
-  const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
-  auto range = mcap_metadatas.equal_range("rosbag2");
-  mcap::Status status{};
-  mcap::Record mcap_record{};
-  mcap::Metadata mcap_metadata{};
-  for (auto i = range.first; i != range.second; ++i) {
-    status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
-    if (!status.ok()) {
-      OnProblem(status);
-      continue;
-    }
-    status = mcap::McapReader::ParseMetadata(mcap_record, &mcap_metadata);
-    if (!status.ok()) {
-      OnProblem(status);
-      continue;
-    }
-    try {
-      metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
-    } catch (const std::out_of_range & /* err */) {
-      RCUTILS_LOG_ERROR_NAMED(
-        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
-    }
-    break;
+/** BaseInfoInterface **/
+rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
+{
+  if (opened_as_ == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
+    read_metadata();
   }
-
   return metadata_;
 }
 
@@ -831,7 +845,10 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
 
   mcap::Metadata metadata;
   metadata.name = "rosbag2";
-  metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro}};
+  YAML::Node metadata_node = YAML::convert<rosbag2_storage::BagMetadata>::encode(bag_metadata);
+  std::string serialized_metadata = YAML::Dump(metadata_node);
+  metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro},
+                       {"serialized_metadata", serialized_metadata}};
   mcap::Status status = mcap_writer_->write(metadata);
   if (!status.ok()) {
     OnProblem(status);
