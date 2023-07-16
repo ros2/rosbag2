@@ -404,8 +404,7 @@ void MCAPStorage::read_metadata()
     try {
       metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
     } catch (const std::out_of_range & /* err */) {
-      RCUTILS_LOG_ERROR_NAMED(
-        LOG_NAME, "Metadata record with name 'rosbag2' did not contain key 'ROS_DISTRO'.");
+      // Ignor this error. In new versions ROS_DISTRO stored inside `serialized_metadata`.
     }
   }
 
@@ -847,8 +846,7 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
   metadata.name = "rosbag2";
   YAML::Node metadata_node = YAML::convert<rosbag2_storage::BagMetadata>::encode(bag_metadata);
   std::string serialized_metadata = YAML::Dump(metadata_node);
-  metadata.metadata = {{"ROS_DISTRO", bag_metadata.ros_distro},
-                       {"serialized_metadata", serialized_metadata}};
+  metadata.metadata = {{"serialized_metadata", serialized_metadata}};
   mcap::Status status = mcap_writer_->write(metadata);
   if (!status.ok()) {
     OnProblem(status);
