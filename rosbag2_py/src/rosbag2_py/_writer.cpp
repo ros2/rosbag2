@@ -38,8 +38,9 @@ template<typename T>
 class Writer : public rosbag2_cpp::Writer
 {
 public:
-  Writer()
-  : rosbag2_cpp::Writer(std::make_unique<T>())
+  template<typename ... Args>
+  explicit Writer(Args && ... args)
+  : rosbag2_cpp::Writer(std::make_unique<T>(std::forward<Args>(args)...))
   {}
 
   /// Write a serialized message to a bag file
@@ -107,7 +108,7 @@ PYBIND11_MODULE(_writer, m) {
   ;
 
   pybind11::class_<PyCompressionWriter>(m, "SequentialCompressionWriter")
-  .def(pybind11::init())
+  .def(pybind11::init<rosbag2_compression::CompressionOptions>())
   .def(
     "open",
     pybind11::overload_cast<
