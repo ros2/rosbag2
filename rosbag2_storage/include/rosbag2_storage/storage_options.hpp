@@ -95,7 +95,7 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
 }
 }  // namespace
 
-void declare_storage_options_r_params(std::shared_ptr<rclcpp::Node> nh, Storageoptions & so)
+void declare_storage_options_r_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so)
 {
   // TODO(roncapat): check if file can be read
   so.uri = nh->declare_parameter<std::string>(
@@ -112,7 +112,7 @@ void declare_storage_options_r_params(std::shared_ptr<rclcpp::Node> nh, Storageo
     "");
 }
 
-void declare_storage_options_rw_params(std::shared_ptr<rclcpp::Node> nh, Storageoptions & so)
+void declare_storage_options_rw_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so)
 {
   auto desc_mbs = int_param_description(
     "Max bagfile size (bytes)",
