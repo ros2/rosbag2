@@ -19,7 +19,8 @@
 #include "rosbag2_transport/qos.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
-namespace rosbag2_transport {
+namespace rosbag2_transport
+{
 
 namespace
 {
@@ -33,19 +34,6 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
   r.from_value = min;
   r.to_value = max;
   d.integer_range.push_back(r);
-  return d;
-}
-
-rcl_interfaces::msg::ParameterDescriptor float_param_description(
-  std::string description, float min,
-  float max)
-{
-  rcl_interfaces::msg::ParameterDescriptor d{};
-  rcl_interfaces::msg::FloatingPointRange r{};
-  d.description = description;
-  r.from_value = min;
-  r.to_value = max;
-  d.floating_point_range.push_back(r);
   return d;
 }
 }  // namespace

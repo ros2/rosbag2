@@ -647,8 +647,8 @@ Recorder::Recorder(
   auto writer = std::make_unique<rosbag2_cpp::Writer>();
 
   pimpl_ = std::make_unique<RecorderImpl>(
-      this, std::move(writer), keyboard_handler,
-      storage_options, record_options);
+    this, std::move(writer), keyboard_handler,
+    storage_options, record_options);
 }
 
 Recorder::Recorder(

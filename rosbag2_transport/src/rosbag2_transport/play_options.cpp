@@ -19,7 +19,8 @@
 #include "rosbag2_transport/qos.hpp"
 #include "rosbag2_transport/play_options.hpp"
 
-namespace rosbag2_transport {
+namespace rosbag2_transport
+{
 
 namespace
 {
