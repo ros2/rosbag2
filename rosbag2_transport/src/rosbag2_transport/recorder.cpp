@@ -631,10 +631,24 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  // TODO(karsten1987): Use this constructor later with parameter parsing.
-  // The reader, storage_options as well as record_options can be loaded via parameter.
-  // That way, the recorder can be used as a simple component in a component manager.
-  throw rclcpp::exceptions::UnimplementedError();
+  rosbag2_storage::StorageOptions storage_options;
+  rosbag2_transport::RecordOptions record_options;
+
+  declare_record_options_rw_params(shared_from_this(), record_options);
+  declare_storage_options_rw_params(shared_from_this(), storage_options);
+
+  #ifndef _WIN32
+  auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
+  #else
+  // We don't have signal handler option in constructor for windows version
+  auto keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+  #endif
+
+  auto writer = std::make_unique<rosbag2_cpp::Writer>();
+
+  pimpl_ = std::make_unique<RecorderImpl>(
+      this, std::move(writer), keyboard_handler,
+      storage_options, record_options);
 }
 
 Recorder::Recorder(
