@@ -22,10 +22,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "rcl_interfaces/msg/parameter_descriptor.hpp"
-#include "rcl_interfaces/msg/integer_range.hpp"
-#include "rcl_interfaces/msg/floating_point_range.hpp"
 #include "keyboard_handler/keyboard_handler.hpp"
+#include "rclcpp/node.hpp"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp/qos.hpp"
