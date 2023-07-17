@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "rclcpp/node.hpp"
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rcl_interfaces/msg/integer_range.hpp"
 #include "rcl_interfaces/msg/floating_point_range.hpp"
