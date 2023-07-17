@@ -23,6 +23,8 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rcl_interfaces REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
@@ -45,6 +47,8 @@ target_link_libraries(${PROJECT_NAME}
   pluginlib::pluginlib
   rcpputils::rcpputils
   rcutils::rcutils
+  rclcpp::rclcpp
+  ${rcl_interfaces_TARGETS}
   yaml-cpp
 )
 

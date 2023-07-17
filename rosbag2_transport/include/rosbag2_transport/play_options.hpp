@@ -183,7 +183,8 @@ void declare_play_options_rw_params(std::shared_ptr<rclcpp::Node> nh, PlayOption
 
   // TODO(roncapat): but I think it's worth to use classic CLI/launchfile remap instead
   // po.topic_remapping_options =
-  //    nh->declare_parameter<std::vector<std::string>>("play.topic_remapping_options", empty_str_list);
+  //    nh->declare_parameter<std::vector<std::string>>(
+  //       "play.topic_remapping_options", empty_str_list);
 
   po.clock_publish_frequency = nh->declare_parameter<double>(
     "play.clock_publish_frequency",
