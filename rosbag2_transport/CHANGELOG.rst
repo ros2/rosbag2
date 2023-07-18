@@ -2,25 +2,19 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.7 (2023-07-18)
+-------------------
+* [humble] Fix for possible freeze in Recorder::stop() (backport `#1381 <https://github.com/ros2/rosbag2/issues/1381>`_) (`#1388 <https://github.com/ros2/rosbag2/issues/1388>`_)
+* [humble] Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (backport `#1382 <https://github.com/ros2/rosbag2/issues/1382>`_) (`#1403 <https://github.com/ros2/rosbag2/issues/1403>`_)
+* [humble] When using sim time, wait for /clock before beginning recording (backport `#1378 <https://github.com/ros2/rosbag2/issues/1378>`_) (`#1392 <https://github.com/ros2/rosbag2/issues/1392>`_)
+* Add recorder stop() API (backport `#1300 <https://github.com/ros2/rosbag2/issues/1300>`_) (`#1396 <https://github.com/ros2/rosbag2/issues/1396>`_)
+* Contributors: Michael Orlov, mergify[bot], zeal-up
+
 0.15.6 (2023-06-05)
 -------------------
 * [Humble] Bugfix for parameters not passing to recorder's node from child component (backport `#1360 <https://github.com/ros2/rosbag2/issues/1360>`_) (`#1368 <https://github.com/ros2/rosbag2/issues/1368>`_)
-  * Bugfix for parameters not passing to recorder's node from child component (`#1360 <https://github.com/ros2/rosbag2/issues/1360>`_)
-  * Update recorder.cpp
-  * Regression test
-  * Fix test for composable recorder with parameter override option
-  ---------
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-  (cherry picked from commit 13f51510342e9f06327ae1146820780baee06c4a)
-  ---------
-  Co-authored-by: Patrick Roncagliolo <ronca.pat@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Fix memory issue when multiple writers with message compression_mode required (`#1331 <https://github.com/ros2/rosbag2/issues/1331>`_)
-  - Deep copy message when sequential compression writer is writing
-  Co-authored-by: zeal <ziyaolin.zeal@gmail.com>
 * Print "Hidden topics are not recorded" only once. (`#1225 <https://github.com/ros2/rosbag2/issues/1225>`_) (`#1323 <https://github.com/ros2/rosbag2/issues/1323>`_)
-  (cherry picked from commit a640adaeeee3bbffaa6cd73cde3f3e8781f12e89)
-  Co-authored-by: rshanor <rickshanor@gmail.com>
 * Contributors: zeal-up, Michael Orlov, Patrick Roncagliolo, rshanor
 
 0.15.5 (2023-04-25)
