@@ -2,23 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.7 (2023-07-18)
+-------------------
+
 0.15.6 (2023-06-05)
 -------------------
 * Add extra checks in execute_and_wait_until_completion(..) (`#1346 <https://github.com/ros2/rosbag2/issues/1346>`_) (`#1357 <https://github.com/ros2/rosbag2/issues/1357>`_)
-  - Add check if process was terminated by the signal or really exited
-  (cherry picked from commit 1215440903c61e0bcbefcf8779b58c86fe31daa6)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: Michael Orlov
-
-0.15.7 (2023-07-18)
--------------------
-* 0.15.6 (`#1372 <https://github.com/ros2/rosbag2/issues/1372>`_)
-  0.15.6
-* Add extra checks in execute_and_wait_until_completion(..) (`#1346 <https://github.com/ros2/rosbag2/issues/1346>`_) (`#1357 <https://github.com/ros2/rosbag2/issues/1357>`_)
-  - Add check if process was terminated by the signal or really exited
-  (cherry picked from commit 1215440903c61e0bcbefcf8779b58c86fe31daa6)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: Michael Orlov, mergify[bot]
 
 0.15.5 (2023-04-25)
 -------------------
