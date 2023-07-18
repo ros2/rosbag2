@@ -23,6 +23,73 @@ Changelog for package rosbag2_transport
   Co-authored-by: rshanor <rickshanor@gmail.com>
 * Contributors: zeal-up, Michael Orlov, Patrick Roncagliolo, rshanor
 
+0.15.7 (2023-07-18)
+-------------------
+* [humble] Fix for possible freeze in Recorder::stop() (backport `#1381 <https://github.com/ros2/rosbag2/issues/1381>`_) (`#1388 <https://github.com/ros2/rosbag2/issues/1388>`_)
+  * Fix for possible freeze in Recorder::stop() (`#1381 <https://github.com/ros2/rosbag2/issues/1381>`_)
+  * Fix for possible freeze in Recorder::stop()
+  - It was possible a freeze in recorder due to the race condition when
+  calling Recorder::stop() while event publisher thread hasn't been fully
+  started yet.
+  * Move event_publisher_thread_wake_cv\_.notify_all() out of the mutex lock
+  ---------
+  (cherry picked from commit c6cc69a4ed7bc25b494051148e99ab0e7d22cc90)
+  # Conflicts:
+  #	rosbag2_transport/src/rosbag2_transport/recorder.cpp
+  * Resolve merge conflicts
+  * Remove `in_recording\_` variable for ABI compatibility
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [humble] Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (backport `#1382 <https://github.com/ros2/rosbag2/issues/1382>`_) (`#1403 <https://github.com/ros2/rosbag2/issues/1403>`_)
+  * Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (`#1382 <https://github.com/ros2/rosbag2/issues/1382>`_)
+  * Fix for rosbag2_transport::Recorder failures due to unhandled exceptions
+  * Revert "Fix for rosbag2_transport::Recorder failures due to unhandled exceptions"
+  This reverts commit 767d440d637f5170bf490142bf55e6f84bfeee6b.
+  * Handle exceptions in event publisher and discovery threads
+  - Exceptions potentially may come from the underlying node operations
+  when we are invalidating context via rclcpp::shutdown(). We need to have
+  possibility to correct finish recording in this case.
+  ---------
+  (cherry picked from commit bb8d2a5fa4da087307761eeb9f5536a00382792a)
+  # Conflicts:
+  #	rosbag2_transport/src/rosbag2_transport/recorder.cpp
+  * Fix for merge conflicts
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [humble] When using sim time, wait for /clock before beginning recording (backport `#1378 <https://github.com/ros2/rosbag2/issues/1378>`_) (`#1392 <https://github.com/ros2/rosbag2/issues/1392>`_)
+  * When using sim time, wait for /clock before beginning recording (`#1378 <https://github.com/ros2/rosbag2/issues/1378>`_)
+  * Disable use-sim-time && no-discovery combo, allow re-enabling discovery after stop()
+  (cherry picked from commit d52ddbbbf443f5a2e4eadec1fe4cc16881fa12c5)
+* Add recorder stop() API (backport `#1300 <https://github.com/ros2/rosbag2/issues/1300>`_) (`#1396 <https://github.com/ros2/rosbag2/issues/1396>`_)
+  - Add Recorder::stop() API
+  - Move routines from recorder's destructor to RecorderImpl::stop()
+  - Add can_record_again_after_stop unit test in rosbag2_transport
+  - Update Doxygen comments for stop() and pause() API in recorder.hpp
+* 0.15.6 (`#1372 <https://github.com/ros2/rosbag2/issues/1372>`_)
+  0.15.6
+* [Humble] Bugfix for parameters not passing to recorder's node from child component (backport `#1360 <https://github.com/ros2/rosbag2/issues/1360>`_) (`#1368 <https://github.com/ros2/rosbag2/issues/1368>`_)
+  * [bugfix] for parameters not passing to recorder's node from child component (`#1360 <https://github.com/ros2/rosbag2/issues/1360>`_)
+  * Update recorder.cpp
+  * Typo
+  * Regression test
+  * Fix test for composable recorder with parameter override option
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 13f51510342e9f06327ae1146820780baee06c4a)
+  # Conflicts:
+  #	rosbag2_transport/src/rosbag2_transport/recorder.cpp
+  * Fix merge conflicts
+  ---------
+  Co-authored-by: Patrick Roncagliolo <ronca.pat@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* fix memory issue when multiple writers with message compression_mode required (`#1331 <https://github.com/ros2/rosbag2/issues/1331>`_)
+  deep copy message when sequential compression writing
+  Co-authored-by: zeal <ziyaolin.zeal@gmail.com>
+* Print "Hidden topics are not recorded" only once. (`#1225 <https://github.com/ros2/rosbag2/issues/1225>`_) (`#1323 <https://github.com/ros2/rosbag2/issues/1323>`_)
+  (cherry picked from commit a640adaeeee3bbffaa6cd73cde3f3e8781f12e89)
+  Co-authored-by: rshanor <rickshanor@gmail.com>
+* Contributors: Michael Orlov, mergify[bot], zeal-up
+
 0.15.5 (2023-04-25)
 -------------------
 * [humble] Redesign record_services tests to make them more deterministic (`#1122 <https://github.com/ros2/rosbag2/issues/1122>`_) (`#1142 <https://github.com/ros2/rosbag2/issues/1142>`_)

@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.7 (2023-07-18)
+-------------------
+
 0.15.6 (2023-06-05)
 -------------------
 * Deconstruct compression classloader factory in correct order with classes loaded (`#1362 <https://github.com/ros2/rosbag2/issues/1362>`_)

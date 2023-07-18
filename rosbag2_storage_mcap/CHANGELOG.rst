@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.7 (2023-07-18)
+-------------------
+* [humble] Don't crash when type definition cannot be found, and find srv defs if available (`#1398 <https://github.com/ros2/rosbag2/issues/1398>`_)
+* [humble] Add ROS_DISTRO metadata record to mcap file when opening for writing (backport `#1371 <https://github.com/ros2/rosbag2/issues/1371>`_) (`#1393 <https://github.com/ros2/rosbag2/issues/1393>`_)
+* Contributors: Emerson Knapp, Michael Orlov, mergify[bot]
+
 0.15.6 (2023-06-05)
 -------------------
 

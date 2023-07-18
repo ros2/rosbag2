@@ -5,6 +5,12 @@ Changelog for package rosbag2
 0.15.6 (2023-06-05)
 -------------------
 
+0.15.7 (2023-07-18)
+-------------------
+* 0.15.6 (`#1372 <https://github.com/ros2/rosbag2/issues/1372>`_)
+  0.15.6
+* Contributors: Michael Orlov
+
 0.15.5 (2023-04-25)
 -------------------
 * Add Michael Orlov as maintainer in rosbag2 packages (`#1215 <https://github.com/ros2/rosbag2/issues/1215>`_) (`#1224 <https://github.com/ros2/rosbag2/issues/1224>`_)
