@@ -18,16 +18,18 @@ from common import get_rosbag_options
 
 import pytest
 
-from rclpy.serialization import serialize_message
+from rclpy.serialization import deserialize_message, serialize_message
 from rosbag2_py import (
     compression_mode_from_string,
     compression_mode_to_string,
     CompressionMode,
     CompressionOptions,
+    SequentialCompressionReader,
     SequentialCompressionWriter,
     TopicMetadata,
 )
 from rosbag2_test_common import TESTED_STORAGE_IDS
+from rosidl_runtime_py.utilities import get_message
 
 from std_msgs.msg import String
 
@@ -61,7 +63,7 @@ def test_compression_options():
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
-def test_sequential_compression_writer(tmp_path, storage_id):
+def test_sequential_compression(tmp_path, storage_id):
     """Checks that we can do a compressed write and read."""
     bag_path = os.path.join(tmp_path, 'tmp_sequential_compressed_write_test')
 
@@ -94,3 +96,25 @@ def test_sequential_compression_writer(tmp_path, storage_id):
 
     # close bag and create new storage instance
     del writer
+
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
+
+    reader = SequentialCompressionReader()
+    reader.open(storage_options, converter_options)
+
+    topic_types = reader.get_all_topics_and_types()
+
+    # Create a map for quicker lookup
+    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+
+    msg_counter = 0
+    while reader.has_next():
+        topic, data, t = reader.read_next()
+        msg_type = get_message(type_map[topic])
+        msg_deserialized = deserialize_message(data, msg_type)
+
+        assert isinstance(msg_deserialized, String)
+        assert msg_deserialized.data == f'Hello, world! {msg_counter}'
+        assert t == msg_counter * 100
+
+        msg_counter += 1
