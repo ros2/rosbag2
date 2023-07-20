@@ -58,7 +58,7 @@ target_link_libraries(${PROJECT_NAME}
   keyboard_handler::keyboard_handler
   rcl::rcl
   rclcpp::rclcpp
-  rclcpp_components::rclcpp_components
+  ${rclcpp_components_TARGETS}
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
