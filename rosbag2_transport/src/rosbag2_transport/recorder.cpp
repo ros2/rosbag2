@@ -627,7 +627,7 @@ void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topi
 // Recorder public interface
 
 Recorder::Recorder(const rclcpp::NodeOptions & node_options)
-: Recorder("rosbag2_recorder", node_options){}
+: Recorder("rosbag2_recorder", node_options) {}
 
 Recorder::Recorder(
   const std::string & node_name,

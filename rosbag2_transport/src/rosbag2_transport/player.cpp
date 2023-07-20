@@ -91,7 +91,7 @@ namespace rosbag2_transport
 constexpr Player::callback_handle_t Player::invalid_callback_handle;
 
 Player::Player(const rclcpp::NodeOptions & node_options)
-: Player("rosbag2_player", node_options){}
+: Player("rosbag2_player", node_options) {}
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
