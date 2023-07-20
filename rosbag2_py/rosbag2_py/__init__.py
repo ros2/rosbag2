@@ -18,6 +18,12 @@ from rpyutils import add_dll_directories_from_env
 # to the search path.
 # See https://docs.python.org/3/whatsnew/3.8.html#bpo-36085-whatsnew
 with add_dll_directories_from_env('PATH'):
+    from rosbag2_py._compression_options import (
+        CompressionMode,
+        CompressionOptions,
+        compression_mode_from_string,
+        compression_mode_to_string
+    )
     from rosbag2_py._reader import (
         SequentialCompressionReader,
         SequentialReader,
@@ -60,6 +66,10 @@ with add_dll_directories_from_env('PATH'):
 
 __all__ = [
     'bag_rewrite',
+    'CompressionMode',
+    'CompressionOptions',
+    'compression_mode_from_string',
+    'compression_mode_to_string',
     'ConverterOptions',
     'FileInformation',
     'get_default_storage_id',
