@@ -94,6 +94,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_export_dependencies(
+  rclcpp_components
   keyboard_handler
   rosbag2_cpp
   rosbag2_compression
