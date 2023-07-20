@@ -152,4 +152,4 @@ void declare_play_options_rw_params(std::shared_ptr<rclcpp::Node> nh, PlayOption
     "play.disable_loan_message",
     false);
 }
-}
+}  // namespace rosbag2_transport

@@ -134,7 +134,7 @@ void declare_record_options_rw_params(std::shared_ptr<rclcpp::Node> nh, RecordOp
     "record.use_sim_time",
     false);
 }
-}
+}  // namespace rosbag2_transport
 
 namespace YAML
 {

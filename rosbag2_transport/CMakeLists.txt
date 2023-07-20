@@ -31,6 +31,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
@@ -57,6 +58,7 @@ target_link_libraries(${PROJECT_NAME}
   keyboard_handler::keyboard_handler
   rcl::rcl
   rclcpp::rclcpp
+  rclcpp_components::rclcpp_components
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression

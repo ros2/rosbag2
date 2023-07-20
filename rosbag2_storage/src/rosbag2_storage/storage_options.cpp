@@ -97,7 +97,7 @@ void declare_storage_options_rw_params(std::shared_ptr<rclcpp::Node> nh, Storage
   // std::unordered_map<std::string, std::string> custom_data{};
   declare_storage_options_r_params(nh, so);
 }
-}
+}  // namespace rosbag2_storage
 
 namespace YAML
 {
