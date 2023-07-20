@@ -58,6 +58,9 @@ class Recorder : public rclcpp::Node
 {
 public:
   ROSBAG2_TRANSPORT_PUBLIC
+  explicit Recorder(const rclcpp::NodeOptions & node_options);
+
+  ROSBAG2_TRANSPORT_PUBLIC
   explicit Recorder(
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
