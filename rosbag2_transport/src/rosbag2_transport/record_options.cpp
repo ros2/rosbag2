@@ -99,7 +99,7 @@ void declare_record_options_rw_params(std::shared_ptr<rclcpp::Node> nh, RecordOp
     "record.compression_queue_size",
     1,
     desc_cqs);
-  ro.compression_queue_size = std::static_cast<uint64_t>(compression_queue_size_);
+  ro.compression_queue_size = static_cast<uint64_t>(compression_queue_size_);
 
   auto desc_cts = int_param_description(
     "Compression threads",
@@ -109,7 +109,7 @@ void declare_record_options_rw_params(std::shared_ptr<rclcpp::Node> nh, RecordOp
     "record.compression_threads",
     0,
     desc_cts);
-  ro.compression_threads = std::static_cast<uint64_t>(compression_threads_);
+  ro.compression_threads = static_cast<uint64_t>(compression_threads_);
 
   // TODO(roncapat)
   // std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
