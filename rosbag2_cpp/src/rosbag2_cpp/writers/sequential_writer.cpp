@@ -62,6 +62,10 @@ SequentialWriter::SequentialWriter(
 
 SequentialWriter::~SequentialWriter()
 {
+  // Deleting all callbacks before calling close(). Calling callbacks from destructor is not safe.
+  // Callbacks likely was created after SequentialWriter object and may point to the already
+  // destructed objects.
+  callback_manager_.delete_all_callbacks();
   close();
 }
 
@@ -172,7 +176,13 @@ void SequentialWriter::close()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
+  if (storage_) {
+    auto info = std::make_shared<bag_events::BagSplitInfo>();
+    info->closed_file = storage_->get_relative_file_path();
+    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    // bag file was closed before callback call.
+    callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
+  }
   storage_factory_.reset();
 }
 

@@ -166,6 +166,14 @@ public:
   }
 
   /**
+   * \brief Delete all callbacks
+   */
+  void delete_all_callbacks()
+  {
+    callbacks_.clear();
+  }
+
+  /**
    * \brief Execute all callbacks registered for the given event.
    *
    * The provided information value is passed to each callback by copy.
