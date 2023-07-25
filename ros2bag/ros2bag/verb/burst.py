@@ -15,11 +15,14 @@
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import add_standard_reader_args
-from ros2bag.api import check_not_negative_int
-from ros2bag.api import check_positive_float
-from ros2bag.api import convert_yaml_to_qos_profile
-from ros2bag.api import print_error
+from ros2bag.api import (
+    add_standard_node_args,
+    add_standard_reader_args,
+    check_not_negative_int,
+    check_positive_float,
+    convert_yaml_to_qos_profile,
+    print_error,
+)
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
@@ -33,7 +36,7 @@ class BurstVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         add_standard_reader_args(parser)
-
+        add_standard_node_args(parser, 'rosbag2_player')
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -100,5 +103,5 @@ class BurstVerb(VerbExtension):
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = -1
 
-        player = Player()
+        player = Player(args.node_name)
         player.burst(storage_options, play_options, args.num_messages)

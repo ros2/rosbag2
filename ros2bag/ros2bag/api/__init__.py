@@ -148,6 +148,14 @@ def add_standard_reader_args(parser: ArgumentParser) -> None:
              'By default attempts to detect automatically - use this argument to override.')
 
 
+def add_standard_node_args(parser: ArgumentParser, prefix: str) -> None:
+    """Add arguments for for verbs that create a Node."""
+    node_name = f'{prefix}_{os.getpid()}'
+    parser.add_argument(
+        '--node-name', type=str, default=node_name,
+        help=f'Specify the recorder node name. Default is {prefix}_PID.')
+
+
 def _parse_cli_storage_plugin():
     plugin_choices = set(rosbag2_py.get_registered_writers())
     default_storage = rosbag2_py.get_default_storage_id()
