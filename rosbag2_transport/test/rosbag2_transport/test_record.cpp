@@ -23,7 +23,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
-#include "rosbag2_test_common/service_client_manager.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"

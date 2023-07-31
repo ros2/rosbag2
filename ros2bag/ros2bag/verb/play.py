@@ -52,13 +52,21 @@ class PlayVerb(VerbExtension):
             '--topics', type=str, default=[], nargs='+',
             help='Space-delimited list of topics to play.')
         parser.add_argument(
+            '--services', type=str, default=[], nargs='+',
+            help='services to replay, separated by space. At least one service needs to be '
+                 'specified.')
+        parser.add_argument(
             '-e', '--regex', default='',
             help='filter topics by regular expression to replay, separated by space. If none '
                  'specified, all topics will be replayed.')
         parser.add_argument(
-            '-x', '--exclude', default='',
+            '--exclude-topics', default='',
             help='regular expressions to exclude topics from replay, separated by space. If none '
                  'specified, all topics will be replayed.')
+        parser.add_argument(
+            '--exclude-services', default='',
+            help='regular expressions to exclude services from replay, separated by space. If '
+                 'none specified, all services will be replayed.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -182,8 +190,21 @@ class PlayVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
-        play_options.topics_regex_to_filter = args.regex
-        play_options.topics_regex_to_exclude = args.exclude
+
+        # Convert service name to service event topic name
+        services = []
+        if args.services and len(args.services) != 0:
+            for s in args.services:
+                name = '/' + s if s[0] != '/' else s
+                services.append(name + '/_service_event')
+        play_options.services_to_filter = services
+
+        play_options.regex_to_filter = args.regex
+        play_options.topics_regex_to_exclude = args.exclude_topics
+        if args.exclude_services:
+            play_options.services_regex_to_exclude = args.exclude_services + '/_service_event'
+        else:
+            play_options.services_regex_to_exclude = args.exclude_services
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping

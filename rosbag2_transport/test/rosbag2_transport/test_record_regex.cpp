@@ -24,7 +24,7 @@
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
-#include "rosbag2_test_common/service_client_manager.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -201,19 +201,19 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_recording)
   record_options.exclude_services = services_regex_to_exclude;
 
   auto service_manager_v1 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(v1);
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(v1);
 
   auto service_manager_v2 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(v2);
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(v2);
 
   auto service_manager_e1 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(e1);
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(e1);
 
   auto service_manager_b1 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(b1);
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b1);
 
   auto service_manager_b2 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(b2);
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b2);
 
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);

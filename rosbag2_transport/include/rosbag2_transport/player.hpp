@@ -55,6 +55,7 @@
 
 #include "rosgraph_msgs/msg/clock.hpp"
 
+
 namespace rosbag2_cpp
 {
 class Reader;
@@ -207,6 +208,11 @@ protected:
   /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   ROSBAG2_TRANSPORT_PUBLIC
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
+
+  /// \brief Getter for clients corresponding to each service name
+  /// \return Hashtable representing service name to client
+  ROSBAG2_TRANSPORT_PUBLIC
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_clients();
 
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher

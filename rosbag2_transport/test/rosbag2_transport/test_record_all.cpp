@@ -26,7 +26,7 @@
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
-#include "rosbag2_test_common/service_client_manager.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -91,12 +91,12 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_are_recorded)
 {
-  auto service_client_manager_1 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+  auto client_manager_1 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
     "test_service_1");
 
-  auto service_client_manager_2 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+  auto client_manager_2 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
     "test_service_2");
 
   rosbag2_transport::RecordOptions record_options =
@@ -107,14 +107,14 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(service_client_manager_1->check_service_ready());
+  ASSERT_TRUE(client_manager_1->check_service_ready());
 
-  ASSERT_TRUE(service_client_manager_2->check_service_ready());
+  ASSERT_TRUE(client_manager_2->check_service_ready());
 
   // By default, only client introspection is enable.
   // For one request, service event topic get 2 messages.
-  ASSERT_TRUE(service_client_manager_1->send_request());
-  ASSERT_TRUE(service_client_manager_2->send_request());
+  ASSERT_TRUE(client_manager_1->send_request());
+  ASSERT_TRUE(client_manager_2->send_request());
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -129,8 +129,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_are_recorded)
 {
-  auto service_client_manager_1 =
-    std::make_shared<rosbag2_test_common::ServiceClientManager<test_msgs::srv::BasicTypes>>(
+  auto client_manager_1 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
     "test_service");
 
   auto string_message = get_messages_strings()[0];
@@ -150,13 +150,13 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
-  ASSERT_TRUE(service_client_manager_1->check_service_ready());
+  ASSERT_TRUE(client_manager_1->check_service_ready());
 
   pub_manager.run_publishers();
 
   // By default, only client introspection is enable.
   // For one request, service event topic get 2 messages.
-  ASSERT_TRUE(service_client_manager_1->send_request());
+  ASSERT_TRUE(client_manager_1->send_request());
 
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

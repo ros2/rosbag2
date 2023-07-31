@@ -521,26 +521,63 @@ void MCAPStorage::reset_iterator()
     options.endTime = mcap::MaxTime;
   }
   options.readOrder = read_order_;
-  if (!storage_filter_.topics.empty()) {
-    options.topicFilter = [this](std::string_view topic) {
+
+  auto filter_process = [this](std::string_view topic) {
+    if (!storage_filter_.topics.empty()) {
       for (const auto & match_topic : storage_filter_.topics) {
         if (match_topic == topic) {
           return true;
         }
       }
-      return false;
-    };
-  }
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
-  if (!storage_filter_.topics_regex.empty()) {
-    options.topicFilter = [this](std::string_view topic) {
+    }
+
+    if (!storage_filter_.services.empty()) {
+      for (const auto & match_service : storage_filter_.services) {
+        if (match_service == topic) {
+          return true;
+        }
+      }
+    }
+
+    bool topics_regex_to_exclude_match = false;
+    bool services_regex_to_exclude_match = false;
+    std::string topic_string(topic);
+
+    if (!storage_filter_.topics_regex_to_exclude.empty()) {
       std::smatch m;
-      std::string topic_string(topic);
-      std::regex re(storage_filter_.topics_regex);
-      return std::regex_match(topic_string, m, re);
-    };
-  }
+      std::regex re(storage_filter_.topics_regex_to_exclude);
+      topics_regex_to_exclude_match = std::regex_match(topic_string, m, re);
+    }
+
+    if (!storage_filter_.services_regex_to_exclude.empty()) {
+      std::smatch m;
+      std::regex re(storage_filter_.services_regex_to_exclude);
+      services_regex_to_exclude_match = std::regex_match(topic_string, m, re);
+    }
+
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+    if (!storage_filter_.regex.empty()) {
+      std::smatch m;
+      std::regex re(storage_filter_.regex);
+
+      if (std::regex_match(topic_string, m, re) && !topics_regex_to_exclude_match &&
+          !services_regex_to_exclude_match) {
+        return true;
+      } else {
+        return false;
+      }
+    }
 #endif
+
+    if ((storage_filter_.topics.empty() && !topics_regex_to_exclude_match) &&
+        (storage_filter_.services.empty() && !services_regex_to_exclude_match)) {
+      return true;
+    }
+
+    return false;
+  };
+  options.topicFilter = filter_process;
+
   linear_view_ =
     std::make_unique<mcap::LinearMessageView>(mcap_reader_->readMessages(OnProblem, options));
   linear_iterator_ = std::make_unique<mcap::LinearMessageView::Iterator>(linear_view_->begin());

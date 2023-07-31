@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TEST_COMMON__SERVICE_CLIENT_MANAGER_HPP_
-#define ROSBAG2_TEST_COMMON__SERVICE_CLIENT_MANAGER_HPP_
+#ifndef ROSBAG2_TEST_COMMON__CLIENT_MANAGER_HPP_
+#define ROSBAG2_TEST_COMMON__CLIENT_MANAGER_HPP_
 
 #include <memory>
 #include <string>
@@ -23,13 +23,14 @@
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
 
+
 namespace rosbag2_test_common
 {
 template<typename ServiceT>
-class ServiceClientManager : public rclcpp::Node
+class ClientManager : public rclcpp::Node
 {
 public:
-  explicit ServiceClientManager(
+  explicit ClientManager(
     std::string service_name,
     size_t client_number = 1,
     bool service_event_contents = false,
@@ -122,4 +123,4 @@ private:
 };
 }  // namespace rosbag2_test_common
 
-#endif  // ROSBAG2_TEST_COMMON__SERVICE_CLIENT_MANAGER_HPP_
+#endif  // ROSBAG2_TEST_COMMON__CLIENT_MANAGER_HPP_

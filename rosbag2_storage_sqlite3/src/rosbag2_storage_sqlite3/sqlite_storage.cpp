@@ -521,6 +521,7 @@ void SqliteStorage::prepare_for_reading()
     "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
   std::vector<std::string> where_conditions;
 
+  std::string topic_and_service_list;
   // add topic filter
   if (!storage_filter_.topics.empty()) {
     // Construct string for selected topics
@@ -531,13 +532,39 @@ void SqliteStorage::prepare_for_reading()
         topic_list += ",";
       }
     }
-    where_conditions.push_back("(topics.name IN (" + topic_list + "))");
+    topic_and_service_list = "(topics.name IN (" + topic_list + "))";
   }
-  // add topic filter based on regular expression
-  if (!storage_filter_.topics_regex.empty()) {
+
+  // add service filter
+  if (!storage_filter_.services.empty()) {
     // Construct string for selected topics
-    where_conditions.push_back("(topics.name REGEXP '" + storage_filter_.topics_regex + "')");
+    std::string service_list{""};
+    for (auto & service : storage_filter_.services) {
+      service_list += "'" + service + "'";
+      if (&service != &storage_filter_.topics.back()) {
+        service_list += ",";
+      }
+    }
+
+    topic_and_service_list = topic_and_service_list +
+      std::string(topic_and_service_list.empty() ? "" : " OR ") +
+      "(topics.name IN (" + service_list + "))";
   }
+
+  std::string list_and_regex = topic_and_service_list;
+  // add topic filter based on regular expression
+  if (!storage_filter_.regex.empty()) {
+    std::string regex = "(topics.name REGEXP '" + storage_filter_.regex + "')";
+    list_and_regex = list_and_regex +
+      std::string(!list_and_regex.empty() ? " OR " : "") +
+      regex;
+  }
+
+  if (!list_and_regex.empty()) {
+    where_conditions.push_back(list_and_regex);
+  }
+
+  std::string exclude_topics_services;
   // exclude topics based on regular expressions
   if (!storage_filter_.topics_regex_to_exclude.empty()) {
     // Construct string for selected topics
@@ -545,6 +572,14 @@ void SqliteStorage::prepare_for_reading()
       "(topics.name NOT IN "
       "(SELECT topics.name FROM topics WHERE topics.name REGEXP '" +
       storage_filter_.topics_regex_to_exclude + "'))");
+  }
+  // exclude service based on regular expressions
+  if (!storage_filter_.services_regex_to_exclude.empty()) {
+    // Construct string for selected topics
+    where_conditions.push_back(
+      "(topics.name NOT IN "
+      "(SELECT topics.name FROM topics WHERE topics.name REGEXP '" +
+      storage_filter_.services_regex_to_exclude + "'))");
   }
 
   const std::string direction_op = read_order_.reverse ? "<" : ">";

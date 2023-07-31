@@ -48,6 +48,18 @@ public:
     return pub_list;
   }
 
+  std::vector<rclcpp::ClientBase *> get_list_of_clients()
+  {
+    std::vector<rclcpp::ClientBase *> cli_list;
+    for (const auto & client : get_clients()) {
+        cli_list.push_back(
+          static_cast<rclcpp::ClientBase *>(
+            client.second.get()));
+    }
+
+    return cli_list;
+  }
+
   using rosbag2_transport::Player::wait_for_playback_to_start;
 
   size_t get_number_of_registered_pre_callbacks()

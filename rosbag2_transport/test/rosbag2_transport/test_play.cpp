@@ -25,12 +25,14 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
+#include "rosbag2_test_common/service_manager.hpp"
 
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 #include "rosbag2_transport/qos.hpp"
 
@@ -107,6 +109,104 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
         Field(
           &test_msgs::msg::Arrays::float32_values,
           ElementsAre(40.0f, 2.0f, 0.0f)))));
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
+{
+  auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+  };
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(
+      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(
+      "test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(
+      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(
+      "test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, services_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+
+  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+
+  srv_->run_services();
+
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(
+      reader), storage_options_, play_options_);
+  player->play();
+
+  std::this_thread::sleep_for(300ms);
+  EXPECT_EQ(service1_receive_requests.size(), 2);
+  EXPECT_EQ(service2_receive_requests.size(), 2);
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_services)
+{
+  auto topic_msg = get_messages_basic_types()[0];
+  topic_msg->int64_value = 1111;
+
+  auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", "", ""},
+    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+  };
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(
+      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(
+      "topic1", 600, topic_msg),
+    serialize_test_message(
+      "test_service1/_service_event", 550, get_service_event_message_basic_types()[1]),
+    serialize_test_message(
+      "topic1", 400, topic_msg),
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, services_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service_receive_requests;
+  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service_receive_requests);
+  srv_->run_services();
+
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  auto await_received_messages = sub_->spin_subscriptions();
+
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(
+      reader), storage_options_, play_options_);
+  player->play();
+
+  await_received_messages.get();
+
+  auto replayed_topic_msg = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
+    "/topic1");
+  EXPECT_THAT(replayed_topic_msg, SizeIs(Ge(2u)));
+  EXPECT_THAT(
+    replayed_topic_msg,
+    Each(Pointee(Field(&test_msgs::msg::BasicTypes::int64_value, 1111))));
+
+  std::this_thread::sleep_for(200ms);
+  ASSERT_EQ(service_receive_requests.size(), 2);
+  for (size_t i = 0; i < 2; i++) {
+    EXPECT_EQ(
+      service_receive_requests[i]->int32_value,
+      get_service_event_message_basic_types()[i]->request[0].int32_value);
+    EXPECT_EQ(
+      service_receive_requests[i]->int64_value,
+      get_service_event_message_basic_types()[i]->request[0].int64_value);
+  }
 }
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_unknown_type)
@@ -299,6 +399,266 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
     // All we care is that any messages arrived
     EXPECT_THAT(replayed_topic2, SizeIs(Ge(1u)));
+  }
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_services)
+{
+  auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+  };
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(
+      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(
+      "test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(
+      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(
+      "test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, services_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Filter allows /test_service2, blocks /test_service1
+  {
+    play_options_.services_to_filter = {"test_service2/_service_event"};
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, services_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    std::this_thread::sleep_for(250ms);
+    EXPECT_EQ(service1_receive_requests.size(), 0);
+    EXPECT_EQ(service2_receive_requests.size(), 2);
+  }
+
+  // Filter allows /test_service1, blocks /test_service2
+  {
+    play_options_.services_to_filter = {"test_service1/_service_event"};
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, services_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    std::this_thread::sleep_for(250ms);
+    EXPECT_EQ(service1_receive_requests.size(), 2);
+    EXPECT_EQ(service2_receive_requests.size(), 0);
+  }
+
+  // No filter, receive both services
+  {
+    play_options_.services_to_filter.clear();
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, services_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    std::this_thread::sleep_for(250ms);
+    EXPECT_EQ(service1_receive_requests.size(), 2);
+    EXPECT_EQ(service2_receive_requests.size(), 2);
+  }
+}
+
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_and_services)
+{
+  auto all_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", "", ""},
+    {"topic2", "test_msgs/BasicTypes", "", "", ""},
+    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 500, get_messages_basic_types()[0]),
+    serialize_test_message(
+      "test_service1/_service_event",
+      520,
+      get_service_event_message_basic_types()[0]),
+    serialize_test_message("topic2", 520, get_messages_basic_types()[0]),
+    serialize_test_message(
+      "test_service2/_service_event",
+      550,
+      get_service_event_message_basic_types()[0]),
+  };
+
+  // Filter allows all topics, blocks service test_service2
+  {
+    play_options_.topics_to_filter = {"topic1", "topic2"};
+    play_options_.services_to_filter = {"test_service1/_service_event"};
+
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 1);
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, all_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    await_received_messages.get();
+    std::this_thread::sleep_for(300ms);
+
+    // Filter allow all topics
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(1u));
+    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+    EXPECT_THAT(replayed_topic2, SizeIs(1u));
+
+    // Filter allow test_service1, block test_service2
+    EXPECT_EQ(service1_receive_requests.size(), 1);
+    EXPECT_EQ(service2_receive_requests.size(), 0);
+  }
+
+  // Filter allows all services, blocks topic2
+  {
+    play_options_.topics_to_filter = {"topic1"};
+    play_options_.services_to_filter = {
+      "test_service1/_service_event", "test_service2/_service_event"};
+
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 0);
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, all_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    await_received_messages.get();
+    std::this_thread::sleep_for(200ms);
+
+    // Filter allow topic2, block topic1
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(1u));
+    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+    EXPECT_THAT(replayed_topic2, SizeIs(0u));
+
+    // Filter allow all services
+    EXPECT_EQ(service1_receive_requests.size(), 1);
+    EXPECT_EQ(service2_receive_requests.size(), 1);
+  }
+
+  // Filter allows all services and topics
+  {
+    play_options_.topics_to_filter = {"topic1", "topic2"};
+    play_options_.services_to_filter = {
+      "test_service1/_service_event", "test_service2/_service_event"};
+
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 1);
+
+    srv_.reset();
+    srv_ = std::make_shared<ServiceManager>();
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+    std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->run_services();
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, all_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(
+        reader), storage_options_, play_options_);
+    player->play();
+
+    await_received_messages.get();
+    std::this_thread::sleep_for(200ms);
+
+    // Filter allow all topics
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(1u));
+    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+    EXPECT_THAT(replayed_topic2, SizeIs(1u));
+
+    // Filter allow all services
+    EXPECT_EQ(service1_receive_requests.size(), 1);
+    EXPECT_EQ(service2_receive_requests.size(), 1);
   }
 }
 
