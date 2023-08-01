@@ -28,7 +28,7 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 {
   rcl_interfaces::msg::ParameterDescriptor d{};
   rcl_interfaces::msg::IntegerRange r{};
-  d.description = description;
+  d.description = std::move(description);
   r.from_value = min;
   r.to_value = max;
   d.integer_range.push_back(r);
@@ -36,66 +36,75 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 }
 }  // namespace
 
-void declare_storage_options_r_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so)
+void init_storage_options_from_node_params(
+  std::shared_ptr<rclcpp::Node> node,
+  StorageOptions & storage_options)
 {
-  // TODO(roncapat): check if file can be read
-  so.uri = nh->declare_parameter<std::string>(
-    "storage.uri",
+  storage_options.uri = node->declare_parameter<std::string>(
+    "uri",
     "");
 
-  so.storage_id = nh->declare_parameter<std::string>(
-    "storage.storage_id",
+  storage_options.storage_id = node->declare_parameter<std::string>(
+    "storage_id",
     "");
 
-  // TODO(roncapat): check if file can be read
-  so.storage_config_uri = nh->declare_parameter<std::string>(
-    "storage.config_uri",
+  storage_options.storage_config_uri = node->declare_parameter<std::string>(
+    "config_uri",
     "");
-}
 
-void declare_storage_options_rw_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so)
-{
   auto desc_mbs = int_param_description(
     "Max bagfile size (bytes)",
     1,
     std::numeric_limits<int64_t>::max());
-  auto max_bagfile_size_ = nh->declare_parameter<int64_t>(
-    "storage.max_bagfile_size",
+  auto max_bagfile_size_ = node->declare_parameter<int64_t>(
+    "max_bagfile_size",
     0,
     desc_mbs);
-  so.max_bagfile_size = static_cast<uint64_t>(max_bagfile_size_);
+  storage_options.max_bagfile_size = static_cast<uint64_t>(max_bagfile_size_);
 
   auto desc_mbd = int_param_description(
     "Max bagfile duration (nanoseconds)",
     1,
     std::numeric_limits<int64_t>::max());
-  auto max_bagfile_duration_ = nh->declare_parameter<int64_t>(
-    "storage.max_bagfile_duration",
+  auto max_bagfile_duration_ = node->declare_parameter<int64_t>(
+    "max_bagfile_duration",
     0,
     desc_mbd);
-  so.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration_);
+  storage_options.max_bagfile_duration = static_cast<uint64_t>(max_bagfile_duration_);
 
   auto desc_mcs = int_param_description(
     "Max chache size (messages)",
     1,
     std::numeric_limits<int64_t>::max());
-  auto max_cache_size_ = nh->declare_parameter<int64_t>(
-    "storage.max_cache_size",
+  auto max_cache_size_ = node->declare_parameter<int64_t>(
+    "max_cache_size",
     0,
     desc_mcs);
-  so.max_cache_size = static_cast<uint64_t>(max_cache_size_);
+  storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
 
-  so.storage_preset_profile = nh->declare_parameter<std::string>(
-    "storage.preset_profile",
+  storage_options.storage_preset_profile = node->declare_parameter<std::string>(
+    "preset_profile",
     "");
 
-  so.snapshot_mode = nh->declare_parameter<bool>(
-    "storage.snapshot_mode",
+  storage_options.snapshot_mode = node->declare_parameter<bool>(
+    "snapshot_mode",
     false);
 
-  // FIXME(roncapat)
-  // std::unordered_map<std::string, std::string> custom_data{};
-  declare_storage_options_r_params(nh, so);
+  auto list_of_key_value_strings = node->declare_parameter<std::vector<std::string>>(
+    "custom_data",
+    std::vector<std::string>());
+  for (const auto & key_value_string : list_of_key_value_strings) {
+    auto delimiter_pos = key_value_string.find("=", 0);
+    if (delimiter_pos == std::string::npos) {
+      std::stringstream ss;
+      ss << "The storage.custom_data expected to be as list of the key=value strings. "
+        "The `=` not found in the " << key_value_string;
+      throw std::invalid_argument(ss.str());
+    }
+    auto key_string = key_value_string.substr(0, delimiter_pos);
+    auto value_string = key_value_string.substr(delimiter_pos + 1);
+    storage_options.custom_data[key_string] = value_string;
+  }
 }
 }  // namespace rosbag2_storage
 

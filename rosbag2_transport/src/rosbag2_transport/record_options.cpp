@@ -18,7 +18,6 @@
 
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rcl_interfaces/msg/integer_range.hpp"
-#include "rcl_interfaces/msg/floating_point_range.hpp"
 #include "rosbag2_transport/qos.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
@@ -33,7 +32,7 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 {
   rcl_interfaces::msg::ParameterDescriptor d{};
   rcl_interfaces::msg::IntegerRange r{};
-  d.description = description;
+  d.description = std::move(description);
   r.from_value = min;
   r.to_value = max;
   d.integer_range.push_back(r);
@@ -41,98 +40,106 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 }
 }  // namespace
 
-void declare_record_options_rw_params(std::shared_ptr<rclcpp::Node> nh, RecordOptions & ro)
+void init_record_options_from_node_params(
+  std::shared_ptr<rclcpp::Node> node,
+  RecordOptions & record_options)
 {
-  static const std::vector<std::string> empty_str_list;
-
-  ro.all = nh->declare_parameter<bool>(
-    "record.all",
+  record_options.all = node->declare_parameter<bool>(
+    "all",
     false);
 
-  ro.is_discovery_disabled = nh->declare_parameter<bool>(
-    "record.is_discovery_disabled",
+  record_options.is_discovery_disabled = node->declare_parameter<bool>(
+    "is_discovery_disabled",
     false);
 
-  ro.topics = nh->declare_parameter<std::vector<std::string>>(
-    "record.topics",
-    empty_str_list);
+  record_options.topics = node->declare_parameter<std::vector<std::string>>(
+    "topics",
+    std::vector<std::string>());
 
-  ro.rmw_serialization_format = nh->declare_parameter<std::string>(
-    "record.rmw_serialization_format",
+  record_options.rmw_serialization_format = node->declare_parameter<std::string>(
+    "rmw_serialization_format",
     "");
 
   auto desc_tpi = int_param_description(
     "Topic polling interval (ms)",
     1,
     std::numeric_limits<int64_t>::max());
-  auto topic_polling_interval_ = nh->declare_parameter<int64_t>(
-    "record.topic_polling_interval",
+  auto topic_polling_interval_ = node->declare_parameter<int64_t>(
+    "topic_polling_interval",
     100,
     desc_tpi);
-  ro.topic_polling_interval = std::chrono::milliseconds{topic_polling_interval_};
+  record_options.topic_polling_interval = std::chrono::milliseconds{topic_polling_interval_};
 
-  ro.regex = nh->declare_parameter<std::string>(
-    "record.regex",
+  record_options.regex = node->declare_parameter<std::string>(
+    "regex",
     "");
 
-  ro.exclude = nh->declare_parameter<std::string>(
-    "record.exclude",
+  record_options.exclude = node->declare_parameter<std::string>(
+    "exclude",
     "");
 
-  ro.node_prefix = nh->declare_parameter<std::string>(
-    "record.node_prefix",
+  record_options.node_prefix = node->declare_parameter<std::string>(
+    "node_prefix",
     "");
 
-  ro.compression_mode = nh->declare_parameter<std::string>(
-    "record.compression_mode",
+  record_options.compression_mode = node->declare_parameter<std::string>(
+    "compression_mode",
     "");
 
-  ro.compression_format = nh->declare_parameter<std::string>(
-    "record.compression_format",
+  record_options.compression_format = node->declare_parameter<std::string>(
+    "compression_format",
     "");
 
   auto desc_cqs = int_param_description(
     "Compression queue size (messages)",
     1,
     std::numeric_limits<int64_t>::max());
-  auto compression_queue_size_ = nh->declare_parameter<int64_t>(
-    "record.compression_queue_size",
+  auto compression_queue_size_ = node->declare_parameter<int64_t>(
+    "compression_queue_size",
     1,
     desc_cqs);
-  ro.compression_queue_size = static_cast<uint64_t>(compression_queue_size_);
+  record_options.compression_queue_size = static_cast<uint64_t>(compression_queue_size_);
 
   auto desc_cts = int_param_description(
     "Compression threads",
     0,
     std::numeric_limits<int64_t>::max());
-  auto compression_threads_ = nh->declare_parameter<int64_t>(
-    "record.compression_threads",
+  auto compression_threads_ = node->declare_parameter<int64_t>(
+    "compression_threads",
     0,
     desc_cts);
-  ro.compression_threads = static_cast<uint64_t>(compression_threads_);
+  record_options.compression_threads = static_cast<uint64_t>(compression_threads_);
 
   // TODO(roncapat)
   // std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
 
-  ro.include_hidden_topics = nh->declare_parameter<bool>(
-    "record.include_hidden_topics",
+  record_options.include_hidden_topics = node->declare_parameter<bool>(
+    "include_hidden_topics",
     false);
 
-  ro.include_unpublished_topics = nh->declare_parameter<bool>(
-    "record.include_unpublished_topics",
+  record_options.include_unpublished_topics = node->declare_parameter<bool>(
+    "include_unpublished_topics",
     false);
 
-  ro.ignore_leaf_topics = nh->declare_parameter<bool>(
-    "record.ignore_leaf_topics",
+  record_options.ignore_leaf_topics = node->declare_parameter<bool>(
+    "ignore_leaf_topics",
     false);
 
-  ro.start_paused = nh->declare_parameter<bool>(
-    "record.start_paused",
+  record_options.start_paused = node->declare_parameter<bool>(
+    "start_paused",
     false);
 
-  ro.use_sim_time = nh->declare_parameter<bool>(
-    "record.use_sim_time",
+  record_options.use_sim_time = node->declare_parameter<bool>(
+    "use_sim_time",
     false);
+
+
+  if (record_options.use_sim_time && record_options.is_discovery_disabled) {
+    throw std::invalid_argument(
+            "'use_sim_time' and 'is_discovery_disabled' both set, but are incompatible settings. "
+            "The `/clock` topic needs to be discovered to record with sim time.");
+  }
+
 }
 }  // namespace rosbag2_transport
 

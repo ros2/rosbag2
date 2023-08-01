@@ -83,7 +83,6 @@ rclcpp::QoS publisher_qos_for_topic(
   const auto offered_qos_profiles = profiles_yaml.as<std::vector<Rosbag2QoS>>();
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
-
 }  // namespace
 
 namespace rosbag2_transport
@@ -99,8 +98,8 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   rosbag2_storage::StorageOptions storage_options;
   rosbag2_transport::PlayOptions play_options;
 
-  declare_play_options_rw_params(shared_from_this(), play_options);
-  declare_storage_options_r_params(shared_from_this(), storage_options);
+  init_play_options_from_node_params(shared_from_this(), play_options);
+  init_storage_options_from_node_params(shared_from_this(), storage_options);
 
   #ifndef _WIN32
   keyboard_handler_ = std::make_shared<KeyboardHandler>(false);

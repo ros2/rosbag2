@@ -17,7 +17,6 @@
 
 #include <chrono>
 #include <memory>
-#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -52,7 +51,9 @@ public:
   bool use_sim_time = false;
 };
 
-void declare_record_options_rw_params(std::shared_ptr<rclcpp::Node> nh, RecordOptions & ro);
+void init_record_options_from_node_params(
+  std::shared_ptr<rclcpp::Node> node,
+  RecordOptions & record_options);
 
 }  // namespace rosbag2_transport
 

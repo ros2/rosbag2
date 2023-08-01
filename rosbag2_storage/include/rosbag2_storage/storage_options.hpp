@@ -16,7 +16,6 @@
 #define ROSBAG2_STORAGE__STORAGE_OPTIONS_HPP_
 
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -66,8 +65,9 @@ public:
   std::unordered_map<std::string, std::string> custom_data{};
 };
 
-void declare_storage_options_r_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so);
-void declare_storage_options_rw_params(std::shared_ptr<rclcpp::Node> nh, StorageOptions & so);
+void init_storage_options_from_node_params(
+  std::shared_ptr<rclcpp::Node> nh,
+  StorageOptions & storage_options);
 
 }  // namespace rosbag2_storage
 
@@ -76,8 +76,8 @@ namespace YAML
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rosbag2_storage::StorageOptions>
 {
-  static Node encode(const rosbag2_storage::StorageOptions & so);
-  static bool decode(const Node & node, rosbag2_storage::StorageOptions & so);
+  static Node encode(const rosbag2_storage::StorageOptions & storage_options);
+  static bool decode(const Node & node, rosbag2_storage::StorageOptions & storage_options);
 };
 }  // namespace YAML
 

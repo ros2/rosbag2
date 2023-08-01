@@ -637,8 +637,8 @@ Recorder::Recorder(
   rosbag2_storage::StorageOptions storage_options;
   rosbag2_transport::RecordOptions record_options;
 
-  declare_record_options_rw_params(shared_from_this(), record_options);
-  declare_storage_options_rw_params(shared_from_this(), storage_options);
+  init_record_options_from_node_params(shared_from_this(), record_options);
+  init_storage_options_from_node_params(shared_from_this(), storage_options);
 
   #ifndef _WIN32
   auto keyboard_handler = std::make_shared<KeyboardHandler>(false);

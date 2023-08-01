@@ -16,7 +16,6 @@
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
 #include <cstddef>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -104,7 +103,9 @@ public:
   bool disable_loan_message = false;
 };
 
-void declare_play_options_rw_params(std::shared_ptr<rclcpp::Node> nh, PlayOptions & po);
+void init_play_options_from_node_params(
+  std::shared_ptr<rclcpp::Node> node,
+  PlayOptions & play_options);
 
 }  // namespace rosbag2_transport
 
