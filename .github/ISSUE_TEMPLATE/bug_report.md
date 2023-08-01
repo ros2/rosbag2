@@ -26,7 +26,9 @@ assignees: ''
 ## System (please complete the following information)
  - OS: [e.g. Ubuntu Bionic]
  - ROS 2 Distro: [e.g. Dashing]
- - Version: [release, branch, or commit hash]
+ - Install Method: [APT, release archive, source]
+ - Version: [release, branch, commit hash, patch release number]
+
 
 ## Additional context
 ** Add any other context about the problem here **
