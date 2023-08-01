@@ -139,7 +139,6 @@ void init_record_options_from_node_params(
             "'use_sim_time' and 'is_discovery_disabled' both set, but are incompatible settings. "
             "The `/clock` topic needs to be discovered to record with sim time.");
   }
-
 }
 }  // namespace rosbag2_transport
 
