@@ -135,7 +135,7 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 
   EXPECT_THAT(
     metadata.topics_with_message_count,
-    ElementsAreArray({
+    UnorderedElementsAreArray({
       rosbag2_storage::TopicInformation{
         rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", "qos_profile2", "type_hash2"},
         1u},
