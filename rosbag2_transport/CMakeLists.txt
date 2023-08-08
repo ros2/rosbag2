@@ -50,7 +50,8 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
-  src/rosbag2_transport/topic_filter.cpp)
+  src/rosbag2_transport/topic_filter.cpp
+  src/rosbag2_transport/storage_options_from_node_params.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)

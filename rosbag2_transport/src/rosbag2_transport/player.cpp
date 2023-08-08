@@ -36,6 +36,7 @@
 #include "rosbag2_storage/storage_filter.hpp"
 
 #include "rosbag2_transport/qos.hpp"
+#include "rosbag2_transport/storage_options_from_node_params.hpp"
 
 namespace
 {
@@ -99,7 +100,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   rosbag2_transport::PlayOptions play_options;
 
   play_options = init_play_options_from_node_params(shared_from_this());
-  storage_options = rosbag2_storage::init_storage_options_from_node_params(shared_from_this());
+  storage_options = init_storage_options_from_node_params(shared_from_this());
 
   #ifndef _WIN32
   keyboard_handler_ = std::make_shared<KeyboardHandler>(false);

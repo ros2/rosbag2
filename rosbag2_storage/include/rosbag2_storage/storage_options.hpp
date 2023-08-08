@@ -65,8 +65,6 @@ public:
   std::unordered_map<std::string, std::string> custom_data{};
 };
 
-  rosbag2_storage::StorageOptions
-  init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
 }  // namespace rosbag2_storage
 
 namespace YAML

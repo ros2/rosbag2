@@ -38,6 +38,7 @@
 #include "rosbag2_transport/qos.hpp"
 
 #include "logging.hpp"
+#include "rosbag2_transport/storage_options_from_node_params.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
@@ -638,7 +639,7 @@ Recorder::Recorder(
   rosbag2_transport::RecordOptions record_options;
 
   record_options = init_record_options_from_node_params(shared_from_this());
-  storage_options = rosbag2_storage::init_storage_options_from_node_params(shared_from_this());
+  storage_options = init_storage_options_from_node_params(shared_from_this());
 
   #ifndef _WIN32
   auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
