@@ -38,17 +38,11 @@ init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
   rosbag2_storage::StorageOptions storage_options{};
 
-  storage_options.uri = node->declare_parameter<std::string>(
-    "uri",
-    "");
+  storage_options.uri = node->declare_parameter<std::string>("uri", "");
 
-  storage_options.storage_id = node->declare_parameter<std::string>(
-    "storage_id",
-    "");
+  storage_options.storage_id = node->declare_parameter<std::string>("storage_id", "");
 
-  storage_options.storage_config_uri = node->declare_parameter<std::string>(
-    "config_uri",
-    "");
+  storage_options.storage_config_uri = node->declare_parameter<std::string>("config_uri", "");
 
   auto desc_mbs = int_parameter_description(
     "Max bagfile size (bytes)",
@@ -80,13 +74,10 @@ init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
     desc_mcs);
   storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
 
-  storage_options.storage_preset_profile = node->declare_parameter<std::string>(
-    "preset_profile",
-    "");
+  storage_options.storage_preset_profile =
+    node->declare_parameter<std::string>("preset_profile", "");
 
-  storage_options.snapshot_mode = node->declare_parameter<bool>(
-    "snapshot_mode",
-    false);
+  storage_options.snapshot_mode = node->declare_parameter<bool>("snapshot_mode", false);
 
   auto list_of_key_value_strings = node->declare_parameter<std::vector<std::string>>(
     "custom_data",
