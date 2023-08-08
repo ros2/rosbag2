@@ -103,7 +103,7 @@ public:
   bool disable_loan_message = false;
 };
 
-PlayOptions init_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
+PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
 
 }  // namespace rosbag2_transport
 

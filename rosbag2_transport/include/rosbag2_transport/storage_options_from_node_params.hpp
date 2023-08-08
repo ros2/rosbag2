@@ -21,7 +21,7 @@
 namespace rosbag2_transport
 {
 rosbag2_storage::StorageOptions
-init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
+get_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT_STORAGE_OPTIONS_FROM_NODE_PARAMS_HPP_

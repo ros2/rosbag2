@@ -96,11 +96,10 @@ Player::Player(const rclcpp::NodeOptions & node_options)
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  rosbag2_storage::StorageOptions storage_options;
-  rosbag2_transport::PlayOptions play_options;
+  rosbag2_storage::StorageOptions storage_options =
+    get_storage_options_from_node_params(shared_from_this());
 
-  play_options = init_play_options_from_node_params(shared_from_this());
-  storage_options = init_storage_options_from_node_params(shared_from_this());
+  PlayOptions play_options = get_play_options_from_node_params(shared_from_this());
 
   #ifndef _WIN32
   keyboard_handler_ = std::make_shared<KeyboardHandler>(false);

@@ -51,7 +51,7 @@ public:
   bool use_sim_time = false;
 };
 
-RecordOptions init_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
+RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
 
 }  // namespace rosbag2_transport
 

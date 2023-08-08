@@ -40,7 +40,7 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 }
 }  // namespace
 
-RecordOptions init_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
   RecordOptions record_options{};
   record_options.all = node->declare_parameter<bool>(

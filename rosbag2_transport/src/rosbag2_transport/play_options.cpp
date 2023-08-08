@@ -54,7 +54,7 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
 }
 }  // namespace
 
-PlayOptions init_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
   PlayOptions play_options{};
   auto desc_raqs = int_param_description(

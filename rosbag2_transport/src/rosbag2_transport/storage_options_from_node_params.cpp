@@ -34,7 +34,7 @@ rcl_interfaces::msg::ParameterDescriptor int_parameter_description(
 }  // namespace
 
 rosbag2_storage::StorageOptions
-init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+get_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
   rosbag2_storage::StorageOptions storage_options{};
 
