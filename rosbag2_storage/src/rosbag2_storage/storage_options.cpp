@@ -36,10 +36,8 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 }
 }  // namespace
 
-void init_storage_options_from_node_params(
-  std::shared_ptr<rclcpp::Node> node,
-  StorageOptions & storage_options)
-{
+StorageOptions init_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node) {
+  StorageOptions storage_options{};
   storage_options.uri = node->declare_parameter<std::string>(
     "uri",
     "");
@@ -105,6 +103,7 @@ void init_storage_options_from_node_params(
     auto value_string = key_value_string.substr(delimiter_pos + 1);
     storage_options.custom_data[key_string] = value_string;
   }
+  return storage_options;
 }
 }  // namespace rosbag2_storage
 

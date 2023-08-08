@@ -40,10 +40,9 @@ rcl_interfaces::msg::ParameterDescriptor int_param_description(
 }
 }  // namespace
 
-void init_record_options_from_node_params(
-  std::shared_ptr<rclcpp::Node> node,
-  RecordOptions & record_options)
+RecordOptions init_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
+  RecordOptions record_options{};
   record_options.all = node->declare_parameter<bool>(
     "all",
     false);
@@ -139,6 +138,7 @@ void init_record_options_from_node_params(
             "'use_sim_time' and 'is_discovery_disabled' both set, but are incompatible settings. "
             "The `/clock` topic needs to be discovered to record with sim time.");
   }
+  return record_options;
 }
 }  // namespace rosbag2_transport
 

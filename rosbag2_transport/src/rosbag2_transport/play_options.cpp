@@ -54,10 +54,9 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
 }
 }  // namespace
 
-void init_play_options_from_node_params(
-  std::shared_ptr<rclcpp::Node> node,
-  PlayOptions & play_options)
+PlayOptions init_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
+  PlayOptions play_options{};
   auto desc_raqs = int_param_description(
     "Read ahead queue size (messages)",
     1,
@@ -146,5 +145,6 @@ void init_play_options_from_node_params(
   play_options.disable_loan_message = node->declare_parameter<bool>(
     "disable_loan_message",
     false);
+  return play_options;
 }
 }  // namespace rosbag2_transport
