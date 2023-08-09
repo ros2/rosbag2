@@ -59,6 +59,11 @@ rclcpp::TopicEndpointInfo make_info(rosidl_type_hash_t hash)
   info.topic_type = "topic_type";
   info.node_name = "node_name";
   info.node_namespace = "node_namespace";
+<<<<<<< HEAD
+=======
+  info.endpoint_type = RMW_ENDPOINT_INVALID;
+  info.qos_profile = rmw_qos_profile_default;
+>>>>>>> 9870868 (Fix uninitialized value pointed out by clang static analysis. (#1440))
   return rclcpp::TopicEndpointInfo(info);
 }
 
