@@ -110,7 +110,7 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  storage_options_.uri = format_storage_uri(base_folder_, 0);
+  storage_options_.uri = format_storage_uri(base_folder_, bag_idx_);
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
@@ -248,7 +248,7 @@ void SequentialWriter::switch_to_next_storage()
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
-    metadata_.relative_file_paths.size());
+    ++bag_idx_);
   storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (!storage_) {
@@ -281,6 +281,20 @@ void SequentialWriter::split_bagfile()
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
+
+  // We just created a new file above when switching to next storage file
+  // so check if the size of the relative files vector is greater than max splits.
+  if (metadata_.relative_file_paths.size() > storage_options_.max_bagfile_splits) {
+    const auto bag_path = (rcpputils::fs::path(base_folder_) / rcpputils::fs::path{metadata_.relative_file_paths.front()});
+    metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
+    metadata_.files.erase(metadata_.files.begin());
+    if (!rcpputils::fs::remove(bag_path)) {
+      std::stringstream warnmsg;
+      warnmsg << "Failed to remove old bagfile from the fs \"" << bag_path.string() << "\"!";
+      ROSBAG2_CPP_LOG_WARN(warnmsg.str().c_str());
+
+    }
+  }
 
   callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }

@@ -128,6 +128,7 @@ protected:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
+  int64_t bag_idx_ = 0;
 
   bool use_cache_ {false};
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
