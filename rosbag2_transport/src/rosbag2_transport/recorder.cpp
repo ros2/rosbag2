@@ -119,6 +119,8 @@ Recorder::~Recorder()
 
 void Recorder::stop()
 {
+  if (stopped_.load()) {return;}
+  stopped_ = true;
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);

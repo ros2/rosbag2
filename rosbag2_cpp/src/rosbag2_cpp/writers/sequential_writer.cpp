@@ -292,7 +292,6 @@ void SequentialWriter::split_bagfile()
       std::stringstream warnmsg;
       warnmsg << "Failed to remove old bagfile from the fs \"" << bag_path.string() << "\"!";
       ROSBAG2_CPP_LOG_WARN(warnmsg.str().c_str());
-
     }
   }
 

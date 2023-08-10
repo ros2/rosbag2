@@ -125,6 +125,7 @@ protected:
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
   std::atomic<bool> stop_discovery_;
+  std::atomic<bool> stopped_{false};
 
 private:
   void topics_discovery();
