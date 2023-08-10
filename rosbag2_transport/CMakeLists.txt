@@ -242,8 +242,11 @@ function(create_tests_for_rmw_implementation)
     ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
   endif()
 
-  if(${rmw_implementation} MATCHES "rmw_fastrtps(.*)")
+  if(${rmw_implementation} MATCHES "rmw_fastrtps_cpp")
     ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
+  endif()
+  if(${rmw_implementation} MATCHES "rmw_fastrtps_dynamic_cpp")
+    ament_add_test_label(test_play_services__rmw_fastrtps_dynamic_cpp xfail)
   endif()
 endfunction()
 
