@@ -94,6 +94,7 @@ class PlayerImpl
 public:
   using callback_handle_t = Player::callback_handle_t;
   using play_msg_callback_t = Player::play_msg_callback_t;
+
   PlayerImpl(
     rclcpp::Node * owner,
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -257,8 +258,8 @@ private:
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
 
-  rosbag2_transport::PlayOptions play_options_;
   rosbag2_storage::StorageOptions storage_options_;
+  rosbag2_transport::PlayOptions play_options_;
   rclcpp::Node * node;
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
@@ -642,7 +643,7 @@ Player::callback_handle_t PlayerImpl::add_on_play_message_pre_callback(
   const play_msg_callback_t & callback)
 {
   if (callback == nullptr) {
-    return invalid_callback_handle;
+    return Player::invalid_callback_handle;
   }
   std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
   callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
@@ -654,7 +655,7 @@ Player::callback_handle_t PlayerImpl::add_on_play_message_post_callback(
   const play_msg_callback_t & callback)
 {
   if (callback == nullptr) {
-    return invalid_callback_handle;
+    return Player::invalid_callback_handle;
   }
   std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
   callback_handle_t new_handle = get_new_on_play_msg_callback_handle();
@@ -785,7 +786,7 @@ void PlayerImpl::prepare_publishers()
     const auto publish_period = std::chrono::nanoseconds(
       static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
 
-    clock_publish_timer_ = create_wall_timer(
+    clock_publish_timer_ = node->create_wall_timer(
       publish_period, [this]() {
         publish_clock_update();
       });
@@ -828,9 +829,9 @@ void PlayerImpl::prepare_publishers()
       node->get_logger());
     try {
       std::shared_ptr<rclcpp::GenericPublisher> pub =
-        create_generic_publisher(topic.name, topic.type, topic_qos);
-      std::shared_ptr<Player::PlayerPublisher> player_pub =
-        std::make_shared<Player::PlayerPublisher>(
+        node->create_generic_publisher(topic.name, topic.type, topic_qos);
+      std::shared_ptr<PlayerImpl::callback_handle_t> player_pub =
+        std::make_shared<PlayerImpl::callback_handle_t>(
         std::move(pub), play_options_.disable_loan_message);
       publishers_.insert(std::make_pair(topic.name, player_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
@@ -963,7 +964,7 @@ void PlayerImpl::add_keyboard_callbacks()
 
 void PlayerImpl::create_control_services()
 {
-  srv_pause_ = create_service<rosbag2_interfaces::srv::Pause>(
+  srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
     "~/pause",
     [this](
       rosbag2_interfaces::srv::Pause::Request::ConstSharedPtr,
@@ -971,7 +972,7 @@ void PlayerImpl::create_control_services()
     {
       pause();
     });
-  srv_resume_ = create_service<rosbag2_interfaces::srv::Resume>(
+  srv_resume_ = node->create_service<rosbag2_interfaces::srv::Resume>(
     "~/resume",
     [this](
       rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr,
@@ -979,7 +980,7 @@ void PlayerImpl::create_control_services()
     {
       resume();
     });
-  srv_toggle_paused_ = create_service<rosbag2_interfaces::srv::TogglePaused>(
+  srv_toggle_paused_ = node->create_service<rosbag2_interfaces::srv::TogglePaused>(
     "~/toggle_paused",
     [this](
       rosbag2_interfaces::srv::TogglePaused::Request::ConstSharedPtr,
@@ -987,7 +988,7 @@ void PlayerImpl::create_control_services()
     {
       toggle_paused();
     });
-  srv_is_paused_ = create_service<rosbag2_interfaces::srv::IsPaused>(
+  srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
     "~/is_paused",
     [this](
       rosbag2_interfaces::srv::IsPaused::Request::ConstSharedPtr,
@@ -995,7 +996,7 @@ void PlayerImpl::create_control_services()
     {
       response->paused = is_paused();
     });
-  srv_get_rate_ = create_service<rosbag2_interfaces::srv::GetRate>(
+  srv_get_rate_ = node->create_service<rosbag2_interfaces::srv::GetRate>(
     "~/get_rate",
     [this](
       rosbag2_interfaces::srv::GetRate::Request::ConstSharedPtr,
@@ -1003,7 +1004,7 @@ void PlayerImpl::create_control_services()
     {
       response->rate = get_rate();
     });
-  srv_set_rate_ = create_service<rosbag2_interfaces::srv::SetRate>(
+  srv_set_rate_ = node->create_service<rosbag2_interfaces::srv::SetRate>(
     "~/set_rate",
     [this](
       rosbag2_interfaces::srv::SetRate::Request::ConstSharedPtr request,
@@ -1011,7 +1012,7 @@ void PlayerImpl::create_control_services()
     {
       response->success = set_rate(request->rate);
     });
-  srv_play_ = create_service<rosbag2_interfaces::srv::Play>(
+  srv_play_ = node->create_service<rosbag2_interfaces::srv::Play>(
     "~/play",
     [this](
       rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
@@ -1024,7 +1025,7 @@ void PlayerImpl::create_control_services()
       configure_play_until_timestamp();
       response->success = play();
     });
-  srv_play_next_ = create_service<rosbag2_interfaces::srv::PlayNext>(
+  srv_play_next_ = node->create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
     [this](
       rosbag2_interfaces::srv::PlayNext::Request::ConstSharedPtr,
@@ -1032,7 +1033,7 @@ void PlayerImpl::create_control_services()
     {
       response->success = play_next();
     });
-  srv_burst_ = create_service<rosbag2_interfaces::srv::Burst>(
+  srv_burst_ = node->create_service<rosbag2_interfaces::srv::Burst>(
     "~/burst",
     [this](
       rosbag2_interfaces::srv::Burst::Request::ConstSharedPtr request,
@@ -1040,7 +1041,7 @@ void PlayerImpl::create_control_services()
     {
       response->actually_burst = burst(request->num_messages);
     });
-  srv_seek_ = create_service<rosbag2_interfaces::srv::Seek>(
+  srv_seek_ = node->create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",
     [this](
       rosbag2_interfaces::srv::Seek::Request::ConstSharedPtr request,
@@ -1049,7 +1050,7 @@ void PlayerImpl::create_control_services()
       seek(rclcpp::Time(request->time).nanoseconds());
       response->success = true;
     });
-  srv_stop_ = create_service<rosbag2_interfaces::srv::Stop>(
+  srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
     "~/stop",
     [this](
       rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
@@ -1225,16 +1226,19 @@ void Player::seek(rcutils_time_point_value_t time_point)
   pimpl_->seek(std::move(time_point));
 }
 
-callback_handle_t Player::add_on_play_message_pre_callback(const play_msg_callback_t & callback) {
+callback_handle_t Player::add_on_play_message_pre_callback(const play_msg_callback_t & callback)
+{
   pimpl_->add_on_play_message_pre_callback(callback);
 }
 
-callback_handle_t Player::add_on_play_message_post_callback(const play_msg_callback_t & callback) {
+callback_handle_t Player::add_on_play_message_post_callback(const play_msg_callback_t & callback)
+{
   pimpl_->add_on_play_message_post_callback(callback);
 }
 
-void Player::delete_on_play_message_callback(const callback_handle_t & handle) {
-  pimpl_->toggle_paused(handle);
+void Player::delete_on_play_message_callback(const callback_handle_t & handle)
+{
+  pimpl_->delete_on_play_message_callback(handle);
 }
 
 }  // namespace rosbag2_transport
