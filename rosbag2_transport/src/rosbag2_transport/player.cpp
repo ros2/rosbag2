@@ -830,8 +830,8 @@ void PlayerImpl::prepare_publishers()
     try {
       std::shared_ptr<rclcpp::GenericPublisher> pub =
         node->create_generic_publisher(topic.name, topic.type, topic_qos);
-      std::shared_ptr<PlayerImpl::callback_handle_t> player_pub =
-        std::make_shared<PlayerImpl::callback_handle_t>(
+      std::shared_ptr<PlayerImpl::PlayerPublisher> player_pub =
+        std::make_shared<PlayerImpl::PlayerPublisher>(
         std::move(pub), play_options_.disable_loan_message);
       publishers_.insert(std::make_pair(topic.name, player_pub));
       if (play_options_.wait_acked_timeout >= 0 &&
