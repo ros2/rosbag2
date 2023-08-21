@@ -292,7 +292,7 @@ private:
   // defaults
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   std::vector<KeyboardHandler::callback_handle_t> keyboard_callbacks_;
-}
+};
 
 PlayerImpl::PlayerImpl(
   rclcpp::Node * owner,
@@ -300,11 +300,11 @@ PlayerImpl::PlayerImpl(
   std::shared_ptr<KeyboardHandler> keyboard_handler,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::PlayOptions & play_options)
-  : reader_(std::move(reader)),
-    storage_options_(storage_options),
-    play_options_(play_options),
-    node(owner),
-    keyboard_handler_(std::move(keyboard_handler))
+: reader_(std::move(reader)),
+  storage_options_(storage_options),
+  play_options_(play_options),
+  node(owner),
+  keyboard_handler_(std::move(keyboard_handler))
 {
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -370,7 +370,8 @@ bool PlayerImpl::is_storage_completely_loaded() const
 bool PlayerImpl::play()
 {
   if (is_in_playback_.exchange(true)) {
-    RCLCPP_WARN_STREAM(node->get_logger(),
+    RCLCPP_WARN_STREAM(
+      node->get_logger(),
       "Trying to play() while in playback, dismissing request.");
     return false;
   }
@@ -1074,7 +1075,8 @@ void PlayerImpl::configure_play_until_timestamp()
   }
 }
 
-inline bool PlayerImpl::shall_stop_at_timestamp(const rcutils_time_point_value_t & msg_timestamp) const
+inline bool PlayerImpl::shall_stop_at_timestamp(
+  const rcutils_time_point_value_t & msg_timestamp) const
 {
   if ((play_until_timestamp_ > -1 && msg_timestamp > play_until_timestamp_) ||
     play_until_timestamp_ == 0)
@@ -1168,47 +1170,58 @@ Player::~Player()
 {}
 
 
-bool Player::play() {
+bool Player::play()
+{
   return pimpl_->play();
 }
 
-void Player::stop() {
+void Player::stop()
+{
   pimpl_->stop();
 }
 
-virtual void Player::pause() {
+virtual void Player::pause()
+{
   pimpl_->pause();
 }
 
-virtual void Player::resume() {
+virtual void Player::resume()
+{
   pimpl_->resume();
 }
 
-void Player::toggle_paused() {
+void Player::toggle_paused()
+{
   pimpl_->toggle_paused();
 }
 
-bool Player::is_paused() const {
+bool Player::is_paused() const
+{
   return pimpl_->is_paused();
 }
 
-double Player::get_rate() const {
+double Player::get_rate() const
+{
   return pimpl_->get_rate();
 }
 
-virtual bool Player::set_rate(double rate) {
+virtual bool Player::set_rate(double rate)
+{
   return pimpl_->set_rate(rate);
 }
 
-virtual bool Player::play_next() {
+virtual bool Player::play_next()
+{
   return pimpl_->play_next();
 }
 
-virtual size_t Player::burst(const size_t num_messages) {
+virtual size_t Player::burst(const size_t num_messages)
+{
   return pimpl_->burst(num_messages);
 }
 
-void Player::seek(rcutils_time_point_value_t time_point) {
+void Player::seek(rcutils_time_point_value_t time_point)
+{
   pimpl_->seek(std::move(time_point));
 }
 
