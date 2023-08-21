@@ -1181,12 +1181,12 @@ void Player::stop()
   pimpl_->stop();
 }
 
-virtual void Player::pause()
+void Player::pause()
 {
   pimpl_->pause();
 }
 
-virtual void Player::resume()
+void Player::resume()
 {
   pimpl_->resume();
 }
@@ -1206,17 +1206,17 @@ double Player::get_rate() const
   return pimpl_->get_rate();
 }
 
-virtual bool Player::set_rate(double rate)
+bool Player::set_rate(double rate)
 {
   return pimpl_->set_rate(rate);
 }
 
-virtual bool Player::play_next()
+bool Player::play_next()
 {
   return pimpl_->play_next();
 }
 
-virtual size_t Player::burst(const size_t num_messages)
+size_t Player::burst(const size_t num_messages)
 {
   return pimpl_->burst(num_messages);
 }
@@ -1226,17 +1226,17 @@ void Player::seek(rcutils_time_point_value_t time_point)
   pimpl_->seek(std::move(time_point));
 }
 
-callback_handle_t Player::add_on_play_message_pre_callback(const play_msg_callback_t & callback)
+Player::callback_handle_t Player::add_on_play_message_pre_callback(const play_msg_callback_t & callback)
 {
   pimpl_->add_on_play_message_pre_callback(callback);
 }
 
-callback_handle_t Player::add_on_play_message_post_callback(const play_msg_callback_t & callback)
+Player::callback_handle_t Player::add_on_play_message_post_callback(const play_msg_callback_t & callback)
 {
   pimpl_->add_on_play_message_post_callback(callback);
 }
 
-void Player::delete_on_play_message_callback(const callback_handle_t & handle)
+void Player::delete_on_play_message_callback(const Player::callback_handle_t & handle)
 {
   pimpl_->delete_on_play_message_callback(handle);
 }
