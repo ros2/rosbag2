@@ -1226,14 +1226,16 @@ void Player::seek(rcutils_time_point_value_t time_point)
   pimpl_->seek(std::move(time_point));
 }
 
-Player::callback_handle_t Player::add_on_play_message_pre_callback(const play_msg_callback_t & callback)
+Player::callback_handle_t Player::add_on_play_message_pre_callback(
+  const play_msg_callback_t & callback)
 {
-  pimpl_->add_on_play_message_pre_callback(callback);
+  return pimpl_->add_on_play_message_pre_callback(callback);
 }
 
-Player::callback_handle_t Player::add_on_play_message_post_callback(const play_msg_callback_t & callback)
+Player::callback_handle_t Player::add_on_play_message_post_callback(
+  const play_msg_callback_t & callback)
 {
-  pimpl_->add_on_play_message_post_callback(callback);
+  return pimpl_->add_on_play_message_post_callback(callback);
 }
 
 void Player::delete_on_play_message_callback(const Player::callback_handle_t & handle)
