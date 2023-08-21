@@ -21,7 +21,7 @@ You can follow the instructions at http://docs.ros.org/en/humble/Installation/Al
 
 ### Build from source
 
-To build from source, follow the instructions in [](DEVELOPING.md)
+To build from source, follow the instructions in [DEVELOPING.md](DEVELOPING.md)
 
 ## Using rosbag2
 
