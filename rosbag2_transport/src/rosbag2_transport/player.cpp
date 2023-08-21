@@ -92,6 +92,8 @@ constexpr Player::callback_handle_t Player::invalid_callback_handle;
 class PlayerImpl
 {
 public:
+  using callback_handle_t = Player::callback_handle_t;
+  using play_msg_callback_t = Player::play_msg_callback_t;
   PlayerImpl(
     rclcpp::Node * owner,
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -255,9 +257,9 @@ private:
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
 
-  rclcpp::Node * node;
-  rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
+  rosbag2_storage::StorageOptions storage_options_;
+  rclcpp::Node * node;
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
@@ -300,7 +302,7 @@ PlayerImpl::PlayerImpl(
   const rosbag2_transport::PlayOptions & play_options)
   : reader_(std::move(reader)),
     storage_options_(storage_options),
-    player_options_(player_options),
+    play_options_(play_options),
     node(owner),
     keyboard_handler_(std::move(keyboard_handler))
 {
@@ -521,7 +523,7 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::peek_next_message_fro
   {
     RCLCPP_WARN_THROTTLE(
       node->get_logger(),
-      *get_clock(),
+      *node->get_clock(),
       1000,
       "Message queue starved. Messages will be delayed. Consider "
       "increasing the --read-ahead-queue-size option.");
