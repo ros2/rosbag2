@@ -148,7 +148,9 @@ protected:
   rosbag2_storage::BagMetadata metadata_;
 
   // Closes the current backed storage and opens the next bagfile.
-  virtual void split_bagfile();
+  // Updating bag timing metadata as neccesary.
+  virtual void split_bagfile(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time);
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(

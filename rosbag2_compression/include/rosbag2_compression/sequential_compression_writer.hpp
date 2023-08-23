@@ -191,7 +191,7 @@ private:
   void compression_thread_fn();
 
   // Closes the current backed storage and opens the next bagfile.
-  void split_bagfile() override;
+  void split_bagfile(const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) override;
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(

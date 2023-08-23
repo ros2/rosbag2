@@ -571,15 +571,17 @@ class ManualSplitWriter : public rosbag2_cpp::writers::SequentialWriter
 {
 public:
   // makes the method public for manual splitting
-  void split()
+  void split(const rcutils_time_point_value_t & message_time)
   {
-    split_bagfile();
+    split_bagfile(
+      std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(message_time)));
   }
 };
 
 void write_sample_split_bag(
   const std::string & uri,
-  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
+  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file,
+  const int max_bag_splits = 0)
 {
   std::string msg_content = "Hello";
   auto msg_length = msg_content.length();
@@ -590,6 +592,7 @@ void write_sample_split_bag(
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
   storage_options.storage_id = "sqlite3";
+  storage_options.max_bagfile_splits = max_bag_splits;
 
   ManualSplitWriter writer;
   writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
@@ -608,7 +611,7 @@ void write_sample_split_bag(
       msg->topic_name = topic_name;
       writer.write(msg);
     }
-    writer.split();
+    writer.split(file_messages.back());
   }
   writer.close();
 }
@@ -628,4 +631,26 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     metadata.starting_time,
     std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
   ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
+}
+
+TEST_F(TemporaryDirectoryFixture, test_max_splits) {
+  const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
+    {100, 300, 200},
+    {500, 400, 600},
+    {700, 800, 900}
+  };
+  std::string uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
+  size_t max_bagfile_splits = 3;
+  write_sample_split_bag(uri, message_timestamps_by_file, max_bagfile_splits);
+
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(uri);
+  ASSERT_EQ(
+    metadata.starting_time,
+    std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(400)));
+  ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
+  ASSERT_EQ(
+    metadata.files.size(),
+    max_bagfile_splits
+  );
 }

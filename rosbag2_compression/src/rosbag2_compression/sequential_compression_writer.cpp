@@ -278,14 +278,14 @@ void SequentialCompressionWriter::compress_file(
   }
 }
 
-void SequentialCompressionWriter::split_bagfile()
+void SequentialCompressionWriter::split_bagfile(const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
   std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
   // Grab last file before calling common splitting logic, which pushes the new filename
   const auto last_file = metadata_.relative_file_paths.back();
-  SequentialWriter::split_bagfile();
+  SequentialWriter::split_bagfile(current_time);
 
   // If we're in FILE compression mode, push this file's name on to the queue so another
   // thread will handle compressing it.  If not, we can just carry on.
