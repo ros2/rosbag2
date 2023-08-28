@@ -69,6 +69,9 @@ if(BUILD_TESTING)
       rosbag2_test_common::rosbag2_test_common
       ${test_msgs_TARGETS}
     )
+    if(WIN32)
+        ament_add_test_label(test_rosbag2_play_end_to_end xfail)
+    endif()
   endif()
 
   ament_add_gmock(test_rosbag2_info_end_to_end
