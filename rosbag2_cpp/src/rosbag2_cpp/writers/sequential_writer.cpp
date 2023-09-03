@@ -354,6 +354,8 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
 
+  if (! message_within_accepted_time_range(message_timestamp)) return;
+
   if (is_first_message_) {
     // Update bagfile starting time
     metadata_.starting_time = message_timestamp;
@@ -430,6 +432,18 @@ bool SequentialWriter::should_split_bagfile(
   }
 
   return should_split;
+}
+
+bool SequentialWriter::message_within_accepted_time_range(const std::chrono::time_point<std::chrono::high_resolution_clock> &current_time) const
+{
+  bool retVal=true;
+  if ( (storage_options_.start_time > 0) &&
+        current_time < std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(storage_options_.start_time)) )
+          retVal = false;
+  else if ( ( storage_options_.end_time > 0) &&
+        current_time > std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(storage_options_.end_time)) )
+          retVal = false;
+  return retVal;
 }
 
 void SequentialWriter::finalize_metadata()

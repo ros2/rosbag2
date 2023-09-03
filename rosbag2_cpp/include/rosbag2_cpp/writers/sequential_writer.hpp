@@ -174,6 +174,10 @@ protected:
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
 
+  // Checks if the message to be written is within accepted time range
+  bool message_within_accepted_time_range(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
+
   // Prepares the metadata by setting initial values.
   virtual void init_metadata();
 
