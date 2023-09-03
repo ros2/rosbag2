@@ -733,7 +733,7 @@ void MCAPStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   mcap_msg.channelId = channel_it->second;
   mcap_msg.sequence = 0;
   if (msg->time_stamp < 0) {
-    RCUTILS_LOG_WARN_NAMED(LOG_NAME, "Invalid message timestamp %lld", msg->time_stamp);
+    RCUTILS_LOG_WARN_NAMED(LOG_NAME, "Invalid message timestamp %ld", msg->time_stamp);
   }
   mcap_msg.logTime = mcap::Timestamp(msg->time_stamp);
   mcap_msg.publishTime = mcap_msg.logTime;
