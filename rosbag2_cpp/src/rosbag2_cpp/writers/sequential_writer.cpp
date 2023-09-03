@@ -445,11 +445,13 @@ bool SequentialWriter::message_within_accepted_time_range(
       std::chrono::nanoseconds(storage_options_.start_time)) )
   {
     retVal = false;
-  } else if ( ( storage_options_.end_time > 0) &&
+  } else {
+    if ( (storage_options_.end_time > 0) &&
     current_time > std::chrono::time_point<std::chrono::high_resolution_clock>(
       std::chrono::nanoseconds(storage_options_.end_time)) )
-  {
-    retVal = false;
+    {
+      retVal = false;
+    }
   }
   return retVal;
 }
