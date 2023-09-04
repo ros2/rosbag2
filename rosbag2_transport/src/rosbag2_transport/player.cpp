@@ -183,6 +183,10 @@ public:
 
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 
+  void wait_for_playback_to_start();
+  size_t get_number_of_registered_pre_callbacks();
+  size_t get_number_of_registered_post_callbacks();
+
 protected:
   struct play_msg_callback_data
   {
@@ -690,6 +694,34 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher(){
   return clock_publisher_;
+}
+
+void PlayerImpl::wait_for_playback_to_start()
+{
+  std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+  ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+}
+
+size_t PlayerImpl::get_number_of_registered_pre_callbacks()
+{
+  size_t callback_counter = 0;
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+    (void)pre_callback_data;
+    callback_counter++;
+  }
+  return callback_counter;
+}
+
+size_t PlayerImpl::get_number_of_registered_post_callbacks()
+{
+  size_t callback_counter = 0;
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+    (void)post_callback_data;
+    callback_counter++;
+  }
+  return callback_counter;
 }
 
 Player::callback_handle_t PlayerImpl::get_new_on_play_msg_callback_handle()
@@ -1267,6 +1299,18 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()
 {
   return pimpl_->get_clock_publisher();
+}
+
+void Player::wait_for_playback_to_start() {
+  pimpl_->wait_for_playback_to_start();
+}
+
+size_t Player::get_number_of_registered_pre_callbacks() {
+  return pimpl_->get_number_of_registered_pre_callbacks();
+}
+
+size_t Player::get_number_of_registered_post_callbacks() {
+  return pimpl_->get_number_of_registered_pre_callbacks();
 }
 
 }  // namespace rosbag2_transport
