@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -33,6 +34,12 @@
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/resource.h>
+#endif
 
 namespace rosbag2_compression
 {
@@ -62,6 +69,47 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
 
 void SequentialCompressionWriter::compression_thread_fn()
 {
+  if (compression_options_.thread_priority) {
+
+#ifdef _WIN32
+    ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+      "Changing thread priority is not implemented for windows");
+
+    /**
+     * The implementation should look something like this
+
+    uint8_t nice_value = *compression_options_.thread_nice_value;
+
+    // this must match THREAD_PRIORITY_IDLE, THREAD_PRIORITY_LOWEST...
+    DWORD dwThreadPri = *compression_options_.thread_nice_value;
+
+    if(!SetThreadPriority(GetCurrentThread(), dwThreadPri))
+    {
+      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+        "Could not set nice value of compression thread to " << nice_value << " : " << std::strerror(GetLastError()));
+    }
+    */
+
+#else
+    int wanted_nice_value = *compression_options_.thread_priority;
+
+    errno = 0;
+    int cur_nice_value = getpriority(PRIO_PROCESS, 0);
+    if (cur_nice_value != -1 && errno == 0) {
+      int new_nice_value = nice(wanted_nice_value - cur_nice_value);
+      if ((new_nice_value == -1 && errno != 0) || new_nice_value != wanted_nice_value) {
+        ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+          "Could not set nice value of compression thread to " << wanted_nice_value << " : " << std::strerror(
+            errno));
+      }
+    } else {
+      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+        "Could not set nice value of compression thread to " << wanted_nice_value <<
+          " : Could not determine cur nice value");
+    }
+#endif
+  }
+
   // Every thread needs to have its own compression context for thread safety.
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
