@@ -684,15 +684,18 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
     });
 }
 
-std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers(){
+std::unordered_map<std::string,
+  std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers()
+{
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> out_publishers_;
-  for (const auto & [topic, publisher] : publishers_){
+  for (const auto & [topic, publisher] : publishers_) {
     out_publishers_[topic] = publisher->generic_publisher();
   }
   return out_publishers_;
 }
 
-rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher(){
+rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher()
+{
   return clock_publisher_;
 }
 
@@ -1301,15 +1304,18 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publis
   return pimpl_->get_clock_publisher();
 }
 
-void Player::wait_for_playback_to_start() {
+void Player::wait_for_playback_to_start()
+{
   pimpl_->wait_for_playback_to_start();
 }
 
-size_t Player::get_number_of_registered_pre_callbacks() {
+size_t Player::get_number_of_registered_pre_callbacks()
+{
   return pimpl_->get_number_of_registered_pre_callbacks();
 }
 
-size_t Player::get_number_of_registered_post_callbacks() {
+size_t Player::get_number_of_registered_post_callbacks()
+{
   return pimpl_->get_number_of_registered_pre_callbacks();
 }
 
