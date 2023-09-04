@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <string>
+#include <optional>
 
 #include "visibility_control.hpp"
 
@@ -61,6 +62,9 @@ struct CompressionOptions
   CompressionMode compression_mode;
   uint64_t compression_queue_size;
   uint64_t compression_threads;
+  /// if set, the compression thread will try to set
+  /// the given nice value for itself
+  std::optional<int8_t> thread_nice_value;
 };
 
 }  // namespace rosbag2_compression

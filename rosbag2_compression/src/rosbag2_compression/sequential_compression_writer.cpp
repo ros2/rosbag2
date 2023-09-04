@@ -16,10 +16,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <sys/resource.h>
 #include <utility>
 
 #include "rcpputils/asserts.hpp"
@@ -62,6 +64,21 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
 
 void SequentialCompressionWriter::compression_thread_fn()
 {
+  if (compression_options_.thread_nice_value) {
+    uint8_t nice_value = *compression_options_.thread_nice_value;
+
+    // according to posix this sets the nice value for the whole process
+    // but in reality this sets the thread priority on linux.
+    // There does not seem to be any other way to set the thread priority on
+    // a non-realtime kernel :-(
+    // https://stackoverflow.com/questions/10876342/equivalent-of-setthreadpriority-on-linux-pthreads
+    if (0 != setpriority(PRIO_PROCESS, 0, nice_value)) {
+      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+        "Could not set nive value of compression thead to " << nice_value << " : " << std::strerror(
+          errno));
+    }
+  }
+
   // Every thread needs to have its own compression context for thread safety.
   auto compressor = compression_factory_->create_compressor(
     compression_options_.compression_format);
