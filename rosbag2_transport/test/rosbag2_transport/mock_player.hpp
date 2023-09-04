@@ -48,15 +48,18 @@ public:
     return pub_list;
   }
 
-  void wait_for_playback_to_start(){
+  void wait_for_playback_to_start()
+  {
     _wait_for_playback_to_start();
   }
 
-  size_t get_number_of_registered_pre_callbacks(){
+  size_t get_number_of_registered_pre_callbacks()
+  {
     return _get_number_of_registered_pre_callbacks();
   }
 
-  size_t get_number_of_registered_post_callbacks(){
+  size_t get_number_of_registered_post_callbacks()
+  {
     return _get_number_of_registered_post_callbacks();
   }
 };
