@@ -36,13 +36,14 @@ public:
   std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
   {
     std::vector<rclcpp::PublisherBase *> pub_list;
-    for (const auto & publisher : publishers_) {
+    for (const auto & publisher : get_publishers()) {
       pub_list.push_back(
         static_cast<rclcpp::PublisherBase *>(
           publisher.second->generic_publisher().get()));
     }
-    if (clock_publisher_) {
-      pub_list.push_back(clock_publisher_.get());
+    auto clock_pub = get_clock_publisher();
+    if (clock_pub) {
+      pub_list.push_back(clock_pub.get());
     }
     return pub_list;
   }

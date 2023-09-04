@@ -179,6 +179,10 @@ public:
   /// #add_on_play_message_post_callback
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> get_publishers();
+
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
+
 protected:
   struct play_msg_callback_data
   {
@@ -674,6 +678,14 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
     [handle](const play_msg_callback_data & data) {
       return data.handle == handle;
     });
+}
+
+std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> PlayerImpl::get_publishers(){
+  return publishers_;
+}
+
+rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher(){
+  return clock_publisher_;
 }
 
 Player::callback_handle_t PlayerImpl::get_new_on_play_msg_callback_handle()
@@ -1241,6 +1253,16 @@ Player::callback_handle_t Player::add_on_play_message_post_callback(
 void Player::delete_on_play_message_callback(const Player::callback_handle_t & handle)
 {
   pimpl_->delete_on_play_message_callback(handle);
+}
+
+std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> Player::get_publishers()
+{
+  return pimpl_->get_publishers();
+}
+
+rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()
+{
+  return pimpl_->get_publishers();
 }
 
 }  // namespace rosbag2_transport

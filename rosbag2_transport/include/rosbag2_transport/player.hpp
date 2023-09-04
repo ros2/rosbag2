@@ -202,6 +202,12 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+protected:
+  ROSBAG2_TRANSPORT_PUBLIC
+  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> get_publishers();
+  ROSBAG2_TRANSPORT_PUBLIC
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
+
 private:
   std::unique_ptr<PlayerImpl> pimpl_;
 };
