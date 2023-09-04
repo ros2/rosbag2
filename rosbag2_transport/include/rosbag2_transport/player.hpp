@@ -208,11 +208,11 @@ protected:
   ROSBAG2_TRANSPORT_PUBLIC
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
   ROSBAG2_TRANSPORT_PUBLIC
-  void wait_for_playback_to_start();
+  void _wait_for_playback_to_start();
   ROSBAG2_TRANSPORT_PUBLIC
-  size_t get_number_of_registered_pre_callbacks();
+  size_t _get_number_of_registered_pre_callbacks();
   ROSBAG2_TRANSPORT_PUBLIC
-  size_t get_number_of_registered_post_callbacks();
+  size_t _get_number_of_registered_post_callbacks();
 
 private:
   std::unique_ptr<PlayerImpl> pimpl_;

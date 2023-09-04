@@ -1304,17 +1304,17 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publis
   return pimpl_->get_clock_publisher();
 }
 
-void Player::wait_for_playback_to_start()
+void Player::_wait_for_playback_to_start()
 {
   pimpl_->wait_for_playback_to_start();
 }
 
-size_t Player::get_number_of_registered_pre_callbacks()
+size_t Player::_get_number_of_registered_pre_callbacks()
 {
   return pimpl_->get_number_of_registered_pre_callbacks();
 }
 
-size_t Player::get_number_of_registered_post_callbacks()
+size_t Player::_get_number_of_registered_post_callbacks()
 {
   return pimpl_->get_number_of_registered_pre_callbacks();
 }
