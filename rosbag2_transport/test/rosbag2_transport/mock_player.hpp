@@ -43,7 +43,7 @@ public:
     }
     auto clock_pub = get_clock_publisher();
     if (clock_pub) {
-      pub_list.push_back(clock_publisher_.get());
+      pub_list.push_back(clock_pub.get());
     }
     return pub_list;
   }

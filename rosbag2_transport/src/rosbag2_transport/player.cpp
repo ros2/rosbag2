@@ -682,7 +682,7 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
 
 std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers(){
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> out_publishers_;
-  for (const auto [topic, publisher] : publishers_){
+  for (const auto & [topic, publisher] : publishers_){
     out_publishers_[topic] = publisher->generic_publisher();
   }
   return out_publishers_;
