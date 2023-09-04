@@ -39,11 +39,11 @@ public:
     for (const auto & publisher : get_publishers()) {
       pub_list.push_back(
         static_cast<rclcpp::PublisherBase *>(
-          publisher.second->generic_publisher().get()));
+          publisher.second.get()));
     }
     auto clock_pub = get_clock_publisher();
     if (clock_pub) {
-      pub_list.push_back(clock_pub.get());
+      pub_list.push_back(clock_publisher_.get());
     }
     return pub_list;
   }

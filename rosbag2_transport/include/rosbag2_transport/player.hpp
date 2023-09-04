@@ -204,7 +204,7 @@ public:
 
 protected:
   ROSBAG2_TRANSPORT_PUBLIC
-  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> get_publishers();
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
   ROSBAG2_TRANSPORT_PUBLIC
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 

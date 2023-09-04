@@ -179,7 +179,7 @@ public:
   /// #add_on_play_message_post_callback
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
-  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> get_publishers();
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
 
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 
@@ -230,7 +230,7 @@ private:
   std::mutex ready_to_play_from_queue_mutex_;
   std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
-  std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<PlayerImpl::PlayerPublisher>> publishers_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
@@ -680,8 +680,12 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
     });
 }
 
-std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> PlayerImpl::get_publishers(){
-  return publishers_;
+std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers(){
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> out_publishers_;
+  for (const auto [topic, publisher] : publishers_){
+    out_publishers_[topic] = publisher->generic_publisher();
+  }
+  return out_publishers_;
 }
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher(){
@@ -1255,7 +1259,7 @@ void Player::delete_on_play_message_callback(const Player::callback_handle_t & h
   pimpl_->delete_on_play_message_callback(handle);
 }
 
-std::unordered_map<std::string, std::shared_ptr<PlayerPublisher>> Player::get_publishers()
+std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Player::get_publishers()
 {
   return pimpl_->get_publishers();
 }
