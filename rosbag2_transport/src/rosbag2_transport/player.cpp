@@ -1266,7 +1266,7 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()
 {
-  return pimpl_->get_publishers();
+  return pimpl_->get_clock_publisher();
 }
 
 }  // namespace rosbag2_transport
