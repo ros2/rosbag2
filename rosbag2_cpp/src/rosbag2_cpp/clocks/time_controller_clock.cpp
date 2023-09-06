@@ -19,25 +19,9 @@
 #include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
+#include "rcpputils/unique_lock.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/types.hpp"
-
-namespace
-{
-/**
- * Trivial std::unique_lock wrapper providing constructor that allows Clang Thread Safety Analysis.
- * The std::unique_lock does not have these annotations.
- */
-class RCPPUTILS_TSA_SCOPED_CAPABILITY TSAUniqueLock : public std::unique_lock<std::mutex>
-{
-public:
-  explicit TSAUniqueLock(std::mutex & mu) RCPPUTILS_TSA_ACQUIRE(mu)
-  : std::unique_lock<std::mutex>(mu)
-  {}
-
-  ~TSAUniqueLock() RCPPUTILS_TSA_RELEASE() {}
-};
-}  // namespace
 
 namespace rosbag2_cpp
 {
@@ -179,7 +163,7 @@ TimeControllerClock::ros_to_steady(rcutils_time_point_value_t ros_time) const
 bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 {
   {
-    TSAUniqueLock lock(impl_->state_mutex);
+    rcpputils::unique_lock<std::mutex> lock(impl_->state_mutex);
     if (impl_->paused) {
       impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
     } else {
