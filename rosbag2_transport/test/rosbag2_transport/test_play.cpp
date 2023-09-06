@@ -45,6 +45,37 @@ using namespace rosbag2_transport;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
+namespace
+{
+static inline std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr>
+get_service_event_message_basic_types()
+{
+  std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr> messages;
+
+  {
+    auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
+    test_msgs::srv::BasicTypes_Request request;
+    request.int32_value = 123;
+    request.int64_value = 456;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  {
+    auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
+    test_msgs::srv::BasicTypes_Request request;
+    request.int32_value = 456;
+    request.int64_value = 789;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  return messages;
+}
+}  // namespace
+
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {
   auto primitive_message1 = get_messages_basic_types()[0];
