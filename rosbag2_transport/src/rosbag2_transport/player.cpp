@@ -509,7 +509,7 @@ bool PlayerImpl::play()
     }
     for (auto pub : senders_) {
       try {
-        if (pub.second.index() == 0) {  // publisher
+        if (std::holds_alternative<SharedPlayerPublisher>(pub.second)) {
           if (!std::get<SharedPlayerPublisher>(pub.second)
             ->generic_publisher()->wait_for_all_acked(timeout))
           {
@@ -1048,7 +1048,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
   auto sender_iter = senders_.find(message->topic_name);
   if (sender_iter != senders_.end()) {
     // For sending requests, ignore service event messages that do not contain request information.
-    if (sender_iter->second.index() == 1 &&
+    if (std::holds_alternative<SharedPlayerClient>(sender_iter->second) &&
       !std::get<SharedPlayerClient>(sender_iter->second)
       ->is_include_request_message(rclcpp::SerializedMessage(*message->serialized_data)))
     {
@@ -1064,34 +1064,29 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       }
     }
 
-    switch (sender_iter->second.index()) {
-      case 0:  // publisher
-        {
-          try {
-            std::get<SharedPlayerPublisher>(sender_iter->second)
-            ->publish(rclcpp::SerializedMessage(*message->serialized_data));
-            message_published = true;
-          } catch (const std::exception & e) {
-            RCLCPP_ERROR_STREAM(
-              owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
-                "' topic. \nError: " << e.what());
-          }
-        }
-        break;
-      case 1:  // Client
-        {
-          try {
-            std::get<SharedPlayerClient>(sender_iter->second)
-            ->async_send_request(rclcpp::SerializedMessage(*message->serialized_data));
-            message_published = true;
-          } catch (const std::exception & e) {
-            RCLCPP_ERROR_STREAM(
-              owner_->get_logger(), "Failed to send request on '" <<
-                rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
-                "' service. \nError: " << e.what());
-          }
-        }
-        break;
+    if (std::holds_alternative<SharedPlayerPublisher>(sender_iter->second)) {
+      try {
+        std::get<SharedPlayerPublisher>(sender_iter->second)
+        ->publish(rclcpp::SerializedMessage(*message->serialized_data));
+        message_published = true;
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(
+          owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
+            "' topic. \nError: " << e.what());
+      }
+    } else if (std::holds_alternative<SharedPlayerClient>(sender_iter->second)) {
+      try {
+        std::get<SharedPlayerClient>(sender_iter->second)
+        ->async_send_request(rclcpp::SerializedMessage(*message->serialized_data));
+        message_published = true;
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(
+          owner_->get_logger(), "Failed to send request on '" <<
+            rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+            "' service. \nError: " << e.what());
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(owner_->get_logger(), "Unknown type of sender !");
     }
 
     // Calling on play message post-callbacks
