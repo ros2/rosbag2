@@ -17,7 +17,8 @@ import os
 from pathlib import Path
 import sys
 import threading
-
+import unittest
+import tempfile
 
 from common import get_rosbag_options, wait_for
 import rclpy
@@ -32,57 +33,59 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
     # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
     sys.setdlopenflags(os.RTLD_GLOBAL | os.RTLD_LAZY)
 
+class TestTransport(unittest.TestCase):
+    def test_options_qos_conversion(self):
+        # Tests that the to-and-from C++ conversions are working properly in the pybind structs
+        simple_overrides = {
+            '/topic': QoSProfile(depth=10)
+        }
 
-def test_options_qos_conversion():
-    # Tests that the to-and-from C++ conversions are working properly in the pybind structs
-    simple_overrides = {
-        '/topic': QoSProfile(depth=10)
-    }
+        play_options = rosbag2_py.PlayOptions()
+        play_options.topic_qos_profile_overrides = simple_overrides
+        assert play_options.topic_qos_profile_overrides == simple_overrides
 
-    play_options = rosbag2_py.PlayOptions()
-    play_options.topic_qos_profile_overrides = simple_overrides
-    assert play_options.topic_qos_profile_overrides == simple_overrides
-
-    record_options = rosbag2_py.RecordOptions()
-    record_options.topic_qos_profile_overrides = simple_overrides
-    assert record_options.topic_qos_profile_overrides == simple_overrides
+        record_options = rosbag2_py.RecordOptions()
+        record_options.topic_qos_profile_overrides = simple_overrides
+        assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
-def test_record_cancel(tmp_path):
-    bag_path = str(tmp_path / 'test_record_cancel')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    def test_record_cancel(self, tmp_path = None):
+        with tempfile.TemporaryDirectory() as d:
+                
+            bag_path = str(Path(d) / 'test_record_cancel')
+            storage_options, converter_options = get_rosbag_options(bag_path)
 
-    recorder = rosbag2_py.Recorder()
+            recorder = rosbag2_py.Recorder()
 
-    record_options = rosbag2_py.RecordOptions()
-    record_options.all = True
-    record_options.is_discovery_disabled = False
-    record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
+            record_options = rosbag2_py.RecordOptions()
+            record_options.all = True
+            record_options.is_discovery_disabled = False
+            record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
-    rclpy.init()
-    record_thread = threading.Thread(
-        target=recorder.record,
-        args=(storage_options, record_options),
-        daemon=True)
-    record_thread.start()
+            rclpy.init()
+            record_thread = threading.Thread(
+                target=recorder.record,
+                args=(storage_options, record_options),
+                daemon=True)
+            record_thread.start()
 
-    node = rclpy.create_node('test_record_cancel')
-    executor = rclpy.executors.SingleThreadedExecutor()
-    executor.add_node(node)
-    pub = node.create_publisher(String, 'chatter', 10)
+            node = rclpy.create_node('test_record_cancel')
+            executor = rclpy.executors.SingleThreadedExecutor()
+            executor.add_node(node)
+            pub = node.create_publisher(String, 'chatter', 10)
 
-    i = 0
-    msg = String()
+            i = 0
+            msg = String()
 
-    while rclpy.ok() and i < 10:
-        msg.data = 'Hello World: {0}'.format(i)
-        i += 1
-        pub.publish(msg)
+            while rclpy.ok() and i < 10:
+                msg.data = 'Hello World: {0}'.format(i)
+                i += 1
+                pub.publish(msg)
 
-    recorder.cancel()
+            recorder.cancel()
 
-    metadata_path = Path(bag_path) / 'metadata.yaml'
-    db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
-    assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
-                    timeout=rclpy.duration.Duration(seconds=3))
-    record_thread.join()
+            metadata_path = Path(bag_path) / 'metadata.yaml'
+            db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
+            assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
+                            timeout=rclpy.duration.Duration(seconds=3))
+            record_thread.join()

@@ -14,6 +14,9 @@
 
 import os
 import sys
+import unittest
+import pathlib
+import tempfile
 
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
@@ -28,6 +31,7 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
 
 from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
+
 
 
 def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
@@ -46,79 +50,84 @@ def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
 
     writer.create_topic(topic)
 
+class TestSequentialWriter(unittest.TestCase):
+    def test_sequential_writer(self, tmp_path: pathlib.Path = pathlib.Path("tmp_path")):
+        """
+        Test for sequential writer.
+        
+        Args:
+            tmp_path: Ignored. Will remove once I verify nothing tries to pass it.
 
-def test_sequential_writer(tmp_path):
-    """
-    Test for sequential writer.
+        :return:
+        """
+        
+        with tempfile.TemporaryDirectory() as d:
+            bag_path = str(pathlib.Path(d) / 'tmp_write_test')
+            
+            storage_options, converter_options = get_rosbag_options(bag_path)
 
-    :return:
-    """
-    bag_path = str(tmp_path / 'tmp_write_test')
+            writer = rosbag2_py.SequentialWriter()
+            writer.open(storage_options, converter_options)
 
-    storage_options, converter_options = get_rosbag_options(bag_path)
+            # create topic
+            topic_name = '/chatter'
+            create_topic(writer, topic_name, 'std_msgs/msg/String')
 
-    writer = rosbag2_py.SequentialWriter()
-    writer.open(storage_options, converter_options)
+            for i in range(10):
+                msg = String()
+                msg.data = f'Hello, world! {str(i)}'
+                time_stamp = i * 100
 
-    # create topic
-    topic_name = '/chatter'
-    create_topic(writer, topic_name, 'std_msgs/msg/String')
+                writer.write(topic_name, serialize_message(msg), time_stamp)
 
-    for i in range(10):
-        msg = String()
-        msg.data = f'Hello, world! {str(i)}'
-        time_stamp = i * 100
+            # close bag and create new storage instance
+            del writer
+            storage_options, converter_options = get_rosbag_options(bag_path)
 
-        writer.write(topic_name, serialize_message(msg), time_stamp)
+            reader = rosbag2_py.SequentialReader()
+            reader.open(storage_options, converter_options)
 
-    # close bag and create new storage instance
-    del writer
-    storage_options, converter_options = get_rosbag_options(bag_path)
+            topic_types = reader.get_all_topics_and_types()
 
-    reader = rosbag2_py.SequentialReader()
-    reader.open(storage_options, converter_options)
+            # Create a map for quicker lookup
+            type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
 
-    topic_types = reader.get_all_topics_and_types()
+            msg_counter = 0
+            while reader.has_next():
+                topic, data, t = reader.read_next()
+                msg_type = get_message(type_map[topic])
+                msg_deserialized = deserialize_message(data, msg_type)
 
-    # Create a map for quicker lookup
-    type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
+                assert isinstance(msg_deserialized, String)
+                assert msg_deserialized.data == f'Hello, world! {msg_counter}'
+                assert t == msg_counter * 100
 
-    msg_counter = 0
-    while reader.has_next():
-        topic, data, t = reader.read_next()
-        msg_type = get_message(type_map[topic])
-        msg_deserialized = deserialize_message(data, msg_type)
-
-        assert isinstance(msg_deserialized, String)
-        assert msg_deserialized.data == f'Hello, world! {msg_counter}'
-        assert t == msg_counter * 100
-
-        msg_counter += 1
-
-
-def test_plugin_list():
-    writer_plugins = rosbag2_py.get_registered_writers()
-    assert 'my_test_plugin' in writer_plugins
-
-
-def test_compression_plugin_list():
-    """
-    Testing retrieval of available compression format plugins.
-
-    :return:
-    """
-    compression_formats = rosbag2_py.get_registered_compressors()
-    assert 'fake_comp' in compression_formats
+                msg_counter += 1
 
 
-def test_serialization_plugin_list():
-    """
-    Testing retrieval of available serialization format plugins.
+    def test_plugin_list(self):
+        writer_plugins = rosbag2_py.get_registered_writers()
+        assert 'my_test_plugin' in writer_plugins
 
-    :return:
-    """
-    serialization_formats = rosbag2_py.get_registered_serializers()
-    assert 's_converter' in serialization_formats, \
-        'get_registered_serializers should return SerializationFormatSerializer plugins'
-    assert 'a_converter' in serialization_formats, \
-        'get_registered_serializers should also return SerializationFormatConverter plugins'
+
+    def test_compression_plugin_list(self):
+        """
+        Testing retrieval of available compression format plugins.
+
+        :return:
+        """
+        compression_formats = rosbag2_py.get_registered_compressors()
+        assert 'fake_comp' in compression_formats
+
+
+    def test_serialization_plugin_list(self):
+        """
+        Testing retrieval of available serialization format plugins.
+
+        :return:
+        """
+        serialization_formats = rosbag2_py.get_registered_serializers()
+        assert 's_converter' in serialization_formats, \
+            'get_registered_serializers should return SerializationFormatSerializer plugins'
+        assert 'a_converter' in serialization_formats, \
+            'get_registered_serializers should also return SerializationFormatConverter plugins'
