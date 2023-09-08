@@ -1,0 +1,1 @@
+python3 -m pybind11_stubgen rosbag2_py -o rosbag2_py_stubs

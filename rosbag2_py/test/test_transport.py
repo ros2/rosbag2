@@ -69,7 +69,7 @@ class TestTransport(unittest.TestCase):
                 daemon=True)
             record_thread.start()
 
-            node = rclpy.create_node('test_record_cancel')
+            node = rclpy.create_node('test_record_cancel') # type: ignore (the type error is in crate_node def)
             executor = rclpy.executors.SingleThreadedExecutor()
             executor.add_node(node)
             pub = node.create_publisher(String, 'chatter', 10)
