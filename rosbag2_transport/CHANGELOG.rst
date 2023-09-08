@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix the build with rmw_fastrtps_dynamic. (`#1438 <https://github.com/ros2/rosbag2/issues/1438>`_)
+* Contributors: Chris Lalancette
+
 0.22.2 (2023-07-14)
 -------------------
 * Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (`#1402 <https://github.com/ros2/rosbag2/issues/1402>`_)
