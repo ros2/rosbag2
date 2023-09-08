@@ -381,3 +381,11 @@ By default, rosbag2 can convert from and to CDR as it's the default serializatio
 
 [qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
 [about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
+
+## Generating and using python stubs
+
+```sh
+colcon build
+source install/setup.bash
+bash src/generate_python_stubs.sh 
+```
