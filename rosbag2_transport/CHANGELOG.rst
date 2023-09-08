@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.3 (2023-09-08)
+-------------------
 * Fix the build with rmw_fastrtps_dynamic. (`#1438 <https://github.com/ros2/rosbag2/issues/1438>`_)
 * Contributors: Chris Lalancette
 
