@@ -389,3 +389,10 @@ colcon build
 source install/setup.bash
 bash src/generate_python_stubs.sh 
 ```
+
+## Making vscode devcontainer python know about ros workspace
+Add the following to the end of your `.bashrc` :
+
+```
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+```
