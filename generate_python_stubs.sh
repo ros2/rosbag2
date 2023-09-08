@@ -1,1 +1,1 @@
-python3 -m pybind11_stubgen rosbag2_py -o rosbag2_py_stubs
+python3 -m pybind11_stubgen rosbag2_py -o install/rosbag2_py/local/lib/python3.10/dist-packages

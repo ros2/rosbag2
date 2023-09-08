@@ -57,13 +57,13 @@ public:
 
   /// Return a tuple containing the topic name, the serialized ROS message, and
   /// the timestamp.
-  pybind11::tuple read_next()
+  std::tuple<std::string, pybind11::bytes, int> read_next()
   {
     const auto next = reader_->read_next();
     rcutils_uint8_array_t rcutils_data = *next->serialized_data.get();
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
-    return pybind11::make_tuple(
+    return std::make_tuple(
       next->topic_name, pybind11::bytes(serialized_data), next->time_stamp);
   }
 
