@@ -32,8 +32,11 @@ from rosbag2_py import (
     StorageOptions,
 )  # noqa
 
-RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
-
+if "ROSBAG2_PY_TEST_RESOURCES_DIR" in os.environ:
+    RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+else:
+    RESOURCES_PATH = Path(os.path.dirname(__file__)) / "resources"
+    
 
 class TestConvert(unittest.TestCase):
 
