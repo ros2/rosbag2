@@ -22,27 +22,11 @@ ExternalProject_Add(ext-singleproducerconsumer
   INSTALL_COMMAND ""
   )
 
-# Concurrent and blocking concurrent queue by moodycamel - header only, don't build, install
-ExternalProject_Add(ext-concurrentqueue
-  PREFIX concurrentqueue
-  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download
-  URL https://github.com/cameron314/concurrentqueue/archive/8f65a8734d77c3cc00d74c0532efca872931d3ce.zip
-  URL_MD5 71a0d932cc89150c2ade85f0d9cac9dc
-  TIMEOUT 60
-  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  )
-
 add_library(singleproducerconsumer INTERFACE)
 target_include_directories(singleproducerconsumer INTERFACE $<INSTALL_INTERFACE:include/moodycamel>)
 
-add_library(concurrentqueue INTERFACE)
-target_include_directories(concurrentqueue INTERFACE $<INSTALL_INTERFACE:include/moodycamel>)
-
 install(
-  TARGETS singleproducerconsumer concurrentqueue
+  TARGETS singleproducerconsumer
   EXPORT export_${PROJECT_NAME}
   INCLUDES DESTINATION include
 )
@@ -52,8 +36,6 @@ install(
   FILES
   "${CMAKE_CURRENT_BINARY_DIR}/singleproducerconsumer/src/ext-singleproducerconsumer/atomicops.h"
   "${CMAKE_CURRENT_BINARY_DIR}/singleproducerconsumer/src/ext-singleproducerconsumer/readerwriterqueue.h"
-  "${CMAKE_CURRENT_BINARY_DIR}/concurrentqueue/src/ext-concurrentqueue/concurrentqueue.h"
-  "${CMAKE_CURRENT_BINARY_DIR}/concurrentqueue/src/ext-concurrentqueue/blockingconcurrentqueue.h"
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include/moodycamel
 )
 

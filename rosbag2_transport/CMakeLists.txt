@@ -63,7 +63,6 @@ target_link_libraries(${PROJECT_NAME}
   ${rosbag2_interfaces_TARGETS}
   rosbag2_storage::rosbag2_storage
   shared_queues_vendor::singleproducerconsumer
-  shared_queues_vendor::concurrentqueue
   yaml-cpp
 )
 
