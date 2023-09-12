@@ -17,7 +17,8 @@
 #include "format_service_info.hpp"
 
 std::string
-format_service_info(std::vector<std::shared_ptr<rosbag2_cpp::service_info>> & service_info_list)
+format_service_info(
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list)
 {
   std::stringstream info_stream;
   int indentation_spaces = 21;
@@ -29,7 +30,7 @@ format_service_info(std::vector<std::shared_ptr<rosbag2_cpp::service_info>> & se
   }
 
   auto print_service_info =
-    [&info_stream](const std::shared_ptr<rosbag2_cpp::service_info> & si) -> void {
+    [&info_stream](const std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t> & si) -> void {
       info_stream << "Service: " << si->name << " | ";
       info_stream << "Type: " << si->type << " | ";
       info_stream << "Request Count: " << si->request_count << " | ";

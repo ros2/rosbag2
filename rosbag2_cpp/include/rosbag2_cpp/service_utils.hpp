@@ -17,15 +17,25 @@
 
 #include <string>
 
+#include "rosbag2_cpp/visibility_control.hpp"
+
 namespace rosbag2_cpp
 {
-bool is_service_event_topic(const std::string & topic, const std::string & topic_type);
+ROSBAG2_CPP_PUBLIC
+bool
+is_service_event_topic(const std::string & topic, const std::string & topic_type);
 
-std::string service_event_topic_name_to_service_name(const std::string & topic_name);
+ROSBAG2_CPP_PUBLIC
+std::string
+service_event_topic_name_to_service_name(const std::string & topic_name);
 
-std::string service_event_topic_type_to_service_type(const std::string & topic_type);
+ROSBAG2_CPP_PUBLIC
+std::string
+service_event_topic_type_to_service_type(const std::string & topic_type);
 
-size_t get_serialization_size_for_service_metadata_event();
-}
+ROSBAG2_CPP_PUBLIC
+size_t
+get_serialization_size_for_service_metadata_event();
+}  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__SERVICE_UTILS_HPP_

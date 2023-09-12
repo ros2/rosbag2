@@ -18,6 +18,7 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
+from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -95,12 +96,7 @@ class BurstVerb(VerbExtension):
         play_options.rate = 1.0
         play_options.topics_to_filter = args.topics
         # Convert service name to service event topic name
-        services = []
-        if args.services and len(args.services) != 0:
-            for s in args.services:
-                name = '/' + s if s[0] != '/' else s
-                services.append(name + '/_service_event')
-        play_options.services_to_filter = services
+        play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = False
         play_options.topic_remapping_options = topic_remapping

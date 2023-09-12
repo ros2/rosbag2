@@ -14,6 +14,7 @@
 #include  <gmock/gmock.h>
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "rosbag2_cpp/service_utils.hpp"
@@ -26,7 +27,7 @@ class ServiceUtilsTest : public Test
 
 TEST_F(ServiceUtilsTest, check_is_service_event_topic)
 {
-  std::vector<std::pair<std::pair<std::string, std::string>, bool>> all_test_data =
+  std::vector<std::pair<std::tuple<std::string, std::string>, bool>> all_test_data =
   {
     {{"/abc/_service_event", "package/srv/xyz_Event"}, true},
     {{"/_service_event", "package/srv/xyz_Event"}, false},
@@ -37,8 +38,8 @@ TEST_F(ServiceUtilsTest, check_is_service_event_topic)
 
   for (const auto & test_data : all_test_data) {
     EXPECT_TRUE(
-      rosbag2_cpp::is_service_event_topic(test_data.first.first, test_data.first.second) ==
-      test_data.second);
+      rosbag2_cpp::is_service_event_topic(
+        std::get<0>(test_data.first), std::get<1>(test_data.first)) == test_data.second);
   }
 }
 

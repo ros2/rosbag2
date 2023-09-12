@@ -18,8 +18,10 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
+from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
+from ros2bag.api import print_warn
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
@@ -53,12 +55,17 @@ class PlayVerb(VerbExtension):
             help='Space-delimited list of topics to play.')
         parser.add_argument(
             '--services', type=str, default=[], nargs='+',
-            help='services to replay, separated by space. At least one service needs to be '
-                 'specified.')
+            help='services to replay, separated by space. if none specified, all services will '
+                 'be played.')
         parser.add_argument(
             '-e', '--regex', default='',
             help='filter topics by regular expression to replay, separated by space. If none '
                  'specified, all topics will be replayed.')
+        parser.add_argument(
+            '-x', '--exclude', default='',
+            help='regular expressions to exclude topics from replay, separated by space. If none '
+                 'specified, all topics will be replayed. This argument is deprecated and please '
+                 'use --exclude-topics.')
         parser.add_argument(
             '--exclude-topics', default='',
             help='regular expressions to exclude topics from replay, separated by space. If none '
@@ -171,6 +178,10 @@ class PlayVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
+        if args.exclude and args.exclude_topics:
+            return print_error(str('-x/--exclude and --exclude_topics cannot be used at the '
+                                   'same time.'))
+
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
@@ -192,15 +203,17 @@ class PlayVerb(VerbExtension):
         play_options.topics_to_filter = args.topics
 
         # Convert service name to service event topic name
-        services = []
-        if args.services and len(args.services) != 0:
-            for s in args.services:
-                name = '/' + s if s[0] != '/' else s
-                services.append(name + '/_service_event')
-        play_options.services_to_filter = services
+        play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
 
         play_options.regex_to_filter = args.regex
-        play_options.topics_regex_to_exclude = args.exclude_topics
+
+        if args.exclude:
+            print(print_warn(str('-x/--exclude argument is deprecated. Please use '
+                                 '--exclude-topics.')))
+            play_options.topics_regex_to_exclude = args.exclude
+        else:
+            play_options.topics_regex_to_exclude = args.exclude_topics
+
         if args.exclude_services:
             play_options.services_regex_to_exclude = args.exclude_services + '/_service_event'
         else:

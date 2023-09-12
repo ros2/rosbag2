@@ -26,14 +26,14 @@
 namespace rosbag2_cpp
 {
 
-typedef struct
+typedef ROSBAG2_CPP_PUBLIC_TYPE struct rosbag2_service_info_t
 {
   std::string name;
   std::string type;
   std::string serialization_format;
   size_t request_count;
   size_t response_count;
-} service_info;
+} rosbag2_service_info_t;
 
 class ROSBAG2_CPP_PUBLIC Info
 {
@@ -43,7 +43,7 @@ public:
   virtual rosbag2_storage::BagMetadata read_metadata(
     const std::string & uri, const std::string & storage_id = "");
 
-  virtual std::vector<std::shared_ptr<service_info>> read_service_info(
+  virtual std::vector<std::shared_ptr<rosbag2_service_info_t>> read_service_info(
     const std::string & uri, const std::string & storage_id = "");
 };
 

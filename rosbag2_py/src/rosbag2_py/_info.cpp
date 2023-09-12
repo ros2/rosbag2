@@ -46,7 +46,7 @@ public:
   {
     auto metadata_info = read_metadata(uri, storage_id);
 
-    std::vector<std::shared_ptr<rosbag2_cpp::service_info>> all_services_info;
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
       auto services_info = info_->read_service_info(
         uri + "/" + file_info.path,

@@ -16,7 +16,7 @@ This set of definitions with all field types recursively included can be called 
 
 ## `ros2msg` encoding
 
-This encoding consists of definitions in [.msg](https://docs.ros.org/en/rolling/Concepts/About-ROS-Interfaces.html#message-description-specification) and [.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format, concatenated together in human-readable form with
+This encoding consists of definitions in [.msg](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#messages) and [.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format, concatenated together in human-readable form with
 a delimiter.
 
 The top-level message definition is present first, with no delimiter. All dependent .msg definitions are preceded by a two-line delimiter:

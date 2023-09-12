@@ -22,6 +22,6 @@
 #include "rosbag2_cpp/info.hpp"
 
 std::string format_service_info(
-  std::vector<std::shared_ptr<rosbag2_cpp::service_info>> & service_info);
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info);
 
 #endif  // ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_

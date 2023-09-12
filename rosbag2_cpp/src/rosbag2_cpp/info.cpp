@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <map>
+#include "rosbag2_cpp/info.hpp"
+
 #include <unordered_map>
 #include <unordered_set>
 #include <stdexcept>
@@ -22,7 +23,6 @@
 #include "rmw/rmw.h"
 
 #include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/logging.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
@@ -84,7 +84,7 @@ struct service_req_resp_info
 };
 }  // namespace
 
-std::vector<std::shared_ptr<service_info>> Info::read_service_info(
+std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
   const std::string & uri, const std::string & storage_id)
 {
   rosbag2_storage::StorageFactory factory;
@@ -96,13 +96,13 @@ std::vector<std::shared_ptr<service_info>> Info::read_service_info(
   using service_analysis =
     std::unordered_map<std::string, std::shared_ptr<service_req_resp_info>>;
 
-  std::unordered_map<std::string, std::shared_ptr<service_info>> all_service_info;
+  std::unordered_map<std::string, std::shared_ptr<rosbag2_service_info_t>> all_service_info;
   service_analysis service_process_info;
 
   auto all_topics_types = storage->get_all_topics_and_types();
   for (auto & t : all_topics_types) {
     if (is_service_event_topic(t.name, t.type)) {
-      auto service_info = std::make_shared<rosbag2_cpp::service_info>();
+      auto service_info = std::make_shared<rosbag2_cpp::rosbag2_service_info_t>();
       service_info->name = service_event_topic_name_to_service_name(t.name);
       service_info->type = service_event_topic_type_to_service_type(t.type);
       service_info->serialization_format = t.serialization_format;
@@ -111,7 +111,7 @@ std::vector<std::shared_ptr<service_info>> Info::read_service_info(
     }
   }
 
-  std::vector<std::shared_ptr<service_info>> ret_service_info;
+  std::vector<std::shared_ptr<rosbag2_service_info_t>> ret_service_info;
 
   if (!all_service_info.empty()) {
     auto msg = service_msgs::msg::ServiceEventInfo();

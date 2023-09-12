@@ -1566,13 +1566,15 @@ void PlayerImpl::PlayerClient::async_send_request(const rclcpp::SerializedMessag
         "'%s' service isn't ready !",
         service_name_.c_str());
     }
-  } else {
-    throw std::runtime_error(
-            "Failed to deserialize service event message for " + service_name_ + " !");
   }
 
   message_members_->fini_function(ros_message);
   delete[] static_cast<uint8_t *>(ros_message);
+
+  if (ret != RMW_RET_OK) {
+    throw std::runtime_error(
+            "Failed to deserialize service event message for " + service_name_ + " !");
+  }
 }
 
 uint8_t PlayerImpl::PlayerClient::get_msg_event_type(const rclcpp::SerializedMessage & message)
@@ -1582,6 +1584,10 @@ uint8_t PlayerImpl::PlayerClient::get_msg_event_type(const rclcpp::SerializedMes
   const rosidl_message_type_support_t * type_support_info =
     rosidl_typesupport_cpp::
     get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
+  if (type_support_info == nullptr) {
+    throw std::runtime_error(
+            "It failed to get message type support handle of service event info !");
+  }
 
   auto ret = rmw_deserialize(
     &message.get_rcl_serialized_message(),

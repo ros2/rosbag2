@@ -18,6 +18,7 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
+from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.api import SplitLineFormatter
@@ -183,11 +184,17 @@ class RecordVerb(VerbExtension):
             help='Choose the compression format/algorithm. '
                  'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
-    def main(self, *, args):  # noqa: D102
+    def _check_necessary_argument(self, args):
         # One options out of --all, --all-topics, --all-services, --services, topics or --regex
         # must be used
         if not (args.all or args.all_topics or args.all_services or
            args.services or (args.topics and len(args.topics) > 0) or args.regex):
+            return False
+        return True
+
+    def main(self, *, args):  # noqa: D102
+
+        if not self._check_necessary_argument(args):
             return print_error('Must specify only one option out of --all, --all-topics, '
                                '--all-services, --services, topics and --regex')
 
@@ -286,12 +293,7 @@ class RecordVerb(VerbExtension):
         record_options.all_services = args.all_services or args.all
 
         # Convert service name to service event topic name
-        services = []
-        if args.services and len(args.services) != 0:
-            for s in args.services:
-                name = '/' + s if s[0] != '/' else s
-                services.append(name + '/_service_event')
-        record_options.services = services
+        record_options.services = convert_service_to_service_event_topic(args.services)
 
         recorder = Recorder()
 
