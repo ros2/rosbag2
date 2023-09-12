@@ -53,7 +53,8 @@ std::unique_ptr<rosbag2_cpp::Writer> ReaderWriterFactory::make_writer(
       record_options.compression_format,
       rosbag2_compression::compression_mode_from_string(record_options.compression_mode),
       record_options.compression_queue_size,
-      record_options.compression_threads
+      record_options.compression_threads,
+      record_options.compression_threads_priority,
     };
     if (compression_options.compression_threads < 1) {
       compression_options.compression_threads = std::thread::hardware_concurrency();
