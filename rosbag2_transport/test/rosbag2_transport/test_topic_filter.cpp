@@ -203,3 +203,41 @@ TEST_F(RegexFixture, regex_all_and_filter)
   auto filtered_topics = filter.filter_topics(topics_and_types_);
   EXPECT_THAT(filtered_topics, SizeIs(6));
 }
+
+TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_selected) {
+  {  // Check for topics explicitly selected via "topics" list
+    rosbag2_transport::RecordOptions record_options;
+    // Select only one topic with name "/planning" via topic list
+    record_options.topics = {"/planning"};
+    record_options.all = false;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
+    testing::internal::CaptureStderr();
+    auto filtered_topics = filter.filter_topics(topics_and_types_);
+    std::string test_output = testing::internal::GetCapturedStderr();
+    ASSERT_EQ(0u, filtered_topics.size());
+    EXPECT_TRUE(
+      test_output.find(
+        "Topic '/invalid_topic' has unknown type 'invalid_topic_type'") == std::string::npos);
+    EXPECT_TRUE(
+      test_output.find(
+        "Topic '/planning' has unknown type 'planning_topic_type'") != std::string::npos);
+  }
+
+  {  // Check for topics selected via regex
+    rosbag2_transport::RecordOptions record_options;
+    // Select only one topic with name "/planning" via regex
+    record_options.regex = "^/planning";
+    record_options.all = false;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
+    testing::internal::CaptureStderr();
+    auto filtered_topics = filter.filter_topics(topics_and_types_);
+    std::string test_output = testing::internal::GetCapturedStderr();
+    ASSERT_EQ(0u, filtered_topics.size());
+    EXPECT_TRUE(
+      test_output.find(
+        "Topic '/invalid_topic' has unknown type 'invalid_topic_type'") == std::string::npos);
+    EXPECT_TRUE(
+      test_output.find(
+        "Topic '/planning' has unknown type 'planning_topic_type'") != std::string::npos);
+  }
+}
