@@ -23,6 +23,7 @@
 import os
 from pathlib import Path
 import sys
+import unittest
 
 if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
     # This is needed on Linux when compiling with clang/libc++.
@@ -34,20 +35,23 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
 from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
 
-RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+if "ROSBAG2_PY_TEST_RESOURCES_DIR" in os.environ:
+    RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+else:
+    RESOURCES_PATH = Path(os.path.dirname(__file__)) / "resources"
+    
+class TestReindexerMultipleFiles(unittest.TestCase):
+    def test_reindexer_multiple_files(self):
+        bag_path = RESOURCES_PATH / 'reindex_test_bags' / 'multiple_files'
+        result_path = bag_path / 'metadata.yaml'
 
+        storage_options, converter_options = get_rosbag_options(str(bag_path))
+        reindexer = rosbag2_py.Reindexer()
+        reindexer.reindex(storage_options)
 
-def test_reindexer_multiple_files():
-    bag_path = RESOURCES_PATH / 'reindex_test_bags' / 'multiple_files'
-    result_path = bag_path / 'metadata.yaml'
+        assert(result_path.exists())
 
-    storage_options, converter_options = get_rosbag_options(str(bag_path))
-    reindexer = rosbag2_py.Reindexer()
-    reindexer.reindex(storage_options)
-
-    assert(result_path.exists())
-
-    try:
-        result_path.unlink()
-    except FileNotFoundError:
-        pass
+        try:
+            result_path.unlink()
+        except FileNotFoundError:
+            pass

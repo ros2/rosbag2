@@ -15,6 +15,7 @@
 import os
 from pathlib import Path
 import sys
+import unittest
 
 
 if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
@@ -27,116 +28,121 @@ if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
 from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
 
-RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+if "ROSBAG2_PY_TEST_RESOURCES_DIR" in os.environ:
+    RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
+else:
+    RESOURCES_PATH = Path(os.path.dirname(__file__)) / "resources"
+    
+class TestSequentialReaderMultipleFiles(unittest.TestCase):
+    
+
+    def test_reset_filter(self):
+        bag_path = str(RESOURCES_PATH / 'wbag')
+        storage_options, converter_options = get_rosbag_options(bag_path)
+
+        reader = rosbag2_py.SequentialReader()
+        reader.open(storage_options, converter_options)
+
+        # Set filter for topic of string type
+        storage_filter = rosbag2_py.StorageFilter(topics=['AAA', 'CCC', 'DDD'])
+        reader.set_filter(storage_filter)
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'AAA'
+        assert t == 1001
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'CCC'
+        assert t == 1002
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'AAA'
+        assert t == 1004
+
+        # No filter and bag continues same location
+        reader.reset_filter()
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'FFF'
+        assert t == 1004
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'BBB'
+        assert t == 1004
+
+        (topic, data, t) = reader.read_next()
+
+        assert topic == 'EEE'
+        assert t == 1005
 
 
-def test_reset_filter():
-    bag_path = str(RESOURCES_PATH / 'wbag')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    def test_seek_forward(self):
+        bag_path = str(RESOURCES_PATH / 'wbag')
+        storage_options, converter_options = get_rosbag_options(bag_path)
 
-    reader = rosbag2_py.SequentialReader()
-    reader.open(storage_options, converter_options)
+        reader = rosbag2_py.SequentialReader()
+        reader.open(storage_options, converter_options)
 
-    # Set filter for topic of string type
-    storage_filter = rosbag2_py.StorageFilter(topics=['AAA', 'CCC', 'DDD'])
-    reader.set_filter(storage_filter)
+        # seek forward
+        reader.seek(1822)
 
-    (topic, data, t) = reader.read_next()
+        (topic, data, t) = reader.read_next()
 
-    assert topic == 'AAA'
-    assert t == 1001
+        assert topic == 'CCC'
+        assert t == 1822
 
-    (topic, data, t) = reader.read_next()
+        # set filter continues in same location
+        storage_filter = rosbag2_py.StorageFilter(topics=['BBB', 'GGG'])
+        reader.set_filter(storage_filter)
 
-    assert topic == 'CCC'
-    assert t == 1002
+        (topic, data, t) = reader.read_next()
 
-    (topic, data, t) = reader.read_next()
+        assert topic == 'GGG'
+        assert t == 1822
 
-    assert topic == 'AAA'
-    assert t == 1004
+        (topic, data, t) = reader.read_next()
 
-    # No filter and bag continues same location
-    reader.reset_filter()
+        assert topic == 'GGG'
+        assert t == 1822
 
-    (topic, data, t) = reader.read_next()
+        (topic, data, t) = reader.read_next()
 
-    assert topic == 'FFF'
-    assert t == 1004
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'BBB'
-    assert t == 1004
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'EEE'
-    assert t == 1005
+        assert topic == 'BBB'
+        assert t == 1826
 
 
-def test_seek_forward():
-    bag_path = str(RESOURCES_PATH / 'wbag')
-    storage_options, converter_options = get_rosbag_options(bag_path)
+    def test_seek_backward(self):
+        bag_path = str(RESOURCES_PATH / 'wbag')
+        storage_options, converter_options = get_rosbag_options(bag_path)
 
-    reader = rosbag2_py.SequentialReader()
-    reader.open(storage_options, converter_options)
+        reader = rosbag2_py.SequentialReader()
+        reader.open(storage_options, converter_options)
 
-    # seek forward
-    reader.seek(1822)
+        # seek forward first
+        reader.seek(1822)
+        storage_filter = rosbag2_py.StorageFilter(topics=['BBB', 'GGG'])
+        reader.set_filter(storage_filter)
+        (topic, data, t) = reader.read_next()
 
-    (topic, data, t) = reader.read_next()
+        # seek backwards & filter preserved
+        reader.seek(1408)
 
-    assert topic == 'CCC'
-    assert t == 1822
+        (topic, data, t) = reader.read_next()
 
-    # set filter continues in same location
-    storage_filter = rosbag2_py.StorageFilter(topics=['BBB', 'GGG'])
-    reader.set_filter(storage_filter)
+        assert topic == 'BBB'
+        assert t == 1408
 
-    (topic, data, t) = reader.read_next()
+        (topic, data, t) = reader.read_next()
 
-    assert topic == 'GGG'
-    assert t == 1822
+        assert topic == 'GGG'
+        assert t == 1408
 
-    (topic, data, t) = reader.read_next()
+        (topic, data, t) = reader.read_next()
 
-    assert topic == 'GGG'
-    assert t == 1822
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'BBB'
-    assert t == 1826
-
-
-def test_seek_backward():
-    bag_path = str(RESOURCES_PATH / 'wbag')
-    storage_options, converter_options = get_rosbag_options(bag_path)
-
-    reader = rosbag2_py.SequentialReader()
-    reader.open(storage_options, converter_options)
-
-    # seek forward first
-    reader.seek(1822)
-    storage_filter = rosbag2_py.StorageFilter(topics=['BBB', 'GGG'])
-    reader.set_filter(storage_filter)
-    (topic, data, t) = reader.read_next()
-
-    # seek backwards & filter preserved
-    reader.seek(1408)
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'BBB'
-    assert t == 1408
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'GGG'
-    assert t == 1408
-
-    (topic, data, t) = reader.read_next()
-
-    assert topic == 'BBB'
-    assert t == 1413
+        assert topic == 'BBB'
+        assert t == 1413
