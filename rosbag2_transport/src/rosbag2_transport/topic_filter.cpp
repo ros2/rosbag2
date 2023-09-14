@@ -117,22 +117,6 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
 bool TopicFilter::take_topic(
   const std::string & topic_name, const std::vector<std::string> & topic_types)
 {
-  if (!has_single_type(topic_name, topic_types)) {
-    return false;
-  }
-
-  const std::string & topic_type = topic_types[0];
-  if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
-    return false;
-  }
-
-  if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
-    RCUTILS_LOG_WARN_ONCE_NAMED(
-      ROSBAG2_TRANSPORT_PACKAGE_NAME,
-      "Hidden topics are not recorded. Enable them with --include-hidden-topics");
-    return false;
-  }
-
   if (!record_options_.include_unpublished_topics && node_graph_ &&
     topic_is_unpublished(topic_name, *node_graph_))
   {
@@ -160,6 +144,22 @@ bool TopicFilter::take_topic(
     !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
     !std::regex_search(topic_name, include_regex))
   {
+    return false;
+  }
+
+  if (!has_single_type(topic_name, topic_types)) {
+    return false;
+  }
+
+  if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
+    RCUTILS_LOG_WARN_ONCE_NAMED(
+      ROSBAG2_TRANSPORT_PACKAGE_NAME,
+      "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+    return false;
+  }
+
+  const std::string & topic_type = topic_types[0];
+  if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
     return false;
   }
 
