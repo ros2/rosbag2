@@ -161,6 +161,31 @@ $ ros2 bag play <bag_file>
 
 The bag file is by default set to the folder name where the data was previously recorded in.
 
+#### Controlling playback via services
+
+The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,
+
+* `~/burst [rosbag2_interfaces/srv/Burst]`
+  * Can only be used while player is paused, publishes `num_messages` in order as fast as possible, moving forward the play head.
+* `~/get_rate [rosbag2_interfaces/srv/GetRate]`
+  * Return the current playback rate.
+* `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
+  * Return whether playback is paused.
+* `~/pause [rosbag2_interfaces/srv/Pause]`
+  * Pause playback. Has no effect if already paused.
+* `~/play [rosbag2_interfaces/srv/Play]`
+  * Play from a starting offset timestamp, either until the end, an ending timestamp or for a set duration. Only works when stopped (not paused).
+* `~/play_next [rosbag2_interfaces/srv/PlayNext]`
+  * Play a single next message from the bag. Only works while paused.
+* `~/resume [rosbag2_interfaces/srv/Resume]`
+  * Resume playback if paused.
+* `~/seek [rosbag2_interfaces/srv/Seek]`
+  * Change the play head to the specified timestamp. Can be forward or backward in time, the next played message is the next immediately after the seeked timestamp.
+* `~/set_rate [rosbag2_interfaces/srv/SetRate]`
+  * Sets the rate of playback, for example 2.0 will play messages twice as fast.
+* `~/toggle_paused [rosbag2_interfaces/srv/TogglePaused]`
+  * Pause if playing, resume if paused.
+
 ### Analyzing data
 
 The recorded data can be analyzed by displaying some meta information about it:
@@ -381,3 +406,4 @@ By default, rosbag2 can convert from and to CDR as it's the default serializatio
 
 [qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
 [about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
+
