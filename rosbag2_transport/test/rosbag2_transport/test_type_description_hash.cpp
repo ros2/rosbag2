@@ -59,6 +59,8 @@ rclcpp::TopicEndpointInfo make_info(rosidl_type_hash_t hash)
   info.topic_type = "topic_type";
   info.node_name = "node_name";
   info.node_namespace = "node_namespace";
+  info.endpoint_type = RMW_ENDPOINT_INVALID;
+  info.qos_profile = rmw_qos_profile_default;
   return rclcpp::TopicEndpointInfo(info);
 }
 
