@@ -2,6 +2,12 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.8 (2023-09-19)
+-------------------
+* Don't warn for unknown types if topics are not selected (`#1466 <https://github.com/ros2/rosbag2/issues/1466>`_) (`#1469 <https://github.com/ros2/rosbag2/issues/1469>`_)
+* Fix the build with rmw_fastrtps_dynamic. (`#1416 <https://github.com/ros2/rosbag2/issues/1416>`_) (`#1439 <https://github.com/ros2/rosbag2/issues/1439>`_)
+* Contributors: mergify[bot]
+
 0.15.7 (2023-07-18)
 -------------------
 * [humble] Fix for possible freeze in Recorder::stop() (backport `#1381 <https://github.com/ros2/rosbag2/issues/1381>`_) (`#1388 <https://github.com/ros2/rosbag2/issues/1388>`_)

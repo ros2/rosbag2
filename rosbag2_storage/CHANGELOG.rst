@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.8 (2023-09-19)
+-------------------
+
 0.15.7 (2023-07-18)
 -------------------
 * Fix missing cstdint include (`#1383 <https://github.com/ros2/rosbag2/issues/1383>`_) (`#1386 <https://github.com/ros2/rosbag2/issues/1386>`_)

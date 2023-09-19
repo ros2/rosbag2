@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_mcap_testdata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.8 (2023-09-19)
+-------------------
+
 0.15.7 (2023-07-18)
 -------------------
 * [humble] Don't crash when type definition cannot be found, and find srv defs if available (`#1398 <https://github.com/ros2/rosbag2/issues/1398>`_)
