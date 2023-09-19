@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.8 (2023-09-19)
+-------------------
+
 0.15.7 (2023-07-18)
 -------------------
 * Rewrite TimeControllerClockTest.unpaused_sleep_returns_true to be correct (backport `#1384 <https://github.com/ros2/rosbag2/issues/1384>`_) (`#1390 <https://github.com/ros2/rosbag2/issues/1390>`_)

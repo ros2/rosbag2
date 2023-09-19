@@ -2,6 +2,9 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.8 (2023-09-19)
+-------------------
+
 0.15.7 (2023-07-18)
 -------------------
 * [humble] Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (backport `#1301 <https://github.com/ros2/rosbag2/issues/1301>`_) (`#1395 <https://github.com/ros2/rosbag2/issues/1395>`_)
