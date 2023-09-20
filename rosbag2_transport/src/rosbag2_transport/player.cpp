@@ -96,7 +96,7 @@ public:
   using play_msg_callback_t = Player::play_msg_callback_t;
 
   PlayerImpl(
-    rclcpp::Node * owner,
+    Player * owner,
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     std::shared_ptr<KeyboardHandler> keyboard_handler,
     const rosbag2_storage::StorageOptions & storage_options,
@@ -278,9 +278,9 @@ private:
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
 
+  Player * owner_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
-  rclcpp::Node * node;
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   moodycamel::ReaderWriterQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   mutable std::future<void> storage_loading_future_;
@@ -316,15 +316,14 @@ private:
 };
 
 PlayerImpl::PlayerImpl(
-  rclcpp::Node * owner,
+  Player * owner,
   std::unique_ptr<rosbag2_cpp::Reader> reader,
   std::shared_ptr<KeyboardHandler> keyboard_handler,
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_transport::PlayOptions & play_options)
-: reader_(std::move(reader)),
+: owner_(owner),
   storage_options_(storage_options),
   play_options_(play_options),
-  node(owner),
   keyboard_handler_(std::move(keyboard_handler))
 {
   {
@@ -339,7 +338,7 @@ PlayerImpl::PlayerImpl(
     // then add the offset to the starting time obtained from reader metadata
     if (play_options_.start_offset < 0) {
       RCLCPP_WARN_STREAM(
-        node->get_logger(),
+        owner_->get_logger(),
         "Invalid start offset value: " <<
           RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
           ". Negative start offset ignored.");
@@ -392,7 +391,7 @@ bool PlayerImpl::play()
 {
   if (is_in_playback_.exchange(true)) {
     RCLCPP_WARN_STREAM(
-      node->get_logger(),
+      owner_->get_logger(),
       "Trying to play() while in playback, dismissing request.");
     return false;
   }
@@ -404,16 +403,16 @@ bool PlayerImpl::play()
     delay = play_options_.delay;
   } else {
     RCLCPP_WARN_STREAM(
-      node->get_logger(),
+      owner_->get_logger(),
       "Invalid delay value: " << play_options_.delay.nanoseconds() << ". Delay is disabled.");
   }
 
-  RCLCPP_INFO_STREAM(node->get_logger(), "Playback until timestamp: " << play_until_timestamp_);
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Playback until timestamp: " << play_until_timestamp_);
 
   try {
     do {
       if (delay > rclcpp::Duration(0, 0)) {
-        RCLCPP_INFO_STREAM(node->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+        RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
         std::chrono::nanoseconds delay_duration(delay.nanoseconds());
         std::this_thread::sleep_for(delay_duration);
       }
@@ -437,7 +436,7 @@ bool PlayerImpl::play()
       }
     } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
   } catch (std::runtime_error & e) {
-    RCLCPP_ERROR(node->get_logger(), "Failed to play: %s", e.what());
+    RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
     load_storage_content_ = false;
     if (storage_loading_future_.valid()) {storage_loading_future_.get();}
     while (message_queue_.pop()) {}   // cleanup queue
@@ -456,13 +455,13 @@ bool PlayerImpl::play()
       try {
         if (!pub.second->generic_publisher()->wait_for_all_acked(timeout)) {
           RCLCPP_ERROR(
-            node->get_logger(),
+            owner_->get_logger(),
             "Timed out while waiting for all published messages to be acknowledged for topic %s",
             pub.first.c_str());
         }
       } catch (std::exception & e) {
         RCLCPP_ERROR(
-          node->get_logger(),
+          owner_->get_logger(),
           "Exception occurred while waiting for all published messages to be acknowledged for "
           "topic %s : %s",
           pub.first.c_str(),
@@ -480,7 +479,7 @@ void PlayerImpl::stop()
   if (!is_in_playback_) {
     return;
   }
-  RCLCPP_INFO_STREAM(node->get_logger(), "Stopping playback.");
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Stopping playback.");
   stop_playback_ = true;
   // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
   // wait until those operations will be finished with stop_playback_ = true;
@@ -502,18 +501,19 @@ void PlayerImpl::stop()
 void PlayerImpl::pause()
 {
   clock_->pause();
-  RCLCPP_INFO_STREAM(node->get_logger(), "Pausing play.");
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Pausing play.");
 }
 
 void PlayerImpl::resume()
 {
   clock_->resume();
-  RCLCPP_INFO_STREAM(node->get_logger(), "Resuming play.");
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Resuming play.");
 }
 
 void PlayerImpl::toggle_paused()
 {
-  is_paused() ? resume() : pause();
+  // Note: Use upper level public API from owner class to facilitate unit tests
+  owner_->is_paused() ? owner_->resume() : owner_->pause();
 }
 
 bool PlayerImpl::is_paused() const
@@ -530,9 +530,9 @@ bool PlayerImpl::set_rate(double rate)
 {
   bool ok = clock_->set_rate(rate);
   if (ok) {
-    RCLCPP_INFO_STREAM(node->get_logger(), "Set rate to " << rate);
+    RCLCPP_INFO_STREAM(owner_->get_logger(), "Set rate to " << rate);
   } else {
-    RCLCPP_WARN_STREAM(node->get_logger(), "Failed to set rate to invalid value " << rate);
+    RCLCPP_WARN_STREAM(owner_->get_logger(), "Failed to set rate to invalid value " << rate);
   }
   return ok;
 }
@@ -544,8 +544,8 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::peek_next_message_fro
     !is_storage_completely_loaded() && rclcpp::ok())
   {
     RCLCPP_WARN_THROTTLE(
-      node->get_logger(),
-      *node->get_clock(),
+      owner_->get_logger(),
+      *owner_->get_clock(),
       1000,
       "Message queue starved. Messages will be delayed. Consider "
       "increasing the --read-ahead-queue-size option.");
@@ -569,18 +569,18 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::peek_next_message_fro
 bool PlayerImpl::play_next()
 {
   if (!clock_->is_paused()) {
-    RCLCPP_WARN_STREAM(node->get_logger(), "Called play next, but not in paused state.");
+    RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
     return false;
   }
 
-  RCLCPP_INFO_STREAM(node->get_logger(), "Playing next message.");
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Playing next message.");
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
   // Check one more time that we are in pause mode after waiting on mutex. Someone could call
   // resume() or stop() from another thread while we were waiting on mutex.
   if (!clock_->is_paused()) {
-    RCLCPP_WARN_STREAM(node->get_logger(), "Called play next, but not in paused state.");
+    RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
     return false;
   }
   skip_message_in_main_play_loop_ = true;
@@ -609,7 +609,7 @@ bool PlayerImpl::play_next()
 size_t PlayerImpl::burst(const size_t num_messages)
 {
   if (!clock_->is_paused()) {
-    RCLCPP_WARN_STREAM(node->get_logger(), "Burst can only be used when in the paused state.");
+    RCLCPP_WARN_STREAM(owner_->get_logger(), "Burst can only be used when in the paused state.");
     return 0;
   }
 
@@ -841,7 +841,7 @@ void PlayerImpl::prepare_publishers()
   if (play_options_.clock_publish_frequency > 0.f || play_options_.clock_publish_on_topic_publish) {
     // NOTE: PlayerClock does not own this publisher because rosbag2_cpp
     // should not own transport-based functionality
-    clock_publisher_ = node->create_publisher<rosgraph_msgs::msg::Clock>(
+    clock_publisher_ = owner_->create_publisher<rosgraph_msgs::msg::Clock>(
       "/clock", rclcpp::ClockQoS());
   }
 
@@ -849,7 +849,7 @@ void PlayerImpl::prepare_publishers()
     const auto publish_period = std::chrono::nanoseconds(
       static_cast<uint64_t>(RCUTILS_S_TO_NS(1) / play_options_.clock_publish_frequency));
 
-    clock_publish_timer_ = node->create_wall_timer(
+    clock_publish_timer_ = owner_->create_wall_timer(
       publish_period, [this]() {
         publish_clock_update();
       });
@@ -889,10 +889,10 @@ void PlayerImpl::prepare_publishers()
 
     auto topic_qos = publisher_qos_for_topic(
       topic, topic_qos_profile_overrides_,
-      node->get_logger());
+      owner_->get_logger());
     try {
       std::shared_ptr<rclcpp::GenericPublisher> pub =
-        node->create_generic_publisher(topic.name, topic.type, topic_qos);
+        owner_->create_generic_publisher(topic.name, topic.type, topic_qos);
       std::shared_ptr<PlayerImpl::PlayerPublisher> player_pub =
         std::make_shared<PlayerImpl::PlayerPublisher>(
         std::move(pub), play_options_.disable_loan_message);
@@ -906,7 +906,7 @@ void PlayerImpl::prepare_publishers()
       // using a warning log seems better than adding a new option
       // to ignore some unknown message type library
       RCLCPP_WARN(
-        node->get_logger(),
+        owner_->get_logger(),
         "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
     }
   }
@@ -918,13 +918,13 @@ void PlayerImpl::prepare_publishers()
       topic_without_support_acked.end());
 
     RCLCPP_WARN(
-      node->get_logger(),
+      owner_->get_logger(),
       "--wait-for-all-acked is invalid for the below topics since reliability of QOS is "
       "BestEffort.\n%s", topic_without_support_acked.c_str());
   }
 
   // Create a publisher and callback for when encountering a split in the input
-  split_event_pub_ = node->create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(
+  split_event_pub_ = owner_->create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(
     "events/read_split",
     1);
   rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
@@ -957,7 +957,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       message_published = true;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
-        node->get_logger(), "Failed to publish message on '" << message->topic_name <<
+        owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
           "' topic. \nError: " << e.what());
     }
 
@@ -980,7 +980,7 @@ void PlayerImpl::add_key_callback(
   std::string key_str = enum_key_code_to_str(key);
   if (key == KeyboardHandler::KeyCode::UNKNOWN) {
     RCLCPP_ERROR_STREAM(
-      node->get_logger(),
+      owner_->get_logger(),
       "Invalid key binding " << key_str << " for " << op_name);
     throw std::invalid_argument("Invalid key binding.");
   }
@@ -991,7 +991,7 @@ void PlayerImpl::add_key_callback(
       key));
   // show instructions
   RCLCPP_INFO_STREAM(
-    node->get_logger(),
+    owner_->get_logger(),
     "Press " << key_str << " for " << op_name);
 }
 
@@ -1001,81 +1001,83 @@ void PlayerImpl::add_keyboard_callbacks()
   if (play_options_.disable_keyboard_controls) {
     return;
   }
-  RCLCPP_INFO_STREAM(node->get_logger(), "Adding keyboard callbacks.");
-  // check keybindings
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Adding keyboard callbacks.");
+  // Add keybindings
+  // Note: Use upper level public API from owner class for callbacks to facilitate unit tests
   add_key_callback(
     play_options_.pause_resume_toggle_key,
-    [this]() {toggle_paused();},
+    [this]() {owner_->toggle_paused();},
     "Pause/Resume"
   );
   add_key_callback(
     play_options_.play_next_key,
-    [this]() {play_next();},
+    [this]() {owner_->play_next();},
     "Play Next Message"
   );
   add_key_callback(
     play_options_.increase_rate_key,
-    [this]() {set_rate(get_rate() * 1.1);},
+    [this]() {owner_->set_rate(get_rate() * 1.1);},
     "Increase Rate 10%"
   );
   add_key_callback(
     play_options_.decrease_rate_key,
-    [this]() {set_rate(get_rate() * 0.9);},
+    [this]() {owner_->set_rate(get_rate() * 0.9);},
     "Decrease Rate 10%"
   );
 }
 
 void PlayerImpl::create_control_services()
 {
-  srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
+  // Note: Use upper level public API from owner class for callbacks to facilitate unit tests
+  srv_pause_ = owner_->create_service<rosbag2_interfaces::srv::Pause>(
     "~/pause",
     [this](
       rosbag2_interfaces::srv::Pause::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::Pause::Response::SharedPtr)
     {
-      pause();
+      owner_->pause();
     });
-  srv_resume_ = node->create_service<rosbag2_interfaces::srv::Resume>(
+  srv_resume_ = owner_->create_service<rosbag2_interfaces::srv::Resume>(
     "~/resume",
     [this](
       rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::Resume::Response::SharedPtr)
     {
-      resume();
+      owner_->resume();
     });
-  srv_toggle_paused_ = node->create_service<rosbag2_interfaces::srv::TogglePaused>(
+  srv_toggle_paused_ = owner_->create_service<rosbag2_interfaces::srv::TogglePaused>(
     "~/toggle_paused",
     [this](
       rosbag2_interfaces::srv::TogglePaused::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::TogglePaused::Response::SharedPtr)
     {
-      toggle_paused();
+      owner_->toggle_paused();
     });
-  srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
+  srv_is_paused_ = owner_->create_service<rosbag2_interfaces::srv::IsPaused>(
     "~/is_paused",
     [this](
       rosbag2_interfaces::srv::IsPaused::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::IsPaused::Response::SharedPtr response)
     {
-      response->paused = is_paused();
+      response->paused = owner_->is_paused();
     });
-  srv_get_rate_ = node->create_service<rosbag2_interfaces::srv::GetRate>(
+  srv_get_rate_ = owner_->create_service<rosbag2_interfaces::srv::GetRate>(
     "~/get_rate",
     [this](
       rosbag2_interfaces::srv::GetRate::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::GetRate::Response::SharedPtr response)
     {
-      response->rate = get_rate();
+      response->rate = owner_->get_rate();
     });
-  srv_set_rate_ = node->create_service<rosbag2_interfaces::srv::SetRate>(
+  srv_set_rate_ = owner_->create_service<rosbag2_interfaces::srv::SetRate>(
     "~/set_rate",
     [this](
       rosbag2_interfaces::srv::SetRate::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::SetRate::Response::SharedPtr response)
     {
-      response->success = set_rate(request->rate);
+      response->success = owner_->set_rate(request->rate);
     });
-  srv_play_ = node->create_service<rosbag2_interfaces::srv::Play>(
+  srv_play_ = owner_->create_service<rosbag2_interfaces::srv::Play>(
     "~/play",
     [this](
       rosbag2_interfaces::srv::Play::Request::ConstSharedPtr request,
@@ -1086,40 +1088,40 @@ void PlayerImpl::create_control_services()
       play_options_.playback_until_timestamp =
       rclcpp::Time(request->playback_until_timestamp).nanoseconds();
       configure_play_until_timestamp();
-      response->success = play();
+      response->success = owner_->play();
     });
-  srv_play_next_ = node->create_service<rosbag2_interfaces::srv::PlayNext>(
+  srv_play_next_ = owner_->create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
     [this](
       rosbag2_interfaces::srv::PlayNext::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::PlayNext::Response::SharedPtr response)
     {
-      response->success = play_next();
+      response->success = owner_->play_next();
     });
-  srv_burst_ = node->create_service<rosbag2_interfaces::srv::Burst>(
+  srv_burst_ = owner_->create_service<rosbag2_interfaces::srv::Burst>(
     "~/burst",
     [this](
       rosbag2_interfaces::srv::Burst::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::Burst::Response::SharedPtr response)
     {
-      response->actually_burst = burst(request->num_messages);
+      response->actually_burst = owner_->burst(request->num_messages);
     });
-  srv_seek_ = node->create_service<rosbag2_interfaces::srv::Seek>(
+  srv_seek_ = owner_->create_service<rosbag2_interfaces::srv::Seek>(
     "~/seek",
     [this](
       rosbag2_interfaces::srv::Seek::Request::ConstSharedPtr request,
       rosbag2_interfaces::srv::Seek::Response::SharedPtr response)
     {
-      seek(rclcpp::Time(request->time).nanoseconds());
+      owner_->seek(rclcpp::Time(request->time).nanoseconds());
       response->success = true;
     });
-  srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
+  srv_stop_ = owner_->create_service<rosbag2_interfaces::srv::Stop>(
     "~/stop",
     [this](
       rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::Stop::Response::SharedPtr)
     {
-      stop();
+      owner_->stop();
     });
 }
 
