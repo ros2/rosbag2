@@ -307,7 +307,7 @@ TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_se
     rosbag2_transport::RecordOptions record_options;
     // Select only one topic with name "/planning" via topic list
     record_options.topics = {"/planning"};
-    record_options.all = false;
+    record_options.all_topics = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
     testing::internal::CaptureStderr();
     auto filtered_topics = filter.filter_topics(topics_and_types_);
@@ -325,7 +325,7 @@ TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_se
     rosbag2_transport::RecordOptions record_options;
     // Select only one topic with name "/planning" via regex
     record_options.regex = "^/planning";
-    record_options.all = false;
+    record_options.all_topics = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
     testing::internal::CaptureStderr();
     auto filtered_topics = filter.filter_topics(topics_and_types_);
