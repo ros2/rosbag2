@@ -179,13 +179,25 @@ public:
   /// #add_on_play_message_post_callback
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+  /// \brief Getter for publishers corresponding to each topic
+  /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
 
+  /// \brief Getter for inner clock_publisher
+  /// \return Shared pointer to the inner clock_publisher
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 
+  /// \brief Blocks and wait on condition variable until first message will be taken from read
+  /// queue
   void wait_for_playback_to_start();
-  size_t get_number_of_registered_pre_callbacks();
-  size_t get_number_of_registered_post_callbacks();
+
+  /// \brief Getter for the number of registered on_play_msg_pre_callbacks
+  /// \return Number of registered on_play_msg_pre_callbacks
+  size_t get_number_of_registered_on_play_msg_pre_callbacks();
+
+  /// \brief Getter for the number of registered on_play_msg_post_callbacks
+  /// \return Number of registered on_play_msg_post_callbacks
+  size_t get_number_of_registered_on_play_msg_post_callbacks();
 
 protected:
   struct play_msg_callback_data
@@ -214,7 +226,7 @@ public:
       }
     }
 
-    ~PlayerPublisher() {}
+    ~PlayerPublisher() = default;
 
     void publish(const rclcpp::SerializedMessage & message)
     {
@@ -348,7 +360,7 @@ PlayerImpl::PlayerImpl(
 
 PlayerImpl::~PlayerImpl()
 {
-// Force to stop playback to avoid hangout in case of unexpected exception or when smart
+  // Force to stop playback to avoid hangout in case of unexpected exception or when smart
   // pointer to the player object goes out of scope
   stop();
   // remove callbacks on key_codes to prevent race conditions
@@ -687,11 +699,11 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
 std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers()
 {
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> out_publishers_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> topic_to_publisher_map;
   for (const auto & [topic, publisher] : publishers_) {
-    out_publishers_[topic] = publisher->generic_publisher();
+    topic_to_publisher_map[topic] = publisher->generic_publisher();
   }
-  return out_publishers_;
+  return topic_to_publisher_map;
 }
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher()
@@ -705,7 +717,7 @@ void PlayerImpl::wait_for_playback_to_start()
   ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
 }
 
-size_t PlayerImpl::get_number_of_registered_pre_callbacks()
+size_t PlayerImpl::get_number_of_registered_on_play_msg_pre_callbacks()
 {
   size_t callback_counter = 0;
   std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
@@ -716,7 +728,7 @@ size_t PlayerImpl::get_number_of_registered_pre_callbacks()
   return callback_counter;
 }
 
-size_t PlayerImpl::get_number_of_registered_post_callbacks()
+size_t PlayerImpl::get_number_of_registered_on_play_msg_post_callbacks()
 {
   size_t callback_counter = 0;
   std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
@@ -1160,9 +1172,7 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
 ///////////////////////////////
 // Player public interface
 
-Player::Player(
-  const std::string & node_name,
-  const rclcpp::NodeOptions & node_options)
+Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
   // TODO(karsten1987): Use this constructor later with parameter parsing.
@@ -1177,10 +1187,7 @@ Player::Player(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
 : Player(std::make_unique<rosbag2_cpp::Reader>(),
-    storage_options,
-    play_options,
-    node_name,
-    node_options)
+    storage_options, play_options, node_name, node_options)
 {}
 
 Player::Player(
@@ -1197,10 +1204,7 @@ Player::Player(
     // We don't have signal handler option in constructor for windows version
     std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
 #endif
-    storage_options,
-    play_options,
-    node_name,
-    node_options)
+    storage_options, play_options, node_name, node_options)
 {}
 
 Player::Player(
@@ -1218,8 +1222,7 @@ Player::Player(
       storage_options, play_options))
 {}
 
-Player::~Player()
-{}
+Player::~Player() = default;
 
 
 bool Player::play()
@@ -1274,7 +1277,7 @@ size_t Player::burst(const size_t num_messages)
 
 void Player::seek(rcutils_time_point_value_t time_point)
 {
-  pimpl_->seek(std::move(time_point));
+  pimpl_->seek(time_point);
 }
 
 Player::callback_handle_t Player::add_on_play_message_pre_callback(
@@ -1304,19 +1307,19 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publis
   return pimpl_->get_clock_publisher();
 }
 
-void Player::_wait_for_playback_to_start()
+void Player::wait_for_playback_to_start()
 {
   pimpl_->wait_for_playback_to_start();
 }
 
-size_t Player::_get_number_of_registered_pre_callbacks()
+size_t Player::get_number_of_registered_on_play_msg_pre_callbacks()
 {
-  return pimpl_->get_number_of_registered_pre_callbacks();
+  return pimpl_->get_number_of_registered_on_play_msg_pre_callbacks();
 }
 
-size_t Player::_get_number_of_registered_post_callbacks()
+size_t Player::get_number_of_registered_on_play_msg_post_callbacks()
 {
-  return pimpl_->get_number_of_registered_pre_callbacks();
+  return pimpl_->get_number_of_registered_on_play_msg_post_callbacks();
 }
 
 }  // namespace rosbag2_transport

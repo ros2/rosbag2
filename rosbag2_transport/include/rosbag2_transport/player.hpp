@@ -203,16 +203,30 @@ public:
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
 protected:
+  /// \brief Getter for publishers corresponding to each topic
+  /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   ROSBAG2_TRANSPORT_PUBLIC
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
+
+  /// \brief Getter for inner clock_publisher
+  /// \return Shared pointer to the inner clock_publisher
   ROSBAG2_TRANSPORT_PUBLIC
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
+
+  /// \brief Blocks and wait on condition variable until first message will be taken from read
+  /// queue
   ROSBAG2_TRANSPORT_PUBLIC
-  void _wait_for_playback_to_start();
+  void wait_for_playback_to_start();
+
+  /// \brief Getter for the number of registered on_play_msg_pre_callbacks
+  /// \return Number of registered on_play_msg_pre_callbacks
   ROSBAG2_TRANSPORT_PUBLIC
-  size_t _get_number_of_registered_pre_callbacks();
+  size_t get_number_of_registered_on_play_msg_pre_callbacks();
+
+  /// \brief Getter for the number of registered on_play_msg_post_callbacks
+  /// \return Number of registered on_play_msg_post_callbacks
   ROSBAG2_TRANSPORT_PUBLIC
-  size_t _get_number_of_registered_post_callbacks();
+  size_t get_number_of_registered_on_play_msg_post_callbacks();
 
 private:
   std::unique_ptr<PlayerImpl> pimpl_;
