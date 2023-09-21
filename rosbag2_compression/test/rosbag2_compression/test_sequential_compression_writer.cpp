@@ -36,12 +36,10 @@
 #include "mock_storage_factory.hpp"
 
 #include "mock_compression_factory.hpp"
+#include "fake_compression_factory.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
-#else
-#include <unistd.h>
-#include <sys/resource.h>
 #endif
 
 using namespace testing;  // NOLINT
@@ -401,67 +399,16 @@ TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_siz
   EXPECT_EQ(fake_storage_size_, kNumMessagesToWrite);
 }
 
-
-TEST_P(SequentialCompressionWriterTest, writer_sets_nice_value)
+TEST_P(SequentialCompressionWriterTest, writer_sets_threads_priority)
 {
   const std::string test_topic_name = "test_topic";
   const std::string test_topic_type = "test_msgs/BasicTypes";
   const uint64_t kCompressionQueueSize = GetParam();
-  const int wanted_nice_value = 10;
-
-  class TestCompressor : public rosbag2_compression::BaseCompressorInterface
-  {
-    int & detected_nice_value;
-
-public:
-    TestCompressor(int & detected_nice_value)
-    : detected_nice_value(detected_nice_value) {}
-    virtual std::string compress_uri(const std::string & uri)
-    {
-      return uri;
-    }
-
-    virtual void compress_serialized_bag_message(
-      const rosbag2_storage::SerializedBagMessage * bag_message,
-      rosbag2_storage::SerializedBagMessage * compressed_message)
-    {
-#ifdef _WIN32
-      int cur_nice_value = getpriority(PRIO_PROCESS, 0);
-      if (cur_nice_value != -1 && errno == 0) {
-
-        detected_nice_value = cur_nice_value;
-      }
+#ifndef _WIN32
+  const int wanted_thread_priority = 10;
 #else
-      //FIXME implement windows version
+  const int wanted_thread_priority = THREAD_MODE_BACKGROUND_BEGIN;
 #endif
-
-      *compressed_message = *bag_message;
-    }
-
-    /**
-     * Get the identifier of the compression algorithm.
-     * This is appended to the extension of the compressed file.
-     */
-    virtual std::string get_compression_identifier() const
-    {
-      return "niceTest";
-    }
-  };
-
-  class FakeFactory : public rosbag2_compression::CompressionFactory
-  {
-    int & detected_nice_value;
-
-public:
-    FakeFactory(int & detected_nice_value)
-    : detected_nice_value(detected_nice_value) {}
-
-    virtual std::shared_ptr<rosbag2_compression::BaseCompressorInterface>
-    create_compressor(const std::string & /*compression_format*/)
-    {
-      return std::make_shared<TestCompressor>(detected_nice_value);
-    }
-  };
 
   // queue size should be 0 or at least the number of remaining messages to prevent message loss
   rosbag2_compression::CompressionOptions compression_options {
@@ -469,14 +416,20 @@ public:
     rosbag2_compression::CompressionMode::MESSAGE,
     kCompressionQueueSize,
     kDefaultCompressionQueueThreads,
-    wanted_nice_value
+    wanted_thread_priority
   };
 
+#ifndef _WIN32
   // nice values are in the range from -20 to +19, so this value will never be read
-  int detected_nice_value = 100;
+  int detected_thread_priority = 100;
+#else
+  int detected_thread_priority = THREAD_PRIORITY_ERROR_RETURN;
+#endif
 
   initializeFakeFileStorage();
-  initializeWriter(compression_options, std::make_unique<FakeFactory>(detected_nice_value));
+  initializeWriter(
+    compression_options,
+    std::make_unique<FakeCompressionFactory>(detected_thread_priority));
 
   writer_->open(tmp_dir_storage_options_);
   writer_->create_topic({test_topic_name, test_topic_type, "", "", ""});
@@ -490,8 +443,7 @@ public:
   }
   writer_.reset();    // reset will call writer destructor
 
-  EXPECT_EQ(detected_nice_value, *compression_options.thread_priority);
-
+  EXPECT_EQ(detected_thread_priority, *compression_options.thread_priority);
   EXPECT_EQ(fake_storage_size_, kNumMessagesToWrite);
 }
 

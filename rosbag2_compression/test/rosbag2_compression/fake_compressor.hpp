@@ -25,6 +25,8 @@ class FakeCompressor : public rosbag2_compression::BaseCompressorInterface
 public:
   FakeCompressor() = default;
 
+  explicit FakeCompressor(int & detected_thread_priority);
+
   std::string compress_uri(const std::string & uri) override;
 
   void compress_serialized_bag_message(

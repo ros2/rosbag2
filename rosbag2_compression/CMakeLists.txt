@@ -104,7 +104,8 @@ if(BUILD_TESTING)
   )
 
   ament_add_gmock(test_sequential_compression_writer
-    test/rosbag2_compression/test_sequential_compression_writer.cpp)
+    test/rosbag2_compression/test_sequential_compression_writer.cpp
+    test/rosbag2_compression/fake_compressor.cpp)
   target_link_libraries(test_sequential_compression_writer
     ${PROJECT_NAME}
     rosbag2_cpp::rosbag2_cpp

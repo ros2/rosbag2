@@ -13,10 +13,26 @@
 // limitations under the License.
 
 #include <string>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/resource.h>
+#endif
 
 #include "pluginlib/class_list_macros.hpp"
-
 #include "fake_compressor.hpp"
+
+FakeCompressor::FakeCompressor(int & detected_thread_priority)
+{
+#ifndef _WIN32
+  int cur_nice_value = getpriority(PRIO_PROCESS, 0);
+  if (cur_nice_value != -1 && errno == 0) {
+    detected_thread_priority = cur_nice_value;
+  }
+#else
+  detected_thread_priority = GetThreadPriority(GetCurrentThread());
+#endif
+}
 
 std::string FakeCompressor::compress_uri(const std::string & uri)
 {
