@@ -95,17 +95,17 @@ void SequentialCompressionWriter::compression_thread_fn()
 
     errno = 0;
     int cur_nice_value = getpriority(PRIO_PROCESS, 0);
-    if (cur_nice_value != -1 && errno == 0) {
+    if (cur_nice_value == -1 && errno != 0) {
+      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+        "Could not set nice value of compression thread to " << wanted_nice_value <<
+          " : Could not determine cur nice value");
+    } else {
       int new_nice_value = nice(wanted_nice_value - cur_nice_value);
-      if ((new_nice_value == -1 && errno != 0) || new_nice_value != wanted_nice_value) {
+      if ((new_nice_value == -1 && errno != 0)) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
           "Could not set nice value of compression thread to " << wanted_nice_value << " : " << std::strerror(
             errno));
       }
-    } else {
-      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-        "Could not set nice value of compression thread to " << wanted_nice_value <<
-          " : Could not determine cur nice value");
     }
 #endif
   }
