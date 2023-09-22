@@ -52,9 +52,9 @@ public:
   {
     std::vector<rclcpp::ClientBase *> cli_list;
     for (const auto & client : get_clients()) {
-        cli_list.push_back(
-          static_cast<rclcpp::ClientBase *>(
-            client.second.get()));
+      cli_list.push_back(
+        static_cast<rclcpp::ClientBase *>(
+          client.second.get()));
     }
 
     return cli_list;

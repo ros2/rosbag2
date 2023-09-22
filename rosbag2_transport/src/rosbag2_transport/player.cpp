@@ -189,9 +189,9 @@ public:
   /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
 
-  /// \brief Getter for clients corresponding to services 
+  /// \brief Getter for clients corresponding to services
   /// \return Hashtable representing service name to client map
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_clients();
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_clients();
 
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher
@@ -763,7 +763,7 @@ std::unordered_map<std::string,
   for (const auto & [topic, sender] : senders_) {
     if (std::holds_alternative<SharedPlayerPublisher>(sender)) {
       topic_to_publisher_map[topic] =
-      std::get<SharedPlayerPublisher>(sender)->generic_publisher();
+        std::get<SharedPlayerPublisher>(sender)->generic_publisher();
     }
   }
   return topic_to_publisher_map;
@@ -776,7 +776,7 @@ std::unordered_map<std::string,
   for (const auto & [service_name, sender] : senders_) {
     if (std::holds_alternative<SharedPlayerClient>(sender)) {
       topic_to_client_map[service_name] =
-      std::get<SharedPlayerClient>(sender)->generic_client();
+        std::get<SharedPlayerClient>(sender)->generic_client();
     }
   }
   return topic_to_client_map;
@@ -1432,7 +1432,7 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
   return pimpl_->get_publishers();
 }
 
-std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Player::get_clients()
+std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> Player::get_clients()
 {
   return pimpl_->get_clients();
 }
