@@ -55,8 +55,7 @@ class PlayVerb(VerbExtension):
             help='Space-delimited list of topics to play.')
         parser.add_argument(
             '--services', type=str, default=[], nargs='+',
-            help='services to replay, separated by space. if none specified, all services will '
-                 'be played.')
+            help='Space-delimited list of services to play.')
         parser.add_argument(
             '-e', '--regex', default='',
             help='filter topics by regular expression to replay, separated by space. If none '
