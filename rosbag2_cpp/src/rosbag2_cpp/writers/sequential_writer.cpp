@@ -340,6 +340,13 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
+  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(message->time_stamp));
+
+  if (!message_within_accepted_time_range(message_timestamp)) {
+    return;
+  }
+
   // Get TopicInformation handler for counting messages.
   rosbag2_storage::TopicInformation * topic_information {nullptr};
   try {
@@ -349,13 +356,6 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     errmsg << "Failed to write on topic '" << message->topic_name <<
       "'. Call create_topic() before first write.";
     throw std::runtime_error(errmsg.str());
-  }
-
-  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds(message->time_stamp));
-
-  if (!message_within_accepted_time_range(message_timestamp)) {
-    return;
   }
 
   if (is_first_message_) {
@@ -439,21 +439,21 @@ bool SequentialWriter::should_split_bagfile(
 bool SequentialWriter::message_within_accepted_time_range(
   const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const
 {
-  bool retVal = true;
-  if ( (storage_options_.start_time > 0) &&
+  bool ret_value = true;
+  if ( (storage_options_.start_time_ns > 0) &&
     current_time < std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(storage_options_.start_time)) )
+      std::chrono::nanoseconds(storage_options_.start_time_ns)) )
   {
-    retVal = false;
+    ret_value = false;
   } else {
-    if ( (storage_options_.end_time > 0) &&
+    if ( (storage_options_.end_time_ns > 0) &&
       current_time > std::chrono::time_point<std::chrono::high_resolution_clock>(
-        std::chrono::nanoseconds(storage_options_.end_time)) )
+        std::chrono::nanoseconds(storage_options_.end_time_ns)) )
     {
-      retVal = false;
+      ret_value = false;
     }
   }
-  return retVal;
+  return ret_value;
 }
 
 void SequentialWriter::finalize_metadata()

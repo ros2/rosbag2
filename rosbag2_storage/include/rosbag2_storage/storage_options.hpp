@@ -21,7 +21,6 @@
 
 #include "rosbag2_storage/visibility_control.hpp"
 #include "rosbag2_storage/yaml.hpp"
-#include "rclcpp/time.hpp"
 
 namespace rosbag2_storage
 {
@@ -58,8 +57,8 @@ public:
   bool snapshot_mode = false;
 
   // Start and end time for cutting
-  rcutils_time_point_value_t start_time = 0;
-  rcutils_time_point_value_t end_time = 0;
+  uint64_t start_time_ns = 0;
+  uint64_t end_time_ns = 0;
 
   // Stores the custom data
   std::unordered_map<std::string, std::string> custom_data{};
