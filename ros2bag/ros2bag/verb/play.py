@@ -50,8 +50,7 @@ class PlayVerb(VerbExtension):
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
             '--topics', type=str, default=[], nargs='+',
-            help='topics to replay, separated by space. If none specified, all topics will be '
-                 'replayed.')
+            help='Space-delimited list of topics to play.')
         parser.add_argument(
             '-e', '--regex', default='',
             help='filter topics by regular expression to replay, separated by space. If none '
