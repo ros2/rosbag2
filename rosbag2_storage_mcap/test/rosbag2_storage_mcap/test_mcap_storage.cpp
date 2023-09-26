@@ -14,6 +14,7 @@
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
+#include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -122,7 +123,6 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
     writer->create_topic({"topic2", "type2", "rmw2", "qos_profile2", "type_hash2"}, {});
     (void)write_messages_to_mcap(messages, writer);
     auto metadata = writer->get_metadata();
-    metadata.ros_distro = "rolling";
     metadata.custom_data["key1"] = "value1";
     writer->update_metadata(metadata);
   }
@@ -146,9 +146,6 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
         2u},
     }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
-
-  const auto current_distro = "rolling";
-  EXPECT_EQ(metadata.ros_distro, current_distro);
 
   EXPECT_THAT(
     metadata.starting_time,

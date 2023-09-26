@@ -239,7 +239,6 @@ private:
   bool enqueued_message_is_already_read();
   bool message_indexes_present();
   void ensure_summary_read();
-  void ensure_rosdistro_metadata_added();
 
   std::optional<rosbag2_storage::storage_interfaces::IOFlag> opened_as_;
   std::string relative_path_;
@@ -262,7 +261,6 @@ private:
   std::unique_ptr<mcap::McapWriter> mcap_writer_;
 
   bool has_read_summary_ = false;
-  bool has_added_ros_distro_metadata_ = false;
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;
@@ -367,7 +365,6 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
-      ensure_rosdistro_metadata_added();
       break;
     }
   }
@@ -404,11 +401,6 @@ void MCAPStorage::read_metadata()
     if (!serialized_metadata.empty()) {
       YAML::Node metadata_node = YAML::Load(serialized_metadata);
       YAML::convert<rosbag2_storage::BagMetadata>::decode(metadata_node, metadata_);
-    }
-    try {
-      metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
-    } catch (const std::out_of_range & /* err */) {
-      // Ignor this error. In new versions ROS_DISTRO stored inside `serialized_metadata`.
     }
   }
 
@@ -460,15 +452,12 @@ void MCAPStorage::read_metadata()
   }
 }
 
-<<<<<<< HEAD
-=======
 /** BaseInfoInterface **/
 rosbag2_storage::BagMetadata MCAPStorage::get_metadata()
 {
   if (opened_as_ == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
     read_metadata();
   }
->>>>>>> a029ef9 (Store serialized metadata in MCAP file (#1423))
   return metadata_;
 }
 
@@ -848,36 +837,19 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
   }
-<<<<<<< HEAD
-  ensure_rosdistro_metadata_added();
-=======
 
   mcap::Metadata metadata;
   metadata.name = "rosbag2";
   YAML::Node metadata_node = YAML::convert<rosbag2_storage::BagMetadata>::encode(bag_metadata);
   std::string serialized_metadata = YAML::Dump(metadata_node);
-  metadata.metadata = {{"serialized_metadata", serialized_metadata}};
+  metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")},
+                       {"serialized_metadata", serialized_metadata}};
   mcap::Status status = mcap_writer_->write(metadata);
   if (!status.ok()) {
     OnProblem(status);
   }
->>>>>>> a029ef9 (Store serialized metadata in MCAP file (#1423))
 }
 #endif
-
-void MCAPStorage::ensure_rosdistro_metadata_added()
-{
-  if (!has_added_ros_distro_metadata_) {
-    mcap::Metadata metadata;
-    metadata.name = "rosbag2";
-    metadata.metadata = {{"ROS_DISTRO", rcpputils::get_env_var("ROS_DISTRO")}};
-    mcap::Status status = mcap_writer_->write(metadata);
-    if (!status.ok()) {
-      OnProblem(status);
-    }
-  }
-  has_added_ros_distro_metadata_ = true;
-}
 
 }  // namespace rosbag2_storage_plugins
 
