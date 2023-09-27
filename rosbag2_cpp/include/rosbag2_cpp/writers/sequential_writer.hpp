@@ -117,7 +117,7 @@ public:
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
-   * Only writes message if timestamp is within start_time_ns and end_time_ns.
+   * Only writes message if within start_time_ns and end_time_ns (from storage_options).
    *
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
