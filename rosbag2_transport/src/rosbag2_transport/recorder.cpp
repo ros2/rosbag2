@@ -38,8 +38,7 @@
 #include "rosbag2_storage/qos.hpp"
 
 #include "logging.hpp"
-#include "rosbag2_transport/storage_options_from_node_params.hpp"
-#include "rosbag2_transport/record_options_from_node_params.hpp"
+#include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport

@@ -36,8 +36,7 @@
 #include "rosbag2_storage/storage_filter.hpp"
 
 #include "rosbag2_transport/qos.hpp"
-#include "rosbag2_transport/storage_options_from_node_params.hpp"
-#include "rosbag2_transport/play_options_from_node_params.hpp"
+#include "rosbag2_transport/config_options_from_node_params.hpp"
 
 namespace
 {

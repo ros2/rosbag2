@@ -12,18 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__STORAGE_OPTIONS_FROM_NODE_PARAMS_HPP_
-#define ROSBAG2_TRANSPORT__STORAGE_OPTIONS_FROM_NODE_PARAMS_HPP_
+#ifndef ROSBAG2_TRANSPORT__CONFIG_OPTIONS_FROM_NODE_PARAMS_HPP_
+#define ROSBAG2_TRANSPORT__CONFIG_OPTIONS_FROM_NODE_PARAMS_HPP_
 
 #include <memory>
 
 #include "rclcpp/node.hpp"
-#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport/storage_options.hpp"
+
 
 namespace rosbag2_transport
 {
+rosbag2_transport::PlayOptions
+get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
+
+rosbag2_transport::RecordOptions
+get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
+
 rosbag2_storage::StorageOptions
 get_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node);
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__STORAGE_OPTIONS_FROM_NODE_PARAMS_HPP_
+#endif  // ROSBAG2_TRANSPORT__CONFIG_OPTIONS_FROM_NODE_PARAMS_HPP_
