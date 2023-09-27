@@ -20,8 +20,7 @@
 #include "rclcpp/node.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport/storage_options.hpp"
-
+#include "rosbag2_storage/storage_options.hpp"
 
 namespace rosbag2_transport
 {
