@@ -95,12 +95,12 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
     "qos_profile_overrides_path", ""
   );
 
-  if (qos_profile_overrides_path != ""){
+  if (qos_profile_overrides_path != "") {
     try {
       YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
-      for (auto topic_qos: yaml_file){
+      for (auto topic_qos : yaml_file) {
         play_options.topic_qos_profile_overrides
-          .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+        .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
       }
     } catch (const YAML::Exception & ex) {
       throw std::runtime_error(
@@ -236,17 +236,17 @@ RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> 
     0,
     desc_cts);
   record_options.compression_threads = static_cast<uint64_t>(compression_threads_);
-  
+
   std::string qos_profile_overrides_path = node->declare_parameter<std::string>(
     "qos_profile_overrides_path", ""
   );
 
-  if (qos_profile_overrides_path != ""){
+  if (qos_profile_overrides_path != "") {
     try {
       YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
-      for (auto topic_qos: yaml_file){
+      for (auto topic_qos : yaml_file) {
         record_options.topic_qos_profile_overrides
-          .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+        .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
       }
     } catch (const YAML::Exception & ex) {
       throw std::runtime_error(
@@ -254,7 +254,7 @@ RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> 
               ex.what());
     }
   }
-  
+
   record_options.include_hidden_topics = node->declare_parameter<bool>(
     "include_hidden_topics",
     false);
