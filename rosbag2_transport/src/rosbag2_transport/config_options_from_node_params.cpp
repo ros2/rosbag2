@@ -91,8 +91,23 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
     "topics_regex_to_exclude",
     "");
 
-  // TODO(roncapat)
-  // std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
+  std::string qos_profile_overrides_path = node->declare_parameter<std::string>(
+    "qos_profile_overrides_path", ""
+  );
+
+  if (qos_profile_overrides_path != ""){
+    try {
+      YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
+      for (auto topic_qos: yaml_file){
+        record_options.topic_qos_profile_overrides
+          .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+      }
+    } catch (const YAML::Exception & ex) {
+      throw std::runtime_error(
+              std::string("Exception on parsing QoS ovverrides file: ") +
+              ex.what());
+    }
+  }
 
   play_options.loop = node->declare_parameter<bool>(
     "loop",
@@ -221,11 +236,25 @@ RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> 
     0,
     desc_cts);
   record_options.compression_threads = static_cast<uint64_t>(compression_threads_);
+  
+  std::string qos_profile_overrides_path = node->declare_parameter<std::string>(
+    "qos_profile_overrides_path", ""
+  );
 
-  // TODO(roncapat)
-  // std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
-  // original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
-
+  if (qos_profile_overrides_path != ""){
+    try {
+      YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
+      for (auto topic_qos: yaml_file){
+        record_options.topic_qos_profile_overrides
+          .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+      }
+    } catch (const YAML::Exception & ex) {
+      throw std::runtime_error(
+              std::string("Exception on parsing QoS ovverrides file: ") +
+              ex.what());
+    }
+  }
+  
   record_options.include_hidden_topics = node->declare_parameter<bool>(
     "include_hidden_topics",
     false);
