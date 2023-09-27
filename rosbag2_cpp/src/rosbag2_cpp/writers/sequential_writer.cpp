@@ -340,10 +340,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds(message->time_stamp));
-
-  if (!message_within_accepted_time_range(message_timestamp)) {
+  if (!message_within_accepted_time_range(message->time_stamp)) {
     return;
   }
 
@@ -357,6 +354,9 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
       "'. Call create_topic() before first write.";
     throw std::runtime_error(errmsg.str());
   }
+
+  const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(message->time_stamp));
 
   if (is_first_message_) {
     // Update bagfile starting time
@@ -436,25 +436,23 @@ bool SequentialWriter::should_split_bagfile(
   return should_split;
 }
 
-bool SequentialWriter::message_within_accepted_time_range(
-  const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const
-{
-  bool ret_value = true;
-  if ( (storage_options_.start_time_ns > 0) &&
-    current_time < std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(storage_options_.start_time_ns)) )
-  {
-    ret_value = false;
-  } else {
-    if ( (storage_options_.end_time_ns > 0) &&
-      current_time > std::chrono::time_point<std::chrono::high_resolution_clock>(
-        std::chrono::nanoseconds(storage_options_.end_time_ns)) )
-    {
-      ret_value = false;
-    }
-  }
-  return ret_value;
-}
+bool SequentialWriter::message_within_accepted_time_range(  
+  const rcutils_time_point_value_t current_time) const  
+{  
+  if (storage_options_.start_time_ns >= 0 &&  
+      static_cast<int64_t>(current_time) < storage_options_.start_time_ns)  
+  {  
+    return false;  
+  }  
+  
+  if (storage_options_.end_time_ns >= 0 &&  
+      static_cast<int64_t>(current_time) > storage_options_.end_time_ns)  
+  {  
+    return false;  
+  }  
+  
+  return true;  
+}  
 
 void SequentialWriter::finalize_metadata()
 {

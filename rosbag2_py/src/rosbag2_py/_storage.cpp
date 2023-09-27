@@ -84,7 +84,7 @@ PYBIND11_MODULE(_storage, m) {
   .def(
     pybind11::init<
       std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool,
-      uint64_t, uint64_t, KEY_VALUE_MAP>(),
+      int64_t, int64_t, KEY_VALUE_MAP>(),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
@@ -93,8 +93,8 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
-    pybind11::arg("start_time_ns") = 0,
-    pybind11::arg("end_time_ns") = 0,
+    pybind11::arg("start_time_ns") = -1,
+    pybind11::arg("end_time_ns") = -1,
     pybind11::arg("custom_data") = KEY_VALUE_MAP{})
   .def_readwrite("uri", &rosbag2_storage::StorageOptions::uri)
   .def_readwrite("storage_id", &rosbag2_storage::StorageOptions::storage_id)

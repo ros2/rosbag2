@@ -177,7 +177,7 @@ protected:
 
   // Checks if the message to be written is within accepted time range
   bool message_within_accepted_time_range(
-    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
+    const rcutils_time_point_value_t current_time) const;
 
   // Prepares the metadata by setting initial values.
   virtual void init_metadata();
