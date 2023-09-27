@@ -99,7 +99,7 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
     try {
       YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
       for (auto topic_qos: yaml_file){
-        record_options.topic_qos_profile_overrides
+        play_options.topic_qos_profile_overrides
           .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
       }
     } catch (const YAML::Exception & ex) {
