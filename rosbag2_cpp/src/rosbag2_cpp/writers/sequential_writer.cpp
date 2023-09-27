@@ -440,13 +440,13 @@ bool SequentialWriter::message_within_accepted_time_range(
   const rcutils_time_point_value_t current_time) const
 {
   if (storage_options_.start_time_ns >= 0 &&
-      static_cast<int64_t>(current_time) < storage_options_.start_time_ns)
+    static_cast<int64_t>(current_time) < storage_options_.start_time_ns)
   {
     return false;
   }
 
   if (storage_options_.end_time_ns >= 0 &&
-      static_cast<int64_t>(current_time) > storage_options_.end_time_ns)
+    static_cast<int64_t>(current_time) > storage_options_.end_time_ns)
   {
     return false;
   }
