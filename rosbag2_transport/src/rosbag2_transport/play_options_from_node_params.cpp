@@ -113,12 +113,6 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
     "disable_keyboard_controls",
     false);
 
-  // TODO(roncapat): but these are never set in ros2 bag play verb.
-  // KeyboardHandler::KeyCode pause_resume_toggle_key = KeyboardHandler::KeyCode::SPACE;
-  // KeyboardHandler::KeyCode play_next_key = KeyboardHandler::KeyCode::CURSOR_RIGHT;
-  // KeyboardHandler::KeyCode increase_rate_key = KeyboardHandler::KeyCode::CURSOR_UP;
-  // KeyboardHandler::KeyCode decrease_rate_key = KeyboardHandler::KeyCode::CURSOR_DOWN;
-
   play_options.wait_acked_timeout = node->declare_parameter<int64_t>(
     "wait_acked_timeout",
     -1);
