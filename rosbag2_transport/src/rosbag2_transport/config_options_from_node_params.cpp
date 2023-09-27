@@ -27,13 +27,31 @@ namespace param_utils
 {
 rcl_interfaces::msg::ParameterDescriptor int_param_description(
   std::string description, int64_t min,
-  int64_t max);
+  int64_t max)
+{
+  rcl_interfaces::msg::ParameterDescriptor d{};
+  rcl_interfaces::msg::IntegerRange r{};
+  d.description = std::move(description);
+  r.from_value = min;
+  r.to_value = max;
+  d.integer_range.push_back(r);
+  return d;
+}
 
 rcl_interfaces::msg::ParameterDescriptor float_param_description(
   std::string description, float min,
-  float max);
-
+  float max)
+{
+  rcl_interfaces::msg::ParameterDescriptor d{};
+  rcl_interfaces::msg::FloatingPointRange r{};
+  d.description = std::move(description);
+  r.from_value = min;
+  r.to_value = max;
+  d.floating_point_range.push_back(r);
+  return d;
+}
 }  // namespace param_utils
+
 
 PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
 {
