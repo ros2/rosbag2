@@ -25,7 +25,6 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(sqlite3_vendor REQUIRED)
@@ -43,7 +42,6 @@ target_link_libraries(${PROJECT_NAME}
   pluginlib::pluginlib
   rosbag2_storage::rosbag2_storage
   rcpputils::rcpputils
-  rclcpp::rclcpp
   rcutils::rcutils
   SQLite::SQLite3
   yaml-cpp
