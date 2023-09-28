@@ -117,6 +117,7 @@ public:
 
   /**
    * Write a message to a bagfile. The topic needs to have been created before writing is possible.
+   * Only writes message if within start_time_ns and end_time_ns (from storage_options).
    *
    * \param message to be written to the bagfile
    * \throws runtime_error if the Writer is not open.
@@ -173,6 +174,10 @@ protected:
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
+
+  // Checks if the message to be written is within accepted time range
+  bool message_within_accepted_time_range(
+    const rcutils_time_point_value_t current_time) const;
 
   // Prepares the metadata by setting initial values.
   virtual void init_metadata();

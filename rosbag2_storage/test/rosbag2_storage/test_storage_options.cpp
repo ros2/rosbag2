@@ -29,6 +29,8 @@ TEST(storage_options, test_yaml_serialization)
   original.storage_preset_profile = "profile";
   original.storage_config_uri = "config_uri";
   original.snapshot_mode = true;
+  original.start_time_ns = 12345000;
+  original.end_time_ns = 23456000;
   original.custom_data["key1"] = "value1";
   original.custom_data["key2"] = "value2";
 
@@ -48,5 +50,7 @@ TEST(storage_options, test_yaml_serialization)
   ASSERT_EQ(original.storage_preset_profile, reconstructed.storage_preset_profile);
   ASSERT_EQ(original.storage_config_uri, reconstructed.storage_config_uri);
   ASSERT_EQ(original.snapshot_mode, reconstructed.snapshot_mode);
+  ASSERT_EQ(original.start_time_ns, reconstructed.start_time_ns);
+  ASSERT_EQ(original.end_time_ns, reconstructed.end_time_ns);
   ASSERT_EQ(original.custom_data, reconstructed.custom_data);
 }
