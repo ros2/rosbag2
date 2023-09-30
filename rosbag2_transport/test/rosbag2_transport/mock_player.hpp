@@ -33,6 +33,12 @@ public:
   : Player(std::move(reader), storage_options, play_options, node_name)
   {}
 
+  explicit MockPlayer(
+    const std::string & node_name = "rosbag2_mock_composable_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : Player(node_name, node_options)
+  {}
+
   std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
   {
     std::vector<rclcpp::PublisherBase *> pub_list;
@@ -58,6 +64,16 @@ public:
   size_t get_number_of_registered_post_callbacks()
   {
     return get_number_of_registered_on_play_msg_post_callbacks();
+  }
+
+  rosbag2_storage::StorageOptions retrieve_storage_options()
+  {
+    return get_storage_options();
+  }
+
+  rosbag2_transport::PlayOptions retrieve_play_options()
+  {
+    return get_play_options();
   }
 };
 

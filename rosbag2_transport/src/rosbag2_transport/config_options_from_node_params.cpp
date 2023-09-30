@@ -136,6 +136,11 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
     "clock_trigger_topics",
     std::vector<std::string>());
 
+  auto delay_ = node->declare_parameter<double>(
+    "delay",
+    0.0);
+  play_options.delay = rclcpp::Duration::from_seconds(delay_);
+
   auto playback_duration_ = node->declare_parameter<double>(
     "playback_duration",
     -1);

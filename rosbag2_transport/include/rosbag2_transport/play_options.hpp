@@ -21,12 +21,23 @@
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
-#include "rclcpp/duration.hpp"
-#include "rclcpp/time.hpp"
-#include "rclcpp/qos.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rosbag2_storage/yaml.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
 {
+
+/// Simple wrapper around rclcpp::Duration to provide a default constructor for YAML deserialization.
+class ROSBAG2_TRANSPORT_PUBLIC Rosbag2Duration : public rclcpp::Duration
+{
+public:
+  Rosbag2Duration()
+  : rclcpp::Duration(-1, 0) {}
+
+  Rosbag2Duration(const rclcpp::Duration & value)
+  : rclcpp::Duration(value) {}
+};
 
 struct PlayOptions
 {
@@ -66,13 +77,13 @@ public:
   std::vector<std::string> clock_trigger_topics = {};
 
   // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
-  rclcpp::Duration delay = rclcpp::Duration(0, 0);
+  Rosbag2Duration delay = rclcpp::Duration(0, 0);
 
   // Determines the maximum duration of the playback. Negative durations will make the playback to
   // not stop. Default configuration makes the player to not stop execution.
   // When positive, the maximum of `play_until_timestamp` and the one that this attribute yields
   // will be used to determine which one stops playback execution.
-  rclcpp::Duration playback_duration = rclcpp::Duration(-1, 0);
+  Rosbag2Duration playback_duration = rclcpp::Duration(-1, 0);
 
   // Determines the timestamp at which the playback will stop. Negative timestamps will make the
   // playback to not stop. Default configuration makes the player to not stop execution.
@@ -102,5 +113,17 @@ public:
 };
 
 }  // namespace rosbag2_transport
+
+namespace YAML
+{
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::PlayOptions>
+{
+  static Node encode(const rosbag2_transport::PlayOptions & play_options);
+  static bool decode(const Node & node, rosbag2_transport::PlayOptions & play_options);
+};
+
+}  // namespace YAML
+
 
 #endif  // ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_

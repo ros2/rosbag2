@@ -45,6 +45,7 @@ find_package(yaml_cpp_vendor REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
   src/rosbag2_transport/player.cpp
+  src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
@@ -110,6 +111,12 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_play
     test/rosbag2_transport/test_play.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common
+    ${SKIP_TEST})
+
+    rosbag2_transport_add_gmock(test_play_params
+    test/rosbag2_transport/test_play_params.cpp
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common
     ${SKIP_TEST})
