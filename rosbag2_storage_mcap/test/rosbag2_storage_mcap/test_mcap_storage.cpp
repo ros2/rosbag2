@@ -14,7 +14,6 @@
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/storage_factory.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
@@ -25,6 +24,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -58,7 +58,7 @@ public:
     if (nullptr == rw_storage) {
       rosbag2_storage::StorageFactory factory;
       rosbag2_storage::StorageOptions options;
-      auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
+      auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
       options.uri = uri.string();
       options.storage_id = "mcap";
       rw_storage = factory.open_read_write(options);
@@ -88,8 +88,8 @@ bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 {
   const std::string storage_id = "mcap";
-  auto uri = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
-  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "rosbag.mcap";
+  auto uri = (std::filesystem::path(temporary_dir_path_) / "rosbag").string();
+  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "rosbag.mcap";
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
                                                          "string data", ""};
 
@@ -161,8 +161,8 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 {
-  auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
+  auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
+  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -211,7 +211,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
   }
-  EXPECT_TRUE(expected_bag.is_regular_file());
+  EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   {
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
@@ -255,8 +255,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 // This test disabled on Foxy since StorageOptions doesn't have storage_config_uri field on it
 TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 {
-  auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
+  auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
+  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -298,7 +298,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
     writer->write(serialized_bag_msg);
-    EXPECT_TRUE(expected_bag.is_regular_file());
+    EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   }
   {
     rosbag2_storage::StorageOptions options;

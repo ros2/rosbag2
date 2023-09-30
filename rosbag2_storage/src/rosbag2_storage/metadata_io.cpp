@@ -14,11 +14,10 @@
 
 #include "rosbag2_storage/metadata_io.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rcutils/filesystem.h"
 
@@ -56,14 +55,14 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
 
 std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 {
-  std::string metadata_file = (rcpputils::fs::path(uri) / metadata_filename).string();
+  std::string metadata_file = (std::filesystem::path(uri) / metadata_filename).string();
 
   return metadata_file;
 }
 
 bool MetadataIo::metadata_file_exists(const std::string & uri)
 {
-  return rcpputils::fs::exists(rcpputils::fs::path(get_metadata_file_name(uri)));
+  return std::filesystem::exists(std::filesystem::path(get_metadata_file_name(uri)));
 }
 
 std::string MetadataIo::serialize_metadata(const BagMetadata & metadata)
