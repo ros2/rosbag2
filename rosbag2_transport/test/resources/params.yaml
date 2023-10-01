@@ -1,30 +1,29 @@
 player_params_node:
-  test: true
-  read_ahead_queue_size: 3
-  node_prefix: "test"
-  rate: 13.0
-  topics_to_filter: {"/foo", "/bar"}
-  topics_regex_to_filter: "[xyz]/topic"
-  topics_regex_to_exclude: "[abc]/topic"
-  qos_profile_overrides_path: overrides.yaml
-  loop: true
-  clock_publish_frequency: 19.0
-  clock_publish_on_topic_publish: : true
-  clock_trigger_topics: : {"/triggers/clock"}
-  playback_duration: 3.6
-  playback_until_timestamp: 5.8
-  start_paused: true
-  start_offset: 0.3
-  disable_keyboard_controls: true
-  wait_acked_timeout: true
-  disable_loan_message: true
+  ros__parameters:
+    test: true
+    read_ahead_queue_size: 3
+    node_prefix: "test"
+    rate: 13.0
+    topics_to_filter: ["/foo", "/bar"]
+    topics_regex_to_filter: "[xyz]/topic"
+    topics_regex_to_exclude: "[abc]/topic"
+    loop: true
+    clock_publish_frequency: 19.0
+    clock_publish_on_topic_publish: true
+    clock_trigger_topics: ["/triggers/clock"]
+    playback_duration: 3.6
+    playback_until_timestamp: 5.8
+    start_paused: true
+    start_offset: 0.3
+    disable_keyboard_controls: true
+    wait_acked_timeout: true
+    disable_loan_message: true
 
-  uri: sqlite3/test_bag_for_seek/test_bag_for_seek_0.db3
-  storage_id: sqlite3
-  config_uri: ""
-  max_bagfile_size: 12345
-  max_bagfile_duration: 54321
-  max_cache_size: 9898
-  preset_profile: "anything"
-  snapshot_mode: false
-  custom_data: {"test=true"}
+    storage_id: sqlite3
+    config_uri: ""
+    max_bagfile_size: 12345
+    max_bagfile_duration: 54321
+    max_cache_size: 9898
+    preset_profile: "anything"
+    snapshot_mode: false
+    custom_data: ["test=true"]

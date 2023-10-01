@@ -37,6 +37,8 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
     "--ros-args",
     "--params-file", _SRC_RESOURCES_DIR_PATH "/params.yaml"
   });
+  opts.append_parameter_override("qos_profile_overrides_path", _SRC_RESOURCES_DIR_PATH "/overrides.yaml");
+  opts.append_parameter_override("uri", _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek/test_bag_for_seek_0");
 
   auto node = std::make_shared<MockPlayer>("player_params_node", opts);
   auto play_options = node->retrieve_play_options();

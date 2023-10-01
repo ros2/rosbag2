@@ -53,7 +53,7 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
 }  // namespace param_utils
 
 
-PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+PlayOptions get_play_options_from_node_params(rclcpp::Node* node)
 {
   PlayOptions play_options{};
   auto desc_raqs = param_utils::int_param_description(
@@ -173,7 +173,7 @@ PlayOptions get_play_options_from_node_params(std::shared_ptr<rclcpp::Node> node
   return play_options;
 }
 
-RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+RecordOptions get_record_options_from_node_params(rclcpp::Node* node)
 {
   RecordOptions record_options{};
   record_options.all = node->declare_parameter<bool>(
@@ -290,7 +290,7 @@ RecordOptions get_record_options_from_node_params(std::shared_ptr<rclcpp::Node> 
 }
 
 rosbag2_storage::StorageOptions
-get_storage_options_from_node_params(std::shared_ptr<rclcpp::Node> node)
+get_storage_options_from_node_params(rclcpp::Node* node)
 {
   rosbag2_storage::StorageOptions storage_options{};
 
