@@ -71,6 +71,34 @@ public:
 namespace YAML
 {
 template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_qos_history_policy_t>
+{
+  static Node encode(const rmw_qos_history_policy_t & policy);
+  static bool decode(const Node & node, rmw_qos_history_policy_t & policy);
+};
+
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_qos_reliability_policy_t>
+{
+  static Node encode(const rmw_qos_reliability_policy_t & policy);
+  static bool decode(const Node & node, rmw_qos_reliability_policy_t & policy);
+};
+
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_qos_durability_policy_t>
+{
+  static Node encode(const rmw_qos_durability_policy_t & policy);
+  static bool decode(const Node & node, rmw_qos_durability_policy_t & policy);
+};
+
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_qos_liveliness_policy_t>
+{
+  static Node encode(const rmw_qos_liveliness_policy_t & policy);
+  static bool decode(const Node & node, rmw_qos_liveliness_policy_t & policy);
+};
+
+template<>
 struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_time_t>
 {
   static Node encode(const rmw_time_t & time);

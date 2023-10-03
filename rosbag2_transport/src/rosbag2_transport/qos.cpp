@@ -18,6 +18,7 @@
 
 #include "rosbag2_transport/qos.hpp"
 #include "logging.hpp"
+#include "rmw/qos_string_conversions.h"
 
 namespace
 {
@@ -39,8 +40,60 @@ static const rmw_time_t RMW_FASTRTPS_FOXY_INFINITE {0x7FFFFFFFll, 0xFFFFFFFFll};
 static const rmw_time_t RMW_CONNEXT_FOXY_INFINITE  {0x7FFFFFFFll, 0x7FFFFFFFll};
 }  // namespace
 
+
 namespace YAML
 {
+
+Node convert<rmw_qos_history_policy_t>::encode(const rmw_qos_history_policy_t & policy)
+{
+  return Node(std::string(rmw_qos_history_policy_to_str(policy)));
+}
+
+bool convert<rmw_qos_history_policy_t>::decode(const Node & node, rmw_qos_history_policy_t & policy)
+{
+  policy = rmw_qos_history_policy_from_str(node.as<std::string>().c_str());
+  return true;
+}
+
+Node convert<rmw_qos_reliability_policy_t>::encode(const rmw_qos_reliability_policy_t & policy)
+{
+  return Node(std::string(rmw_qos_reliability_policy_to_str(policy)));
+}
+
+bool convert<rmw_qos_reliability_policy_t>::decode(
+  const Node & node,
+  rmw_qos_reliability_policy_t & policy)
+{
+  policy = rmw_qos_reliability_policy_from_str(node.as<std::string>().c_str());
+  return true;
+}
+
+Node convert<rmw_qos_durability_policy_t>::encode(const rmw_qos_durability_policy_t & policy)
+{
+  return Node(std::string(rmw_qos_durability_policy_to_str(policy)));
+}
+
+bool convert<rmw_qos_durability_policy_t>::decode(
+  const Node & node,
+  rmw_qos_durability_policy_t & policy)
+{
+  policy = rmw_qos_durability_policy_from_str(node.as<std::string>().c_str());
+  return true;
+}
+
+Node convert<rmw_qos_liveliness_policy_t>::encode(const rmw_qos_liveliness_policy_t & policy)
+{
+  return Node(std::string(rmw_qos_liveliness_policy_to_str(policy)));
+}
+
+bool convert<rmw_qos_liveliness_policy_t>::decode(
+  const Node & node,
+  rmw_qos_liveliness_policy_t & policy)
+{
+  policy = rmw_qos_liveliness_policy_from_str(node.as<std::string>().c_str());
+  return true;
+}
+
 Node convert<rmw_time_t>::encode(const rmw_time_t & time)
 {
   Node node;
@@ -67,13 +120,13 @@ Node convert<rosbag2_transport::Rosbag2QoS>::encode(const rosbag2_transport::Ros
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
-  node["history"] = static_cast<int>(p.history);
+  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history);
   node["depth"] = p.depth;
-  node["reliability"] = static_cast<int>(p.reliability);
-  node["durability"] = static_cast<int>(p.durability);
+  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability);
+  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability);
   node["deadline"] = p.deadline;
   node["lifespan"] = p.lifespan;
-  node["liveliness"] = static_cast<int>(p.liveliness);
+  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness);
   node["liveliness_lease_duration"] = p.liveliness_lease_duration;
   node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
   return node;
@@ -82,19 +135,14 @@ Node convert<rosbag2_transport::Rosbag2QoS>::encode(const rosbag2_transport::Ros
 bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   const Node & node, rosbag2_transport::Rosbag2QoS & qos)
 {
-  auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
-  auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
-  auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
-  auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
-
   qos
   .keep_last(node["depth"].as<int>())
-  .history(history)
-  .reliability(reliability)
-  .durability(durability)
+  .history(node["history"].as<rmw_qos_history_policy_t>())
+  .reliability(node["reliability"].as<rmw_qos_reliability_policy_t>())
+  .durability(node["durability"].as<rmw_qos_durability_policy_t>())
   .deadline(node["deadline"].as<rmw_time_t>())
   .lifespan(node["lifespan"].as<rmw_time_t>())
-  .liveliness(liveliness)
+  .liveliness(node["liveliness"].as<rmw_qos_liveliness_policy_t>())
   .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
   return true;

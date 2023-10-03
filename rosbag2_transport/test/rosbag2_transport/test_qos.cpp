@@ -41,17 +41,17 @@ TEST(TestQoS, supports_version_4)
   // This test shows how this data looks at the time of introduction
   // Bags created by this version of rosbag2 look like this and must be able to be read
   std::string serialized_profiles =
-    "- history: 1\n"
+    "- history: system_default\n"
     "  depth: 10\n"
-    "  reliability: 1\n"
-    "  durability: 2\n"
+    "  reliability: reliable\n"
+    "  durability: volatile\n"
     "  deadline:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
     "  lifespan:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
-    "  liveliness: 0\n"
+    "  liveliness: system_default\n"
     "  liveliness_lease_duration:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
@@ -118,17 +118,17 @@ TEST(TestQoS, translates_bad_infinity_values)
   for (const auto & infinity : bad_infinities) {
     std::ostringstream serialized_profile;
     serialized_profile <<
-      "history: 1\n"
+      "history: system_default\n"
       "depth: 10\n"
-      "reliability: 1\n"
-      "durability: 2\n"
+      "reliability: reliable\n"
+      "durability: volatile\n"
       "deadline:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
       "lifespan:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
-      "liveliness: 0\n"
+      "liveliness: system_default\n"
       "liveliness_lease_duration:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
