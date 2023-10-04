@@ -70,7 +70,6 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
 void SequentialCompressionWriter::compression_thread_fn()
 {
   if (compression_options_.thread_priority) {
-
 #ifdef _WIN32
     ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
       "Changing thread priority is not implemented for windows");
@@ -103,8 +102,8 @@ void SequentialCompressionWriter::compression_thread_fn()
       int new_nice_value = nice(wanted_nice_value - cur_nice_value);
       if ((new_nice_value == -1 && errno != 0)) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-          "Could not set nice value of compression thread to " << wanted_nice_value << " : " << std::strerror(
-            errno));
+          "Could not set nice value of compression thread to " << wanted_nice_value <<
+            " : " << std::strerror(errno));
       }
     }
 #endif

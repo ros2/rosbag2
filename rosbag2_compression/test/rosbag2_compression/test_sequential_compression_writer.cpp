@@ -148,7 +148,7 @@ public:
 
   const uint64_t kDefaultCompressionQueueSize = 1;
   const uint64_t kDefaultCompressionQueueThreads = 4;
-  const std::optional<int8_t> kDefaultCompressionQueueThreadsPriority = std::nullopt;
+  const std::optional<int32_t> kDefaultCompressionQueueThreadsPriority = std::nullopt;
 };
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
@@ -405,9 +405,9 @@ TEST_P(SequentialCompressionWriterTest, writer_sets_threads_priority)
   const std::string test_topic_type = "test_msgs/BasicTypes";
   const uint64_t kCompressionQueueSize = GetParam();
 #ifndef _WIN32
-  const int wanted_thread_priority = 10;
+  const int32_t wanted_thread_priority = 10;
 #else
-  const int wanted_thread_priority = THREAD_MODE_BACKGROUND_BEGIN;
+  const int32_t wanted_thread_priority = THREAD_MODE_BACKGROUND_BEGIN;
 #endif
 
   // queue size should be 0 or at least the number of remaining messages to prevent message loss
@@ -421,9 +421,9 @@ TEST_P(SequentialCompressionWriterTest, writer_sets_threads_priority)
 
 #ifndef _WIN32
   // nice values are in the range from -20 to +19, so this value will never be read
-  int detected_thread_priority = 100;
+  int32_t detected_thread_priority = 100;
 #else
-  int detected_thread_priority = THREAD_PRIORITY_ERROR_RETURN;
+  int32_t detected_thread_priority = THREAD_PRIORITY_ERROR_RETURN;
 #endif
 
   initializeFakeFileStorage();

@@ -67,7 +67,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::string>(node, "compression_format", record_options.compression_format);
   optional_assign<uint64_t>(node, "compression_queue_size", record_options.compression_queue_size);
   optional_assign<uint64_t>(node, "compression_threads", record_options.compression_threads);
-  optional_assign<int8_t>(
+  optional_assign<int32_t>(
     node, "compression_threads_priority",
     record_options.compression_threads_priority);
 

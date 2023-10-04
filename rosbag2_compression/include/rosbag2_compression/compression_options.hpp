@@ -64,7 +64,7 @@ struct CompressionOptions
   uint64_t compression_threads;
   /// if set, the compression thread(s) will try to set
   /// the given priority for itself
-  std::optional<int8_t> thread_priority;
+  std::optional<int32_t> thread_priority;
 };
 
 }  // namespace rosbag2_compression
