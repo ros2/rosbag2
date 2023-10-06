@@ -55,7 +55,7 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
 
 std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 {
-  std::string metadata_file = (std::filesystem::path(uri) / metadata_filename).string();
+  std::string metadata_file = (std::filesystem::path(uri) / metadata_filename).generic_string();
 
   return metadata_file;
 }
