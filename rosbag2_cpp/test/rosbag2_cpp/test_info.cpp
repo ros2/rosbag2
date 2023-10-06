@@ -14,12 +14,11 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"
@@ -62,8 +61,8 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_2) 
 
   {
     std::ofstream fout {
-      (rcpputils::fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
-      .string()};
+      (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+      .generic_string()};
     fout << bagfile;
   }
 
@@ -150,8 +149,8 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_6) 
 
   {
     std::ofstream fout {
-      (rcpputils::fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
-      .string()};
+      (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+      .generic_string()};
     fout << bagfile;
   }
 
@@ -240,8 +239,8 @@ TEST_P(
     "  compression_mode: \"FILE\"\n");
 
   std::ofstream fout {
-    (rcpputils::fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
-    .string()};
+    (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+    .generic_string()};
   fout << bagfile;
   fout.close();
 
@@ -293,13 +292,13 @@ TEST_P(
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, info_for_standalone_bagfile) {
   const auto storage_id = GetParam();
-  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  const auto bag_path = std::filesystem::path(temporary_dir_path_) / "bag";
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
     rosbag2_storage::StorageOptions storage_options;
     storage_options.storage_id = storage_id;
-    storage_options.uri = bag_path.string();
+    storage_options.uri = bag_path.generic_string();
     writer.open(storage_options);
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});

@@ -14,6 +14,7 @@
 
 #include "rosbag2_cpp/info.hpp"
 
+#include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
 #include <stdexcept>
@@ -34,8 +35,8 @@ namespace rosbag2_cpp
 rosbag2_storage::BagMetadata Info::read_metadata(
   const std::string & uri, const std::string & storage_id)
 {
-  const rcpputils::fs::path bag_path{uri};
-  if (!bag_path.exists()) {
+  const std::filesystem::path bag_path{uri};
+  if (!std::filesystem::exists(bag_path)) {
     throw std::runtime_error("Bag path " + uri + " does not exist.");
   }
 
@@ -44,7 +45,7 @@ rosbag2_storage::BagMetadata Info::read_metadata(
     return metadata_io.read_metadata(uri);
   }
 
-  if (bag_path.is_directory()) {
+  if (std::filesystem::is_directory(bag_path)) {
     throw std::runtime_error("Could not find metadata in bag directory " + uri);
   }
 
