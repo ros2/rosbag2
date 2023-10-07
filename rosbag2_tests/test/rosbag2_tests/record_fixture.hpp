@@ -17,13 +17,12 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <future>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -50,12 +49,12 @@ public:
   void SetUp() override
   {
     auto bag_name = get_test_name() + "_" + GetParam();
-    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / bag_name;
+    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
 
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    rcpputils::fs::remove_all(root_bag_path_);
+    std::filesystem::remove_all(root_bag_path_);
   }
 
   static void SetUpTestCase()
@@ -65,7 +64,7 @@ public:
 
   void TearDown() override
   {
-    rcpputils::fs::remove_all(root_bag_path_);
+    std::filesystem::remove_all(root_bag_path_);
   }
 
   static void TearDownTestCase()
@@ -75,7 +74,8 @@ public:
 
   std::string get_base_record_command() const
   {
-    return "ros2 bag record --storage " + GetParam() + " --output " + root_bag_path_.string();
+    return "ros2 bag record --storage " + GetParam() + " --output " +
+           root_bag_path_.generic_string();
   }
 
   std::string get_test_name() const
@@ -95,20 +95,20 @@ public:
     return bag_file_name.str();
   }
 
-  rcpputils::fs::path get_compressed_bag_file_path(int split_index)
+  std::filesystem::path get_compressed_bag_file_path(int split_index)
   {
-    return rcpputils::fs::path(get_bag_file_path(split_index).string() + ".zstd");
+    return std::filesystem::path(get_bag_file_path(split_index).generic_string() + ".zstd");
   }
 
-  rcpputils::fs::path get_bag_file_path(int split_index)
+  std::filesystem::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / get_relative_bag_file_path(split_index);
   }
 
-  rcpputils::fs::path get_relative_bag_file_path(int split_index)
+  std::filesystem::path get_relative_bag_file_path(int split_index)
   {
     const auto storage_id = GetParam();
-    return rcpputils::fs::path(
+    return std::filesystem::path(
       rosbag2_test_common::bag_filename_for_storage_id(
         get_bag_file_name(split_index), storage_id));
   }
@@ -117,7 +117,7 @@ public:
   {
     rosbag2_storage::MetadataIo metadata_io;
     const auto start_time = std::chrono::steady_clock::now();
-    const auto bag_path = root_bag_path_.string();
+    const auto bag_path = root_bag_path_.generic_string();
 
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
       if (metadata_io.metadata_file_exists(bag_path)) {
@@ -134,13 +134,13 @@ public:
     const auto storage_path = get_bag_file_path(0);
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (storage_path.exists()) {
+      if (std::filesystem::exists(storage_path)) {
         return;
       }
       std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
     }
-    ASSERT_EQ(storage_path.exists(), true)
-      << "Could not find storage file: \"" << storage_path.string() << "\"";
+    ASSERT_EQ(std::filesystem::exists(storage_path), true)
+      << "Could not find storage file: \"" << storage_path.generic_string() << "\"";
   }
 
   template<typename MessageT>
@@ -157,7 +157,7 @@ public:
       reader = std::make_unique<rosbag2_cpp::Reader>(
         std::make_unique<rosbag2_compression::SequentialCompressionReader>());
     }
-    reader->open(root_bag_path_.string());
+    reader->open(root_bag_path_.generic_string());
     reader->set_filter(filter);
 
     auto messages = std::vector<std::shared_ptr<MessageT>>{};
@@ -171,7 +171,7 @@ public:
   std::string get_serialization_format_for_topic(const std::string & topic_name)
   {
     auto reader = rosbag2_cpp::Reader{};
-    reader.open(root_bag_path_.string());
+    reader.open(root_bag_path_.generic_string());
     auto topics_and_types = reader.get_all_topics_and_types();
     auto topic_it = std::find_if(
       topics_and_types.begin(), topics_and_types.end(),
@@ -192,15 +192,15 @@ public:
     rosbag2_storage::BagMetadata metadata{};
     metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
     for (int i = 0; i <= expected_splits; i++) {
-      rcpputils::fs::path bag_file_path;
+      std::filesystem::path bag_file_path;
       if (!compression_format.empty()) {
         bag_file_path = get_bag_file_path(i);
       } else {
         bag_file_path = get_compressed_bag_file_path(i);
       }
 
-      if (rcpputils::fs::exists(bag_file_path)) {
-        metadata.relative_file_paths.push_back(bag_file_path.string());
+      if (std::filesystem::exists(bag_file_path)) {
+        metadata.relative_file_paths.push_back(bag_file_path.generic_string());
       }
     }
     metadata.duration = std::chrono::nanoseconds(0);
@@ -211,7 +211,7 @@ public:
     metadata.compression_format = compression_format;
 
     rosbag2_storage::MetadataIo metadata_io;
-    metadata_io.write_metadata(root_bag_path_.string(), metadata);
+    metadata_io.write_metadata(root_bag_path_.generic_string(), metadata);
   #else
     (void)expected_splits;
     (void)compression_format;
@@ -220,7 +220,7 @@ public:
   }
 
   // relative path to the root of the bag file.
-  rcpputils::fs::path root_bag_path_;
+  std::filesystem::path root_bag_path_;
 
   MemoryManagement memory_management_;
 };
