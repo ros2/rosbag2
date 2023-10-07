@@ -84,9 +84,7 @@ rclcpp::QoS publisher_qos_for_topic(
     YAML::decode_for_version<std::vector<rosbag2_transport::Rosbag2QoS>>(
     profiles_yaml,
     topic.version);
-  return rosbag2_transport::Rosbag2QoS::adapt_offer_to_recorded_offers(
-    topic.name,
-    offered_qos_profiles);
+  return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
 }
 }  // namespace
 

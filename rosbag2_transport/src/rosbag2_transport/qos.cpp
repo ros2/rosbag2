@@ -40,7 +40,6 @@ static const rmw_time_t RMW_FASTRTPS_FOXY_INFINITE {0x7FFFFFFFll, 0xFFFFFFFFll};
 static const rmw_time_t RMW_CONNEXT_FOXY_INFINITE  {0x7FFFFFFFll, 0x7FFFFFFFll};
 }  // namespace
 
-
 namespace YAML
 {
 
@@ -132,6 +131,23 @@ bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
   return true;
 }
 
+Node convert<rosbag2_transport::Rosbag2QoS>::encode(
+  const rosbag2_transport::Rosbag2QoS & qos)
+{
+  const auto & p = qos.get_rmw_qos_profile();
+  Node node;
+  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history);
+  node["depth"] = p.depth;
+  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability);
+  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability);
+  node["deadline"] = p.deadline;
+  node["lifespan"] = p.lifespan;
+  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness);
+  node["liveliness_lease_duration"] = p.liveliness_lease_duration;
+  node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
+  return node;
+}
+
 bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   const Node & node, rosbag2_transport::Rosbag2QoS & qos, int version)
 {
@@ -160,23 +176,6 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
   return true;
-}
-
-Node convert<rosbag2_transport::Rosbag2QoS>::encode(
-  const rosbag2_transport::Rosbag2QoS & qos)
-{
-  const auto & p = qos.get_rmw_qos_profile();
-  Node node;
-  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history);
-  node["depth"] = p.depth;
-  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability);
-  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability);
-  node["deadline"] = p.deadline;
-  node["lifespan"] = p.lifespan;
-  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness);
-  node["liveliness_lease_duration"] = p.liveliness_lease_duration;
-  node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
-  return node;
 }
 }  // namespace YAML
 
@@ -262,8 +261,7 @@ bool operator==(const rmw_time_t & lhs, const rmw_time_t & rhs)
   * policies that affect compatibility.
   * This means it excludes history and lifespan from the equality check.
   */
-template<typename T>
-bool all_profiles_effectively_same(const std::vector<T> & profiles)
+bool all_profiles_effectively_same(const std::vector<Rosbag2QoS> & profiles)
 {
   auto iterator = profiles.begin();
   const auto p_ref = iterator->get_rmw_qos_profile();
