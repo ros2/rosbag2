@@ -177,8 +177,8 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   auto recorded_topics = mock_writer.get_topics();
   std::string serialized_profiles = recorded_topics.at(topic).first.offered_qos_profiles;
   // Basic smoke test that the profile was serialized into the metadata as a string.
-  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: 1\n"));
-  EXPECT_THAT(serialized_profiles, ContainsRegex("durability: 2\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: reliable\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("durability: volatile\n"));
   EXPECT_THAT(
     serialized_profiles, ContainsRegex(
       "deadline:\n"
@@ -191,7 +191,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
       "    sec: .+\n"
       "    nsec: .+\n"
   ));
-  EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: 1\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: automatic\n"));
   EXPECT_THAT(
     serialized_profiles, ContainsRegex(
       "liveliness_lease_duration:\n"
