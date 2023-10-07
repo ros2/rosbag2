@@ -23,13 +23,14 @@
 
 TEST(TestQoS, serialization)
 {
-  rosbag2_transport::Rosbag2QoS_v<> expected_qos;
+  rosbag2_transport::Rosbag2QoS expected_qos;
   YAML::Node offered_qos_profiles;
   offered_qos_profiles.push_back(expected_qos);
 
   std::string serialized = YAML::Dump(offered_qos_profiles);
   YAML::Node loaded_node = YAML::Load(serialized);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS_v<>>>();
+  auto deserialized_profiles = YAML::decode_for_version<std::vector<rosbag2_transport::Rosbag2QoS>>(
+    loaded_node, 9);
   ASSERT_EQ(deserialized_profiles.size(), 1u);
 
   rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
@@ -58,7 +59,8 @@ TEST(TestQoS, supports_version_4)
     "  avoid_ros_namespace_conventions: false\n";
 
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS_v<8>>>();
+  auto deserialized_profiles = YAML::decode_for_version<std::vector<rosbag2_transport::Rosbag2QoS>>(
+    loaded_node, 8);
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
@@ -134,7 +136,8 @@ TEST(TestQoS, translates_bad_infinity_values)
       "  nsec: " << infinity.nsec << "\n"
       "avoid_ros_namespace_conventions: false\n";
     const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
-    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS_v<>>();
+    const auto deserialized_profile = YAML::decode_for_version<rosbag2_transport::Rosbag2QoS>(
+      loaded_node, 9);
     const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
     EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
     EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));

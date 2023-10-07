@@ -54,18 +54,18 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["compression_format"] = record_options.compression_format;
   node["compression_queue_size"] = record_options.compression_queue_size;
   node["compression_threads"] = record_options.compression_threads;
-  std::map<std::string, rosbag2_transport::Rosbag2QoS_v<>> qos_overrides(
+  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides(
     record_options.topic_qos_profile_overrides.begin(),
     record_options.topic_qos_profile_overrides.end());
   node["topic_qos_profile_overrides"] = convert<std::map<std::string,
-      rosbag2_transport::Rosbag2QoS_v<>>>::encode(qos_overrides);
+      rosbag2_transport::Rosbag2QoS>>::encode(qos_overrides);
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   return node;
 }
 
 bool convert<rosbag2_transport::RecordOptions>::decode(
-  const Node & node, rosbag2_transport::RecordOptions & record_options)
+  const Node & node, rosbag2_transport::RecordOptions & record_options, int version)
 {
   optional_assign<bool>(node, "all", record_options.all);
   optional_assign<bool>(node, "is_discovery_disabled", record_options.is_discovery_disabled);
@@ -83,9 +83,11 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<uint64_t>(node, "compression_threads", record_options.compression_threads);
 
   // yaml-cpp doesn't implement unordered_map
-  std::map<std::string, rosbag2_transport::Rosbag2QoS_v<>> qos_overrides;
-  optional_assign<std::map<std::string, rosbag2_transport::Rosbag2QoS_v<>>>(
-    node, "topic_qos_profile_overrides", qos_overrides);
+  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides;
+  if (node["topic_qos_profile_overrides"]) {
+    qos_overrides = YAML::decode_for_version<std::map<std::string, rosbag2_transport::Rosbag2QoS>>(
+      node["topic_qos_profile_overrides"], version);
+  }
   record_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());
 
   optional_assign<bool>(node, "include_hidden_topics", record_options.include_hidden_topics);

@@ -42,7 +42,8 @@ TEST(record_options, test_yaml_serialization)
   std::stringstream serializer;
   serializer << node;
   auto reconstructed_node = YAML::Load(serializer.str());
-  auto reconstructed = reconstructed_node.as<rosbag2_transport::RecordOptions>();
+  auto reconstructed = YAML::decode_for_version<rosbag2_transport::RecordOptions>(
+    reconstructed_node, 9);
 
   #define CHECK(field) ASSERT_EQ(original.field, reconstructed.field)
   CHECK(all);

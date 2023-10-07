@@ -471,9 +471,7 @@ public:
     if (!offered_qos.empty()) {
       YAML::Node offered_qos_yaml;
       for (const auto & profile : offered_qos) {
-        offered_qos_yaml.push_back<rosbag2_transport::Rosbag2QoS_v<>>(
-          static_cast<rosbag2_transport
-          ::Rosbag2QoS_v<>>(profile));
+        offered_qos_yaml.push_back(profile);
       }
       serialized_offered_qos = YAML::Dump(offered_qos_yaml);
     }

@@ -132,46 +132,38 @@ bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
   return true;
 }
 
-Node convert<rosbag2_transport::Rosbag2QoS_v<8>>::encode(
-  const rosbag2_transport::Rosbag2QoS_v<8> & qos)
+bool convert<rosbag2_transport::Rosbag2QoS>::decode(
+  const Node & node, rosbag2_transport::Rosbag2QoS & qos, int version)
 {
-  const auto & p = qos.get_rmw_qos_profile();
-  Node node;
-  node["history"] = static_cast<int>(p.history);
-  node["depth"] = p.depth;
-  node["reliability"] = static_cast<int>(p.reliability);
-  node["durability"] = static_cast<int>(p.durability);
-  node["deadline"] = p.deadline;
-  node["lifespan"] = p.lifespan;
-  node["liveliness"] = static_cast<int>(p.liveliness);
-  node["liveliness_lease_duration"] = p.liveliness_lease_duration;
-  node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
-  return node;
-}
-
-bool convert<rosbag2_transport::Rosbag2QoS_v<8>>::decode(
-  const Node & node, rosbag2_transport::Rosbag2QoS_v<8> & qos)
-{
-  auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
-  auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
-  auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
-  auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
+  if (version <= 8) {
+    auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
+    auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
+    auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
+    auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
+    qos
+    .history(history)
+    .reliability(reliability)
+    .durability(durability)
+    .liveliness(liveliness);
+  } else {
+    qos
+    .history(node["history"].as<rmw_qos_history_policy_t>())
+    .reliability(node["reliability"].as<rmw_qos_reliability_policy_t>())
+    .durability(node["durability"].as<rmw_qos_durability_policy_t>())
+    .liveliness(node["liveliness"].as<rmw_qos_liveliness_policy_t>());
+  }
 
   qos
   .keep_last(node["depth"].as<int>())
-  .history(history)
-  .reliability(reliability)
-  .durability(durability)
   .deadline(node["deadline"].as<rmw_time_t>())
   .lifespan(node["lifespan"].as<rmw_time_t>())
-  .liveliness(liveliness)
   .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
   return true;
 }
 
-Node convert<rosbag2_transport::Rosbag2QoS_v<9>>::encode(
-  const rosbag2_transport::Rosbag2QoS_v<9> & qos)
+Node convert<rosbag2_transport::Rosbag2QoS>::encode(
+  const rosbag2_transport::Rosbag2QoS & qos)
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
@@ -185,22 +177,6 @@ Node convert<rosbag2_transport::Rosbag2QoS_v<9>>::encode(
   node["liveliness_lease_duration"] = p.liveliness_lease_duration;
   node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
   return node;
-}
-
-bool convert<rosbag2_transport::Rosbag2QoS_v<9>>::decode(
-  const Node & node, rosbag2_transport::Rosbag2QoS_v<9> & qos)
-{
-  qos
-  .keep_last(node["depth"].as<int>())
-  .history(node["history"].as<rmw_qos_history_policy_t>())
-  .reliability(node["reliability"].as<rmw_qos_reliability_policy_t>())
-  .durability(node["durability"].as<rmw_qos_durability_policy_t>())
-  .deadline(node["deadline"].as<rmw_time_t>())
-  .lifespan(node["lifespan"].as<rmw_time_t>())
-  .liveliness(node["liveliness"].as<rmw_qos_liveliness_policy_t>())
-  .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
-  .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
-  return true;
 }
 }  // namespace YAML
 
@@ -328,31 +304,4 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
       "Falling back to the rosbag2_transport default publisher offer.");
   return Rosbag2QoS{};
 }
-
-template<int V>
-Rosbag2QoS_v<V> Rosbag2QoS_v<V>::adapt_offer_to_recorded_offers(
-  const std::string & topic_name, const std::vector<Rosbag2QoS_v<V>> & profiles)
-{
-  if (profiles.empty()) {
-    return Rosbag2QoS_v<V>{};
-  }
-  if (all_profiles_effectively_same(profiles)) {
-    auto result = profiles[0];
-    return result.default_history();
-  }
-
-  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-    "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
-      "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
-      "Falling back to the rosbag2_transport default publisher offer.");
-  return Rosbag2QoS_v<V>{};
-}
-
-template
-Rosbag2QoS_v<8> Rosbag2QoS_v<8>::adapt_offer_to_recorded_offers(
-  const std::string & topic_name, const std::vector<Rosbag2QoS_v<8>> & profiles);
-
-template
-Rosbag2QoS_v<9> Rosbag2QoS_v<9>::adapt_offer_to_recorded_offers(
-  const std::string & topic_name, const std::vector<Rosbag2QoS_v<9>> & profiles);
 }  // namespace rosbag2_transport

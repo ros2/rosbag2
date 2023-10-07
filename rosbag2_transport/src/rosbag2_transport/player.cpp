@@ -80,19 +80,13 @@ rclcpp::QoS publisher_qos_for_topic(
   }
 
   const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
-  if (topic.version <= 8) {
-    const auto offered_qos_profiles =
-      profiles_yaml.as<std::vector<rosbag2_transport::Rosbag2QoS_v<8>>>();
-    return rosbag2_transport::Rosbag2QoS_v<8>::adapt_offer_to_recorded_offers(
-      topic.name,
-      offered_qos_profiles);
-  } else {
-    const auto offered_qos_profiles =
-      profiles_yaml.as<std::vector<rosbag2_transport::Rosbag2QoS_v<9>>>();
-    return rosbag2_transport::Rosbag2QoS_v<9>::adapt_offer_to_recorded_offers(
-      topic.name,
-      offered_qos_profiles);
-  }
+  const auto offered_qos_profiles =
+    YAML::decode_for_version<std::vector<rosbag2_transport::Rosbag2QoS>>(
+    profiles_yaml,
+    topic.version);
+  return rosbag2_transport::Rosbag2QoS::adapt_offer_to_recorded_offers(
+    topic.name,
+    offered_qos_profiles);
 }
 }  // namespace
 
