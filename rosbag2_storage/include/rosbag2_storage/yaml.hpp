@@ -102,6 +102,7 @@ struct convert<rosbag2_storage::TopicMetadata>
 
   static bool decode(const Node & node, rosbag2_storage::TopicMetadata & topic, int version)
   {
+    topic.version = version;
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
@@ -160,7 +161,8 @@ struct convert<std::vector<rosbag2_storage::TopicInformation>>
 
     rhs.clear();
     for (const auto & value : node) {
-      rhs.push_back(decode_for_version<rosbag2_storage::TopicInformation>(value, version));
+      auto temp = decode_for_version<rosbag2_storage::TopicInformation>(value, version);
+      rhs.push_back(temp);
     }
     return true;
   }

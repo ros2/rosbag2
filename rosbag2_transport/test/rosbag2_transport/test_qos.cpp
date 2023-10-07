@@ -23,13 +23,13 @@
 
 TEST(TestQoS, serialization)
 {
-  rosbag2_transport::Rosbag2QoS expected_qos;
+  rosbag2_transport::Rosbag2QoS_v<> expected_qos;
   YAML::Node offered_qos_profiles;
   offered_qos_profiles.push_back(expected_qos);
 
   std::string serialized = YAML::Dump(offered_qos_profiles);
   YAML::Node loaded_node = YAML::Load(serialized);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS_v<>>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
 
   rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
@@ -41,24 +41,24 @@ TEST(TestQoS, supports_version_4)
   // This test shows how this data looks at the time of introduction
   // Bags created by this version of rosbag2 look like this and must be able to be read
   std::string serialized_profiles =
-    "- history: system_default\n"
+    "- history: 1\n"
     "  depth: 10\n"
-    "  reliability: reliable\n"
-    "  durability: volatile\n"
+    "  reliability: 1\n"
+    "  durability: 2\n"
     "  deadline:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
     "  lifespan:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
-    "  liveliness: system_default\n"
+    "  liveliness: 0\n"
     "  liveliness_lease_duration:\n"
     "    sec: 0\n"
     "    nsec: 0\n"
     "  avoid_ros_namespace_conventions: false\n";
 
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS_v<8>>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
@@ -134,7 +134,7 @@ TEST(TestQoS, translates_bad_infinity_values)
       "  nsec: " << infinity.nsec << "\n"
       "avoid_ros_namespace_conventions: false\n";
     const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
-    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS>();
+    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS_v<>>();
     const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
     EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
     EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));

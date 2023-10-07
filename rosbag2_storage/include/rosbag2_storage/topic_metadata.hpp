@@ -29,6 +29,7 @@ struct TopicMetadata
   std::string offered_qos_profiles;
   // REP-2011 type description hash if available for topic, "" otherwise.
   std::string type_description_hash;
+  int version = 9;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {

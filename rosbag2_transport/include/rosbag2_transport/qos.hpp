@@ -66,6 +66,36 @@ public:
     const std::string & topic_name,
     const std::vector<Rosbag2QoS> & profiles);
 };
+
+template <int V=9>
+class ROSBAG2_TRANSPORT_PUBLIC Rosbag2QoS_v : public rosbag2_transport::Rosbag2QoS
+{
+public:
+  Rosbag2QoS_v()
+  : rosbag2_transport::Rosbag2QoS() {}
+
+  explicit Rosbag2QoS_v(const rclcpp::QoS & value)
+  : rosbag2_transport::Rosbag2QoS(value) {}
+
+  explicit Rosbag2QoS_v(const Rosbag2QoS & value)
+  : rosbag2_transport::Rosbag2QoS(value) {}
+
+  Rosbag2QoS_v<V> & default_history()
+  {
+    keep_last(rmw_qos_profile_default.depth);
+    return *this;
+  }
+
+  static Rosbag2QoS_v<V> adapt_request_to_offers(
+    const std::string & topic_name,
+    const std::vector<rclcpp::TopicEndpointInfo> & endpoints){
+      return rosbag2_transport::Rosbag2QoS::adapt_request_to_offers(topic_name, endpoints);
+    };
+
+  static Rosbag2QoS_v<V> adapt_offer_to_recorded_offers(
+    const std::string & topic_name,
+    const std::vector<Rosbag2QoS_v<V>> & profiles);
+};
 }  // namespace rosbag2_transport
 
 namespace YAML
@@ -106,10 +136,17 @@ struct ROSBAG2_TRANSPORT_PUBLIC convert<rmw_time_t>
 };
 
 template<>
-struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::Rosbag2QoS>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::Rosbag2QoS_v<8>>
 {
-  static Node encode(const rosbag2_transport::Rosbag2QoS & qos);
-  static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS & qos);
+  static Node encode(const rosbag2_transport::Rosbag2QoS_v<8> & qos);
+  static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS_v<8> & qos);
+};
+
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::Rosbag2QoS_v<9>>
+{
+  static Node encode(const rosbag2_transport::Rosbag2QoS_v<9> & qos);
+  static bool decode(const Node & node, rosbag2_transport::Rosbag2QoS_v<9> & qos);
 };
 }  // namespace YAML
 

@@ -508,7 +508,7 @@ std::string RecorderImpl::serialized_offered_qos_profiles_for_topic(
 {
   YAML::Node offered_qos_profiles;
   for (const auto & info : topics_endpoint_info) {
-    offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
+    offered_qos_profiles.push_back(Rosbag2QoS_v<>(info.qos_profile()));
   }
   return YAML::Dump(offered_qos_profiles);
 }
