@@ -295,7 +295,7 @@ void bag_rewrite(
     rosbag2_storage::StorageOptions storage_options{};
     YAML::convert<rosbag2_storage::StorageOptions>::decode(bag_node, storage_options);
     rosbag2_transport::RecordOptions record_options = bag_rewrite_default_record_options();
-    YAML::convert<rosbag2_transport::RecordOptions>::decode(bag_node, record_options);
+    record_options = YAML::decode_for_version<rosbag2_transport::RecordOptions>(bag_node, 9);
     output_options.push_back(std::make_pair(storage_options, record_options));
   }
   rosbag2_transport::bag_rewrite(input_options, output_options);
