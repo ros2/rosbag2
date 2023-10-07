@@ -67,7 +67,7 @@ public:
     const std::vector<Rosbag2QoS> & profiles);
 };
 
-template <int V=9>
+template<int V = 9>
 class ROSBAG2_TRANSPORT_PUBLIC Rosbag2QoS_v : public rosbag2_transport::Rosbag2QoS
 {
 public:
@@ -88,9 +88,10 @@ public:
 
   static Rosbag2QoS_v<V> adapt_request_to_offers(
     const std::string & topic_name,
-    const std::vector<rclcpp::TopicEndpointInfo> & endpoints){
-      return rosbag2_transport::Rosbag2QoS::adapt_request_to_offers(topic_name, endpoints);
-    };
+    const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
+  {
+    return rosbag2_transport::Rosbag2QoS::adapt_request_to_offers(topic_name, endpoints);
+  }
 
   static Rosbag2QoS_v<V> adapt_offer_to_recorded_offers(
     const std::string & topic_name,

@@ -46,7 +46,7 @@ namespace YAML
 
 Node convert<rmw_qos_history_policy_t>::encode(const rmw_qos_history_policy_t & policy)
 {
-  if (policy == RMW_QOS_POLICY_HISTORY_UNKNOWN){
+  if (policy == RMW_QOS_POLICY_HISTORY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
     return Node(std::string(rmw_qos_history_policy_to_str(policy)));
@@ -61,7 +61,7 @@ bool convert<rmw_qos_history_policy_t>::decode(const Node & node, rmw_qos_histor
 
 Node convert<rmw_qos_reliability_policy_t>::encode(const rmw_qos_reliability_policy_t & policy)
 {
-  if (policy == RMW_QOS_POLICY_RELIABILITY_UNKNOWN){
+  if (policy == RMW_QOS_POLICY_RELIABILITY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
     return Node(std::string(rmw_qos_reliability_policy_to_str(policy)));
@@ -78,11 +78,12 @@ bool convert<rmw_qos_reliability_policy_t>::decode(
 
 Node convert<rmw_qos_durability_policy_t>::encode(const rmw_qos_durability_policy_t & policy)
 {
-  if (policy == RMW_QOS_POLICY_DURABILITY_UNKNOWN){
+  if (policy == RMW_QOS_POLICY_DURABILITY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
     return Node(std::string(rmw_qos_durability_policy_to_str(policy)));
-  }}
+  }
+}
 
 bool convert<rmw_qos_durability_policy_t>::decode(
   const Node & node,
@@ -94,7 +95,7 @@ bool convert<rmw_qos_durability_policy_t>::decode(
 
 Node convert<rmw_qos_liveliness_policy_t>::encode(const rmw_qos_liveliness_policy_t & policy)
 {
-  if (policy == RMW_QOS_POLICY_LIVELINESS_UNKNOWN){
+  if (policy == RMW_QOS_POLICY_LIVELINESS_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
     return Node(std::string(rmw_qos_liveliness_policy_to_str(policy)));
@@ -131,7 +132,8 @@ bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
   return true;
 }
 
-Node convert<rosbag2_transport::Rosbag2QoS_v<8>>::encode(const rosbag2_transport::Rosbag2QoS_v<8> & qos)
+Node convert<rosbag2_transport::Rosbag2QoS_v<8>>::encode(
+  const rosbag2_transport::Rosbag2QoS_v<8> & qos)
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
@@ -168,7 +170,8 @@ bool convert<rosbag2_transport::Rosbag2QoS_v<8>>::decode(
   return true;
 }
 
-Node convert<rosbag2_transport::Rosbag2QoS_v<9>>::encode(const rosbag2_transport::Rosbag2QoS_v<9> & qos)
+Node convert<rosbag2_transport::Rosbag2QoS_v<9>>::encode(
+  const rosbag2_transport::Rosbag2QoS_v<9> & qos)
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
@@ -283,7 +286,7 @@ bool operator==(const rmw_time_t & lhs, const rmw_time_t & rhs)
   * policies that affect compatibility.
   * This means it excludes history and lifespan from the equality check.
   */
-template <typename T>
+template<typename T>
 bool all_profiles_effectively_same(const std::vector<T> & profiles)
 {
   auto iterator = profiles.begin();
@@ -348,7 +351,7 @@ Rosbag2QoS_v<V> Rosbag2QoS_v<V>::adapt_offer_to_recorded_offers(
 template
 Rosbag2QoS_v<8> Rosbag2QoS_v<8>::adapt_offer_to_recorded_offers(
   const std::string & topic_name, const std::vector<Rosbag2QoS_v<8>> & profiles);
-  
+
 template
 Rosbag2QoS_v<9> Rosbag2QoS_v<9>::adapt_offer_to_recorded_offers(
   const std::string & topic_name, const std::vector<Rosbag2QoS_v<9>> & profiles);

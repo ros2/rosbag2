@@ -57,7 +57,8 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   std::map<std::string, rosbag2_transport::Rosbag2QoS_v<>> qos_overrides(
     record_options.topic_qos_profile_overrides.begin(),
     record_options.topic_qos_profile_overrides.end());
-  node["topic_qos_profile_overrides"] = convert<std::map<std::string, rosbag2_transport::Rosbag2QoS_v<>>>::encode(qos_overrides);
+  node["topic_qos_profile_overrides"] = convert<std::map<std::string,
+      rosbag2_transport::Rosbag2QoS_v<>>>::encode(qos_overrides);
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   return node;
