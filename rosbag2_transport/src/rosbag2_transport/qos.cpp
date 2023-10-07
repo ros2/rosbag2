@@ -46,7 +46,11 @@ namespace YAML
 
 Node convert<rmw_qos_history_policy_t>::encode(const rmw_qos_history_policy_t & policy)
 {
-  return Node(std::string(rmw_qos_history_policy_to_str(policy)));
+  if (policy == RMW_QOS_POLICY_HISTORY_UNKNOWN){
+    return Node(std::string("unknown"));
+  } else {
+    return Node(std::string(rmw_qos_history_policy_to_str(policy)));
+  }
 }
 
 bool convert<rmw_qos_history_policy_t>::decode(const Node & node, rmw_qos_history_policy_t & policy)
@@ -57,7 +61,11 @@ bool convert<rmw_qos_history_policy_t>::decode(const Node & node, rmw_qos_histor
 
 Node convert<rmw_qos_reliability_policy_t>::encode(const rmw_qos_reliability_policy_t & policy)
 {
-  return Node(std::string(rmw_qos_reliability_policy_to_str(policy)));
+  if (policy == RMW_QOS_POLICY_RELIABILITY_UNKNOWN){
+    return Node(std::string("unknown"));
+  } else {
+    return Node(std::string(rmw_qos_reliability_policy_to_str(policy)));
+  }
 }
 
 bool convert<rmw_qos_reliability_policy_t>::decode(
@@ -70,8 +78,11 @@ bool convert<rmw_qos_reliability_policy_t>::decode(
 
 Node convert<rmw_qos_durability_policy_t>::encode(const rmw_qos_durability_policy_t & policy)
 {
-  return Node(std::string(rmw_qos_durability_policy_to_str(policy)));
-}
+  if (policy == RMW_QOS_POLICY_DURABILITY_UNKNOWN){
+    return Node(std::string("unknown"));
+  } else {
+    return Node(std::string(rmw_qos_durability_policy_to_str(policy)));
+  }}
 
 bool convert<rmw_qos_durability_policy_t>::decode(
   const Node & node,
@@ -83,7 +94,11 @@ bool convert<rmw_qos_durability_policy_t>::decode(
 
 Node convert<rmw_qos_liveliness_policy_t>::encode(const rmw_qos_liveliness_policy_t & policy)
 {
-  return Node(std::string(rmw_qos_liveliness_policy_to_str(policy)));
+  if (policy == RMW_QOS_POLICY_LIVELINESS_UNKNOWN){
+    return Node(std::string("unknown"));
+  } else {
+    return Node(std::string(rmw_qos_liveliness_policy_to_str(policy)));
+  }
 }
 
 bool convert<rmw_qos_liveliness_policy_t>::decode(
