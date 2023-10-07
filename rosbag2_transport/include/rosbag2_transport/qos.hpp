@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__QOS_HPP_
 #define ROSBAG2_TRANSPORT__QOS_HPP_
 
+#include <map>
 #include <string>
 #include <vector>
 
