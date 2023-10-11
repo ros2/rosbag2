@@ -24,12 +24,14 @@
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 #include "record_integration_fixture.hpp"
 
@@ -58,7 +60,8 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   ASSERT_FALSE(std::regex_match(b3, re));
   ASSERT_FALSE(std::regex_match(b4, re));
 
-  rosbag2_transport::RecordOptions record_options = {false, false, {}, "rmw_format", 10ms};
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
 
   // TODO(karsten1987) Refactor this into publication manager
@@ -99,7 +102,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
 }
 
-TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
+TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_recording)
 {
   auto test_string_messages = get_messages_strings();
   auto test_array_messages = get_messages_arrays();
@@ -129,9 +132,10 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   ASSERT_TRUE(std::regex_match(e1, re));
   ASSERT_TRUE(std::regex_match(e1, exclude));
 
-  rosbag2_transport::RecordOptions record_options = {false, false, {}, "rmw_format", 10ms};
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
-  record_options.exclude = topics_regex_to_exclude;
+  record_options.exclude_topics = topics_regex_to_exclude;
 
 
   // TODO(karsten1987) Refactor this into publication manager
@@ -173,4 +177,70 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_recording)
   EXPECT_THAT(recorded_topics, SizeIs(2));
   EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
   EXPECT_TRUE(recorded_topics.find(v2) != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_recording)
+{
+  std::string regex = "/[a-z]+_nice(_.*)";
+  std::string services_regex_to_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
+
+  // matching service
+  std::string v1 = "/awesome_nice_service";
+  std::string v2 = "/still_nice_service";
+
+  // excluded topics
+  std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
+
+  // service that shouldn't match
+  std::string b1 = "/numberslike1arenot_nice";
+  std::string b2 = "/namespace_before/not_nice";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, {}, {}, "rmw_format", 10ms};
+  record_options.regex = regex;
+  record_options.exclude_services = services_regex_to_exclude;
+
+  auto service_manager_v1 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(v1);
+
+  auto service_manager_v2 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(v2);
+
+  auto service_manager_e1 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(e1);
+
+  auto service_manager_b1 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b1);
+
+  auto service_manager_b2 =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b2);
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+
+  ASSERT_TRUE(service_manager_v1->check_service_ready());
+  ASSERT_TRUE(service_manager_v2->check_service_ready());
+  ASSERT_TRUE(service_manager_e1->check_service_ready());
+  ASSERT_TRUE(service_manager_b1->check_service_ready());
+  ASSERT_TRUE(service_manager_b2->check_service_ready());
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(service_manager_v1->send_request());
+  ASSERT_TRUE(service_manager_v2->send_request());
+  ASSERT_TRUE(service_manager_e1->send_request());
+  ASSERT_TRUE(service_manager_b1->send_request());
+  ASSERT_TRUE(service_manager_b2->send_request());
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_THAT(recorded_messages, SizeIs(4));
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_THAT(recorded_topics, SizeIs(2));
+  EXPECT_TRUE(recorded_topics.find(v1 + "/_service_event") != recorded_topics.end());
+  EXPECT_TRUE(recorded_topics.find(v2 + "/_service_event") != recorded_topics.end());
 }

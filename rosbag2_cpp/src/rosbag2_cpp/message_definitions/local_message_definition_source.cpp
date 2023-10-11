@@ -48,9 +48,9 @@ public:
 };
 
 // Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
-static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/)?([a-zA-Z0-9_]+)$)"};
+static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/)?([a-zA-Z0-9_]+)$)"};
 
-// Match field types from .msg definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
+// Match field types from .msg and .srv definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
 static const std::regex MSG_FIELD_TYPE_REGEX{R"((?:^|\n)\s*([a-zA-Z0-9_/]+)(?:\[[^\]]*\])?\s+)"};
 
 // match field types from `.idl` definitions ("foo_msgs/msg/bar" in #include <foo_msgs/msg/Bar.idl>)
@@ -102,6 +102,7 @@ std::set<std::string> parse_definition_dependencies(
 {
   switch (format) {
     case LocalMessageDefinitionSource::Format::MSG:
+    case LocalMessageDefinitionSource::Format::SRV:
       return parse_msg_dependencies(text, package_context);
     case LocalMessageDefinitionSource::Format::IDL:
       return parse_idl_dependencies(text);
@@ -117,6 +118,8 @@ static const char * extension_for_format(LocalMessageDefinitionSource::Format fo
       return ".msg";
     case LocalMessageDefinitionSource::Format::IDL:
       return ".idl";
+    case LocalMessageDefinitionSource::Format::SRV:
+      return ".srv";
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
@@ -133,6 +136,9 @@ std::string LocalMessageDefinitionSource::delimiter(
       break;
     case Format::IDL:
       result += "IDL: ";
+      break;
+    case Format::SRV:
+      result += "SRV: ";
       break;
     default:
       throw std::runtime_error("switch is not exhaustive");
@@ -166,7 +172,9 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   }
   std::string package = match[1];
   std::string share_dir = ament_index_cpp::get_package_share_directory(package);
-  std::ifstream file{share_dir + "/msg/" + match[2].str() +
+  std::string dir = definition_identifier.format() == Format::MSG ||
+    definition_identifier.format() == Format::IDL ? "/msg/" : "/srv/";
+  std::ifstream file{share_dir + dir + match[2].str() +
     extension_for_format(definition_identifier.format())};
   if (!file.good()) {
     throw DefinitionNotFoundError(definition_identifier.topic_type());
@@ -183,7 +191,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
 }
 
 rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
-  const std::string & root_topic_type)
+  const std::string & root_type)
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
@@ -191,12 +199,14 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
       if (depth <= 0) {
         throw std::runtime_error{
-                "Reached max recursion depth resolving definition of " + root_topic_type};
+                "Reached max recursion depth resolving definition of " + root_type};
       }
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;
       for (const auto & dep_name : spec.dependencies) {
-        DefinitionIdentifier dep(dep_name, definition_identifier.format());
+        Format format = definition_identifier.format() == Format::SRV ?
+          Format::MSG : definition_identifier.format();
+        DefinitionIdentifier dep(dep_name, format);
         bool inserted = seen_deps.insert(dep).second;
         if (inserted) {
           result += "\n";
@@ -208,14 +218,14 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     };
 
   std::string result;
-  Format format = Format::MSG;
+  Format format = root_type.find("/srv/") != std::string::npos ? Format::SRV : Format::MSG;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
   try {
-    result = append_recursive(DefinitionIdentifier(root_topic_type, format), max_recursion_depth);
+    result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
   } catch (const DefinitionNotFoundError & err) {
     ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
     format = Format::IDL;
-    DefinitionIdentifier root_definition_identifier(root_topic_type, format);
+    DefinitionIdentifier root_definition_identifier(root_type, format);
     result = (delimiter(root_definition_identifier) +
       append_recursive(root_definition_identifier, max_recursion_depth));
   } catch (const TypenameNotUnderstoodError & err) {
@@ -230,6 +240,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       out.encoding = "unknown";
       break;
     case Format::MSG:
+    case Format::SRV:
       out.encoding = "ros2msg";
       break;
     case Format::IDL:
@@ -238,8 +249,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
+
   out.encoded_message_definition = result;
-  out.topic_type = root_topic_type;
+  out.topic_type = root_type;
   return out;
 }
 }  // namespace rosbag2_cpp

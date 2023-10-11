@@ -14,15 +14,22 @@
 
 #include "rosbag2_cpp/info.hpp"
 
-#include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <stdexcept>
 #include <string>
 
+#include "rcl/service_introspection.h"
+#include "rmw/rmw.h"
+
 #include "rcpputils/filesystem_helper.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/logging.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_cpp
 {
@@ -50,6 +57,122 @@ rosbag2_storage::BagMetadata Info::read_metadata(
     throw std::runtime_error("No plugin detected that could open file " + uri);
   }
   return storage->get_metadata();
+}
+
+namespace
+{
+struct client_id_hash
+{
+  std::size_t operator()(const std::array<uint8_t, 16> & client_id) const
+  {
+    std::hash<uint8_t> hasher;
+    std::size_t seed = 0;
+    for (const auto & value : client_id) {
+      // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
+      seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    return seed;
+  }
+};
+
+using client_id = std::array<uint8_t, 16>;
+using sequence_set = std::unordered_set<int64_t>;
+struct service_req_resp_info
+{
+  std::unordered_map<client_id, sequence_set, client_id_hash> request;
+  std::unordered_map<client_id, sequence_set, client_id_hash> response;
+};
+}  // namespace
+
+std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
+  const std::string & uri, const std::string & storage_id)
+{
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_only({uri, storage_id});
+  if (!storage) {
+    throw std::runtime_error("No plugin detected that could open file " + uri);
+  }
+
+  using service_analysis =
+    std::unordered_map<std::string, std::shared_ptr<service_req_resp_info>>;
+
+  std::unordered_map<std::string, std::shared_ptr<rosbag2_service_info_t>> all_service_info;
+  service_analysis service_process_info;
+
+  auto all_topics_types = storage->get_all_topics_and_types();
+  for (auto & t : all_topics_types) {
+    if (is_service_event_topic(t.name, t.type)) {
+      auto service_info = std::make_shared<rosbag2_cpp::rosbag2_service_info_t>();
+      service_info->name = service_event_topic_name_to_service_name(t.name);
+      service_info->type = service_event_topic_type_to_service_type(t.type);
+      service_info->serialization_format = t.serialization_format;
+      all_service_info.emplace(t.name, service_info);
+      service_process_info[t.name] = std::make_shared<service_req_resp_info>();
+    }
+  }
+
+  std::vector<std::shared_ptr<rosbag2_service_info_t>> ret_service_info;
+
+  if (!all_service_info.empty()) {
+    auto msg = service_msgs::msg::ServiceEventInfo();
+    const rosidl_message_type_support_t * type_support_info =
+      rosidl_typesupport_cpp::
+      get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
+
+    while (storage->has_next()) {
+      auto bag_msg = storage->read_next();
+
+      // Check if topic is service event topic
+      auto one_service_info = all_service_info.find(bag_msg->topic_name);
+      if (one_service_info == all_service_info.end()) {
+        continue;
+      }
+
+      auto ret = rmw_deserialize(
+        bag_msg->serialized_data.get(),
+        type_support_info,
+        reinterpret_cast<void *>(&msg));
+      if (ret != RMW_RET_OK) {
+        throw std::runtime_error(
+                "It failed to deserialize message from " + bag_msg->topic_name + " !");
+      }
+
+      switch (msg.event_type) {
+        case service_msgs::msg::ServiceEventInfo::REQUEST_SENT:
+        case service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED:
+          service_process_info[bag_msg->topic_name]
+          ->request[msg.client_gid].emplace(msg.sequence_number);
+          break;
+        case service_msgs::msg::ServiceEventInfo::RESPONSE_SENT:
+        case service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED:
+          service_process_info[bag_msg->topic_name]
+          ->response[msg.client_gid].emplace(msg.sequence_number);
+          break;
+      }
+    }
+
+    for (auto & [topic_name, service_info] : service_process_info) {
+      size_t count = 0;
+      // Get the number of request from all clients
+      for (auto &[client_id, request_list] : service_info->request) {
+        count += request_list.size();
+      }
+      all_service_info[topic_name]->request_count = count;
+
+      count = 0;
+      // Get the number of response from all clients
+      for (auto &[client_id, response_list] : service_info->response) {
+        count += response_list.size();
+      }
+      all_service_info[topic_name]->response_count = count;
+    }
+
+    for (auto & [topic_name, service_info] : all_service_info) {
+      ret_service_info.emplace_back(std::move(service_info));
+    }
+  }
+
+  return ret_service_info;
 }
 
 }  // namespace rosbag2_cpp

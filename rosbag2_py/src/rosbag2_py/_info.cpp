@@ -15,6 +15,8 @@
 #include <memory>
 #include <string>
 
+#include "format_bag_metadata.hpp"
+#include "format_service_info.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
@@ -38,6 +40,30 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
+  void read_metadata_and_output_service_verbose(
+    const std::string & uri,
+    const std::string & storage_id)
+  {
+    auto metadata_info = read_metadata(uri, storage_id);
+
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
+    for (auto & file_info : metadata_info.files) {
+      auto services_info = info_->read_service_info(
+        uri + "/" + file_info.path,
+        metadata_info.storage_identifier);
+      if (!services_info.empty()) {
+        all_services_info.insert(
+          all_services_info.end(),
+          services_info.begin(),
+          services_info.end());
+      }
+    }
+
+    // Output formatted metadata and service info
+    std::cout << format_bag_meta_data(metadata_info, true);
+    std::cout << format_service_info(all_services_info) << std::endl;
+  }
+
 protected:
   std::unique_ptr<rosbag2_cpp::Info> info_;
 };
@@ -49,5 +75,8 @@ PYBIND11_MODULE(_info, m) {
 
   pybind11::class_<rosbag2_py::Info>(m, "Info")
   .def(pybind11::init())
-  .def("read_metadata", &rosbag2_py::Info::read_metadata);
+  .def("read_metadata", &rosbag2_py::Info::read_metadata)
+  .def(
+    "read_metadata_and_output_service_verbose",
+    &rosbag2_py::Info::read_metadata_and_output_service_verbose);
 }
