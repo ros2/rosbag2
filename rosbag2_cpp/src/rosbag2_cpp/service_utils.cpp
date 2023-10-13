@@ -17,6 +17,7 @@
 #include "rcl/service_introspection.h"
 
 #include "rosbag2_cpp/service_utils.hpp"
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "rosidl_typesupport_cpp/message_type_support_dispatch.hpp"
 #include "rosidl_typesupport_introspection_cpp/identifier.hpp"
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
@@ -59,8 +60,9 @@ bool is_service_event_topic(const std::string & topic, const std::string & topic
 
 std::string service_event_topic_name_to_service_name(const std::string & topic_name)
 {
+  std::string service_name;
   if (topic_name.length() <= (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1)) {
-    return std::string();
+    return service_name;
   }
 
   if (topic_name.substr(
@@ -68,10 +70,10 @@ std::string service_event_topic_name_to_service_name(const std::string & topic_n
       (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1)) !=
     RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
   {
-    return std::string();
+    return service_name;
   }
 
-  std::string service_name = topic_name.substr(
+  service_name = topic_name.substr(
     0, topic_name.length() - (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1));
 
   return service_name;
@@ -79,22 +81,23 @@ std::string service_event_topic_name_to_service_name(const std::string & topic_n
 
 std::string service_event_topic_type_to_service_type(const std::string & topic_type)
 {
+  std::string service_type;
   if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
-    return std::string();
+    return service_type;
   }
 
   // Should include '/srv/' in type
   if (topic_type.find(service_event_topic_type_middle) == std::string::npos) {
-    return std::string();
+    return service_type;
   }
 
   if (topic_type.substr(topic_type.length() - std::strlen(service_event_topic_type_postfix)) !=
     service_event_topic_type_postfix)
   {
-    return std::string();
+    return service_type;
   }
 
-  std::string service_type = topic_type.substr(
+  service_type = topic_type.substr(
     0, topic_type.length() - strlen(service_event_topic_type_postfix));
 
   return service_type;
@@ -110,8 +113,7 @@ size_t get_serialization_size_for_service_metadata_event()
   }
 
   const rosidl_message_type_support_t * type_support_info =
-    rosidl_typesupport_cpp::
-    get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
+    rosidl_typesupport_cpp::get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
 
   // Get the serialized size of service event info
   const rosidl_message_type_support_t * type_support_handle =
@@ -119,7 +121,7 @@ size_t get_serialization_size_for_service_metadata_event()
     type_support_info,
     rosidl_typesupport_introspection_cpp::typesupport_identifier);
   if (type_support_handle == nullptr) {
-    std::runtime_error("Cannot get ServiceEventInfo typesupport handle !");
+    throw std::runtime_error("Cannot get ServiceEventInfo typesupport handle !");
   }
 
   auto service_event_info =

@@ -176,6 +176,13 @@ bool TopicFilter::take_topic(
     {
       return false;
     }
+
+    if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
+      RCUTILS_LOG_WARN_ONCE_NAMED(
+        ROSBAG2_TRANSPORT_PACKAGE_NAME,
+        "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+      return false;
+    }
   } else {
     if (!record_options_.all_services &&
       record_options_.services.empty() &&
@@ -191,8 +198,7 @@ bool TopicFilter::take_topic(
     }
 
     // Convert service event topic name to service name
-    auto service_name =
-      rosbag2_cpp::service_event_topic_name_to_service_name(topic_name);
+    auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic_name);
 
     std::regex exclude_services_regex(record_options_.exclude_services);
     if (!record_options_.exclude_services.empty() &&
@@ -202,23 +208,12 @@ bool TopicFilter::take_topic(
     }
 
     std::regex include_regex(record_options_.regex);
-    if (
-      !record_options_.all_services &&  // All takes precedence over regex
+    if (!record_options_.all_services &&  // All takes precedence over regex
       !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
       !std::regex_search(service_name, include_regex))
     {
       return false;
     }
-  }
-
-  if (!record_options_.include_hidden_topics &&
-    topic_is_hidden(topic_name) &&
-    !is_service_event_topic)
-  {
-    RCUTILS_LOG_WARN_ONCE_NAMED(
-      ROSBAG2_TRANSPORT_PACKAGE_NAME,
-      "Hidden topics are not recorded. Enable them with --include-hidden-topics");
-    return false;
   }
 
   if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {

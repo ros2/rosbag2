@@ -19,17 +19,14 @@
 #include <stdexcept>
 #include <string>
 
-#include "rcl/service_introspection.h"
 #include "rmw/rmw.h"
-
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "rcpputils/filesystem_helper.hpp"
-#include "rosbag2_cpp/service_utils.hpp"
-#include "rosbag2_storage/logging.hpp"
-#include "rosbag2_storage/metadata_io.hpp"
-#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
-#include "rosbag2_storage/storage_factory.hpp"
-
 #include "service_msgs/msg/service_event_info.hpp"
+
+#include "rosbag2_cpp/service_utils.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
 
 namespace rosbag2_cpp
 {
@@ -63,6 +60,9 @@ namespace
 {
 struct client_id_hash
 {
+  static_assert(
+    std::is_same<std::array<uint8_t, 16>,
+    service_msgs::msg::ServiceEventInfo::_client_gid_type>::value);
   std::size_t operator()(const std::array<uint8_t, 16> & client_id) const
   {
     std::hash<uint8_t> hasher;
@@ -75,7 +75,7 @@ struct client_id_hash
   }
 };
 
-using client_id = std::array<uint8_t, 16>;
+using client_id = service_msgs::msg::ServiceEventInfo::_client_gid_type;
 using sequence_set = std::unordered_set<int64_t>;
 struct service_req_resp_info
 {
@@ -91,6 +91,11 @@ std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
   auto storage = factory.open_read_only({uri, storage_id});
   if (!storage) {
     throw std::runtime_error("No plugin detected that could open file " + uri);
+  }
+
+  rosbag2_storage::ReadOrder read_order;
+  if (!storage->set_read_order(read_order)) {
+    throw std::runtime_error("Failed to set read order on " + uri);
   }
 
   using service_analysis =
@@ -134,19 +139,19 @@ std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
         reinterpret_cast<void *>(&msg));
       if (ret != RMW_RET_OK) {
         throw std::runtime_error(
-                "It failed to deserialize message from " + bag_msg->topic_name + " !");
+                "Failed to deserialize message from " + bag_msg->topic_name + " !");
       }
 
       switch (msg.event_type) {
         case service_msgs::msg::ServiceEventInfo::REQUEST_SENT:
         case service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED:
-          service_process_info[bag_msg->topic_name]
-          ->request[msg.client_gid].emplace(msg.sequence_number);
+          service_process_info[bag_msg->topic_name]->request[msg.client_gid].emplace(
+            msg.sequence_number);
           break;
         case service_msgs::msg::ServiceEventInfo::RESPONSE_SENT:
         case service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED:
-          service_process_info[bag_msg->topic_name]
-          ->response[msg.client_gid].emplace(msg.sequence_number);
+          service_process_info[bag_msg->topic_name]->response[msg.client_gid].emplace(
+            msg.sequence_number);
           break;
       }
     }

@@ -138,6 +138,7 @@ void format_topics_with_type(
   }
 
   if (i == number_of_topics) {
+    info_stream << std::endl;
     return;
   }
 
@@ -163,7 +164,7 @@ struct ServiceMetadata
 struct ServiceInformation
 {
   ServiceMetadata service_metadata;
-  size_t event_message_count;
+  size_t event_message_count = 0;
 };
 
 std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
@@ -237,11 +238,9 @@ std::string format_bag_meta_data(
 
   size_t total_service_event_msg_count = 0;
   std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
-  if (!only_topic) {
-    service_info_list = filter_service_event_topic(
-      metadata.topics_with_message_count,
-      total_service_event_msg_count);
-  }
+  service_info_list = filter_service_event_topic(
+    metadata.topics_with_message_count,
+    total_service_event_msg_count);
 
   info_stream << std::endl;
   info_stream << "Files:             ";
@@ -264,7 +263,7 @@ std::string format_bag_meta_data(
   if (!only_topic) {
     info_stream << "Service:           " << service_info_list.size() << std::endl;
     info_stream << "Service information: ";
-    if (service_info_list.size() != 0) {
+    if (!service_info_list.empty()) {
       format_service_with_type(service_info_list, info_stream, indentation_spaces + 2);
     }
   }
