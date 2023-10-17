@@ -324,3 +324,86 @@ INSTANTIATE_TEST_SUITE_P(
   ParametrizedTemporaryDirectoryFixture,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
+
+class GetServiceInfoTest : public Test
+{
+public:
+  GetServiceInfoTest() {}
+
+  virtual ~GetServiceInfoTest() = default;
+
+  const std::string bags_path = std::string(_TEST_RESOURCES_DIR_PATH) + "/bags/";
+};
+
+TEST_F(GetServiceInfoTest, only_topics_bag_test) {
+  const auto test_bag_file = rcpputils::fs::path(bags_path) / "only_topics.mcap";
+  const std::string storage_id = "mcap";
+
+  rosbag2_cpp::Info info;
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_info;
+
+  ASSERT_NO_THROW(ret_service_info = info.read_service_info(test_bag_file.string(), storage_id));
+
+  EXPECT_TRUE(ret_service_info.empty());
+}
+
+TEST_F(GetServiceInfoTest, only_services_bag_test) {
+  const auto test_bag_file = rcpputils::fs::path(bags_path) / "only_services.mcap";
+  const std::string storage_id = "mcap";
+
+  rosbag2_cpp::Info info;
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_info;
+
+  ASSERT_NO_THROW(ret_service_info = info.read_service_info(test_bag_file.string(), storage_id));
+
+  ASSERT_EQ(ret_service_info.size(), 1);
+  EXPECT_EQ(ret_service_info[0]->name, "/add_two_ints");
+  EXPECT_EQ(ret_service_info[0]->type, "example_interfaces/srv/AddTwoInts");
+  EXPECT_EQ(ret_service_info[0]->request_count, 6);
+  EXPECT_EQ(ret_service_info[0]->response_count, 6);
+  EXPECT_EQ(ret_service_info[0]->serialization_format, "cdr");
+}
+
+TEST_F(GetServiceInfoTest, topics_and_services_bag_test) {
+  const auto test_bag_file = rcpputils::fs::path(bags_path) / "topics_and_services.mcap";
+  const std::string storage_id = "mcap";
+
+  rosbag2_cpp::Info info;
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_info;
+
+  ASSERT_NO_THROW(ret_service_info = info.read_service_info(test_bag_file.string(), storage_id));
+
+  ASSERT_EQ(ret_service_info.size(), 2);
+  EXPECT_EQ(ret_service_info[0]->name, "/add_two_ints2");
+  EXPECT_EQ(ret_service_info[0]->type, "example_interfaces/srv/AddTwoInts");
+  EXPECT_EQ(ret_service_info[0]->request_count, 0);
+  EXPECT_EQ(ret_service_info[0]->response_count, 0);
+  EXPECT_EQ(ret_service_info[0]->serialization_format, "cdr");
+  EXPECT_EQ(ret_service_info[1]->name, "/add_two_ints");
+  EXPECT_EQ(ret_service_info[1]->type, "example_interfaces/srv/AddTwoInts");
+  EXPECT_EQ(ret_service_info[1]->request_count, 3);
+  EXPECT_EQ(ret_service_info[1]->response_count, 3);
+  EXPECT_EQ(ret_service_info[1]->serialization_format, "cdr");
+}
+
+TEST_F(GetServiceInfoTest, topics_and_services_sqlite3_bag_test) {
+  const auto test_bag_file = rcpputils::fs::path(bags_path) / "topics_and_services.db3";
+  const std::string storage_id = "sqlite3";
+
+  rosbag2_cpp::Info info;
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_info;
+
+  ASSERT_NO_THROW(ret_service_info = info.read_service_info(test_bag_file.string(), storage_id));
+
+  ASSERT_EQ(ret_service_info.size(), 2);
+  EXPECT_EQ(ret_service_info[0]->name, "/add_two_ints");
+  EXPECT_EQ(ret_service_info[0]->type, "example_interfaces/srv/AddTwoInts");
+  EXPECT_EQ(ret_service_info[0]->request_count, 3);
+  EXPECT_EQ(ret_service_info[0]->response_count, 3);
+  EXPECT_EQ(ret_service_info[0]->serialization_format, "cdr");
+  EXPECT_EQ(ret_service_info[1]->name, "/add_two_ints2");
+  EXPECT_EQ(ret_service_info[1]->type, "example_interfaces/srv/AddTwoInts");
+  EXPECT_EQ(ret_service_info[1]->request_count, 0);
+  EXPECT_EQ(ret_service_info[1]->response_count, 0);
+  EXPECT_EQ(ret_service_info[1]->serialization_format, "cdr");
+}
