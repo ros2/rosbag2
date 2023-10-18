@@ -46,17 +46,17 @@ Added or changed parameters:
 
     Record all service event topics.
 
+- `--exclude-regex`
+
+    Rename from `--exclude`.  Exclude topics and services containing provided regular expression.
+
 - `--exclude-topics`
 
-    Rename from `--exclude`. List of topics not being recorded.
+    List of topics not being recorded.
 
 - `--exclude-services`
 
     List of services not being recorded.
-
-- `-e REGEX, --exclude-regex REGEX`
-
-    Rename from `-e REGEX, --regex REGEX`. Record only topics and services containing provided regular expression.
 
 The description of the relevant parameter behavior.
 
@@ -67,6 +67,7 @@ The description of the relevant parameter behavior.
 | --all-topics | Record all topics. Hidden topics including service event topics are excluded. |
 | --all-services | Only record all service event topics. |
 | --include-hidden-topics | Record all hidden topics. Include service event topic. |
+| --exclude-regex | Exclude topics and services containing provided regular expression. |
 | --exclude-topics | List of topics not being recorded. |
 | --exclude-services | List of services not being recorded. |
 | -e REGEX, --exclude-regex REGEX | Record only topics and service containing provided regular expression. |
