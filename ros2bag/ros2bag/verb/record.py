@@ -216,8 +216,8 @@ class RecordVerb(VerbExtension):
             return print_error('Must specify only one option out of --all, --all-topics, '
                                'topics or --regex')
 
-        if (args.exclude_regex and \
-            not (args.regex or args.all or args.all_topics or args.all_services)):
+        if (args.exclude_regex and
+           not (args.regex or args.all or args.all_topics or args.all_services)):
             return print_error('--exclude-regex argument requires either --all, --all, '
                                '--all-topics, --all-services or --regex')
 
