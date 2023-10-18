@@ -26,11 +26,12 @@ TEST(record_options, test_yaml_serialization)
   original.is_discovery_disabled = true;
   original.topics = {"topic", "other_topic"};
   original.services = {"service", "other_service"};
+  original.exclude_topics = {"exclude_topic1", "exclude_topic2"};
+  original.exclude_services = {"exclude_service1", "exclude_service2"};
   original.rmw_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
   original.regex = "[xyz]/topic";
-  original.exclude_topics = "*";
-  original.exclude_services = "*";
+  original.exclude_regex = "[x]/topic";
   original.node_prefix = "prefix";
   original.compression_mode = "stream";
   original.compression_format = "h264";
@@ -53,6 +54,8 @@ TEST(record_options, test_yaml_serialization)
   CHECK(is_discovery_disabled);
   CHECK(topics);
   CHECK(services);
+  CHECK(exclude_topics);
+  CHECK(exclude_services);
   CHECK(rmw_serialization_format);
   #undef CHECK
 }

@@ -79,12 +79,16 @@ class RecordVerb(VerbExtension):
                  'Overrides --all, --all-topics and --all-services, applies on top of '
                  'topics list and service list.')
         parser.add_argument(
-            '--exclude-topics', default='',
-            help='Exclude topics containing provided regular expression. '
+            '--exclude-regex', default='',
+            help='Exclude topics and services containing provided regular expression. '
                  'Works on top of --all, --all-topics, or --regex.')
         parser.add_argument(
-            '--exclude-services', default='',
-            help='Exclude services containing provided regular expression. '
+            '--exclude-topics', type=str, metavar='Topic', nargs='+',
+            help='List of topics not being recorded. '
+                 'Works on top of --all, --all-topics, or --regex.')
+        parser.add_argument(
+            '--exclude-services', type=str, metavar='ServiceName', nargs='+',
+            help='List of services not being recorded. '
                  'Works on top of --all, --all-services, or --regex.')
 
         # Enable to record service
@@ -212,6 +216,11 @@ class RecordVerb(VerbExtension):
             return print_error('Must specify only one option out of --all, --all-topics, '
                                'topics or --regex')
 
+        if (args.exclude_regex and \
+            not (args.regex or args.all or args.all_topics or args.all_services)):
+            return print_error('--exclude-regex argument requires either --all, --all, '
+                               '--all-topics, --all-services or --regex')
+
         if args.exclude_topics and not (args.regex or args.all or args.all_topics):
             return print_error('--exclude-topics argument requires either --all, --all-topics '
                                'or --regex')
@@ -277,8 +286,10 @@ class RecordVerb(VerbExtension):
         record_options.topic_polling_interval = datetime.timedelta(
             milliseconds=args.polling_interval)
         record_options.regex = args.regex
+        record_options.exclude_regex = args.exclude_regex
         record_options.exclude_topics = args.exclude_topics
-        record_options.exclude_services = args.exclude_services
+        record_options.exclude_services = \
+            convert_service_to_service_event_topic(args.exclude_services)
         record_options.node_prefix = NODE_NAME_PREFIX
         record_options.compression_mode = args.compression_mode
         record_options.compression_format = args.compression_format

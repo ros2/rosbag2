@@ -189,7 +189,7 @@ TEST_P(TestRewrite, test_filter_split) {
     storage_opts.storage_id = storage_id_;
     rosbag2_transport::RecordOptions rec_opts;
     rec_opts.all_topics = true;
-    rec_opts.exclude_topics = "basic";
+    rec_opts.exclude_regex = "basic";
     output_bags_.push_back({storage_opts, rec_opts});
   }
   {

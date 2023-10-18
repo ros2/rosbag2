@@ -189,10 +189,10 @@ TEST(TestTopicFilter, filter_topics) {
   }
 }
 
-TEST_F(RegexFixture, regex_all_topics_and_exclude_topics)
+TEST_F(RegexFixture, regex_all_topics_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.exclude_topics = "/inv.*";
+  record_options.exclude_regex = "/inv.*";
   record_options.all_topics = true;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
@@ -203,10 +203,42 @@ TEST_F(RegexFixture, regex_all_topics_and_exclude_topics)
   }
 }
 
+TEST_F(RegexFixture, regex_all_topics_and_exclude_topics)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.exclude_topics = {
+    "/invalid_topic",
+    "/invalidated_topic",
+    "/invisible"};
+  record_options.all_topics = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(3));
+  for (const auto & topic : {"/planning", "/localization", "/status"}) {
+    EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end());
+  }
+}
+
+TEST_F(RegexFixture, regex_all_services_and_exclude_regex)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.exclude_regex = "/inv.*";
+  record_options.all_services = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(1));
+  EXPECT_EQ("/planning_service/_service_event", filtered_topics.begin()->first);
+}
+
 TEST_F(RegexFixture, regex_all_services_and_exclude_services)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.exclude_services = "/inv.*";
+  record_options.exclude_services = {
+    "/invalid_service/_service_event",
+    "/invalidated_service/_service_event"
+  };
   record_options.all_services = true;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
@@ -218,10 +250,9 @@ TEST_F(RegexFixture, regex_all_services_and_exclude_services)
 TEST_F(RegexFixture, regex_all_topics_all_services_and_exclude_topics_and_services)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.exclude_topics = "/inv.*";
   record_options.all_topics = true;
-  record_options.exclude_services = "/inv.*";
   record_options.all_services = true;
+  record_options.exclude_regex = "/inv.*";
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
@@ -233,11 +264,24 @@ TEST_F(RegexFixture, regex_all_topics_all_services_and_exclude_topics_and_servic
   }
 }
 
+TEST_F(RegexFixture, regex_filter_exclude_regex)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/invalid.*";
+  record_options.exclude_regex = ".invalidated.*";  // Only affect topics
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(2));
+  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+}
+
 TEST_F(RegexFixture, regex_filter_exclude_topics)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
-  record_options.exclude_topics = ".invalidated.*";  // Only affect topics
+  record_options.exclude_topics = {"/invalidated_topic"};
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
@@ -251,27 +295,13 @@ TEST_F(RegexFixture, regex_filter_exclude_services)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
-  record_options.exclude_services = ".invalidated.*";  // Only affect services
+  record_options.exclude_services = {"/invalidated_service/_service_event"};
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 
   EXPECT_THAT(filtered_topics, SizeIs(3));
   EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
   EXPECT_TRUE(filtered_topics.find("/invalidated_topic") != filtered_topics.end());
-  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
-}
-
-TEST_F(RegexFixture, regex_filter_exclude_topics_and_services)
-{
-  rosbag2_transport::RecordOptions record_options;
-  record_options.regex = "/invalid.*";
-  record_options.exclude_topics = ".invalidated.*";
-  record_options.exclude_services = ".invalidated.*";
-  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
-  auto filtered_topics = filter.filter_topics(topics_and_types_);
-
-  EXPECT_THAT(filtered_topics, SizeIs(2));
-  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
 }
 
@@ -296,7 +326,6 @@ TEST_F(RegexFixture, regex_all_topics_and_filter)
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/status";
   record_options.all_topics = true;
-  record_options.exclude_services = ".*";  //  Not include services
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
   EXPECT_THAT(filtered_topics, SizeIs(6));
@@ -343,9 +372,9 @@ TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_se
 TEST_F(RegexFixture, regex_all_services_and_filter)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.regex = "/status";
+  record_options.regex = "/no_exist_service";
   record_options.all_services = true;
-  record_options.exclude_topics = ".*";  // Not include topics
+
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
   EXPECT_THAT(filtered_topics, SizeIs(3));

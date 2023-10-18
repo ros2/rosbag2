@@ -50,7 +50,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, {}, {}, "rmw_format", 100ms};
+  {true, false, false, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -100,7 +100,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
     "test_service_2");
 
   rosbag2_transport::RecordOptions record_options =
-  {false, true, false, {}, {}, "rmw_format", 100ms};
+  {false, true, false, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -140,8 +140,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   pub_manager.setup_publisher(string_topic, string_message, 1);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, true, false, {}, {}, "rmw_format", 100ms};
-  record_options.exclude_topics = "rosout";
+  {true, true, false, {}, {}, {"rosout"}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
