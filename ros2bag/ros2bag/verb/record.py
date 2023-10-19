@@ -287,7 +287,7 @@ class RecordVerb(VerbExtension):
             milliseconds=args.polling_interval)
         record_options.regex = args.regex
         record_options.exclude_regex = args.exclude_regex
-        record_options.exclude_topics = args.exclude_topics
+        record_options.exclude_topics = args.exclude_topics if args.exclude_topics else []
         record_options.exclude_services = \
             convert_service_to_service_event_topic(args.exclude_services)
         record_options.node_prefix = NODE_NAME_PREFIX
