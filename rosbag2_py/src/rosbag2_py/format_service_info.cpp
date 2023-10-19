@@ -21,9 +21,10 @@ format_service_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list)
 {
   std::stringstream info_stream;
-  int indentation_spaces = 21;
+  const std::string service_info_string = "Service information: ";
+  auto indentation_spaces = service_info_string.size();
   info_stream << "Service:           " << service_info_list.size() << std::endl;
-  info_stream << "Service information: ";
+  info_stream << service_info_string;
 
   if (service_info_list.empty()) {
     return info_stream.str();
