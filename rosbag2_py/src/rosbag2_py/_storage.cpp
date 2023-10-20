@@ -127,15 +127,22 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(
-    pybind11::init<std::vector<std::string>, std::string, std::string>(),
+    pybind11::init<
+      std::vector<std::string>, std::vector<std::string>, std::string, std::string, std::string>(),
     pybind11::arg("topics") = std::vector<std::string>(),
-    pybind11::arg("topics_regex") = "",
-    pybind11::arg("topics_regex_to_exclude") = "")
+    pybind11::arg("services") = std::vector<std::string>(),
+    pybind11::arg("regex") = "",
+    pybind11::arg("topics_regex_to_exclude") = "",
+    pybind11::arg("services_regex_to_exclude") = "")
   .def_readwrite("topics", &rosbag2_storage::StorageFilter::topics)
-  .def_readwrite("topics_regex", &rosbag2_storage::StorageFilter::topics_regex)
+  .def_readwrite("services", &rosbag2_storage::StorageFilter::services)
+  .def_readwrite("regex", &rosbag2_storage::StorageFilter::regex)
   .def_readwrite(
     "topics_regex_to_exclude",
-    &rosbag2_storage::StorageFilter::topics_regex_to_exclude);
+    &rosbag2_storage::StorageFilter::topics_regex_to_exclude)
+  .def_readwrite(
+    "services_regex_to_exclude",
+    &rosbag2_storage::StorageFilter::services_regex_to_exclude);
 
   pybind11::class_<rosbag2_storage::MessageDefinition>(m, "MessageDefinition")
   .def(
