@@ -53,8 +53,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
-    {"topic2", "test_msgs/Arrays", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {"topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -122,9 +122,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
   unknown_message1->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
-    {"topic2", "test_msgs/Arrays", "", "", ""},
-    {"topic3", "unknown_msgs/UnknownType", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {"topic2", "test_msgs/Arrays", "", {}, ""},
+    {"topic3", "unknown_msgs/UnknownType", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -190,8 +190,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
-    {"topic2", "test_msgs/Arrays", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {"topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -315,9 +315,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
   unknown_message1->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
-    {"topic2", "test_msgs/Arrays", "", "", ""},
-    {"topic3", "unknown_msgs/UnknownType", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {"topic2", "test_msgs/Arrays", "", {}, ""},
+    {"topic3", "unknown_msgs/UnknownType", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -424,7 +424,7 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->int32_value = 42;
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -467,16 +467,11 @@ public:
       messages_.push_back(serialize_test_message(topic_name_, timestamp, basic_msg_));
     }
 
-    std::string serialized_offered_qos = "";
-    if (!offered_qos.empty()) {
-      YAML::Node offered_qos_yaml;
-      for (const auto & profile : offered_qos) {
-        offered_qos_yaml.push_back(profile);
-      }
-      serialized_offered_qos = YAML::Dump(offered_qos_yaml);
-    }
-    topic_types_.push_back(
-      {topic_name_, msg_type_, "" /*serialization_format*/, serialized_offered_qos, ""});
+    std::vector<rclcpp::QoS> casted;
+    casted.reserve(offered_qos.size());
+    std::copy(offered_qos.begin(), offered_qos.end(), casted.begin());
+    
+    topic_types_.push_back({topic_name_, msg_type_, "", casted, ""});
   }
 
   template<typename Duration>
@@ -567,7 +562,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_transient_local
   // In this test, we subscribe requesting DURABILITY_TRANSIENT_LOCAL.
   // The bag metadata has this recorded for the original Publisher,
   // so playback's offer should be compatible (whereas the default offer would not be)
-  const auto transient_local_profile = Rosbag2QoS{Rosbag2QoS{}.transient_local()};
+  const auto transient_local_profile = rosbag2_storage::Rosbag2QoS{rosbag2_storage::Rosbag2QoS{}.transient_local()};
   // This should normally take less than 1s - just making it shorter than 60s default
   const auto timeout = 5s;
 
@@ -590,8 +585,8 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_deadline)
   // requirement, so they are compatible.
   const rclcpp::Duration request_deadline{1s};
   const rclcpp::Duration offer_deadline{500ms};
-  const auto request_profile = Rosbag2QoS{}.deadline(request_deadline);
-  const auto offer_profile = Rosbag2QoS{Rosbag2QoS{}.deadline(offer_deadline)};
+  const auto request_profile = rosbag2_storage::Rosbag2QoS{}.deadline(request_deadline);
+  const auto offer_profile = rosbag2_storage::Rosbag2QoS{rosbag2_storage::Rosbag2QoS{}.deadline(offer_deadline)};
   const auto timeout = 5s;
 
   initialize({offer_profile});
@@ -612,10 +607,10 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
   const rclcpp::Duration override_liveliness_offer{250ms};
   ASSERT_LT(liveliness_request, recorded_liveliness_offer);
   ASSERT_LT(override_liveliness_offer, liveliness_request);
-  const auto request_profile = Rosbag2QoS{}.liveliness_lease_duration(liveliness_request);
-  const auto recorded_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
+  const auto request_profile = rosbag2_storage::Rosbag2QoS{}.liveliness_lease_duration(liveliness_request);
+  const auto recorded_offer_profile = rosbag2_storage::Rosbag2QoS{rosbag2_storage::Rosbag2QoS{}.liveliness_lease_duration(
       recorded_liveliness_offer)};
-  const auto override_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
+  const auto override_offer_profile = rosbag2_storage::Rosbag2QoS{rosbag2_storage::Rosbag2QoS{}.liveliness_lease_duration(
       override_liveliness_offer)};
   const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
     std::pair<std::string, rclcpp::QoS>{topic_name_, override_offer_profile},
@@ -636,7 +631,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
 TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
 {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", "", ""},
+    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();

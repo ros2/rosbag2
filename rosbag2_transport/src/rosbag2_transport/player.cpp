@@ -74,17 +74,17 @@ rclcpp::QoS publisher_qos_for_topic(
     RCLCPP_INFO_STREAM(
       logger,
       "Overriding QoS profile for topic " << topic.name);
-    return Rosbag2QoS{qos_it->second};
+    return rosbag2_storage::Rosbag2QoS{qos_it->second};
   } else if (topic.offered_qos_profiles.empty()) {
-    return Rosbag2QoS{};
+    return rosbag2_storage::Rosbag2QoS{};
   }
 
-  const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
-  const auto offered_qos_profiles =
-    YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-    profiles_yaml,
-    topic.version);
-  return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);
+  std::vector<rosbag2_storage::Rosbag2QoS> casted;
+  casted.reserve(topic.offered_qos_profiles.size());
+  std::transform(
+    topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(), casted.begin(),
+    [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
+  return rosbag2_storage::Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, casted);
 }
 }  // namespace
 

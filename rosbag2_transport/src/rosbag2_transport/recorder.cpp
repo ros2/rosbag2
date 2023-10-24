@@ -103,15 +103,15 @@ private:
    * Find the QoS profile that should be used for subscribing.
    *
    * Uses the override from record_options, if it is specified for this topic.
-   * Otherwise, falls back to Rosbag2QoS::adapt_request_to_offers
+   * Otherwise, falls back to rosbag2_storage::Rosbag2QoS::adapt_request_to_offers
    *
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    *   \return The QoS profile to be used for subscribing.
    */
   rclcpp::QoS subscription_qos_for_topic(const std::string & topic_name) const;
 
-  // Serialize all currently offered QoS profiles for a topic into a YAML list.
-  std::string serialized_offered_qos_profiles_for_topic(
+  // Get all currently offered QoS profiles for a topic.
+  std::vector<rclcpp::QoS> offered_qos_profiles_for_topic(
     const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const;
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
@@ -461,7 +461,7 @@ void RecorderImpl::subscribe_topics(
         topic_with_type.first,
         topic_with_type.second,
         serialization_format_,
-        serialized_offered_qos_profiles_for_topic(endpoint_infos),
+        offered_qos_profiles_for_topic(endpoint_infos),
         type_description_hash_for_topic(endpoint_infos),
       });
   }
@@ -474,7 +474,7 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // that callback called before we reached out the line: writer_->create_topic(topic)
   writer_->create_topic(topic);
 
-  Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
+  rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -503,14 +503,14 @@ RecorderImpl::create_subscription(
   return subscription;
 }
 
-std::string RecorderImpl::serialized_offered_qos_profiles_for_topic(
+std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(
   const std::vector<rclcpp::TopicEndpointInfo> & topics_endpoint_info) const
 {
-  YAML::Node offered_qos_profiles;
+  std::vector<rclcpp::QoS> offered_qos_profiles;
   for (const auto & info : topics_endpoint_info) {
-    offered_qos_profiles.push_back(Rosbag2QoS(info.qos_profile()));
+    offered_qos_profiles.push_back(info.qos_profile());
   }
-  return YAML::Dump(offered_qos_profiles);
+  return offered_qos_profiles;
 }
 
 std::string type_hash_to_string(const rosidl_type_hash_t & type_hash)
@@ -576,7 +576,7 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
       "Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
   }
-  return Rosbag2QoS::adapt_request_to_offers(
+  return rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
     topic_name, node->get_publishers_info_by_topic(topic_name));
 }
 
