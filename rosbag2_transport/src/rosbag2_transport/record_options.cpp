@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
 namespace YAML
@@ -54,11 +54,11 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["compression_format"] = record_options.compression_format;
   node["compression_queue_size"] = record_options.compression_queue_size;
   node["compression_threads"] = record_options.compression_threads;
-  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides(
+  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides(
     record_options.topic_qos_profile_overrides.begin(),
     record_options.topic_qos_profile_overrides.end());
   node["topic_qos_profile_overrides"] = convert<std::map<std::string,
-      rosbag2_transport::Rosbag2QoS>>::encode(qos_overrides);
+      rosbag2_storage::Rosbag2QoS>>::encode(qos_overrides);
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   return node;
@@ -83,9 +83,9 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<uint64_t>(node, "compression_threads", record_options.compression_threads);
 
   // yaml-cpp doesn't implement unordered_map
-  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides;
+  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides;
   if (node["topic_qos_profile_overrides"]) {
-    qos_overrides = YAML::decode_for_version<std::map<std::string, rosbag2_transport::Rosbag2QoS>>(
+    qos_overrides = YAML::decode_for_version<std::map<std::string, rosbag2_storage::Rosbag2QoS>>(
       node["topic_qos_profile_overrides"], version);
   }
   record_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());

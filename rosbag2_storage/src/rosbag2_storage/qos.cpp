@@ -16,8 +16,8 @@
 #include <vector>
 
 
-#include "rosbag2_transport/qos.hpp"
-#include "logging.hpp"
+#include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/logging.hpp"
 #include "rmw/qos_string_conversions.h"
 
 namespace
@@ -131,8 +131,8 @@ bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
   return true;
 }
 
-Node convert<rosbag2_transport::Rosbag2QoS>::encode(
-  const rosbag2_transport::Rosbag2QoS & qos)
+Node convert<rosbag2_storage::Rosbag2QoS>::encode(
+  const rosbag2_storage::Rosbag2QoS & qos)
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
@@ -148,8 +148,8 @@ Node convert<rosbag2_transport::Rosbag2QoS>::encode(
   return node;
 }
 
-bool convert<rosbag2_transport::Rosbag2QoS>::decode(
-  const Node & node, rosbag2_transport::Rosbag2QoS & qos, int version)
+bool convert<rosbag2_storage::Rosbag2QoS>::decode(
+  const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version)
 {
   if (version <= 8) {
     auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
@@ -179,7 +179,7 @@ bool convert<rosbag2_transport::Rosbag2QoS>::decode(
 }
 }  // namespace YAML
 
-namespace rosbag2_transport
+namespace rosbag2_storage
 {
 Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
@@ -210,7 +210,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     request_qos.reliable();
   } else {
     if (reliability_reliable_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      ROSBAG2_STORAGE_LOG_WARN_STREAM(
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
           "are offering RMW_QOS_POLICY_RELIABILITY_RELIABLE. "
           "Falling back to RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT "
@@ -226,7 +226,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     request_qos.transient_local();
   } else {
     if (durability_transient_local_endpoints_count > 0) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+      ROSBAG2_STORAGE_LOG_WARN_STREAM(
         "Some, but not all, publishers on topic \"" << topic_name << "\" "
           "are offering RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL. "
           "Falling back to RMW_QOS_POLICY_DURABILITY_VOLATILE "
@@ -296,10 +296,10 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
     return result.default_history();
   }
 
-  ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+  ROSBAG2_STORAGE_LOG_WARN_STREAM(
     "Not all original publishers on topic " << topic_name << " offered the same QoS profiles. "
       "Rosbag2 cannot yet choose an adapted profile to offer for this mixed case. "
-      "Falling back to the rosbag2_transport default publisher offer.");
+      "Falling back to the rosbag2_storage default publisher offer.");
   return Rosbag2QoS{};
 }
-}  // namespace rosbag2_transport
+}  // namespace rosbag2_storage

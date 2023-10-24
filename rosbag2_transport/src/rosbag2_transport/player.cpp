@@ -35,7 +35,7 @@
 
 #include "rosbag2_storage/storage_filter.hpp"
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 
 namespace
 {
@@ -68,7 +68,7 @@ rclcpp::QoS publisher_qos_for_topic(
   const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides,
   const rclcpp::Logger & logger)
 {
-  using rosbag2_transport::Rosbag2QoS;
+  using rosbag2_storage::Rosbag2QoS;
   auto qos_it = topic_qos_profile_overrides.find(topic.name);
   if (qos_it != topic_qos_profile_overrides.end()) {
     RCLCPP_INFO_STREAM(
@@ -81,7 +81,7 @@ rclcpp::QoS publisher_qos_for_topic(
 
   const auto profiles_yaml = YAML::Load(topic.offered_qos_profiles);
   const auto offered_qos_profiles =
-    YAML::decode_for_version<std::vector<rosbag2_transport::Rosbag2QoS>>(
+    YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
     profiles_yaml,
     topic.version);
   return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, offered_qos_profiles);

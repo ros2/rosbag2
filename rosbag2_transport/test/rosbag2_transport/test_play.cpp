@@ -32,7 +32,7 @@
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
@@ -455,7 +455,7 @@ public:
   {
   }
 
-  void initialize(const std::vector<rosbag2_transport::Rosbag2QoS> & offered_qos)
+  void initialize(const std::vector<rosbag2_storage::Rosbag2QoS> & offered_qos)
   {
     // Because these tests only cares about compatibility (receiving any messages at all)
     // We publish one more message than we expect to receive, to avoid caring about

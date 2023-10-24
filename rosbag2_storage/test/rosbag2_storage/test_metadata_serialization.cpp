@@ -54,8 +54,8 @@ TEST_F(MetadataFixture, test_writing_and_reading_yaml)
   metadata.starting_time =
     std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(1000000));
   metadata.message_count = 50;
-  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", "qos1", "", 8}, 100});
-  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", "qos2", "", 8}, 200});
+  metadata.topics_with_message_count.push_back({{"topic1", "type1", "rmw1", {}, ""}, 100});
+  metadata.topics_with_message_count.push_back({{"topic2", "type2", "rmw2", {}, ""}, 200});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
@@ -99,13 +99,14 @@ TEST_F(MetadataFixture, metadata_reads_v3_check_offered_qos_profiles_empty)
 {
   // Make sure that when reading a v3 metadata, the deserialization
   // does not attempt to fill the offered_qos_profiles field
-  const std::string offered_qos_profiles = "qos_profile_string_data";
+  std::vector<rclcpp::QoS> offered_qos_profiles;
+  offered_qos_profiles.push_back(rclcpp::QoS(1));
   const size_t message_count = 100;  // arbitrary value
 
   BagMetadata metadata{};
   metadata.version = 3;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles, "", 3}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, ""}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -118,13 +119,14 @@ TEST_F(MetadataFixture, metadata_reads_v3_check_offered_qos_profiles_empty)
 TEST_F(MetadataFixture, metadata_reads_v4_fills_offered_qos_profiles)
 {
   // Make sure when reading a v4 metadata that the deserialization fills "offered_qos_profiles"
-  const std::string offered_qos_profiles = "qos_profile_string_data";
+  std::vector<rclcpp::QoS> offered_qos_profiles;
+  offered_qos_profiles.push_back(rclcpp::QoS(1));
   const size_t message_count = 100;  // arbitrary value
 
   BagMetadata metadata{};
   metadata.version = 4;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", offered_qos_profiles, "", 4}, message_count});
+    {{"topic", "type", "rmw", offered_qos_profiles, ""}, message_count});
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);
   ASSERT_THAT(
@@ -154,7 +156,7 @@ TEST_F(MetadataFixture, metadata_reads_v7_topic_type_hash)
   BagMetadata metadata{};
   metadata.version = 7;
   metadata.topics_with_message_count.push_back(
-    {{"topic", "type", "rmw", "", type_description_hash, 7}, 1});
+    {{"topic", "type", "rmw", {rclcpp::QoS(1)}, type_description_hash}, 1});
 
   metadata_io_->write_metadata(temporary_dir_path_, metadata);
   auto read_metadata = metadata_io_->read_metadata(temporary_dir_path_);

@@ -25,11 +25,13 @@ find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(
   ${PROJECT_NAME}
   SHARED
+  src/rosbag2_storage/qos.cpp
   src/rosbag2_storage/default_storage_id.cpp
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
@@ -45,6 +47,7 @@ target_link_libraries(${PROJECT_NAME}
   pluginlib::pluginlib
   rcpputils::rcpputils
   rcutils::rcutils
+  rclcpp::rclcpp
   yaml-cpp
 )
 

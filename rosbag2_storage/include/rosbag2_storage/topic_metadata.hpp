@@ -16,6 +16,7 @@
 #define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
 #include <string>
+#include "rclcpp/qos.hpp"
 
 namespace rosbag2_storage
 {
@@ -25,11 +26,9 @@ struct TopicMetadata
   std::string name;
   std::string type;
   std::string serialization_format;
-  // Serialized std::vector<rclcpp::QoS> as a YAML string
-  std::string offered_qos_profiles;
+  std::vector<rclcpp::QoS> offered_qos_profiles;
   // REP-2011 type description hash if available for topic, "" otherwise.
   std::string type_description_hash;
-  int version = 9;
 
   bool operator==(const rosbag2_storage::TopicMetadata & rhs) const
   {
