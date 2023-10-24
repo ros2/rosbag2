@@ -208,7 +208,7 @@ void Reindexer::aggregate_metadata(
         ROSBAG2_CPP_LOG_DEBUG_STREAM("Found topic!");
         // Merge in the new information
         found_topic->second.message_count += topic.message_count;
-        if (topic.topic_metadata.offered_qos_profiles != "") {
+        if (!topic.topic_metadata.offered_qos_profiles.empty()) {
           found_topic->second.topic_metadata.offered_qos_profiles =
             topic.topic_metadata.offered_qos_profiles;
         }

@@ -35,7 +35,7 @@
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 
 #include "rosbag2_storage/yaml.hpp"
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
