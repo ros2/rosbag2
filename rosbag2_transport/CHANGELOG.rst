@@ -2,6 +2,12 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix uninitialized value pointed out by clang static analysis. (backport `#1440 <https://github.com/ros2/rosbag2/issues/1440>`_) (`#1448 <https://github.com/ros2/rosbag2/issues/1448>`_)
+* Don't warn for unknown types if topics are not selected (`#1466 <https://github.com/ros2/rosbag2/issues/1466>`_) (`#1468 <https://github.com/ros2/rosbag2/issues/1468>`_)
+* Contributors: Michael Orlov, Chris Lalancette
+
 0.22.3 (2023-09-08)
 -------------------
 * Fix the build with rmw_fastrtps_dynamic. (`#1438 <https://github.com/ros2/rosbag2/issues/1438>`_)
