@@ -97,9 +97,9 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
   std::vector<std::string> topics = {"topic1", "topic2"};
 
   rosbag2_storage::TopicMetadata topic_metadata_1 = {topics[0], "std_msgs/msg/String", "cdr",
-                                                     "qos_profile1", "type_hash1"};
+                                                     {rclcpp::QoS(1)}, "type_hash1"};
   rosbag2_storage::TopicMetadata topic_metadata_2 = {topics[1], "std_msgs/msg/String", "cdr",
-                                                     "qos_profile2", "type_hash2"};
+                                                     {rclcpp::QoS(2)}, "type_hash2"};
 
   std::vector<std::tuple<std::string, int64_t, rosbag2_storage::TopicMetadata,
                          rosbag2_storage::MessageDefinition>>
@@ -116,8 +116,8 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 
   {
     auto writer = factory.open_read_write(options);
-    writer->create_topic({"topic1", "type1", "rmw1", "qos_profile1", "type_hash1"}, {});
-    writer->create_topic({"topic2", "type2", "rmw2", "qos_profile2", "type_hash2"}, {});
+    writer->create_topic({"topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, {});
+    writer->create_topic({"topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}, {});
     (void)write_messages_to_mcap(messages, writer);
     auto metadata = writer->get_metadata();
     metadata.ros_distro = "rolling";
@@ -137,10 +137,10 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
     metadata.topics_with_message_count,
     UnorderedElementsAreArray({
       rosbag2_storage::TopicInformation{
-        rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", "qos_profile2", "type_hash2"},
+        rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"},
         1u},
       rosbag2_storage::TopicInformation{
-        rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", "qos_profile1", "type_hash1"},
+        rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"},
         2u},
     }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
@@ -180,7 +180,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     topic_metadata.name = topic_name;
     topic_metadata.type = "std_msgs/msg/String";
     topic_metadata.serialization_format = "cdr";
-    topic_metadata.offered_qos_profiles = "qos_profile1";
+    topic_metadata.offered_qos_profiles = {rclcpp::QoS(1)};
     topic_metadata.type_description_hash = "type_hash1";
 
     std_msgs::msg::String msg;
@@ -225,7 +225,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 
     EXPECT_THAT(topics_and_types,
                 ElementsAreArray({rosbag2_storage::TopicMetadata{
-                  topic_name, "std_msgs/msg/String", "cdr", "qos_profile1", "type_hash1"}}));
+                  topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"}}));
 
     const auto metadata = reader->get_metadata();
 
@@ -234,7 +234,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     EXPECT_THAT(metadata.topics_with_message_count,
                 ElementsAreArray({rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{topic_name, "std_msgs/msg/String", "cdr",
-                                                 "qos_profile1", "type_hash1"},
+                                                 {rclcpp::QoS(1)}, "type_hash1"},
                   1u}}));
     EXPECT_THAT(metadata.message_count, Eq(1u));
 
