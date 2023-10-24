@@ -158,20 +158,23 @@ bool TopicFilter::take_topic(
       return false;
     }
 
-    if (!record_options_.topics.empty() && !topic_in_list(topic_name, record_options_.topics)) {
-      return false;
+    if (!record_options_.all_topics) {
+      // Not in include topic list
+      if (record_options_.topics.empty() || !topic_in_list(topic_name, record_options_.topics)) {
+        // Not match include regex
+        if (!record_options_.regex.empty()) {
+          std::regex include_regex(record_options_.regex);
+          if (!std::regex_search(topic_name, include_regex)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
     }
 
     if (!record_options_.exclude_topics.empty() &&
       topic_in_list(topic_name, record_options_.exclude_topics))
-    {
-      return false;
-    }
-
-    std::regex include_regex(record_options_.regex);
-    if (!record_options_.all_topics &&  // All takes precedence over regex
-      !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
-      !std::regex_search(topic_name, include_regex))
     {
       return false;
     }
@@ -197,25 +200,28 @@ bool TopicFilter::take_topic(
       return false;
     }
 
-    if (!record_options_.services.empty() &&
-      !service_in_list(topic_name, record_options_.services))
-    {
-      return false;
+    // Convert service event topic name to service name
+    auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic_name);
+
+    if (!record_options_.all_services) {
+      // Not in include service list
+      if (record_options_.services.empty() ||
+        !service_in_list(topic_name, record_options_.services))
+      {
+        // Not match include regex
+        if (!record_options_.regex.empty()) {
+          std::regex include_regex(record_options_.regex);
+          if (!std::regex_search(service_name, include_regex)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
     }
 
     if (!record_options_.exclude_services.empty() &&
       service_in_list(topic_name, record_options_.exclude_services))
-    {
-      return false;
-    }
-
-    // Convert service event topic name to service name
-    auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic_name);
-
-    std::regex include_regex(record_options_.regex);
-    if (!record_options_.all_services &&  // All takes precedence over regex
-      !record_options_.regex.empty() &&  // empty regex matches nothing, but should be ignored
-      !std::regex_search(service_name, include_regex))
     {
       return false;
     }

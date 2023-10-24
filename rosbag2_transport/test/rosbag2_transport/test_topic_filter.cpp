@@ -54,6 +54,7 @@ TEST(TestTopicFilter, filter_hidden_topics) {
 
   {
     rosbag2_transport::RecordOptions record_options;
+    record_options.all_topics = true;
     record_options.include_hidden_topics = true;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
     auto filtered_topics = filter.filter_topics(topics_and_types);
