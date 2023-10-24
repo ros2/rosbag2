@@ -478,12 +478,6 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
 
-  // For service event topic, avoid receiving the last response message.
-  // TODO(Barry-Xu-2018): is there a better way ?
-  if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
-    subscription_qos.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
-  }
-
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
