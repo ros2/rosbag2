@@ -215,7 +215,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("name"),
     pybind11::arg("type"),
     pybind11::arg("serialization_format"),
-    pybind11::arg("offered_qos_profiles") = {},
+    pybind11::arg("offered_qos_profiles") = std::vector<rclcpp::QoS>(),
     pybind11::arg("type_description_hash") = "")
   .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
   .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
