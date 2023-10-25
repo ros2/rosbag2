@@ -23,6 +23,7 @@
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage/qos.hpp"
 
 #include "./format_bag_metadata.hpp"
 
@@ -152,13 +153,63 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::MessageDefinition::encoded_message_definition)
   .def_readwrite("type_hash", &rosbag2_storage::MessageDefinition::type_hash);
 
+  pybind11::enum_<rmw_qos_history_policy_t>(m, "rmw_qos_history_policy_t")
+  .value("RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT", RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT)
+  .value("RMW_QOS_POLICY_HISTORY_KEEP_LAST", RMW_QOS_POLICY_HISTORY_KEEP_LAST)
+  .value("RMW_QOS_POLICY_HISTORY_KEEP_ALL", RMW_QOS_POLICY_HISTORY_KEEP_ALL)
+  .value("RMW_QOS_POLICY_HISTORY_UNKNOWN", RMW_QOS_POLICY_HISTORY_UNKNOWN);
+
+  pybind11::enum_<rmw_qos_reliability_policy_t>(m, "rmw_qos_reliability_policy_t")
+  .value("RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT", RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT)
+  .value("RMW_QOS_POLICY_RELIABILITY_RELIABLE", RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+  .value("RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT", RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+  .value("RMW_QOS_POLICY_RELIABILITY_UNKNOWN", RMW_QOS_POLICY_RELIABILITY_UNKNOWN);
+
+  pybind11::enum_<rmw_qos_durability_policy_t>(m, "rmw_qos_durability_policy_t")
+  .value("RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT", RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT)
+  .value("RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL", RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+  .value("RMW_QOS_POLICY_DURABILITY_VOLATILE", RMW_QOS_POLICY_DURABILITY_VOLATILE)
+  .value("RMW_QOS_POLICY_DURABILITY_UNKNOWN", RMW_QOS_POLICY_DURABILITY_UNKNOWN);  
+
+
+  pybind11::enum_<rmw_qos_liveliness_policy_t>(m, "rmw_qos_liveliness_policy_t")
+  .value("RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT", RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
+  .value("RMW_QOS_POLICY_LIVELINESS_AUTOMATIC", RMW_QOS_POLICY_LIVELINESS_AUTOMATIC)
+  .value("RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC", RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC)
+  .value("RMW_QOS_POLICY_LIVELINESS_UNKNOWN", RMW_QOS_POLICY_LIVELINESS_UNKNOWN);  
+
+  pybind11::class_<rclcpp::Duration>(m, "Duration")
+  .def(
+    pybind11::init<int32_t, uint32_t>(),
+    pybind11::arg("seconds"),
+    pybind11::arg("nanoseconds"));
+
+  pybind11::class_<rclcpp::QoS>(m, "QoS")
+  .def(
+    pybind11::init<size_t>(),
+    pybind11::arg("history_depth"))
+  .def("keep_last", &rclcpp::QoS::keep_last)  
+  .def("keep_all", &rclcpp::QoS::keep_all)  
+  .def("reliable", &rclcpp::QoS::reliable)  
+  .def("best_effort", &rclcpp::QoS::best_effort)  
+  .def("durability_volatile", &rclcpp::QoS::durability_volatile)  
+  .def("transient_local", &rclcpp::QoS::transient_local)  
+  .def("history", pybind11::overload_cast<rmw_qos_history_policy_t>(&rclcpp::QoS::history))
+  .def("reliability", pybind11::overload_cast<rmw_qos_reliability_policy_t>(&rclcpp::QoS::reliability))
+  .def("durability", pybind11::overload_cast<rmw_qos_durability_policy_t>(&rclcpp::QoS::durability))  
+  .def("liveliness", pybind11::overload_cast<rmw_qos_liveliness_policy_t>(&rclcpp::QoS::liveliness))  
+  .def("deadline", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::deadline))  
+  .def("lifespan", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::lifespan))  
+  .def("liveliness_lease_duration", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::liveliness_lease_duration))  
+  .def("avoid_ros_namespace_conventions", pybind11::overload_cast<bool>(&rclcpp::QoS::avoid_ros_namespace_conventions));
+
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
-    pybind11::init<std::string, std::string, std::string, std::string, std::string>(),
+    pybind11::init<std::string, std::string, std::string, std::vector<rclcpp::QoS>, std::string>(),
     pybind11::arg("name"),
     pybind11::arg("type"),
     pybind11::arg("serialization_format"),
-    pybind11::arg("offered_qos_profiles") = "",
+    pybind11::arg("offered_qos_profiles") = {},
     pybind11::arg("type_description_hash") = "")
   .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
   .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
