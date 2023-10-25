@@ -14,6 +14,7 @@
 #ifndef ROSBAG2_STORAGE__YAML_HPP_
 #define ROSBAG2_STORAGE__YAML_HPP_
 
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <vector>

@@ -16,6 +16,7 @@
 #define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
 #include <string>
+#include <vector>
 #include "rclcpp/qos.hpp"
 
 namespace rosbag2_storage
