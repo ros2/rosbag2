@@ -73,7 +73,7 @@ ament_export_libraries(${PROJECT_NAME})
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
 
-ament_export_dependencies(pluginlib yaml_cpp_vendor)
+ament_export_dependencies(pluginlib yaml_cpp_vendor rclcpp)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
