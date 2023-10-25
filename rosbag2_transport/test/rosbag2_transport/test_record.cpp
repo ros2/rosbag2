@@ -181,7 +181,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   std::vector<rosbag2_storage::Rosbag2QoS> to_encode;
   to_encode.reserve(offered_qos_profiles.size());
   std::transform(
-    offered_qos_profiles.begin(), offered_qos_profiles.end(), to_encode.begin(),
+    offered_qos_profiles.begin(), offered_qos_profiles.end(), std::back_inserter(to_encode),
     [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
   std::string serialized_profiles = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
     to_encode).as<std::string>();

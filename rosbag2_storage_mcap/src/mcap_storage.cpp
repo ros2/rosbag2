@@ -825,7 +825,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
     to_encode.reserve(topic_info.topic_metadata.offered_qos_profiles.size());
     std::transform(topic_info.topic_metadata.offered_qos_profiles.begin(),
                     topic_info.topic_metadata.offered_qos_profiles.end(),
-                    to_encode.begin(),
+                    std::back_inserter(to_encode),
                     [](auto & qos) {
                                    return static_cast<rosbag2_storage::Rosbag2QoS>(qos);
                                  });

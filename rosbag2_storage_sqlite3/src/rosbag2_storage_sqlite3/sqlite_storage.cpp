@@ -465,7 +465,7 @@ void SqliteStorage::create_topic(
     std::transform(
       topic.offered_qos_profiles.begin(),
       topic.offered_qos_profiles.end(),
-      to_encode.begin(),
+      std::back_inserter(to_encode),
       [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
     auto yaml_node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
     auto insert_topic =
