@@ -175,7 +175,15 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
   auto recorded_topics = mock_writer.get_topics();
-  std::string serialized_profiles = recorded_topics.at(topic).first.offered_qos_profiles;
+  auto offered_qos_profiles = recorded_topics.at(topic).first.offered_qos_profiles;
+
+
+  std::vector<rosbag2_storage::Rosbag2QoS> to_encode;
+  to_encode.reserve(offered_qos_profiles.size());
+  std::transform(
+    offered_qos_profiles.begin(), offered_qos_profiles.end(), to_encode.begin(),
+    [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
+  std::string serialized_profiles  = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode).as<std::string>();
   // Basic smoke test that the profile was serialized into the metadata as a string.
   EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: reliable\n"));
   EXPECT_THAT(serialized_profiles, ContainsRegex("durability: volatile\n"));
