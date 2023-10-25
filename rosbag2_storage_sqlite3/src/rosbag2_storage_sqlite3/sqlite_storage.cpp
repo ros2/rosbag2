@@ -466,7 +466,7 @@ void SqliteStorage::create_topic(
       topic.offered_qos_profiles.begin(),
       topic.offered_qos_profiles.end(),
       to_encode.begin(),
-      [](auto & qos){return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
+      [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
     auto yaml_node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
     auto insert_topic =
       database_->prepare_statement(
@@ -600,7 +600,9 @@ void SqliteStorage::fill_topics_and_types()
 
       for (auto result : query_results) {
         auto yaml_node = YAML::Load(std::get<3>(result));
-        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(yaml_node, metadata_.version); 
+        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          yaml_node,
+          metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
         std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
         all_topics_and_types_.push_back(
@@ -619,11 +621,14 @@ void SqliteStorage::fill_topics_and_types()
 
       for (auto result : query_results) {
         auto yaml_node = YAML::Load(std::get<3>(result));
-        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(yaml_node, metadata_.version); 
+        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          yaml_node,
+          metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
         std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
         all_topics_and_types_.push_back(
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles, ""});
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles,
+            ""});
       }
     }
   } else {
@@ -698,12 +703,15 @@ void SqliteStorage::read_metadata()
 
       for (auto result : query_results) {
         auto yaml_node = YAML::Load(std::get<6>(result));
-        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(yaml_node, metadata_.version); 
+        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          yaml_node,
+          metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
         std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
         metadata_.topics_with_message_count.push_back(
           {
-            {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles, std::get<7>(result)},
+            {std::get<0>(result), std::get<1>(result), std::get<2>(
+                result), offered_qos_profiles, std::get<7>(result)},
             static_cast<size_t>(std::get<3>(result))
           });
 
@@ -725,12 +733,15 @@ void SqliteStorage::read_metadata()
 
       for (auto result : query_results) {
         auto yaml_node = YAML::Load(std::get<6>(result));
-        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(yaml_node, metadata_.version); 
+        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          yaml_node,
+          metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
         std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
         metadata_.topics_with_message_count.push_back(
           {
-            {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles, ""},
+            {std::get<0>(result), std::get<1>(result), std::get<2>(
+                result), offered_qos_profiles, ""},
             static_cast<size_t>(std::get<3>(result))
           });
 
