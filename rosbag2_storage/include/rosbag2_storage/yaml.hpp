@@ -78,10 +78,11 @@ struct convert<rosbag2_storage::TopicMetadata>
     std::vector<rosbag2_storage::Rosbag2QoS> to_encode;
     to_encode.reserve(topic.offered_qos_profiles.size());
     std::transform(
-      topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(), to_encode.begin(),
+      topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(), std::back_inserter(to_encode),
       [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
-    node["offered_qos_profiles"] = convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
+    auto temp = convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
       to_encode);
+    node["offered_qos_profiles"] = YAML::Dump(temp);
     node["type_description_hash"] = topic.type_description_hash;
     return node;
   }
@@ -92,10 +93,10 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 4) {
+      std::string qos_str = node["offered_qos_profiles"].as<std::string>();
       auto decoded =
         decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-        node["offered_qos_profiles"],
-        version);
+        YAML::Load(qos_str), version);
       topic.offered_qos_profiles.reserve(decoded.size());
       std::copy(decoded.begin(), decoded.end(), topic.offered_qos_profiles.begin());
     }
