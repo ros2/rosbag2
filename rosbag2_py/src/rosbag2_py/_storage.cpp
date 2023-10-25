@@ -169,14 +169,14 @@ PYBIND11_MODULE(_storage, m) {
   .value("RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT", RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT)
   .value("RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL", RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
   .value("RMW_QOS_POLICY_DURABILITY_VOLATILE", RMW_QOS_POLICY_DURABILITY_VOLATILE)
-  .value("RMW_QOS_POLICY_DURABILITY_UNKNOWN", RMW_QOS_POLICY_DURABILITY_UNKNOWN);  
+  .value("RMW_QOS_POLICY_DURABILITY_UNKNOWN", RMW_QOS_POLICY_DURABILITY_UNKNOWN);
 
 
   pybind11::enum_<rmw_qos_liveliness_policy_t>(m, "rmw_qos_liveliness_policy_t")
   .value("RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT", RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT)
   .value("RMW_QOS_POLICY_LIVELINESS_AUTOMATIC", RMW_QOS_POLICY_LIVELINESS_AUTOMATIC)
   .value("RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC", RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC)
-  .value("RMW_QOS_POLICY_LIVELINESS_UNKNOWN", RMW_QOS_POLICY_LIVELINESS_UNKNOWN);  
+  .value("RMW_QOS_POLICY_LIVELINESS_UNKNOWN", RMW_QOS_POLICY_LIVELINESS_UNKNOWN);
 
   pybind11::class_<rclcpp::Duration>(m, "Duration")
   .def(
@@ -188,20 +188,26 @@ PYBIND11_MODULE(_storage, m) {
   .def(
     pybind11::init<size_t>(),
     pybind11::arg("history_depth"))
-  .def("keep_last", &rclcpp::QoS::keep_last)  
-  .def("keep_all", &rclcpp::QoS::keep_all)  
-  .def("reliable", &rclcpp::QoS::reliable)  
-  .def("best_effort", &rclcpp::QoS::best_effort)  
-  .def("durability_volatile", &rclcpp::QoS::durability_volatile)  
-  .def("transient_local", &rclcpp::QoS::transient_local)  
+  .def("keep_last", &rclcpp::QoS::keep_last)
+  .def("keep_all", &rclcpp::QoS::keep_all)
+  .def("reliable", &rclcpp::QoS::reliable)
+  .def("best_effort", &rclcpp::QoS::best_effort)
+  .def("durability_volatile", &rclcpp::QoS::durability_volatile)
+  .def("transient_local", &rclcpp::QoS::transient_local)
   .def("history", pybind11::overload_cast<rmw_qos_history_policy_t>(&rclcpp::QoS::history))
-  .def("reliability", pybind11::overload_cast<rmw_qos_reliability_policy_t>(&rclcpp::QoS::reliability))
-  .def("durability", pybind11::overload_cast<rmw_qos_durability_policy_t>(&rclcpp::QoS::durability))  
-  .def("liveliness", pybind11::overload_cast<rmw_qos_liveliness_policy_t>(&rclcpp::QoS::liveliness))  
-  .def("deadline", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::deadline))  
-  .def("lifespan", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::lifespan))  
-  .def("liveliness_lease_duration", pybind11::overload_cast<const rclcpp::Duration&>(&rclcpp::QoS::liveliness_lease_duration))  
-  .def("avoid_ros_namespace_conventions", pybind11::overload_cast<bool>(&rclcpp::QoS::avoid_ros_namespace_conventions));
+  .def(
+    "reliability",
+    pybind11::overload_cast<rmw_qos_reliability_policy_t>(&rclcpp::QoS::reliability))
+  .def("durability", pybind11::overload_cast<rmw_qos_durability_policy_t>(&rclcpp::QoS::durability))
+  .def("liveliness", pybind11::overload_cast<rmw_qos_liveliness_policy_t>(&rclcpp::QoS::liveliness))
+  .def("deadline", pybind11::overload_cast<const rclcpp::Duration &>(&rclcpp::QoS::deadline))
+  .def("lifespan", pybind11::overload_cast<const rclcpp::Duration &>(&rclcpp::QoS::lifespan))
+  .def(
+    "liveliness_lease_duration",
+    pybind11::overload_cast<const rclcpp::Duration &>(&rclcpp::QoS::liveliness_lease_duration))
+  .def(
+    "avoid_ros_namespace_conventions",
+    pybind11::overload_cast<bool>(&rclcpp::QoS::avoid_ros_namespace_conventions));
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
