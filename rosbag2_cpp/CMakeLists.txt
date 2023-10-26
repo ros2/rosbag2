@@ -138,8 +138,6 @@ if(BUILD_TESTING)
   find_package(rosbag2_test_msgdefs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  add_definitions(-D_TEST_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/${PROJECT_NAME}")
-
   add_library(
     converter_test_plugins
     SHARED
