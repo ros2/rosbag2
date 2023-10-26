@@ -78,7 +78,8 @@ struct convert<rosbag2_storage::TopicMetadata>
     std::vector<rosbag2_storage::Rosbag2QoS> to_encode;
     to_encode.reserve(topic.offered_qos_profiles.size());
     std::transform(
-      topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(), std::back_inserter(to_encode),
+      topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(),
+      std::back_inserter(to_encode),
       [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
     auto temp = convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
       to_encode);

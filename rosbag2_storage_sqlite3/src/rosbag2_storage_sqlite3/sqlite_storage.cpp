@@ -477,7 +477,7 @@ void SqliteStorage::create_topic(
       topic.name,
       topic.type,
       topic.serialization_format,
-      yaml_node.as<std::string>(),
+      YAML::Dump(yaml_node),
       topic.type_description_hash);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));

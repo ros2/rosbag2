@@ -440,7 +440,7 @@ void MCAPStorage::read_metadata()
     if (metadata_it != channel.metadata.end()) {
       auto node = YAML::Load(metadata_it->second);
       auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-        YAML::Load(metadata_it->second), metadata_.version); 
+        YAML::Load(metadata_it->second), metadata_.version);
       topic_info.topic_metadata.offered_qos_profiles.reserve(decoded.size());
       std::copy(decoded.begin(), decoded.end(),
         topic_info.topic_metadata.offered_qos_profiles.begin());
@@ -830,7 +830,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
                                    return static_cast<rosbag2_storage::Rosbag2QoS>(qos);
                                  });
     auto yaml_node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
-    channel.metadata.emplace("offered_qos_profiles", yaml_node.as<std::string>());
+    channel.metadata.emplace("offered_qos_profiles", YAML::Dump(yaml_node));
     channel.metadata.emplace("topic_type_hash", topic_info.topic_metadata.type_description_hash);
     mcap_writer_->addChannel(channel);
     channel_ids_.emplace(topic.name, channel.id);
