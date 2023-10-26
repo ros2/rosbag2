@@ -604,7 +604,8 @@ void SqliteStorage::fill_topics_and_types()
           yaml_node,
           metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
-        std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
+        offered_qos_profiles.reserve(decoded.size());
+        std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
         all_topics_and_types_.push_back(
           {
             std::get<0>(result),
@@ -625,7 +626,7 @@ void SqliteStorage::fill_topics_and_types()
           yaml_node,
           metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
-        std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
+        std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
         all_topics_and_types_.push_back(
           {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles,
             ""});
@@ -707,7 +708,7 @@ void SqliteStorage::read_metadata()
           yaml_node,
           metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
-        std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
+        std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
         metadata_.topics_with_message_count.push_back(
           {
             {std::get<0>(result), std::get<1>(result), std::get<2>(
@@ -737,7 +738,7 @@ void SqliteStorage::read_metadata()
           yaml_node,
           metadata_.version);
         std::vector<rclcpp::QoS> offered_qos_profiles;
-        std::copy(decoded.begin(), decoded.end(), offered_qos_profiles.begin());
+        std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
         metadata_.topics_with_message_count.push_back(
           {
             {std::get<0>(result), std::get<1>(result), std::get<2>(

@@ -191,7 +191,7 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
     topics_and_types, ElementsAreArray(
   {
     rosbag2_storage::TopicMetadata{"topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"},
-    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", {rclcpp::QoS(1)}, "type_hash2"}
+    rosbag2_storage::TopicMetadata{"topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}
   }));
 }
 
@@ -269,7 +269,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
         "topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, 2u},
     rosbag2_storage::TopicInformation{rosbag2_storage::TopicMetadata{
-        "topic2", "type2", "rmw2", {rclcpp::QoS(1)}, "type_hash2"}, 1u}
+        "topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}, 1u}
   }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
   EXPECT_THAT(
