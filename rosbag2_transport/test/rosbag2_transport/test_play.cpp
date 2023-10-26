@@ -469,7 +469,7 @@ public:
 
     std::vector<rclcpp::QoS> casted;
     casted.reserve(offered_qos.size());
-    std::copy(offered_qos.begin(), offered_qos.end(), casted.begin());
+    std::copy(offered_qos.begin(), offered_qos.end(), std::back_inserter(casted));
 
     topic_types_.push_back({topic_name_, msg_type_, "", casted, ""});
   }
