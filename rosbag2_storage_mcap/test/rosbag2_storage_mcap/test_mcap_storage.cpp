@@ -96,10 +96,10 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
   std::vector<std::string> string_messages = {"first message", "second message", "third message"};
   std::vector<std::string> topics = {"topic1", "topic2"};
 
-  rosbag2_storage::TopicMetadata topic_metadata_1 = {topics[0], "std_msgs/msg/String", "cdr",
-                                                     {rclcpp::QoS(1)}, "type_hash1"};
-  rosbag2_storage::TopicMetadata topic_metadata_2 = {topics[1], "std_msgs/msg/String", "cdr",
-                                                     {rclcpp::QoS(2)}, "type_hash2"};
+  rosbag2_storage::TopicMetadata topic_metadata_1 = {
+    topics[0], "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"};
+  rosbag2_storage::TopicMetadata topic_metadata_2 = {
+    topics[1], "std_msgs/msg/String", "cdr", {rclcpp::QoS(2)}, "type_hash2"};
 
   std::vector<std::tuple<std::string, int64_t, rosbag2_storage::TopicMetadata,
                          rosbag2_storage::MessageDefinition>>
@@ -233,8 +233,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.string()}));
     EXPECT_THAT(metadata.topics_with_message_count,
                 ElementsAreArray({rosbag2_storage::TopicInformation{
-                  rosbag2_storage::TopicMetadata{topic_name, "std_msgs/msg/String", "cdr",
-                                                 {rclcpp::QoS(1)}, "type_hash1"},
+                  rosbag2_storage::TopicMetadata{
+                    topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"},
                   1u}}));
     EXPECT_THAT(metadata.message_count, Eq(1u));
 

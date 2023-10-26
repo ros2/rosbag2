@@ -825,9 +825,8 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
     to_encode.reserve(topic_info.topic_metadata.offered_qos_profiles.size());
     std::transform(topic_info.topic_metadata.offered_qos_profiles.begin(),
                    topic_info.topic_metadata.offered_qos_profiles.end(),
-                   std::back_inserter(to_encode),
-                   [](auto & qos) {
-                    return static_cast<rosbag2_storage::Rosbag2QoS>(qos);
+                   std::back_inserter(to_encode), [](auto & qos) {
+                     return static_cast<rosbag2_storage::Rosbag2QoS>(qos);
                    });
     auto yaml_node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
     channel.metadata.emplace("offered_qos_profiles", YAML::Dump(yaml_node));
