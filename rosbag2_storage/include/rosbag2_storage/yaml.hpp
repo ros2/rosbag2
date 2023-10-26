@@ -99,7 +99,7 @@ struct convert<rosbag2_storage::TopicMetadata>
         decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
         YAML::Load(qos_str), version);
       topic.offered_qos_profiles.reserve(decoded.size());
-      std::copy(decoded.begin(), decoded.end(), topic.offered_qos_profiles.begin());
+      std::copy(decoded.begin(), decoded.end(), std::back_inserter(topic.offered_qos_profiles));
     }
     if (version >= 7) {
       topic.type_description_hash = node["type_description_hash"].as<std::string>();

@@ -443,7 +443,7 @@ void MCAPStorage::read_metadata()
         YAML::Load(metadata_it->second), metadata_.version);
       topic_info.topic_metadata.offered_qos_profiles.reserve(decoded.size());
       std::copy(decoded.begin(), decoded.end(),
-        topic_info.topic_metadata.offered_qos_profiles.begin());
+        std::back_inserter(topic_info.topic_metadata.offered_qos_profiles));
     }
     const auto type_hash_it = channel.metadata.find("topic_type_hash");
     if (type_hash_it != channel.metadata.end()) {
