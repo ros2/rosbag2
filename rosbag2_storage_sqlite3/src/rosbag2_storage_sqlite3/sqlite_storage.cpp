@@ -735,7 +735,7 @@ void SqliteStorage::read_metadata()
       for (auto result : query_results) {
         std::vector<rclcpp::QoS> offered_qos_profiles {};
         std::string yaml_str = std::get<6>(result);
-        if (yaml_str != ""){
+        if (yaml_str != "") {
           auto yaml_node = YAML::Load(yaml_str);
           auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
             yaml_node,

@@ -96,7 +96,11 @@ setup_topic_filtering(
 
       // Gather all offered qos profiles from all inputs
       input_topics_qos_profiles.try_emplace(topic_name);
-      input_topics_qos_profiles[topic_name] = topic_metadata.offered_qos_profiles;
+      input_topics_qos_profiles[topic_name].insert(
+        input_topics_qos_profiles[topic_name].end(),
+        topic_metadata.offered_qos_profiles.begin(),
+        topic_metadata.offered_qos_profiles.end()
+      );
     }
     // Fill message_definitions_map
     std::vector<rosbag2_storage::MessageDefinition> msg_definitions;

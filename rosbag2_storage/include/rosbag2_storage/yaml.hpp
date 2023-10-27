@@ -95,7 +95,7 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 4) {
       std::string qos_str = node["offered_qos_profiles"].as<std::string>();
-      if (qos_str != ""){
+      if (qos_str != "") {
         auto decoded =
           decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
           YAML::Load(qos_str), version);
