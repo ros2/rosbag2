@@ -162,7 +162,7 @@ bool convert<rosbag2_storage::Rosbag2QoS>::decode(
     auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
     auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
     auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
-    switch(history) {
+    switch (history) {
       case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
         qos.keep_last(node["depth"].as<int>());
         break;
@@ -178,7 +178,7 @@ bool convert<rosbag2_storage::Rosbag2QoS>::decode(
     .liveliness(liveliness);
   } else {
     auto history = node["history"].as<rmw_qos_history_policy_t>();
-    switch(history) {
+    switch (history) {
       case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
         qos.keep_last(node["depth"].as<int>());
         break;
