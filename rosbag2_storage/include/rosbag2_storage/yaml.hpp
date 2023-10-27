@@ -95,11 +95,13 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 4) {
       std::string qos_str = node["offered_qos_profiles"].as<std::string>();
-      auto decoded =
-        decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-        YAML::Load(qos_str), version);
-      topic.offered_qos_profiles.reserve(decoded.size());
-      std::copy(decoded.begin(), decoded.end(), std::back_inserter(topic.offered_qos_profiles));
+      if (qos_str != ""){
+        auto decoded =
+          decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          YAML::Load(qos_str), version);
+        topic.offered_qos_profiles.reserve(decoded.size());
+        std::copy(decoded.begin(), decoded.end(), std::back_inserter(topic.offered_qos_profiles));
+      }
     }
     if (version >= 7) {
       topic.type_description_hash = node["type_description_hash"].as<std::string>();

@@ -733,12 +733,16 @@ void SqliteStorage::read_metadata()
         rcutils_time_point_value_t, std::string>();
 
       for (auto result : query_results) {
-        auto yaml_node = YAML::Load(std::get<6>(result));
-        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-          yaml_node,
-          metadata_.version);
-        std::vector<rclcpp::QoS> offered_qos_profiles;
-        std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
+        std::vector<rclcpp::QoS> offered_qos_profiles {};
+        std::string yaml_str = std::get<6>(result);
+        if (yaml_str != ""){
+          auto yaml_node = YAML::Load(yaml_str);
+          auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+            yaml_node,
+            metadata_.version);
+          offered_qos_profiles.reserve(decoded.size());
+          std::copy(decoded.begin(), decoded.end(), std::back_inserter(offered_qos_profiles));
+        }
         metadata_.topics_with_message_count.push_back(
           {
             {std::get<0>(result), std::get<1>(result), std::get<2>(
