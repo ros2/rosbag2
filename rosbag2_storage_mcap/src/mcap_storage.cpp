@@ -438,12 +438,14 @@ void MCAPStorage::read_metadata()
     // Look up the offered_qos_profiles metadata entry
     const auto metadata_it = channel.metadata.find("offered_qos_profiles");
     if (metadata_it != channel.metadata.end()) {
-      auto node = YAML::Load(metadata_it->second);
-      auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-        YAML::Load(metadata_it->second), metadata_.version);
-      topic_info.topic_metadata.offered_qos_profiles.reserve(decoded.size());
-      std::copy(decoded.begin(), decoded.end(),
-                std::back_inserter(topic_info.topic_metadata.offered_qos_profiles));
+      if (metadata_it->second != "") {
+        auto node = YAML::Load(metadata_it->second);
+        auto decoded = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+          node, metadata_.version);
+        topic_info.topic_metadata.offered_qos_profiles.reserve(decoded.size());
+        std::copy(decoded.begin(), decoded.end(),
+                  std::back_inserter(topic_info.topic_metadata.offered_qos_profiles));
+      }
     }
     const auto type_hash_it = channel.metadata.find("topic_type_hash");
     if (type_hash_it != channel.metadata.end()) {
