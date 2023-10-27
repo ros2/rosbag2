@@ -15,13 +15,19 @@
 #ifndef ROSBAG2_TRANSPORT__PLAYER_SERVICE_CLIENT_HPP_
 #define ROSBAG2_TRANSPORT__PLAYER_SERVICE_CLIENT_HPP_
 
+#include <chrono>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
+#include "rclcpp/generic_client.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace rosbag2_transport
 {
+
+class PlayerServiceClientManager;
 
 class PlayerServiceClient final
 {
@@ -30,7 +36,8 @@ public:
     std::shared_ptr<rclcpp::GenericClient> cli,
     std::string service_name,
     const std::string & service_event_type,
-    const rclcpp::Logger logger);
+    const rclcpp::Logger logger,
+    std::shared_ptr<PlayerServiceClientManager> player_service_client_manager);
 
   // Can call this function if check_include_request_message() return true
   void async_send_request(const rclcpp::SerializedMessage & message);
@@ -47,6 +54,7 @@ private:
   std::shared_ptr<rclcpp::GenericClient> client_;
   std::string service_name_;
   const rclcpp::Logger logger_;
+  std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
   enum class introspection_type
   {
     UNKNOW = 0,
@@ -63,6 +71,27 @@ private:
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
   uint8_t get_msg_event_type(const rclcpp::SerializedMessage & message);
+};
+
+class PlayerServiceClientManager final
+{
+public:
+  PlayerServiceClientManager(
+    size_t request_future_timeout, size_t maximum_request_future_queue = 30);
+
+  // Timeout future will be discarded and check queue.
+  bool request_future_queue_is_full();
+
+  bool register_request_future(rclcpp::GenericClient::FutureAndRequestId & request_future);
+
+private:
+  using time_point = std::chrono::steady_clock::time_point;
+  using ptr_future_and_request_id = std::unique_ptr<rclcpp::GenericClient::FutureAndRequestId>;
+  std::map<time_point, ptr_future_and_request_id> request_futures_list_;
+  std::mutex request_futures_list_lock_;
+
+  std::chrono::seconds request_future_timeout_;
+  size_t maximum_request_future_queue_;
 };
 
 }  // namespace rosbag2_transport

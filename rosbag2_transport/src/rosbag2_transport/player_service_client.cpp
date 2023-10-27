@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "rosbag2_transport/player_service_client.hpp"
 
 #include "rclcpp/logger.hpp"
@@ -30,10 +32,12 @@ PlayerServiceClient::PlayerServiceClient(
   std::shared_ptr<rclcpp::GenericClient> cli,
   std::string service_name,
   const std::string & service_event_type,
-  const rclcpp::Logger logger)
+  const rclcpp::Logger logger,
+  std::shared_ptr<PlayerServiceClientManager> player_service_client_manager)
 : client_(std::move(cli)),
   service_name_(std::move(service_name)),
-  logger_(logger)
+  logger_(logger),
+  player_service_client_manager_(player_service_client_manager)
 {
   ts_lib_ = rclcpp::get_typesupport_library(
     service_event_type, "rosidl_typesupport_cpp");
@@ -128,8 +132,9 @@ void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & m
         // members_[0]: info, members_[1]: request, members_[2]: response
         auto request_offset = message_members_->members_[1].offset_;
         auto request_addr = reinterpret_cast<size_t>(ros_message.get()) + request_offset;
-        client_->async_send_request(
+        auto future_and_request_id = client_->async_send_request(
           reinterpret_cast<void *>(*reinterpret_cast<size_t *>(request_addr)));
+        player_service_client_manager_->register_request_future(future_and_request_id);
       } else {
         RCLCPP_ERROR(
           logger_, "Service request hasn't been sent. The '%s' service isn't ready !",
@@ -168,6 +173,71 @@ uint8_t PlayerServiceClient::get_msg_event_type(
   }
 
   return msg.event_type;
+}
+
+PlayerServiceClientManager::PlayerServiceClientManager(
+  size_t requst_future_timeout,
+  size_t maximum_request_future_queue)
+: request_future_timeout_(std::chrono::seconds(requst_future_timeout)),
+  maximum_request_future_queue_(maximum_request_future_queue)
+{
+}
+
+bool PlayerServiceClientManager::request_future_queue_is_full()
+{
+  std::lock_guard<std::mutex> lock(request_futures_list_lock_);
+
+  // Remove complete request future
+  std::vector<time_point> remove_keys;
+  for (auto & request_future : request_futures_list_) {
+    if (request_future.second->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+      remove_keys.emplace_back(request_future.first);
+    }
+  }
+  for (auto & key : remove_keys) {
+    request_futures_list_.erase(key);
+  }
+
+  // Remove all timeout request future
+  auto current_time = std::chrono::steady_clock::now();
+  time_point time_threshold;
+  bool remove_action = false;
+  for (auto rit = request_futures_list_.rbegin(); rit != request_futures_list_.rend(); ++rit) {
+    if ((current_time - rit->first) >= request_future_timeout_) {
+      time_threshold = rit->first;
+      remove_action = true;
+    }
+  }
+
+  if (remove_action) {
+    while (true) {
+      auto begin = request_futures_list_.begin();
+      request_futures_list_.erase(begin);
+      if (begin->first == time_threshold) {
+        break;
+      }
+    }
+  }
+
+  if (request_futures_list_.size() == maximum_request_future_queue_) {
+    return true;
+  }
+
+  return false;
+}
+
+bool PlayerServiceClientManager::register_request_future(
+  rclcpp::GenericClient::FutureAndRequestId & request_future)
+{
+  auto future_and_request_id =
+    std::make_unique<rclcpp::GenericClient::FutureAndRequestId>(std::move(request_future));
+
+  if (!request_future_queue_is_full()) {
+    request_futures_list_[std::chrono::steady_clock::now()] = std::move(future_and_request_id);
+    return true;
+  }
+
+  return false;
 }
 
 }  // namespace rosbag2_transport

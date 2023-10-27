@@ -333,6 +333,8 @@ private:
   // defaults
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   std::vector<KeyboardHandler::callback_handle_t> keyboard_callbacks_;
+
+  std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 };
 
 PlayerImpl::PlayerImpl(
@@ -344,7 +346,8 @@ PlayerImpl::PlayerImpl(
 : owner_(owner),
   storage_options_(storage_options),
   play_options_(play_options),
-  keyboard_handler_(std::move(keyboard_handler))
+  keyboard_handler_(std::move(keyboard_handler)),
+  player_service_client_manager_(std::make_shared<PlayerServiceClientManager>(5 * 60))
 {
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -984,7 +987,8 @@ void PlayerImpl::prepare_publishers()
       try {
         auto cli = owner_->create_generic_client(service_name, service_type);
         auto player_cli = std::make_shared<PlayerServiceClient>(
-          std::move(cli), service_name, topic.type, owner_->get_logger());
+          std::move(cli), service_name, topic.type, owner_->get_logger(),
+          player_service_client_manager_);
         senders_.insert(std::make_pair(topic.name, player_cli));
       } catch (const std::runtime_error & e) {
         RCLCPP_WARN(
