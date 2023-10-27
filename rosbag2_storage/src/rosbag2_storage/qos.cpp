@@ -151,30 +151,49 @@ Node convert<rosbag2_storage::Rosbag2QoS>::encode(
 bool convert<rosbag2_storage::Rosbag2QoS>::decode(
   const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version)
 {
+  qos
+  .deadline(node["deadline"].as<rmw_time_t>())
+  .lifespan(node["lifespan"].as<rmw_time_t>())
+  .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
+  .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
+
   if (version <= 8) {
     auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
     auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
     auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
     auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
+    switch(history) {
+      case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
+        qos.keep_last(node["depth"].as<int>());
+        break;
+      case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
+        qos.keep_all();
+        break;
+      default:
+        qos.history(history);
+    }
     qos
-    .history(history)
     .reliability(reliability)
     .durability(durability)
     .liveliness(liveliness);
   } else {
+    auto history = node["history"].as<rmw_qos_history_policy_t>();
+    switch(history) {
+      case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
+        qos.keep_last(node["depth"].as<int>());
+        break;
+      case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
+        qos.keep_all();
+        break;
+      default:
+        qos.history(history);
+    }
     qos
-    .history(node["history"].as<rmw_qos_history_policy_t>())
     .reliability(node["reliability"].as<rmw_qos_reliability_policy_t>())
     .durability(node["durability"].as<rmw_qos_durability_policy_t>())
     .liveliness(node["liveliness"].as<rmw_qos_liveliness_policy_t>());
   }
 
-  qos
-  .keep_last(node["depth"].as<int>())
-  .deadline(node["deadline"].as<rmw_time_t>())
-  .lifespan(node["lifespan"].as<rmw_time_t>())
-  .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
-  .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
   return true;
 }
 }  // namespace YAML
