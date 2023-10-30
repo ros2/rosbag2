@@ -103,7 +103,7 @@ private:
    * Find the QoS profile that should be used for subscribing.
    *
    * Uses the override from record_options, if it is specified for this topic.
-   * Otherwise, falls back to rosbag2_storage::Rosbag2QoS::adapt_request_to_offers
+   * Otherwise, falls back to Rosbag2QoS::adapt_request_to_offers
    *
    *   \param topic_name The full name of the topic, with namespace (ex. /arm/joint_status).
    *   \return The QoS profile to be used for subscribing.

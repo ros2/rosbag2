@@ -151,49 +151,93 @@ Node convert<rosbag2_storage::Rosbag2QoS>::encode(
 bool convert<rosbag2_storage::Rosbag2QoS>::decode(
   const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version)
 {
+  rmw_qos_history_policy_t history;
+  rmw_qos_reliability_policy_t reliability;
+  rmw_qos_durability_policy_t durability;
+  rmw_qos_liveliness_policy_t liveliness;
+
+  if (version <= 8) {
+    history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
+    reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
+    durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
+    liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
+  } else {
+    history = node["history"].as<rmw_qos_history_policy_t>();
+    reliability = node["reliability"].as<rmw_qos_reliability_policy_t>();
+    durability = node["durability"].as<rmw_qos_durability_policy_t>();
+    liveliness = node["liveliness"].as<rmw_qos_liveliness_policy_t>();
+  }
+
+  switch (history) {
+    case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
+      qos.keep_last(node["depth"].as<int>());
+      break;
+    case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
+      qos.keep_all();
+      break;
+    default:
+      qos.history(history);
+  }
+
   qos
+  .reliability(reliability)
+  .durability(durability)
   .deadline(node["deadline"].as<rmw_time_t>())
   .lifespan(node["lifespan"].as<rmw_time_t>())
+  .liveliness(liveliness)
   .liveliness_lease_duration(node["liveliness_lease_duration"].as<rmw_time_t>())
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
 
-  if (version <= 8) {
-    auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
-    auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
-    auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
-    auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
-    switch (history) {
-      case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
-        qos.keep_last(node["depth"].as<int>());
-        break;
-      case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
-        qos.keep_all();
-        break;
-      default:
-        qos.history(history);
-    }
-    qos
-    .reliability(reliability)
-    .durability(durability)
-    .liveliness(liveliness);
-  } else {
-    auto history = node["history"].as<rmw_qos_history_policy_t>();
-    switch (history) {
-      case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
-        qos.keep_last(node["depth"].as<int>());
-        break;
-      case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
-        qos.keep_all();
-        break;
-      default:
-        qos.history(history);
-    }
-    qos
-    .reliability(node["reliability"].as<rmw_qos_reliability_policy_t>())
-    .durability(node["durability"].as<rmw_qos_durability_policy_t>())
-    .liveliness(node["liveliness"].as<rmw_qos_liveliness_policy_t>());
+  return true;
+}
+
+Node convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
+  const std::vector<rosbag2_storage::Rosbag2QoS> & rhs)
+{
+  Node node{NodeType::Sequence};
+  for (const auto & value : rhs) {
+    node.push_back(value);
+  }
+  return node;
+}
+
+bool convert<std::vector<rosbag2_storage::Rosbag2QoS>>::decode(
+  const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version)
+{
+  if (!node.IsSequence()) {
+    return false;
   }
 
+  rhs.clear();
+  for (const auto & value : node) {
+    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
+    rhs.push_back(temp);
+  }
+  return true;
+}
+
+Node convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::encode(
+  const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs)
+{
+  Node node{NodeType::Sequence};
+  for (const auto & [key, value] : rhs) {
+    node.force_insert(key, value);
+  }
+  return node;
+}
+
+bool convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::decode(
+  const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version)
+{
+  if (!node.IsMap()) {
+    return false;
+  }
+
+  rhs.clear();
+  for (const auto & element : node) {
+    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version);
+    rhs[element.first.as<std::string>()] = temp;
+  }
   return true;
 }
 }  // namespace YAML

@@ -153,8 +153,7 @@ struct convert<std::vector<rosbag2_storage::TopicInformation>>
 
     rhs.clear();
     for (const auto & value : node) {
-      auto temp = decode_for_version<rosbag2_storage::TopicInformation>(value, version);
-      rhs.push_back(temp);
+      rhs.push_back(decode_for_version<rosbag2_storage::TopicInformation>(value, version));
     }
     return true;
   }

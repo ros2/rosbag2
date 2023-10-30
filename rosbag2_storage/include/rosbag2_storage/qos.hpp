@@ -141,57 +141,17 @@ struct ROSBAG2_STORAGE_PUBLIC convert<rosbag2_storage::Rosbag2QoS>
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rosbag2_storage::Rosbag2QoS>>
 {
-  static Node encode(const std::vector<rosbag2_storage::Rosbag2QoS> & rhs)
-  {
-    Node node{NodeType::Sequence};
-    for (const auto & value : rhs) {
-      node.push_back(value);
-    }
-    return node;
-  }
-
+  static Node encode(const std::vector<rosbag2_storage::Rosbag2QoS> & rhs);
   static bool decode(
-    const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version)
-  {
-    if (!node.IsSequence()) {
-      return false;
-    }
-
-    rhs.clear();
-    for (const auto & value : node) {
-      auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
-      rhs.push_back(temp);
-    }
-    return true;
-  }
+    const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version);
 };
 
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>
 {
-  static Node encode(const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs)
-  {
-    Node node{NodeType::Sequence};
-    for (const auto & [key, value] : rhs) {
-      node.force_insert(key, value);
-    }
-    return node;
-  }
-
+  static Node encode(const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs);
   static bool decode(
-    const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version)
-  {
-    if (!node.IsMap()) {
-      return false;
-    }
-
-    rhs.clear();
-    for (const auto & element : node) {
-      auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version);
-      rhs[element.first.as<std::string>()] = temp;
-    }
-    return true;
-  }
+    const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version);
 };
 }  // namespace YAML
 
