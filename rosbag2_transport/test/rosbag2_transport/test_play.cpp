@@ -467,7 +467,8 @@ public:
       messages_.push_back(serialize_test_message(topic_name_, timestamp, basic_msg_));
     }
 
-    topic_types_.push_back({
+    topic_types_.push_back(
+    {
       topic_name_,
       msg_type_,
       "",
