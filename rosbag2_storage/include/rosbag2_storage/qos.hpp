@@ -68,6 +68,12 @@ public:
     const std::string & topic_name,
     const std::vector<Rosbag2QoS> & profiles);
 };
+
+std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(std::vector<rclcpp::QoS> in);
+std::string serialize_rclcpp_qos_vector(std::vector<rclcpp::QoS> in);
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::vector<rosbag2_storage::Rosbag2QoS> in);
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(YAML::Node in, int version);
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::string serielized, int version);
 }  // namespace rosbag2_storage
 
 namespace YAML

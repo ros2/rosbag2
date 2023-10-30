@@ -79,13 +79,9 @@ rclcpp::QoS publisher_qos_for_topic(
     return Rosbag2QoS{};
   }
 
-  std::vector<Rosbag2QoS> casted;
-  casted.reserve(topic.offered_qos_profiles.size());
-  std::transform(
-    topic.offered_qos_profiles.begin(), topic.offered_qos_profiles.end(),
-    std::back_inserter(casted),
-    [](auto & qos) {return static_cast<Rosbag2QoS>(qos);});
-  return Rosbag2QoS::adapt_offer_to_recorded_offers(topic.name, casted);
+  return Rosbag2QoS::adapt_offer_to_recorded_offers(
+    topic.name,
+    rosbag2_storage::from_rclcpp_qos_vector(topic.offered_qos_profiles));
 }
 }  // namespace
 

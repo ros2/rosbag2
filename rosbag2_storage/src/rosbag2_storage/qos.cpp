@@ -365,4 +365,45 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
       "Falling back to the rosbag2_storage default publisher offer.");
   return Rosbag2QoS{};
 }
+
+std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(std::vector<rclcpp::QoS> in)
+{
+  std::vector<rosbag2_storage::Rosbag2QoS> out;
+  out.reserve(in.size());
+  std::transform(
+    in.begin(), in.end(), std::back_inserter(out),
+    [](auto & qos) {return static_cast<rosbag2_storage::Rosbag2QoS>(qos);});
+  return out;
+}
+
+std::string serialize_rclcpp_qos_vector(std::vector<rclcpp::QoS> in)
+{
+  std::vector<rosbag2_storage::Rosbag2QoS> to_encode = from_rclcpp_qos_vector(in);
+  auto node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
+  return YAML::Dump(node);
+}
+
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::vector<rosbag2_storage::Rosbag2QoS> in)
+{
+  std::vector<rclcpp::QoS> out;
+  out.reserve(in.size());
+  std::copy(in.begin(), in.end(), std::back_inserter(out));
+  return out;
+}
+
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(YAML::Node node, int version)
+{
+  auto in = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
+    node,
+    version);
+  return to_rclcpp_qos_vector(in);
+}
+
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::string serielized, int version)
+{
+  if (serielized == "") {return {};}
+  auto node = YAML::Load(serielized);
+  return to_rclcpp_qos_vector(node, version);
+}
+
 }  // namespace rosbag2_storage
