@@ -19,6 +19,7 @@ jobs:
       id: action-ros-ci
       uses: ros-tooling/action-ros-ci@v0.2
       with:
+        import-token: ${{ secrets.GITHUB_TOKEN }}
         package-name: |
           mcap_vendor
           ros2bag
