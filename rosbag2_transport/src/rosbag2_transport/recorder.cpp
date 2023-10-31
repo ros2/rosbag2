@@ -37,6 +37,76 @@
 
 #include "topic_filter.hpp"
 
+
+namespace
+{
+// NOTE(emersonknapp) in-place backport for needed functions introduced in
+// https://github.com/ros2/rclcpp/pull/2210 and
+// https://github.com/ros2/rcl/pull/1078
+namespace backports
+{
+bool
+rcl_clock_time_started(rcl_clock_t * clock)
+{
+  rcl_time_point_value_t query_now;
+  if (rcl_clock_get_now(clock, &query_now) == RCL_RET_OK) {
+    return query_now > 0;
+  }
+  return false;
+}
+
+bool
+clock_started(rclcpp::Clock & clock)
+{
+  if (!rcl_clock_valid(clock.get_clock_handle())) {
+    throw std::runtime_error("clock is not rcl_clock_valid");
+  }
+  return backports::rcl_clock_time_started(clock.get_clock_handle());
+}
+
+bool
+clock_wait_until_started(
+  rclcpp::Clock & clock,
+  const rclcpp::Duration & timeout,
+  rclcpp::Context::SharedPtr context = rclcpp::contexts::get_global_default_context(),
+  const rclcpp::Duration & wait_tick_ns = rclcpp::Duration(0, static_cast<uint32_t>(1e7)))
+{
+  using rclcpp::Clock;
+  using rclcpp::Duration;
+  using rclcpp::Time;
+  if (!context || !context->is_valid()) {
+    throw std::runtime_error("context cannot be slept with because it's invalid");
+  }
+  if (!rcl_clock_valid(clock.get_clock_handle())) {
+    throw std::runtime_error("clock cannot be waited on as it is not rcl_clock_valid");
+  }
+
+  Clock timeout_clock = Clock(RCL_STEADY_TIME);
+  Time start = timeout_clock.now();
+
+  // Check if the clock has started every wait_tick_ns nanoseconds
+  // Context check checks for rclcpp::shutdown()
+  while (!clock_started(clock) && context->is_valid()) {
+    if (timeout < wait_tick_ns) {
+      timeout_clock.sleep_for(timeout);
+    } else {
+      Duration time_left = start + timeout - timeout_clock.now();
+      if (time_left > wait_tick_ns) {
+        timeout_clock.sleep_for(Duration(wait_tick_ns));
+      } else {
+        timeout_clock.sleep_for(time_left);
+      }
+    }
+
+    if (timeout_clock.now() - start > timeout) {
+      return clock_started(clock);
+    }
+  }
+  return clock_started(clock);
+}
+}  // namespace backports
+}  // namespace
+
 namespace rosbag2_transport
 {
 
@@ -275,11 +345,14 @@ void Recorder::topics_discovery()
       this->get_logger(),
       "use_sim_time set, waiting for /clock before starting recording...");
     while (rclcpp::ok() && stop_discovery_ == false) {
-      if (this->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+      if (backports::clock_wait_until_started(
+          *get_clock(),
+          record_options_.topic_polling_interval))
+      {
         break;
       }
     }
-    if (this->get_clock()->started()) {
+    if (backports::clock_started(*get_clock())) {
       RCLCPP_INFO(this->get_logger(), "Sim time /clock found, starting recording.");
     }
   }
