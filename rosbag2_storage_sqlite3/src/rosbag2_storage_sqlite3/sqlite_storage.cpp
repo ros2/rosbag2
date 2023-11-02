@@ -592,7 +592,9 @@ void SqliteStorage::fill_topics_and_types()
 
       for (auto result : query_results) {
         auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
-          std::get<3>(result), metadata_.version);
+        // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+        // metadata_.version will be lower than 9
+        std::get<3>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         all_topics_and_types_.push_back(
           {
             std::get<0>(result),
@@ -609,7 +611,9 @@ void SqliteStorage::fill_topics_and_types()
 
       for (auto result : query_results) {
         auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
-          std::get<3>(result), metadata_.version);
+        // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+        // metadata_.version will be lower than 9
+        std::get<3>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         all_topics_and_types_.push_back(
           {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles,
             ""});
@@ -687,7 +691,9 @@ void SqliteStorage::read_metadata()
 
       for (auto result : query_results) {
         auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
-          std::get<6>(result), metadata_.version);
+        // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+        // metadata_.version will be lower than 9
+        std::get<6>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         metadata_.topics_with_message_count.push_back(
           {
             {std::get<0>(result), std::get<1>(result), std::get<2>(
@@ -713,7 +719,9 @@ void SqliteStorage::read_metadata()
 
       for (auto result : query_results) {
         auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
-          std::get<6>(result), metadata_.version);
+        // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+        // metadata_.version will be lower than 9
+        std::get<6>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         metadata_.topics_with_message_count.push_back(
           {
             {std::get<0>(result), std::get<1>(result), std::get<2>(

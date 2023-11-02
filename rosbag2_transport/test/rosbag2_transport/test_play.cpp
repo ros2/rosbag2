@@ -610,8 +610,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
   const rclcpp::Duration override_liveliness_offer{250ms};
   ASSERT_LT(liveliness_request, recorded_liveliness_offer);
   ASSERT_LT(override_liveliness_offer, liveliness_request);
-  const auto request_profile = Rosbag2QoS{}.liveliness_lease_duration(
-    liveliness_request);
+  const auto request_profile = Rosbag2QoS{}.liveliness_lease_duration(liveliness_request);
   const auto recorded_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(
       recorded_liveliness_offer)};
   const auto override_offer_profile = Rosbag2QoS{Rosbag2QoS{}.liveliness_lease_duration(

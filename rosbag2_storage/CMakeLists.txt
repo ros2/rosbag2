@@ -26,6 +26,7 @@ find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rmw REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(
@@ -48,6 +49,7 @@ target_link_libraries(${PROJECT_NAME}
   rcpputils::rcpputils
   rcutils::rcutils
   rclcpp::rclcpp
+  rmw::rmw
   yaml-cpp
 )
 
@@ -73,7 +75,7 @@ ament_export_libraries(${PROJECT_NAME})
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
 
-ament_export_dependencies(pluginlib yaml_cpp_vendor rclcpp)
+ament_export_dependencies(pluginlib yaml_cpp_vendor rclcpp rmw)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

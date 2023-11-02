@@ -59,8 +59,7 @@ struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::RecordOptions>
 {
   static Node encode(const rosbag2_transport::RecordOptions & storage_options);
   static bool decode(
-    const Node & node, rosbag2_transport::RecordOptions & storage_options,
-    int version);
+    const Node & node, rosbag2_transport::RecordOptions & storage_options, int version);
 };
 }  // namespace YAML
 

@@ -235,8 +235,8 @@ bool convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::decode(
 
   rhs.clear();
   for (const auto & element : node) {
-    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version);
-    rhs[element.first.as<std::string>()] = temp;
+    rhs[element.first.as<std::string>()] = decode_for_version<rosbag2_storage::Rosbag2QoS>(
+      element.second, version);
   }
   return true;
 }
@@ -366,7 +366,7 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
   return Rosbag2QoS{};
 }
 
-std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(std::vector<rclcpp::QoS> in)
+std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
 {
   std::vector<rosbag2_storage::Rosbag2QoS> out;
   out.reserve(in.size());
@@ -376,14 +376,14 @@ std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(std::vector<rclc
   return out;
 }
 
-std::string serialize_rclcpp_qos_vector(std::vector<rclcpp::QoS> in)
+std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
 {
   std::vector<rosbag2_storage::Rosbag2QoS> to_encode = from_rclcpp_qos_vector(in);
   auto node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
   return YAML::Dump(node);
 }
 
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::vector<rosbag2_storage::Rosbag2QoS> in)
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::vector<rosbag2_storage::Rosbag2QoS> & in)
 {
   std::vector<rclcpp::QoS> out;
   out.reserve(in.size());
@@ -391,7 +391,7 @@ std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::vector<rosbag2_storage::Rosba
   return out;
 }
 
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(YAML::Node node, int version)
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const YAML::Node & node, int version)
 {
   auto in = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
     node,
@@ -399,10 +399,10 @@ std::vector<rclcpp::QoS> to_rclcpp_qos_vector(YAML::Node node, int version)
   return to_rclcpp_qos_vector(in);
 }
 
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(std::string serielized, int version)
+std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version)
 {
-  if (serielized == "") {return {};}
-  auto node = YAML::Load(serielized);
+  if (serialized == "") {return {};}
+  auto node = YAML::Load(serialized);
   return to_rclcpp_qos_vector(node, version);
 }
 
