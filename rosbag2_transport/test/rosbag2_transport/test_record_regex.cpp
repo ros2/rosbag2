@@ -339,7 +339,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
-  record_options.exclude_services.emplace_back(services_exclude);
+  record_options.exclude_service_events.emplace_back(services_exclude);
 
   auto service_manager_v1 =
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(v1);

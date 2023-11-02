@@ -236,7 +236,7 @@ TEST_F(RegexFixture, regex_all_services_and_exclude_regex)
 TEST_F(RegexFixture, regex_all_services_and_exclude_services)
 {
   rosbag2_transport::RecordOptions record_options;
-  record_options.exclude_services = {
+  record_options.exclude_service_events = {
     "/invalid_service/_service_event",
     "/invalidated_service/_service_event"
   };
@@ -296,7 +296,7 @@ TEST_F(RegexFixture, regex_filter_exclude_services)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
-  record_options.exclude_services = {"/invalidated_service/_service_event"};
+  record_options.exclude_service_events = {"/invalidated_service/_service_event"};
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_);
 

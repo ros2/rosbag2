@@ -36,7 +36,7 @@ public:
   std::vector<std::string> topics;
   std::vector<std::string> services;  // service event topic
   std::vector<std::string> exclude_topics;
-  std::vector<std::string> exclude_services;  // service event topic
+  std::vector<std::string> exclude_service_events;  // service event topic
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval{100};
   std::string regex = "";

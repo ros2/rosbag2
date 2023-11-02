@@ -37,7 +37,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["regex"] = record_options.regex;
   node["exclude_regex"] = record_options.exclude_regex;
   node["exclude_topics"] = record_options.exclude_topics;
-  node["exclude_services"] = record_options.exclude_services;
+  node["exclude_services"] = record_options.exclude_service_events;
   node["node_prefix"] = record_options.node_prefix;
   node["compression_mode"] = record_options.compression_mode;
   node["compression_format"] = record_options.compression_format;
@@ -69,7 +69,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::string>(node, "exclude_regex", record_options.exclude_regex);
   optional_assign<std::vector<std::string>>(node, "exclude_topics", record_options.exclude_topics);
   optional_assign<std::vector<std::string>>(
-    node, "exclude_services", record_options.exclude_services);
+    node, "exclude_services", record_options.exclude_service_events);
   optional_assign<std::string>(node, "node_prefix", record_options.node_prefix);
   optional_assign<std::string>(node, "compression_mode", record_options.compression_mode);
   optional_assign<std::string>(node, "compression_format", record_options.compression_format);

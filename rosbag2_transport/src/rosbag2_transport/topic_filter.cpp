@@ -220,8 +220,8 @@ bool TopicFilter::take_topic(
       }
     }
 
-    if (!record_options_.exclude_services.empty() &&
-      service_in_list(topic_name, record_options_.exclude_services))
+    if (!record_options_.exclude_service_events.empty() &&
+      service_in_list(topic_name, record_options_.exclude_service_events))
     {
       return false;
     }

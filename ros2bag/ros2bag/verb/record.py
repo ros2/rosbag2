@@ -189,7 +189,7 @@ class RecordVerb(VerbExtension):
                  'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
     def _check_necessary_argument(self, args):
-        # At least one options out of --all, --all-topics, --all-services, --services, topics or
+        # At least one options out of --all, --all-topics, --all-services, --services, --topics or
         # --regex must be used
         if not (args.all or args.all_topics or args.all_services or
            args.services or (args.topics and len(args.topics) > 0) or args.regex):

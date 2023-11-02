@@ -27,7 +27,7 @@ TEST(record_options, test_yaml_serialization)
   original.topics = {"topic", "other_topic"};
   original.services = {"service", "other_service"};
   original.exclude_topics = {"exclude_topic1", "exclude_topic2"};
-  original.exclude_services = {"exclude_service1", "exclude_service2"};
+  original.exclude_service_events = {"exclude_service1", "exclude_service2"};
   original.rmw_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
   original.regex = "[xyz]/topic";
@@ -55,7 +55,7 @@ TEST(record_options, test_yaml_serialization)
   CHECK(topics);
   CHECK(services);
   CHECK(exclude_topics);
-  CHECK(exclude_services);
+  CHECK(exclude_service_events);
   CHECK(rmw_serialization_format);
   #undef CHECK
 }
