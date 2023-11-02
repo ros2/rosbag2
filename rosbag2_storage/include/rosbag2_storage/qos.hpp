@@ -103,31 +103,37 @@ T decode_for_version(const Node & node, int version)
   throw TypedBadConversion<T>(node.Mark());
 }
 
+template<typename T>
+Node encode_for_version(const T & value, int version)
+{
+  return convert<T>::encode(value, version);
+}
+
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rmw_qos_history_policy_t>
 {
-  static Node encode(const rmw_qos_history_policy_t & policy);
+  static Node encode(const rmw_qos_history_policy_t & policy, int version);
   static bool decode(const Node & node, rmw_qos_history_policy_t & policy);
 };
 
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rmw_qos_reliability_policy_t>
 {
-  static Node encode(const rmw_qos_reliability_policy_t & policy);
+  static Node encode(const rmw_qos_reliability_policy_t & policy, int version);
   static bool decode(const Node & node, rmw_qos_reliability_policy_t & policy);
 };
 
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rmw_qos_durability_policy_t>
 {
-  static Node encode(const rmw_qos_durability_policy_t & policy);
+  static Node encode(const rmw_qos_durability_policy_t & policy, int version);
   static bool decode(const Node & node, rmw_qos_durability_policy_t & policy);
 };
 
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rmw_qos_liveliness_policy_t>
 {
-  static Node encode(const rmw_qos_liveliness_policy_t & policy);
+  static Node encode(const rmw_qos_liveliness_policy_t & policy, int version);
   static bool decode(const Node & node, rmw_qos_liveliness_policy_t & policy);
 };
 
@@ -142,7 +148,7 @@ template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rosbag2_storage::Rosbag2QoS>
 {
   static Node encode(const rosbag2_storage::Rosbag2QoS & qos);
-  static bool decode(const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version);
+  static bool decode(const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version = 9);
 };
 
 template<>
@@ -150,7 +156,7 @@ struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rosbag2_storage::Rosbag2QoS>>
 {
   static Node encode(const std::vector<rosbag2_storage::Rosbag2QoS> & rhs);
   static bool decode(
-    const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version);
+    const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version = 9);
 };
 
 template<>
@@ -158,7 +164,7 @@ struct ROSBAG2_STORAGE_PUBLIC convert<std::map<std::string, rosbag2_storage::Ros
 {
   static Node encode(const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs);
   static bool decode(
-    const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version);
+    const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version = 9);
 };
 }  // namespace YAML
 

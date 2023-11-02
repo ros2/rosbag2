@@ -43,8 +43,11 @@ static const rmw_time_t RMW_CONNEXT_FOXY_INFINITE  {0x7FFFFFFFll, 0x7FFFFFFFll};
 namespace YAML
 {
 
-Node convert<rmw_qos_history_policy_t>::encode(const rmw_qos_history_policy_t & policy)
+Node convert<rmw_qos_history_policy_t>::encode(const rmw_qos_history_policy_t & policy, int version)
 {
+  if (version < 9) {
+    return Node(static_cast<int>(policy));
+  }
   if (policy == RMW_QOS_POLICY_HISTORY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
@@ -58,8 +61,13 @@ bool convert<rmw_qos_history_policy_t>::decode(const Node & node, rmw_qos_histor
   return true;
 }
 
-Node convert<rmw_qos_reliability_policy_t>::encode(const rmw_qos_reliability_policy_t & policy)
+Node convert<rmw_qos_reliability_policy_t>::encode(
+  const rmw_qos_reliability_policy_t & policy,
+  int version)
 {
+  if (version < 9) {
+    return Node(static_cast<int>(policy));
+  }
   if (policy == RMW_QOS_POLICY_RELIABILITY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
@@ -75,8 +83,13 @@ bool convert<rmw_qos_reliability_policy_t>::decode(
   return true;
 }
 
-Node convert<rmw_qos_durability_policy_t>::encode(const rmw_qos_durability_policy_t & policy)
+Node convert<rmw_qos_durability_policy_t>::encode(
+  const rmw_qos_durability_policy_t & policy,
+  int version)
 {
+  if (version < 9) {
+    return Node(static_cast<int>(policy));
+  }
   if (policy == RMW_QOS_POLICY_DURABILITY_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
@@ -92,8 +105,13 @@ bool convert<rmw_qos_durability_policy_t>::decode(
   return true;
 }
 
-Node convert<rmw_qos_liveliness_policy_t>::encode(const rmw_qos_liveliness_policy_t & policy)
+Node convert<rmw_qos_liveliness_policy_t>::encode(
+  const rmw_qos_liveliness_policy_t & policy,
+  int version)
 {
+  if (version < 9) {
+    return Node(static_cast<int>(policy));
+  }
   if (policy == RMW_QOS_POLICY_LIVELINESS_UNKNOWN) {
     return Node(std::string("unknown"));
   } else {
@@ -136,13 +154,13 @@ Node convert<rosbag2_storage::Rosbag2QoS>::encode(
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
-  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history);
+  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history, 9);
   node["depth"] = p.depth;
-  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability);
-  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability);
+  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability, 9);
+  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability, 9);
   node["deadline"] = p.deadline;
   node["lifespan"] = p.lifespan;
-  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness);
+  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness, 9);
   node["liveliness_lease_duration"] = p.liveliness_lease_duration;
   node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
   return node;

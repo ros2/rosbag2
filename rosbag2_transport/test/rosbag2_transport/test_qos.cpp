@@ -136,8 +136,7 @@ TEST(TestQoS, translates_bad_infinity_values)
       "  nsec: " << infinity.nsec << "\n"
       "avoid_ros_namespace_conventions: false\n";
     const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
-    const auto deserialized_profile = YAML::decode_for_version<rosbag2_storage::Rosbag2QoS>(
-      loaded_node, 9);
+    const auto deserialized_profile = loaded_node.as<rosbag2_storage::Rosbag2QoS>();
     const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
     EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
     EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));
