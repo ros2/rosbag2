@@ -146,10 +146,10 @@ TEST(TestQoS, translates_bad_infinity_values)
   }
 }
 
-using rosbag2_storage::Rosbag2QoS;  // NOLINT
 class AdaptiveQoSTest : public ::testing::Test
 {
 public:
+  using Rosbag2QoS = rosbag2_storage::Rosbag2QoS;
   AdaptiveQoSTest() = default;
 
   rclcpp::TopicEndpointInfo make_endpoint(const rclcpp::QoS & qos)

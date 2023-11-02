@@ -450,6 +450,8 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
 {
 public:
+  using Rosbag2QoS = rosbag2_storage::Rosbag2QoS;
+  
   RosBag2PlayQosOverrideTestFixture()
   : RosBag2PlayTestFixture()
   {
@@ -510,7 +512,6 @@ public:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
 };
 
-using rosbag2_storage::Rosbag2QoS;
 TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden)
 {
   // By default playback uses DURABILITY_VOLATILE.
