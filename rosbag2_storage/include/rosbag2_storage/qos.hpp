@@ -72,8 +72,6 @@ public:
 std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(
   const std::vector<rclcpp::QoS> & in);
 std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in);
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::vector<rosbag2_storage::Rosbag2QoS> & in);
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const YAML::Node & in, int version);
 std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version);
 }  // namespace rosbag2_storage
 
@@ -157,6 +155,14 @@ struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rosbag2_storage::Rosbag2QoS>>
   static Node encode(const std::vector<rosbag2_storage::Rosbag2QoS> & rhs);
   static bool decode(
     const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version = 9);
+};
+
+template<>
+struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rclcpp::QoS>>
+{
+  static Node encode(const std::vector<rclcpp::QoS> & rhs);
+  static bool decode(
+    const Node & node, std::vector<rclcpp::QoS> & rhs, int version = 9);
 };
 
 template<>

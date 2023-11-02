@@ -124,6 +124,14 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
   )
-endif()
+
+  ament_add_gmock(test_qos
+    test/rosbag2_storage/test_qos.cpp)
+  target_link_libraries(test_qos
+    ${PROJECT_NAME}
+    rosbag2_test_common::rosbag2_test_common
+    yaml-cpp
+  )
+  endif()
 
 ament_package()

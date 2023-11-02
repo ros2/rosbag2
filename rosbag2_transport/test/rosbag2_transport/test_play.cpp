@@ -451,13 +451,13 @@ class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
 {
 public:
   using Rosbag2QoS = rosbag2_storage::Rosbag2QoS;
-  
+
   RosBag2PlayQosOverrideTestFixture()
   : RosBag2PlayTestFixture()
   {
   }
 
-  void initialize(const std::vector<rosbag2_storage::Rosbag2QoS> & offered_qos)
+  void initialize(const std::vector<rclcpp::QoS> & offered_qos)
   {
     // Because these tests only cares about compatibility (receiving any messages at all)
     // We publish one more message than we expect to receive, to avoid caring about
@@ -474,7 +474,7 @@ public:
       topic_name_,
       msg_type_,
       "",
-      rosbag2_storage::to_rclcpp_qos_vector(offered_qos),
+      offered_qos,
       ""});
   }
 

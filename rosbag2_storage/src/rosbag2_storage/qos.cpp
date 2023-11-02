@@ -174,13 +174,18 @@ bool convert<rosbag2_storage::Rosbag2QoS>::decode(
   rmw_qos_durability_policy_t durability;
   rmw_qos_liveliness_policy_t liveliness;
 
+  int temp;
+  if (convert<int>::decode(node["history"], temp)) {
+    history = static_cast<rmw_qos_history_policy_t>(temp);
+  } else {
+    history = node["history"].as<rmw_qos_history_policy_t>();
+  }
+
   if (version <= 8) {
-    history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
     reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
     durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
     liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
   } else {
-    history = node["history"].as<rmw_qos_history_policy_t>();
     reliability = node["reliability"].as<rmw_qos_reliability_policy_t>();
     durability = node["durability"].as<rmw_qos_durability_policy_t>();
     liveliness = node["liveliness"].as<rmw_qos_liveliness_policy_t>();
@@ -221,6 +226,31 @@ Node convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
 
 bool convert<std::vector<rosbag2_storage::Rosbag2QoS>>::decode(
   const Node & node, std::vector<rosbag2_storage::Rosbag2QoS> & rhs, int version)
+{
+  if (!node.IsSequence()) {
+    return false;
+  }
+
+  rhs.clear();
+  for (const auto & value : node) {
+    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
+    rhs.push_back(temp);
+  }
+  return true;
+}
+
+Node convert<std::vector<rclcpp::QoS>>::encode(
+  const std::vector<rclcpp::QoS> & rhs)
+{
+  Node node{NodeType::Sequence};
+  for (const auto & value : rhs) {
+    node.push_back(static_cast<rosbag2_storage::Rosbag2QoS>(value));
+  }
+  return node;
+}
+
+bool convert<std::vector<rclcpp::QoS>>::decode(
+  const Node & node, std::vector<rclcpp::QoS> & rhs, int version)
 {
   if (!node.IsSequence()) {
     return false;
@@ -384,6 +414,7 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
   return Rosbag2QoS{};
 }
 
+
 std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
 {
   std::vector<rosbag2_storage::Rosbag2QoS> out;
@@ -396,32 +427,15 @@ std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(const std::vecto
 
 std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
 {
-  std::vector<rosbag2_storage::Rosbag2QoS> to_encode = from_rclcpp_qos_vector(in);
-  auto node = YAML::convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(to_encode);
+  auto node = YAML::convert<std::vector<rclcpp::QoS>>::encode(in);
   return YAML::Dump(node);
-}
-
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::vector<rosbag2_storage::Rosbag2QoS> & in)
-{
-  std::vector<rclcpp::QoS> out;
-  out.reserve(in.size());
-  std::copy(in.begin(), in.end(), std::back_inserter(out));
-  return out;
-}
-
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const YAML::Node & node, int version)
-{
-  auto in = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-    node,
-    version);
-  return to_rclcpp_qos_vector(in);
 }
 
 std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version)
 {
   if (serialized == "") {return {};}
   auto node = YAML::Load(serialized);
-  return to_rclcpp_qos_vector(node, version);
+  return YAML::decode_for_version<std::vector<rclcpp::QoS>>(node, version);
 }
 
 }  // namespace rosbag2_storage
