@@ -149,57 +149,45 @@ bool convert<rmw_time_t>::decode(const Node & node, rmw_time_t & time)
   return true;
 }
 
-Node convert<rosbag2_storage::Rosbag2QoS>::encode(
-  const rosbag2_storage::Rosbag2QoS & qos)
+Node convert<rclcpp::QoS>::encode(const rclcpp::QoS & qos, int version)
 {
   const auto & p = qos.get_rmw_qos_profile();
   Node node;
-  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history, 9);
+  node["history"] = convert<rmw_qos_history_policy_t>::encode(p.history, version);
   node["depth"] = p.depth;
-  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability, 9);
-  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability, 9);
+  node["reliability"] = convert<rmw_qos_reliability_policy_t>::encode(p.reliability, version);
+  node["durability"] = convert<rmw_qos_durability_policy_t>::encode(p.durability, version);
   node["deadline"] = p.deadline;
   node["lifespan"] = p.lifespan;
-  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness, 9);
+  node["liveliness"] = convert<rmw_qos_liveliness_policy_t>::encode(p.liveliness, version);
   node["liveliness_lease_duration"] = p.liveliness_lease_duration;
   node["avoid_ros_namespace_conventions"] = p.avoid_ros_namespace_conventions;
   return node;
 }
 
-bool convert<rosbag2_storage::Rosbag2QoS>::decode(
-  const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version)
+bool convert<rclcpp::QoS>::decode(const Node & node, rclcpp::QoS & qos, int version)
 {
   rmw_qos_history_policy_t history;
   rmw_qos_reliability_policy_t reliability;
   rmw_qos_durability_policy_t durability;
   rmw_qos_liveliness_policy_t liveliness;
 
-  int temp;
-  if (convert<int>::decode(node["history"], temp)) {
-    history = static_cast<rmw_qos_history_policy_t>(temp);
-  } else {
-    history = node["history"].as<rmw_qos_history_policy_t>();
-  }
-
   if (version <= 8) {
+    history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
     reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
     durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
     liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
   } else {
+    history = node["history"].as<rmw_qos_history_policy_t>();
     reliability = node["reliability"].as<rmw_qos_reliability_policy_t>();
     durability = node["durability"].as<rmw_qos_durability_policy_t>();
     liveliness = node["liveliness"].as<rmw_qos_liveliness_policy_t>();
   }
 
-  switch (history) {
-    case RMW_QOS_POLICY_HISTORY_KEEP_LAST:
-      qos.keep_last(node["depth"].as<int>());
-      break;
-    case RMW_QOS_POLICY_HISTORY_KEEP_ALL:
-      qos.keep_all();
-      break;
-    default:
-      qos.history(history);
+  if (history == RMW_QOS_POLICY_HISTORY_KEEP_LAST) {
+    qos.keep_last(node["depth"].as<int>());
+  } else {
+    qos.history(history);
   }
 
   qos
@@ -212,6 +200,18 @@ bool convert<rosbag2_storage::Rosbag2QoS>::decode(
   .avoid_ros_namespace_conventions(node["avoid_ros_namespace_conventions"].as<bool>());
 
   return true;
+}
+
+Node convert<rosbag2_storage::Rosbag2QoS>::encode(
+  const rosbag2_storage::Rosbag2QoS & qos, int version)
+{
+  return convert<rclcpp::QoS>::encode(static_cast<rclcpp::QoS>(qos), version);
+}
+
+bool convert<rosbag2_storage::Rosbag2QoS>::decode(
+  const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version)
+{
+  return convert<rclcpp::QoS>::decode(node, qos, version);
 }
 
 Node convert<std::vector<rosbag2_storage::Rosbag2QoS>>::encode(
@@ -233,18 +233,16 @@ bool convert<std::vector<rosbag2_storage::Rosbag2QoS>>::decode(
 
   rhs.clear();
   for (const auto & value : node) {
-    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
-    rhs.push_back(temp);
+    rhs.push_back(decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version));
   }
   return true;
 }
 
-Node convert<std::vector<rclcpp::QoS>>::encode(
-  const std::vector<rclcpp::QoS> & rhs)
+Node convert<std::vector<rclcpp::QoS>>::encode(const std::vector<rclcpp::QoS> & rhs, int version)
 {
   Node node{NodeType::Sequence};
   for (const auto & value : rhs) {
-    node.push_back(static_cast<rosbag2_storage::Rosbag2QoS>(value));
+    node.push_back(convert<rclcpp::QoS>::encode(value, version));
   }
   return node;
 }
@@ -258,8 +256,10 @@ bool convert<std::vector<rclcpp::QoS>>::decode(
 
   rhs.clear();
   for (const auto & value : node) {
-    auto temp = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
-    rhs.push_back(temp);
+    // Using rosbag2_storage::Rosbag2QoS for decoding because rclcpp::QoS is not default
+    // constructable. Note: It is safe to use upcast when adding to the vector<rclcpp::QoS>
+    auto rosbag2_qos = decode_for_version<rosbag2_storage::Rosbag2QoS>(value, version);
+    rhs.push_back(rosbag2_qos);
   }
   return true;
 }
@@ -414,7 +414,6 @@ Rosbag2QoS Rosbag2QoS::adapt_offer_to_recorded_offers(
   return Rosbag2QoS{};
 }
 
-
 std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
 {
   std::vector<rosbag2_storage::Rosbag2QoS> out;
@@ -425,15 +424,15 @@ std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(const std::vecto
   return out;
 }
 
-std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in)
+std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in, int version)
 {
-  auto node = YAML::convert<std::vector<rclcpp::QoS>>::encode(in);
+  auto node = YAML::convert<std::vector<rclcpp::QoS>>::encode(in, version);
   return YAML::Dump(node);
 }
 
 std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version)
 {
-  if (serialized == "") {return {};}
+  if (serialized.empty()) {return {};}
   auto node = YAML::Load(serialized);
   return YAML::decode_for_version<std::vector<rclcpp::QoS>>(node, version);
 }

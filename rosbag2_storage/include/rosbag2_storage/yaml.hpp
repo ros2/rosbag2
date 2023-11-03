@@ -69,14 +69,14 @@ struct convert<std::unordered_map<std::string, std::string>>
 template<>
 struct convert<rosbag2_storage::TopicMetadata>
 {
-  static Node encode(const rosbag2_storage::TopicMetadata & topic)
+  static Node encode(const rosbag2_storage::TopicMetadata & topic, int version)
   {
     Node node;
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
-    node["offered_qos_profiles"] = rosbag2_storage::serialize_rclcpp_qos_vector(
-      topic.offered_qos_profiles);
+    node["offered_qos_profiles"] =
+      rosbag2_storage::serialize_rclcpp_qos_vector(topic.offered_qos_profiles, version);
     node["type_description_hash"] = topic.type_description_hash;
     return node;
   }
@@ -102,11 +102,12 @@ struct convert<rosbag2_storage::TopicMetadata>
 template<>
 struct convert<rosbag2_storage::TopicInformation>
 {
-  static Node encode(const rosbag2_storage::TopicInformation & metadata)
+  static Node encode(const rosbag2_storage::TopicInformation & topic_info, int version)
   {
     Node node;
-    node["topic_metadata"] = metadata.topic_metadata;
-    node["message_count"] = metadata.message_count;
+    node["topic_metadata"] =
+      convert<rosbag2_storage::TopicMetadata>::encode(topic_info.topic_metadata, version);
+    node["message_count"] = topic_info.message_count;
     return node;
   }
 
@@ -122,11 +123,11 @@ struct convert<rosbag2_storage::TopicInformation>
 template<>
 struct convert<std::vector<rosbag2_storage::TopicInformation>>
 {
-  static Node encode(const std::vector<rosbag2_storage::TopicInformation> & rhs)
+  static Node encode(const std::vector<rosbag2_storage::TopicInformation> & rhs, int version)
   {
     Node node{NodeType::Sequence};
     for (const auto & value : rhs) {
-      node.push_back(value);
+      node.push_back(convert<rosbag2_storage::TopicInformation>::encode(value, version));
     }
     return node;
   }
@@ -217,7 +218,9 @@ struct convert<rosbag2_storage::BagMetadata>
     node["duration"] = metadata.duration;
     node["starting_time"] = metadata.starting_time;
     node["message_count"] = metadata.message_count;
-    node["topics_with_message_count"] = metadata.topics_with_message_count;
+    node["topics_with_message_count"] =
+      convert<std::vector<rosbag2_storage::TopicInformation>>::encode(
+      metadata.topics_with_message_count, metadata.version);
     node["compression_format"] = metadata.compression_format;
     node["compression_mode"] = metadata.compression_mode;
     node["relative_file_paths"] = metadata.relative_file_paths;

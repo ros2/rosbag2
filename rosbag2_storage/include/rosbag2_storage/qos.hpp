@@ -71,7 +71,7 @@ public:
 
 std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(
   const std::vector<rclcpp::QoS> & in);
-std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in);
+std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in, int version = 9);
 std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version);
 }  // namespace rosbag2_storage
 
@@ -99,12 +99,6 @@ T decode_for_version(const Node & node, int version)
     return value;
   }
   throw TypedBadConversion<T>(node.Mark());
-}
-
-template<typename T>
-Node encode_for_version(const T & value, int version)
-{
-  return convert<T>::encode(value, version);
 }
 
 template<>
@@ -143,9 +137,16 @@ struct ROSBAG2_STORAGE_PUBLIC convert<rmw_time_t>
 };
 
 template<>
+struct ROSBAG2_STORAGE_PUBLIC convert<rclcpp::QoS>
+{
+  static Node encode(const rclcpp::QoS & qos, int version = 9);
+  static bool decode(const Node & node, rclcpp::QoS & qos, int version = 9);
+};
+
+template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<rosbag2_storage::Rosbag2QoS>
 {
-  static Node encode(const rosbag2_storage::Rosbag2QoS & qos);
+  static Node encode(const rosbag2_storage::Rosbag2QoS & qos, int version = 9);
   static bool decode(const Node & node, rosbag2_storage::Rosbag2QoS & qos, int version = 9);
 };
 
@@ -160,9 +161,8 @@ struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rosbag2_storage::Rosbag2QoS>>
 template<>
 struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rclcpp::QoS>>
 {
-  static Node encode(const std::vector<rclcpp::QoS> & rhs);
-  static bool decode(
-    const Node & node, std::vector<rclcpp::QoS> & rhs, int version = 9);
+  static Node encode(const std::vector<rclcpp::QoS> & rhs, int version = 9);
+  static bool decode(const Node & node, std::vector<rclcpp::QoS> & rhs, int version = 9);
 };
 
 template<>
