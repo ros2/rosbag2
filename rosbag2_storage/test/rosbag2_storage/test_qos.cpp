@@ -29,8 +29,7 @@ TEST(TestQoS, serialization)
 
   std::string serialized = YAML::Dump(offered_qos_profiles);
   YAML::Node loaded_node = YAML::Load(serialized);
-  auto deserialized_profiles = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-    loaded_node, 9);
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_storage::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
 
   rosbag2_storage::Rosbag2QoS actual_qos = deserialized_profiles[0];
@@ -59,8 +58,9 @@ TEST(TestQoS, supports_version_4)
     "  avoid_ros_namespace_conventions: false\n";
 
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
-  auto deserialized_profiles = YAML::decode_for_version<std::vector<rosbag2_storage::Rosbag2QoS>>(
-    loaded_node, 8);
+  // Intentionally use loaded_node.as<..> to make sure that old format will be automatically
+  // detected and properly decoded by yaml parser.
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_storage::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 

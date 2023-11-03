@@ -172,6 +172,19 @@ bool convert<rclcpp::QoS>::decode(const Node & node, rclcpp::QoS & qos, int vers
   rmw_qos_durability_policy_t durability;
   rmw_qos_liveliness_policy_t liveliness;
 
+  // Try to auto-detect qos serialization format
+  int history_int = -1;
+  if (convert<int>::decode(node["history"], history_int) &&
+    history_int >= RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT &&
+    history_int <= RMW_QOS_POLICY_HISTORY_UNKNOWN)
+  {
+    history = static_cast<rmw_qos_history_policy_t>(history_int);
+    version = 8;
+  } else {
+    history = node["history"].as<rmw_qos_history_policy_t>();
+    version = 9;
+  }
+
   if (version <= 8) {
     history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
     reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
