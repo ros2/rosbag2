@@ -401,10 +401,10 @@ void MCAPStorage::read_metadata()
       YAML::Node metadata_node = YAML::Load(serialized_metadata);
       YAML::convert<rosbag2_storage::BagMetadata>::decode(metadata_node, metadata_);
     } else {
-      metadata_.version = 8; // Workaround to properly convert topic_metadata.offered_qos_profiles
+      metadata_.version = 8;  // Workaround to properly convert topic_metadata.offered_qos_profiles
       // for old metadata versions. Assuming that if serialized metadata is not present then
       // metadata_.version < 9
-  }
+    }
     try {
       metadata_.ros_distro = mcap_metadata.metadata.at("ROS_DISTRO");
     } catch (const std::out_of_range & /* err */) {
