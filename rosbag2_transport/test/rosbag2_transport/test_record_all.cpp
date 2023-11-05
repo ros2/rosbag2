@@ -50,7 +50,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, {}, {}, {}, {}, "rmw_format", 100ms};
+  {true, false, false, {}, {}, {"/rosout"}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -63,8 +63,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
@@ -72,11 +71,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
-  auto recorded_messages = mock_writer.get_messages();
-  // We may receive additional messages from rosout, it doesn't matter,
-  // as long as we have received at least as many total messages as we expect
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
-  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
 
   auto string_messages = filter_messages<test_msgs::msg::Strings>(
     recorded_messages, string_topic);
@@ -100,7 +97,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
     "test_service_2");
 
   rosbag2_transport::RecordOptions record_options =
-  {false, true, false, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, true, false, {}, {}, {"/rosout"}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -111,18 +108,21 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   ASSERT_TRUE(client_manager_2->check_service_ready());
 
-  // By default, only client introspection is enable.
+  // By default, only client introspection is enabled.
   // For one request, service event topic get 2 messages.
   ASSERT_TRUE(client_manager_1->send_request());
   ASSERT_TRUE(client_manager_2->send_request());
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = 4;
+  auto ret = rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(5),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    });
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }
@@ -140,7 +140,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   pub_manager.setup_publisher(string_topic, string_message, 1);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, true, false, {}, {}, {"rosout"}, {}, "rmw_format", 100ms};
+  {true, true, false, {}, {}, {"/rosout"}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -153,17 +153,20 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   pub_manager.run_publishers();
 
-  // By default, only client introspection is enable.
+  // By default, only client introspection is enabled.
   // For one request, service event topic get 2 messages.
   ASSERT_TRUE(client_manager_1->send_request());
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = 3;
+  auto ret = rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(5),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    });
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }

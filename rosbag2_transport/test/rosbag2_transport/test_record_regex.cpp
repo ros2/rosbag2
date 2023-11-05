@@ -303,16 +303,23 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   ASSERT_TRUE(service_manager_b2->check_service_ready());
 
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   ASSERT_TRUE(service_manager_v1->send_request());
   ASSERT_TRUE(service_manager_v2->send_request());
   ASSERT_TRUE(service_manager_e1->send_request());
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
+
+  size_t expected_messages = 4;
+  auto ret = rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(5),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    });
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(4));
+  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_THAT(recorded_topics, SizeIs(2));
@@ -369,16 +376,23 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   ASSERT_TRUE(service_manager_b2->check_service_ready());
 
   auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   ASSERT_TRUE(service_manager_v1->send_request());
   ASSERT_TRUE(service_manager_v2->send_request());
   ASSERT_TRUE(service_manager_e1->send_request());
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
+
+  size_t expected_messages = 4;
+  auto ret = rosbag2_test_common::wait_until_shutdown(
+    std::chrono::seconds(5),
+    [&mock_writer, &expected_messages]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    });
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(4));
+  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_THAT(recorded_topics, SizeIs(2));
