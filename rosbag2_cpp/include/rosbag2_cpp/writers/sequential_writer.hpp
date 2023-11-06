@@ -116,6 +116,11 @@ public:
   bool take_snapshot() override;
 
   /**
+   * \brief Closes the current backed storage and opens the next bagfile.
+   */
+  void split_bagfile() override;
+
+  /**
    * \brief Add callbacks for events that may occur during bag writing.
    * \param callbacks the structure containing the callback to add for each event.
    */
@@ -145,9 +150,6 @@ protected:
   std::mutex topics_info_mutex_;
 
   rosbag2_storage::BagMetadata metadata_;
-
-  // Closes the current backed storage and opens the next bagfile.
-  virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
