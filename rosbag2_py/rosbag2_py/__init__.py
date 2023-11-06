@@ -25,6 +25,7 @@ with add_dll_directories_from_env('PATH'):
     )
     from rosbag2_py._storage import (
         ConverterOptions,
+        MAX_ALLOWED_FILE_SPLITS,
         StorageFilter,
         StorageOptions,
         TopicMetadata,
@@ -69,6 +70,7 @@ __all__ = [
     'TopicMetadata',
     'TopicInformation',
     'BagMetadata',
+    'MAX_ALLOWED_FILE_SPLITS',
     'Info',
     'Player',
     'PlayOptions',

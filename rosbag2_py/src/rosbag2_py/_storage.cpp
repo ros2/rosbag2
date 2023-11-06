@@ -27,6 +27,7 @@
 
 PYBIND11_MODULE(_storage, m) {
   m.doc() = "Python wrapper of the rosbag2 utilities API";
+  m.attr("MAX_ALLOWED_FILE_SPLITS") = rosbag2_storage::max_allowed_file_splits;
 
   pybind11::class_<rosbag2_cpp::ConverterOptions>(m, "ConverterOptions")
   .def(
@@ -43,11 +44,13 @@ PYBIND11_MODULE(_storage, m) {
   pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
   .def(
     pybind11::init<
-      std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool>(),
+      std::string, std::string, uint64_t, uint64_t, uint64_t, uint64_t, std::string, std::string,
+      bool>(),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
+    pybind11::arg("max_bagfile_splits") = 0,
     pybind11::arg("max_cache_size") = 0,
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
@@ -60,6 +63,9 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "max_bagfile_duration",
     &rosbag2_storage::StorageOptions::max_bagfile_duration)
+  .def_readwrite(
+    "max_bagfile_splits",
+    &rosbag2_storage::StorageOptions::max_bagfile_splits)
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)

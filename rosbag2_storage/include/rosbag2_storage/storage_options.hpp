@@ -24,6 +24,9 @@
 namespace rosbag2_storage
 {
 
+// Max number of allowed bag splits. 2^30.
+const uint64_t max_allowed_file_splits = 1073741824;
+
 struct StorageOptions
 {
 public:
@@ -37,6 +40,10 @@ public:
   // The maximum duration a bagfile can be, in seconds, before it is split.
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
+
+  // The maximum number of bags to store on disk when splitting by size or duration.
+  // A value of 0 indicates that no bags will be deleted.
+  uint64_t max_bagfile_splits = 0;
 
   // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.

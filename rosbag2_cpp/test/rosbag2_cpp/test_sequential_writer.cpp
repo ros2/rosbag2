@@ -579,7 +579,8 @@ public:
 
 void write_sample_split_bag(
   const std::string & uri,
-  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
+  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file,
+  const int max_bag_splits = 0)
 {
   std::string msg_content = "Hello";
   auto msg_length = msg_content.length();
@@ -590,6 +591,7 @@ void write_sample_split_bag(
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
   storage_options.storage_id = "sqlite3";
+  storage_options.max_bagfile_splits = max_bag_splits;
 
   ManualSplitWriter writer;
   writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
@@ -628,4 +630,40 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     metadata.starting_time,
     std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
   ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
+}
+
+TEST_F(TemporaryDirectoryFixture, test_max_splits) {
+  const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
+    {100, 300, 200},
+    {500, 400, 600},
+    {700, 800, 900}
+  };
+  std::string uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
+  size_t max_bagfile_splits = 3;
+  write_sample_split_bag(uri, message_timestamps_by_file, max_bagfile_splits);
+
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(uri);
+  ASSERT_EQ(
+    metadata.starting_time,
+    std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(400)));
+  ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
+  ASSERT_EQ(
+    metadata.files.size(),
+    max_bagfile_splits
+  );
+  ASSERT_EQ(
+    metadata.duration, std::chrono::nanoseconds(500)
+  );
+}
+TEST_F(SequentialWriterTest, open_throws_error_on_max_bagfile_splits_too_large) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  // Set max_bagfile_splits greater that rosbag2_storage::max_allowed_file_splits.
+  storage_options_.max_bagfile_splits = 2147483648;
+  std::string rmw_format = "rmw_format";
+
+  EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
 }
