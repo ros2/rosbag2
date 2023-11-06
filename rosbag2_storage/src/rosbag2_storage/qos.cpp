@@ -186,12 +186,10 @@ bool convert<rclcpp::QoS>::decode(const Node & node, rclcpp::QoS & qos, int vers
   }
 
   if (version <= 8) {
-    history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
     reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
     durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
     liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
   } else {
-    history = node["history"].as<rmw_qos_history_policy_t>();
     reliability = node["reliability"].as<rmw_qos_reliability_policy_t>();
     durability = node["durability"].as<rmw_qos_durability_policy_t>();
     liveliness = node["liveliness"].as<rmw_qos_liveliness_policy_t>();
