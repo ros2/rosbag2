@@ -1,0 +1,57 @@
+rosbag2_bagfile_information:
+  version: 8
+  storage_identifier: sqlite3
+  duration:
+    nanoseconds: 70633730
+  starting_time:
+    nanoseconds_since_epoch: 1699345836023194036
+  message_count: 10
+  topics_with_message_count:
+    - topic_metadata:
+        name: /events/write_split
+        type: rosbag2_interfaces/msg/WriteSplitEvent
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+        type_description_hash: RIHS01_5ef58f7106a5cff8f5a794028c18117ee21015850ddcc567df449f41932960f8
+      message_count: 0
+    - topic_metadata:
+        name: /test_service1/_service_event
+        type: test_msgs/srv/BasicTypes_Event
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 1\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+        type_description_hash: RIHS01_5b9988a4805a06ae22dff12903a774ccda710e9514926b826ffc884e3a9a982e
+      message_count: 4
+    - topic_metadata:
+        name: /test_service2/_service_event
+        type: test_msgs/srv/BasicTypes_Event
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 1\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+        type_description_hash: RIHS01_5b9988a4805a06ae22dff12903a774ccda710e9514926b826ffc884e3a9a982e
+      message_count: 4
+    - topic_metadata:
+        name: /test_topic1
+        type: test_msgs/msg/Strings
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+        type_description_hash: RIHS01_eee55533636293ac7c94c62432eedb5777eb849847d2a17b4dcead8c4a20ab32
+      message_count: 1
+    - topic_metadata:
+        name: /test_topic2
+        type: test_msgs/msg/Strings
+        serialization_format: cdr
+        offered_qos_profiles: "- history: 3\n  depth: 0\n  reliability: 1\n  durability: 2\n  deadline:\n    sec: 9223372036\n    nsec: 854775807\n  lifespan:\n    sec: 9223372036\n    nsec: 854775807\n  liveliness: 1\n  liveliness_lease_duration:\n    sec: 9223372036\n    nsec: 854775807\n  avoid_ros_namespace_conventions: false"
+        type_description_hash: RIHS01_eee55533636293ac7c94c62432eedb5777eb849847d2a17b4dcead8c4a20ab32
+      message_count: 1
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - bag_with_topics_and_service_events.db3
+  files:
+    - path: bag_with_topics_and_service_events.db3
+      starting_time:
+        nanoseconds_since_epoch: 1699345836023194036
+      duration:
+        nanoseconds: 70633730
+      message_count: 10
+  custom_data: ~
+  ros_distro: ""
