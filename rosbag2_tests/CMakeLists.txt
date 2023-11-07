@@ -129,6 +129,7 @@ if(BUILD_TESTING)
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
+      rosbag2_transport::rosbag2_transport
       ${test_msgs_TARGETS}
     )
   endif()
