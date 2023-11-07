@@ -47,14 +47,14 @@ class InfoVerb(VerbExtension):
         return True
 
     def main(self, *, args):  # noqa: D102
-        m = Info().read_metadata(args.bag_path, args.storage)
-        if args.topic_name:
-            for topic_info in m.topics_with_message_count:
-                if not self._is_service_event_topic(topic_info.topic_metadata.name,
-                                                    topic_info.topic_metadata.type):
-                    print(topic_info.topic_metadata.name)
+        if args.verbose:
+            Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
         else:
-            if args.verbose:
-                Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
+            m = Info().read_metadata(args.bag_path, args.storage)
+            if args.topic_name:
+                for topic_info in m.topics_with_message_count:
+                    if not self._is_service_event_topic(topic_info.topic_metadata.name,
+                                                        topic_info.topic_metadata.type):
+                        print(topic_info.topic_metadata.name)
             else:
                 print(m)
