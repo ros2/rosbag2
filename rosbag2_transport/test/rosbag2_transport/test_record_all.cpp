@@ -104,9 +104,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(client_manager_1->check_service_ready());
-
-  ASSERT_TRUE(client_manager_2->check_service_ready());
+  ASSERT_TRUE(client_manager_1->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(client_manager_2->wait_for_srvice_to_be_ready());
 
   // By default, only client introspection is enabled.
   // For one request, service event topic get 2 messages.
@@ -149,7 +148,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
-  ASSERT_TRUE(client_manager_1->check_service_ready());
+  ASSERT_TRUE(client_manager_1->wait_for_srvice_to_be_ready());
 
   pub_manager.run_publishers();
 

@@ -89,7 +89,17 @@ public:
     return true;
   }
 
-  bool send_request()
+  bool wait_for_srvice_to_be_ready(std::chrono::duration<double> timeout = std::chrono::seconds(5))
+  {
+    using clock = std::chrono::system_clock;
+    auto start = clock::now();
+    while (!check_service_ready() && (clock::now() - start) < timeout) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    }
+    return check_service_ready();
+  }
+
+  bool send_request(std::chrono::duration<double> timeout = std::chrono::seconds(5))
   {
     if (!check_service_ready()) {
       return false;
@@ -100,7 +110,7 @@ public:
       auto result = client->async_send_request(request);
       // Wait for the result.
       if (rclcpp::executors::spin_node_until_future_complete(
-          exec_, get_node_base_interface(), result) != rclcpp::FutureReturnCode::SUCCESS)
+          exec_, get_node_base_interface(), result, timeout) != rclcpp::FutureReturnCode::SUCCESS)
       {
         RCLCPP_INFO(
           rclcpp::get_logger("service_client_manager"), "Failed to get response !");
