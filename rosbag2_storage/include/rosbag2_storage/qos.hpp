@@ -69,10 +69,10 @@ public:
     const std::vector<Rosbag2QoS> & profiles);
 };
 
-std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(
+ROSBAG2_STORAGE_PUBLIC std::vector<rosbag2_storage::Rosbag2QoS> from_rclcpp_qos_vector(
   const std::vector<rclcpp::QoS> & in);
-std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in, int version = 9);
-std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version);
+ROSBAG2_STORAGE_PUBLIC std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in, int version = 9);
+ROSBAG2_STORAGE_PUBLIC std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version);
 }  // namespace rosbag2_storage
 
 namespace YAML
