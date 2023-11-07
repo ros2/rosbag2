@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <filesystem>
 #include <string>
 
 #include "rosbag2_cpp/info.hpp"
@@ -52,17 +53,17 @@ public:
   void SetUp() override
   {
     auto bag_name = get_test_name() + "_" + GetParam();
-    root_bag_path_ = rcpputils::fs::path(temporary_dir_path_) / bag_name;
+    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
 
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    rcpputils::fs::remove_all(root_bag_path_);
+    std::filesystem::remove_all(root_bag_path_);
   }
 
   void TearDown() override
   {
-    rcpputils::fs::remove_all(root_bag_path_);
+    std::filesystem::remove_all(root_bag_path_);
   }
 
   static void SetUpTestCase()
@@ -116,7 +117,7 @@ public:
 
   std::string get_bag_path_str() const
   {
-    return root_bag_path_.string();
+    return root_bag_path_.generic_string();
   }
 
   bool wait_for_subscriptions(
@@ -142,7 +143,7 @@ public:
   }
 
   // relative path to the root of the bag file.
-  rcpputils::fs::path root_bag_path_;
+  std::filesystem::path root_bag_path_;
   std::future<void> node_spinner_future_;
   std::atomic_bool exit_from_node_spinner_{false};
 };
