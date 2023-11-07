@@ -121,11 +121,11 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gmock(test_rosbag2_info_get_service_info
-    test/rosbag2_tests/test_rosbag2_info_get_service_info.cpp
+  ament_add_gmock(test_rosbag2_cpp_get_service_info
+    test/rosbag2_tests/test_rosbag2_cpp_get_service_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_rosbag2_info_get_service_info)
-    target_link_libraries(test_rosbag2_info_get_service_info
+  if(TARGET test_rosbag2_cpp_get_service_info)
+    target_link_libraries(test_rosbag2_cpp_get_service_info
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common

@@ -45,7 +45,8 @@ public:
   }
 };
 
-class GetServiceInfoTest : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
+class Rosbag2CPPGetServiceInfoTest
+  : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
 {
 public:
   void SetUp() override
@@ -146,7 +147,7 @@ public:
   std::atomic_bool exit_from_node_spinner_{false};
 };
 
-TEST_P(GetServiceInfoTest, only_topics_bag_test) {
+TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_only) {
   const std::string storage_id = GetParam();
   const auto bag_path_str = get_bag_path_str();
   {
@@ -169,7 +170,7 @@ TEST_P(GetServiceInfoTest, only_topics_bag_test) {
   EXPECT_TRUE(ret_service_infos.empty());
 }
 
-TEST_P(GetServiceInfoTest, only_services_bag_test) {
+TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only) {
   const std::string storage_id = GetParam();
   const std::string bag_path_str = get_bag_path_str();
 
@@ -236,7 +237,7 @@ TEST_P(GetServiceInfoTest, only_services_bag_test) {
   EXPECT_EQ(ret_service_infos[0]->serialization_format, "cdr");
 }
 
-TEST_P(GetServiceInfoTest, topics_and_services_bag_test) {
+TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_services) {
   const std::string storage_id = GetParam();
   const std::string bag_path_str = get_bag_path_str();
 
@@ -331,6 +332,6 @@ TEST_P(GetServiceInfoTest, topics_and_services_bag_test) {
 
 INSTANTIATE_TEST_SUITE_P(
   TestInfoGetServiceInfo,
-  GetServiceInfoTest,
+  Rosbag2CPPGetServiceInfoTest,
   ::testing::ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
