@@ -80,7 +80,14 @@ public:
     info->opened_file = "BagFile" + std::to_string(file_number_);
     callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
     messages_per_file_ = 0;
+    split_bagfile_called_ = true;
   }
+
+  bool split_bagfile_called()
+  {
+    return split_bagfile_called_;
+  }
+
 
   void
   add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks) override
@@ -138,6 +145,7 @@ private:
   size_t file_number_ = 0;
   size_t max_messages_per_file_ = 0;
   bool writer_close_called_{false};
+  bool split_bagfile_called_ = false;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
