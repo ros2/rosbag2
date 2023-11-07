@@ -75,8 +75,7 @@ public:
     EXPECT_CALL(*metadata_io, read_metadata(_)).WillRepeatedly(Return(metadata_));
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
-    EXPECT_CALL(*storage_, get_all_topics_and_types())
-    .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
+    ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
     // 5 messages in the first bag file, then infinite in the second
     EXPECT_CALL(*storage_, has_next()).Times(AnyNumber());
     ON_CALL(*storage_, has_next).WillByDefault(
@@ -233,4 +232,22 @@ TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
   EXPECT_NO_THROW(reader.open(expected_bagfile_path.string()));
   EXPECT_TRUE(reader.has_next());
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
+}
+
+TEST_F(SequentialReaderTest, storage_impl_additional_topics) {
+  std::vector<rosbag2_storage::TopicMetadata> storage_topics;
+  rosbag2_storage::TopicMetadata meta0;
+  meta0.name = "storage_invented_topic";
+  meta0.type = "test_msgs/BasicTypes";
+  meta0.serialization_format = storage_serialization_format_;
+  storage_topics.push_back(meta0);
+  EXPECT_CALL(*storage_, get_all_topics_and_types()).WillRepeatedly(Return(storage_topics));
+
+  auto storage_options = default_storage_options_;
+  reader_->open(storage_options, {"", storage_serialization_format_});
+  auto topics = reader_->get_all_topics_and_types();
+
+  EXPECT_THAT(topics, SizeIs(2));
+  EXPECT_THAT(topics[0].name, Eq("topic"));
+  EXPECT_THAT(topics[1].name, Eq("storage_invented_topic"));
 }

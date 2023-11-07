@@ -283,10 +283,25 @@ void SequentialReader::check_converter_serialization_format(
 void SequentialReader::fill_topics_metadata()
 {
   rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+
+  std::unordered_map<std::string, rosbag2_storage::TopicMetadata> topics_map;
+  auto & yaml_topics = metadata_.topics_with_message_count;
+  auto storage_topics = storage_->get_all_topics_and_types();
+
+  // Combine topics from metadata and first opened storage,
+  // preferring metadata.yaml's info and using storage to fill in any extras.
+  for (const auto & topic_metadata : storage_topics) {
+    topics_map[topic_metadata.name] = topic_metadata;
+  }
+  for (const auto & topic_information : yaml_topics) {
+    topics_map[topic_information.topic_metadata.name] = topic_information.topic_metadata;
+  }
+
+  // Unroll the combined map into the needed vector
   topics_metadata_.clear();
-  topics_metadata_.reserve(metadata_.topics_with_message_count.size());
-  for (const auto & topic_information : metadata_.topics_with_message_count) {
-    topics_metadata_.push_back(topic_information.topic_metadata);
+  topics_metadata_.reserve(topics_map.size());
+  for (auto it : topics_map) {
+    topics_metadata_.push_back(it.second);
   }
 }
 
