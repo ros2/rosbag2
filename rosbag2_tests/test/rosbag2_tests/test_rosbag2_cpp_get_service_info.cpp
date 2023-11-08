@@ -81,7 +81,7 @@ public:
   {
     node_spinner_future_ = std::async(
       std::launch::async,
-      [&]() -> void {
+      [node, this]() -> void {
         rclcpp::executors::SingleThreadedExecutor exec;
         exec.add_node(node);
         while (!exit_from_node_spinner_) {
