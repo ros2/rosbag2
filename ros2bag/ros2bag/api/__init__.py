@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import (
+    ArgumentParser,
+    ArgumentTypeError,
+    FileType,
+    Namespace,
+)
 import os
+import tempfile
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -129,3 +135,32 @@ def add_standard_reader_args(parser: ArgumentParser) -> None:
         '-s', '--storage', default='', choices=reader_choices,
         help='Storage implementation of bag. '
              'By default attempts to detect automatically - use this argument to override.')
+    config_group = parser.add_mutually_exclusive_group()
+    config_group.add_argument(
+        '--storage-config-file',
+        type=FileType('r'),
+        help='Path to a file defining storage-specific configuration. '
+             'See documentation for each storage implementation for details on the structure '
+             'of this file.'
+    )
+    config_group.add_argument(
+        '--storage-config',
+        type=str,
+        help='Storage configuration as a string, which will be placed in a temporary file '
+             'and passed to storage as if it were --storage-config-file.'
+    )
+
+
+def storage_config_file_from_args(args: Namespace):
+    """Return a file object to pass to storage plugins, based on args."""
+    if args.storage_config_file:
+        return args.storage_config_file
+    elif args.storage_config:
+        # Create a temporary file to pass to storage plugins
+        storage_config_file = tempfile.NamedTemporaryFile(
+            prefix='rosbag2_storage_config_')
+        storage_config_file.write(args.storage_config.encode('utf-8'))
+        storage_config_file.flush()
+        storage_config_file.seek(0)
+        return storage_config_file
+    return None

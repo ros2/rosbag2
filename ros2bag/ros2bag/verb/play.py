@@ -20,6 +20,7 @@ from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
+from ros2bag.api import storage_config_file_from_args
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
@@ -64,14 +65,6 @@ class PlayVerb(VerbExtension):
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
         parser.add_argument(
-            '--storage-config-file', type=FileType('r'),
-            help='Path to a yaml file defining storage specific configurations. '
-                 'For the default storage plugin settings are specified through syntax:'
-                 'read:'
-                 '  pragmas: [\"<setting_name>\" = <setting_value>]'
-                 'Note that applicable settings are limited to read-only for ros2 bag play.'
-                 'For a list of sqlite3 settings, refer to sqlite3 documentation')
-        parser.add_argument(
             '--clock', type=positive_float, nargs='?', const=40, default=0,
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
@@ -115,9 +108,7 @@ class PlayVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
-        storage_config_file = ''
-        if args.storage_config_file:
-            storage_config_file = args.storage_config_file.name
+        storage_config_file = storage_config_file_from_args(args)
 
         topic_remapping = ['--ros-args']
         for remap_rule in args.remap:
@@ -127,7 +118,7 @@ class PlayVerb(VerbExtension):
         storage_options = StorageOptions(
             uri=args.bag_path,
             storage_id=args.storage,
-            storage_config_uri=storage_config_file,
+            storage_config_uri=storage_config_file.name if storage_config_file else '',
         )
         play_options = PlayOptions()
         play_options.read_ahead_queue_size = args.read_ahead_queue_size
