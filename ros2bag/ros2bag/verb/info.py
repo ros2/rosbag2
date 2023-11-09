@@ -47,6 +47,9 @@ class InfoVerb(VerbExtension):
         return True
 
     def main(self, *, args):  # noqa: D102
+        if args.topic_name and args.verbose:
+            print("Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
+                  'will be ignored.')
         if args.verbose:
             Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
         else:
