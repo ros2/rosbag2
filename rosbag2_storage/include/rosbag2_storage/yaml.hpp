@@ -75,8 +75,13 @@ struct convert<rosbag2_storage::TopicMetadata>
     node["name"] = topic.name;
     node["type"] = topic.type;
     node["serialization_format"] = topic.serialization_format;
-    node["offered_qos_profiles"] =
-      rosbag2_storage::serialize_rclcpp_qos_vector(topic.offered_qos_profiles, version);
+    if (version < 9) {
+      node["offered_qos_profiles"] = rosbag2_storage::serialize_rclcpp_qos_vector(
+        topic.offered_qos_profiles, version);
+    } else {
+      node["offered_qos_profiles"] = YAML::convert<std::vector<rclcpp::QoS>>::encode(
+        topic.offered_qos_profiles, version);
+    }
     node["type_description_hash"] = topic.type_description_hash;
     return node;
   }
@@ -86,7 +91,10 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.name = node["name"].as<std::string>();
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
-    if (version >= 4) {
+    if (version >= 9) {
+      topic.offered_qos_profiles =
+        YAML::decode_for_version<std::vector<rclcpp::QoS>>(node["offered_qos_profiles"], version);
+    } else if (version >= 4) {
       std::string qos_str = node["offered_qos_profiles"].as<std::string>();
       topic.offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(qos_str, version);
     }
