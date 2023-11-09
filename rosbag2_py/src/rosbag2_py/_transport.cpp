@@ -216,30 +216,18 @@ protected:
 std::atomic_bool Recorder::exit_{false};
 std::condition_variable Recorder::wait_for_exit_cv_{};
 
-// Simple wrapper to read the output config YAML into structs
+// Simple wrapper to convert the RecordOptions wrapper to the C++ type
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
-  std::string output_config_file)
+  const std::vector<std::pair<rosbag2_storage::StorageOptions, RecordOptions>> & output_options)
 {
-  YAML::Node yaml_file = YAML::LoadFile(output_config_file);
-  auto bag_nodes = yaml_file["output_bags"];
-  if (!bag_nodes) {
-    throw std::runtime_error("Output bag config YAML file must have top-level key 'output_bags'");
+  std::vector<std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>> output;
+  for (const auto & [storage_options, record_options] : output_options) {
+    rosbag2_transport::RecordOptions record_options_c = record_options;
+    record_options_c.compression_queue_size = 0;
+    output.emplace_back(storage_options, record_options_c);
   }
-  if (!bag_nodes.IsSequence()) {
-    throw std::runtime_error(
-            "Top-level key 'output_bags' must contain a list of "
-            "StorageOptions/RecordOptions dicts.");
-  }
-
-  std::vector<
-    std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>> output_options;
-  for (const auto & bag_node : bag_nodes) {
-    auto storage_options = bag_node.as<rosbag2_storage::StorageOptions>();
-    auto record_options = bag_node.as<rosbag2_transport::RecordOptions>();
-    output_options.push_back(std::make_pair(storage_options, record_options));
-  }
-  rosbag2_transport::bag_rewrite(input_options, output_options);
+  rosbag2_transport::bag_rewrite(input_options, output);
 }
 
 }  // namespace rosbag2_py
@@ -281,7 +269,44 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
-  .def(py::init<>())
+  .def(
+    py::init<
+      bool,
+      bool,
+      std::vector<std::string>,
+      std::string,
+      std::chrono::milliseconds,
+      std::string,
+      std::string,
+      std::string,
+      std::string,
+      std::string,
+      uint64_t,
+      uint64_t,
+      QoSMap,
+      bool,
+      bool,
+      bool,
+      bool,
+      bool>(),
+    py::arg("all") = false,
+    py::arg("is_discovery_disabled") = false,
+    py::arg("topics") = std::vector<std::string>{},
+    py::arg("rmw_serialization_format") = "",
+    py::arg("topic_polling_interval") = std::chrono::milliseconds{100},
+    py::arg("regex") = "",
+    py::arg("exclude") = "",
+    py::arg("node_prefix") = "",
+    py::arg("compression_mode") = "",
+    py::arg("compression_format") = "",
+    py::arg("compression_queue_size") = 1,
+    py::arg("compression_threads") = 0,
+    py::arg("topic_qos_profile_overrides") = QoSMap{},
+    py::arg("include_hidden_topics") = false,
+    py::arg("include_unpublished_topics") = false,
+    py::arg("ignore_leaf_topics") = false,
+    py::arg("start_paused") = false,
+    py::arg("use_sim_time") = false)
   .def_readwrite("all", &RecordOptions::all)
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)

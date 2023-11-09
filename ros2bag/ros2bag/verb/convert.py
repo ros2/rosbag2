@@ -15,8 +15,36 @@
 import argparse
 
 from ros2bag.verb import VerbExtension
-from rosbag2_py import bag_rewrite
-from rosbag2_py import StorageOptions
+from rosbag2_py import (
+    bag_rewrite,
+    RecordOptions,
+    StorageOptions,
+)
+import yaml
+
+
+def input_bag_options(config: str):
+    return StorageOptions(**yaml.safe_load(config))
+
+
+def output_bag_options(config: str):
+    kwargs = yaml.safe_load(config)
+    storage_options = StorageOptions(uri=kwargs['uri'])
+    record_options = RecordOptions()
+    for key, val in kwargs.items():
+        try:
+            storage_options.__setattr__(key, val)
+            continue
+        except AttributeError:
+            pass
+        try:
+            record_options.__setattr__(key, val)
+            continue
+        except AttributeError:
+            pass
+        raise argparse.ArgumentError(f'Unknown output option "{key}"')
+
+    return storage_options, record_options
 
 
 class ConvertVerb(VerbExtension):
@@ -26,25 +54,17 @@ class ConvertVerb(VerbExtension):
         parser.add_argument(
             '-i', '--input',
             required=True,
-            action='append', nargs='+',
-            metavar=('uri', 'storage_id'),
-            help='URI (and optional storage ID) of an input bag. May be provided more than once')
+            type=input_bag_options,
+            action='append',
+            help='StorageOptions as YAML string.',
+        )
         parser.add_argument(
-            '-o', '--output-options',
-            type=str, required=True,
-            help='YAML file with options for output bags. Must have one top-level key '
-                 '"output_bags", which contains a sequence of StorageOptions/RecordOptions '
-                 'objects. See README.md for some examples.')
+            '-o', '--output',
+            required=True,
+            type=output_bag_options,
+            action='append',
+            help='Combined StorageOptions and RecordOptions as YAML string.',
+        )
 
     def main(self, *, args):
-        input_options = []
-        for input_bag in args.input:
-            if len(input_bag) > 2:
-                raise argparse.ArgumentTypeError(
-                    f'--input expects 1 or 2 arguments, {len(input_bag)} provided')
-            storage_options = StorageOptions(uri=input_bag[0])
-            if len(input_bag) > 1:
-                storage_options.storage_id = input_bag[1]
-            input_options.append(storage_options)
-
-        bag_rewrite(input_options, args.output_options)
+        bag_rewrite(args.input, args.output)

@@ -223,81 +223,39 @@ This flexible feature enables the following features:
 Here is an example command:
 
 ```
-ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id --output-options output_options.yaml
+ros2 bag convert \
+  --input "uri: /path/to/bag1" \
+  --input "{uri: /path/to/some.mcap, storage_id: mcap}" \
+  --output "{uri: /output/bag1, storage_id: sqlite3}"
 ```
 
-The `--input` argument may be specified any number of times, and takes 1 or 2 values.
-The first value is the URI of the input bag.
-If a second value is supplied, it specifies the storage implementation of the bag.
-If no storage implementation is specified, rosbag2 will try to determine it automatically from the bag.
+The `--input` argument may be specified any number of times, and takes a YAML representation of a `rosbag2_storage::StorageOptions`.
+The `uri` value is required.
 
-The `--output-options` argument must point to the URI of a YAML file specifying the full recording configuration for each bag to output (`StorageOptions` + `RecordOptions`).
-This file must contain a top-level key `output_bags`, which contains a list of these objects.
-
-The only required value in the output bags is `uri` and `storage_id`. All other values are options (however, if no topic selection is specified, this output bag will be empty!).
-
-This example notes all fields that can have an effect, with a comment on the required ones.
-
-```
-output_bags
-- uri: /output/bag1  # required
-  storage_id: sqlite3  # required
-  max_bagfile_size: 0
-  max_bagfile_duration: 0
-  storage_preset_profile: ""
-  storage_config_uri: ""
-  all: false
-  topics: []
-  rmw_serialization_format: ""  # defaults to using the format of the input topic
-  regex: ""
-  exclude: ""
-  compression_mode: ""
-  compression_format: ""
-  compression_queue_size: 1
-  compression_threads: 0
-  include_hidden_topics: false
-  include_unpublished_topics: false
-```
+The `--output` argument also takes YAML, but can take keys for both `rosbag2_storage::StorageOptions` _and_ `rosbag2_transport::RecordOptions`.
+The `uri` key is always required, and if not speficied, `storage_id` will use the default storage implementation.
 
 Example merge:
 
 ```
-$ ros2 bag convert -i bag1 -i bag2 -o out.yaml
-
-# out.yaml
-output_bags:
-- uri: merged_bag
-  storage_id: sqlite3
-  all: true
+$ ros2 bag convert -i "uri: bag1" -i "uri: bag2" -o "{uri: merged_bag, all: true}"
 ```
 
 Example split:
 
 ```
-$ ros2 bag convert -i bag1 -o out.yaml
-
-# out.yaml
-output_bags:
-- uri: split1
-  storage_id: sqlite3
-  topics: [/topic1, /topic2]
-- uri: split2
-  storage_id: sqlite3
-  topics: [/topic3]
+$ ros2 bag convert \
+  -i "uri: bag1" \
+  -o "{uri: split1, topics=[/topic1, /topic2]}" \
+  -o "{uri: split2, topics=[/topic3]}"
 ```
 
 Example compress:
 
 ```
-$ ros2 bag convert -i bag1 -o out.yaml
-
-# out.yaml
-output_bags:
-- uri: compressed
-  storage_id: sqlite3
-  all: true
-  compression_mode: file
-  compression_format: zstd
+$ ros2 bag convert \
+  -i "{uri: bag1}" \
+  -o "{uri: compressed_bag, all: true, compression_mode: file, compression_format: zstd}"
 ```
 
 ### Overriding QoS Profiles
@@ -406,4 +364,3 @@ By default, rosbag2 can convert from and to CDR as it's the default serializatio
 
 [qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
 [about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
-

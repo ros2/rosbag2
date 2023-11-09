@@ -29,6 +29,7 @@ from common import get_rosbag_options  # noqa
 import rosbag2_py  # noqa
 from rosbag2_py import (
     bag_rewrite,
+    RecordOptions,
     StorageOptions,
 )  # noqa
 
@@ -49,26 +50,9 @@ class TestConvert(unittest.TestCase):
         except OSError:
             pass
 
-    def test_no_toplevel_key(self):
-        output_options_path = self.tmp_path / 'no_toplevel_key.yml'
-        output_options_content = """
-- key: value
-"""
-        with output_options_path.open('w') as f:
-            f.write(output_options_content)
+    def test_empty_args(self):
         with self.assertRaises(RuntimeError):
-            bag_rewrite([], str(output_options_path))
-
-    def test_output_bags_not_a_list(self):
-        output_options_path = self.tmp_path / 'not_a_list.yml'
-        output_options_content = """
-output_bags:
-  key: value
-"""
-        with output_options_path.open('w') as f:
-            f.write(output_options_content)
-        with self.assertRaises(RuntimeError):
-            bag_rewrite([], str(output_options_path))
+            bag_rewrite([], [])
 
     def test_basic_convert(self):
         # This test is just to test that the rosbag2_py wrapper parses input
@@ -81,19 +65,18 @@ output_bags:
             StorageOptions(uri=str(bag_a_path)),
             StorageOptions(uri=str(bag_b_path), storage_id='sqlite3'),
         ]
-        output_options_path = self.tmp_path / 'simple_convert.yml'
-        output_options_content = f"""
-output_bags:
-- uri: {output_uri_1}
-  storage_id: sqlite3
-  topics: [a_empty]
-- uri: {output_uri_2}
-  storage_id: sqlite3
-  exclude: ".*empty.*"
-"""
-        with output_options_path.open('w') as f:
-            f.write(output_options_content)
-        bag_rewrite(input_options, str(output_options_path))
+        output_options = [
+            (
+                StorageOptions(uri=str(output_uri_1)),
+                RecordOptions(topics=['a_empty'])
+            ),
+            (
+                StorageOptions(uri=str(output_uri_2)),
+                RecordOptions(exclude='.*empty.*')
+            ),
+        ]
+
+        bag_rewrite(input_options, output_options)
         self.assertTrue(output_uri_1.exists() and output_uri_1.is_dir())
         self.assertTrue((output_uri_1 / 'metadata.yaml').exists())
         self.assertTrue(output_uri_2.exists() and output_uri_2.is_dir())
