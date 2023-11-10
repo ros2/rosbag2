@@ -55,12 +55,14 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
 
   YAML::Emitter emitter;
   emitter 
-  << YAML::Comment("params.yaml")
+  << YAML::Newline << YAML::Comment("params.yaml")
   << param_node << YAML::Newline 
-  << YAML::Comment("overrides.yaml")
+  << YAML::Newline << YAML::Comment("overrides.yaml")
   << qos_node << YAML::Newline 
-  << YAML::Comment("node parameters")
-  << yaml_play_opt << YAML::Newline;
+  << YAML::Newline << YAML::Comment("node play parameters")
+  << yaml_play_opt << YAML::Newline
+  << YAML::Newline << YAML::Comment("node storage parameters")
+  << yaml_storage_opt << YAML::Newline;
 
   std::cout << emitter.c_str() << std::endl;
 
