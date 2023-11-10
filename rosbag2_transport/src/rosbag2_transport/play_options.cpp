@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "rclcpp/duration.hpp"
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/play_options.hpp"
 
 namespace YAML
@@ -36,7 +36,7 @@ struct convert<rosbag2_transport::Rosbag2Duration>
 
   static bool decode(const Node & node, rosbag2_transport::Rosbag2Duration & duration)
   {
-    duration = rclcpp::Duration(
+    duration = rosbag2_transport::Rosbag2Duration(
       node["seconds"].as<int32_t>(),
       node["nanoseconds"].as<uint32_t>()
     );
@@ -54,7 +54,7 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
   node["topics_to_filter"] = play_options.topics_to_filter;
   node["topics_regex_to_filter"] = play_options.topics_regex_to_filter;
   node["topics_regex_to_exclude"] = play_options.topics_regex_to_exclude;
-  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides(
+  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides(
     play_options.topic_qos_profile_overrides.begin(),
     play_options.topic_qos_profile_overrides.end());
   node["topic_qos_profile_overrides"] = qos_overrides;
@@ -65,11 +65,17 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
   node["clock_trigger_topics"] = play_options.clock_trigger_topics;
   node["delay"] = play_options.delay;
   node["playback_duration"] = play_options.playback_duration;
-  node["playback_until_timestamp"] = play_options.playback_until_timestamp;
+  node["playback_until_timestamp"] = YAML::convert<rosbag2_transport::Rosbag2Duration>::encode(
+    rosbag2_transport::Rosbag2Duration(
+      std::chrono::nanoseconds{play_options.playback_until_timestamp}));
   node["start_paused"] = play_options.start_paused;
-  node["start_offset"] = play_options.start_offset;
+  node["start_offset"] = YAML::convert<rosbag2_transport::Rosbag2Duration>::encode(
+    rosbag2_transport::Rosbag2Duration(
+      std::chrono::nanoseconds{play_options.start_offset}));
   node["disable_keyboard_controls"] = play_options.disable_keyboard_controls;
-  node["wait_acked_timeout"] = play_options.wait_acked_timeout;
+  node["wait_acked_timeout"] = YAML::convert<rosbag2_transport::Rosbag2Duration>::encode(
+    rosbag2_transport::Rosbag2Duration(
+      std::chrono::nanoseconds{play_options.wait_acked_timeout}));
   node["disable_loan_message"] = play_options.disable_loan_message;
 
   return node;
@@ -90,8 +96,8 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
     play_options.topics_regex_to_exclude);
 
   // yaml-cpp doesn't implement unordered_map
-  std::map<std::string, rosbag2_transport::Rosbag2QoS> qos_overrides;
-  optional_assign<std::map<std::string, rosbag2_transport::Rosbag2QoS>>(
+  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides;
+  optional_assign<std::map<std::string, rosbag2_storage::Rosbag2QoS>>(
     node, "topic_qos_profile_overrides", qos_overrides);
   play_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());
 
@@ -107,11 +113,15 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
   optional_assign<rosbag2_transport::Rosbag2Duration>(
     node, "playback_duration",
     play_options.playback_duration);
-  optional_assign<int64_t>(node, "playback_until_timestamp", play_options.playback_until_timestamp);
+
+  play_options.playback_until_timestamp =
+    node["playback_until_timestamp"].as<rosbag2_transport::Rosbag2Duration>().nanoseconds();
   optional_assign<bool>(node, "start_paused", play_options.start_paused);
-  optional_assign<int64_t>(node, "start_offset", play_options.start_offset);
+  play_options.start_offset =
+    node["start_offset"].as<rosbag2_transport::Rosbag2Duration>().nanoseconds();
   optional_assign<bool>(node, "disable_keyboard_controls", play_options.disable_keyboard_controls);
-  optional_assign<int64_t>(node, "wait_acked_timeout", play_options.wait_acked_timeout);
+  play_options.wait_acked_timeout =
+    node["wait_acked_timeout"].as<rosbag2_transport::Rosbag2Duration>().nanoseconds();
   optional_assign<bool>(node, "disable_loan_message", play_options.disable_loan_message);
 
   return true;

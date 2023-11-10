@@ -35,7 +35,7 @@
 
 #include "rosbag2_storage/storage_filter.hpp"
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 
 namespace
@@ -199,6 +199,14 @@ public:
   /// \brief Getter for the number of registered on_play_msg_post_callbacks
   /// \return Number of registered on_play_msg_post_callbacks
   size_t get_number_of_registered_on_play_msg_post_callbacks();
+
+  /// \brief Getter for the currently stored storage options
+  /// \return Copy of the currently stored storage options
+  rosbag2_storage::StorageOptions get_storage_options();
+
+  /// \brief Getter for the currently stored play options
+  /// \return Copy of the currently stored play options
+  rosbag2_transport::PlayOptions get_play_options();
 
 protected:
   struct play_msg_callback_data
@@ -1184,6 +1192,9 @@ rosbag2_transport::PlayOptions PlayerImpl::get_play_options()
 
 ///////////////////////////////
 // Player public interface
+
+Player::Player(const rclcpp::NodeOptions & node_options)
+: Player("rosbag2_player", node_options) {}
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)

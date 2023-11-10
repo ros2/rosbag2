@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 
@@ -53,7 +53,7 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
 }  // namespace param_utils
 
 
-PlayOptions get_play_options_from_node_params(rclcpp::Node* node)
+PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
 {
   PlayOptions play_options{};
   auto desc_raqs = param_utils::int_param_description(
@@ -100,7 +100,9 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node* node)
       YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
       for (auto topic_qos : yaml_file) {
         play_options.topic_qos_profile_overrides
-        .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+        .emplace(
+          topic_qos.first.as<std::string>(),
+          topic_qos.second.as<rosbag2_storage::Rosbag2QoS>());
       }
     } catch (const YAML::Exception & ex) {
       throw std::runtime_error(
@@ -173,7 +175,7 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node* node)
   return play_options;
 }
 
-RecordOptions get_record_options_from_node_params(rclcpp::Node* node)
+RecordOptions get_record_options_from_node_params(rclcpp::Node * node)
 {
   RecordOptions record_options{};
   record_options.all = node->declare_parameter<bool>(
@@ -251,7 +253,9 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node* node)
       YAML::Node yaml_file = YAML::LoadFile(qos_profile_overrides_path);
       for (auto topic_qos : yaml_file) {
         record_options.topic_qos_profile_overrides
-        .emplace(topic_qos.first.as<std::string>(), topic_qos.second.as<Rosbag2QoS>());
+        .emplace(
+          topic_qos.first.as<std::string>(),
+          topic_qos.second.as<rosbag2_storage::Rosbag2QoS>());
       }
     } catch (const YAML::Exception & ex) {
       throw std::runtime_error(
@@ -290,7 +294,7 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node* node)
 }
 
 rosbag2_storage::StorageOptions
-get_storage_options_from_node_params(rclcpp::Node* node)
+get_storage_options_from_node_params(rclcpp::Node * node)
 {
   rosbag2_storage::StorageOptions storage_options{};
 

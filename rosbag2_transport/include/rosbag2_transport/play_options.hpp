@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
+#include <chrono>
 #include <cstddef>
 #include <string>
 #include <unordered_map>
@@ -28,15 +29,22 @@
 namespace rosbag2_transport
 {
 
-/// Simple wrapper around rclcpp::Duration to provide a default constructor for YAML deserialization.
+/// Simple wrapper around rclcpp::Duration to provide a default constructor.
 class ROSBAG2_TRANSPORT_PUBLIC Rosbag2Duration : public rclcpp::Duration
 {
 public:
   Rosbag2Duration()
   : rclcpp::Duration(-1, 0) {}
 
-  Rosbag2Duration(const rclcpp::Duration & value)
+  Rosbag2Duration(int32_t seconds, uint32_t nanoseconds)
+  : rclcpp::Duration(seconds, nanoseconds) {}
+
+  // intentionally not using explicit to create a conversion constructor
+  Rosbag2Duration(const rclcpp::Duration & value) // NOLINT
   : rclcpp::Duration(value) {}
+
+  explicit Rosbag2Duration(std::chrono::nanoseconds nanoseconds)
+  : rclcpp::Duration(nanoseconds) {}
 };
 
 struct PlayOptions
