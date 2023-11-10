@@ -469,7 +469,7 @@ void SqliteStorage::create_topic(
       topic.name,
       topic.type,
       topic.serialization_format,
-      topic.offered_qos_profiles,
+      rosbag2_storage::serialize_rclcpp_qos_vector(topic.offered_qos_profiles),
       topic.type_description_hash);
     insert_topic->execute_and_reset();
     topics_.emplace(topic.name, static_cast<int>(database_->get_last_insert_id()));
@@ -591,12 +591,16 @@ void SqliteStorage::fill_topics_and_types()
         std::string, std::string, std::string, std::string, std::string>();
 
       for (auto result : query_results) {
+        auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
+          // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+          // metadata_.version will be lower than 9
+          std::get<3>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         all_topics_and_types_.push_back(
           {
             std::get<0>(result),
             std::get<1>(result),
             std::get<2>(result),
-            std::get<3>(result),
+            offered_qos_profiles,
             std::get<4>(result)});
       }
     } else {
@@ -606,8 +610,13 @@ void SqliteStorage::fill_topics_and_types()
         std::string, std::string, std::string, std::string>();
 
       for (auto result : query_results) {
+        auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
+          // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+          // metadata_.version will be lower than 9
+          std::get<3>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         all_topics_and_types_.push_back(
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result), ""});
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), offered_qos_profiles,
+            ""});
       }
     }
   } else {
@@ -617,7 +626,7 @@ void SqliteStorage::fill_topics_and_types()
 
     for (auto result : query_results) {
       all_topics_and_types_.push_back(
-        {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", ""});
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), {}, ""});
     }
   }
 }
@@ -681,10 +690,14 @@ void SqliteStorage::read_metadata()
         rcutils_time_point_value_t, std::string, std::string>();
 
       for (auto result : query_results) {
+        auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
+          // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+          // metadata_.version will be lower than 9
+          std::get<6>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         metadata_.topics_with_message_count.push_back(
           {
-            {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(
-                result), std::get<7>(result)},
+            {std::get<0>(result), std::get<1>(result), std::get<2>(
+                result), offered_qos_profiles, std::get<7>(result)},
             static_cast<size_t>(std::get<3>(result))
           });
 
@@ -705,10 +718,14 @@ void SqliteStorage::read_metadata()
         rcutils_time_point_value_t, std::string>();
 
       for (auto result : query_results) {
+        auto offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(
+          // Before db_schema_version_ = 3 we didn't store metadata in the database and real
+          // metadata_.version will be lower than 9
+          std::get<6>(result), (db_schema_version_ >= 3) ? metadata_.version : 8);
         metadata_.topics_with_message_count.push_back(
           {
-            {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(
-                result), ""},
+            {std::get<0>(result), std::get<1>(result), std::get<2>(
+                result), offered_qos_profiles, ""},
             static_cast<size_t>(std::get<3>(result))
           });
 
@@ -732,7 +749,7 @@ void SqliteStorage::read_metadata()
       metadata_.topics_with_message_count.push_back(
         {
           {std::get<0>(result), std::get<1>(result), std::get<2>(
-              result), "", ""},
+              result), {}, ""},
           static_cast<size_t>(std::get<3>(result))
         });
 

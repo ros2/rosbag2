@@ -19,20 +19,20 @@
 
 #include "rmw/types.h"
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 
 TEST(TestQoS, serialization)
 {
-  rosbag2_transport::Rosbag2QoS expected_qos;
+  rosbag2_storage::Rosbag2QoS expected_qos;
   YAML::Node offered_qos_profiles;
   offered_qos_profiles.push_back(expected_qos);
 
   std::string serialized = YAML::Dump(offered_qos_profiles);
   YAML::Node loaded_node = YAML::Load(serialized);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_storage::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
 
-  rosbag2_transport::Rosbag2QoS actual_qos = deserialized_profiles[0];
+  rosbag2_storage::Rosbag2QoS actual_qos = deserialized_profiles[0];
   EXPECT_EQ(actual_qos, expected_qos);
 }
 
@@ -58,13 +58,15 @@ TEST(TestQoS, supports_version_4)
     "  avoid_ros_namespace_conventions: false\n";
 
   YAML::Node loaded_node = YAML::Load(serialized_profiles);
-  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
+  // Intentionally use loaded_node.as<..> to make sure that old format will be automatically
+  // detected and properly decoded by yaml parser.
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_storage::Rosbag2QoS>>();
   ASSERT_EQ(deserialized_profiles.size(), 1u);
   auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
 
   rmw_time_t zerotime{0, 0};
   // Explicitly set up the same QoS profile in case defaults change
-  auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  auto expected_qos = rosbag2_storage::Rosbag2QoS{}
   .default_history()
   .reliable()
   .durability_volatile()
@@ -105,7 +107,7 @@ TEST(TestQoS, translates_bad_infinity_values)
     {0x7FFFFFFFll, 0x7FFFFFFFll}  // connext
   };
   rmw_time_t infinity = RMW_DURATION_INFINITE;
-  const auto expected_qos = rosbag2_transport::Rosbag2QoS{}
+  const auto expected_qos = rosbag2_storage::Rosbag2QoS{}
   .default_history()
   .reliable()
   .durability_volatile()
@@ -118,23 +120,23 @@ TEST(TestQoS, translates_bad_infinity_values)
   for (const auto & infinity : bad_infinities) {
     std::ostringstream serialized_profile;
     serialized_profile <<
-      "history: 1\n"
+      "history: system_default\n"
       "depth: 10\n"
-      "reliability: 1\n"
-      "durability: 2\n"
+      "reliability: reliable\n"
+      "durability: volatile\n"
       "deadline:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
       "lifespan:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
-      "liveliness: 0\n"
+      "liveliness: system_default\n"
       "liveliness_lease_duration:\n"
       "  sec: " << infinity.sec << "\n"
       "  nsec: " << infinity.nsec << "\n"
       "avoid_ros_namespace_conventions: false\n";
     const YAML::Node loaded_node = YAML::Load(serialized_profile.str());
-    const auto deserialized_profile = loaded_node.as<rosbag2_transport::Rosbag2QoS>();
+    const auto deserialized_profile = loaded_node.as<rosbag2_storage::Rosbag2QoS>();
     const auto actual_qos = deserialized_profile.get_rmw_qos_profile();
     EXPECT_TRUE(rmw_time_equal(actual_qos.lifespan, expected_qos.lifespan));
     EXPECT_TRUE(rmw_time_equal(actual_qos.deadline, expected_qos.deadline));
@@ -144,10 +146,10 @@ TEST(TestQoS, translates_bad_infinity_values)
   }
 }
 
-using rosbag2_transport::Rosbag2QoS;  // NOLINT
 class AdaptiveQoSTest : public ::testing::Test
 {
 public:
+  using Rosbag2QoS = rosbag2_storage::Rosbag2QoS;
   AdaptiveQoSTest() = default;
 
   rclcpp::TopicEndpointInfo make_endpoint(const rclcpp::QoS & qos)
@@ -170,8 +172,8 @@ public:
 
   const std::string topic_name_{"/topic"};
   std::vector<rclcpp::TopicEndpointInfo> endpoints_{};
-  const rosbag2_transport::Rosbag2QoS default_offer_{};
-  const rosbag2_transport::Rosbag2QoS default_request_{};
+  const Rosbag2QoS default_offer_{};
+  const Rosbag2QoS default_request_{};
 };
 
 TEST_F(AdaptiveQoSTest, adapt_request_empty_returns_default)

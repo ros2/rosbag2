@@ -37,7 +37,7 @@ int main(int, char **)
     "synthetic",
     "example_interfaces/msg/Int32",
     rmw_get_serialization_format(),
-    "",
+    {},
     ""
   });
 

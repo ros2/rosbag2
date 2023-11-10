@@ -30,7 +30,7 @@
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
-#include "rosbag2_transport/qos.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "record_integration_fixture.hpp"
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
@@ -175,10 +175,12 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
   auto recorded_topics = mock_writer.get_topics();
-  std::string serialized_profiles = recorded_topics.at(topic).first.offered_qos_profiles;
+  auto offered_qos_profiles = recorded_topics.at(topic).first.offered_qos_profiles;
+  std::string serialized_profiles = rosbag2_storage::serialize_rclcpp_qos_vector(
+    offered_qos_profiles);
   // Basic smoke test that the profile was serialized into the metadata as a string.
-  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: 1\n"));
-  EXPECT_THAT(serialized_profiles, ContainsRegex("durability: 2\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("reliability: reliable\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("durability: volatile\n"));
   EXPECT_THAT(
     serialized_profiles, ContainsRegex(
       "deadline:\n"
@@ -191,7 +193,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
       "    sec: .+\n"
       "    nsec: .+\n"
   ));
-  EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: 1\n"));
+  EXPECT_THAT(serialized_profiles, ContainsRegex("liveliness: automatic\n"));
   EXPECT_THAT(
     serialized_profiles, ContainsRegex(
       "liveliness_lease_duration:\n"

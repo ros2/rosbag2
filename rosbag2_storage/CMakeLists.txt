@@ -25,11 +25,14 @@ find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rmw REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 add_library(
   ${PROJECT_NAME}
   SHARED
+  src/rosbag2_storage/qos.cpp
   src/rosbag2_storage/default_storage_id.cpp
   src/rosbag2_storage/metadata_io.cpp
   src/rosbag2_storage/ros_helper.cpp
@@ -45,6 +48,8 @@ target_link_libraries(${PROJECT_NAME}
   pluginlib::pluginlib
   rcpputils::rcpputils
   rcutils::rcutils
+  rclcpp::rclcpp
+  rmw::rmw
   yaml-cpp
 )
 
@@ -70,7 +75,7 @@ ament_export_libraries(${PROJECT_NAME})
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
 
-ament_export_dependencies(pluginlib yaml_cpp_vendor)
+ament_export_dependencies(pluginlib yaml_cpp_vendor rclcpp rmw)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -119,6 +124,14 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
   )
-endif()
+
+  ament_add_gmock(test_qos
+    test/rosbag2_storage/test_qos.cpp)
+  target_link_libraries(test_qos
+    ${PROJECT_NAME}
+    rosbag2_test_common::rosbag2_test_common
+    yaml-cpp
+  )
+  endif()
 
 ament_package()

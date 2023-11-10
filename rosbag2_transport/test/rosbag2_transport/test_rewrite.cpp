@@ -131,9 +131,7 @@ TEST_P(TestRewrite, test_merge) {
   for (const auto & topic_info : metadata.topics_with_message_count) {
     const auto topic = topic_info.topic_metadata;
     if (topic.name == "a_empty") {
-      YAML::Node qos_node = YAML::Load(topic.offered_qos_profiles);
-      EXPECT_TRUE(qos_node.IsSequence());
-      EXPECT_EQ(qos_node.size(), 3u);
+      EXPECT_EQ(topic.offered_qos_profiles.size(), 3u);
     }
   }
 }
