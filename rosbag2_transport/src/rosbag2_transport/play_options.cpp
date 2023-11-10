@@ -29,16 +29,16 @@ struct convert<rosbag2_transport::Rosbag2Duration>
   static Node encode(const rosbag2_transport::Rosbag2Duration & duration)
   {
     Node node;
-    node["seconds"] = duration.seconds();
-    node["nanoseconds"] = duration.nanoseconds();
+    node["sec"] = duration.nanoseconds() / 1000000000;
+    node["nsec"] = duration.nanoseconds() % 1000000000;
     return node;
   }
 
   static bool decode(const Node & node, rosbag2_transport::Rosbag2Duration & duration)
   {
     duration = rosbag2_transport::Rosbag2Duration(
-      node["seconds"].as<int32_t>(),
-      node["nanoseconds"].as<uint32_t>()
+      node["sec"].as<int32_t>(),
+      node["nsec"].as<uint32_t>()
     );
     return true;
   }

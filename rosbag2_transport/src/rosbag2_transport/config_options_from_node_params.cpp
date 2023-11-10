@@ -138,35 +138,53 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
     "clock_trigger_topics",
     std::vector<std::string>());
 
-  auto delay_ = node->declare_parameter<double>(
-    "delay",
+  auto delay_sec = node->declare_parameter<int32_t>(
+    "delay.sec",
     0.0);
-  play_options.delay = rclcpp::Duration::from_seconds(delay_);
+  auto delay_nsec = node->declare_parameter<int32_t>(
+    "delay.nsec",
+    0.0);
+  play_options.delay = rclcpp::Duration(delay_sec, delay_nsec);
 
-  auto playback_duration_ = node->declare_parameter<double>(
-    "playback_duration",
-    -1);
-  play_options.playback_duration = rclcpp::Duration::from_seconds(playback_duration_);
+  auto playback_duration_sec = node->declare_parameter<int32_t>(
+    "playback_duration.sec",
+    -1.0);
+  auto playback_duration_nsec = node->declare_parameter<int32_t>(
+    "playback_duration.nsec",
+    0.0);
+  play_options.playback_duration = rclcpp::Duration(playback_duration_sec, playback_duration_nsec);
 
-  play_options.playback_until_timestamp = node->declare_parameter<int64_t>(
-    "playback_until_timestamp",
-    -1);
+  auto playback_until_timestamp_sec = node->declare_parameter<int32_t>(
+    "playback_until_timestamp.sec",
+    -1.0);
+  auto playback_until_timestamp_nsec = node->declare_parameter<int32_t>(
+    "playback_until_timestamp.nsec",
+    0.0);
+  play_options.playback_until_timestamp = rclcpp::Duration(playback_until_timestamp_sec, playback_until_timestamp_nsec).nanoseconds();
 
   play_options.start_paused = node->declare_parameter<bool>(
     "start_paused",
     false);
 
-  play_options.start_offset = node->declare_parameter<int64_t>(
-    "start_offset",
-    0);
+  auto start_offset_sec = node->declare_parameter<int32_t>(
+    "start_offset.sec",
+    -1.0);
+  auto start_offset_nsec = node->declare_parameter<int32_t>(
+    "start_offset.nsec",
+    0.0);
+  play_options.start_offset = rclcpp::Duration(start_offset_sec, start_offset_nsec).nanoseconds();
 
   play_options.disable_keyboard_controls = node->declare_parameter<bool>(
     "disable_keyboard_controls",
     false);
 
-  play_options.wait_acked_timeout = node->declare_parameter<int64_t>(
-    "wait_acked_timeout",
-    -1);
+  auto wait_acked_timeout_sec = node->declare_parameter<int32_t>(
+    "wait_acked_timeout.sec",
+    -1.0);
+  auto wait_acked_timeout_nsec = node->declare_parameter<int32_t>(
+    "wait_acked_timeout.nsec",
+    0.0);
+  play_options.wait_acked_timeout = rclcpp::Duration(wait_acked_timeout_sec, wait_acked_timeout_nsec).nanoseconds();
 
   play_options.disable_loan_message = node->declare_parameter<bool>(
     "disable_loan_message",

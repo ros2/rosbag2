@@ -50,9 +50,25 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
+  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params.yaml");
+  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
+
   YAML::Emitter emitter;
-  emitter << yaml_play_opt;
-  std::cout << "Node :" << emitter.c_str() << std::endl;
+  emitter 
+  << YAML::Comment("params.yaml")
+  << param_node << YAML::Newline 
+  << YAML::Comment("overrides.yaml")
+  << qos_node << YAML::Newline 
+  << YAML::Comment("node parameters")
+  << yaml_play_opt << YAML::Newline;
+
+  std::cout << emitter.c_str() << std::endl;
 
   // TODO(roncapat): compare YAML trees (from file vs from struct)
 }
+
+/*
+TEST_F(RosBag2PlayTestFixture, test_negative_durations) {
+// TODO(roncapat): implement
+}
+*/
