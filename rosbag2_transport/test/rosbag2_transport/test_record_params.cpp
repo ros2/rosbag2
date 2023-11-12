@@ -23,18 +23,18 @@
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
-#include "mock_player.hpp"
-#include "rosbag2_play_test_fixture.hpp"
+#include "mock_recorder.hpp"
+#include "rosbag2_transport_test_fixture.hpp"
 #include "rosbag2_storage/storage_options.hpp"
-#include "rosbag2_transport/play_options.hpp"
+#include "rosbag2_transport/record_options.hpp"
 
-TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
+TEST_F(Rosbag2TransportTestFixture, parse_parameter_from_file) {
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   rclcpp::NodeOptions opts;
   opts.arguments(
   {
     "--ros-args",
-    "--params-file", _SRC_RESOURCES_DIR_PATH "/params_player.yaml"
+    "--params-file", _SRC_RESOURCES_DIR_PATH "/params_recorder.yaml"
   });
   opts.append_parameter_override(
     "qos_profile_overrides_path",
@@ -43,24 +43,21 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
     "uri",
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
 
-  auto node = std::make_shared<MockPlayer>("player_params_node", opts);
-  auto play_options = node->retrieve_play_options();
+  auto node = std::make_shared<MockRecorder>("recorder_params_node", opts);
+  auto record_options = node->retrieve_record_options();
   auto storage_options = node->retrieve_storage_options();
-  YAML::Node yaml_play_opt = YAML::convert<rosbag2_transport::PlayOptions>().encode(play_options);
+  YAML::Node yaml_record_opt = YAML::convert<rosbag2_transport::RecordOptions>().encode(record_options);
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
   auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params.yaml");
-  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
 
   YAML::Emitter emitter;
   emitter 
   << YAML::Newline << YAML::Comment("params.yaml")
-  << param_node << YAML::Newline 
-  << YAML::Newline << YAML::Comment("overrides.yaml")
-  << qos_node << YAML::Newline 
-  << YAML::Newline << YAML::Comment("node play parameters")
-  << yaml_play_opt << YAML::Newline
+  << param_node << YAML::Newline
+  << YAML::Newline << YAML::Comment("node record parameters")
+  << yaml_record_opt << YAML::Newline
   << YAML::Newline << YAML::Comment("node storage parameters")
   << yaml_storage_opt << YAML::Newline;
 

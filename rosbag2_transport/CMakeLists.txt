@@ -200,6 +200,12 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
 
+  rosbag2_transport_add_gmock(test_record_params
+    test/rosbag2_transport/test_record_params.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common
+    ${SKIP_TEST})
+
   rosbag2_transport_add_gmock(test_record_all_ignore_leaf_topics
     test/rosbag2_transport/test_record_all_ignore_leaf_topics.cpp
     LINK_LIBS rosbag2_transport

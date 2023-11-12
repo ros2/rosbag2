@@ -1,0 +1,31 @@
+recorder_params_node:
+  ros__parameters:
+    all: true
+    is_discovery_disabled: true
+    topics: {"topic", "other_topic"}
+    rmw_serialization_format: "cdr"
+    topic_polling_interval:
+      sec: 0
+      nsec: 10000000
+    regex: "[xyz]/topic"
+    exclude: "*"
+    node_prefix: "prefix"
+    compression_mode: "stream"
+    compression_format: "h264"
+    compression_queue_size: 10
+    compression_threads: 2
+    qos_profile_overrides_path: ""
+    include_hidden_topics: true
+    include_unpublished_topics: true
+    ignore_leaf_topics: false
+    start_paused: false
+    use_sim_time: false
+
+    storage_id: sqlite3
+    config_uri: ""
+    max_bagfile_size: 12345
+    max_bagfile_duration: 54321
+    max_cache_size: 9898
+    preset_profile: "none"
+    snapshot_mode: false
+    custom_data: ["test=true"]
