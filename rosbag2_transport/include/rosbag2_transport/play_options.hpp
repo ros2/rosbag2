@@ -131,7 +131,27 @@ struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::PlayOptions>
   static bool decode(const Node & node, rosbag2_transport::PlayOptions & play_options);
 };
 
-}  // namespace YAML
+template<>
+struct convert<rosbag2_transport::Rosbag2Duration>
+{
+  static Node encode(const rosbag2_transport::Rosbag2Duration & duration)
+  {
+    Node node;
+    node["sec"] = duration.nanoseconds() / 1000000000;
+    node["nsec"] = duration.nanoseconds() % 1000000000;
+    return node;
+  }
 
+  static bool decode(const Node & node, rosbag2_transport::Rosbag2Duration & duration)
+  {
+    duration = rosbag2_transport::Rosbag2Duration(
+      node["sec"].as<int32_t>(),
+      node["nsec"].as<uint32_t>()
+    );
+    return true;
+  }
+};
+
+}  // namespace YAML
 
 #endif  // ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_

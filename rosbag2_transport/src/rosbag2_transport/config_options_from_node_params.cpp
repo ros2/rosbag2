@@ -212,15 +212,13 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node * node)
     "rmw_serialization_format",
     "");
 
-  auto desc_tpi = param_utils::int_param_description(
-    "Topic polling interval (ms)",
-    1,
-    std::numeric_limits<int64_t>::max());
-  auto topic_polling_interval_ = node->declare_parameter<int64_t>(
-    "topic_polling_interval",
-    100,
-    desc_tpi);
-  record_options.topic_polling_interval = std::chrono::milliseconds{topic_polling_interval_};
+  auto topic_polling_interval_sec = node->declare_parameter<int32_t>(
+    "topic_polling_interval.sec",
+    0.0);
+  auto topic_polling_interval_nsec = node->declare_parameter<int32_t>(
+    "topic_polling_interval.nsec",
+    1000000.0);
+  record_options.topic_polling_interval = rclcpp::Duration(topic_polling_interval_sec, topic_polling_interval_nsec).to_chrono<std::chrono::milliseconds>();
 
   record_options.regex = node->declare_parameter<std::string>(
     "regex",
@@ -318,7 +316,7 @@ get_storage_options_from_node_params(rclcpp::Node * node)
 
   storage_options.storage_id = node->declare_parameter<std::string>("storage_id", "");
 
-  storage_options.storage_config_uri = node->declare_parameter<std::string>("config_uri", "");
+  storage_options.storage_config_uri = node->declare_parameter<std::string>("storage_config_uri", "");
 
   auto desc_mbs = param_utils::int_param_description(
     "Max bagfile size (bytes)",
@@ -351,7 +349,7 @@ get_storage_options_from_node_params(rclcpp::Node * node)
   storage_options.max_cache_size = static_cast<uint64_t>(max_cache_size_);
 
   storage_options.storage_preset_profile =
-    node->declare_parameter<std::string>("preset_profile", "");
+    node->declare_parameter<std::string>("storage_preset_profile", "");
 
   storage_options.snapshot_mode = node->declare_parameter<bool>("snapshot_mode", false);
 
@@ -370,6 +368,13 @@ get_storage_options_from_node_params(rclcpp::Node * node)
     auto value_string = key_value_string.substr(delimiter_pos + 1);
     storage_options.custom_data[key_string] = value_string;
   }
+
+  storage_options.start_time_ns = node->declare_parameter<int64_t>(
+    "start_time_ns",
+    -1);
+  storage_options.end_time_ns = node->declare_parameter<int64_t>(
+    "end_time_ns",
+    -1);
 
   return storage_options;
 }
