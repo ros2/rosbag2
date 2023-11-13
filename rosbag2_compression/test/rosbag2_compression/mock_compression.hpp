@@ -27,9 +27,10 @@ class MockCompressor : public rosbag2_compression::BaseCompressorInterface
 {
 public:
   MOCK_METHOD1(compress_uri, std::string(const std::string & uri));
-  MOCK_METHOD1(
+  MOCK_METHOD2(
     compress_serialized_bag_message,
-    void(rosbag2_storage::SerializedBagMessage * bag_message));
+    void(const rosbag2_storage::SerializedBagMessage *,
+    rosbag2_storage::SerializedBagMessage *));
   MOCK_CONST_METHOD0(get_compression_identifier, std::string());
 };
 
