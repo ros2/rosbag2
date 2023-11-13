@@ -50,12 +50,12 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
-  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params.yaml");
+  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params_player.yaml");
   auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
 
   YAML::Emitter emitter;
   emitter 
-  << YAML::Newline << YAML::Comment("params.yaml")
+  << YAML::Newline << YAML::Comment("params_player.yaml")
   << param_node << YAML::Newline 
   << YAML::Newline << YAML::Comment("overrides.yaml")
   << qos_node << YAML::Newline 

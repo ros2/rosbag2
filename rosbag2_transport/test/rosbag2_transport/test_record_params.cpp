@@ -24,11 +24,11 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "mock_recorder.hpp"
-#include "rosbag2_transport_test_fixture.hpp"
+#include "rosbag2_record_test_fixture.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/record_options.hpp"
 
-TEST_F(Rosbag2TransportTestFixture, parse_parameter_from_file) {
+TEST_F(RosBag2RecordTestFixture, parse_parameter_from_file) {
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   rclcpp::NodeOptions opts;
   opts.arguments(
@@ -50,12 +50,15 @@ TEST_F(Rosbag2TransportTestFixture, parse_parameter_from_file) {
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
-  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params.yaml");
+  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params_recorder.yaml");
+  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
 
   YAML::Emitter emitter;
   emitter 
   << YAML::Newline << YAML::Comment("params.yaml")
   << param_node << YAML::Newline
+  << YAML::Newline << YAML::Comment("overrides.yaml")
+  << qos_node << YAML::Newline 
   << YAML::Newline << YAML::Comment("node record parameters")
   << yaml_record_opt << YAML::Newline
   << YAML::Newline << YAML::Comment("node storage parameters")

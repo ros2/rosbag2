@@ -298,9 +298,7 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node * node)
     "start_paused",
     false);
 
-  record_options.use_sim_time = node->declare_parameter<bool>(
-    "use_sim_time",
-    false);
+  record_options.use_sim_time = node->get_parameter("use_sim_time").get_value<bool>();
 
 
   if (record_options.use_sim_time && record_options.is_discovery_disabled) {
