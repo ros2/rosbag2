@@ -46,7 +46,8 @@ TEST_F(RosBag2RecordTestFixture, parse_parameter_from_file) {
   auto node = std::make_shared<MockRecorder>("recorder_params_node", opts);
   auto record_options = node->retrieve_record_options();
   auto storage_options = node->retrieve_storage_options();
-  YAML::Node yaml_record_opt = YAML::convert<rosbag2_transport::RecordOptions>().encode(record_options);
+  YAML::Node yaml_record_opt = YAML::convert<rosbag2_transport::RecordOptions>().encode(
+    record_options);
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
@@ -54,15 +55,15 @@ TEST_F(RosBag2RecordTestFixture, parse_parameter_from_file) {
   auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
 
   YAML::Emitter emitter;
-  emitter 
-  << YAML::Newline << YAML::Comment("params.yaml")
-  << param_node << YAML::Newline
-  << YAML::Newline << YAML::Comment("overrides.yaml")
-  << qos_node << YAML::Newline 
-  << YAML::Newline << YAML::Comment("node record parameters")
-  << yaml_record_opt << YAML::Newline
-  << YAML::Newline << YAML::Comment("node storage parameters")
-  << yaml_storage_opt << YAML::Newline;
+  emitter
+    << YAML::Newline << YAML::Comment("params.yaml")
+    << param_node << YAML::Newline
+    << YAML::Newline << YAML::Comment("overrides.yaml")
+    << qos_node << YAML::Newline
+    << YAML::Newline << YAML::Comment("node record parameters")
+    << yaml_record_opt << YAML::Newline
+    << YAML::Newline << YAML::Comment("node storage parameters")
+    << yaml_storage_opt << YAML::Newline;
 
   std::cout << emitter.c_str() << std::endl;
 

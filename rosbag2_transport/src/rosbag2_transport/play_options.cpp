@@ -22,7 +22,7 @@
 
 namespace YAML
 {
-  
+
 Node convert<rosbag2_transport::PlayOptions>::encode(
   const rosbag2_transport::PlayOptions & play_options)
 {

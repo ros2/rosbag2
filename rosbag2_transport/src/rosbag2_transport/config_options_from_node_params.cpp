@@ -160,7 +160,10 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
   auto playback_until_timestamp_nsec = node->declare_parameter<int32_t>(
     "playback_until_timestamp.nsec",
     0.0);
-  play_options.playback_until_timestamp = rclcpp::Duration(playback_until_timestamp_sec, playback_until_timestamp_nsec).nanoseconds();
+  play_options.playback_until_timestamp = rclcpp::Duration(
+    playback_until_timestamp_sec,
+    playback_until_timestamp_nsec).
+    nanoseconds();
 
   play_options.start_paused = node->declare_parameter<bool>(
     "start_paused",
@@ -184,7 +187,8 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
   auto wait_acked_timeout_nsec = node->declare_parameter<int32_t>(
     "wait_acked_timeout.nsec",
     0.0);
-  play_options.wait_acked_timeout = rclcpp::Duration(wait_acked_timeout_sec, wait_acked_timeout_nsec).nanoseconds();
+  play_options.wait_acked_timeout =
+    rclcpp::Duration(wait_acked_timeout_sec, wait_acked_timeout_nsec).nanoseconds();
 
   play_options.disable_loan_message = node->declare_parameter<bool>(
     "disable_loan_message",
@@ -218,7 +222,9 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node * node)
   auto topic_polling_interval_nsec = node->declare_parameter<int32_t>(
     "topic_polling_interval.nsec",
     1000000.0);
-  record_options.topic_polling_interval = rclcpp::Duration(topic_polling_interval_sec, topic_polling_interval_nsec).to_chrono<std::chrono::milliseconds>();
+  record_options.topic_polling_interval = rclcpp::Duration(
+    topic_polling_interval_sec,
+    topic_polling_interval_nsec).to_chrono<std::chrono::milliseconds>();
 
   record_options.regex = node->declare_parameter<std::string>(
     "regex",
@@ -316,7 +322,8 @@ get_storage_options_from_node_params(rclcpp::Node * node)
 
   storage_options.storage_id = node->declare_parameter<std::string>("storage_id", "");
 
-  storage_options.storage_config_uri = node->declare_parameter<std::string>("storage_config_uri", "");
+  storage_options.storage_config_uri =
+    node->declare_parameter<std::string>("storage_config_uri", "");
 
   auto desc_mbs = param_utils::int_param_description(
     "Max bagfile size (bytes)",
