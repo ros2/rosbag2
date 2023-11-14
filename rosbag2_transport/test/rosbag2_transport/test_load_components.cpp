@@ -55,11 +55,24 @@ TEST_F(TestComponentManager, test_load_components)
   }
 
   {
-
-    rclcpp::parameter_map_from_yaml_file();
+    std::string path{_SRC_RESOURCES_DIR_PATH "/params_player.yaml"};
+    auto pm = rclcpp::parameter_map_from_yaml_file(path);
+    auto pl = rclcpp::parameters_from_map(pm, "/player_params_node");
     auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
     request->package_name = "rosbag2_transport";
     request->plugin_name = "rosbag2_transport::Player";
+    for (auto p: pl){
+      request->parameters.push_back(p.to_parameter_msg());
+    }
+
+    rclcpp::Parameter qos_profile_overrides_path("qos_profile_overrides_path",
+      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/overrides.yaml"));
+
+    rclcpp::Parameter uri("uri",
+      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "//sqlite3/test_bag_for_seek"));
+
+    request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
+    request->parameters.push_back(uri.to_parameter_msg());
 
     auto future = composition_client->async_send_request(request);
     auto ret = exec->spin_until_future_complete(future, 5s);  // Wait for the result.
@@ -72,9 +85,20 @@ TEST_F(TestComponentManager, test_load_components)
   }
 
   {
+    std::string path{_SRC_RESOURCES_DIR_PATH "/params_recorder.yaml"};
+    auto pm = rclcpp::parameter_map_from_yaml_file(path);
+    auto pl = rclcpp::parameters_from_map(pm, "/recorder_params_node");
     auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
     request->package_name = "rosbag2_transport";
     request->plugin_name = "rosbag2_transport::Recorder";
+    for (auto p: pl){
+      request->parameters.push_back(p.to_parameter_msg());
+    }
+
+    rclcpp::Parameter qos_profile_overrides_path("qos_profile_overrides_path",
+      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/overrides.yaml"));
+
+    request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
 
     auto future = composition_client->async_send_request(request);
     auto ret = exec->spin_until_future_complete(future, 5s);  // Wait for the result.
@@ -83,6 +107,6 @@ TEST_F(TestComponentManager, test_load_components)
     EXPECT_EQ(result->success, true);
     EXPECT_EQ(result->error_message, "");
     EXPECT_EQ(result->full_node_name, "/rosbag2_recorder");
-    EXPECT_EQ(result->unique_id, 1u);
+    EXPECT_EQ(result->unique_id, 2u);
   }
 }
