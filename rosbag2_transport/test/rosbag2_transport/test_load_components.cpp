@@ -61,7 +61,7 @@ TEST_F(TestComponentManager, test_load_components)
     auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
     request->package_name = "rosbag2_transport";
     request->plugin_name = "rosbag2_transport::Player";
-    for (auto p: pl) {
+    for (auto p : pl) {
       request->parameters.push_back(p.to_parameter_msg());
     }
 
