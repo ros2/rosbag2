@@ -69,6 +69,12 @@ target_link_libraries(${PROJECT_NAME}
   yaml-cpp
 )
 
+rclcpp_components_register_node(
+  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Player" EXECUTABLE Rosbag2Player)
+
+rclcpp_components_register_node(
+  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Recorder" EXECUTABLE Rosbag2Recorder)
+
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_TRANSPORT_BUILDING_LIBRARY")
@@ -243,9 +249,14 @@ function(create_tests_for_rmw_implementation)
     AMENT_DEPS test_msgs rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_component_parameters
-      test/rosbag2_transport/test_composable_recorder.cpp
+    test/rosbag2_transport/test_composable_recorder.cpp
     LINK_LIBS rosbag2_transport
     AMENT_DEPS test_msgs rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_load_components
+    test/rosbag2_transport/test_load_components.cpp
+    LINK_LIBS rosbag2_transport
+    AMENT_DEPS test_msgs rosbag2_test_common rclcpp_components)
 
   if(${rmw_implementation} MATCHES "rmw_cyclonedds(.*)")
     ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
