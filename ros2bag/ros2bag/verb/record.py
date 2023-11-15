@@ -21,6 +21,7 @@ from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import FileSuffixStyle
 from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
 from rosbag2_py import get_registered_writers
@@ -170,6 +171,16 @@ class RecordVerb(VerbExtension):
             help='Use simulation time for message timestamps by subscribing to the /clock topic. '
                  'Until first /clock message is received, no messages will be written to bag.')
         self._subparser = parser
+        parser.add_argument(
+            '--suffix-style',
+            type=str,
+            default='index',
+            choices=['index', 'datetime'],
+            help='Suffix style for the bagfile name. '
+                 '"index" is incrementing integer starting at 0. '
+                 '"datetime" is an ISO 8601 basic UTC datetime "yyyymmddThhmmssZ". '
+                 'Default: %(default)s.',
+        )
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
@@ -237,7 +248,8 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
-            snapshot_mode=args.snapshot_mode
+            snapshot_mode=args.snapshot_mode,
+            suffix_style=FileSuffixStyle.__members__[args.suffix_style.capitalize()],
         )
         record_options = RecordOptions()
         record_options.all = args.all

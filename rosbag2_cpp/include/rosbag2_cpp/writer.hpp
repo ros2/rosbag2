@@ -104,6 +104,11 @@ public:
   bool take_snapshot();
 
   /**
+   * Close the current bagfile and opens the next bagfile.
+   */
+  void split_bagfile();
+
+  /**
    * Remove a new topic in the underlying storage.
    * If creation of subscription fails remove the topic
    * from the db (more of cleanup)

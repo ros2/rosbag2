@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -44,6 +45,21 @@ std::string strip_parent_path(const std::string & relative_path)
 {
   return rcpputils::fs::path(relative_path).filename().string();
 }
+
+/// @brief Stringify the current system time for use in filenames
+/// @return ISO 8601 string 'yyyymmddThhmmssZ'
+std::string now_datetime_string()
+{
+  char buf[sizeof "yyyymmddThhmmssZ"];
+  auto now = std::chrono::system_clock::now();
+  std::time_t now_t = std::chrono::system_clock::to_time_t(now);
+  if (!std::strftime(buf, sizeof buf, "%Y%m%dT%H%M%SZ", std::gmtime(&now_t))) {
+    throw std::runtime_error("Failed to format time string");
+  }
+  return std::string{buf};
+}
+
+
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -240,10 +256,37 @@ std::string SequentialWriter::format_storage_uri(
   // Right now `base_folder_` is always just the folder name for where to install the bagfile.
   // The name of the folder needs to be queried in case
   // SequentialWriter is opened with a relative path.
-  std::stringstream storage_file_name;
-  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
+  rcpputils::fs::path base_dir{base_folder};
+  std::string file_prefix = base_dir.filename().string() + "_";
+  std::string storage_file_name;
 
-  return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
+  switch (storage_options_.suffix_style) {
+    case rosbag2_storage::FileSuffixStyle::Index:
+      storage_file_name = file_prefix + std::to_string(storage_count);
+      break;
+    case rosbag2_storage::FileSuffixStyle::Datetime:
+      storage_file_name = file_prefix + now_datetime_string();
+      if (storage_) {
+        // If there is a previous file, and it has the same timestamp to the second,
+        // append an increasing index on it, for rare case of bags split in less than a second.
+        std::filesystem::path prev_stem{storage_->get_relative_file_path()};
+        prev_stem = prev_stem.filename().replace_extension();
+        size_t index = 0;
+        if (prev_stem.has_extension()) {
+          // The index is the remaining extension (excluding first character '.')
+          index = std::stoul(prev_stem.extension().string().substr(1));
+          prev_stem = prev_stem.replace_extension();
+        }
+        if (prev_stem == storage_file_name) {
+          storage_file_name += "." + std::to_string(index + 1);
+        }
+      }
+      break;
+    default:
+      throw std::runtime_error("Unhandled file suffix style");
+  }
+
+  return (base_dir / storage_file_name).string();
 }
 
 void SequentialWriter::switch_to_next_storage()

@@ -72,7 +72,7 @@ public:
     return true;
   }
 
-  void split_bagfile()
+  void split_bagfile() override
   {
     auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
     info->closed_file = "BagFile" + std::to_string(file_number_);

@@ -66,6 +66,10 @@ public:
         Return(storage_)));
     EXPECT_CALL(
       *storage_factory_, open_read_write(_)).Times(AtLeast(0));
+    ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+      [this]() {
+        return fake_storage_uri_ + file_ext_;
+      });
   }
 
   ~SequentialWriterTest()
@@ -84,6 +88,7 @@ public:
   // uses in callback from cache_consumer thread
   rosbag2_storage::BagMetadata fake_metadata_;
   std::string fake_storage_uri_;
+  const std::string file_ext_ = ".mock";
 };
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
@@ -232,11 +237,6 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
       return fake_storage_size_.load();
     });
 
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
   EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
 
   // intercept the metadata write so we can analyze it.
@@ -275,7 +275,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << base_path << "_" << counter << file_ext_;
 
     const auto expected_path = ss.str();
     counter++;
@@ -307,11 +307,6 @@ TEST_F(
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
       return fake_storage_size_.load();
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
     });
 
   EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
@@ -377,7 +372,7 @@ TEST_F(
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << base_path << "_" << counter << file_ext_;
 
     const auto expected_path = ss.str();
     counter++;
@@ -528,11 +523,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
       fake_metadata_ = metadata;
     });
 
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
@@ -561,9 +551,10 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   }
 
   ASSERT_TRUE(callback_called);
-  auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
+  auto expected_closed = rcpputils::fs::path(storage_options_.uri) /
+    (storage_options_.uri + "_0" + file_ext_);
   EXPECT_EQ(closed_file, expected_closed.string());
-  EXPECT_EQ(opened_file, fake_storage_uri_);
+  EXPECT_EQ(opened_file, storage_->get_relative_file_path());
 }
 
 
@@ -666,4 +657,49 @@ TEST_F(SequentialWriterTest, open_throws_error_on_max_bagfile_splits_too_large) 
   std::string rmw_format = "rmw_format";
 
   EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
+}
+
+TEST_F(SequentialWriterTest, suffix_style_index)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Index;
+  writer_->open(storage_options_, {"", ""});
+
+  auto expected = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
+  EXPECT_EQ(fake_storage_uri_, expected.string());
+  writer_->split_bagfile();
+  expected = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_1");
+  EXPECT_EQ(fake_storage_uri_, expected.string());
+}
+
+TEST_F(SequentialWriterTest, suffix_style_datetime)
+{
+  std::string datetime_regex{"^uri/uri_[0-9]{8}T[0-9]{6}Z(\\.[0-9]+)?$"};
+  auto no_ext = [](const std::string & path) -> std::string {
+      return std::filesystem::path(path).replace_extension("").string();
+    };
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Datetime;
+  writer_->open(storage_options_, {"", ""});
+
+  auto first_stem = no_ext(storage_->get_relative_file_path());
+  EXPECT_THAT(first_stem, MatchesRegex(datetime_regex));
+
+  writer_->split_bagfile();
+  auto second_stem = no_ext(storage_->get_relative_file_path());
+  EXPECT_THAT(second_stem, MatchesRegex(datetime_regex));
+  EXPECT_THAT(second_stem, Gt(first_stem));
+
+  writer_->split_bagfile();
+  auto third_stem = no_ext(storage_->get_relative_file_path());
+  EXPECT_THAT(third_stem, MatchesRegex(datetime_regex));
+  EXPECT_THAT(third_stem, Gt(first_stem));
+  EXPECT_THAT(third_stem, Gt(second_stem));
 }

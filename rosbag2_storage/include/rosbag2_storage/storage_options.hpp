@@ -27,6 +27,12 @@ namespace rosbag2_storage
 // Max number of allowed bag splits. 2^30.
 const uint64_t max_allowed_file_splits = 1073741824;
 
+enum class FileSuffixStyle
+{
+  Index,
+  Datetime
+};
+
 struct StorageOptions
 {
 public:
@@ -61,6 +67,9 @@ public:
   // Enable snapshot mode.
   // Defaults to disabled.
   bool snapshot_mode = false;
+
+  // Suffix style for split bagfiles.
+  FileSuffixStyle suffix_style = FileSuffixStyle::Index;
 };
 
 }  // namespace rosbag2_storage

@@ -53,6 +53,11 @@ public:
    */
   virtual bool take_snapshot() = 0;
 
+  /**
+   * Close the current bagfile and opens the next bagfile.
+   */
+  virtual void split_bagfile() = 0;
+
   virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 };
 
