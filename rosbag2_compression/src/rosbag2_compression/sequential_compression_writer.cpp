@@ -71,24 +71,23 @@ void SequentialCompressionWriter::compression_thread_fn()
 {
   if (compression_options_.thread_priority) {
 #ifdef _WIN32
-    ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-      "Changing thread priority is not implemented for windows");
-
-    /**
-     * The implementation should look something like this
-
-    uint8_t nice_value = *compression_options_.thread_nice_value;
-
-    // this must match THREAD_PRIORITY_IDLE, THREAD_PRIORITY_LOWEST...
-    DWORD dwThreadPri = *compression_options_.thread_nice_value;
-
-    if(!SetThreadPriority(GetCurrentThread(), dwThreadPri))
-    {
+    // This must match THREAD_PRIORITY_IDLE, THREAD_PRIORITY_LOWEST...
+    int wanted_thread_priority = *compression_options_.thread_priority;
+    if (!SetThreadPriority(GetCurrentThread(), wanted_thread_priority)) {
       ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-        "Could not set nice value of compression thread to " << nice_value << " : " << std::strerror(GetLastError()));
+        "Could not set thread priority of compression thread to the: " << wanted_thread_priority <<
+          ". Error code: " << GetLastError());
+    } else {
+      auto detected_thread_priority = GetThreadPriority(GetCurrentThread());
+      if (detected_thread_priority == THREAD_PRIORITY_ERROR_RETURN) {
+        ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+          "Failed to get current thread priority. Error code: " << GetLastError());
+      } else if (wanted_thread_priority != detected_thread_priority) {
+        ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+          "Could not set thread priority of compression thread to the: " <<
+            wanted_thread_priority << ". Detected thread priority: " << detected_thread_priority);
+      }
     }
-    */
-
 #else
     int wanted_nice_value = *compression_options_.thread_priority;
 
@@ -96,14 +95,14 @@ void SequentialCompressionWriter::compression_thread_fn()
     int cur_nice_value = getpriority(PRIO_PROCESS, 0);
     if (cur_nice_value == -1 && errno != 0) {
       ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-        "Could not set nice value of compression thread to " << wanted_nice_value <<
+        "Could not set nice value of compression thread to the: " << wanted_nice_value <<
           " : Could not determine cur nice value");
     } else {
       int new_nice_value = nice(wanted_nice_value - cur_nice_value);
       if ((new_nice_value == -1 && errno != 0)) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-          "Could not set nice value of compression thread to " << wanted_nice_value <<
-            " : " << std::strerror(errno));
+          "Could not set nice value of compression thread to the: " << wanted_nice_value <<
+            ". Error : " << std::strerror(errno));
       }
     }
 #endif
