@@ -87,11 +87,6 @@ install(
   RUNTIME DESTINATION bin
 )
 
-install(
-  DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
-)
-
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
@@ -124,6 +119,5 @@ endif()
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(mcap_vendor pluginlib rosbag2_storage rcutils)
-ament_export_include_directories("include/${PROJECT_NAME}")
 
 ament_package()
