@@ -70,6 +70,9 @@ public:
 
   // Suffix style for split bagfiles.
   FileSuffixStyle suffix_style = FileSuffixStyle::Index;
+
+  // Allow adding new files to an already existing rosbag2 directory
+  bool append_files = false;
 };
 
 }  // namespace rosbag2_storage

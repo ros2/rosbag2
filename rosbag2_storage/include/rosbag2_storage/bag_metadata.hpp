@@ -48,7 +48,7 @@ struct BagMetadata
   std::vector<FileInformation> files;
   std::chrono::nanoseconds duration;
   std::chrono::time_point<std::chrono::high_resolution_clock> starting_time;
-  uint64_t message_count;
+  uint64_t message_count = 0;
   std::vector<TopicInformation> topics_with_message_count;
   std::string compression_format;
   std::string compression_mode;

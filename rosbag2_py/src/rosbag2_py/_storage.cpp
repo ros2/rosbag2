@@ -49,7 +49,7 @@ PYBIND11_MODULE(_storage, m) {
   .def(
     pybind11::init<
       std::string, std::string, uint64_t, uint64_t, uint64_t, uint64_t, std::string, std::string,
-      bool, rosbag2_storage::FileSuffixStyle>(),
+      bool, rosbag2_storage::FileSuffixStyle, bool>(),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
@@ -59,7 +59,8 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
-    pybind11::arg("suffix_style") = rosbag2_storage::FileSuffixStyle::Index)
+    pybind11::arg("suffix_style") = rosbag2_storage::FileSuffixStyle::Index,
+    pybind11::arg("append_files") = false)
   .def_readwrite("uri", &rosbag2_storage::StorageOptions::uri)
   .def_readwrite("storage_id", &rosbag2_storage::StorageOptions::storage_id)
   .def_readwrite(
@@ -85,7 +86,10 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::StorageOptions::snapshot_mode)
   .def_readwrite(
     "suffix_style",
-    &rosbag2_storage::StorageOptions::suffix_style);
+    &rosbag2_storage::StorageOptions::suffix_style)
+  .def_readwrite(
+    "append_files",
+    &rosbag2_storage::StorageOptions::append_files);
 
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(

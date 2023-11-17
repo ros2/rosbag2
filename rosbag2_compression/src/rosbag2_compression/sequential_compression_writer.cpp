@@ -112,10 +112,11 @@ void SequentialCompressionWriter::compression_thread_fn()
   }
 }
 
-void SequentialCompressionWriter::init_metadata()
+void SequentialCompressionWriter::init_metadata(
+  std::optional<rosbag2_storage::BagMetadata> initial_value)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-  SequentialWriter::init_metadata();
+  SequentialWriter::init_metadata(initial_value);
   metadata_.compression_format = compression_options_.compression_format;
   metadata_.compression_mode =
     rosbag2_compression::compression_mode_to_string(compression_options_.compression_mode);

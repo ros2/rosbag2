@@ -164,6 +164,9 @@ class RecordVerb(VerbExtension):
                  '  pragmas: [\"<setting_name>\" = <setting_value>]'
                  'For a list of sqlite3 settings, refer to sqlite3 documentation')
         parser.add_argument(
+            '--append-files', action='store_true', default=False,
+            help='Allow adding files to existing directory.')
+        parser.add_argument(
             '--start-paused', action='store_true', default=False,
             help='Start the recorder in a paused state.')
         parser.add_argument(
@@ -199,8 +202,9 @@ class RecordVerb(VerbExtension):
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
-        if os.path.isdir(uri):
-            return print_error("Output folder '{}' already exists.".format(uri))
+        if not args.append_files and os.path.isdir(uri):
+            return print_error(f"Output folder '{uri}' already exists. "
+                               'Use --append-files to add to existing directory.')
 
         if args.compression_format and args.compression_mode == 'none':
             return print_error('Invalid choice: Cannot specify compression format '
@@ -250,6 +254,7 @@ class RecordVerb(VerbExtension):
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
             suffix_style=FileSuffixStyle.__members__[args.suffix_style.capitalize()],
+            append_files=args.append_files,
         )
         record_options = RecordOptions()
         record_options.all = args.all

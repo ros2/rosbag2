@@ -198,7 +198,7 @@ private:
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time);
 
   // Prepares the metadata by setting initial values.
-  void init_metadata() override;
+  void init_metadata(std::optional<rosbag2_storage::BagMetadata> initial_value) override;
 };
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_

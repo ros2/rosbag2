@@ -703,3 +703,146 @@ TEST_F(SequentialWriterTest, suffix_style_datetime)
   EXPECT_THAT(third_stem, Gt(first_stem));
   EXPECT_THAT(third_stem, Gt(second_stem));
 }
+
+class SequentialWriterHelper : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  explicit SequentialWriterHelper(
+    std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
+    std::shared_ptr<rosbag2_cpp::SerializationFormatConverterFactoryInterface> converter_factory,
+    std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+  : rosbag2_cpp::writers::SequentialWriter(
+      std::move(storage_factory), converter_factory, std::move(metadata_io))
+  {}
+
+  rosbag2_storage::BagMetadata get_metadata()
+  {
+    return metadata_;
+  }
+};
+
+class AppendWriteTest : public rosbag2_test_common::TemporaryDirectoryFixture
+{
+public:
+  std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
+  rosbag2_storage::StorageOptions storage_options_;
+
+  AppendWriteTest()
+  {
+    converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
+    storage_options_.uri = (std::filesystem::path(temporary_dir_path_) / "uri").string();
+  }
+  virtual ~AppendWriteTest() = default;
+
+  void basic_append_check()
+  {
+    auto sequential_writer = create_sequential_writer();
+    auto writer_ptr = sequential_writer.get();
+    auto writer = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+    storage_options_.append_files = true;
+    writer->open(storage_options_, {"", ""});
+    writer->split_bagfile();
+    writer->split_bagfile();
+    size_t expected_splits = 3;
+    size_t max_splits = storage_options_.max_bagfile_splits;
+    size_t first_index_offset = 0;
+    if (max_splits > 0 && max_splits < expected_splits) {
+      first_index_offset = expected_splits - max_splits;
+      expected_splits = max_splits;
+    }
+
+    auto meta = writer_ptr->get_metadata();
+    EXPECT_THAT(meta.relative_file_paths, SizeIs(expected_splits));
+    if (storage_options_.suffix_style == rosbag2_storage::FileSuffixStyle::Index) {
+      for (size_t i = 0; i < expected_splits; i++) {
+        EXPECT_EQ(
+          std::filesystem::path(meta.relative_file_paths[i]).replace_extension("").string(),
+          "uri_" + std::to_string(i + first_index_offset));
+      }
+    }
+  }
+
+  std::unique_ptr<SequentialWriterHelper> create_sequential_writer()
+  {
+    auto storage_factory = std::make_unique<rosbag2_storage::StorageFactory>();
+    auto metadata_io = std::make_unique<rosbag2_storage::MetadataIo>();
+    return std::make_unique<SequentialWriterHelper>(
+      std::move(storage_factory), converter_factory_, std::move(metadata_io));
+  }
+
+  static std::string no_ext(const std::string & path)
+  {
+    return std::filesystem::path(path).replace_extension("").string();
+  }
+};
+
+
+TEST_F(AppendWriteTest, append_nonexistent)
+{
+  storage_options_.max_bagfile_splits = 0;
+  basic_append_check();
+}
+
+TEST_F(AppendWriteTest, append_index_on_existing_index)
+{
+  storage_options_.max_bagfile_splits = 2;
+  basic_append_check();
+
+  // Open new writer in append mode
+  storage_options_.append_files = true;
+  auto sequential_writer = create_sequential_writer();
+  auto writer_ptr = sequential_writer.get();
+  auto writer = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  writer->open(storage_options_, {"", ""});
+
+  writer->split_bagfile();
+
+  auto meta = writer_ptr->get_metadata();
+  EXPECT_THAT(meta.relative_file_paths, SizeIs(2));
+  EXPECT_EQ(no_ext(meta.relative_file_paths[0]), "uri_3");
+  EXPECT_EQ(no_ext(meta.relative_file_paths[1]), "uri_4");
+}
+
+TEST_F(AppendWriteTest, append_index_on_existing_datetime)
+{
+  storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Datetime;
+  basic_append_check();
+
+  // Close writer, open new one in append mode with index suffixing
+  storage_options_.append_files = true;
+  storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Index;
+
+  auto sequential_writer = create_sequential_writer();
+  auto writer_ptr = sequential_writer.get();
+  auto writer = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  writer->open(storage_options_, {"", ""});
+
+  writer->split_bagfile();
+
+  auto meta = writer_ptr->get_metadata();
+  EXPECT_THAT(meta.relative_file_paths, SizeIs(5));
+  EXPECT_EQ(no_ext(meta.relative_file_paths[3]), "uri_0");
+  EXPECT_EQ(no_ext(meta.relative_file_paths[4]), "uri_1");
+}
+
+TEST_F(AppendWriteTest, append_index_on_existing_with_missing_metadata)
+{
+  storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Index;
+  storage_options_.max_bagfile_splits = 3;
+  basic_append_check();
+  auto metadata_path = std::filesystem::path(storage_options_.uri) / "metadata.yaml";
+  ASSERT_TRUE(std::filesystem::remove(metadata_path));
+
+  storage_options_.append_files = true;
+  auto sequential_writer = create_sequential_writer();
+  auto writer_ptr = sequential_writer.get();
+  auto writer = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  writer->open(storage_options_, {"", ""});
+  writer->split_bagfile();
+
+  auto meta = writer_ptr->get_metadata();
+  EXPECT_THAT(meta.relative_file_paths, SizeIs(3));
+  EXPECT_EQ(no_ext(meta.relative_file_paths[0]), "uri_2");
+  EXPECT_EQ(no_ext(meta.relative_file_paths[1]), "uri_3");
+  EXPECT_EQ(no_ext(meta.relative_file_paths[2]), "uri_4");
+}

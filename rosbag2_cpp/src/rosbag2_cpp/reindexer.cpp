@@ -191,6 +191,13 @@ void Reindexer::aggregate_metadata(
     bag_reader->open(temp_so, blank_converter_options);
     auto temp_metadata = bag_reader->get_metadata();
 
+    rosbag2_storage::FileInformation file_info;
+    file_info.path = f_.string();
+    file_info.starting_time = temp_metadata.starting_time;
+    file_info.duration = temp_metadata.duration;
+    file_info.message_count = temp_metadata.message_count;
+    metadata_.files.push_back(file_info);
+
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
     }

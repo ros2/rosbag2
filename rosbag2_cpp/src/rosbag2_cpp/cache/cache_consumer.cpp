@@ -41,7 +41,7 @@ void CacheConsumer::stop()
   message_cache_->begin_flushing();
   is_stop_issued_ = true;
 
-  ROSBAG2_CPP_LOG_INFO_STREAM(
+  ROSBAG2_CPP_LOG_DEBUG_STREAM(
     "Writing remaining messages from cache to the bag. It may take a while");
 
   if (consumer_thread_.joinable()) {

@@ -29,6 +29,7 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/reindexer.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
 
@@ -80,19 +81,76 @@ SequentialWriter::~SequentialWriter()
   close();
 }
 
-void SequentialWriter::init_metadata()
+std::optional<rosbag2_storage::BagMetadata> SequentialWriter::preinit_metadata(
+  const rosbag2_storage::StorageOptions & storage_options)
 {
-  metadata_ = rosbag2_storage::BagMetadata{};
+  std::filesystem::path storage_path(storage_options.uri);
+  if (std::filesystem::exists(storage_path) && !std::filesystem::is_directory(storage_path)) {
+    std::stringstream error;
+    error << "Cannot append files to non-directory file (" << storage_path.string() << ").";
+    throw std::runtime_error{error.str()};
+  } else if (!std::filesystem::exists(storage_path)) {
+    return std::nullopt;
+  }
+  // Exists and is a directory
+  rosbag2_storage::MetadataIo metadata_io;
+  if (!metadata_io.metadata_file_exists(storage_options.uri)) {
+    rosbag2_cpp::Reindexer reindexer;
+    reindexer.reindex(storage_options);
+  }
+  assert(metadata_io.metadata_file_exists(storage_options.uri));
+  auto metadata = metadata_io.read_metadata(storage_options.uri);
+
+  if (storage_options.suffix_style == rosbag2_storage::FileSuffixStyle::Index) {
+    // Check files in order, keeping the last index found
+    const auto & files = metadata.relative_file_paths;
+    for (auto it = files.begin(); it != files.end(); it++) {
+      std::string stem = std::filesystem::path(*it).stem().string();
+      size_t suffix_idx = stem.find_last_of('_');
+      std::string suffix = stem.substr(suffix_idx + 1);
+      if (std::regex_match(suffix, std::regex("\\d+"))) {
+        // It's only an index if it's just digits, otherwise it's ignored
+        bag_idx_ = std::stoul(suffix);
+        ROSBAG2_CPP_LOG_DEBUG("Discovered an index %zu", bag_idx_);
+      }
+    }
+    if (bag_idx_ > 0) {
+      ROSBAG2_CPP_LOG_INFO(
+        "Discovered existing file index %zu, starting at %zu", bag_idx_, bag_idx_ + 1);
+      bag_idx_++;
+    }
+  }
+
+  return metadata;
+}
+
+void SequentialWriter::init_metadata(std::optional<rosbag2_storage::BagMetadata> initial_value)
+{
+  if (initial_value) {
+    metadata_ = *initial_value;
+  } else {
+    metadata_ = rosbag2_storage::BagMetadata{};
+    metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds::max());
+  }
+
+  while (
+    storage_options_.max_bagfile_splits > 0 &&
+    metadata_.relative_file_paths.size() >= storage_options_.max_bagfile_splits)
+  {
+    remove_first_file();
+  }
+
   metadata_.storage_identifier = storage_->get_storage_identifier();
-  metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
-  metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
+  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
+
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   file_info.message_count = 0;
-  metadata_.files = {file_info};
+  metadata_.files.push_back(file_info);
+  ROSBAG2_CPP_LOG_INFO("Opened %s for writing", metadata_.relative_file_paths.back().c_str());
 }
 
 void SequentialWriter::open(
@@ -111,8 +169,12 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
+  std::optional<rosbag2_storage::BagMetadata> initial_metadata;
   rcpputils::fs::path db_path(storage_options.uri);
-  if (db_path.is_directory()) {
+
+  if (storage_options.append_files) {
+    initial_metadata = preinit_metadata(storage_options);
+  } else if (db_path.is_directory()) {
     std::stringstream error;
     error << "Database directory already exists (" << db_path.string() <<
       "), can't overwrite existing database";
@@ -169,7 +231,7 @@ void SequentialWriter::open(
       std::bind(&SequentialWriter::write_messages, this, std::placeholders::_1));
   }
 
-  init_metadata();
+  init_metadata(initial_metadata);
 }
 
 void SequentialWriter::close()
@@ -327,41 +389,24 @@ void SequentialWriter::split_bagfile()
   switch_to_next_storage();
   info->opened_file = storage_->get_relative_file_path();
 
+  if (
+    storage_options_.max_bagfile_splits > 0 &&
+    metadata_.relative_file_paths.size() >= storage_options_.max_bagfile_splits)
+  {
+    // We are about to create a new file when switching to next storage
+    // so if max splits is set, delete a file to make room
+    remove_first_file();
+  }
+
   metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
-  auto last_file_end_time = metadata_.files.back().starting_time + metadata_.files.back().duration;
   rosbag2_storage::FileInformation file_info{};
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
 
-  // We just created a new file above when switching to next storage file
-  // so check if the size of the relative files vector is greater than max splits.
-  if (
-    storage_options_.max_bagfile_splits > 0 &&
-    metadata_.relative_file_paths.size() > storage_options_.max_bagfile_splits)
-  {
-    const auto expired_db_path = (
-      rcpputils::fs::path(base_folder_) / rcpputils::fs::path{
-          metadata_.relative_file_paths.front()}
-    );
-    if (rcpputils::fs::remove(expired_db_path)) {
-      // TODO(hrfuller) Should update topics_names_to_info as well but the
-      // per topic metadata isn't recorded per file.
-      metadata_.message_count -= metadata_.files.begin()->message_count;
-      metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
-      metadata_.files.erase(metadata_.files.begin());
-      // Update the global bag metadata with new times excluding the bag that was removed.
-      metadata_.starting_time = metadata_.files.front().starting_time;
-      metadata_.duration = last_file_end_time - metadata_.starting_time;
-    } else {
-      ROSBAG2_CPP_LOG_WARN_STREAM(
-        "Failed to remove expired bagfile from the filesystem, --max-bag-splits will not be "
-        "respected: "
-          << expired_db_path.string());
-    }
-  }
+  ROSBAG2_CPP_LOG_INFO("Opened %s for writing", metadata_.relative_file_paths.back().c_str());
 
   callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }
@@ -509,6 +554,37 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
       callbacks.write_split_callback,
       bag_events::BagEvent::WRITE_SPLIT);
   }
+}
+
+void SequentialWriter::remove_first_file()
+{
+  if (metadata_.relative_file_paths.empty()) {
+    return;
+  }
+  auto last_file_end_time = metadata_.files.back().starting_time + metadata_.files.back().duration;
+
+  const auto expired_db_path = (
+    std::filesystem::path(base_folder_) / metadata_.relative_file_paths.front());
+  if (!std::filesystem::exists(expired_db_path)) {
+    ROSBAG2_CPP_LOG_WARN_STREAM(
+      "Couldn't remove fie " << expired_db_path <<
+        " which doesn't exist any more. Ignoring.");
+  } else if (std::filesystem::remove(expired_db_path)) {
+    ROSBAG2_CPP_LOG_INFO_STREAM("Removed file " << expired_db_path);
+  } else {
+    ROSBAG2_CPP_LOG_ERROR_STREAM(
+      "Failed to remove file " << expired_db_path <<
+        " - removing from metadata and ignoring. May affect ability to enforce max_bagfile_splits");
+  }
+
+  metadata_.message_count -= metadata_.files.begin()->message_count;
+  // TODO(hrfuller) Should update topics_names_to_info as well but the
+  // per topic metadata isn't recorded per file.
+  metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
+  metadata_.files.erase(metadata_.files.begin());
+  // Update the global bag metadata with new times excluding the bag that was removed.
+  metadata_.starting_time = metadata_.files.front().starting_time;
+  metadata_.duration = last_file_end_time - metadata_.starting_time;
 }
 
 }  // namespace writers

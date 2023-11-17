@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -156,8 +157,12 @@ protected:
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
 
+  // Find out initial values for metadata based on preexisting directory, for append-files mode
+  std::optional<rosbag2_storage::BagMetadata> preinit_metadata(
+    const rosbag2_storage::StorageOptions & storage_options);
+
   // Prepares the metadata by setting initial values.
-  virtual void init_metadata();
+  virtual void init_metadata(std::optional<rosbag2_storage::BagMetadata> initial_value);
 
   // Record TopicInformation into metadata
   void finalize_metadata();
@@ -168,6 +173,11 @@ protected:
   virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   get_writeable_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
+  // Helper method tries to delete the first file in relative_file_paths.
+  // Always removes it from relative_file_paths, so that it is not tried again.
+  // Note: call this before pushing a new empty file to metadata
+  void remove_first_file();
 
 private:
   /// Helper method to write messages while also updating tracked metadata.
