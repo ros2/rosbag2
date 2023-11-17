@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_sqlite3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.22.4 (2023-10-24)
 -------------------
 
