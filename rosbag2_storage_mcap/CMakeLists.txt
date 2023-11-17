@@ -119,6 +119,6 @@ endif()
 
 ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
-ament_export_dependencies(rosbag2_storage rcutils)
+ament_export_dependencies(mcap_vendor pluginlib rosbag2_storage rcutils)
 
 ament_package()
