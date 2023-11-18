@@ -33,10 +33,9 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
   node["topics_to_filter"] = play_options.topics_to_filter;
   node["topics_regex_to_filter"] = play_options.topics_regex_to_filter;
   node["topics_regex_to_exclude"] = play_options.topics_regex_to_exclude;
-  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides(
-    play_options.topic_qos_profile_overrides.begin(),
-    play_options.topic_qos_profile_overrides.end());
-  node["topic_qos_profile_overrides"] = qos_overrides;
+  node["topic_qos_profile_overrides"] =
+    YAML::convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
+    play_options.topic_qos_profile_overrides);
   node["loop"] = play_options.loop;
   node["topic_remapping_options"] = play_options.topic_remapping_options;
   node["clock_publish_frequency"] = play_options.clock_publish_frequency;
@@ -74,11 +73,8 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
     node, "topics_regex_to_exclude",
     play_options.topics_regex_to_exclude);
 
-  // yaml-cpp doesn't implement unordered_map
-  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides;
-  optional_assign<std::map<std::string, rosbag2_storage::Rosbag2QoS>>(
-    node, "topic_qos_profile_overrides", qos_overrides);
-  play_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());
+  optional_assign<std::unordered_map<std::string, rclcpp::QoS>>(
+    node, "topic_qos_profile_overrides", play_options.topic_qos_profile_overrides);
 
   optional_assign<double>(node, "clock_publish_frequency", play_options.clock_publish_frequency);
   optional_assign<bool>(

@@ -57,11 +57,9 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["compression_format"] = record_options.compression_format;
   node["compression_queue_size"] = record_options.compression_queue_size;
   node["compression_threads"] = record_options.compression_threads;
-  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides(
-    record_options.topic_qos_profile_overrides.begin(),
-    record_options.topic_qos_profile_overrides.end());
-  node["topic_qos_profile_overrides"] = convert<std::map<std::string,
-      rosbag2_storage::Rosbag2QoS>>::encode(qos_overrides);
+  node["topic_qos_profile_overrides"] =
+    convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
+    record_options.topic_qos_profile_overrides);
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   return node;
@@ -87,13 +85,12 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<uint64_t>(node, "compression_queue_size", record_options.compression_queue_size);
   optional_assign<uint64_t>(node, "compression_threads", record_options.compression_threads);
 
-  // yaml-cpp doesn't implement unordered_map
-  std::map<std::string, rosbag2_storage::Rosbag2QoS> qos_overrides;
+  std::unordered_map<std::string, rclcpp::QoS> qos_overrides;
   if (node["topic_qos_profile_overrides"]) {
-    qos_overrides = YAML::decode_for_version<std::map<std::string, rosbag2_storage::Rosbag2QoS>>(
+    qos_overrides = YAML::decode_for_version<std::unordered_map<std::string, rclcpp::QoS>>(
       node["topic_qos_profile_overrides"], version);
   }
-  record_options.topic_qos_profile_overrides.insert(qos_overrides.begin(), qos_overrides.end());
+  record_options.topic_qos_profile_overrides = qos_overrides;
 
   optional_assign<bool>(node, "include_hidden_topics", record_options.include_hidden_topics);
   optional_assign<bool>(

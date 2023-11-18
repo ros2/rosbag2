@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 
-
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_storage/logging.hpp"
 #include "rmw/qos_string_conversions.h"
@@ -275,8 +274,8 @@ bool convert<std::vector<rclcpp::QoS>>::decode(
   return true;
 }
 
-Node convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::encode(
-  const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs)
+Node convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
+  const std::unordered_map<std::string, rclcpp::QoS> & rhs)
 {
   Node node{NodeType::Sequence};
   for (const auto & [key, value] : rhs) {
@@ -285,8 +284,8 @@ Node convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::encode(
   return node;
 }
 
-bool convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::decode(
-  const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version)
+bool convert<std::unordered_map<std::string, rclcpp::QoS>>::decode(
+  const Node & node, std::unordered_map<std::string, rclcpp::QoS> & rhs, int version)
 {
   if (!node.IsMap()) {
     return false;
@@ -294,8 +293,12 @@ bool convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>::decode(
 
   rhs.clear();
   for (const auto & element : node) {
-    rhs[element.first.as<std::string>()] = decode_for_version<rosbag2_storage::Rosbag2QoS>(
-      element.second, version);
+    // Using rosbag2_storage::Rosbag2QoS for decoding because rclcpp::QoS is not default
+    // constructable. Note: It is safe to use upcast when inserting into the unordered_map
+    rhs.insert(
+      {element.first.as<std::string>(),
+        decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version)
+      });
   }
   return true;
 }
