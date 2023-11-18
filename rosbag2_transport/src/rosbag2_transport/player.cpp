@@ -1199,10 +1199,8 @@ Player::Player(const rclcpp::NodeOptions & node_options)
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  rosbag2_storage::StorageOptions storage_options =
-    get_storage_options_from_node_params(this);
-
-  PlayOptions play_options = get_play_options_from_node_params(this);
+  rosbag2_storage::StorageOptions storage_options = get_storage_options_from_node_params(*this);
+  PlayOptions play_options = get_play_options_from_node_params(*this);
 
   #ifndef _WIN32
   auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
@@ -1214,8 +1212,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   auto reader = std::make_unique<rosbag2_cpp::Reader>();
 
   pimpl_ = std::make_unique<PlayerImpl>(
-    this, std::move(reader), keyboard_handler,
-    storage_options, play_options);
+    this, std::move(reader), keyboard_handler, storage_options, play_options);
 }
 
 Player::Player(
