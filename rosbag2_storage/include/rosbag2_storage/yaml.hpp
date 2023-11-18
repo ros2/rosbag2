@@ -30,6 +30,7 @@
 # pragma warning(pop)
 #endif
 
+#include "rclcpp/duration.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/qos.hpp"
 
@@ -41,7 +42,7 @@ template<typename T>
 void optional_assign(const Node & node, std::string field, T & assign_to)
 {
   if (node[field]) {
-    assign_to = node[field].as<T>();
+    YAML::convert<T>::decode(node[field], assign_to);
   }
 }
 
@@ -62,6 +63,41 @@ struct convert<std::unordered_map<std::string, std::string>>
     for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
       custom_data.emplace(it->first.as<std::string>(), it->second.as<std::string>());
     }
+    return true;
+  }
+};
+
+template<>
+struct convert<rclcpp::Duration>
+{
+  static Node encode(const rclcpp::Duration & duration)
+  {
+    Node node;
+    node["sec"] = duration.nanoseconds() / 1000000000;
+    node["nsec"] = duration.nanoseconds() % 1000000000;
+    return node;
+  }
+
+  static bool decode(const Node & node, rclcpp::Duration & duration)
+  {
+    duration = rclcpp::Duration(node["sec"].as<int32_t>(), node["nsec"].as<uint32_t>());
+    return true;
+  }
+};
+
+template<>
+struct convert<std::chrono::milliseconds>
+{
+  static Node encode(const std::chrono::milliseconds & duration)
+  {
+    Node node;
+    node["milliseconds"] = duration.count();
+    return node;
+  }
+
+  static bool decode(const Node & node, std::chrono::milliseconds & duration)
+  {
+    duration = std::chrono::milliseconds(node["milliseconds"].as<std::chrono::milliseconds::rep>());
     return true;
   }
 };
