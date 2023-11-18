@@ -25,13 +25,13 @@
 namespace rosbag2_transport
 {
 rosbag2_transport::PlayOptions
-get_play_options_from_node_params(rclcpp::Node * node);
+get_play_options_from_node_params(rclcpp::Node & node);
 
 rosbag2_transport::RecordOptions
-get_record_options_from_node_params(rclcpp::Node * node);
+get_record_options_from_node_params(rclcpp::Node & node);
 
 rosbag2_storage::StorageOptions
-get_storage_options_from_node_params(rclcpp::Node * node);
+get_storage_options_from_node_params(rclcpp::Node & node);
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__CONFIG_OPTIONS_FROM_NODE_PARAMS_HPP_

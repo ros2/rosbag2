@@ -635,10 +635,9 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  rosbag2_storage::StorageOptions storage_options =
-    get_storage_options_from_node_params(this);
+  rosbag2_storage::StorageOptions storage_options = get_storage_options_from_node_params(*this);
 
-  RecordOptions record_options = get_record_options_from_node_params(this);
+  RecordOptions record_options = get_record_options_from_node_params(*this);
 
   #ifndef _WIN32
   auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
