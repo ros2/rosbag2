@@ -66,7 +66,7 @@ TEST_F(TestComponentManager, test_load_components)
     }
 
     rclcpp::Parameter qos_profile_overrides_path("qos_profile_overrides_path",
-      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/overrides.yaml"));
+      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
 
     rclcpp::Parameter uri("uri",
       rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "//sqlite3/test_bag_for_seek"));
@@ -96,7 +96,7 @@ TEST_F(TestComponentManager, test_load_components)
     }
 
     rclcpp::Parameter qos_profile_overrides_path("qos_profile_overrides_path",
-      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/overrides.yaml"));
+      rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
 
     request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
 
