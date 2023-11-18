@@ -53,7 +53,7 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   opts.arguments(
   {
     "--ros-args",
-    "--params-file", _SRC_RESOURCES_DIR_PATH "/params_recorder.yaml"
+    "--params-file", _SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml"
   });
   opts.append_parameter_override(
     "qos_profile_overrides_path",
@@ -70,7 +70,7 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);
 
-  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params_recorder.yaml");
+  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml");
   auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
 
   YAML::Emitter emitter;
