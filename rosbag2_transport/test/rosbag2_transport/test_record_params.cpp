@@ -24,11 +24,30 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "mock_recorder.hpp"
-#include "rosbag2_record_test_fixture.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_transport_test_fixture.hpp"
 
-TEST_F(RosBag2RecordTestFixture, parse_parameter_from_file) {
+class RecordParamsTestFixture : public Rosbag2TransportTestFixture
+{
+public:
+  RecordParamsTestFixture()
+  : Rosbag2TransportTestFixture()
+  {
+    rclcpp::init(0, nullptr);
+    pub_ = std::make_shared<PublicationManager>();
+  }
+
+  ~RecordParamsTestFixture() override
+  {
+    rclcpp::shutdown();
+  }
+
+  std::shared_ptr<PublicationManager> pub_;
+};
+
+TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   rclcpp::NodeOptions opts;
   opts.arguments(
