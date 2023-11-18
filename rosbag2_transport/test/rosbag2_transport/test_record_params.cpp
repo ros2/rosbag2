@@ -57,7 +57,7 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   });
   opts.append_parameter_override(
     "qos_profile_overrides_path",
-    _SRC_RESOURCES_DIR_PATH "/overrides.yaml");
+    _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
   opts.append_parameter_override(
     "uri",
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
@@ -71,13 +71,13 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
     storage_options);
 
   auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/params_recorder.yaml");
-  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/overrides.yaml");
+  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
 
   YAML::Emitter emitter;
   emitter
     << YAML::Newline << YAML::Comment("params.yaml")
     << param_node << YAML::Newline
-    << YAML::Newline << YAML::Comment("overrides.yaml")
+    << YAML::Newline << YAML::Comment("qos_profile_overrides.yaml")
     << qos_node << YAML::Newline
     << YAML::Newline << YAML::Comment("node record parameters")
     << yaml_record_opt << YAML::Newline
