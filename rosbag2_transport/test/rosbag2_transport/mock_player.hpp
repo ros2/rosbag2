@@ -54,8 +54,6 @@ public:
     return pub_list;
   }
 
-  using rosbag2_transport::Player::wait_for_playback_to_start;
-
   size_t get_number_of_registered_pre_callbacks()
   {
     return get_number_of_registered_on_play_msg_pre_callbacks();
@@ -66,15 +64,9 @@ public:
     return get_number_of_registered_on_play_msg_post_callbacks();
   }
 
-  rosbag2_storage::StorageOptions retrieve_storage_options()
-  {
-    return get_storage_options();
-  }
-
-  rosbag2_transport::PlayOptions retrieve_play_options()
-  {
-    return get_play_options();
-  }
+  using rosbag2_transport::Player::wait_for_playback_to_start;
+  using rosbag2_transport::Player::get_storage_options;
+  using rosbag2_transport::Player::get_play_options;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_PLAYER_HPP_

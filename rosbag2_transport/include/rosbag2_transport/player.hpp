@@ -234,12 +234,12 @@ protected:
   ROSBAG2_TRANSPORT_PUBLIC
   /// \brief Getter for the currently stored storage options
   /// \return Copy of the currently stored storage options
-  rosbag2_storage::StorageOptions get_storage_options();
+  const rosbag2_storage::StorageOptions & get_storage_options();
 
   ROSBAG2_TRANSPORT_PUBLIC
   /// \brief Getter for the currently stored play options
   /// \return Copy of the currently stored play options
-  rosbag2_transport::PlayOptions get_play_options();
+  const rosbag2_transport::PlayOptions & get_play_options();
 
 private:
   std::unique_ptr<PlayerImpl> pimpl_;

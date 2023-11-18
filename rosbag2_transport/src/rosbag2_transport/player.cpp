@@ -202,11 +202,11 @@ public:
 
   /// \brief Getter for the currently stored storage options
   /// \return Copy of the currently stored storage options
-  rosbag2_storage::StorageOptions get_storage_options();
+  const rosbag2_storage::StorageOptions & get_storage_options();
 
   /// \brief Getter for the currently stored play options
   /// \return Copy of the currently stored play options
-  rosbag2_transport::PlayOptions get_play_options();
+  const rosbag2_transport::PlayOptions & get_play_options();
 
 protected:
   struct play_msg_callback_data
@@ -1180,12 +1180,12 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
   }
 }
 
-rosbag2_storage::StorageOptions PlayerImpl::get_storage_options()
+const rosbag2_storage::StorageOptions & PlayerImpl::get_storage_options()
 {
   return storage_options_;
 }
 
-rosbag2_transport::PlayOptions PlayerImpl::get_play_options()
+const rosbag2_transport::PlayOptions & PlayerImpl::get_play_options()
 {
   return play_options_;
 }
@@ -1356,12 +1356,12 @@ size_t Player::get_number_of_registered_on_play_msg_post_callbacks()
   return pimpl_->get_number_of_registered_on_play_msg_post_callbacks();
 }
 
-rosbag2_storage::StorageOptions Player::get_storage_options()
+const rosbag2_storage::StorageOptions & Player::get_storage_options()
 {
   return pimpl_->get_storage_options();
 }
 
-rosbag2_transport::PlayOptions Player::get_play_options()
+const rosbag2_transport::PlayOptions & Player::get_play_options()
 {
   return pimpl_->get_play_options();
 }
