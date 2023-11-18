@@ -44,8 +44,8 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
 
   auto node = std::make_shared<MockPlayer>("player_params_node", opts);
-  auto play_options = node->retrieve_play_options();
-  auto storage_options = node->retrieve_storage_options();
+  auto play_options = node->get_play_options();
+  auto storage_options = node->get_storage_options();
   YAML::Node yaml_play_opt = YAML::convert<rosbag2_transport::PlayOptions>().encode(play_options);
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
     storage_options);

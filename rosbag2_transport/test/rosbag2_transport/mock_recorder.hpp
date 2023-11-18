@@ -72,15 +72,8 @@ public:
     return available_for_recording;
   }
 
-  rosbag2_storage::StorageOptions retrieve_storage_options()
-  {
-    return get_storage_options();
-  }
-
-  rosbag2_transport::RecordOptions retrieve_record_options()
-  {
-    return get_record_options();
-  }
+  using rosbag2_transport::Recorder::get_storage_options;
+  using rosbag2_transport::Recorder::get_record_options;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_RECORDER_HPP_

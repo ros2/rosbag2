@@ -44,8 +44,8 @@ TEST_F(RosBag2RecordTestFixture, parse_parameter_from_file) {
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
 
   auto node = std::make_shared<MockRecorder>("recorder_params_node", opts);
-  auto record_options = node->retrieve_record_options();
-  auto storage_options = node->retrieve_storage_options();
+  auto record_options = node->get_record_options();
+  auto storage_options = node->get_storage_options();
   YAML::Node yaml_record_opt = YAML::convert<rosbag2_transport::RecordOptions>().encode(
     record_options);
   YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
