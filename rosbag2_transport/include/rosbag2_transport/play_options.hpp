@@ -29,24 +29,6 @@
 namespace rosbag2_transport
 {
 
-/// Simple wrapper around rclcpp::Duration to provide a default constructor.
-class ROSBAG2_TRANSPORT_PUBLIC Rosbag2Duration : public rclcpp::Duration
-{
-public:
-  Rosbag2Duration()
-  : rclcpp::Duration(-1, 0) {}
-
-  Rosbag2Duration(int32_t seconds, uint32_t nanoseconds)
-  : rclcpp::Duration(seconds, nanoseconds) {}
-
-  // intentionally not using explicit to create a conversion constructor
-  Rosbag2Duration(const rclcpp::Duration & value) // NOLINT
-  : rclcpp::Duration(value) {}
-
-  explicit Rosbag2Duration(std::chrono::nanoseconds nanoseconds)
-  : rclcpp::Duration(nanoseconds) {}
-};
-
 struct PlayOptions
 {
 public:
@@ -85,13 +67,13 @@ public:
   std::vector<std::string> clock_trigger_topics = {};
 
   // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
-  Rosbag2Duration delay = rclcpp::Duration(0, 0);
+  rclcpp::Duration delay = rclcpp::Duration(0, 0);
 
   // Determines the maximum duration of the playback. Negative durations will make the playback to
   // not stop. Default configuration makes the player to not stop execution.
   // When positive, the maximum of `play_until_timestamp` and the one that this attribute yields
   // will be used to determine which one stops playback execution.
-  Rosbag2Duration playback_duration = rclcpp::Duration(-1, 0);
+  rclcpp::Duration playback_duration = rclcpp::Duration(-1, 0);
 
   // Determines the timestamp at which the playback will stop. Negative timestamps will make the
   // playback to not stop. Default configuration makes the player to not stop execution.
@@ -129,27 +111,6 @@ struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::PlayOptions>
 {
   static Node encode(const rosbag2_transport::PlayOptions & play_options);
   static bool decode(const Node & node, rosbag2_transport::PlayOptions & play_options);
-};
-
-template<>
-struct convert<rosbag2_transport::Rosbag2Duration>
-{
-  static Node encode(const rosbag2_transport::Rosbag2Duration & duration)
-  {
-    Node node;
-    node["sec"] = duration.nanoseconds() / 1000000000;
-    node["nsec"] = duration.nanoseconds() % 1000000000;
-    return node;
-  }
-
-  static bool decode(const Node & node, rosbag2_transport::Rosbag2Duration & duration)
-  {
-    duration = rosbag2_transport::Rosbag2Duration(
-      node["sec"].as<int32_t>(),
-      node["nsec"].as<uint32_t>()
-    );
-    return true;
-  }
 };
 
 }  // namespace YAML
