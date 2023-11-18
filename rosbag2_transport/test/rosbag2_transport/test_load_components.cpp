@@ -55,7 +55,7 @@ TEST_F(TestComponentManager, test_load_components)
   }
 
   {
-    std::string path{_SRC_RESOURCES_DIR_PATH "/params_player.yaml"};
+    std::string path{_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml"};
     auto pm = rclcpp::parameter_map_from_yaml_file(path);
     auto pl = rclcpp::parameters_from_map(pm, "/player_params_node");
     auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
