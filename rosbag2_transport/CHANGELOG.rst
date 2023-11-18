@@ -2,6 +2,9 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.5 (2023-11-18)
+-------------------
+
 0.22.4 (2023-10-24)
 -------------------
 * Fix uninitialized value pointed out by clang static analysis. (backport `#1440 <https://github.com/ros2/rosbag2/issues/1440>`_) (`#1448 <https://github.com/ros2/rosbag2/issues/1448>`_)
