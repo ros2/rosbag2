@@ -156,7 +156,7 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
 
   auto playback_until_timestamp_sec = node->declare_parameter<int32_t>(
     "playback_until_timestamp.sec",
-    -1.0);
+    0.0);
   auto playback_until_timestamp_nsec = node->declare_parameter<int32_t>(
     "playback_until_timestamp.nsec",
     0.0);
@@ -171,7 +171,7 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node * node)
 
   auto start_offset_sec = node->declare_parameter<int32_t>(
     "start_offset.sec",
-    -1.0);
+    0.0);
   auto start_offset_nsec = node->declare_parameter<int32_t>(
     "start_offset.nsec",
     0.0);
