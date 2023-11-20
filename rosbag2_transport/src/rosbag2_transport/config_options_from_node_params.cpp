@@ -327,7 +327,7 @@ get_storage_options_from_node_params(rclcpp::Node * node)
 
   auto desc_mbs = param_utils::int_param_description(
     "Max bagfile size (bytes)",
-    1,
+    0,
     std::numeric_limits<int64_t>::max());
   auto max_bagfile_size_ = node->declare_parameter<int64_t>(
     "max_bagfile_size",
@@ -337,7 +337,7 @@ get_storage_options_from_node_params(rclcpp::Node * node)
 
   auto desc_mbd = param_utils::int_param_description(
     "Max bagfile duration (nanoseconds)",
-    1,
+    0,
     std::numeric_limits<int64_t>::max());
   auto max_bagfile_duration_ = node->declare_parameter<int64_t>(
     "max_bagfile_duration",
@@ -347,7 +347,7 @@ get_storage_options_from_node_params(rclcpp::Node * node)
 
   auto desc_mcs = param_utils::int_param_description(
     "Max chache size (messages)",
-    1,
+    0,
     std::numeric_limits<int64_t>::max());
   auto max_cache_size_ = node->declare_parameter<int64_t>(
     "max_cache_size",
