@@ -60,26 +60,51 @@ declare_integer_node_params(
   int64_t max = std::numeric_limits<int64_t>::max(),
   T default_value = 0)
 {
-  auto param_desc = param_utils::int_param_description(description, min, max);
-  return static_cast<T>(node.declare_parameter<int64_t>(description, default_value, param_desc));
+  T output_value{default_value};
+  try {
+    auto param_desc = param_utils::int_param_description(description, min, max);
+    output_value =
+      static_cast<T>(node.declare_parameter<int64_t>(description, default_value, param_desc));
+  } catch (const rclcpp::exceptions::InvalidParameterValueException & e) {
+    std::ostringstream oss;
+    oss << e.what();
+    oss << " Parameter shall be in range [" << min << " , " << max << "]";
+    throw rclcpp::exceptions::InvalidParameterValueException(oss.str());
+  }
+  return output_value;
 }
 
 rclcpp::Duration get_duration_from_node_param(
   rclcpp::Node & node,
   const std::string & node_name,
-  int32_t default_value_sec = 0,
+  int64_t default_value_sec = 0,
   int64_t default_value_nsec = 0)
 {
-  constexpr uint32_t max_limits = std::numeric_limits<uint32_t>::max();
-  constexpr int64_t min_limits = -1 * static_cast<int64_t>(max_limits) - 1;
+  constexpr int64_t NANOSECONDS_PER_SECOND = 1000LL * 1000LL * 1000LL;
+  constexpr int64_t MAX_NANOSEC = NANOSECONDS_PER_SECOND - 1;
+  constexpr int64_t MIN_NANOSEC = -1 * MAX_NANOSEC;
+  constexpr int64_t MAX_SEC = std::numeric_limits<int64_t>::max() / NANOSECONDS_PER_SECOND - 1;
+  constexpr int64_t MIN_SEC = std::numeric_limits<int64_t>::min() / NANOSECONDS_PER_SECOND + 1;
 
+  if (default_value_sec > MAX_SEC || default_value_sec < MIN_SEC) {
+    std::ostringstream oss;
+    oss << "default_value_sec = " << default_value_sec << " for " << node_name;
+    oss << " is out of range. Shall be in range [" << MIN_SEC << " , " << MAX_SEC << "]";
+    throw std::out_of_range(oss.str());
+  }
+  if (default_value_nsec > MAX_NANOSEC || default_value_nsec < MIN_NANOSEC) {
+    std::ostringstream oss;
+    oss << "default_value_nsec = " << default_value_nsec << " for " << node_name;
+    oss << " is out of range. Shall be in range [" << MIN_NANOSEC << " , " << MAX_NANOSEC << "]";
+    throw std::out_of_range(oss.str());
+  }
   const auto sec = declare_integer_node_params<int64_t>(
-    node, node_name + ".sec", min_limits, max_limits, default_value_sec);
+    node, node_name + ".sec", MIN_SEC, MAX_SEC, default_value_sec);
   const auto nsec = declare_integer_node_params<int64_t>(
-    node, node_name + ".nsec", min_limits, max_limits, default_value_nsec);
+    node, node_name + ".nsec", MIN_NANOSEC, MAX_NANOSEC, default_value_nsec);
 
   auto total_nanoseconds =
-    static_cast<int64_t>(std::abs(sec)) * (1000LL * 1000LL * 1000LL) + std::abs(nsec);
+    static_cast<int64_t>(std::abs(sec)) * NANOSECONDS_PER_SECOND + std::abs(nsec);
   if (sec < 0 || nsec < 0) {
     total_nanoseconds *= -1;
   }
