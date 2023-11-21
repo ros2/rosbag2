@@ -53,24 +53,18 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml");
   auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
 
-  YAML::Emitter emitter;
-  emitter
-    << YAML::Newline << YAML::Comment("player_node_params.yaml")
-    << param_node << YAML::Newline
-    << YAML::Newline << YAML::Comment("qos_profile_overrides.yaml")
-    << qos_node << YAML::Newline
-    << YAML::Newline << YAML::Comment("node play parameters")
-    << yaml_play_opt << YAML::Newline
-    << YAML::Newline << YAML::Comment("node storage parameters")
-    << yaml_storage_opt << YAML::Newline;
-
-  std::cout << emitter.c_str() << std::endl;
-
-  // TODO(roncapat): compare YAML trees (from file vs from struct)
+  EXPECT_EQ(play_options.read_ahead_queue_size, 3);
+  EXPECT_EQ(play_options.node_prefix, "test");
+  EXPECT_EQ(play_options.rate, 13.0);
+  std::vector<std::string> topics_to_filter {"/foo", "/bar"};
+  EXPECT_EQ(play_options.topics_to_filter, topics_to_filter);
+  EXPECT_EQ(play_options.topics_regex_to_filter, "[xyz]/topic");
+  EXPECT_EQ(play_options.topics_regex_to_exclude, "[abc]/topic");
+  EXPECT_EQ(play_options.loop, false);
+  EXPECT_EQ(play_options.clock_publish_frequency, 19.0);
+  std::vector<std::string> clock_trigger_topics {"/triggers/clock"};
+  EXPECT_EQ(play_options.clock_trigger_topics, clock_trigger_topics);
+  EXPECT_EQ(play_options.delay.nanoseconds(), 1);
+  EXPECT_EQ(play_options.playback_duration.seconds(), -1);
+  // TODO(roncapat): compare the other params (from file vs from struct)
 }
-
-/*
-TEST_F(RosBag2PlayTestFixture, test_negative_durations) {
-// TODO(roncapat): implement
-}
-*/
