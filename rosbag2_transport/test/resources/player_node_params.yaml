@@ -20,18 +20,18 @@ player_params_node:
       nsec: 00000000
     # Negative timestamps will make the playback to not stop.
     playback_until_timestamp:
-      sec: -4294967296
-      nsec: -4294967296
+      sec: -9223372035
+      nsec: -999999999
     start_paused: true
     # Negative durations are invalid.
     start_offset: 
-      sec: 4294967295
-      nsec: 4294967295
+      sec: 0
+      nsec: 999999999
     disable_keyboard_controls: true
     # Negative value means that published messages do not need to be acknowledged.
     wait_acked_timeout:
       sec: 0
-      nsec: -4294967296
+      nsec: -999999999
     disable_loan_message: false
 
     storage_id: sqlite3
