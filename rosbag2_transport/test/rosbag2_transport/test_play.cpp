@@ -80,7 +80,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
     std::move(
       reader), storage_options_, play_options_);
   player->play();
-
+  player->wait_for_playback_to_end();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -151,7 +151,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
     std::move(
       reader), storage_options_, play_options_);
   player->play();
-
+  player->wait_for_playback_to_end();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -223,7 +223,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -256,7 +256,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -289,7 +289,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -346,7 +346,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -376,7 +376,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -407,7 +407,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
       std::move(
         reader), storage_options_, play_options_);
     player->play();
-
+    player->wait_for_playback_to_end();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -439,7 +439,9 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
 
   player->pause();
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future =
+    std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
   player->wait_for_playback_to_start();
   ASSERT_TRUE(player->is_paused());
 
@@ -490,6 +492,7 @@ public:
       std::move(
         reader), storage_options_, play_options_);
     player->play();
+    player->wait_for_playback_to_end();
     const auto result = await_received_messages.wait_for(timeout);
     // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out
     if (expect_timeout) {
@@ -681,7 +684,7 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
   auto await_received_messages = sub_->spin_subscriptions();
 
   player->play();
-
+  player->wait_for_playback_to_end();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(

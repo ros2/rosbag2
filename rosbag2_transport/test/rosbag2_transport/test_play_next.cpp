@@ -83,7 +83,8 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
   player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
@@ -137,7 +138,8 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -190,7 +192,8 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -244,7 +247,8 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_play_next) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -300,7 +304,8 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());

@@ -83,7 +83,8 @@ TEST_F(RosBag2PlayTestFixture, burst_bursts_requested_messages_without_delays) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
   player->wait_for_playback_to_start();
 
   const size_t NUM_MESSAGES_TO_BURST = 4;
@@ -136,7 +137,8 @@ TEST_F(RosBag2PlayTestFixture, burst_stops_at_end_of_file) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
   player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
@@ -183,7 +185,8 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_one_by_one_messages_with_the_same_
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_EQ(player->burst(1), 1u);
@@ -191,7 +194,6 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_one_by_one_messages_with_the_same_
   while (player->burst(1) == 1) {
     // Yield CPU resources for player-play() running in separate thread to make sure that it
     // will not play extra messages.
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
     played_messages++;
   }
   ASSERT_EQ(played_messages, messages.size());
@@ -236,7 +238,8 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_burst) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   const size_t EXPECTED_BURST_COUNT = 2;
   ASSERT_TRUE(player->is_paused());
@@ -290,7 +293,8 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_burst) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_EQ(player->burst(1), 1u);
@@ -346,7 +350,8 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
   ASSERT_TRUE(player->is_paused());
 
   const size_t EXPECTED_BURST_COUNT = 3;

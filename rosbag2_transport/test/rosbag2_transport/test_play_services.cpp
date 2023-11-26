@@ -68,7 +68,6 @@ public:
     exec_.cancel();
     rclcpp::shutdown();
     if (spin_thread_.joinable()) {spin_thread_.join();}
-    if (play_thread_.joinable()) {play_thread_.join();}
   }
 
   /// Use SetUp instead of ctor because we want to ASSERT some preconditions for the tests
@@ -211,10 +210,7 @@ private:
       std::move(reader), storage_options, play_options, player_name_);
     player_->pause();  // Start playing in pause mode. Require for play_next test. For all other
     // tests we will resume playback via explicit call to start_playback().
-    play_thread_ = std::thread(
-      [this]() {
-        player_->play();
-      });
+    player_->play();
   }
 
   void topic_callback(std::shared_ptr<const test_msgs::msg::BasicTypes>/* msg */)
@@ -254,7 +250,6 @@ public:
 
   // Orchestration
   std::thread spin_thread_;
-  std::thread play_thread_;
   rclcpp::executors::SingleThreadedExecutor exec_;
   std::shared_ptr<MockPlayer> player_;
 
@@ -417,9 +412,9 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
   ASSERT_TRUE(player_->is_paused());
   // Make sure that player reached out main play loop
   player_->wait_for_playback_to_start();
+  auto play_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   service_call_stop();
-  // play_thread_ shall successfully finish after "Stop" without rclcpp::shutdown()
-  if (play_thread_.joinable()) {play_thread_.join();}
+  play_future.get();
   expect_messages(false);
 }
 
@@ -447,8 +442,8 @@ TEST_F(PlaySrvsTest, stop_in_active_play) {
   ASSERT_FALSE(player_->is_paused());
   // Wait until first message is going to be published in active playback mode
   ASSERT_TRUE(cv.wait_for(lk, 2s, [&] {return calls == 1;}));
+  auto play_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   service_call_stop();
-  // play_thread_ shall successfully finish after "Stop" without rclcpp::shutdown()
-  if (play_thread_.joinable()) {play_thread_.join();}
+  play_future.get();
   ASSERT_EQ(calls, 1);
 }

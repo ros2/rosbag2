@@ -110,9 +110,9 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, register_unregister_callbacks) {
   player.pause();   // Put player in pause mode before starting
   ASSERT_TRUE(player.is_paused());
 
-  // Run play asynchronously in separate thread
   std::future<void> play_future_result =
-    std::async(std::launch::async, [&]() {player.play();});
+    std::async(std::launch::async, [&] {player.wait_for_playback_to_end();});
+  player.play();
 
   for (size_t i = 1; i < num_test_messages_; i++) {
     EXPECT_TRUE(player.play_next());
@@ -148,9 +148,9 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, call_callbacks) {
   player.pause();  // Put player in pause mode before starting
   ASSERT_TRUE(player.is_paused());
 
-  // Run play asynchronously in separate thread
   std::future<void> play_future_result =
-    std::async(std::launch::async, [&]() {player.play();});
+    std::async(std::launch::async, [&] {player.wait_for_playback_to_end();});
+  player.play();
 
   for (size_t i = 1; i < num_test_messages_; i++) {
     EXPECT_TRUE(player.play_next());

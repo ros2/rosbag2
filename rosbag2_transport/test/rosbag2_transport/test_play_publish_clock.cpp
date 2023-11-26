@@ -77,7 +77,8 @@ public:
 
     auto await_received_messages = sub_->spin_subscriptions();
 
-    auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+    auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+    player->play();
 
     player_future.get();
     await_received_messages.get();

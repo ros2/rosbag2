@@ -155,6 +155,7 @@ public:
         exec.spin();
       });
     player->play();
+    player->wait_for_playback_to_end();
 
     exec.cancel();
     spin_thread.join();
@@ -175,15 +176,11 @@ public:
       [&exec]() {
         exec.spin();
       });
-    auto play_thread = std::thread(
-      [&player]() {
-        player->play();
-      });
+    player->play();
     player->burst(num_messages);
 
     exec.cancel();
     spin_thread.join();
-    play_thread.join();
   }
 };
 

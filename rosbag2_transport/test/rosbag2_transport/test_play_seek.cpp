@@ -115,7 +115,8 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_back_in_time) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   EXPECT_TRUE(player->is_paused());
   EXPECT_TRUE(player->play_next());
@@ -162,7 +163,8 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_with_timestamp_later_than_in_last_messag
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   EXPECT_TRUE(player->is_paused());
   EXPECT_TRUE(player->play_next());
@@ -196,7 +198,8 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_forward) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   EXPECT_TRUE(player->is_paused());
   EXPECT_TRUE(player->play_next());
@@ -234,7 +237,8 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_back_in_time_from_the_end_of_the_bag) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   EXPECT_TRUE(player->is_paused());
   // Play all messages  from bag
@@ -280,7 +284,8 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_forward_from_the_end_of_the_bag) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+  player->play();
 
   EXPECT_TRUE(player->is_paused());
   // Play all messages  from bag

@@ -116,6 +116,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
+  /// \brief Blocks and wait on condition variable until the play thread stops
+  ROSBAG2_TRANSPORT_PUBLIC
+  void wait_for_playback_to_end();
+
   /// \brief Unpause if in pause mode, stop playback and exit from play.
   ROSBAG2_TRANSPORT_PUBLIC
   void stop();
