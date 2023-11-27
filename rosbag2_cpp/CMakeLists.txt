@@ -170,22 +170,24 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
-    target_link_libraries(test_info ${PROJECT_NAME})
-    ament_target_dependencies(test_info rosbag2_test_common test_msgs)
+    target_link_libraries(test_info ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common ${test_msgs_TARGETS})
   endif()
 
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_reader)
-    ament_target_dependencies(test_sequential_reader rosbag2_storage rosbag2_test_common test_msgs)
-    target_link_libraries(test_sequential_reader ${PROJECT_NAME})
+    target_link_libraries(test_sequential_reader
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+    )
   endif()
 
   ament_add_gmock(test_storage_without_metadata_file
     test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
   if(TARGET test_storage_without_metadata_file)
-    ament_target_dependencies(test_storage_without_metadata_file rosbag2_storage)
-    target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME})
+    target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME} rosbag2_storage::rosbag2_storage)
   endif()
 
   ament_add_gmock(test_local_message_definition_source
