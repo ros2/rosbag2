@@ -242,7 +242,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_topic_filter
     test/rosbag2_transport/test_topic_filter.cpp)
   target_include_directories(test_topic_filter PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
   target_link_libraries(test_topic_filter
     ${PROJECT_NAME}
   )
@@ -251,11 +251,8 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_rewrite.cpp)
   target_link_libraries(test_rewrite
     ${PROJECT_NAME}
-    keyboard_handler::keyboard_handler
     rcpputils::rcpputils
-    rosbag2_cpp::rosbag2_cpp
     rosbag2_test_common::rosbag2_test_common
-    ${test_msgs_TARGTES}
   )
 endif()
 
