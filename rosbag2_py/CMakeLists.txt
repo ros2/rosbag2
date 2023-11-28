@@ -44,8 +44,8 @@ ament_python_install_package(${PROJECT_NAME})
 pybind11_add_module(_compression_options SHARED
   src/rosbag2_py/_compression_options.cpp
 )
-ament_target_dependencies(_compression_options PUBLIC
-  "rosbag2_compression"
+target_link_libraries(_compression_options PUBLIC
+  rosbag2_compression::rosbag2_compression
 )
 
 pybind11_add_module(_reader SHARED
