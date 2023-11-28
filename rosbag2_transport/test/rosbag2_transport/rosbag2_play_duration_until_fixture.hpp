@@ -177,7 +177,7 @@ public:
 
       auto await_received_messages = test_fixture_->sub_->spin_subscriptions();
       ASSERT_TRUE(test_fixture_->player_->play());
-      test_fixture_->player_->wait_for_playback_to_end();
+      test_fixture_->player_->wait_for_playback_to_finish();
       await_received_messages.get();
     }
 

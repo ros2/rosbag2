@@ -67,7 +67,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
     std::move(reader), storage_options_, play_options_);
 
   ASSERT_TRUE(player->play());
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
 
   await_received_messages.get();
 

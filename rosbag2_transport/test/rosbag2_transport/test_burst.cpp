@@ -97,7 +97,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursts_requested_messages_without_delays) {
 
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
 
   await_received_messages.get();
 
@@ -145,7 +145,7 @@ TEST_F(RosBag2PlayTestFixture, burst_stops_at_end_of_file) {
   ASSERT_EQ(played_messages, messages.size());
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -198,7 +198,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_one_by_one_messages_with_the_same_
   ASSERT_EQ(played_messages, messages.size());
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -245,7 +245,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_burst) {
   ASSERT_TRUE(player->is_paused());
   player->resume();
   auto start = std::chrono::steady_clock::now();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   auto expected_replay_time =
@@ -297,7 +297,7 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_burst) {
   ASSERT_EQ(player->burst(1), 1u);
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -355,7 +355,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
 
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");

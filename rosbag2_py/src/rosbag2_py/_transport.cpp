@@ -155,7 +155,7 @@ public:
         exec.spin();
       });
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
 
     exec.cancel();
     spin_thread.join();

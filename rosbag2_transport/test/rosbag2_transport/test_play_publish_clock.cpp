@@ -78,7 +78,7 @@ public:
     auto await_received_messages = sub_->spin_subscriptions();
 
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
 
     await_received_messages.get();
     exec.cancel();

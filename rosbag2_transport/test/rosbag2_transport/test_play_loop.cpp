@@ -78,10 +78,10 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   auto loop_thread = std::async(
     std::launch::async, [&player]() {
       player->play();
-      player->wait_for_playback_to_end();
+      player->wait_for_playback_to_finish();
       // play again the same bag file
       player->play();
-      player->wait_for_playback_to_end();
+      player->wait_for_playback_to_finish();
     });
 
   await_received_messages.get();

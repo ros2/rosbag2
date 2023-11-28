@@ -193,7 +193,7 @@ public:
   void wait_for_playback_to_start();
 
   /// \brief Blocks and wait on condition variable until the play thread stops
-  void wait_for_playback_to_end();
+  void wait_for_playback_to_finish();
 
   /// \brief Getter for the number of registered on_play_msg_pre_callbacks
   /// \return Number of registered on_play_msg_pre_callbacks
@@ -500,7 +500,7 @@ bool PlayerImpl::play()
   return true;
 }
 
-void PlayerImpl::wait_for_playback_to_end()
+void PlayerImpl::wait_for_playback_to_finish()
 {
   std::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
@@ -1275,9 +1275,9 @@ bool Player::play()
   return pimpl_->play();
 }
 
-void Player::wait_for_playback_to_end()
+void Player::wait_for_playback_to_finish()
 {
-  return pimpl_->wait_for_playback_to_end();
+  return pimpl_->wait_for_playback_to_finish();
 }
 
 void Player::stop()

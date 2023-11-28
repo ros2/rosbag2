@@ -118,9 +118,9 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
-  /// \brief Blocks and wait on condition variable until the play thread stops
+  /// \brief Blocks and waits on the condition variable until the play thread finishes
   ROSBAG2_TRANSPORT_PUBLIC
-  void wait_for_playback_to_end();
+  void wait_for_playback_to_finish();
 
   /// \brief Unpause if in pause mode, stop playback and exit from play.
   ROSBAG2_TRANSPORT_PUBLIC

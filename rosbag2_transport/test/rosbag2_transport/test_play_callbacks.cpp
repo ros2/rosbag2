@@ -118,7 +118,7 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, register_unregister_callbacks) {
   }
   player.resume();   // Resume playback for playing the last message
   ASSERT_FALSE(player.is_paused());
-  player.wait_for_playback_to_end();
+  player.wait_for_playback_to_finish();
   EXPECT_FALSE(player.play_next());
 }
 
@@ -153,6 +153,6 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, call_callbacks) {
 
   player.resume();  // Resume playback for playing the last message
   ASSERT_FALSE(player.is_paused());
-  player.wait_for_playback_to_end();
+  player.wait_for_playback_to_finish();
   EXPECT_FALSE(player.play_next());
 }

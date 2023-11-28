@@ -79,7 +79,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(reader), storage_options_, play_options_);
   player->play();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -149,7 +149,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(reader), storage_options_, play_options_);
   player->play();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -220,7 +220,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -252,7 +252,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -284,7 +284,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -340,7 +340,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -369,7 +369,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -399,7 +399,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     await_received_messages.get();
 
     auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
@@ -436,7 +436,7 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   ASSERT_TRUE(player->is_paused());
 
   rclcpp::shutdown();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
 }
 
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
@@ -481,7 +481,7 @@ public:
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(reader), storage_options_, play_options_);
     player->play();
-    player->wait_for_playback_to_end();
+    player->wait_for_playback_to_finish();
     const auto result = await_received_messages.wait_for(timeout);
     // Must EXPECT, can't ASSERT because transport needs to be shutdown if timed out
     if (expect_timeout) {
@@ -673,7 +673,7 @@ TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
   auto await_received_messages = sub_->spin_subscriptions();
 
   player->play();
-  player->wait_for_playback_to_end();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(

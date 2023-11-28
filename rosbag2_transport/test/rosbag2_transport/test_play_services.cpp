@@ -414,7 +414,7 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
   player_->wait_for_playback_to_start();
   service_call_stop();
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
-  player_->wait_for_playback_to_end();
+  player_->wait_for_playback_to_finish();
   expect_messages(false);
 }
 
@@ -444,6 +444,6 @@ TEST_F(PlaySrvsTest, stop_in_active_play) {
   ASSERT_TRUE(cv.wait_for(lk, 2s, [&] {return calls == 1;}));
   service_call_stop();
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
-  player_->wait_for_playback_to_end();
+  player_->wait_for_playback_to_finish();
   ASSERT_EQ(calls, 1);
 }
