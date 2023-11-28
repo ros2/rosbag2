@@ -85,9 +85,8 @@ TEST_F(PlayerTestFixture, playing_respects_relative_timing_of_stored_messages)
   // we check that time elapsed during playing is at least the time difference between the two
   // messages
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -99,9 +98,8 @@ TEST_F(PlayerTestFixture, playing_rate_2x)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference * 0.5));
@@ -115,9 +113,8 @@ TEST_F(PlayerTestFixture, playing_rate_1x)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -129,9 +126,8 @@ TEST_F(PlayerTestFixture, playing_rate_halfx)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference * 2.0));
 }
@@ -144,9 +140,8 @@ TEST_F(PlayerTestFixture, playing_rate_zero)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -159,9 +154,8 @@ TEST_F(PlayerTestFixture, playing_rate_negative)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -178,9 +172,8 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
 
   EXPECT_THAT(replay_time, Gt(lower_expected_duration));
@@ -198,9 +191,8 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_time = clock.now() - start;
 
   EXPECT_THAT(replay_time, Gt(lower_expected_duration));
@@ -221,9 +213,8 @@ TEST_F(PlayerTestFixture, play_respects_start_offset)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_duration = clock.now() - start;
 
   EXPECT_THAT(replay_duration, Gt(lower_expected_duration));
@@ -242,9 +233,8 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
     std::move(reader), storage_options_, play_options_);
 
   auto start = clock.now();
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   player->play();
-  player_future.get();
+  player->wait_for_playback_to_end();
   auto replay_duration = clock.now() - start;
 
   EXPECT_THAT(replay_duration, Gt(lower_expected_duration));

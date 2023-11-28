@@ -75,14 +75,18 @@ TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
     std::move(
       reader), storage_options_, play_options);
 
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
-  player->play();
-  player_future.get();
-  player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
-  player->play();
-  player_future.get();
+  auto loop_thread = std::async(
+    std::launch::async, [&player]() {
+      player->play();
+      player->wait_for_playback_to_end();
+      // play again the same bag file
+      player->play();
+      player->wait_for_playback_to_end();
+    });
+
   await_received_messages.get();
   rclcpp::shutdown();
+  loop_thread.get();
 
   auto replayed_test_primitives = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
     "/loop_test_topic");

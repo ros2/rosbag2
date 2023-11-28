@@ -412,9 +412,9 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
   ASSERT_TRUE(player_->is_paused());
   // Make sure that player reached out main play loop
   player_->wait_for_playback_to_start();
-  auto play_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   service_call_stop();
-  play_future.get();
+  // playback shall successfully finish after "Stop" without rclcpp::shutdown()
+  player_->wait_for_playback_to_end();
   expect_messages(false);
 }
 
@@ -442,8 +442,8 @@ TEST_F(PlaySrvsTest, stop_in_active_play) {
   ASSERT_FALSE(player_->is_paused());
   // Wait until first message is going to be published in active playback mode
   ASSERT_TRUE(cv.wait_for(lk, 2s, [&] {return calls == 1;}));
-  auto play_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   service_call_stop();
-  play_future.get();
+  // playback shall successfully finish after "Stop" without rclcpp::shutdown()
+  player_->wait_for_playback_to_end();
   ASSERT_EQ(calls, 1);
 }

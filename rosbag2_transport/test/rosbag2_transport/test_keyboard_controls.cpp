@@ -160,7 +160,7 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   keyboard_handler->simulate_key_press(play_options_.increase_rate_key);
   keyboard_handler->simulate_key_press(play_options_.decrease_rate_key);
 
-  // start play thread
+  // start playback asynchronously in a separate thread
   player->play();
 
   // play next

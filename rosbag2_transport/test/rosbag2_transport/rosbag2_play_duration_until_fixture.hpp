@@ -176,12 +176,8 @@ public:
           std::chrono::seconds(5)));
 
       auto await_received_messages = test_fixture_->sub_->spin_subscriptions();
-      auto player_future = std::async(
-        std::launch::async, [&] {
-          test_fixture_->player_->wait_for_playback_to_end();
-        });
       ASSERT_TRUE(test_fixture_->player_->play());
-      player_future.get();
+      test_fixture_->player_->wait_for_playback_to_end();
       await_received_messages.get();
     }
 

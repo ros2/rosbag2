@@ -101,10 +101,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_none_are_played_due_to_timestamp)
     player->add_on_play_message_post_callback(mock_post_callback.AsStdFunction());
   ASSERT_NE(post_callback_handle, Player::invalid_callback_handle);
 
-  auto play_future_result =
-    std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
   ASSERT_TRUE(player->play());
-  play_future_result.get();
+  player->wait_for_playback_to_end();
 }
 
 TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
@@ -138,18 +136,17 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
   ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
 
   auto await_received_messages = sub_->spin_subscriptions();
-  auto player_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   ASSERT_TRUE(player_->play());
-  player_future.get();
+  player_->wait_for_playback_to_end();
 
   // Playing one more time with play_next() to save time and count messages.
   player_->pause();
-  player_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   player_->play();
   ASSERT_TRUE(player_->play_next());
   ASSERT_FALSE(player_->play_next());
   player_->resume();
-  player_future.get();
+  player_->wait_for_playback_to_end();
+
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
   EXPECT_THAT(replayed_topic1, SizeIs(2));
@@ -211,14 +208,13 @@ TEST_F(RosBag2PlayUntilTestFixture, play_should_return_false_when_interrupted)
 
   auto await_received_messages = sub_->spin_subscriptions();
   player_->pause();
-  auto player_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   player_->play();
   player_->wait_for_playback_to_start();
   ASSERT_TRUE(player_->is_paused());
   ASSERT_FALSE(player_->play());
 
   player_->resume();
-  player_future.get();
+  player_->wait_for_playback_to_end();
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
   EXPECT_THAT(replayed_topic1, SizeIs(1));
@@ -297,9 +293,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_is_equal_to_the_total_duration)
   ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
 
   auto await_received_messages = sub_->spin_subscriptions();
-  auto play_future = std::async(std::launch::async, [&] {player_->wait_for_playback_to_end();});
   ASSERT_TRUE(player_->play());
-  play_future.get();
+  player_->wait_for_playback_to_end();
 
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);

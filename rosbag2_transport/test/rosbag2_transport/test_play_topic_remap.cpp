@@ -64,11 +64,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   auto await_received_messages = sub_->spin_subscriptions();
 
   auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
-  auto player_future = std::async(std::launch::async, [&] {player->wait_for_playback_to_end();});
+    std::move(reader), storage_options_, play_options_);
+
   ASSERT_TRUE(player->play());
-  player_future.get();
+  player->wait_for_playback_to_end();
 
   await_received_messages.get();
 
