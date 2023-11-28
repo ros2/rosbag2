@@ -295,11 +295,11 @@ private:
   std::mutex skip_message_in_main_play_loop_mutex_;
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
     skip_message_in_main_play_loop_mutex_) = false;
-  std::atomic_bool is_in_playback_{false};
+  std::mutex is_in_playback_mutex_;
+  std::atomic_bool is_in_playback_{false} RCPPUTILS_TSA_GUARDED_BY(is_in_playback_mutex_);
+  std::thread playback_thread_;
+  std::condition_variable playback_finished_cv_;
 
-  std::thread play_thread;
-  std::condition_variable playback_end;
-  std::mutex playback_end_mutex_;
   rcutils_time_point_value_t starting_time_;
 
   // control services
@@ -369,10 +369,7 @@ PlayerImpl::~PlayerImpl()
   // Force to stop playback to avoid hangout in case of unexpected exception or when smart
   // pointer to the player object goes out of scope
   stop();
-  // Stop may not join the thread if is_in_playback_ is false.
-  if (play_thread.joinable()) {
-    play_thread.join();
-  }
+
   // remove callbacks on key_codes to prevent race conditions
   // Note: keyboard_handler handles locks between removing & executing callbacks
   for (auto cb_handle : keyboard_callbacks_) {
@@ -400,11 +397,14 @@ bool PlayerImpl::is_storage_completely_loaded() const
 
 bool PlayerImpl::play()
 {
-  if (is_in_playback_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      owner_->get_logger(),
-      "Trying to play() while in playback, dismissing request.");
-    return false;
+  {
+    std::lock_guard<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+    if (is_in_playback_.exchange(true)) {
+      RCLCPP_WARN_STREAM(
+        owner_->get_logger(),
+        "Trying to play() while in playback, dismissing request.");
+      return false;
+    }
   }
 
   stop_playback_ = false;
@@ -421,13 +421,13 @@ bool PlayerImpl::play()
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Playback until timestamp: " << play_until_timestamp_);
 
   // May need to join the previous thread if we are calling play() a second time
-  if (play_thread.joinable()) {
-    play_thread.join();
+  if (playback_thread_.joinable()) {
+    playback_thread_.join();
   }
-  play_thread = std::thread(
+  playback_thread_ = std::thread(
     [&, delay]() {
       try {
-        do{
+        do {
           if (delay > rclcpp::Duration(0, 0)) {
             RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
             std::chrono::nanoseconds delay_duration(delay.nanoseconds());
@@ -461,9 +461,12 @@ bool PlayerImpl::play()
         if (storage_loading_future_.valid()) {storage_loading_future_.get();}
         while (message_queue_.pop()) {}     // cleanup queue
       }
-      std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
-      is_ready_to_play_from_queue_ = false;
-      ready_to_play_from_queue_cv_.notify_all();
+
+      {
+        std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+        is_ready_to_play_from_queue_ = false;
+        ready_to_play_from_queue_cv_.notify_all();
+      }
 
       // Wait for all published messages to be acknowledged.
       if (play_options_.wait_acked_timeout >= 0) {
@@ -471,30 +474,27 @@ bool PlayerImpl::play()
         if (timeout == std::chrono::milliseconds(0)) {
           timeout = std::chrono::milliseconds(-1);
         }
-        for (auto pub : publishers_) {
+        for (const auto & pub : publishers_) {
           try {
             if (!pub.second->generic_publisher()->wait_for_all_acked(timeout)) {
               RCLCPP_ERROR(
                 owner_->get_logger(),
                 "Timed out while waiting for all published messages to be acknowledged "
-                "for topic %s",
-                pub.first.c_str());
+                "for topic %s", pub.first.c_str());
             }
           } catch (std::exception & e) {
             RCLCPP_ERROR(
               owner_->get_logger(),
               "Exception occurred while waiting for all published messages to be acknowledged for "
-              "topic %s : %s",
-              pub.first.c_str(),
-              e.what());
+              "topic %s : %s", pub.first.c_str(), e.what());
           }
         }
       }
 
       {
-        std::lock_guard<std::mutex> lk(playback_end_mutex_);
+        std::lock_guard<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
         is_in_playback_ = false;
-        playback_end.notify_all();
+        playback_finished_cv_.notify_all();
       }
     });
   return true;
@@ -502,34 +502,42 @@ bool PlayerImpl::play()
 
 void PlayerImpl::wait_for_playback_to_end()
 {
-  std::unique_lock<std::mutex> lk(playback_end_mutex_);
-  playback_end.wait(lk, [this] {return !is_in_playback_.load();});
+  std::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+  playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
 }
 
 void PlayerImpl::stop()
 {
+  std::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   if (!is_in_playback_) {
-    return;
-  }
-  RCLCPP_INFO_STREAM(owner_->get_logger(), "Stopping playback.");
-  stop_playback_ = true;
-  // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
-  // wait until those operations will be finished with stop_playback_ = true;
-  {
-    std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
-    // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
-    skip_message_in_main_play_loop_ = true;
-    cancel_wait_for_next_message_ = true;
-  }
+    if (playback_thread_.joinable()) {
+      playback_thread_.join();
+    }
+  } else {
+    RCLCPP_INFO_STREAM(owner_->get_logger(), "Stopping playback.");
+    stop_playback_ = true;
+    // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
+    // wait until those operations will be finished with stop_playback_ = true;
+    {
+      std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+      // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
+      skip_message_in_main_play_loop_ = true;
+      cancel_wait_for_next_message_ = true;
+    }
 
-  if (clock_->is_paused()) {
-    clock_->resume();  // Temporary resume clock to force wakeup in clock_->sleep_until(time)
-    clock_->pause();   // Return in pause mode to preserve original state of the player
-  }
-  // Note: Don't clean up message queue here. It will be cleaned up automatically in
-  // Player::play() after finishing play_messages_from_queue();
-  if (play_thread.joinable()) {
-    play_thread.join();
+    if (clock_->is_paused()) {
+      clock_->resume();  // Temporary resume clock to force wakeup in clock_->sleep_until(time)
+      clock_->pause();   // Return in pause mode to preserve original state of the player
+    }
+    // Note: Don't clean up message queue here. It will be cleaned up automatically in
+    // playback thread after finishing play_messages_from_queue();
+
+    // Wait for playback thread to finish. Make sure that we have unlocked
+    // is_in_playback_mutex_, otherwise playback_thread_ will wait forever at the end
+    is_in_playback_lk.unlock();
+    if (playback_thread_.joinable()) {
+      playback_thread_.join();
+    }
   }
 }
 

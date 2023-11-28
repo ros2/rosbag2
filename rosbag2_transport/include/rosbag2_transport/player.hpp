@@ -113,6 +113,8 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
 
+  /// \brief Start playback asynchronously in a separate thread
+  /// \return false if playback thread already running, otherwise true
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
