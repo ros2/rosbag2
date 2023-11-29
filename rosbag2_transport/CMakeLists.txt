@@ -120,11 +120,9 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
     ${SKIP_TEST})
 
-    rosbag2_transport_add_gmock(test_play_params
+  rosbag2_transport_add_gmock(test_play_params
     test/rosbag2_transport/test_play_params.cpp
-    LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common
-    ${SKIP_TEST})
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_play_loop
     test/rosbag2_transport/test_play_loop.cpp
@@ -193,9 +191,7 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_record_params
     test/rosbag2_transport/test_record_params.cpp
-    LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common
-    ${SKIP_TEST})
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_record_all_ignore_leaf_topics
     test/rosbag2_transport/test_record_all_ignore_leaf_topics.cpp
@@ -232,8 +228,8 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_load_components
     test/rosbag2_transport/test_load_components.cpp
-    LINK_LIBS rosbag2_transport
-    AMENT_DEPS test_msgs rosbag2_test_common rclcpp_components)
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
+    ${rclcpp_components_TARGETS})
 
   if(${rmw_implementation} MATCHES "rmw_cyclonedds(.*)")
     ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
