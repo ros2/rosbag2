@@ -75,7 +75,7 @@ void SequentialCompressionWriter::compression_thread_fn()
     int wanted_thread_priority = *compression_options_.thread_priority;
     if (!SetThreadPriority(GetCurrentThread(), wanted_thread_priority)) {
       ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-        "Could not set thread priority of compression thread to the: " << wanted_thread_priority <<
+        "Could not set thread priority of compression thread to: " << wanted_thread_priority <<
           ". Error code: " << GetLastError());
     } else {
       auto detected_thread_priority = GetThreadPriority(GetCurrentThread());
@@ -84,7 +84,7 @@ void SequentialCompressionWriter::compression_thread_fn()
           "Failed to get current thread priority. Error code: " << GetLastError());
       } else if (wanted_thread_priority != detected_thread_priority) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-          "Could not set thread priority of compression thread to the: " <<
+          "Could not set thread priority of compression thread to: " <<
             wanted_thread_priority << ". Detected thread priority: " << detected_thread_priority);
       }
     }
@@ -95,13 +95,13 @@ void SequentialCompressionWriter::compression_thread_fn()
     int cur_nice_value = getpriority(PRIO_PROCESS, 0);
     if (cur_nice_value == -1 && errno != 0) {
       ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-        "Could not set nice value of compression thread to the: " << wanted_nice_value <<
+        "Could not set nice value of compression thread to: " << wanted_nice_value <<
           " : Could not determine cur nice value");
     } else {
       int new_nice_value = nice(wanted_nice_value - cur_nice_value);
       if ((new_nice_value == -1 && errno != 0)) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
-          "Could not set nice value of compression thread to the: " << wanted_nice_value <<
+          "Could not set nice value of compression thread to: " << wanted_nice_value <<
             ". Error : " << std::strerror(errno));
       }
     }
