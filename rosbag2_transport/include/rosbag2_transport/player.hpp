@@ -20,7 +20,6 @@
 #include <functional>
 #include <future>
 #include <memory>
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -110,8 +109,18 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
 
+  /// \brief Start playback asynchronously in a separate thread
+  /// \return false if playback thread already running, otherwise true
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
+
+  /// \brief Waits on the condition variable until the play thread finishes.
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
+  /// If timeout is negative, the wait_for_playback_to_finish will be a blocking call.
+  /// @return true if playback finished during timeout, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool wait_for_playback_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   /// \brief Unpause if in pause mode, stop playback and exit from play.
   ROSBAG2_TRANSPORT_PUBLIC

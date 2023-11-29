@@ -86,6 +86,7 @@ TEST_F(PlayerTestFixture, playing_respects_relative_timing_of_stored_messages)
   // messages
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -98,6 +99,7 @@ TEST_F(PlayerTestFixture, playing_rate_2x)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
 
   ASSERT_THAT(replay_time, Gt(message_time_difference * 0.5));
@@ -112,6 +114,7 @@ TEST_F(PlayerTestFixture, playing_rate_1x)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -124,6 +127,7 @@ TEST_F(PlayerTestFixture, playing_rate_halfx)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference * 2.0));
 }
@@ -137,6 +141,7 @@ TEST_F(PlayerTestFixture, playing_rate_zero)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -150,6 +155,7 @@ TEST_F(PlayerTestFixture, playing_rate_negative)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
   ASSERT_THAT(replay_time, Gt(message_time_difference));
 }
@@ -167,6 +173,7 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
 
   EXPECT_THAT(replay_time, Gt(lower_expected_duration));
@@ -185,6 +192,7 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_delay)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_time = clock.now() - start;
 
   EXPECT_THAT(replay_time, Gt(lower_expected_duration));
@@ -206,6 +214,7 @@ TEST_F(PlayerTestFixture, play_respects_start_offset)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_duration = clock.now() - start;
 
   EXPECT_THAT(replay_duration, Gt(lower_expected_duration));
@@ -225,6 +234,7 @@ TEST_F(PlayerTestFixture, play_ignores_invalid_start_offset)
 
   auto start = clock.now();
   player->play();
+  player->wait_for_playback_to_finish();
   auto replay_duration = clock.now() - start;
 
   EXPECT_THAT(replay_duration, Gt(lower_expected_duration));
