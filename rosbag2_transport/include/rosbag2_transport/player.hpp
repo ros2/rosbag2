@@ -117,9 +117,13 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
-  /// \brief Blocks and waits on the condition variable until the play thread finishes
+  /// \brief Waits on the condition variable until the play thread finishes.
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
+  /// If timeout is negative, the wait_for_playback_to_finish will be a blocking call.
+  /// @return true if playback finished during timeout, otherwise false.
   ROSBAG2_TRANSPORT_PUBLIC
-  void wait_for_playback_to_finish();
+  bool wait_for_playback_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   /// \brief Unpause if in pause mode, stop playback and exit from play.
   ROSBAG2_TRANSPORT_PUBLIC

@@ -78,11 +78,9 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_explicit) {
   ASSERT_TRUE(player.is_paused());
 
   player.play();
-  auto play_future_result =
-    std::async(std::launch::async, [&] { player.wait_for_playback_to_finish();});
   EXPECT_TRUE(player.play_next());
   player.stop();
-  ASSERT_EQ(play_future_result.wait_for(1s), std::future_status::ready);
+  ASSERT_TRUE(player.wait_for_playback_to_finish(1s));
 }
 
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_implicit) {
@@ -94,7 +92,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_implicit) {
 
     player.play();
     play_future_result =
-      std::async(std::launch::async, [&] { player.wait_for_playback_to_finish();});
+      std::async(std::launch::async, [&] {player.wait_for_playback_to_finish();});
     EXPECT_TRUE(player.play_next());
   }
   ASSERT_EQ(play_future_result.wait_for(1s), std::future_status::ready);
@@ -121,8 +119,6 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_explicit) {
   ASSERT_TRUE(player.is_paused());
   player.play();
   player.wait_for_playback_to_start();
-  auto play_future_result =
-    std::async(std::launch::async, [&] { player.wait_for_playback_to_finish();});
   ASSERT_TRUE(player.is_paused());
   {
     std::unique_lock<std::mutex> lk{m};
@@ -132,7 +128,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_explicit) {
     lk.unlock();
     player.stop();
   }
-  ASSERT_EQ(play_future_result.wait_for(1s), std::future_status::ready);
+  ASSERT_TRUE(player.wait_for_playback_to_finish(1s));
   ASSERT_EQ(calls, 1);
 }
 
@@ -160,7 +156,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_implict) {
     player.play();
     player.wait_for_playback_to_start();
     play_future_result =
-      std::async(std::launch::async, [&] { player.wait_for_playback_to_finish();});
+      std::async(std::launch::async, [&] {player.wait_for_playback_to_finish();});
     ASSERT_TRUE(player.is_paused());
 
     std::unique_lock<std::mutex> lk{m};

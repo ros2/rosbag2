@@ -174,8 +174,12 @@ public:
   /// queue
   void wait_for_playback_to_start();
 
-  /// \brief Blocks and wait on condition variable until the play thread stops
-  void wait_for_playback_to_finish();
+  /// \brief Waits on the condition variable until the play thread finishes.
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
+  /// If timeout is negative, the wait_for_playback_to_finish will be a blocking call.
+  /// @return true if playback finished during timeout, otherwise false.
+  bool wait_for_playback_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   /// \brief Getter for the number of registered on_play_msg_pre_callbacks
   /// \return Number of registered on_play_msg_pre_callbacks
@@ -482,10 +486,17 @@ bool PlayerImpl::play()
   return true;
 }
 
-void PlayerImpl::wait_for_playback_to_finish()
+bool PlayerImpl::wait_for_playback_to_finish(std::chrono::duration<double> timeout)
 {
   rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
-  playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
+  if (timeout.count() < 0) {
+    playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
+    return true;
+  } else {
+    return playback_finished_cv_.wait_for(
+      is_in_playback_lk,
+      timeout, [this] {return !is_in_playback_.load();});
+  }
 }
 
 void PlayerImpl::stop()
@@ -1257,9 +1268,9 @@ bool Player::play()
   return pimpl_->play();
 }
 
-void Player::wait_for_playback_to_finish()
+bool Player::wait_for_playback_to_finish(std::chrono::duration<double> timeout)
 {
-  return pimpl_->wait_for_playback_to_finish();
+  return pimpl_->wait_for_playback_to_finish(timeout);
 }
 
 void Player::stop()
