@@ -87,7 +87,8 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(record_options.start_paused, false);
   EXPECT_EQ(record_options.use_sim_time, false);
 
-  EXPECT_EQ(storage_options.uri,
+  EXPECT_EQ(
+    storage_options.uri,
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
   EXPECT_EQ(storage_options.storage_id, "sqlite3");
   EXPECT_EQ(storage_options.storage_config_uri, "");

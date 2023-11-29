@@ -64,7 +64,8 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(play_options.start_offset, 999999999);
   EXPECT_EQ(play_options.wait_acked_timeout, -999999999);
   EXPECT_EQ(play_options.disable_loan_message, false);
-  EXPECT_EQ(storage_options.uri,
+  EXPECT_EQ(
+    storage_options.uri,
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
   EXPECT_EQ(storage_options.storage_id, "sqlite3");
   EXPECT_EQ(storage_options.storage_config_uri, "");
