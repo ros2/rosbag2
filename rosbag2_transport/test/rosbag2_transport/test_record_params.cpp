@@ -29,6 +29,8 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 
+using namespace std::chrono_literals;
+
 class RecordParamsTestFixture : public Rosbag2TransportTestFixture
 {
 public:
@@ -65,32 +67,34 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   auto node = std::make_shared<MockRecorder>("recorder_params_node", opts);
   auto record_options = node->get_record_options();
   auto storage_options = node->get_storage_options();
-  YAML::Node yaml_record_opt = YAML::convert<rosbag2_transport::RecordOptions>().encode(
-    record_options);
-  YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
-    storage_options);
 
-  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml");
-  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
+  EXPECT_EQ(record_options.all, true);
+  EXPECT_EQ(record_options.is_discovery_disabled, true);
+  std::vector<std::string> topics {"/topic", "/other_topic"};
+  EXPECT_EQ(record_options.topics, topics);
+  EXPECT_EQ(record_options.rmw_serialization_format, "cdr");
+  EXPECT_TRUE(record_options.topic_polling_interval == 0.01s);
+  EXPECT_EQ(record_options.regex, "[xyz]/topic");
+  EXPECT_EQ(record_options.exclude, "*");
+  EXPECT_EQ(record_options.node_prefix, "prefix");
+  EXPECT_EQ(record_options.compression_mode, "stream");
+  EXPECT_EQ(record_options.compression_format, "h264");
+  EXPECT_EQ(record_options.compression_queue_size, 10);
+  EXPECT_EQ(record_options.compression_threads, 2);
+  EXPECT_EQ(record_options.include_hidden_topics, true);
+  EXPECT_EQ(record_options.include_unpublished_topics, true);
+  EXPECT_EQ(record_options.ignore_leaf_topics, false);
+  EXPECT_EQ(record_options.start_paused, false);
+  EXPECT_EQ(record_options.use_sim_time, false);
 
-  YAML::Emitter emitter;
-  emitter
-    << YAML::Newline << YAML::Comment("params.yaml")
-    << param_node << YAML::Newline
-    << YAML::Newline << YAML::Comment("qos_profile_overrides.yaml")
-    << qos_node << YAML::Newline
-    << YAML::Newline << YAML::Comment("node record parameters")
-    << yaml_record_opt << YAML::Newline
-    << YAML::Newline << YAML::Comment("node storage parameters")
-    << yaml_storage_opt << YAML::Newline;
-
-  std::cout << emitter.c_str() << std::endl;
-
-  // TODO(roncapat): compare YAML trees (from file vs from struct)
+  EXPECT_EQ(storage_options.uri,
+    _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
+  EXPECT_EQ(storage_options.storage_id, "sqlite3");
+  EXPECT_EQ(storage_options.storage_config_uri, "");
+  EXPECT_EQ(storage_options.max_bagfile_size, 12345);
+  EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
+  EXPECT_EQ(storage_options.max_cache_size, 9898);
+  EXPECT_EQ(storage_options.storage_preset_profile, "none");
+  EXPECT_EQ(storage_options.start_time_ns, 0);
+  EXPECT_EQ(storage_options.end_time_ns, 100000);
 }
-
-/*
-TEST_F(RosBag2PlayTestFixture, test_negative_durations) {
-// TODO(roncapat): implement
-}
-*/

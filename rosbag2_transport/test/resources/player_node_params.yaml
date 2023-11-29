@@ -20,8 +20,8 @@ player_params_node:
       nsec: 00000000
     # Negative timestamps will make the playback to not stop.
     playback_until_timestamp:
-      sec: -9223372035
-      nsec: -999999999
+      sec: -2
+      nsec: -500000000
     start_paused: true
     # Negative durations are invalid.
     start_offset: 

@@ -46,12 +46,6 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   auto node = std::make_shared<MockPlayer>("player_params_node", opts);
   auto play_options = node->get_play_options();
   auto storage_options = node->get_storage_options();
-  YAML::Node yaml_play_opt = YAML::convert<rosbag2_transport::PlayOptions>().encode(play_options);
-  YAML::Node yaml_storage_opt = YAML::convert<rosbag2_storage::StorageOptions>().encode(
-    storage_options);
-
-  auto param_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml");
-  auto qos_node = YAML::LoadFile(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
 
   EXPECT_EQ(play_options.read_ahead_queue_size, 3);
   EXPECT_EQ(play_options.node_prefix, "test");
@@ -66,15 +60,12 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(play_options.clock_trigger_topics, clock_trigger_topics);
   EXPECT_EQ(play_options.delay.nanoseconds(), 1);
   EXPECT_FLOAT_EQ(play_options.playback_duration.seconds(), -1);
-  EXPECT_FLOAT_EQ(play_options.playback_until_timestamp, -2500000000);
-  EXPECT_FLOAT_EQ(play_options.start_offset, 999999999);
-  EXPECT_FLOAT_EQ(play_options.wait_acked_timeout, -999999999);
+  EXPECT_EQ(play_options.playback_until_timestamp, -2500000000);
+  EXPECT_EQ(play_options.start_offset, 999999999);
+  EXPECT_EQ(play_options.wait_acked_timeout, -999999999);
   EXPECT_EQ(play_options.disable_loan_message, false);
-  EXPECT_EQ(play_options.uri,
+  EXPECT_EQ(storage_options.uri,
     _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
-  EXPECT_EQ(play_options.qos_profile_overrides_path,
-    _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
-
   EXPECT_EQ(storage_options.storage_id, "sqlite3");
   EXPECT_EQ(storage_options.storage_config_uri, "");
   EXPECT_EQ(storage_options.max_bagfile_size, 12345);
