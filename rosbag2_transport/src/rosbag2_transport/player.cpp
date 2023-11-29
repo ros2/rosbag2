@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -27,33 +26,16 @@
 #include "rcl/graph.h"
 
 #include "rclcpp/rclcpp.hpp"
-
+#include "rcpputils/unique_lock.hpp"
 #include "rcutils/time.h"
 
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
-
 #include "rosbag2_storage/storage_filter.hpp"
-
 #include "rosbag2_storage/qos.hpp"
 
 namespace
 {
-/**
- * Trivial std::unique_lock wrapper providing constructor that allows Clang Thread Safety Analysis.
- * The std::unique_lock does not have these annotations.
- */
-class RCPPUTILS_TSA_SCOPED_CAPABILITY TSAUniqueLock : public std::unique_lock<std::mutex>
-{
-public:
-  explicit TSAUniqueLock(std::mutex & mu) RCPPUTILS_TSA_ACQUIRE(mu)
-  : std::unique_lock<std::mutex>(mu)
-  {}
-
-  ~TSAUniqueLock() RCPPUTILS_TSA_RELEASE() {}
-};
-
 /**
  * Determine which QoS to offer for a topic.
  * The priority of the profile selected is:
@@ -398,7 +380,7 @@ bool PlayerImpl::is_storage_completely_loaded() const
 bool PlayerImpl::play()
 {
   {
-    std::lock_guard<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+    rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
     if (is_in_playback_.exchange(true)) {
       RCLCPP_WARN_STREAM(
         owner_->get_logger(),
@@ -492,7 +474,7 @@ bool PlayerImpl::play()
       }
 
       {
-        std::lock_guard<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+        rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
         is_in_playback_ = false;
         playback_finished_cv_.notify_all();
       }
@@ -502,13 +484,13 @@ bool PlayerImpl::play()
 
 void PlayerImpl::wait_for_playback_to_finish()
 {
-  std::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+  rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
 }
 
 void PlayerImpl::stop()
 {
-  std::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+  rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   if (!is_in_playback_) {
     if (playback_thread_.joinable()) {
       playback_thread_.join();
@@ -805,7 +787,7 @@ void PlayerImpl::load_storage_content()
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
   while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
-    TSAUniqueLock lk(reader_mutex_);
+    rcpputils::unique_lock lk(reader_mutex_);
     if (!reader_->has_next()) {break;}
 
     if (message_queue_.size_approx() < queue_lower_boundary) {
