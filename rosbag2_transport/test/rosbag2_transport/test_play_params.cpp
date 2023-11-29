@@ -65,6 +65,21 @@ TEST_F(RosBag2PlayTestFixture, parse_parameter_from_file) {
   std::vector<std::string> clock_trigger_topics {"/triggers/clock"};
   EXPECT_EQ(play_options.clock_trigger_topics, clock_trigger_topics);
   EXPECT_EQ(play_options.delay.nanoseconds(), 1);
-  EXPECT_EQ(play_options.playback_duration.seconds(), -1);
-  // TODO(roncapat): compare the other params (from file vs from struct)
+  EXPECT_FLOAT_EQ(play_options.playback_duration.seconds(), -1);
+  EXPECT_FLOAT_EQ(play_options.playback_until_timestamp, -2500000000);
+  EXPECT_FLOAT_EQ(play_options.start_offset, 999999999);
+  EXPECT_FLOAT_EQ(play_options.wait_acked_timeout, -999999999);
+  EXPECT_EQ(play_options.disable_loan_message, false);
+  EXPECT_EQ(play_options.uri,
+    _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
+  EXPECT_EQ(play_options.qos_profile_overrides_path,
+    _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
+
+  EXPECT_EQ(storage_options.storage_id, "sqlite3");
+  EXPECT_EQ(storage_options.storage_config_uri, "");
+  EXPECT_EQ(storage_options.max_bagfile_size, 12345);
+  EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
+  EXPECT_EQ(storage_options.max_cache_size, 9898);
+  EXPECT_EQ(storage_options.storage_preset_profile, "none");
+  EXPECT_EQ(storage_options.snapshot_mode, false);
 }
