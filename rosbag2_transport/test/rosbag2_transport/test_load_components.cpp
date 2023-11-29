@@ -52,7 +52,8 @@ protected:
       ASSERT_TRUE(false) << "service not available after waiting";
     }
   }
-  void TearDown() override{
+  void TearDown() override
+  {
     rclcpp::shutdown();
   }
 };
