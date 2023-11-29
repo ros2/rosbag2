@@ -28,8 +28,6 @@
 # :type GENERATE_DEFAULT: option
 # :param LINK_LIBS: libraries to link to the test executable
 # :type LINK_LIBS: list of strings
-# :param AMENT_DEPS: ament dependencies to declare for the test executable
-# :type AMENT_DEPS: list of strings
 # :param INCLUDE_DIRS: extra include directories to use for building the test
 # :type INCLUDE_DIRS: list of strings
 #
@@ -37,7 +35,7 @@ function(rosbag2_transport_add_gmock target_base)
   cmake_parse_arguments(ARG
     "SKIP_TEST"
     ""
-    "LINK_LIBS;AMENT_DEPS;INCLUDE_DIRS"
+    "LINK_LIBS;INCLUDE_DIRS"
     ${ARGN})
   if(NOT ARG_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR "rosbag2_transport_add_gmock() must be invoked with "
@@ -57,7 +55,6 @@ function(rosbag2_transport_add_gmock target_base)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     ${SKIP_TEST})
   if(TARGET ${target_name})
-    ament_target_dependencies(${target_name} ${ARG_AMENT_DEPS})
     target_link_libraries(${target_name} ${ARG_LINK_LIBS})
     target_include_directories(${target_name} PUBLIC ${ARG_INCLUDE_DIRS})
   endif()

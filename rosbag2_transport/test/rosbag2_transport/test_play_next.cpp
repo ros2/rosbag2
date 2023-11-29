@@ -83,7 +83,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->play();
   player->wait_for_playback_to_start();
 
   ASSERT_TRUE(player->is_paused());
@@ -98,7 +98,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
   ASSERT_THAT(replay_time, Lt(std::chrono::seconds(2)));
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player_future.get();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -137,7 +137,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -151,7 +151,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_one_by_one_messages_with_the_sa
   ASSERT_EQ(played_messages, messages.size());
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player_future.get();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -190,7 +190,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -198,7 +198,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   ASSERT_TRUE(player->is_paused());
   player->resume();
   auto start = std::chrono::steady_clock::now();
-  player_future.get();
+  player->wait_for_playback_to_finish();
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   auto expected_replay_time =
@@ -244,13 +244,13 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_play_next) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player_future.get();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -300,7 +300,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
+  player->play();
 
   ASSERT_TRUE(player->is_paused());
   ASSERT_TRUE(player->play_next());
@@ -313,7 +313,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
 
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player_future.get();
+  player->wait_for_playback_to_finish();
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
