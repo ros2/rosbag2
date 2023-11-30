@@ -1,4 +1,4 @@
-// Copyright 2023, Patrick Roncagliolo.
+// Copyright 2023, Patrick Roncagliolo and Michael Orlov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

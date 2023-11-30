@@ -15,15 +15,14 @@
 #include <gmock/gmock.h>
 #include <memory>
 
-#include "rclcpp/rclcpp.hpp"
-#include "rosbag2_transport_test_fixture.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
-class ComposableRecorderTestFixture : public Rosbag2TransportTestFixture
+using namespace std::chrono_literals;
+
+class ComposableRecorderTestFixture : public testing::Test
 {
 public:
   ComposableRecorderTestFixture()
-  : Rosbag2TransportTestFixture()
   {
     rclcpp::init(0, nullptr);
   }
@@ -40,13 +39,10 @@ public:
   static const char demo_attribute_name_[];
   bool demo_attribute_value{false};
 
-  explicit ComposableRecorder(const rclcpp::NodeOptions & options)
-  : rosbag2_transport::Recorder(
-      std::make_shared<rosbag2_cpp::Writer>(),
-      rosbag2_storage::StorageOptions(),
-      rosbag2_transport::RecordOptions(),
-      "test_recorder_component",
-      options)
+  explicit ComposableRecorder(
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions(),
+    const std::string & node_name = "rosbag2_mock_composable_recorder")
+  : Recorder(node_name, node_options)
   {
     // Declare demo attribute parameter for the underlying node with default value equal to false.
     // However, if node was created with option to override this parameter it will be settled up
@@ -65,6 +61,9 @@ public:
     }
     return ret_value;
   }
+
+  using rosbag2_transport::Recorder::get_storage_options;
+  using rosbag2_transport::Recorder::get_record_options;
 };
 const char ComposableRecorder::demo_attribute_name_[] = "demo_attribute";
 
@@ -81,4 +80,62 @@ TEST_F(ComposableRecorderTestFixture, recorder_inner_params_passed_as_append_ove
   // parameter_overrides options
   ASSERT_TRUE(recorder->get_value_of_bool_parameter(recorder->demo_attribute_name_));
   ASSERT_TRUE(recorder->demo_attribute_value);
+}
+
+TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
+  // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
+  rclcpp::NodeOptions opts;
+  opts.arguments(
+  {
+    "--ros-args",
+    "--params-file", _SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml"
+  });
+  opts.append_parameter_override(
+    "qos_profile_overrides_path",
+    _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
+
+  auto recorder = std::make_shared<ComposableRecorder>(opts, "recorder_params_node");
+  auto record_options = recorder->get_record_options();
+  auto storage_options = recorder->get_storage_options();
+
+  EXPECT_EQ(record_options.all, true);
+  EXPECT_EQ(record_options.is_discovery_disabled, true);
+  std::vector<std::string> topics {"/topic", "/other_topic"};
+  EXPECT_EQ(record_options.topics, topics);
+  EXPECT_EQ(record_options.rmw_serialization_format, "cdr");
+  EXPECT_TRUE(record_options.topic_polling_interval == 0.01s);
+  EXPECT_EQ(record_options.regex, "[xyz]/topic");
+  EXPECT_EQ(record_options.exclude, "*");
+  EXPECT_EQ(record_options.node_prefix, "prefix");
+  EXPECT_EQ(record_options.compression_mode, "stream");
+  EXPECT_EQ(record_options.compression_format, "h264");
+  EXPECT_EQ(record_options.compression_queue_size, 10);
+  EXPECT_EQ(record_options.compression_threads, 2);
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{
+    std::pair{
+      "/overrided_topic_qos",
+      rclcpp::QoS{rclcpp::KeepLast(10)}.reliable().durability_volatile()}
+  };
+  EXPECT_EQ(record_options.topic_qos_profile_overrides, topic_qos_profile_overrides);
+  EXPECT_EQ(record_options.include_hidden_topics, true);
+  EXPECT_EQ(record_options.include_unpublished_topics, true);
+  EXPECT_EQ(record_options.ignore_leaf_topics, false);
+  EXPECT_EQ(record_options.start_paused, false);
+  EXPECT_EQ(record_options.use_sim_time, false);
+
+  EXPECT_EQ(storage_options.uri, "path/to/some_bag");
+  EXPECT_EQ(storage_options.storage_id, "sqlite3");
+  EXPECT_EQ(storage_options.storage_config_uri, "");
+  EXPECT_EQ(storage_options.max_bagfile_size, 12345);
+  EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
+  EXPECT_EQ(storage_options.max_cache_size, 9898);
+  EXPECT_EQ(storage_options.storage_preset_profile, "resilient");
+  EXPECT_EQ(storage_options.snapshot_mode, false);
+  std::unordered_map<std::string, std::string> custom_data{
+    std::pair{"key1", "value1"},
+    std::pair{"key2", "value2"}
+  };
+  EXPECT_EQ(storage_options.custom_data, custom_data);
+  EXPECT_EQ(storage_options.start_time_ns, 0);
+  EXPECT_EQ(storage_options.end_time_ns, 100000);
 }

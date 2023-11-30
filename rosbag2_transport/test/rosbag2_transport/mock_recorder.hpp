@@ -33,7 +33,7 @@ public:
   {}
 
   explicit MockRecorder(
-    const std::string & node_name = "rosbag2_mock_composable_recorder",
+    const std::string & node_name = "rosbag2_mock_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
   : Recorder(node_name, node_options)
   {}

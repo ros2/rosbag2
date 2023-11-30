@@ -120,8 +120,8 @@ function(create_tests_for_rmw_implementation)
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
     ${SKIP_TEST})
 
-  rosbag2_transport_add_gmock(test_play_params
-    test/rosbag2_transport/test_play_params.cpp
+  rosbag2_transport_add_gmock(test_composable_player
+    test/rosbag2_transport/test_composable_player.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_play_loop
@@ -189,10 +189,6 @@ function(create_tests_for_rmw_implementation)
     test/rosbag2_transport/test_record_all.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_record_params
-    test/rosbag2_transport/test_record_params.cpp
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
-
   rosbag2_transport_add_gmock(test_record_all_ignore_leaf_topics
     test/rosbag2_transport/test_record_all_ignore_leaf_topics.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
@@ -222,12 +218,12 @@ function(create_tests_for_rmw_implementation)
     test/rosbag2_transport/test_record_services.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_component_parameters
+  rosbag2_transport_add_gmock(test_composable_recorder
     test/rosbag2_transport/test_composable_recorder.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_load_components
-    test/rosbag2_transport/test_load_components.cpp
+  rosbag2_transport_add_gmock(test_load_composable_components
+    test/rosbag2_transport/test_load_composable_components.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
     ${rclcpp_components_TARGETS})
 

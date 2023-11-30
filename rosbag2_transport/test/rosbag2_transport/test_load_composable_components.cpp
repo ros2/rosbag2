@@ -18,8 +18,6 @@
 #include <string>
 
 #include "composition_interfaces/srv/load_node.hpp"
-#include "composition_interfaces/srv/unload_node.hpp"
-#include "composition_interfaces/srv/list_nodes.hpp"
 
 #include "rclcpp_components/component_manager.hpp"
 #include "rclcpp_components/component_manager_isolated.hpp"
