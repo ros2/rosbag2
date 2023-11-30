@@ -15,38 +15,26 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
-#include <future>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
-#include <utility>
 
-#include "rclcpp/rclcpp.hpp"
 #include "mock_recorder.hpp"
-#include "rosbag2_storage/storage_options.hpp"
-#include "rosbag2_test_common/publication_manager.hpp"
-#include "rosbag2_transport/record_options.hpp"
-#include "rosbag2_transport_test_fixture.hpp"
 
 using namespace std::chrono_literals;
 
-class RecordParamsTestFixture : public Rosbag2TransportTestFixture
+class RecordParamsTestFixture : public testing::Test
 {
 public:
-  RecordParamsTestFixture()
-  : Rosbag2TransportTestFixture()
+  void SetUp() override
   {
     rclcpp::init(0, nullptr);
-    pub_ = std::make_shared<PublicationManager>();
   }
 
-  ~RecordParamsTestFixture() override
+  void TearDown() override
   {
     rclcpp::shutdown();
   }
-
-  std::shared_ptr<PublicationManager> pub_;
 };
 
 TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
@@ -60,13 +48,10 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   opts.append_parameter_override(
     "qos_profile_overrides_path",
     _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
-  opts.append_parameter_override(
-    "uri",
-    _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
 
-  auto node = std::make_shared<MockRecorder>("recorder_params_node", opts);
-  auto record_options = node->get_record_options();
-  auto storage_options = node->get_storage_options();
+  auto recorder = std::make_shared<MockRecorder>("recorder_params_node", opts);
+  auto record_options = recorder->get_record_options();
+  auto storage_options = recorder->get_storage_options();
 
   EXPECT_EQ(record_options.all, true);
   EXPECT_EQ(record_options.is_discovery_disabled, true);
@@ -81,21 +66,31 @@ TEST_F(RecordParamsTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(record_options.compression_format, "h264");
   EXPECT_EQ(record_options.compression_queue_size, 10);
   EXPECT_EQ(record_options.compression_threads, 2);
+  std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{
+    std::pair{
+      "/overrided_topic_qos",
+      rclcpp::QoS{rclcpp::KeepLast(10)}.reliable().durability_volatile()}
+  };
+  EXPECT_EQ(record_options.topic_qos_profile_overrides, topic_qos_profile_overrides);
   EXPECT_EQ(record_options.include_hidden_topics, true);
   EXPECT_EQ(record_options.include_unpublished_topics, true);
   EXPECT_EQ(record_options.ignore_leaf_topics, false);
   EXPECT_EQ(record_options.start_paused, false);
   EXPECT_EQ(record_options.use_sim_time, false);
 
-  EXPECT_EQ(
-    storage_options.uri,
-    _SRC_RESOURCES_DIR_PATH "/sqlite3/test_bag_for_seek");
+  EXPECT_EQ(storage_options.uri, "path/to/some_bag");
   EXPECT_EQ(storage_options.storage_id, "sqlite3");
   EXPECT_EQ(storage_options.storage_config_uri, "");
   EXPECT_EQ(storage_options.max_bagfile_size, 12345);
   EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
   EXPECT_EQ(storage_options.max_cache_size, 9898);
-  EXPECT_EQ(storage_options.storage_preset_profile, "none");
+  EXPECT_EQ(storage_options.storage_preset_profile, "resilient");
+  EXPECT_EQ(storage_options.snapshot_mode, false);
+  std::unordered_map<std::string, std::string> custom_data{
+    std::pair{"key1", "value1"},
+    std::pair{"key2", "value2"}
+  };
+  EXPECT_EQ(storage_options.custom_data, custom_data);
   EXPECT_EQ(storage_options.start_time_ns, 0);
   EXPECT_EQ(storage_options.end_time_ns, 100000);
 }

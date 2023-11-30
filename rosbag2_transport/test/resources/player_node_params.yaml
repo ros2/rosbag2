@@ -34,11 +34,12 @@ player_params_node:
       nsec: -999999999
     disable_loan_message: false
 
-    storage_id: sqlite3
+    uri: "path/to/some_bag"
+    storage_id: "sqlite3"
     storage_config_uri: ""
     max_bagfile_size: 12345
     max_bagfile_duration: 54321
     max_cache_size: 9898
-    storage_preset_profile: "none"
+    storage_preset_profile: "resilient"
     snapshot_mode: false
-    custom_data: ["test=true"]
+    custom_data: ["key1=value1", "key2=value2"]

@@ -28,27 +28,22 @@ using namespace std::chrono_literals;
 
 class TestComponentManager : public ::testing::Test
 {
-protected:
-  std::shared_ptr<rclcpp::Node> node;
-  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec;
-  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> composition_client;
-  std::shared_ptr<rclcpp_components::ComponentManager> manager;
   void SetUp() override
   {
     rclcpp::init(0, nullptr);
-    exec = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-    node = rclcpp::Node::make_shared("test_component_manager");
+    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    node_ = rclcpp::Node::make_shared("test_component_manager");
     using ComponentManagerIsolated =
       rclcpp_components::ComponentManagerIsolated<rclcpp::executors::SingleThreadedExecutor>;
-    manager = std::make_shared<ComponentManagerIsolated>(exec);
+    composition_manager_ = std::make_shared<ComponentManagerIsolated>(exec_);
 
-    exec->add_node(manager);
-    exec->add_node(node);
+    exec_->add_node(composition_manager_);
+    exec_->add_node(node_);
 
-    composition_client = node->create_client<composition_interfaces::srv::LoadNode>(
+    composition_client_ = node_->create_client<composition_interfaces::srv::LoadNode>(
       "/ComponentManager/_container/load_node");
 
-    if (!composition_client->wait_for_service(20s)) {
+    if (!composition_client_->wait_for_service(20s)) {
       ASSERT_TRUE(false) << "service not available after waiting";
     }
   }
@@ -56,6 +51,12 @@ protected:
   {
     rclcpp::shutdown();
   }
+
+protected:
+  std::shared_ptr<rclcpp::Node> node_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
+  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> composition_client_;
+  std::shared_ptr<rclcpp_components::ComponentManager> composition_manager_;
 };
 
 TEST_F(TestComponentManager, test_load_play_component)
@@ -66,7 +67,7 @@ TEST_F(TestComponentManager, test_load_play_component)
   auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
   request->package_name = "rosbag2_transport";
   request->plugin_name = "rosbag2_transport::Player";
-  for (auto p : pl) {
+  for (const auto & p : pl) {
     request->parameters.push_back(p.to_parameter_msg());
   }
 
@@ -79,10 +80,10 @@ TEST_F(TestComponentManager, test_load_play_component)
   request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
   request->parameters.push_back(uri.to_parameter_msg());
 
-  auto future = composition_client->async_send_request(request);
-  auto ret = exec->spin_until_future_complete(future, 5s);  // Wait for the result.
+  auto future = composition_client_->async_send_request(request);
+  auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
+  ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = future.get();
-  EXPECT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   EXPECT_EQ(result->success, true);
   EXPECT_EQ(result->error_message, "");
   EXPECT_EQ(result->full_node_name, "/rosbag2_player");
@@ -97,7 +98,7 @@ TEST_F(TestComponentManager, test_load_record_component)
   auto request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
   request->package_name = "rosbag2_transport";
   request->plugin_name = "rosbag2_transport::Recorder";
-  for (auto p : pl) {
+  for (const auto & p : pl) {
     request->parameters.push_back(p.to_parameter_msg());
   }
 
@@ -106,10 +107,10 @@ TEST_F(TestComponentManager, test_load_record_component)
 
   request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
 
-  auto future = composition_client->async_send_request(request);
-  auto ret = exec->spin_until_future_complete(future, 5s);  // Wait for the result.
+  auto future = composition_client_->async_send_request(request);
+  auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
+  ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = future.get();
-  EXPECT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   EXPECT_EQ(result->success, true);
   EXPECT_EQ(result->error_message, "");
   EXPECT_EQ(result->full_node_name, "/rosbag2_recorder");
