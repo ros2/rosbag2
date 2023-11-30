@@ -85,7 +85,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options);
 
-  ~PlayerImpl();
+  virtual ~PlayerImpl();
 
   bool play();
 
@@ -282,7 +282,7 @@ private:
   bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
     skip_message_in_main_play_loop_mutex_) = false;
   std::mutex is_in_playback_mutex_;
-  std::atomic_bool is_in_playback_{false} RCPPUTILS_TSA_GUARDED_BY(is_in_playback_mutex_);
+  std::atomic_bool is_in_playback_ RCPPUTILS_TSA_GUARDED_BY(is_in_playback_mutex_) = false;
   std::thread playback_thread_;
   std::condition_variable playback_finished_cv_;
 
