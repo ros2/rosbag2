@@ -21,7 +21,7 @@
 #include "rosbag2_compression/compression_factory.hpp"
 #include "fake_compressor.hpp"
 
-class FakeCompressionFactory
+class ROSBAG2_COMPRESSION_EXPORT FakeCompressionFactory
   : public rosbag2_compression::CompressionFactory
 {
 public:
