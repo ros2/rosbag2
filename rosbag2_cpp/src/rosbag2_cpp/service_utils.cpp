@@ -38,6 +38,11 @@ bool is_service_event_topic(const std::string & topic, const std::string & topic
   std::string end_topic_name = topic.substr(
     topic.length() - (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1));
 
+  // Should be "/_service_event"
+  if (end_topic_name != RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) {
+    return false;
+  }
+
   if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
     return false;
   }
@@ -51,11 +56,10 @@ bool is_service_event_topic(const std::string & topic, const std::string & topic
     return false;
   }
 
-  return (topic_type.compare(
-           topic_type.length() - std::strlen(service_event_topic_type_postfix),
-           std::strlen(service_event_topic_type_postfix),
-           service_event_topic_type_postfix) == 0) &&
-         (end_topic_name == RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX);
+  return topic_type.compare(
+    topic_type.length() - std::strlen(service_event_topic_type_postfix),
+    std::strlen(service_event_topic_type_postfix),
+    service_event_topic_type_postfix) == 0;
 }
 
 std::string service_event_topic_name_to_service_name(const std::string & topic_name)

@@ -25,10 +25,12 @@ ROSBAG2_CPP_PUBLIC
 bool
 is_service_event_topic(const std::string & topic, const std::string & topic_type);
 
+// Call this function after is_service_event_topic() return true
 ROSBAG2_CPP_PUBLIC
 std::string
 service_event_topic_name_to_service_name(const std::string & topic_name);
 
+// Call this function after is_service_event_topic() return true
 ROSBAG2_CPP_PUBLIC
 std::string
 service_event_topic_type_to_service_type(const std::string & topic_type);

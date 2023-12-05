@@ -43,7 +43,7 @@ public:
     enable_service_event_contents_(service_event_contents),
     enable_client_event_contents_(client_event_contents)
   {
-    auto echo_process =
+    auto do_nothing_srv_callback =
       [this](const std::shared_ptr<rmw_request_id_t> request_header,
         const std::shared_ptr<typename ServiceT::Request> request,
         std::shared_ptr<typename ServiceT::Response> response) -> void
@@ -54,7 +54,7 @@ public:
         (void)response;
       };
 
-    service_ = create_service<ServiceT>(service_name_, echo_process);
+    service_ = create_service<ServiceT>(service_name_, do_nothing_srv_callback);
 
     rcl_service_introspection_state_t introspection_state;
     if (enable_service_event_contents_) {

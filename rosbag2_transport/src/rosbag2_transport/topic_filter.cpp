@@ -71,6 +71,7 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
   return it != topics.end();
 }
 
+// Check if service event topic is in a service event topic list.
 bool service_in_list(
   const std::string & topic_name,
   const std::vector<std::string> & service_event_topics)

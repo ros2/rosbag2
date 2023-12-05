@@ -68,6 +68,40 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
       "Serialization Format: cdr"));
 }
 
+TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info bag_with_topics_and_service_events --verbose --topic-name",
+    bags_path_);
+  std::string output = internal::GetCapturedStdout();
+  auto expected_storage = GetParam();
+  auto expected_file = rosbag2_test_common::bag_filename_for_storage_id(
+    "bag_with_topics_and_service_events", GetParam());
+  std::string expected_ros_distro = "unknown";
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
+      "will be ignored.\n"));
+
+  // The bag size depends on the os and is not asserted, the time is asserted time zone independent
+  EXPECT_THAT(
+    output, ContainsRegex(
+      "\nFiles:             " + expected_file +
+      "\nBag size:          .*B"
+      "\nStorage id:        " + expected_storage +
+      "\nROS Distro:        " + expected_ros_distro +
+      "\nDuration:          0\\.70s"
+      "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
+      "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
+      "\nMessages:          2"
+      "\nTopic information: "));
+
+  EXPECT_THAT(output, HasSubstr("Service:           2\n"));
+}
+
 TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   internal::CaptureStdout();
   auto exit_code = execute_and_wait_until_completion(
