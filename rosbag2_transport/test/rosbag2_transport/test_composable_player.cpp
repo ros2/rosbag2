@@ -180,8 +180,8 @@ TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_afte
 
   const std::string uri_str = (std::filesystem::path(
       _SRC_RESOURCES_DIR_PATH) / GetParam() / "test_bag_for_seek").generic_string();
-  rclcpp::Parameter uri("uri", rclcpp::ParameterValue(uri_str));
-  rclcpp::Parameter start_paused("start_paused", rclcpp::ParameterValue(true));
+  rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(uri_str));
+  rclcpp::Parameter start_paused("play.start_paused", rclcpp::ParameterValue(true));
 
   load_node_request->parameters.push_back(uri.to_parameter_msg());
   load_node_request->parameters.push_back(start_paused.to_parameter_msg());

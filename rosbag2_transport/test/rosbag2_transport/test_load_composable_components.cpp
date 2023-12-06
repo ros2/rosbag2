@@ -67,8 +67,8 @@ TEST_P(CompositionManagerTestFixture, test_load_record_component)
 
   rclcpp::Parameter qos_profile_overrides_path("record.qos_profile_overrides_path",
     rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
-  rclcpp::Parameter uri("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
-  rclcpp::Parameter storage_id("storage_id", GetParam());
+  rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
+  rclcpp::Parameter storage_id("storage.storage_id", GetParam());
 
   request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
   request->parameters.push_back(uri.to_parameter_msg());

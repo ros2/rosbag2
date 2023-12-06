@@ -172,7 +172,7 @@ TEST_P(ComposableRecorderTests, recorder_inner_params_passed_as_append_override)
 {
   std::vector<rclcpp::Parameter> parameters;
   parameters.emplace_back(MockComposableRecorder::demo_attribute_name_, true);
-  parameters.emplace_back("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
+  parameters.emplace_back("storage.uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
   auto options = rclcpp::NodeOptions()
     .use_global_arguments(false)
     .parameter_overrides(parameters);
@@ -195,8 +195,8 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   opts.append_parameter_override(
     "record.qos_profile_overrides_path",
     _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
-  opts.append_parameter_override("uri", root_bag_path_.generic_string());
-  opts.append_parameter_override("storage_id", GetParam());
+  opts.append_parameter_override("storage.uri", root_bag_path_.generic_string());
+  opts.append_parameter_override("storage.storage_id", GetParam());
 
   auto recorder = std::make_shared<MockComposableRecorder>(opts, "recorder_params_node");
   auto record_options = recorder->get_record_options();
@@ -260,10 +260,10 @@ TEST_P(
   load_node_request->package_name = "rosbag2_transport";
   load_node_request->plugin_name = "rosbag2_transport::Recorder";
 
-  rclcpp::Parameter uri("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
-  rclcpp::Parameter storage_id("storage_id", GetParam());
-  rclcpp::Parameter disable_all("all", false);
-  rclcpp::Parameter topics("topics", std::vector{test_topic_name});
+  rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
+  rclcpp::Parameter storage_id("storage.storage_id", GetParam());
+  rclcpp::Parameter disable_all("record.all", false);
+  rclcpp::Parameter topics("record.topics", std::vector{test_topic_name});
 
   load_node_request->parameters.push_back(uri.to_parameter_msg());
   load_node_request->parameters.push_back(storage_id.to_parameter_msg());

@@ -184,7 +184,7 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   play_options.playback_until_timestamp = param_utils::get_duration_from_node_param(
     node, "play.playback_until_timestamp", 0, -1).nanoseconds();
 
-  play_options.start_paused = node.declare_parameter<bool>("start_paused", false);
+  play_options.start_paused = node.declare_parameter<bool>("play.start_paused", false);
 
   play_options.start_offset = param_utils::get_duration_from_node_param(
     node, "play.start_offset", 0, 0).nanoseconds();
