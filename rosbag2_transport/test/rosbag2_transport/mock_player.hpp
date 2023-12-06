@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 class MockPlayer : public rosbag2_transport::Player
