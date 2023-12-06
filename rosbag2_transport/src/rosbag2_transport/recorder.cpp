@@ -651,6 +651,7 @@ Recorder::Recorder(
   pimpl_ = std::make_unique<RecorderImpl>(
     this, std::move(writer), keyboard_handler,
     storage_options, record_options);
+  pimpl_->record();
 }
 
 Recorder::Recorder(
@@ -688,8 +689,7 @@ Recorder::Recorder(
       storage_options, record_options))
 {}
 
-Recorder::~Recorder()
-{}
+Recorder::~Recorder() = default;
 
 void Recorder::record()
 {

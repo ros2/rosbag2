@@ -57,14 +57,35 @@ class RecorderImpl;
 class Recorder : public rclcpp::Node
 {
 public:
+  /// \brief Constructor and entry point for the composable recorder.
+  /// Will call Recorder(node_name, node_options) constructor with node_name = "rosbag2_recorder".
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Recorder(const rclcpp::NodeOptions & node_options);
 
+  /// \brief Default constructor and entry point for the composable recorder.
+  /// Will construct Recorder class and initialize record_options, storage_options from node
+  /// parameters. At the end will call Recorder::record() to automatically start recording in a
+  /// separate thread.
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Recorder(
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Constructor which will construct Recorder class with provided parameters and default
+  /// KeyboardHandler class initialized with parameter which is disabling signal handlers in it.
+  /// \param writer Shared pointer to the instance of the rosbag2_cpp::Writer class. Shall not be
+  /// null_ptr.
+  /// \param storage_options Storage options which will be applied to the rosbag2_cpp::writer class
+  /// when recording will be started.
+  /// \param record_options Settings for Recorder class
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   Recorder(
     std::shared_ptr<rosbag2_cpp::Writer> writer,
@@ -73,6 +94,16 @@ public:
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Constructor which will construct Recorder class with provided parameters
+  /// \param writer Shared pointer to the instance of the rosbag2_cpp::Writer class. Shall not be
+  /// null_ptr.
+  /// \param keyboard_handler Keyboard handler class uses to handle user input from keyboard.
+  /// \param storage_options Storage options which will be applied to the rosbag2_cpp::writer class
+  /// when recording will be started.
+  /// \param record_options Settings for Recorder class
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   Recorder(
     std::shared_ptr<rosbag2_cpp::Writer> writer,
@@ -82,6 +113,7 @@ public:
     const std::string & node_name = "rosbag2_recorder",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Default destructor.
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
