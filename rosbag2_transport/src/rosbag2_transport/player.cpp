@@ -1249,6 +1249,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
 
   pimpl_ = std::make_unique<PlayerImpl>(
     this, std::move(reader), keyboard_handler, storage_options, play_options);
+  pimpl_->play();
 }
 
 Player::Player(
