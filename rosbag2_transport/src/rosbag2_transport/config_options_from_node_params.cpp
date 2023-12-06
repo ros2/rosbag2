@@ -117,27 +117,28 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 {
   PlayOptions play_options{};
   play_options.read_ahead_queue_size = param_utils::declare_integer_node_params<size_t>(
-    node, "read_ahead_queue_size", 1, std::numeric_limits<int64_t>::max(), 1000);
+    node, "play.read_ahead_queue_size", 1, std::numeric_limits<int64_t>::max(), 1000);
 
-  play_options.node_prefix = node.declare_parameter<std::string>("node_prefix", "");
+  play_options.node_prefix = node.declare_parameter<std::string>("play.node_prefix", "");
 
   auto desc_rate = param_utils::float_param_description(
     "Playback rate (hz)",
     0.000001,
     std::numeric_limits<float>::max());
-  play_options.rate = static_cast<float>(node.declare_parameter<float>("rate", 1.0, desc_rate));
+  play_options.rate =
+    static_cast<float>(node.declare_parameter<float>("play.rate", 1.0, desc_rate));
 
   play_options.topics_to_filter = node.declare_parameter<std::vector<std::string>>(
-    "topics_to_filter", std::vector<std::string>());
+    "play.topics_to_filter", std::vector<std::string>());
 
   play_options.topics_regex_to_filter =
-    node.declare_parameter<std::string>("topics_regex_to_filter", "");
+    node.declare_parameter<std::string>("play.topics_regex_to_filter", "");
 
   play_options.topics_regex_to_exclude =
-    node.declare_parameter<std::string>("topics_regex_to_exclude", "");
+    node.declare_parameter<std::string>("play.topics_regex_to_exclude", "");
 
   std::string qos_profile_overrides_path =
-    node.declare_parameter<std::string>("qos_profile_overrides_path", "");
+    node.declare_parameter<std::string>("play.qos_profile_overrides_path", "");
 
   if (!qos_profile_overrides_path.empty()) {
     try {
@@ -154,10 +155,10 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
     }
   }
 
-  play_options.loop = node.declare_parameter<bool>("loop", false);
+  play_options.loop = node.declare_parameter<bool>("play.loop", false);
 
   auto topic_remapping_options = node.declare_parameter<std::vector<std::string>>(
-    "topic_remapping_options", std::vector<std::string>());
+    "play.topic_remapping_options", std::vector<std::string>());
 
   if (!topic_remapping_options.empty()) {
     RCLCPP_WARN(
@@ -167,35 +168,35 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   }
 
   play_options.clock_publish_frequency =
-    node.declare_parameter<double>("clock_publish_frequency", 0.0);
+    node.declare_parameter<double>("play.clock_publish_frequency", 0.0);
 
   play_options.clock_publish_on_topic_publish =
-    node.declare_parameter<bool>("clock_publish_on_topic_publish", false);
+    node.declare_parameter<bool>("play.clock_publish_on_topic_publish", false);
 
   play_options.clock_trigger_topics = node.declare_parameter<std::vector<std::string>>(
-    "clock_trigger_topics", std::vector<std::string>());
+    "play.clock_trigger_topics", std::vector<std::string>());
 
-  play_options.delay = param_utils::get_duration_from_node_param(node, "delay", 0, 0);
+  play_options.delay = param_utils::get_duration_from_node_param(node, "play.delay", 0, 0);
 
   play_options.playback_duration = param_utils::get_duration_from_node_param(
-    node, "playback_duration", -1, 0);
+    node, "play.playback_duration", -1, 0);
 
   play_options.playback_until_timestamp = param_utils::get_duration_from_node_param(
-    node, "playback_until_timestamp", 0, -1).nanoseconds();
+    node, "play.playback_until_timestamp", 0, -1).nanoseconds();
 
   play_options.start_paused = node.declare_parameter<bool>("start_paused", false);
 
   play_options.start_offset = param_utils::get_duration_from_node_param(
-    node, "start_offset", 0, 0).nanoseconds();
+    node, "play.start_offset", 0, 0).nanoseconds();
 
   play_options.disable_keyboard_controls =
-    node.declare_parameter<bool>("disable_keyboard_controls", false);
+    node.declare_parameter<bool>("play.disable_keyboard_controls", false);
 
   play_options.wait_acked_timeout = param_utils::get_duration_from_node_param(
-    node, "wait_acked_timeout", 0, -1).nanoseconds();
+    node, "play.wait_acked_timeout", 0, -1).nanoseconds();
 
   play_options.disable_loan_message =
-    node.declare_parameter<bool>("disable_loan_message", false);
+    node.declare_parameter<bool>("play.disable_loan_message", false);
 
   return play_options;
 }
@@ -203,36 +204,39 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
 {
   RecordOptions record_options{};
-  record_options.all = node.declare_parameter<bool>("all", false);
+  record_options.all = node.declare_parameter<bool>("record.all", false);
 
   record_options.is_discovery_disabled =
-    node.declare_parameter<bool>("is_discovery_disabled", false);
+    node.declare_parameter<bool>("record.is_discovery_disabled", false);
 
   record_options.topics = node.declare_parameter<std::vector<std::string>>(
-    "topics", std::vector<std::string>());
+    "record.topics", std::vector<std::string>());
 
   record_options.rmw_serialization_format =
-    node.declare_parameter<std::string>("rmw_serialization_format", "");
+    node.declare_parameter<std::string>("record.rmw_serialization_format", "");
 
   record_options.topic_polling_interval = param_utils::get_duration_from_node_param(
-    node, "topic_polling_interval",
+    node, "record.topic_polling_interval",
     0, 1000000).to_chrono<std::chrono::milliseconds>();
 
-  record_options.regex = node.declare_parameter<std::string>("regex", "");
-  record_options.exclude = node.declare_parameter<std::string>("exclude", "");
-  record_options.node_prefix = node.declare_parameter<std::string>("node_prefix", "");
-  record_options.compression_mode = node.declare_parameter<std::string>("compression_mode", "");
-  record_options.compression_format = node.declare_parameter<std::string>("compression_format", "");
+  record_options.regex = node.declare_parameter<std::string>("record.regex", "");
+  record_options.exclude = node.declare_parameter<std::string>("record.exclude", "");
+  record_options.node_prefix = node.declare_parameter<std::string>("record.node_prefix", "");
+  record_options.compression_mode = node.declare_parameter<std::string>(
+    "record.compression_mode",
+    "");
+  record_options.compression_format = node.declare_parameter<std::string>(
+    "record.compression_format", "");
 
   record_options.compression_queue_size = param_utils::declare_integer_node_params<uint64_t>(
-    node, "compression_queue_size", 0, std::numeric_limits<int64_t>::max(), 1);
+    node, "record.compression_queue_size", 0, std::numeric_limits<int64_t>::max(), 1);
 
   record_options.compression_threads = param_utils::declare_integer_node_params<uint64_t>(
-    node, "compression_threads", 0, std::numeric_limits<int64_t>::max(),
+    node, "record.compression_threads", 0, std::numeric_limits<int64_t>::max(),
     record_options.compression_threads);
 
   std::string qos_profile_overrides_path =
-    node.declare_parameter<std::string>("qos_profile_overrides_path", "");
+    node.declare_parameter<std::string>("record.qos_profile_overrides_path", "");
 
   if (!qos_profile_overrides_path.empty()) {
     try {
@@ -250,15 +254,15 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   }
 
   record_options.include_hidden_topics =
-    node.declare_parameter<bool>("include_hidden_topics", false);
+    node.declare_parameter<bool>("record.include_hidden_topics", false);
 
   record_options.include_unpublished_topics =
-    node.declare_parameter<bool>("include_unpublished_topics", false);
+    node.declare_parameter<bool>("record.include_unpublished_topics", false);
 
   record_options.ignore_leaf_topics =
-    node.declare_parameter<bool>("ignore_leaf_topics", false);
+    node.declare_parameter<bool>("record.ignore_leaf_topics", false);
 
-  record_options.start_paused = node.declare_parameter<bool>("start_paused", false);
+  record_options.start_paused = node.declare_parameter<bool>("record.start_paused", false);
 
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 
@@ -275,32 +279,32 @@ get_storage_options_from_node_params(rclcpp::Node & node)
 {
   rosbag2_storage::StorageOptions storage_options{};
 
-  storage_options.uri = node.declare_parameter<std::string>("uri", "");
+  storage_options.uri = node.declare_parameter<std::string>("storage.uri", "");
 
-  storage_options.storage_id = node.declare_parameter<std::string>("storage_id", "");
+  storage_options.storage_id = node.declare_parameter<std::string>("storage.storage_id", "");
 
   storage_options.storage_config_uri =
-    node.declare_parameter<std::string>("storage_config_uri", "");
+    node.declare_parameter<std::string>("storage.storage_config_uri", "");
 
   storage_options.max_bagfile_size = param_utils::declare_integer_node_params<uint64_t>(
-    node, "max_bagfile_size", 0,
+    node, "storage.max_bagfile_size", 0,
     std::numeric_limits<int64_t>::max(), storage_options.max_bagfile_size);
 
   storage_options.max_bagfile_duration = param_utils::declare_integer_node_params<uint64_t>(
-    node, "max_bagfile_duration", 0,
+    node, "storage.max_bagfile_duration", 0,
     std::numeric_limits<int64_t>::max(), storage_options.max_bagfile_duration);
 
   storage_options.max_cache_size = param_utils::declare_integer_node_params<uint64_t>(
-    node, "max_cache_size", 0,
+    node, "storage.max_cache_size", 0,
     std::numeric_limits<int64_t>::max(), 100 * 1024 * 1024);
 
   storage_options.storage_preset_profile =
-    node.declare_parameter<std::string>("storage_preset_profile", "");
+    node.declare_parameter<std::string>("storage.storage_preset_profile", "");
 
-  storage_options.snapshot_mode = node.declare_parameter<bool>("snapshot_mode", false);
+  storage_options.snapshot_mode = node.declare_parameter<bool>("storage.snapshot_mode", false);
 
   auto list_of_key_value_strings = node.declare_parameter<std::vector<std::string>>(
-    "custom_data",
+    "storage.custom_data",
     std::vector<std::string>());
   for (const auto & key_value_string : list_of_key_value_strings) {
     auto delimiter_pos = key_value_string.find("=", 0);
@@ -316,11 +320,11 @@ get_storage_options_from_node_params(rclcpp::Node & node)
   }
 
   storage_options.start_time_ns = param_utils::declare_integer_node_params<int64_t>(
-    node, "start_time_ns", std::numeric_limits<int64_t>::min(),
+    node, "storage.start_time_ns", std::numeric_limits<int64_t>::min(),
     std::numeric_limits<int64_t>::max(), storage_options.start_time_ns);
 
   storage_options.end_time_ns = param_utils::declare_integer_node_params<int64_t>(
-    node, "end_time_ns", std::numeric_limits<int64_t>::min(),
+    node, "storage.end_time_ns", std::numeric_limits<int64_t>::min(),
     std::numeric_limits<int64_t>::max(), storage_options.end_time_ns);
 
   return storage_options;

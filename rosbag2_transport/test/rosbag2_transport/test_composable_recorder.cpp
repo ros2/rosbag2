@@ -91,7 +91,7 @@ TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
     "--params-file", _SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml"
   });
   opts.append_parameter_override(
-    "qos_profile_overrides_path",
+    "record.qos_profile_overrides_path",
     _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
 
   auto recorder = std::make_shared<ComposableRecorder>(opts, "recorder_params_node");
