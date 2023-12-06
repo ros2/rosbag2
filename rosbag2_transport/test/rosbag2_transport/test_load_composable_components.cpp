@@ -14,50 +14,11 @@
 
 #include <gmock/gmock.h>
 
-#include <memory>
-#include <string>
-
-#include "composition_interfaces/srv/load_node.hpp"
-
-#include "rclcpp_components/component_manager.hpp"
-#include "rclcpp_components/component_manager_isolated.hpp"
+#include "composition_manager_test_fixture.hpp"
 
 using namespace std::chrono_literals;
 
-class TestComponentManager : public ::testing::Test
-{
-  void SetUp() override
-  {
-    rclcpp::init(0, nullptr);
-    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-    node_ = rclcpp::Node::make_shared("test_component_manager");
-    using ComponentManagerIsolated =
-      rclcpp_components::ComponentManagerIsolated<rclcpp::executors::SingleThreadedExecutor>;
-    composition_manager_ = std::make_shared<ComponentManagerIsolated>(exec_);
-
-    exec_->add_node(composition_manager_);
-    exec_->add_node(node_);
-
-    composition_client_ = node_->create_client<composition_interfaces::srv::LoadNode>(
-      "/ComponentManager/_container/load_node");
-
-    if (!composition_client_->wait_for_service(20s)) {
-      ASSERT_TRUE(false) << "service not available after waiting";
-    }
-  }
-  void TearDown() override
-  {
-    rclcpp::shutdown();
-  }
-
-protected:
-  std::shared_ptr<rclcpp::Node> node_;
-  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
-  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> composition_client_;
-  std::shared_ptr<rclcpp_components::ComponentManager> composition_manager_;
-};
-
-TEST_F(TestComponentManager, test_load_play_component)
+TEST_F(CompositionManagerTestFixture, test_load_play_component)
 {
   std::string path{_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml"};
   auto pm = rclcpp::parameter_map_from_yaml_file(path);
@@ -88,7 +49,7 @@ TEST_F(TestComponentManager, test_load_play_component)
   EXPECT_EQ(result->unique_id, 1u);
 }
 
-TEST_F(TestComponentManager, test_load_record_component)
+TEST_F(CompositionManagerTestFixture, test_load_record_component)
 {
   std::string path{_SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml"};
   auto pm = rclcpp::parameter_map_from_yaml_file(path);
