@@ -42,7 +42,7 @@ PlayerServiceClient::PlayerServiceClient(
   ts_lib_ = rclcpp::get_typesupport_library(
     service_event_type, "rosidl_typesupport_cpp");
 
-  ts_ = rclcpp::get_typesupport_handle(
+  ts_ = rclcpp::get_message_typesupport_handle(
     service_event_type,
     "rosidl_typesupport_cpp",
     *ts_lib_);
