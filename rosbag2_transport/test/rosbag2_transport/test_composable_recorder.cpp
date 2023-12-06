@@ -13,33 +13,53 @@
 // limitations under the License.
 
 #include <gmock/gmock.h>
+
+#include <filesystem>
 #include <memory>
 
 #include "rosbag2_transport/recorder.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
+using namespace ::testing;  // NOLINT
 
-class ComposableRecorderTestFixture : public testing::Test
+class ComposableRecorderTests
+  : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
 {
 public:
-  ComposableRecorderTestFixture()
+  void SetUp() override
   {
     rclcpp::init(0, nullptr);
+    auto bag_name = get_test_name() + "_" + GetParam();
+    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
   }
 
-  ~ComposableRecorderTestFixture() override
+  void TearDown() override
   {
     rclcpp::shutdown();
+    std::filesystem::remove_all(root_bag_path_);
   }
+
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+    std::string test_name = test_info->name();
+    // Replace any slashes in the test name, since it is used in paths
+    std::replace(test_name.begin(), test_name.end(), '/', '_');
+    return test_name;
+  }
+
+  std::filesystem::path root_bag_path_;
 };
 
-class ComposableRecorder : public rosbag2_transport::Recorder
+class MockComposableRecorder : public rosbag2_transport::Recorder
 {
 public:
   static const char demo_attribute_name_[];
   bool demo_attribute_value{false};
 
-  explicit ComposableRecorder(
+  explicit MockComposableRecorder(
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions(),
     const std::string & node_name = "rosbag2_mock_composable_recorder")
   : Recorder(node_name, node_options)
@@ -65,24 +85,25 @@ public:
   using rosbag2_transport::Recorder::get_storage_options;
   using rosbag2_transport::Recorder::get_record_options;
 };
-const char ComposableRecorder::demo_attribute_name_[] = "demo_attribute";
+const char MockComposableRecorder::demo_attribute_name_[] = "demo_attribute";
 
-TEST_F(ComposableRecorderTestFixture, recorder_inner_params_passed_as_append_override)
+TEST_P(ComposableRecorderTests, recorder_inner_params_passed_as_append_override)
 {
   std::vector<rclcpp::Parameter> parameters;
-  parameters.emplace_back(ComposableRecorder::demo_attribute_name_, true);
+  parameters.emplace_back(MockComposableRecorder::demo_attribute_name_, true);
+  parameters.emplace_back("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
   auto options = rclcpp::NodeOptions()
     .use_global_arguments(false)
     .parameter_overrides(parameters);
 
-  auto recorder = std::make_shared<ComposableRecorder>(options);
+  auto recorder = std::make_shared<MockComposableRecorder>(options);
   // Check that rosbag2_transport::Recorder inner params will not erase our
   // parameter_overrides options
   ASSERT_TRUE(recorder->get_value_of_bool_parameter(recorder->demo_attribute_name_));
   ASSERT_TRUE(recorder->demo_attribute_value);
 }
 
-TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
+TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   rclcpp::NodeOptions opts;
   opts.arguments(
@@ -93,8 +114,10 @@ TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
   opts.append_parameter_override(
     "record.qos_profile_overrides_path",
     _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
+  opts.append_parameter_override("uri", root_bag_path_.generic_string());
+  opts.append_parameter_override("storage_id", GetParam());
 
-  auto recorder = std::make_shared<ComposableRecorder>(opts, "recorder_params_node");
+  auto recorder = std::make_shared<MockComposableRecorder>(opts, "recorder_params_node");
   auto record_options = recorder->get_record_options();
   auto storage_options = recorder->get_storage_options();
 
@@ -123,13 +146,13 @@ TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(record_options.start_paused, false);
   EXPECT_EQ(record_options.use_sim_time, false);
 
-  EXPECT_EQ(storage_options.uri, "path/to/some_bag");
-  EXPECT_EQ(storage_options.storage_id, "sqlite3");
+  EXPECT_EQ(storage_options.uri, root_bag_path_.generic_string());
+  EXPECT_EQ(storage_options.storage_id, GetParam());
   EXPECT_EQ(storage_options.storage_config_uri, "");
-  EXPECT_EQ(storage_options.max_bagfile_size, 12345);
-  EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
-  EXPECT_EQ(storage_options.max_cache_size, 9898);
-  EXPECT_EQ(storage_options.storage_preset_profile, "resilient");
+  EXPECT_EQ(storage_options.max_bagfile_size, 8601600678);
+  EXPECT_EQ(storage_options.max_bagfile_duration, 54321689657);
+  EXPECT_EQ(storage_options.max_cache_size, 989888);
+  EXPECT_EQ(storage_options.storage_preset_profile, "none");
   EXPECT_EQ(storage_options.snapshot_mode, false);
   std::unordered_map<std::string, std::string> custom_data{
     std::pair{"key1", "value1"},
@@ -139,3 +162,9 @@ TEST_F(ComposableRecorderTestFixture, parse_parameter_from_file) {
   EXPECT_EQ(storage_options.start_time_ns, 0);
   EXPECT_EQ(storage_options.end_time_ns, 100000);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedComposableRecorderTests,
+  ComposableRecorderTests,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

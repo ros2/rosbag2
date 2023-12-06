@@ -28,8 +28,22 @@
 using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 
-class ComposablePlayerTestFixture
-  : public CompositionManagerTestFixture, public WithParamInterface<std::string>
+class ComposablePlayerTests
+  : public ::testing::Test, public WithParamInterface<std::string>
+{
+public:
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
+  }
+
+  void TearDown() override
+  {
+    rclcpp::shutdown();
+  }
+};
+
+class ComposablePlayerIntegrationTests : public CompositionManagerTestFixture
 {
 public:
   using srvPlay = rosbag2_interfaces::srv::Play;
@@ -99,7 +113,7 @@ protected:
   const size_t num_msgs_in_bag_ = 5;
 };
 
-TEST_P(ComposablePlayerTestFixture, player_can_parse_parameters_from_file) {
+TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   rclcpp::NodeOptions opts;
   opts.arguments(
@@ -158,7 +172,7 @@ TEST_P(ComposablePlayerTestFixture, player_can_parse_parameters_from_file) {
   EXPECT_EQ(storage_options.custom_data, custom_data);
 }
 
-TEST_P(ComposablePlayerTestFixture, player_can_automatically_play_file_after_composition) {
+TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_after_composition) {
   const size_t expected_number_of_messages = num_msgs_in_bag_;
   auto load_node_request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
   load_node_request->package_name = "rosbag2_transport";
@@ -196,6 +210,12 @@ TEST_P(ComposablePlayerTestFixture, player_can_automatically_play_file_after_com
 
 INSTANTIATE_TEST_SUITE_P(
   ParametrizedComposablePlayerTests,
-  ComposablePlayerTestFixture,
+  ComposablePlayerTests,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedComposablePlayerIntegrationTests,
+  ComposablePlayerIntegrationTests,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );

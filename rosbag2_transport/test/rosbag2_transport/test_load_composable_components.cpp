@@ -15,10 +15,11 @@
 #include <gmock/gmock.h>
 
 #include "composition_manager_test_fixture.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;  // NOLINT
 
-TEST_F(CompositionManagerTestFixture, test_load_play_component)
+TEST_P(CompositionManagerTestFixture, test_load_play_component)
 {
   std::string path{_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml"};
   auto pm = rclcpp::parameter_map_from_yaml_file(path);
@@ -33,11 +34,14 @@ TEST_F(CompositionManagerTestFixture, test_load_play_component)
   rclcpp::Parameter qos_profile_overrides_path("play.qos_profile_overrides_path",
     rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
 
-  rclcpp::Parameter uri("storage.uri",
-    rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "//sqlite3/test_bag_for_seek"));
+  const std::string uri_str = (std::filesystem::path(
+      _SRC_RESOURCES_DIR_PATH) / GetParam() / "test_bag_for_seek").generic_string();
+  rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(uri_str));
+  rclcpp::Parameter storage_id("storage.storage_id", GetParam());
 
   request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
   request->parameters.push_back(uri.to_parameter_msg());
+  request->parameters.push_back(storage_id.to_parameter_msg());
 
   auto future = composition_client_->async_send_request(request);
   auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
@@ -49,7 +53,7 @@ TEST_F(CompositionManagerTestFixture, test_load_play_component)
   EXPECT_EQ(result->unique_id, 1u);
 }
 
-TEST_F(CompositionManagerTestFixture, test_load_record_component)
+TEST_P(CompositionManagerTestFixture, test_load_record_component)
 {
   std::string path{_SRC_RESOURCES_DIR_PATH "/recorder_node_params.yaml"};
   auto pm = rclcpp::parameter_map_from_yaml_file(path);
@@ -63,8 +67,12 @@ TEST_F(CompositionManagerTestFixture, test_load_record_component)
 
   rclcpp::Parameter qos_profile_overrides_path("record.qos_profile_overrides_path",
     rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
+  rclcpp::Parameter uri("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
+  rclcpp::Parameter storage_id("storage_id", GetParam());
 
   request->parameters.push_back(qos_profile_overrides_path.to_parameter_msg());
+  request->parameters.push_back(uri.to_parameter_msg());
+  request->parameters.push_back(storage_id.to_parameter_msg());
 
   auto future = composition_client_->async_send_request(request);
   auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
@@ -75,3 +83,9 @@ TEST_F(CompositionManagerTestFixture, test_load_record_component)
   EXPECT_EQ(result->full_node_name, "/rosbag2_recorder");
   EXPECT_EQ(result->unique_id, 1u);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedLoadComposableComponentsTests,
+  CompositionManagerTestFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

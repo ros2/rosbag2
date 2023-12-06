@@ -17,19 +17,30 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
 #include "composition_interfaces/srv/load_node.hpp"
 #include "rclcpp_components/component_manager.hpp"
 #include "rclcpp_components/component_manager_isolated.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
-class CompositionManagerTestFixture : public ::testing::Test
+class CompositionManagerTestFixture
+  : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
 {
 public:
   void SetUp() override
   {
     rclcpp::init(0, nullptr);
+    auto bag_name = get_test_name() + "_" + GetParam();
+    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
+
+    // Clean up potentially leftover bag files.
+    // There may be leftovers if the system reallocates a temp directory
+    // used by a previous test execution and the test did not have a clean exit.
+    std::filesystem::remove_all(root_bag_path_);
+
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     node_ = rclcpp::Node::make_shared("test_component_manager");
     using ComponentManagerIsolated =
@@ -46,12 +57,24 @@ public:
       ASSERT_TRUE(false) << "service not available after waiting";
     }
   }
+
   void TearDown() override
   {
     rclcpp::shutdown();
+    std::filesystem::remove_all(root_bag_path_);
+  }
+
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+    std::string test_name = test_info->name();
+    // Replace any slashes in the test name, since it is used in paths
+    std::replace(test_name.begin(), test_name.end(), '/', '_');
+    return test_name;
   }
 
 protected:
+  std::filesystem::path root_bag_path_;
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
   std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> composition_client_;
