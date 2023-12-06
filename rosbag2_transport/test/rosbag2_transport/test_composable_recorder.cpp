@@ -17,12 +17,93 @@
 #include <filesystem>
 #include <memory>
 
-#include "rosbag2_transport/recorder.hpp"
+#include "composition_manager_test_fixture.hpp"
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_test_common/publication_manager.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
+#include "rosbag2_transport/recorder.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
+
+class ComposableRecorderIntegrationTests : public CompositionManagerTestFixture
+{
+public:
+  std::string get_bag_file_name(int split_index) const
+  {
+    std::stringstream bag_file_name;
+    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
+
+    return bag_file_name.str();
+  }
+
+  std::filesystem::path get_bag_file_path(int split_index)
+  {
+    return root_bag_path_ / get_relative_bag_file_path(split_index);
+  }
+
+  std::filesystem::path get_relative_bag_file_path(int split_index) const
+  {
+    const auto storage_id = GetParam();
+    return std::filesystem::path(
+      rosbag2_test_common::bag_filename_for_storage_id(get_bag_file_name(split_index), storage_id));
+  }
+
+  void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
+  {
+    rosbag2_storage::MetadataIo metadata_io;
+    const auto start_time = std::chrono::steady_clock::now();
+    const auto bag_path = root_bag_path_.generic_string();
+
+    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
+      if (metadata_io.metadata_file_exists(bag_path)) {
+        return;
+      }
+      std::this_thread::sleep_for(50ms);
+    }
+    ASSERT_EQ(metadata_io.metadata_file_exists(bag_path), true)
+      << "Could not find metadata file: \"" << bag_path.c_str() << "\"";
+  }
+
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  {
+    const auto storage_path = get_bag_file_path(0);
+    const auto start_time = std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
+      if (std::filesystem::exists(storage_path)) {
+        return;
+      }
+      std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
+    }
+    ASSERT_EQ(std::filesystem::exists(storage_path), true)
+      << "Could not find storage file: \"" << storage_path.generic_string() << "\"";
+  }
+
+  template<typename MessageT>
+  std::vector<std::shared_ptr<MessageT>> get_messages_for_topic(const std::string & topic)
+  {
+    auto filter = rosbag2_storage::StorageFilter{};
+    filter.topics.push_back(topic);
+
+    std::unique_ptr<rosbag2_cpp::Reader> reader = std::make_unique<rosbag2_cpp::Reader>();
+    reader->open(root_bag_path_.generic_string());
+    reader->set_filter(filter);
+
+    auto messages = std::vector<std::shared_ptr<MessageT>>{};
+    while (reader->has_next()) {
+      auto msg = reader->read_next();
+      messages.push_back(memory_management_.deserialize_message<MessageT>(msg->serialized_data));
+    }
+    return messages;
+  }
+
+protected:
+  MemoryManagement memory_management_{};
+};
 
 class ComposableRecorderTests
   : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
@@ -162,6 +243,73 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(storage_options.start_time_ns, 0);
   EXPECT_EQ(storage_options.end_time_ns, 100000);
 }
+
+TEST_P(
+  ComposableRecorderIntegrationTests,
+  recorder_can_automatically_start_recording_after_composition) {
+  const size_t num_messages_to_publish = 5;
+  auto string_message = get_messages_strings()[0];
+  string_message->string_value = "Hello World";
+  const std::string test_topic_name = "/composable_recorder_test_string_topic";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(test_topic_name, string_message, num_messages_to_publish);
+
+  // Load composable recorder node
+  auto load_node_request = std::make_shared<composition_interfaces::srv::LoadNode::Request>();
+  load_node_request->package_name = "rosbag2_transport";
+  load_node_request->plugin_name = "rosbag2_transport::Recorder";
+
+  rclcpp::Parameter uri("uri", rclcpp::ParameterValue(root_bag_path_.generic_string()));
+  rclcpp::Parameter storage_id("storage_id", GetParam());
+  rclcpp::Parameter disable_all("all", false);
+  rclcpp::Parameter topics("topics", std::vector{test_topic_name});
+
+  load_node_request->parameters.push_back(uri.to_parameter_msg());
+  load_node_request->parameters.push_back(storage_id.to_parameter_msg());
+  load_node_request->parameters.push_back(disable_all.to_parameter_msg());
+  load_node_request->parameters.push_back(topics.to_parameter_msg());
+
+  auto load_node_future = load_node_client_->async_send_request(load_node_request);
+  // Wait for the response
+  auto load_node_ret = exec_->spin_until_future_complete(load_node_future, 10s);
+  ASSERT_EQ(load_node_ret, rclcpp::FutureReturnCode::SUCCESS);
+  auto load_node_response = load_node_future.get();
+  EXPECT_EQ(load_node_response->success, true);
+  EXPECT_EQ(load_node_response->error_message, "");
+  EXPECT_EQ(load_node_response->full_node_name, "/rosbag2_recorder");
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_name.c_str())) <<
+    "Expected to find " << test_topic_name.c_str() << " subscription";
+
+  wait_for_storage_file();
+
+  pub_manager.run_publishers();
+
+  // Unload composed recorder node
+  auto unload_node_request = std::make_shared<composition_interfaces::srv::UnloadNode::Request>();
+  unload_node_request->unique_id = load_node_response->unique_id;
+  auto unload_node_future = unload_node_client_->async_send_request(unload_node_request);
+  // Wait for the response
+  auto unload_node_ret = exec_->spin_until_future_complete(unload_node_future, 10s);
+  auto unload_node_response = unload_node_future.get();
+  EXPECT_EQ(unload_node_ret, rclcpp::FutureReturnCode::SUCCESS);
+  EXPECT_EQ(unload_node_response->success, true);
+  EXPECT_EQ(unload_node_response->error_message, "");
+
+  wait_for_metadata();
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>(test_topic_name);
+  // We shutdown node right after publishing messages. We can't guarantee that all published
+  // messages will be delivered and recorded. Some messages could be still in the DDS or pub/sub
+  // queues. Make sure that we recorded at least one.
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(1)));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParametrizedComposableRecorderIntegrationTests,
+  ComposableRecorderIntegrationTests,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);
 
 INSTANTIATE_TEST_SUITE_P(
   ParametrizedComposableRecorderTests,

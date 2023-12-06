@@ -186,7 +186,7 @@ TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_afte
   load_node_request->parameters.push_back(uri.to_parameter_msg());
   load_node_request->parameters.push_back(start_paused.to_parameter_msg());
 
-  auto load_node_future = composition_client_->async_send_request(load_node_request);
+  auto load_node_future = load_node_client_->async_send_request(load_node_request);
   auto ret = exec_->spin_until_future_complete(load_node_future, 10s);  // Wait for the result.
   ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = load_node_future.get();

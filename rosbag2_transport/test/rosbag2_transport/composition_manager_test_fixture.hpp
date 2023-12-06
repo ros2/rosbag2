@@ -50,10 +50,17 @@ public:
     exec_->add_node(composition_manager_);
     exec_->add_node(node_);
 
-    composition_client_ = node_->create_client<composition_interfaces::srv::LoadNode>(
+    load_node_client_ = node_->create_client<composition_interfaces::srv::LoadNode>(
       "/ComponentManager/_container/load_node");
 
-    if (!composition_client_->wait_for_service(std::chrono::seconds(20))) {
+    if (!load_node_client_->wait_for_service(std::chrono::seconds(20))) {
+      ASSERT_TRUE(false) << "service not available after waiting";
+    }
+
+    unload_node_client_ = node_->create_client<composition_interfaces::srv::UnloadNode>(
+      "/ComponentManager/_container/unload_node");
+
+    if (!unload_node_client_->wait_for_service(std::chrono::seconds(20))) {
       ASSERT_TRUE(false) << "service not available after waiting";
     }
   }
@@ -77,7 +84,8 @@ protected:
   std::filesystem::path root_bag_path_;
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
-  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> composition_client_;
+  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::LoadNode>> load_node_client_;
+  std::shared_ptr<rclcpp::Client<composition_interfaces::srv::UnloadNode>> unload_node_client_;
   std::shared_ptr<rclcpp_components::ComponentManager> composition_manager_;
 };
 
