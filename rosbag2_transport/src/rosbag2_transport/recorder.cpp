@@ -170,6 +170,16 @@ void Recorder::record()
       });
   }
 
+  srv_split_bagfile_ = create_service<rosbag2_interfaces::srv::SplitBagfile>(
+    "~/split_bagfile",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
+    {
+      writer_->split_bagfile();
+    });
+
   split_event_pub_ =
     create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
 
