@@ -28,8 +28,8 @@ recorder_params_node:
       uri: "path/to/some_bag"
       storage_id: "sqlite3"
       storage_config_uri: ""
-      max_bagfile_size: 8601600678
-      max_bagfile_duration: 54321689657
+      max_bagfile_size: 2147483646
+      max_bagfile_duration: 2147483646
       max_cache_size: 989888
       storage_preset_profile: "none"
       snapshot_mode: false
