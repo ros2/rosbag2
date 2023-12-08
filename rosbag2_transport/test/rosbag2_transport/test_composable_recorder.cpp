@@ -114,6 +114,11 @@ public:
     rclcpp::init(0, nullptr);
     auto bag_name = get_test_name() + "_" + GetParam();
     root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
+
+    // Clean up potentially leftover bag files.
+    // There may be leftovers if the system reallocates a temp directory
+    // used by a previous test execution and the test did not have a clean exit.
+    std::filesystem::remove_all(root_bag_path_);
   }
 
   void TearDown() override
@@ -287,15 +292,7 @@ TEST_P(
   pub_manager.run_publishers();
 
   // Unload composed recorder node
-  auto unload_node_request = std::make_shared<composition_interfaces::srv::UnloadNode::Request>();
-  unload_node_request->unique_id = load_node_response->unique_id;
-  auto unload_node_future = unload_node_client_->async_send_request(unload_node_request);
-  // Wait for the response
-  auto unload_node_ret = exec_->spin_until_future_complete(unload_node_future, 10s);
-  auto unload_node_response = unload_node_future.get();
-  EXPECT_EQ(unload_node_ret, rclcpp::FutureReturnCode::SUCCESS);
-  EXPECT_EQ(unload_node_response->success, true);
-  EXPECT_EQ(unload_node_response->error_message, "");
+  unload_node(load_node_response->unique_id);
 
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>(test_topic_name);

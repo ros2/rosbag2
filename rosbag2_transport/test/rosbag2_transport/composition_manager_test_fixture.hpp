@@ -68,7 +68,23 @@ public:
   void TearDown() override
   {
     rclcpp::shutdown();
+    composition_manager_.reset(); // Need to force destruction to invoke composed recorder
+    // destructor before trying to delete files which is currently opened for writing.
     std::filesystem::remove_all(root_bag_path_);
+  }
+
+  void unload_node(uint64_t node_id)
+  {
+    auto unload_node_request = std::make_shared<composition_interfaces::srv::UnloadNode::Request>();
+    unload_node_request->unique_id = node_id;
+    auto unload_node_future = unload_node_client_->async_send_request(unload_node_request);
+    // Wait for the response
+    auto unload_node_ret =
+      exec_->spin_until_future_complete(unload_node_future, std::chrono::seconds(10));
+    auto unload_node_response = unload_node_future.get();
+    EXPECT_EQ(unload_node_ret, rclcpp::FutureReturnCode::SUCCESS);
+    EXPECT_EQ(unload_node_response->success, true);
+    EXPECT_EQ(unload_node_response->error_message, "");
   }
 
   std::string get_test_name() const

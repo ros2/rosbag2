@@ -51,6 +51,9 @@ TEST_P(CompositionManagerTestFixture, test_load_play_component)
   EXPECT_EQ(result->error_message, "");
   EXPECT_EQ(result->full_node_name, "/rosbag2_player");
   EXPECT_EQ(result->unique_id, 1u);
+
+  // Unload composed player node
+  unload_node(result->unique_id);
 }
 
 TEST_P(CompositionManagerTestFixture, test_load_record_component)
@@ -82,6 +85,9 @@ TEST_P(CompositionManagerTestFixture, test_load_record_component)
   EXPECT_EQ(result->error_message, "");
   EXPECT_EQ(result->full_node_name, "/rosbag2_recorder");
   EXPECT_EQ(result->unique_id, 1u);
+
+  // Unload composed recorder node
+  unload_node(result->unique_id);
 }
 
 INSTANTIATE_TEST_SUITE_P(
