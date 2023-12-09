@@ -68,7 +68,7 @@ public:
   void TearDown() override
   {
     rclcpp::shutdown();
-    composition_manager_.reset(); // Need to force destruction to invoke composed recorder
+    composition_manager_.reset();  // Need to force destruction to invoke composed recorder
     // destructor before trying to delete files which is currently opened for writing.
     std::filesystem::remove_all(root_bag_path_);
   }
