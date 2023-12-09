@@ -235,8 +235,8 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(storage_options.uri, root_bag_path_.generic_string());
   EXPECT_EQ(storage_options.storage_id, GetParam());
   EXPECT_EQ(storage_options.storage_config_uri, "");
-  EXPECT_EQ(storage_options.max_bagfile_size, 8601600678);
-  EXPECT_EQ(storage_options.max_bagfile_duration, 54321689657);
+  EXPECT_EQ(storage_options.max_bagfile_size, 2147483646);
+  EXPECT_EQ(storage_options.max_bagfile_duration, 2147483646);
   EXPECT_EQ(storage_options.max_cache_size, 989888);
   EXPECT_EQ(storage_options.storage_preset_profile, "none");
   EXPECT_EQ(storage_options.snapshot_mode, false);
