@@ -70,7 +70,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 rclcpp_components_register_node(
-  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Player" EXECUTABLE Rosbag2Player)
+  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Player" EXECUTABLE player)
 
 rclcpp_components_register_node(
   ${PROJECT_NAME} PLUGIN "rosbag2_transport::Recorder" EXECUTABLE Rosbag2Recorder)
