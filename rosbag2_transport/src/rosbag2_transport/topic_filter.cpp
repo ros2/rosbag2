@@ -71,19 +71,6 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
   return it != topics.end();
 }
 
-// Check if service event topic is in a service event topic list.
-bool service_in_list(
-  const std::string & topic_name,
-  const std::vector<std::string> & service_event_topics)
-{
-  size_t pos = topic_name.rfind(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX);
-  if (pos == std::string::npos) {
-    return false;
-  }
-  auto it = std::find(service_event_topics.begin(), service_event_topics.end(), topic_name);
-  return it != service_event_topics.end();
-}
-
 bool
 topic_is_unpublished(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
@@ -207,7 +194,7 @@ bool TopicFilter::take_topic(
     if (!record_options_.all_services) {
       // Not in include service list
       if (record_options_.services.empty() ||
-        !service_in_list(topic_name, record_options_.services))
+        !topic_in_list(topic_name, record_options_.services))
       {
         // Not match include regex
         if (!record_options_.regex.empty()) {
@@ -222,7 +209,7 @@ bool TopicFilter::take_topic(
     }
 
     if (!record_options_.exclude_service_events.empty() &&
-      service_in_list(topic_name, record_options_.exclude_service_events))
+      topic_in_list(topic_name, record_options_.exclude_service_events))
     {
       return false;
     }
