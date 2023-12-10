@@ -151,7 +151,7 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   std::vector<std::string> clock_trigger_topics {"/triggers/clock"};
   EXPECT_EQ(play_options.clock_trigger_topics, clock_trigger_topics);
   EXPECT_EQ(play_options.delay.nanoseconds(), 1);
-  EXPECT_FLOAT_EQ(play_options.playback_duration.seconds(), -1);
+  EXPECT_FLOAT_EQ(play_options.playback_duration.seconds(), -1.0);
   EXPECT_EQ(play_options.playback_until_timestamp, -2500000000LL);
   EXPECT_EQ(play_options.start_offset, 999999999);
   EXPECT_EQ(play_options.wait_acked_timeout, -999999999);
