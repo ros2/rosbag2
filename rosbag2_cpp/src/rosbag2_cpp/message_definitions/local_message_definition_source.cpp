@@ -102,10 +102,18 @@ std::set<std::string> parse_definition_dependencies(
 {
   switch (format) {
     case LocalMessageDefinitionSource::Format::MSG:
-    case LocalMessageDefinitionSource::Format::SRV:
       return parse_msg_dependencies(text, package_context);
     case LocalMessageDefinitionSource::Format::IDL:
       return parse_idl_dependencies(text);
+    case LocalMessageDefinitionSource::Format::SRV:
+      {
+        auto dep = parse_msg_dependencies(text, package_context);
+        if (!dep.empty()) {
+          return dep;
+        } else {
+          return parse_idl_dependencies(text);
+        }
+      }
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
@@ -204,9 +212,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       const MessageSpec & spec = load_message_spec(definition_identifier);
       std::string result = spec.text;
       for (const auto & dep_name : spec.dependencies) {
-        Format format = definition_identifier.format() == Format::SRV ?
-          Format::MSG : definition_identifier.format();
-        DefinitionIdentifier dep(dep_name, format);
+        DefinitionIdentifier dep(dep_name, definition_identifier.format());
         bool inserted = seen_deps.insert(dep).second;
         if (inserted) {
           result += "\n";
@@ -218,21 +224,62 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     };
 
   std::string result;
-  Format format = root_type.find("/srv/") != std::string::npos ? Format::SRV : Format::MSG;
+  Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
-  try {
-    result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
-  } catch (const DefinitionNotFoundError & err) {
-    ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
-    format = Format::IDL;
-    DefinitionIdentifier root_definition_identifier(root_type, format);
-    result = (delimiter(root_definition_identifier) +
-      append_recursive(root_definition_identifier, max_recursion_depth));
-  } catch (const TypenameNotUnderstoodError & err) {
-    ROSBAG2_CPP_LOG_ERROR(
-      "Message type name '%s' not understood by type definition search, "
-      "definition will be left empty in bag.", err.what());
+
+  if (root_type.find("/srv/") == std::string::npos) {  // Not a service
+    try {
+      format = Format::MSG;
+      result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
+    } catch (const DefinitionNotFoundError & err) {
+      ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
+      format = Format::IDL;
+      DefinitionIdentifier root_definition_identifier(root_type, format);
+      result = (delimiter(root_definition_identifier) +
+        append_recursive(root_definition_identifier, max_recursion_depth));
+    } catch (const TypenameNotUnderstoodError & err) {
+      ROSBAG2_CPP_LOG_ERROR(
+        "Message type name '%s' not understood by type definition search, "
+        "definition will be left empty in bag.", err.what());
+      format = Format::UNKNOWN;
+    }
+  } else {
+    // The service dependencies could be either in the msg or idl files. Therefore, will try to
+    // search service dependencies in MSG files first then in IDL files via two separate recursive
+    // searches for each dependency.
     format = Format::UNKNOWN;
+    DefinitionIdentifier def_identifier{root_type, Format::SRV};
+    (void)seen_deps.insert(def_identifier).second;
+    result = delimiter(def_identifier);
+    const MessageSpec & spec = load_message_spec(def_identifier);
+    result += spec.text;
+    for (const auto & dep_name : spec.dependencies) {
+      DefinitionIdentifier dep(dep_name, Format::MSG);
+      bool inserted = seen_deps.insert(dep).second;
+      if (inserted) {
+        try {
+          result += "\n";
+          result += delimiter(dep);
+          result += append_recursive(dep, max_recursion_depth);
+          format = Format::MSG;
+        } catch (const DefinitionNotFoundError & err) {
+          ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
+          dep = DefinitionIdentifier(dep_name, Format::IDL);
+          inserted = seen_deps.insert(dep).second;
+          if (inserted) {
+            result += "\n";
+            result += delimiter(dep);
+            result += append_recursive(dep, max_recursion_depth);
+            format = Format::IDL;
+          }
+        } catch (const TypenameNotUnderstoodError & err) {
+          ROSBAG2_CPP_LOG_ERROR(
+            "Message type name '%s' not understood by type definition search, "
+            "definition will be left empty in bag.", err.what());
+          format = Format::UNKNOWN;
+        }
+      }
+    }
   }
   rosbag2_storage::MessageDefinition out;
   switch (format) {
