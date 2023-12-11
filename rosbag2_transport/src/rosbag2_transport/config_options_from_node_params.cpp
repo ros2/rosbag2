@@ -123,10 +123,10 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 
   auto desc_rate = param_utils::float_param_description(
     "Playback rate (hz)",
-    0.000001,
-    static_cast<float>(std::numeric_limits<float>::max()));
+    0.000001f,
+    std::numeric_limits<float>::max());
   play_options.rate =
-    static_cast<float>(node.declare_parameter<float>("play.rate", 1.0, desc_rate));
+    static_cast<float>(node.declare_parameter<float>("play.rate", 1.0f, desc_rate));
 
   play_options.topics_to_filter = node.declare_parameter<std::vector<std::string>>(
     "play.topics_to_filter", std::vector<std::string>());
