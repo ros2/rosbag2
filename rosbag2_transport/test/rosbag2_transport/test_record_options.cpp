@@ -49,5 +49,5 @@ TEST(record_options, test_yaml_serialization)
   CHECK(is_discovery_disabled);
   CHECK(topics);
   CHECK(rmw_serialization_format);
-  #undef CMP
+  #undef CHECK
 }

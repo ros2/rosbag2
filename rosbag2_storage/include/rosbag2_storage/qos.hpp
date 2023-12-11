@@ -15,9 +15,9 @@
 #ifndef ROSBAG2_STORAGE__QOS_HPP_
 #define ROSBAG2_STORAGE__QOS_HPP_
 
-#include <map>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
@@ -179,11 +179,11 @@ struct ROSBAG2_STORAGE_PUBLIC convert<std::vector<rclcpp::QoS>>
 };
 
 template<>
-struct ROSBAG2_STORAGE_PUBLIC convert<std::map<std::string, rosbag2_storage::Rosbag2QoS>>
+struct ROSBAG2_STORAGE_PUBLIC convert<std::unordered_map<std::string, rclcpp::QoS>>
 {
-  static Node encode(const std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs);
+  static Node encode(const std::unordered_map<std::string, rclcpp::QoS> & rhs);
   static bool decode(
-    const Node & node, std::map<std::string, rosbag2_storage::Rosbag2QoS> & rhs, int version = 9);
+    const Node & node, std::unordered_map<std::string, rclcpp::QoS> & rhs, int version = 9);
 };
 }  // namespace YAML
 

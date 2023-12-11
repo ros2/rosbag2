@@ -1,0 +1,47 @@
+player_params_node:
+  ros__parameters:
+    play:
+      read_ahead_queue_size: 3
+      node_prefix: "test"
+      rate: 13.0
+      topics_to_filter: ["/foo", "/bar"]
+      topics_regex_to_filter: "[xyz]/topic"
+      topics_regex_to_exclude: "[abc]/topic"
+      loop: false
+      clock_publish_frequency: 19.0
+      clock_publish_on_topic_publish: true
+      clock_trigger_topics: ["/triggers/clock"]
+      # Negative durations are invalid. 
+      delay:
+        sec: 0
+        nsec: 1
+      # Negative timestamps will make the playback to not stop.  
+      playback_duration:
+        sec: -1
+        nsec: 00000000
+      # Negative timestamps will make the playback to not stop.
+      playback_until_timestamp:
+        sec: -2
+        nsec: -500000000
+      start_paused: true
+      # Negative durations are invalid.
+      start_offset: 
+        sec: 0
+        nsec: 999999999
+      disable_keyboard_controls: true
+      # Negative value means that published messages do not need to be acknowledged.
+      wait_acked_timeout:
+        sec: 0
+        nsec: -999999999
+      disable_loan_message: false
+
+    storage:
+      uri: "path/to/some_bag"
+      storage_id: "sqlite3"
+      storage_config_uri: ""
+      max_bagfile_size: 12345
+      max_bagfile_duration: 54321
+      max_cache_size: 9898
+      storage_preset_profile: "resilient"
+      snapshot_mode: false
+      custom_data: ["key1=value1", "key2=value2"]

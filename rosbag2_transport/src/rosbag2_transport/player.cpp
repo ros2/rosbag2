@@ -33,6 +33,7 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/config_options_from_node_params.hpp"
 
 namespace
 {
@@ -188,6 +189,14 @@ public:
   /// \brief Getter for the number of registered on_play_msg_post_callbacks
   /// \return Number of registered on_play_msg_post_callbacks
   size_t get_number_of_registered_on_play_msg_post_callbacks();
+
+  /// \brief Getter for the currently stored storage options
+  /// \return Copy of the currently stored storage options
+  const rosbag2_storage::StorageOptions & get_storage_options();
+
+  /// \brief Getter for the currently stored play options
+  /// \return Copy of the currently stored play options
+  const rosbag2_transport::PlayOptions & get_play_options();
 
 protected:
   struct play_msg_callback_data
@@ -1207,16 +1216,40 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
   }
 }
 
+const rosbag2_storage::StorageOptions & PlayerImpl::get_storage_options()
+{
+  return storage_options_;
+}
+
+const rosbag2_transport::PlayOptions & PlayerImpl::get_play_options()
+{
+  return play_options_;
+}
+
 ///////////////////////////////
 // Player public interface
+
+Player::Player(const rclcpp::NodeOptions & node_options)
+: Player("rosbag2_player", node_options) {}
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  // TODO(karsten1987): Use this constructor later with parameter parsing.
-  // The reader, storage_options as well as play_options can be loaded via parameter.
-  // That way, the player can be used as a simple component in a component manager.
-  throw rclcpp::exceptions::UnimplementedError();
+  rosbag2_storage::StorageOptions storage_options = get_storage_options_from_node_params(*this);
+  PlayOptions play_options = get_play_options_from_node_params(*this);
+
+  #ifndef _WIN32
+  auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
+  #else
+  // We don't have signal handler option in constructor for windows version
+  auto keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+  #endif
+
+  auto reader = std::make_unique<rosbag2_cpp::Reader>();
+
+  pimpl_ = std::make_unique<PlayerImpl>(
+    this, std::move(reader), keyboard_handler, storage_options, play_options);
+  pimpl_->play();
 }
 
 Player::Player(
@@ -1365,4 +1398,21 @@ size_t Player::get_number_of_registered_on_play_msg_post_callbacks()
   return pimpl_->get_number_of_registered_on_play_msg_post_callbacks();
 }
 
+const rosbag2_storage::StorageOptions & Player::get_storage_options()
+{
+  return pimpl_->get_storage_options();
+}
+
+const rosbag2_transport::PlayOptions & Player::get_play_options()
+{
+  return pimpl_->get_play_options();
+}
+
 }  // namespace rosbag2_transport
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader.
+// This acts as a sort of entry point, allowing the component to be
+// discoverable when its library is being loaded into a running process.
+RCLCPP_COMPONENTS_REGISTER_NODE(rosbag2_transport::Player)

@@ -31,6 +31,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_compression REQUIRED)
@@ -44,10 +45,12 @@ find_package(yaml_cpp_vendor REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
   src/rosbag2_transport/player.cpp
+  src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
-  src/rosbag2_transport/topic_filter.cpp)
+  src/rosbag2_transport/topic_filter.cpp
+  src/rosbag2_transport/config_options_from_node_params.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
@@ -55,6 +58,7 @@ target_link_libraries(${PROJECT_NAME}
   keyboard_handler::keyboard_handler
   rcl::rcl
   rclcpp::rclcpp
+  ${rclcpp_components_TARGETS}
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
@@ -64,6 +68,12 @@ target_link_libraries(${PROJECT_NAME}
   shared_queues_vendor::singleproducerconsumer
   yaml-cpp
 )
+
+rclcpp_components_register_node(
+  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Player" EXECUTABLE player)
+
+rclcpp_components_register_node(
+  ${PROJECT_NAME} PLUGIN "rosbag2_transport::Recorder" EXECUTABLE recorder)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
@@ -89,6 +99,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_export_dependencies(
+  rclcpp_components
   keyboard_handler
   rosbag2_cpp
   rosbag2_compression
@@ -108,6 +119,10 @@ function(create_tests_for_rmw_implementation)
     test/rosbag2_transport/test_play.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
     ${SKIP_TEST})
+
+  rosbag2_transport_add_gmock(test_composable_player
+    test/rosbag2_transport/test_composable_player.cpp
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
   rosbag2_transport_add_gmock(test_play_loop
     test/rosbag2_transport/test_play_loop.cpp
@@ -203,9 +218,14 @@ function(create_tests_for_rmw_implementation)
     test/rosbag2_transport/test_record_services.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
 
-  rosbag2_transport_add_gmock(test_component_parameters
-      test/rosbag2_transport/test_composable_recorder.cpp
+  rosbag2_transport_add_gmock(test_composable_recorder
+    test/rosbag2_transport/test_composable_recorder.cpp
     LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+
+  rosbag2_transport_add_gmock(test_load_composable_components
+    test/rosbag2_transport/test_load_composable_components.cpp
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
+    ${rclcpp_components_TARGETS})
 
   if(${rmw_implementation} MATCHES "rmw_cyclonedds(.*)")
     ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)

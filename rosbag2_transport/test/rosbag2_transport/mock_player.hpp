@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 class MockPlayer : public rosbag2_transport::Player
@@ -31,6 +33,12 @@ public:
     const rosbag2_transport::PlayOptions & play_options,
     const std::string & node_name = "rosbag2_mock_player")
   : Player(std::move(reader), storage_options, play_options, node_name)
+  {}
+
+  explicit MockPlayer(
+    const std::string & node_name = "rosbag2_mock_composable_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : Player(node_name, node_options)
   {}
 
   std::vector<rclcpp::PublisherBase *> get_list_of_publishers()
@@ -48,8 +56,6 @@ public:
     return pub_list;
   }
 
-  using rosbag2_transport::Player::wait_for_playback_to_start;
-
   size_t get_number_of_registered_pre_callbacks()
   {
     return get_number_of_registered_on_play_msg_pre_callbacks();
@@ -59,6 +65,10 @@ public:
   {
     return get_number_of_registered_on_play_msg_post_callbacks();
   }
+
+  using rosbag2_transport::Player::wait_for_playback_to_start;
+  using rosbag2_transport::Player::get_storage_options;
+  using rosbag2_transport::Player::get_play_options;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_PLAYER_HPP_

@@ -32,6 +32,12 @@ public:
   : Recorder(writer, storage_options, record_options)
   {}
 
+  explicit MockRecorder(
+    const std::string & node_name = "rosbag2_mock_recorder",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : Recorder(node_name, node_options)
+  {}
+
   template<typename DurationRepT = int64_t, typename DurationT = std::milli>
   bool wait_for_topic_to_be_discovered(
     const std::string & topic_name_to_wait_for,
@@ -65,6 +71,9 @@ public:
     }
     return available_for_recording;
   }
+
+  using rosbag2_transport::Recorder::get_storage_options;
+  using rosbag2_transport::Recorder::get_record_options;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_RECORDER_HPP_

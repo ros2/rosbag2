@@ -15,15 +15,16 @@
 #ifndef ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 #define ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_
 
+#include <chrono>
 #include <cstddef>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
-#include "rclcpp/duration.hpp"
-#include "rclcpp/time.hpp"
-#include "rclcpp/qos.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rosbag2_storage/yaml.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
 {
@@ -102,5 +103,16 @@ public:
 };
 
 }  // namespace rosbag2_transport
+
+namespace YAML
+{
+template<>
+struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::PlayOptions>
+{
+  static Node encode(const rosbag2_transport::PlayOptions & play_options);
+  static bool decode(const Node & node, rosbag2_transport::PlayOptions & play_options);
+};
+
+}  // namespace YAML
 
 #endif  // ROSBAG2_TRANSPORT__PLAY_OPTIONS_HPP_

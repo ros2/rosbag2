@@ -80,11 +80,35 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   static constexpr callback_handle_t invalid_callback_handle = 0;
 
+  /// \brief Constructor and entry point for the composable player.
+  /// Will call Player(node_name, node_options) constructor with node_name = "rosbag2_player".
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
+  ROSBAG2_TRANSPORT_PUBLIC
+  explicit Player(const rclcpp::NodeOptions & node_options);
+
+  /// \brief Default constructor and entry point for the composable player.
+  /// Will construct Player class and initialize play_options, storage_options from node
+  /// parameters. At the end will call Player::play() to automatically start playback in a
+  /// separate thread.
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Constructor which will construct Player class with provided parameters and default
+  /// rosbag2_cpp::reader and KeyboardHandler classes.
+  /// \note The KeyboardHandler class will be initialized with parameter which is disabling
+  /// signal handlers in it.
+  /// \param storage_options Storage options which will be applied to the rosbag2_cpp::reader
+  /// after construction.
+  /// \param play_options Playback settings for Player class.
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     const rosbag2_storage::StorageOptions & storage_options,
@@ -92,6 +116,16 @@ public:
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Constructor which will construct Player class with provided parameters and default
+  /// KeyboardHandler class initialized with parameter which is disabling signal handlers in it.
+  /// \param reader Unique pointer to the rosbag2_cpp::Reader class which will be moved to the
+  /// internal instance of the Player class during construction.
+  /// \param storage_options Storage options which will be applied to the rosbag2_cpp::reader
+  /// after construction.
+  /// \param play_options Playback settings for Player class.
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -100,6 +134,16 @@ public:
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Constructor which will construct Player class with provided parameters.
+  /// \param keyboard_handler Keyboard handler class uses to handle user input from keyboard.
+  /// \param reader Unique pointer to the rosbag2_cpp::Reader class which will be moved to the
+  /// internal instance of the Player class during construction.
+  /// \param storage_options Storage options which will be applied to the rosbag2_cpp::reader
+  /// after construction.
+  /// \param play_options Playback settings for Player class.
+  /// \param node_name Name for the underlying node.
+  /// \param node_options Node options which will be used during construction of the underlying
+  /// node.
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -109,6 +153,7 @@ public:
     const std::string & node_name = "rosbag2_player",
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions());
 
+  /// \brief Default destructor.
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Player();
 
@@ -236,6 +281,16 @@ protected:
   /// \return Number of registered on_play_msg_post_callbacks
   ROSBAG2_TRANSPORT_PUBLIC
   size_t get_number_of_registered_on_play_msg_post_callbacks();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  /// \brief Getter for the currently stored storage options
+  /// \return Copy of the currently stored storage options
+  const rosbag2_storage::StorageOptions & get_storage_options();
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  /// \brief Getter for the currently stored play options
+  /// \return Copy of the currently stored play options
+  const rosbag2_transport::PlayOptions & get_play_options();
 
 private:
   std::unique_ptr<PlayerImpl> pimpl_;
