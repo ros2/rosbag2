@@ -387,6 +387,8 @@ Here is an example of Python launchfile composition. Notice that components do n
 
 ```python
 import launch
+import launch_ros
+import yaml
 
 '''
 Used to load parameters for composable nodes from a standard param file
