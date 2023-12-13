@@ -18,6 +18,7 @@ recorder_params_node:
       compression_format: "h264"
       compression_queue_size: 10
       compression_threads: 2
+      compression_threads_priority: -1
       qos_profile_overrides_path: ""
       include_hidden_topics: true
       include_unpublished_topics: true

@@ -235,6 +235,10 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
     node, "record.compression_threads", 0, std::numeric_limits<int64_t>::max(),
     record_options.compression_threads);
 
+  record_options.compression_threads_priority = param_utils::declare_integer_node_params<int32_t>(
+    node, "record.compression_threads_priority", std::numeric_limits<int32_t>::min(),
+    std::numeric_limits<int32_t>::max(), record_options.compression_threads_priority);
+
   std::string qos_profile_overrides_path =
     node.declare_parameter<std::string>("record.qos_profile_overrides_path", "");
 
