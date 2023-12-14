@@ -207,14 +207,22 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   auto record_options = recorder->get_record_options();
   auto storage_options = recorder->get_storage_options();
 
-  EXPECT_EQ(record_options.all, true);
+  EXPECT_EQ(record_options.all_topics, true);
+  EXPECT_EQ(record_options.all_services, true);
   EXPECT_EQ(record_options.is_discovery_disabled, true);
   std::vector<std::string> topics {"/topic", "/other_topic"};
   EXPECT_EQ(record_options.topics, topics);
+  std::vector<std::string> services {"/service/_service_event", "/other_service/_service_event"};
+  EXPECT_EQ(record_options.services, services);
   EXPECT_EQ(record_options.rmw_serialization_format, "cdr");
   EXPECT_TRUE(record_options.topic_polling_interval == 0.01s);
   EXPECT_EQ(record_options.regex, "[xyz]/topic");
-  EXPECT_EQ(record_options.exclude, "*");
+  EXPECT_EQ(record_options.exclude_regex, "(.*)");
+  std::vector<std::string> exclude_topics {"/exclude_topic", "/other_exclude_topic"};
+  EXPECT_EQ(record_options.exclude_topics, exclude_topics);
+  std::vector<std::string> exclude_services {
+    "/exclude_service/_service_event", "/other_exclude_service/_service_event"};
+  EXPECT_EQ(record_options.exclude_service_events, exclude_services);
   EXPECT_EQ(record_options.node_prefix, "prefix");
   EXPECT_EQ(record_options.compression_mode, "stream");
   EXPECT_EQ(record_options.compression_format, "h264");

@@ -74,3 +74,20 @@ TEST_F(ServiceUtilsTest, check_service_event_topic_type_to_service_type)
     );
   }
 }
+
+TEST_F(ServiceUtilsTest, check_service_name_to_service_event_topic_name)
+{
+  std::vector<std::pair<std::string, std::string>> all_test_data =
+  {
+    {"", ""},
+    {"/a/_service_event", "/a/_service_event"},
+    {"/abc", "/abc/_service_event"}
+  };
+
+  for (const auto & test_data : all_test_data) {
+    EXPECT_EQ(
+      rosbag2_cpp::service_name_to_service_event_topic_name(test_data.first),
+      test_data.second
+    );
+  }
+}

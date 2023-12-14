@@ -217,7 +217,6 @@ def convert_service_to_service_event_topic(services):
         return services_event_topics
 
     for service in services:
-        name = '/' + service if service[0] != '/' else service
-        services_event_topics.append(name + '/_service_event')
+        services_event_topics.append(service + '/_service_event')
 
     return services_event_topics

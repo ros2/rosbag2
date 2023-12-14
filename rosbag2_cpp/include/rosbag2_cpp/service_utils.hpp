@@ -38,6 +38,10 @@ service_event_topic_type_to_service_type(const std::string & topic_type);
 ROSBAG2_CPP_PUBLIC
 size_t
 get_serialization_size_for_service_metadata_event();
+
+ROSBAG2_CPP_PUBLIC
+std::string
+service_name_to_service_event_topic_name(const std::string & service_name);
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__SERVICE_UTILS_HPP_

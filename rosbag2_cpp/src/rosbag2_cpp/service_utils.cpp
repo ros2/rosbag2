@@ -139,4 +139,21 @@ size_t get_serialization_size_for_service_metadata_event()
   return size;
 }
 
+std::string service_name_to_service_event_topic_name(const std::string & service_name)
+{
+  if (service_name.empty()) {
+    return service_name;
+  }
+
+  // If the end of string is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX, do nothing
+  if ((service_name.length() > sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) &&
+    (service_name.substr(service_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) ==
+    RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX))
+  {
+    return service_name;
+  }
+
+  return service_name + RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX;
+}
+
 }  // namespace rosbag2_cpp
