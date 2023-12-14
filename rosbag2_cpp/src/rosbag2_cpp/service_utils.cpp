@@ -31,12 +31,12 @@ const char * service_event_topic_type_middle = "/srv/";
 
 bool is_service_event_topic(const std::string & topic, const std::string & topic_type)
 {
-  if (topic.length() <= (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1)) {
+  if (topic.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
     return false;
   }
 
   std::string end_topic_name = topic.substr(
-    topic.length() - (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1));
+    topic.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
 
   // Should be "/_service_event"
   if (end_topic_name != RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) {
@@ -65,20 +65,20 @@ bool is_service_event_topic(const std::string & topic, const std::string & topic
 std::string service_event_topic_name_to_service_name(const std::string & topic_name)
 {
   std::string service_name;
-  if (topic_name.length() <= (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1)) {
+  if (topic_name.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
     return service_name;
   }
 
   if (topic_name.substr(
       topic_name.length() -
-      (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1)) !=
+      strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) !=
     RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
   {
     return service_name;
   }
 
   service_name = topic_name.substr(
-    0, topic_name.length() - (sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) - 1));
+    0, topic_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
 
   return service_name;
 }
@@ -146,7 +146,7 @@ std::string service_name_to_service_event_topic_name(const std::string & service
   }
 
   // If the end of string is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX, do nothing
-  if ((service_name.length() > sizeof(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) &&
+  if ((service_name.length() > strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) &&
     (service_name.substr(service_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) ==
     RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX))
   {
