@@ -358,7 +358,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("regex", &RecordOptions::regex)
   .def_readwrite("exclude_regex", &RecordOptions::exclude_regex)
   .def_readwrite("exclude_topics", &RecordOptions::exclude_topics)
-  .def_readwrite("exclude_services", &RecordOptions::exclude_service_events)
+  .def_readwrite("exclude_service_events", &RecordOptions::exclude_service_events)
   .def_readwrite("node_prefix", &RecordOptions::node_prefix)
   .def_readwrite("compression_mode", &RecordOptions::compression_mode)
   .def_readwrite("compression_format", &RecordOptions::compression_format)
