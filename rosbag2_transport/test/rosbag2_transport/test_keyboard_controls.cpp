@@ -157,8 +157,14 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   keyboard_handler->simulate_key_press(play_options_.pause_resume_toggle_key);
   EXPECT_THAT(player->is_paused(), true);
 
-  keyboard_handler->simulate_key_press(play_options_.increase_rate_key);
+  EXPECT_DOUBLE_EQ(player->get_rate(), 1.0);
   keyboard_handler->simulate_key_press(play_options_.decrease_rate_key);
+  // Each increase/decrease shall change playback rate value by 10%
+  EXPECT_DOUBLE_EQ(player->get_rate(), 0.9);
+  keyboard_handler->simulate_key_press(play_options_.increase_rate_key);
+  EXPECT_DOUBLE_EQ(player->get_rate(), 1.0);
+  keyboard_handler->simulate_key_press(play_options_.increase_rate_key);
+  EXPECT_DOUBLE_EQ(player->get_rate(), 1.1);
 
   // start playback asynchronously in a separate thread
   player->play();
@@ -175,7 +181,7 @@ TEST_F(RosBag2PlayTestFixture, test_keyboard_controls)
   EXPECT_THAT(player->num_paused, 1);
   EXPECT_THAT(player->num_resumed, 1);
   EXPECT_THAT(player->num_played_next, 1);
-  EXPECT_THAT(player->num_set_rate, 2);
+  EXPECT_THAT(player->num_set_rate, 3);
 }
 
 TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
