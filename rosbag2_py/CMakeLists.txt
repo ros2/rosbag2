@@ -126,6 +126,8 @@ install(
 install(
   TARGETS rosbag2_format_output
   LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 if(BUILD_TESTING)
