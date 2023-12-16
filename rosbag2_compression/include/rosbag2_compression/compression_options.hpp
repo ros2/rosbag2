@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <string>
+#include <optional>
 
 #include "visibility_control.hpp"
 
@@ -60,7 +61,12 @@ struct CompressionOptions
   std::string compression_format;
   CompressionMode compression_mode;
   uint64_t compression_queue_size;
+  /// \brief // The number of compression threads
   uint64_t compression_threads;
+  /// \brief If set, the compression thread(s) will try to set the given priority for itself
+  /// For Windows the valid values are: THREAD_PRIORITY_LOWEST, THREAD_PRIORITY_BELOW_NORMAL and
+  /// THREAD_PRIORITY_NORMAL. For POSIX compatible OSes this is the "nice" value.
+  std::optional<int32_t> thread_priority;
 };
 
 }  // namespace rosbag2_compression

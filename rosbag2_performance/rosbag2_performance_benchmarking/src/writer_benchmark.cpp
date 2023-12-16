@@ -178,7 +178,7 @@ void WriterBenchmark::create_writer()
   if (!bag_config_.compression_format.empty()) {
     rosbag2_compression::CompressionOptions compression_options{
       bag_config_.compression_format, rosbag2_compression::CompressionMode::MESSAGE,
-      bag_config_.compression_queue_size, bag_config_.compression_threads};
+      bag_config_.compression_queue_size, bag_config_.compression_threads, std::nullopt};
 
     writer_ = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
       compression_options);

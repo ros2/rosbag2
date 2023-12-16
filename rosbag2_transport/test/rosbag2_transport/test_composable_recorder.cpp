@@ -220,6 +220,7 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(record_options.compression_format, "h264");
   EXPECT_EQ(record_options.compression_queue_size, 10);
   EXPECT_EQ(record_options.compression_threads, 2);
+  EXPECT_EQ(record_options.compression_threads_priority, -1);
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{
     std::pair{
       "/overrided_topic_qos",

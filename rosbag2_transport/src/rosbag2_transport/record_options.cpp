@@ -39,6 +39,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["compression_format"] = record_options.compression_format;
   node["compression_queue_size"] = record_options.compression_queue_size;
   node["compression_threads"] = record_options.compression_threads;
+  node["compression_threads_priority"] = record_options.compression_threads_priority;
   node["topic_qos_profile_overrides"] =
     convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
     record_options.topic_qos_profile_overrides);
@@ -66,6 +67,9 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::string>(node, "compression_format", record_options.compression_format);
   optional_assign<uint64_t>(node, "compression_queue_size", record_options.compression_queue_size);
   optional_assign<uint64_t>(node, "compression_threads", record_options.compression_threads);
+  optional_assign<int32_t>(
+    node, "compression_threads_priority",
+    record_options.compression_threads_priority);
 
   std::unordered_map<std::string, rclcpp::QoS> qos_overrides;
   if (node["topic_qos_profile_overrides"]) {
