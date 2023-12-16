@@ -62,6 +62,7 @@ private:
   bool allow_unknown_types_ = false;
   std::unordered_set<std::string> already_warned_unknown_types_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
+  std::unordered_map<std::string, bool> take_topics_cache_;
 };
 }  // namespace rosbag2_transport
 

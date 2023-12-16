@@ -75,7 +75,7 @@ topic_is_unpublished(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
 {
   auto publishers_info = node_graph.get_publishers_info_by_topic(topic_name);
-  return publishers_info.size() == 0;
+  return publishers_info.empty();
 }
 
 bool
@@ -83,7 +83,7 @@ is_leaf_topic(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
 {
   auto subscriptions_info = node_graph.get_subscriptions_info_by_topic(topic_name);
-  return subscriptions_info.size() == 0;
+  return subscriptions_info.empty();
 }
 }  // namespace
 
@@ -94,21 +94,31 @@ TopicFilter::TopicFilter(
   RecordOptions record_options,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
   bool allow_unknown_types)
-: record_options_(record_options),
+: record_options_(std::move(record_options)),
   allow_unknown_types_(allow_unknown_types),
   node_graph_(node_graph)
 {}
 
-TopicFilter::~TopicFilter()
-{}
+TopicFilter::~TopicFilter() = default;
 
 std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
 {
   std::unordered_map<std::string, std::string> filtered_topics;
   for (const auto & [topic_name, topic_types] : topic_names_and_types) {
-    if (take_topic(topic_name, topic_types)) {
-      filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
+    // Check take_topics_cache_ first to avoid performance burden when discovery thread running
+    auto take_topics_cache_it = take_topics_cache_.find(topic_name);
+    if (take_topics_cache_it != take_topics_cache_.end()) {
+      if (take_topics_cache_it->second) {
+        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
+      }
+    } else {
+      if (take_topic(topic_name, topic_types)) {
+        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
+        take_topics_cache_[topic_name] = true;
+      } else {
+        take_topics_cache_[topic_name] = false;
+      }
     }
   }
   return filtered_topics;
@@ -117,6 +127,11 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
 bool TopicFilter::take_topic(
   const std::string & topic_name, const std::vector<std::string> & topic_types)
 {
+  if (!has_single_type(topic_name, topic_types)) {
+    return false;
+  }
+  const std::string & topic_type = topic_types[0];
+
   if (!record_options_.include_unpublished_topics && node_graph_ &&
     topic_is_unpublished(topic_name, *node_graph_))
   {
@@ -147,10 +162,6 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  if (!has_single_type(topic_name, topic_types)) {
-    return false;
-  }
-
   if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
     RCUTILS_LOG_WARN_ONCE_NAMED(
       ROSBAG2_TRANSPORT_PACKAGE_NAME,
@@ -158,7 +169,6 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  const std::string & topic_type = topic_types[0];
   if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
     return false;
   }
