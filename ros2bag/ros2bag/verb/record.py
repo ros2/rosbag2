@@ -17,10 +17,13 @@ import datetime
 import os
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import add_writer_storage_plugin_extensions
-from ros2bag.api import convert_yaml_to_qos_profile
-from ros2bag.api import print_error
-from ros2bag.api import SplitLineFormatter
+from ros2bag.api import (
+    add_standard_node_args,
+    add_writer_storage_plugin_extensions,
+    convert_yaml_to_qos_profile,
+    print_error,
+    SplitLineFormatter,
+)
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import get_default_storage_id
@@ -101,6 +104,7 @@ class RecordVerb(VerbExtension):
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
 
         # Core config
+        add_standard_node_args(parser, prefix='rosbag2_recorder')
         parser.add_argument(
             '-f', '--serialization-format', default='', choices=serialization_choices,
             help='The rmw serialization format in which the messages are saved, defaults to the '
@@ -131,9 +135,7 @@ class RecordVerb(VerbExtension):
             '--use-sim-time', action='store_true', default=False,
             help='Use simulation time for message timestamps by subscribing to the /clock topic. '
                  'Until first /clock message is received, no messages will be written to bag.')
-        parser.add_argument(
-            '--node-name', type=str, default='rosbag2_recorder',
-            help='Specify the recorder node name. Default is %(default)s.')
+
         parser.add_argument(
             '--custom-data', type=str, metavar='KEY=VALUE', nargs='*',
             help='Store the custom data in metadata.yaml '
