@@ -637,20 +637,12 @@ void Player::add_keyboard_callbacks()
   );
   add_key_callback(
     play_options_.increase_rate_key,
-<<<<<<< HEAD
-    [this]() {set_rate(get_rate() * 1.1);},
-=======
-    [this]() {owner_->set_rate(get_rate() + 0.1);},
->>>>>>> 95f78b6 (Bugfix for incorrect playback rate changes when pressing buttons (#1513))
+    [this]() {set_rate(get_rate() + 0.1);},
     "Increase Rate 10%"
   );
   add_key_callback(
     play_options_.decrease_rate_key,
-<<<<<<< HEAD
-    [this]() {set_rate(get_rate() * 0.9);},
-=======
-    [this]() {owner_->set_rate(get_rate() - 0.1);},
->>>>>>> 95f78b6 (Bugfix for incorrect playback rate changes when pressing buttons (#1513))
+    [this]() {set_rate(get_rate() - 0.1);},
     "Decrease Rate 10%"
   );
 }
