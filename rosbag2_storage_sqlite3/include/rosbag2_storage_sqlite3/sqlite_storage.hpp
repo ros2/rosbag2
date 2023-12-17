@@ -133,6 +133,7 @@ private:
   std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
   SqliteStatement write_statement_ {};
   SqliteStatement read_statement_ {};
+  SqliteStatement page_count_statement_ {};
   ReadQueryResult message_result_ {nullptr};
   ReadQueryResult::Iterator current_message_row_ {
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};

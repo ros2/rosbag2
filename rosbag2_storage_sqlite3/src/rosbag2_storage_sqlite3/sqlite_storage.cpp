@@ -29,6 +29,7 @@
 
 #include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -181,6 +182,10 @@ void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  if (page_count_statement_) {
+    page_count_statement_->reset();  // Reset statement to avoid DB lock
+    page_count_statement_.reset();
+  }
   storage_mode_ = io_flag;
   const auto preset = parse_preset_profile(storage_options.storage_preset_profile);
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
@@ -212,6 +217,9 @@ void SqliteStorage::open(
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
+  db_page_size_ = get_page_size();
+  page_count_statement_ = database_->prepare_statement("PRAGMA page_count;");
+
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
     db_schema_version_ = kDBSchemaVersion_;
@@ -228,7 +236,6 @@ void SqliteStorage::open(
 
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
-  db_page_size_ = get_page_size();
 }
 
 void SqliteStorage::update_metadata(const rosbag2_storage::BagMetadata & metadata)
@@ -402,10 +409,17 @@ void SqliteStorage::get_all_message_definitions(
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  static const SqliteStatement get_page_count_statement =
-    database_->prepare_statement("PRAGMA page_count");
-
-  auto page_count_query_result = get_page_count_statement->execute_query<int>();
+  if (!database_ || !page_count_statement_) {
+    // Trying to call get_bagfile_size when SqliteStorage::open was not called or db
+    // failed to open. Fallback to the filesystem call.
+    const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
+    return bag_path.exists() ? bag_path.file_size() : 0u;
+  }
+  auto scope_exit_reset_statement = rcpputils::make_scope_exit(
+    [this]() {
+      page_count_statement_->reset();
+    });
+  auto page_count_query_result = page_count_statement_->execute_query<int>();
   auto page_count_query_result_begin = page_count_query_result.begin();
   if (page_count_query_result_begin == page_count_query_result.end()) {
     throw SqliteException{"Error. PRAGMA page_count return no result."};
@@ -862,8 +876,11 @@ int SqliteStorage::read_db_schema_version()
 
 uint64_t SqliteStorage::get_page_size()
 {
-  static const SqliteStatement get_page_size_statement =
-    database_->prepare_statement("PRAGMA page_size");
+  if (!database_) {
+    return 0;  // Trying to call get_page_size when SqliteStorage::open was not called or db
+    // failed to open
+  }
+  SqliteStatement get_page_size_statement = database_->prepare_statement("PRAGMA page_size;");
 
   auto page_size_query_result = get_page_size_statement->execute_query<int>();
   auto page_size_query_result_begin = page_size_query_result.begin();
