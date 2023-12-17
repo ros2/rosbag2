@@ -228,6 +228,7 @@ void SqliteStorage::open(
 
   ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(
     "Opened database '" << relative_path_ << "' for " << to_string(io_flag) << ".");
+  db_page_size_ = get_page_size();
 }
 
 void SqliteStorage::update_metadata(const rosbag2_storage::BagMetadata & metadata)
@@ -401,9 +402,16 @@ void SqliteStorage::get_all_message_definitions(
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
+  static const SqliteStatement get_page_count_statement =
+    database_->prepare_statement("PRAGMA page_count");
 
-  return bag_path.exists() ? bag_path.file_size() : 0u;
+  auto page_count_query_result = get_page_count_statement->execute_query<int>();
+  auto page_count_query_result_begin = page_count_query_result.begin();
+  if (page_count_query_result_begin == page_count_query_result.end()) {
+    throw SqliteException{"Error. PRAGMA page_count return no result."};
+  }
+  uint64_t current_page_count = std::get<0>(*page_count_query_result_begin);
+  return current_page_count * db_page_size_;
 }
 
 void SqliteStorage::initialize()
@@ -850,6 +858,19 @@ int SqliteStorage::read_db_schema_version()
   }
 
   return schema_version;
+}
+
+uint64_t SqliteStorage::get_page_size()
+{
+  static const SqliteStatement get_page_size_statement =
+    database_->prepare_statement("PRAGMA page_size");
+
+  auto page_size_query_result = get_page_size_statement->execute_query<int>();
+  auto page_size_query_result_begin = page_size_query_result.begin();
+  if (page_size_query_result_begin == page_size_query_result.end()) {
+    throw SqliteException{"Error. PRAGMA page_size return no result."};
+  }
+  return std::get<0>(*page_size_query_result_begin);
 }
 
 }  // namespace rosbag2_storage_plugins
