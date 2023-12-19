@@ -415,10 +415,15 @@ uint64_t SqliteStorage::get_bagfile_size() const
     const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
     return bag_path.exists() ? bag_path.file_size() : 0u;
   }
+
   auto scope_exit_reset_statement = rcpputils::make_scope_exit(
     [this]() {
       page_count_statement_->reset();
     });
+  // We need to lock database_write_mutex_ because possible situation when write(messages) or
+  // create_topic() methods could be called from another thread at the same time. DB can't
+  // execute more than one statement simultaneously.
+  std::lock_guard<std::mutex> db_lock(const_cast<SqliteStorage *>(this)->database_write_mutex_);
   auto page_count_query_result = page_count_statement_->execute_query<int>();
   auto page_count_query_result_begin = page_count_query_result.begin();
   if (page_count_query_result_begin == page_count_query_result.end()) {
