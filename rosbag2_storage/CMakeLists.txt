@@ -81,7 +81,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
-  find_package(std_msgs REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
 
@@ -133,14 +132,6 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     yaml-cpp
   )
-
-  ament_add_gmock(test_storage_interfaces
-      test/rosbag2_storage/test_storage_interfaces.cpp)
-  target_link_libraries(test_storage_interfaces
-    ${PROJECT_NAME}
-    rosbag2_test_common::rosbag2_test_common
-    ${std_msgs_TARGETS}
-  )
-  endif()
+endif()
 
 ament_package()

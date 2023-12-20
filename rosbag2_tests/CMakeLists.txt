@@ -107,7 +107,6 @@ if(BUILD_TESTING)
     )
   endif()
 
-
   ament_add_gmock(test_rosbag2_cpp_api
     test/rosbag2_tests/test_rosbag2_cpp_api.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -133,6 +132,17 @@ if(BUILD_TESTING)
       ${test_msgs_TARGETS}
     )
   endif()
+
+  ament_add_gmock(test_storage_interfaces
+    test/rosbag2_tests/test_storage_interfaces.cpp)
+  if(TARGET test_storage_interfaces)
+    target_link_libraries(test_storage_interfaces
+      rosbag2_storage::rosbag2_storage
+      rosbag2_test_common::rosbag2_test_common
+      ${std_msgs_TARGETS}
+    )
+  endif()
+
 endif()
 
 ament_package()
