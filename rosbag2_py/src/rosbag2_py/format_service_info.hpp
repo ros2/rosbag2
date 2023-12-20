@@ -20,8 +20,9 @@
 #include <vector>
 
 #include "rosbag2_cpp/info.hpp"
+#include "visibility_control.hpp"
 
-std::string format_service_info(
+ROSBAG2_PY_PUBLIC std::string format_service_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info);
 
 #endif  // ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_

@@ -55,6 +55,12 @@ add_library(rosbag2_format_output SHARED
 target_link_libraries(rosbag2_format_output PUBLIC
   rosbag2_cpp::rosbag2_cpp
 )
+install(
+  TARGETS rosbag2_format_output
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 pybind11_add_module(_reader SHARED
   src/rosbag2_py/_reader.cpp
@@ -121,13 +127,6 @@ install(
     _transport
     _reindexer
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
-)
-
-install(
-  TARGETS rosbag2_format_output
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
 )
 
 if(BUILD_TESTING)
