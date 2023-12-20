@@ -29,10 +29,10 @@ using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
-class StorageInterfacesTests : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
+class Rosbag2StorageAPITests : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
 {
 public:
-  StorageInterfacesTests()
+  Rosbag2StorageAPITests()
   {
     memory_management_ = std::make_unique<MemoryManagement>();
   }
@@ -114,7 +114,7 @@ public:
   std::unique_ptr<MemoryManagement> memory_management_;
 };
 
-TEST_P(StorageInterfacesTests, get_bagfile_size_read_write_interface)
+TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
 {
   const std::string FILE_EXTENSION = (GetParam() == "mcap") ? ".mcap" : ".db3";
   std::filesystem::path full_bagfile_path = root_bag_path_;
@@ -161,7 +161,7 @@ TEST_P(StorageInterfacesTests, get_bagfile_size_read_write_interface)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  ParametrizedStorageTests,
-  StorageInterfacesTests,
+  ParametrizedStorageAPITests,
+  Rosbag2StorageAPITests,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
