@@ -14,12 +14,12 @@
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>  
+  <depend>rclcpp_components</depend>
+  <depend>rmw</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_interfaces</depend>
   <depend>rosbag2_storage</depend>
-  <depend>rmw</depend>
   <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
   <depend>keyboard_handler</depend>
@@ -28,6 +28,7 @@
   <test_depend>ament_index_cpp</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>composition_interfaces</test_depend>
   <test_depend>rmw_implementation_cmake</test_depend>
   <test_depend>rosbag2_compression_zstd</test_depend>
   <test_depend>rosbag2_test_common</test_depend>

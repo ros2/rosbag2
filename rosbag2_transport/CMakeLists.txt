@@ -26,7 +26,6 @@ if(WIN32)
   add_definitions(-DNOMINMAX)
 endif()
 
-find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
@@ -54,17 +53,19 @@ add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
   keyboard_handler::keyboard_handler
-  rcl::rcl
   rclcpp::rclcpp
-  ${rclcpp_components_TARGETS}
-  rcutils::rcutils
-  rmw::rmw
-  rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   ${rosbag2_interfaces_TARGETS}
   rosbag2_storage::rosbag2_storage
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  rcl::rcl
+  rclcpp_components::component
+  rcutils::rcutils
+  rmw::rmw
+  rosbag2_compression::rosbag2_compression
   shared_queues_vendor::singleproducerconsumer
   yaml-cpp
 )
@@ -99,13 +100,12 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_export_dependencies(
-  rclcpp_components
   keyboard_handler
+  rclcpp
   rosbag2_cpp
-  rosbag2_compression
   rosbag2_interfaces
-  shared_queues_vendor
-  yaml_cpp_vendor)
+  rosbag2_storage
+)
 
 function(create_tests_for_rmw_implementation)
   # disable the following tests for connext
@@ -122,7 +122,13 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_composable_player
     test/rosbag2_transport/test_composable_player.cpp
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+    LINK_LIBS
+      ${composition_interfaces_TARGETS}
+      rclcpp_components::component_manager
+      rosbag2_transport
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+  )
 
   rosbag2_transport_add_gmock(test_play_loop
     test/rosbag2_transport/test_play_loop.cpp
@@ -144,7 +150,7 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_player_stop
     test/rosbag2_transport/test_player_stop.cpp
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common rmw::rmw)
 
   rosbag2_transport_add_gmock(test_play_seek
     test/rosbag2_transport/test_play_seek.cpp
@@ -182,7 +188,7 @@ function(create_tests_for_rmw_implementation)
   rosbag2_transport_add_gmock(test_record
     test/rosbag2_transport/test_record.cpp
     INCLUDE_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common rmw::rmw
     ${SKIP_TEST})
 
   rosbag2_transport_add_gmock(test_record_all
@@ -220,12 +226,17 @@ function(create_tests_for_rmw_implementation)
 
   rosbag2_transport_add_gmock(test_composable_recorder
     test/rosbag2_transport/test_composable_recorder.cpp
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+    LINK_LIBS
+      ${composition_interfaces_TARGETS}
+      rclcpp_components::component_manager
+      rosbag2_test_common::rosbag2_test_common
+      rosbag2_transport
+      ${test_msgs_TARGETS}
+  )
 
   rosbag2_transport_add_gmock(test_load_composable_components
     test/rosbag2_transport/test_load_composable_components.cpp
-    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common
-    ${rclcpp_components_TARGETS})
+    LINK_LIBS rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common ${rclcpp_components_TARGETS})
 
   if(${rmw_implementation} MATCHES "rmw_cyclonedds(.*)")
     ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
@@ -245,8 +256,10 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_index_cpp REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  find_package(test_msgs REQUIRED)
+  find_package(composition_interfaces REQUIRED)
   find_package(rosbag2_test_common REQUIRED)
+  find_package(test_msgs REQUIRED)
+
   include(cmake/rosbag2_transport_add_gmock.cmake)
   ament_lint_auto_find_test_dependencies()
   call_for_each_rmw_implementation(create_tests_for_rmw_implementation)

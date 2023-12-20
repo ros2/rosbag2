@@ -14,13 +14,16 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "composition_manager_test_fixture.hpp"
 #include "mock_player.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "test_msgs/msg/basic_types.hpp"

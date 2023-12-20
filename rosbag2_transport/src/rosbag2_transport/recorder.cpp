@@ -29,6 +29,8 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
 
+#include "rmw/types.h"
+
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/service_utils.hpp"

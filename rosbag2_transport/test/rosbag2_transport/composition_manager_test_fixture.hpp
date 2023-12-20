@@ -17,11 +17,14 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <string>
 
 #include "composition_interfaces/srv/load_node.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/component_manager.hpp"
 #include "rclcpp_components/component_manager_isolated.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
