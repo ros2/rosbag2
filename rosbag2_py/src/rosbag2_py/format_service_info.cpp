@@ -16,6 +16,9 @@
 
 #include "format_service_info.hpp"
 
+namespace rosbag2_py
+{
+
 std::string
 format_service_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list)
@@ -49,3 +52,5 @@ format_service_info(
 
   return info_stream.str();
 }
+
+}  // namespace rosbag2_py

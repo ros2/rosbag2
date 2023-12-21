@@ -18,9 +18,13 @@
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"
-#include "visibility_control.hpp"
 
-ROSBAG2_PY_PUBLIC std::string format_bag_meta_data(
+namespace rosbag2_py
+{
+
+std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata, bool only_topic = false);
+
+}  // namespace rosbag2_py
 
 #endif  // ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_

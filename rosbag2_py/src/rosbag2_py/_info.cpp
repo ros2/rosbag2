@@ -20,7 +20,7 @@
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
-#include "./pybind11.hpp"
+#include "pybind11.hpp"
 
 namespace rosbag2_py
 {
