@@ -223,6 +223,9 @@ void format_service_with_type(
 
 }  // namespace
 
+namespace rosbag2_py
+{
+
 std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
   bool only_topic)
@@ -270,3 +273,5 @@ std::string format_bag_meta_data(
 
   return info_stream.str();
 }
+
+}  // namespace rosbag2_py
