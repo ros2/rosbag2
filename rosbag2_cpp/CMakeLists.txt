@@ -72,7 +72,8 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
   src/rosbag2_cpp/writers/sequential_writer.cpp
-  src/rosbag2_cpp/reindexer.cpp)
+  src/rosbag2_cpp/reindexer.cpp
+  src/rosbag2_cpp/service_utils.cpp)
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
@@ -258,6 +259,12 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_time_controller_clock.cpp)
   if(TARGET test_time_controller_clock)
     target_link_libraries(test_time_controller_clock ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_service_utils
+    test/rosbag2_cpp/test_service_utils.cpp)
+  if(TARGET test_service_utils)
+    target_link_libraries(test_service_utils ${PROJECT_NAME})
   endif()
 endif()
 

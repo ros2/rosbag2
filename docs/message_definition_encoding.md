@@ -16,7 +16,7 @@ This set of definitions with all field types recursively included can be called 
 
 ## `ros2msg` encoding
 
-This encoding consists of definitions in [.msg](https://docs.ros.org/en/rolling/Concepts/About-ROS-Interfaces.html#message-description-specification) format, concatenated together in human-readable form with
+This encoding consists of definitions in [.msg](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#messages) and [.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format, concatenated together in human-readable form with
 a delimiter.
 
 The top-level message definition is present first, with no delimiter. All dependent .msg definitions are preceded by a two-line delimiter:
@@ -32,6 +32,19 @@ For example, the complete message definition for `my_msgs/msg/ExampleMsg` in `ro
 ```
 # defines a message that includes a field of a custom message type
 my_msgs/BasicMsg my_basic_field
+================================================================================
+MSG: my_msgs/msg/BasicMsg
+# defines a message with a primitive type field
+float32 my_float
+```
+
+Another example is a service message definition for `my_msgs/srv/ExampleSrv` in `ros2msg` form
+
+```
+# defines a service message that includes a field of a custom message type
+my_msgs/BasicMsg request
+---
+my_msgs/BasicMsg response
 ================================================================================
 MSG: my_msgs/msg/BasicMsg
 # defines a message with a primitive type field

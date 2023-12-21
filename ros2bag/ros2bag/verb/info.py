@@ -26,11 +26,38 @@ class InfoVerb(VerbExtension):
             '-t', '--topic-name', action='store_true',
             help='Only display topic names.'
         )
+        parser.add_argument(
+            '-v', '--verbose', action='store_true',
+            help='Display request/response information for services'
+        )
+
+    def _is_service_event_topic(self, topic_name, topic_type) -> bool:
+
+        service_event_type_middle = '/srv/'
+        service_event_type_postfix = '_Event'
+
+        if (service_event_type_middle not in topic_type
+                or not topic_type.endswith(service_event_type_postfix)):
+            return False
+
+        service_event_topic_postfix = '/_service_event'
+        if not topic_name.endswith(service_event_topic_postfix):
+            return False
+
+        return True
 
     def main(self, *, args):  # noqa: D102
-        m = Info().read_metadata(args.bag_path, args.storage)
-        if args.topic_name:
-            for topic_info in m.topics_with_message_count:
-                print(topic_info.topic_metadata.name)
+        if args.topic_name and args.verbose:
+            print("Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
+                  'will be ignored.')
+        if args.verbose:
+            Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
         else:
-            print(m)
+            m = Info().read_metadata(args.bag_path, args.storage)
+            if args.topic_name:
+                for topic_info in m.topics_with_message_count:
+                    if not self._is_service_event_topic(topic_info.topic_metadata.name,
+                                                        topic_info.topic_metadata.type):
+                        print(topic_info.topic_metadata.name)
+            else:
+                print(m)

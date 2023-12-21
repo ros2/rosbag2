@@ -62,6 +62,51 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
     "float32 c\n");
 }
 
+TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
+{
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvMsg");
+  ASSERT_EQ(result.encoding, "ros2msg");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "================================================================================\n"
+    "SRV: rosbag2_test_msgdefs/srv/ComplexSrvMsg\n"
+    "rosbag2_test_msgdefs/BasicMsg req\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicMsg resp\n"
+    "\n"
+    "================================================================================\n"
+    "MSG: rosbag2_test_msgdefs/BasicMsg\n"
+    "float32 c\n") << result.encoded_message_definition << std::endl;
+}
+
+TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
+{
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvIdl");
+  ASSERT_EQ(result.encoding, "ros2idl");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "================================================================================\n"
+    "SRV: rosbag2_test_msgdefs/srv/ComplexSrvIdl\n"
+    "rosbag2_test_msgdefs/BasicIdl req\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicIdl resp\n"
+    "\n"
+    "================================================================================\n"
+    "MSG: rosbag2_test_msgdefs/BasicIdl\n"
+    "\n"
+    "================================================================================\n"
+    "IDL: rosbag2_test_msgdefs/BasicIdl\n"
+    "module rosbag2_test_msgdefs {\n"
+    "  module msg {\n"
+    "    struct BasicIdl {\n"
+    "        float x;\n"
+    "    };\n"
+    "  };\n"
+    "};\n") << result.encoded_message_definition << std::endl;
+}
+
 TEST(test_local_message_definition_source, can_find_idl_deps)
 {
   LocalMessageDefinitionSource source;
@@ -132,7 +177,7 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   rosbag2_storage::MessageDefinition result;
   ASSERT_NO_THROW(
   {
-    result = source.get_full_text("rosbag2_test_msgdefs/srv/BasicSrv_Request");
+    result = source.get_full_text("rosbag2_test_msgdefs/idl/BasicSrv_Request");
   });
   ASSERT_EQ(result.encoding, "unknown");
 }

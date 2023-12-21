@@ -55,7 +55,15 @@ class SplitLineFormatter(HelpFormatter):
 
 
 def print_error(string: str) -> str:
-    return '[ERROR] [ros2bag]: {}'.format(string)
+    return _print_base('ERROR', string)
+
+
+def print_warn(string: str) -> str:
+    return _print_base('WARN', string)
+
+
+def _print_base(print_type: str, string: str) -> str:
+    return '[{}] [ros2bag]: {}'.format(print_type, string)
 
 
 def dict_to_duration(time_dict: Optional[Dict[str, int]]) -> Duration:
@@ -200,3 +208,15 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
              'Settings in this profile can still be overridden by other explicit options '
              'and --storage-config-file. Profiles:\n' +
              '\n'.join([f'{preset[0]}: {preset[1]}' for preset in preset_profiles]))
+
+
+def convert_service_to_service_event_topic(services):
+    services_event_topics = []
+
+    if not services:
+        return services_event_topics
+
+    for service in services:
+        services_event_topics.append(service + '/_service_event')
+
+    return services_event_topics

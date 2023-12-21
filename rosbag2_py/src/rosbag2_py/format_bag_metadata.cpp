@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "format_bag_metadata.hpp"
-
 #include <chrono>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -26,7 +25,10 @@
 #include <time.h>
 #endif
 
+#include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+
+#include "format_bag_metadata.hpp"
 
 namespace
 {
@@ -124,17 +126,109 @@ void format_topics_with_type(
       info_stream << std::endl;
     };
 
-  print_topic_info(topics[0]);
   size_t number_of_topics = topics.size();
-  for (size_t j = 1; j < number_of_topics; ++j) {
+  size_t i = 0;
+  // Find first topic which isn't service event topic
+  while (i < number_of_topics &&
+    rosbag2_cpp::is_service_event_topic(
+      topics[i].topic_metadata.name,
+      topics[i].topic_metadata.type))
+  {
+    i++;
+  }
+
+  if (i == number_of_topics) {
+    info_stream << std::endl;
+    return;
+  }
+
+  print_topic_info(topics[i]);
+  for (size_t j = ++i; j < number_of_topics; ++j) {
+    if (rosbag2_cpp::is_service_event_topic(
+        topics[j].topic_metadata.name, topics[j].topic_metadata.type))
+    {
+      continue;
+    }
     indent(info_stream, indentation_spaces);
     print_topic_info(topics[j]);
   }
 }
 
+struct ServiceMetadata
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+};
+
+struct ServiceInformation
+{
+  ServiceMetadata service_metadata;
+  size_t event_message_count = 0;
+};
+
+std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
+  const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
+  size_t & total_service_event_msg_count)
+{
+  total_service_event_msg_count = 0;
+  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+
+  for (auto & topic : topics_with_message_count) {
+    if (rosbag2_cpp::is_service_event_topic(
+        topic.topic_metadata.name, topic.topic_metadata.type))
+    {
+      auto service_info = std::make_shared<ServiceInformation>();
+      service_info->service_metadata.name =
+        rosbag2_cpp::service_event_topic_name_to_service_name(topic.topic_metadata.name);
+      service_info->service_metadata.type =
+        rosbag2_cpp::service_event_topic_type_to_service_type(topic.topic_metadata.type);
+      service_info->service_metadata.serialization_format =
+        topic.topic_metadata.serialization_format;
+      service_info->event_message_count = topic.message_count;
+      total_service_event_msg_count += topic.message_count;
+      service_info_list.emplace_back(service_info);
+    }
+  }
+
+  return service_info_list;
+}
+
+void format_service_with_type(
+  const std::vector<std::shared_ptr<ServiceInformation>> & services,
+  std::stringstream & info_stream,
+  int indentation_spaces)
+{
+  if (services.empty()) {
+    info_stream << std::endl;
+    return;
+  }
+
+  auto print_service_info =
+    [&info_stream](const std::shared_ptr<ServiceInformation> & si) -> void {
+      info_stream << "Service: " << si->service_metadata.name << " | ";
+      info_stream << "Type: " << si->service_metadata.type << " | ";
+      info_stream << "Event Count: " << si->event_message_count << " | ";
+      info_stream << "Serialization Format: " << si->service_metadata.serialization_format;
+      info_stream << std::endl;
+    };
+
+  print_service_info(services[0]);
+  auto number_of_services = services.size();
+  for (size_t j = 1; j < number_of_services; ++j) {
+    indent(info_stream, indentation_spaces);
+    print_service_info(services[j]);
+  }
+}
+
 }  // namespace
 
-std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
+namespace rosbag2_py
+{
+
+std::string format_bag_meta_data(
+  const rosbag2_storage::BagMetadata & metadata,
+  bool only_topic)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -144,6 +238,12 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   if (ros_distro.empty()) {
     ros_distro = "unknown";
   }
+
+  size_t total_service_event_msg_count = 0;
+  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+  service_info_list = filter_service_event_topic(
+    metadata.topics_with_message_count,
+    total_service_event_msg_count);
 
   info_stream << std::endl;
   info_stream << "Files:             ";
@@ -157,10 +257,21 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   info_stream << "Start:             " << format_time_point(start_time) <<
     std::endl;
   info_stream << "End:               " << format_time_point(end_time) << std::endl;
-  info_stream << "Messages:          " << metadata.message_count << std::endl;
+  info_stream << "Messages:          " << metadata.message_count - total_service_event_msg_count <<
+    std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
     metadata.topics_with_message_count, info_stream, indentation_spaces);
 
+  if (!only_topic) {
+    info_stream << "Service:           " << service_info_list.size() << std::endl;
+    info_stream << "Service information: ";
+    if (!service_info_list.empty()) {
+      format_service_with_type(service_info_list, info_stream, indentation_spaces + 2);
+    }
+  }
+
   return info_stream.str();
 }
+
+}  // namespace rosbag2_py

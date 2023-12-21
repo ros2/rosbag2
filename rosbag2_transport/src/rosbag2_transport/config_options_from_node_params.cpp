@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "rclcpp/logging.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
@@ -204,13 +205,33 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
 {
   RecordOptions record_options{};
-  record_options.all = node.declare_parameter<bool>("record.all", false);
+  record_options.all_topics = node.declare_parameter<bool>("record.all_topics", false);
+  record_options.all_services = node.declare_parameter<bool>("record.all_services", false);
 
   record_options.is_discovery_disabled =
     node.declare_parameter<bool>("record.is_discovery_disabled", false);
 
   record_options.topics = node.declare_parameter<std::vector<std::string>>(
     "record.topics", std::vector<std::string>());
+
+  // Convert service name to service event topic name
+  auto service_list = node.declare_parameter<std::vector<std::string>>(
+    "record.services", std::vector<std::string>());
+  for (auto & service : service_list) {
+    service = rosbag2_cpp::service_name_to_service_event_topic_name(service);
+  }
+  record_options.services = service_list;
+
+  record_options.exclude_topics = node.declare_parameter<std::vector<std::string>>(
+    "record.exclude_topics", std::vector<std::string>());
+
+  // Convert service name to service event topic name
+  auto exclude_service_list = node.declare_parameter<std::vector<std::string>>(
+    "record.exclude_services", std::vector<std::string>());
+  for (auto & service : exclude_service_list) {
+    service = rosbag2_cpp::service_name_to_service_event_topic_name(service);
+  }
+  record_options.exclude_service_events = exclude_service_list;
 
   record_options.rmw_serialization_format =
     node.declare_parameter<std::string>("record.rmw_serialization_format", "cdr");
@@ -220,7 +241,7 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
     0, 1000000).to_chrono<std::chrono::milliseconds>();
 
   record_options.regex = node.declare_parameter<std::string>("record.regex", "");
-  record_options.exclude = node.declare_parameter<std::string>("record.exclude", "");
+  record_options.exclude_regex = node.declare_parameter<std::string>("record.exclude_regex", "");
   record_options.node_prefix = node.declare_parameter<std::string>("record.node_prefix", "");
   record_options.compression_mode = node.declare_parameter<std::string>(
     "record.compression_mode",

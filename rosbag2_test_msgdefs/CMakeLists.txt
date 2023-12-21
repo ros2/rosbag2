@@ -15,6 +15,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ComplexMsg.msg"
   "msg/ComplexMsgDependsOnIdl.msg"
   "srv/BasicSrv.srv"
+  "srv/ComplexSrvMsg.srv"
+  "srv/ComplexSrvIdl.srv"
   ADD_LINTER_TESTS
 )
 

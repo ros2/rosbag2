@@ -30,13 +30,17 @@ namespace rosbag2_transport
 struct RecordOptions
 {
 public:
-  bool all = false;
+  bool all_topics = false;
+  bool all_services = false;
   bool is_discovery_disabled = false;
   std::vector<std::string> topics;
+  std::vector<std::string> services;  // service event topic
+  std::vector<std::string> exclude_topics;
+  std::vector<std::string> exclude_service_events;  // service event topic
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval{100};
   std::string regex = "";
-  std::string exclude = "";
+  std::string exclude_regex = "";
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";

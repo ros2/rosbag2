@@ -51,7 +51,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_two_topics_ignore_l
   pub_manager.setup_publisher(array_topic, array_message, 2);
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
-  rosbag2_transport::RecordOptions record_options = {true, false, {}, "rmw_format", 100ms};
+  rosbag2_transport::RecordOptions record_options =
+  {true, false, false, {}, {}, {}, {}, "rmw_format", 100ms};
   record_options.ignore_leaf_topics = true;
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);

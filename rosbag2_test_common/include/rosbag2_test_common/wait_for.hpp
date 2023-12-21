@@ -51,6 +51,23 @@ bool wait_until_shutdown(Timeout timeout, Condition condition)
   rclcpp::shutdown();
   return true;
 }
+
+template<typename Condition>
+bool wait_until_condition(
+  Condition condition,
+  std::chrono::duration<double> timeout = std::chrono::seconds(5))
+{
+  using clock = std::chrono::system_clock;
+  auto start = clock::now();
+  while (!condition()) {
+    if ((clock::now() - start) > timeout) {
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  return true;
+}
+
 }  // namespace rosbag2_test_common
 
 #endif  // ROSBAG2_TEST_COMMON__WAIT_FOR_HPP_

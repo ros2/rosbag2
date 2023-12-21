@@ -31,6 +31,7 @@
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 
@@ -183,6 +184,24 @@ RecorderImpl::RecorderImpl(
   for (auto & topic : record_options_.topics) {
     topic = rclcpp::expand_topic_or_service_name(
       topic, node->get_name(),
+      node->get_namespace(), false);
+  }
+
+  for (auto & exclude_topic : record_options_.exclude_topics) {
+    exclude_topic = rclcpp::expand_topic_or_service_name(
+      exclude_topic, node->get_name(),
+      node->get_namespace(), false);
+  }
+
+  for (auto & service : record_options_.services) {
+    service = rclcpp::expand_topic_or_service_name(
+      service, node->get_name(),
+      node->get_namespace(), false);
+  }
+
+  for (auto & exclude_service_event_topic : record_options_.exclude_service_events) {
+    exclude_service_event_topic = rclcpp::expand_topic_or_service_name(
+      exclude_service_event_topic, node->get_name(),
       node->get_namespace(), false);
   }
 }
@@ -476,6 +495,7 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   writer_->create_topic(topic);
 
   rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
+
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});

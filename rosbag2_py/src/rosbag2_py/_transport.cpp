@@ -350,13 +350,15 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<RecordOptions>(m, "RecordOptions")
   .def(py::init<>())
-  .def_readwrite("all", &RecordOptions::all)
+  .def_readwrite("all_topics", &RecordOptions::all_topics)
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)
   .def_readwrite("rmw_serialization_format", &RecordOptions::rmw_serialization_format)
   .def_readwrite("topic_polling_interval", &RecordOptions::topic_polling_interval)
   .def_readwrite("regex", &RecordOptions::regex)
-  .def_readwrite("exclude", &RecordOptions::exclude)
+  .def_readwrite("exclude_regex", &RecordOptions::exclude_regex)
+  .def_readwrite("exclude_topics", &RecordOptions::exclude_topics)
+  .def_readwrite("exclude_service_events", &RecordOptions::exclude_service_events)
   .def_readwrite("node_prefix", &RecordOptions::node_prefix)
   .def_readwrite("compression_mode", &RecordOptions::compression_mode)
   .def_readwrite("compression_format", &RecordOptions::compression_format)
@@ -371,6 +373,8 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("start_paused", &RecordOptions::start_paused)
   .def_readwrite("ignore_leaf_topics", &RecordOptions::ignore_leaf_topics)
   .def_readwrite("use_sim_time", &RecordOptions::use_sim_time)
+  .def_readwrite("services", &RecordOptions::services)
+  .def_readwrite("all_services", &RecordOptions::all_services)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

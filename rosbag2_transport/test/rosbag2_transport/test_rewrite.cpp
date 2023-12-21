@@ -93,7 +93,7 @@ TEST_P(TestRewrite, test_noop_rewrite) {
   output_storage.uri = (output_dir_ / "unchanged").string();
   output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
-  output_record.all = true;
+  output_record.all_topics = true;
   output_bags_.push_back({output_storage, output_record});
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
@@ -114,7 +114,7 @@ TEST_P(TestRewrite, test_merge) {
   output_storage.uri = (output_dir_ / "merged").string();
   output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
-  output_record.all = true;
+  output_record.all_topics = true;
   output_bags_.push_back({output_storage, output_record});
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
@@ -144,7 +144,7 @@ TEST_P(TestRewrite, test_message_definitions_stored_with_merge) {
   output_storage.uri = (output_dir_ / "merged").string();
   output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
-  output_record.all = true;
+  output_record.all_topics = true;
   output_bags_.push_back({output_storage, output_record});
 
   rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
@@ -188,8 +188,8 @@ TEST_P(TestRewrite, test_filter_split) {
     storage_opts.uri = (output_dir_ / "split1").string();
     storage_opts.storage_id = storage_id_;
     rosbag2_transport::RecordOptions rec_opts;
-    rec_opts.all = true;
-    rec_opts.exclude = "basic";
+    rec_opts.all_topics = true;
+    rec_opts.exclude_regex = "basic";
     output_bags_.push_back({storage_opts, rec_opts});
   }
   {
@@ -197,7 +197,7 @@ TEST_P(TestRewrite, test_filter_split) {
     storage_opts.uri = (output_dir_ / "split2").string();
     storage_opts.storage_id = storage_id_;
     rosbag2_transport::RecordOptions rec_opts;
-    rec_opts.all = false;
+    rec_opts.all_topics = false;
     rec_opts.topics = {"b_basictypes"};
     output_bags_.push_back({storage_opts, rec_opts});
   }
@@ -232,7 +232,7 @@ TEST_P(TestRewrite, test_compress) {
   output_storage.uri = out_bag.string();
   output_storage.storage_id = storage_id_;
   rosbag2_transport::RecordOptions output_record;
-  output_record.all = true;
+  output_record.all_topics = true;
   output_record.compression_mode = "file";
   output_record.compression_format = "zstd";
   output_bags_.push_back({output_storage, output_record});

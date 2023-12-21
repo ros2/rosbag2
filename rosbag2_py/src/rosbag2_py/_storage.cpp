@@ -23,11 +23,9 @@
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
-#include "rosbag2_storage/qos.hpp"
 
-#include "./format_bag_metadata.hpp"
-
-#include "./pybind11.hpp"
+#include "format_bag_metadata.hpp"
+#include "pybind11.hpp"
 
 namespace
 {
@@ -358,7 +356,7 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("ros_distro", &rosbag2_storage::BagMetadata::ros_distro)
   .def(
     "__repr__", [](const rosbag2_storage::BagMetadata & metadata) {
-      return format_bag_meta_data(metadata);
+      return rosbag2_py::format_bag_meta_data(metadata);
     });
 
   pybind11::enum_<rosbag2_storage::ReadOrder::SortBy>(m, "ReadOrderSortBy")
