@@ -5,8 +5,10 @@ player_params_node:
       node_prefix: "test"
       rate: 13.0
       topics_to_filter: ["/foo", "/bar"]
-      topics_regex_to_filter: "[xyz]/topic"
+      services_to_filter: ["/service1", "/service2"]
+      regex_to_filter: "[xyz]/topic_service"
       topics_regex_to_exclude: "[abc]/topic"
+      services_regex_to_exclude: "[abc]/service"
       loop: false
       clock_publish_frequency: 19.0
       clock_publish_on_topic_publish: true

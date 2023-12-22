@@ -494,21 +494,19 @@ bool PlayerImpl::play()
           try {
             if (std::holds_alternative<SharedPlayerPublisher>(pub.second)) {
               if (!std::get<SharedPlayerPublisher>(pub.second)
-                ->generic_publisher()->wait_for_all_acked(timeout))
+              ->generic_publisher()->wait_for_all_acked(timeout))
               {
                 RCLCPP_ERROR(
                   owner_->get_logger(),
-                  "Timed out while waiting for all published messages to be acknowledged for topic %s",
-                  pub.first.c_str());
+                  "Timed out while waiting for all published messages to be acknowledged for topic "
+                  "%s", pub.first.c_str());
               }
             }
           } catch (std::exception & e) {
             RCLCPP_ERROR(
               owner_->get_logger(),
               "Exception occurred while waiting for all published messages to be acknowledged for "
-              "topic %s : %s",
-              pub.first.c_str(),
-              e.what());
+              "topic %s : %s", pub.first.c_str(), e.what());
           }
         }
       }

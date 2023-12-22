@@ -31,8 +31,10 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
   node["node_prefix"] = play_options.node_prefix;
   node["rate"] = play_options.rate;
   node["topics_to_filter"] = play_options.topics_to_filter;
-  node["topics_regex_to_filter"] = play_options.topics_regex_to_filter;
+  node["services_to_filter"] = play_options.services_to_filter;
+  node["regex_to_filter"] = play_options.regex_to_filter;
   node["topics_regex_to_exclude"] = play_options.topics_regex_to_exclude;
+  node["services_regex_to_exclude"] = play_options.services_regex_to_exclude;
   node["topic_qos_profile_overrides"] =
     YAML::convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
     play_options.topic_qos_profile_overrides);
@@ -67,9 +69,13 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
   optional_assign<float>(node, "rate", play_options.rate);
   optional_assign<std::vector<std::string>>(
     node, "topics_to_filter", play_options.topics_to_filter);
-  optional_assign<std::string>(node, "topics_regex_to_filter", play_options.topics_regex_to_filter);
+  optional_assign<std::vector<std::string>>(
+    node, "services_to_filter", play_options.services_to_filter);
+  optional_assign<std::string>(node, "regex_to_filter", play_options.regex_to_filter);
   optional_assign<std::string>(
     node, "topics_regex_to_exclude", play_options.topics_regex_to_exclude);
+  optional_assign<std::string>(
+    node, "services_regex_to_exclude", play_options.services_regex_to_exclude);
 
   optional_assign<std::unordered_map<std::string, rclcpp::QoS>>(
     node, "topic_qos_profile_overrides", play_options.topic_qos_profile_overrides);

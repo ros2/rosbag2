@@ -131,10 +131,14 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 
   play_options.topics_to_filter = node.declare_parameter<std::vector<std::string>>(
     "play.topics_to_filter", std::vector<std::string>());
+  play_options.services_to_filter = node.declare_parameter<std::vector<std::string>>(
+    "play.services_to_filter", std::vector<std::string>());
 
-  play_options.topics_regex_to_filter =
-    node.declare_parameter<std::string>("play.topics_regex_to_filter", "");
+  play_options.regex_to_filter =
+    node.declare_parameter<std::string>("play.regex_to_filter", "");
 
+  play_options.services_regex_to_exclude =
+    node.declare_parameter<std::string>("play.services_regex_to_exclude", "");
   play_options.topics_regex_to_exclude =
     node.declare_parameter<std::string>("play.topics_regex_to_exclude", "");
 
