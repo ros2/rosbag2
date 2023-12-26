@@ -168,6 +168,7 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
       impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
     } else {
       const auto steady_until = impl_->ros_to_steady(until);
+      // wait only if necessary for performance
       if (steady_until > impl_->now_fn()) {
         impl_->cv.wait_until(lock, steady_until);
       }
