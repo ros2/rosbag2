@@ -27,8 +27,6 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
-#include "moodycamel/readerwriterqueue.h"
-
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"

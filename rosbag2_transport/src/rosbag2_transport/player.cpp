@@ -23,6 +23,8 @@
 #include <vector>
 #include <thread>
 
+#include "moodycamel/readerwriterqueue.h"
+
 #include "rcl/graph.h"
 
 #include "rclcpp/rclcpp.hpp"
