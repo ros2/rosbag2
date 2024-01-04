@@ -192,18 +192,7 @@ class Recorder
 public:
   Recorder()
   {
-    auto init_options = rclcpp::InitOptions();
-    init_options.shutdown_on_signal = false;
-    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::None);
-
-    std::signal(
-      SIGTERM, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-    std::signal(
-      SIGINT, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
+    rclcpp::init(0, nullptr);
   }
 
   virtual ~Recorder()
@@ -216,36 +205,64 @@ public:
     RecordOptions & record_options,
     std::string & node_name)
   {
-    exit_ = false;
-    auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-    if (record_options.rmw_serialization_format.empty()) {
-      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
-    }
-
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer), storage_options, record_options, node_name);
-    recorder->record();
-
-    exec->add_node(recorder);
-    // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
-    // recorder->stop() to be able to send notifications about bag split and close.
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec->spin();
+    auto old_sigterm_handler = std::signal(
+      SIGTERM, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
       });
-    {
-      // Release the GIL for long-running record, so that calling Python code can use other threads
-      py::gil_scoped_release release;
-      std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
-      wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
-      recorder->stop();
+    auto old_sigint_handler = std::signal(
+      SIGINT, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
+      });
+
+    try {
+      exit_ = false;
+      auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+      if (record_options.rmw_serialization_format.empty()) {
+        record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
+      }
+
+      auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+      auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+        std::move(writer), storage_options, record_options, node_name);
+      recorder->record();
+
+      exec->add_node(recorder);
+      // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
+      // recorder->stop() to be able to send notifications about bag split and close.
+      auto spin_thread = std::thread(
+        [&exec]() {
+          exec->spin();
+        });
+      {
+        // Release the GIL for long-running record, so that calling Python code
+        // can use other threads
+        py::gil_scoped_release release;
+        std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
+        wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
+        recorder->stop();
+      }
+      exec->cancel();
+      if (spin_thread.joinable()) {
+        spin_thread.join();
+      }
+      exec->remove_node(recorder);
+    } catch (...) {
+      // Return old signal handlers anyway
+      if (old_sigterm_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigterm_handler);
+      }
+      if (old_sigint_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigint_handler);
+      }
+      throw;
     }
-    exec->cancel();
-    if (spin_thread.joinable()) {
-      spin_thread.join();
+    // Return old signal handlers
+    if (old_sigterm_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigterm_handler);
     }
-    exec->remove_node(recorder);
+    if (old_sigint_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigint_handler);
+    }
   }
 
   static void cancel()
