@@ -176,7 +176,7 @@ uint8_t PlayerServiceClient::get_msg_event_type(
 }
 
 PlayerServiceClientManager::PlayerServiceClientManager(
-  size_t requst_future_timeout,
+  std::chrono::seconds requst_future_timeout,
   size_t maximum_request_future_queue)
 : request_future_timeout_(std::chrono::seconds(requst_future_timeout)),
   maximum_request_future_queue_(maximum_request_future_queue)

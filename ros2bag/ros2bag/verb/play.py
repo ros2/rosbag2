@@ -177,7 +177,7 @@ class PlayVerb(VerbExtension):
                 return print_error(str(e))
 
         if args.exclude and args.exclude_topics:
-            return print_error(str('-x/--exclude and --exclude_topics cannot be used at the '
+            return print_error(str('-x/--exclude and --exclude-topics cannot be used at the '
                                    'same time.'))
 
         storage_config_file = ''
@@ -213,7 +213,8 @@ class PlayVerb(VerbExtension):
             play_options.topics_regex_to_exclude = args.exclude_topics
 
         if args.exclude_services:
-            play_options.services_regex_to_exclude = args.exclude_services + '/_service_event'
+            play_options.services_regex_to_exclude = convert_service_to_service_event_topic(
+                args.exclude_services)
         else:
             play_options.services_regex_to_exclude = args.exclude_services
         play_options.topic_qos_profile_overrides = qos_profile_overrides

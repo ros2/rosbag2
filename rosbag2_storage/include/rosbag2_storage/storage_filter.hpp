@@ -29,7 +29,7 @@ struct StorageFilter
   std::vector<std::string> topics;
 
   // Service names to whitelist when reading a bag. Only messages matching these
-  // specified service will be returned. If list is empty, the filter is ignored
+  // specified services will be returned. If list is empty, the filter is ignored
   // and all messages of services are returned.
   std::vector<std::string> services;
 

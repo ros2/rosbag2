@@ -42,7 +42,7 @@ public:
   std::vector<std::string> topics_to_filter = {};
 
   // Service names to whitelist when playing a bag.
-  // Only messages matching these specified service will be played.
+  // Only messages matching these specified services will be played.
   // If list is empty, the filter is ignored and all messages of services are played.
   std::vector<std::string> services_to_filter = {};
 
