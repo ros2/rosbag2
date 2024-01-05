@@ -209,7 +209,9 @@ RecorderImpl::RecorderImpl(
 RecorderImpl::~RecorderImpl()
 {
   keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
-  stop();
+  if (in_recording_) {
+    stop();
+  }
 }
 
 void RecorderImpl::stop()
