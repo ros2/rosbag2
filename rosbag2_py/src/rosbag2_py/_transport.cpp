@@ -144,28 +144,11 @@ class Recorder
 public:
   Recorder()
   {
-<<<<<<< HEAD
-    auto init_options = rclcpp::InitOptions();
-    init_options.shutdown_on_signal = false;
-    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::SigInt);
-    rclcpp::uninstall_signal_handlers();
-
-    std::signal(
-      SIGTERM, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-    std::signal(
-      SIGINT, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-=======
     rclcpp::init(0, nullptr);
->>>>>>> 195e406 (Install signal handlers in recorder only inside record method (#1464))
   }
 
   virtual ~Recorder()
   {
-//    rclcpp::install_signal_handlers(rclcpp::SignalHandlerOptions::SigTerm);
     rclcpp::shutdown();
   }
 
@@ -173,29 +156,9 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options)
   {
-<<<<<<< HEAD
-    exit_ = false;
-    auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-    if (record_options.rmw_serialization_format.empty()) {
-      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
-    }
-
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer), storage_options, record_options);
-    recorder->record();
-
-    exec->add_node(recorder);
-    // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
-    // recorder->stop() to be able to send notifications about bag split and close.
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec->spin();
-=======
     auto old_sigterm_handler = std::signal(
       SIGTERM, [](int /* signal */) {
         rosbag2_py::Recorder::cancel();
->>>>>>> 195e406 (Install signal handlers in recorder only inside record method (#1464))
       });
     auto old_sigint_handler = std::signal(
       SIGINT, [](int /* signal */) {
@@ -211,7 +174,7 @@ public:
 
       auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
       auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-        std::move(writer), storage_options, record_options, node_name);
+        std::move(writer), storage_options, record_options);
       recorder->record();
 
       exec->add_node(recorder);
