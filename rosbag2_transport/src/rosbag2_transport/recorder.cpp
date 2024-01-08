@@ -561,16 +561,34 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
-  auto subscription = node->create_generic_subscription(
+  std::function<void(std::shared_ptr<const rclcpp::SerializedMessage>,
+    const rclcpp::MessageInfo &)> recvFun;
+
+  if (record_options_.use_sim_time) {
+    return node->create_generic_subscription(
+      topic_name,
+      topic_type,
+      qos,
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+        if (!paused_.load()) {
+          writer_->write(
+            message, topic_name, topic_type, node->now());
+        }
+      });
+  }
+
+  return node->create_generic_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+    const rclcpp::MessageInfo & mi) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, node->get_clock()->now());
+        writer_->write(
+          message, topic_name, topic_type,
+          rclcpp::Time(mi.get_rmw_message_info().received_timestamp));
       }
     });
-  return subscription;
 }
 
 std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(
