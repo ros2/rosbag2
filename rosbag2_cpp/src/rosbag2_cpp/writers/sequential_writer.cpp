@@ -110,7 +110,7 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  storage_options_.uri = format_storage_uri(base_folder_, 0);
+  storage_options_.uri = format_storage_uri(base_folder_, bag_idx_);
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
@@ -248,7 +248,7 @@ void SequentialWriter::switch_to_next_storage()
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
-    metadata_.relative_file_paths.size());
+    ++bag_idx_);
   storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (!storage_) {
@@ -269,7 +269,8 @@ void SequentialWriter::switch_to_next_storage()
   }
 }
 
-void SequentialWriter::split_bagfile()
+void SequentialWriter::split_bagfile(
+  const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time)
 {
   auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = storage_->get_relative_file_path();
@@ -279,8 +280,36 @@ void SequentialWriter::split_bagfile()
   metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   rosbag2_storage::FileInformation file_info{};
+  file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds::max());
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
+
+  // We just created a new file above when switching to next storage file
+  // so check if the size of the relative files vector is greater than max splits.
+  if (
+    storage_options_.max_bagfile_splits > 0 &&
+    metadata_.relative_file_paths.size() > storage_options_.max_bagfile_splits)
+  {
+    const auto expired_db_path = (
+      rcpputils::fs::path(base_folder_) / rcpputils::fs::path{
+          metadata_.relative_file_paths.front()}
+    );
+    // TODO(hrfuller) Should update topics_names_to_info as well but the
+    // per topic metadata isn't recorded per file.
+    metadata_.message_count -= metadata_.files.begin()->message_count;
+    metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
+    metadata_.files.erase(metadata_.files.begin());
+    // Update the global bag metadata with new times excluding the bag that was removed.
+    metadata_.starting_time = metadata_.files.front().starting_time;
+    metadata_.duration = current_time - metadata_.starting_time;
+    if (!rcpputils::fs::remove(expired_db_path)) {
+      std::stringstream warnmsg;
+      warnmsg <<
+        "Failed to remove expired bagfile from the fs \"" << expired_db_path.string() << "\"!";
+      ROSBAG2_CPP_LOG_WARN(warnmsg.str().c_str());
+    }
+  }
 
   callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }
@@ -305,17 +334,21 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
 
-  if (should_split_bagfile(message_timestamp)) {
-    split_bagfile();
+  if (is_first_message_) {
     // Update bagfile starting time
     metadata_.starting_time = message_timestamp;
+    is_first_message_ = false;
+  }
+
+  if (should_split_bagfile(message_timestamp)) {
+    split_bagfile(message_timestamp);
     metadata_.files.back().starting_time = message_timestamp;
   }
 
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
-
   metadata_.files.back().starting_time =
     std::min(metadata_.files.back().starting_time, message_timestamp);
+
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
@@ -373,7 +406,7 @@ bool SequentialWriter::should_split_bagfile(
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::seconds(storage_options_.max_bagfile_duration));
     should_split = should_split ||
-      ((current_time - metadata_.starting_time) > max_duration_ns);
+      ((current_time - metadata_.files.back().starting_time) > max_duration_ns);
   }
 
   return should_split;

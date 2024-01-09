@@ -104,6 +104,12 @@ class RecordVerb(VerbExtension):
                   'the bag will split at whichever threshold is reached first.'
         )
         parser.add_argument(
+            '--max-bag-splits', type=int, default=0,
+            help='Maximum number of bags to keep if either `--max-bag-size` or '
+                 '`--max-bag-duration` is specified. Once `--max-bag-splits` bags are saved to disk '
+                 'older bags will be removed as recording continues.'
+        )
+        parser.add_argument(
             '--max-cache-size', type=int, default=100*1024*1024,
             help='maximum size (in bytes) of messages to hold in each buffer of cache.'
                  'Default is 100 mebibytes. The cache is handled through double buffering, '
@@ -195,6 +201,10 @@ class RecordVerb(VerbExtension):
 
         args.compression_mode = args.compression_mode.upper()
 
+        if args.max_bag_splits > 0 and args.max_bag_duration == 0 and args.max_bag_size == 0:
+            return print_error('Invalid choice: --max-bag-splits must be specified in conjunction '
+                               'with either --max-bag-size or --max-bag-duration')
+
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:
             qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
@@ -218,6 +228,7 @@ class RecordVerb(VerbExtension):
             storage_id=args.storage,
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
+            max_bagfile_splits=args.max_bag_splits,
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
