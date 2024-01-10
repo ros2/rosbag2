@@ -224,7 +224,7 @@ void SqliteStorage::open(
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
     db_schema_version_ = kDBSchemaVersion_;
-    std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+    std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     initialize();
     db_file_size_ = db_page_size_ * read_total_page_count_locked();
   } else {
@@ -251,7 +251,7 @@ void SqliteStorage::update_metadata(const rosbag2_storage::BagMetadata & metadat
     auto insert_metadata = database_->prepare_statement(
       "INSERT INTO metadata (metadata_version, metadata) VALUES (?, ?)");
     insert_metadata->bind(metadata.version, serialized_metadata);
-    std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+    std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     insert_metadata->execute_and_reset();
     db_file_size_ = db_page_size_ * read_total_page_count_locked();
   }
@@ -283,7 +283,7 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   write_locked(message);
   db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
@@ -328,7 +328,7 @@ void SqliteStorage::write_locked(
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -482,7 +482,7 @@ void SqliteStorage::create_topic(
   const rosbag2_storage::TopicMetadata & topic,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
@@ -523,7 +523,7 @@ void SqliteStorage::create_topic(
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
     auto delete_topic =
       database_->prepare_statement(
@@ -878,7 +878,7 @@ int SqliteStorage::read_db_schema_version()
   return schema_version;
 }
 
-uint64_t SqliteStorage::read_total_page_count_locked()
+uint64_t SqliteStorage::read_total_page_count_locked() const
 {
   auto scope_exit_reset_statement = rcpputils::make_scope_exit(
     [this]() {
@@ -892,7 +892,7 @@ uint64_t SqliteStorage::read_total_page_count_locked()
   return std::get<0>(*page_count_query_result_begin);
 }
 
-uint64_t SqliteStorage::get_page_size()
+uint64_t SqliteStorage::get_page_size() const
 {
   if (!database_) {
     return 0;  // Trying to call get_page_size when SqliteStorage::open was not called or db
