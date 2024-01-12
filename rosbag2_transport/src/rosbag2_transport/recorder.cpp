@@ -343,7 +343,13 @@ void RecorderImpl::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
   }
-  RCLCPP_INFO(node->get_logger(), "Recording...");
+  if (record_options_.start_paused) {
+    RCLCPP_INFO(
+      node->get_logger(), "Wait for recording: Press %s to start.",
+      enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+  } else {
+    RCLCPP_INFO(node->get_logger(), "Recording...");
+  }
 }
 
 void RecorderImpl::event_publisher_thread_main()
