@@ -29,6 +29,7 @@
 
 #include "rcpputils/env.hpp"
 #include "rcpputils/filesystem_helper.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -181,6 +182,10 @@ void SqliteStorage::open(
   const rosbag2_storage::StorageOptions & storage_options,
   rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
+  if (page_count_statement_) {
+    page_count_statement_->reset();  // Reset statement to avoid DB lock
+    page_count_statement_.reset();
+  }
   storage_mode_ = io_flag;
   const auto preset = parse_preset_profile(storage_options.storage_preset_profile);
   auto pragmas = parse_pragmas(storage_options.storage_config_uri, io_flag);
@@ -212,10 +217,16 @@ void SqliteStorage::open(
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
+  db_page_size_ = get_page_size();
+  db_file_size_ = 0;
+  page_count_statement_ = database_->prepare_statement("PRAGMA page_count;");
+
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
     db_schema_version_ = kDBSchemaVersion_;
+    std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     initialize();
+    db_file_size_ = db_page_size_ * read_total_page_count_locked();
   } else {
     db_schema_version_ = read_db_schema_version();
     read_metadata();
@@ -240,7 +251,9 @@ void SqliteStorage::update_metadata(const rosbag2_storage::BagMetadata & metadat
     auto insert_metadata = database_->prepare_statement(
       "INSERT INTO metadata (metadata_version, metadata) VALUES (?, ?)");
     insert_metadata->bind(metadata.version, serialized_metadata);
+    std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     insert_metadata->execute_and_reset();
+    db_file_size_ = db_page_size_ * read_total_page_count_locked();
   }
 }
 
@@ -270,8 +283,9 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   write_locked(message);
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
 
 void SqliteStorage::write_locked(
@@ -314,7 +328,7 @@ void SqliteStorage::write_locked(
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (!write_statement_) {
     prepare_for_writing();
   }
@@ -323,9 +337,14 @@ void SqliteStorage::write(
 
   for (auto & message : messages) {
     write_locked(message);
+    // Update db_file_size_ with the estimated data size written to the DB
+    // + 3 * sizeof(int64_t) This is for storing timestamp, topic_id and index for messages table
+    db_file_size_ += message->serialized_data->buffer_length + 3 * sizeof(int64_t);
   }
 
   commit_transaction();
+  // Correct db_file_size_ by reading out the exact numbers from the DB
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
 
 bool SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
@@ -401,9 +420,14 @@ void SqliteStorage::get_all_message_definitions(
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
-  const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
-
-  return bag_path.exists() ? bag_path.file_size() : 0u;
+  if (!database_ || !page_count_statement_) {
+    // Trying to call get_bagfile_size when SqliteStorage::open was not called or db
+    // failed to open. Fallback to the filesystem call.
+    const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
+    return bag_path.exists() ? bag_path.file_size() : 0u;
+  } else {
+    return db_file_size_;
+  }
 }
 
 void SqliteStorage::initialize()
@@ -458,7 +482,7 @@ void SqliteStorage::create_topic(
   const rosbag2_storage::TopicMetadata & topic,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (topics_.find(topic.name) == std::end(topics_)) {
     auto insert_topic =
       database_->prepare_statement(
@@ -494,11 +518,12 @@ void SqliteStorage::create_topic(
       topic_type_and_hash,
       static_cast<int>(database_->get_last_insert_id()));
   }
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
 
 void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  std::lock_guard<std::mutex> db_lock(database_write_mutex_);
+  std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (topics_.find(topic.name) != std::end(topics_)) {
     auto delete_topic =
       database_->prepare_statement(
@@ -507,6 +532,7 @@ void SqliteStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
     delete_topic->execute_and_reset();
     topics_.erase(topic.name);
   }
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
 
 void SqliteStorage::prepare_for_writing()
@@ -850,6 +876,36 @@ int SqliteStorage::read_db_schema_version()
   }
 
   return schema_version;
+}
+
+uint64_t SqliteStorage::read_total_page_count_locked() const
+{
+  auto scope_exit_reset_statement = rcpputils::make_scope_exit(
+    [this]() {
+      page_count_statement_->reset();
+    });
+  auto page_count_query_result = page_count_statement_->execute_query<int>();
+  auto page_count_query_result_begin = page_count_query_result.begin();
+  if (page_count_query_result_begin == page_count_query_result.end()) {
+    throw SqliteException{"Error. PRAGMA page_count return no result."};
+  }
+  return std::get<0>(*page_count_query_result_begin);
+}
+
+uint64_t SqliteStorage::get_page_size() const
+{
+  if (!database_) {
+    return 0;  // Trying to call get_page_size when SqliteStorage::open was not called or db
+    // failed to open
+  }
+  SqliteStatement get_page_size_statement = database_->prepare_statement("PRAGMA page_size;");
+
+  auto page_size_query_result = get_page_size_statement->execute_query<int>();
+  auto page_size_query_result_begin = page_size_query_result.begin();
+  if (page_size_query_result_begin == page_size_query_result.end()) {
+    throw SqliteException{"Error. PRAGMA page_size return no result."};
+  }
+  return std::get<0>(*page_size_query_result_begin);
 }
 
 }  // namespace rosbag2_storage_plugins

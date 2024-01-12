@@ -122,22 +122,25 @@ private:
   void activate_transaction();
   void commit_transaction();
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
-  RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
+  RCPPUTILS_TSA_REQUIRES(db_read_write_mutex_);
   int get_last_rowid();
   int read_db_schema_version();
+  uint64_t get_page_size() const;
+  uint64_t read_total_page_count_locked() const RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
 
-  std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
+  std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
   SqliteStatement write_statement_ {};
   SqliteStatement read_statement_ {};
+  SqliteStatement page_count_statement_ {};
   ReadQueryResult message_result_ {nullptr};
   ReadQueryResult::Iterator current_message_row_ {
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
-  std::unordered_map<std::string, int> topics_ RCPPUTILS_TSA_GUARDED_BY(database_write_mutex_);
+  std::unordered_map<std::string, int> topics_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
   std::unordered_map<std::string, int> msg_definitions_ RCPPUTILS_TSA_GUARDED_BY(
-    database_write_mutex_);
+    db_read_write_mutex_);
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
@@ -152,11 +155,13 @@ private:
   // This mutex is necessary to protect:
   // a) database access (this could also be done with FULLMUTEX), but see b)
   // b) topics_ collection - since we could be writing and reading it at the same time
-  std::mutex database_write_mutex_;
+  std::mutex db_read_write_mutex_;
 
   const int kDBSchemaVersion_ = 4;
   int db_schema_version_ = -1;  //  Valid version number starting from 1
   rosbag2_storage::BagMetadata metadata_{};
+  uint64_t db_page_size_ = 0;
+  std::atomic<uint64_t> db_file_size_{0};
 };
 
 

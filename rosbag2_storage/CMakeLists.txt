@@ -132,6 +132,6 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     yaml-cpp
   )
-  endif()
+endif()
 
 ament_package()
