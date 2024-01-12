@@ -122,7 +122,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
 
   rosbag2_storage::StorageFactory factory{};
   rosbag2_storage::StorageOptions options{};
-  options.uri = root_bag_path_;
+  options.uri = root_bag_path_.generic_string();
   options.storage_id = GetParam();
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> rw_storage =
@@ -136,7 +136,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
   uint64_t storage_bagfile_size = rw_storage->get_bagfile_size();
 
   size_t fs_bagfile_size = std::filesystem::file_size(full_bagfile_path);
-  size_t tolerance = fs_bagfile_size * 0.001;  // tolerance = 0.1%
+  auto tolerance = static_cast<size_t>(fs_bagfile_size * 0.001);  // tolerance = 0.1%
 
   size_t filesize_difference =
     std::abs(static_cast<int64_t>(storage_bagfile_size) - static_cast<int64_t>(fs_bagfile_size));
@@ -150,7 +150,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
   storage_bagfile_size = rw_storage->get_bagfile_size();
 
   fs_bagfile_size = std::filesystem::file_size(full_bagfile_path);
-  tolerance = fs_bagfile_size * 0.001;  // tolerance = 0.1%
+  tolerance = static_cast<size_t>(fs_bagfile_size * 0.001);  // tolerance = 0.1%
 
   filesize_difference =
     std::abs(static_cast<int64_t>(storage_bagfile_size) - static_cast<int64_t>(fs_bagfile_size));
