@@ -92,6 +92,9 @@ private:
 
   std::chrono::seconds request_future_timeout_;
   size_t maximum_request_future_queue_;
+
+  void
+  remove_complete_request_future();
 };
 
 }  // namespace rosbag2_transport

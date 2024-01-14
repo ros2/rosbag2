@@ -188,15 +188,7 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
   std::lock_guard<std::mutex> lock(request_futures_list_lock_);
 
   // Remove complete request future
-  std::vector<time_point> remove_keys;
-  for (auto & request_future : request_futures_list_) {
-    if (request_future.second->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-      remove_keys.emplace_back(request_future.first);
-    }
-  }
-  for (auto & key : remove_keys) {
-    request_futures_list_.erase(key);
-  }
+  remove_complete_request_future();
 
   // Remove all timeout request future
   auto current_time = std::chrono::steady_clock::now();
@@ -240,4 +232,16 @@ bool PlayerServiceClientManager::register_request_future(
   return false;
 }
 
+void PlayerServiceClientManager::remove_complete_request_future()
+{
+  std::vector<time_point> remove_keys;
+  for (auto & request_future : request_futures_list_) {
+    if (request_future.second->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+      remove_keys.emplace_back(request_future.first);
+    }
+  }
+  for (auto & key : remove_keys) {
+    request_futures_list_.erase(key);
+  }
+}
 }  // namespace rosbag2_transport
