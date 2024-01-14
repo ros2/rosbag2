@@ -53,8 +53,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/Arrays", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2, "topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -121,9 +121,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_
   unknown_message1->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/Arrays", "", {}, ""},
-    {"topic3", "unknown_msgs/UnknownType", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {3, "topic3", "unknown_msgs/UnknownType", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -188,8 +188,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/Arrays", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2, "topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -310,9 +310,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
   unknown_message1->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/Arrays", "", {}, ""},
-    {"topic3", "unknown_msgs/UnknownType", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {3, "topic3", "unknown_msgs/UnknownType", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -416,7 +416,7 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   auto primitive_message1 = get_messages_basic_types()[0];
   primitive_message1->int32_value = 42;
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
@@ -461,13 +461,7 @@ public:
       messages_.push_back(serialize_test_message(topic_name_, timestamp, basic_msg_));
     }
 
-    topic_types_.push_back(
-    {
-      topic_name_,
-      msg_type_,
-      "",
-      offered_qos,
-      ""});
+    topic_types_.push_back({0, topic_name_, msg_type_, "", offered_qos, ""});
   }
 
   template<typename Duration>
@@ -627,7 +621,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, override_has_precedence_over_recorded)
 TEST_F(RosBag2PlayTestFixture, read_split_callback_is_called)
 {
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();

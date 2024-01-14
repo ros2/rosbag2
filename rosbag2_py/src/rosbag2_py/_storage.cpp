@@ -209,12 +209,15 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
-    pybind11::init<std::string, std::string, std::string, std::vector<rclcpp::QoS>, std::string>(),
+    pybind11::init<int64_t, std::string, std::string, std::string, std::vector<rclcpp::QoS>,
+    std::string>(),
+    pybind11::arg("id"),
     pybind11::arg("name"),
     pybind11::arg("type"),
     pybind11::arg("serialization_format"),
     pybind11::arg("offered_qos_profiles") = std::vector<rclcpp::QoS>(),
     pybind11::arg("type_description_hash") = "")
+  .def_readwrite("id", &rosbag2_storage::TopicMetadata::id)
   .def_readwrite("name", &rosbag2_storage::TopicMetadata::name)
   .def_readwrite("type", &rosbag2_storage::TopicMetadata::type)
   .def_readwrite(

@@ -35,7 +35,7 @@ TEST_F(RosBag2PlayTestFixture, burst_with_false_preconditions) {
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {serialize_test_message("topic1", 2100, primitive_message)};
@@ -56,7 +56,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursts_requested_messages_without_delays) {
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -110,7 +110,7 @@ TEST_F(RosBag2PlayTestFixture, burst_stops_at_end_of_file) {
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -157,7 +157,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_one_by_one_messages_with_the_same_
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -210,7 +210,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_burst) {
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -265,7 +265,7 @@ TEST_F(RosBag2PlayTestFixture, player_can_resume_after_burst) {
   primitive_message->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""}};
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -313,8 +313,8 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/Arrays", "", {}, ""},
+    {1, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2, "topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =

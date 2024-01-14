@@ -115,6 +115,10 @@ public:
 
 private:
   void initialize();
+  void add_topic_to_metadata(
+    int64_t topic_id, std::string topic_name, std::string topic_type, std::string ser_format,
+    int64_t msg_count, const std::string & offered_qos_profiles_str,
+    const std::string & type_hash);
   void read_metadata();
   void prepare_for_writing();
   void prepare_for_reading();
@@ -138,8 +142,8 @@ private:
   ReadQueryResult message_result_ {nullptr};
   ReadQueryResult::Iterator current_message_row_ {
     nullptr, SqliteStatementWrapper::QueryResult<>::Iterator::POSITION_END};
-  std::unordered_map<std::string, int> topics_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
-  std::unordered_map<std::string, int> msg_definitions_ RCPPUTILS_TSA_GUARDED_BY(
+  std::unordered_map<std::string, int64_t> topics_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
+  std::unordered_map<std::string, int64_t> msg_definitions_ RCPPUTILS_TSA_GUARDED_BY(
     db_read_write_mutex_);
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;

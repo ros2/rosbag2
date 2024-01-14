@@ -441,6 +441,7 @@ void MCAPStorage::read_metadata()
 
     // Create a TopicInformation for this topic
     rosbag2_storage::TopicInformation topic_info{};
+    topic_info.topic_metadata.id = channel.id;
     topic_info.topic_metadata.name = channel.topic;
     topic_info.topic_metadata.serialization_format = channel.messageEncoding;
     topic_info.topic_metadata.type = schema_ptr->name;

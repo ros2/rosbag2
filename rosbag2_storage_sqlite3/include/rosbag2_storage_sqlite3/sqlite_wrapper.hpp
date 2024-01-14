@@ -50,7 +50,7 @@ public:
   SqliteStatement prepare_statement(const std::string & query);
   std::string query_pragma_value(const std::string & key);
 
-  size_t get_last_insert_id();
+  int64_t get_last_insert_id();
 
   operator bool();
 

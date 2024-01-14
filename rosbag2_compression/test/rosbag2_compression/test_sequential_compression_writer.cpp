@@ -258,7 +258,7 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
 
   tmp_dir_storage_options_.max_bagfile_size = 1;
   writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({test_topic_name, test_topic_type, "", {}, ""});
+  writer_->create_topic({0, test_topic_name, test_topic_type, "", {}, ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;
@@ -301,7 +301,7 @@ TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_open_and_
 
   EXPECT_CALL(*storage_, update_metadata(_)).Times(2);
   writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({test_topic_name, test_topic_type, "", {}, ""});
+  writer_->create_topic({0, test_topic_name, test_topic_type, "", {}, ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;
@@ -340,7 +340,7 @@ TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_bag_split
 
   EXPECT_CALL(*storage_, update_metadata(_)).Times(4);
   writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({test_topic_name, test_topic_type, "", {}, ""});
+  writer_->create_topic({0, test_topic_name, test_topic_type, "", {}, ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;
@@ -388,7 +388,7 @@ TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_siz
   initializeWriter(compression_options);
 
   writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({test_topic_name, test_topic_type, "", {}, ""});
+  writer_->create_topic({0, test_topic_name, test_topic_type, "", {}, ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;
@@ -441,7 +441,7 @@ TEST_P(SequentialCompressionWriterTest, writer_sets_threads_priority)
     std::make_unique<FakeCompressionFactory>(detected_thread_priority));
 
   writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({test_topic_name, test_topic_type, "", {}, ""});
+  writer_->create_topic({0, test_topic_name, test_topic_type, "", {}, ""});
 
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   message->topic_name = test_topic_name;

@@ -33,6 +33,7 @@ class DataGeneratorNode(Node):
         self.writer.open(storage_options, converter_options)
 
         topic_info = rosbag2_py._storage.TopicMetadata(
+            id=0,
             name='synthetic',
             type='example_interfaces/msg/Int32',
             serialization_format='cdr')
