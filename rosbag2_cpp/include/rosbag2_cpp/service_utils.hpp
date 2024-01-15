@@ -15,9 +15,12 @@
 #ifndef ROSBAG2_CPP__SERVICE_UTILS_HPP_
 #define ROSBAG2_CPP__SERVICE_UTILS_HPP_
 
+#include <array>
 #include <string>
 
 #include "rosbag2_cpp/visibility_control.hpp"
+
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_cpp
 {
@@ -42,6 +45,27 @@ get_serialization_size_for_service_metadata_event();
 ROSBAG2_CPP_PUBLIC
 std::string
 service_name_to_service_event_topic_name(const std::string & service_name);
+
+ROSBAG2_CPP_PUBLIC
+bool
+introspection_include_metadata_and_contents(size_t message_size);
+
+struct client_id_hash
+{
+  static_assert(
+    std::is_same<std::array<uint8_t, 16>,
+    service_msgs::msg::ServiceEventInfo::_client_gid_type>::value);
+  std::size_t operator()(const std::array<uint8_t, 16> & client_id) const
+  {
+    std::hash<uint8_t> hasher;
+    std::size_t seed = 0;
+    for (const auto & value : client_id) {
+      // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
+      seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    return seed;
+  }
+};
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__SERVICE_UTILS_HPP_

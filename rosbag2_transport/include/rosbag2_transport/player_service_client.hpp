@@ -19,10 +19,14 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <string>
+#include <tuple>
 
 #include "rclcpp/generic_client.hpp"
 #include "rclcpp/rclcpp.hpp"
+
+#include "rosbag2_cpp/service_utils.hpp"
 
 namespace rosbag2_transport
 {
@@ -55,14 +59,17 @@ private:
   std::string service_name_;
   const rclcpp::Logger logger_;
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
-  enum class introspection_type
+  enum class request_info_from
   {
-    UNKNOW = 0,
-    METADATA,
-    CONTENTS
+    SERVICE = 0,
+    CLIENT,
+    NO_CONTENT  // Only have META info. Not send request.
   };
-  introspection_type client_side_type_ = introspection_type::UNKNOW;
-  introspection_type service_side_type_ = introspection_type::UNKNOW;
+  bool service_set_introspection_content = false;
+
+  using client_id = service_msgs::msg::ServiceEventInfo::_client_gid_type;
+  // Info on request data from service or client
+  std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info;
 
   std::shared_ptr<rcpputils::SharedLibrary> ts_lib_;
   const rosidl_message_type_support_t * ts_;
@@ -70,7 +77,8 @@ private:
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
-  uint8_t get_msg_event_type(const rclcpp::SerializedMessage & message);
+  std::tuple<uint8_t, client_id, int64_t>
+  get_msg_event_type(const rclcpp::SerializedMessage & message);
 };
 
 class PlayerServiceClientManager final
