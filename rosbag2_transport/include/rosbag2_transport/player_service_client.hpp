@@ -95,6 +95,9 @@ private:
 
   void
   remove_complete_request_future();
+
+  void
+  remove_all_timeout_request_future();
 };
 
 }  // namespace rosbag2_transport

@@ -187,29 +187,17 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
 {
   std::lock_guard<std::mutex> lock(request_futures_list_lock_);
 
+  // To improve performance, it's not necessary to clean up completed requests and timeout requests
+  // every time.
+  if (request_futures_list_.size() < maximum_request_future_queue_) {
+    return false;
+  }
+
   // Remove complete request future
   remove_complete_request_future();
 
   // Remove all timeout request future
-  auto current_time = std::chrono::steady_clock::now();
-  time_point time_threshold;
-  bool remove_action = false;
-  for (auto rit = request_futures_list_.rbegin(); rit != request_futures_list_.rend(); ++rit) {
-    if ((current_time - rit->first) >= request_future_timeout_) {
-      time_threshold = rit->first;
-      remove_action = true;
-    }
-  }
-
-  if (remove_action) {
-    while (true) {
-      auto begin = request_futures_list_.begin();
-      request_futures_list_.erase(begin);
-      if (begin->first == time_threshold) {
-        break;
-      }
-    }
-  }
+  remove_all_timeout_request_future();
 
   if (request_futures_list_.size() == maximum_request_future_queue_) {
     return true;
@@ -243,5 +231,19 @@ void PlayerServiceClientManager::remove_complete_request_future()
   for (auto & key : remove_keys) {
     request_futures_list_.erase(key);
   }
+}
+
+void PlayerServiceClientManager::remove_all_timeout_request_future()
+{
+  auto current_time = std::chrono::steady_clock::now();
+  auto first_iter_without_timeout =
+    request_futures_list_.lower_bound(current_time - request_future_timeout_);
+
+  if (first_iter_without_timeout == request_futures_list_.begin()) {
+    return;
+  }
+
+  auto last_iter_with_timeout = --first_iter_without_timeout;
+  request_futures_list_.erase(request_futures_list_.begin(), last_iter_with_timeout);
 }
 }  // namespace rosbag2_transport
