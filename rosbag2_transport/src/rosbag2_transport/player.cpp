@@ -1060,8 +1060,8 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
   auto sender_iter = senders_.find(message->topic_name);
   if (sender_iter != senders_.end()) {
     // For sending requests, ignore service event messages that do not contain request information.
-    if (std::holds_alternative<SharedPlayerClient>(sender_iter->second) &&
-      !std::get<SharedPlayerClient>(sender_iter->second)
+    bool is_player_client = std::holds_alternative<SharedPlayerClient>(sender_iter->second);
+    if (is_player_client && !std::get<SharedPlayerClient>(sender_iter->second)
       ->is_include_request_message(rclcpp::SerializedMessage(*message->serialized_data)))
     {
       return message_published;
@@ -1076,7 +1076,8 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       }
     }
 
-    if (std::holds_alternative<SharedPlayerPublisher>(sender_iter->second)) {
+    bool is_player_publisher = std::holds_alternative<SharedPlayerPublisher>(sender_iter->second);
+    if (is_player_publisher) {
       try {
         std::get<SharedPlayerPublisher>(sender_iter->second)
         ->publish(rclcpp::SerializedMessage(*message->serialized_data));
@@ -1086,7 +1087,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
           owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
             "' topic. \nError: " << e.what());
       }
-    } else if (std::holds_alternative<SharedPlayerClient>(sender_iter->second)) {
+    } else if (is_player_client) {
       try {
         std::get<SharedPlayerClient>(sender_iter->second)
         ->async_send_request(rclcpp::SerializedMessage(*message->serialized_data));
