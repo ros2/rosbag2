@@ -16,8 +16,6 @@
 
 #include "rosbag2_transport/player_service_client.hpp"
 
-#include "rclcpp/logger.hpp"
-
 #include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosidl_typesupport_introspection_cpp/identifier.hpp"
@@ -213,8 +211,13 @@ bool PlayerServiceClientManager::register_request_future(
     std::make_unique<rclcpp::GenericClient::FutureAndRequestId>(std::move(request_future));
 
   if (!request_future_queue_is_full()) {
+    std::lock_guard<std::mutex> lock(request_futures_list_lock_);
     request_futures_list_[std::chrono::steady_clock::now()] = std::move(future_and_request_id);
     return true;
+  } else {
+    ROSBAG2_TRANSPORT_LOG_WARN(
+      "Client request queue is full. "
+      "Please consider increasing the length of the queue.");
   }
 
   return false;
@@ -245,5 +248,8 @@ void PlayerServiceClientManager::remove_all_timeout_request_future()
 
   auto last_iter_with_timeout = --first_iter_without_timeout;
   request_futures_list_.erase(request_futures_list_.begin(), last_iter_with_timeout);
+  ROSBAG2_TRANSPORT_LOG_WARN(
+    "Client requests are discarded since timeout. "
+    "Please consider setting a longer timeout.");
 }
 }  // namespace rosbag2_transport
