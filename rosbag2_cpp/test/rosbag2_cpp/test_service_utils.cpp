@@ -91,3 +91,22 @@ TEST_F(ServiceUtilsTest, check_service_name_to_service_event_topic_name)
     );
   }
 }
+
+TEST_F(ServiceUtilsTest, check_introspection_include_metadata_and_contents)
+{
+  size_t service_metadata_event = rosbag2_cpp::get_serialization_size_for_service_metadata_event();
+
+  EXPECT_FALSE(
+    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event) - 1);
+  EXPECT_TRUE(rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event));
+}
+
+TEST_F(ServiceUtilsTest, check_client_id_to_string)
+{
+  service_msgs::msg::ServiceEventInfo::_client_gid_type client_id = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+  };
+  std::string expected_string = "1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16";
+
+  EXPECT_EQ(rosbag2_cpp::client_id_to_string(client_id), expected_string);
+}

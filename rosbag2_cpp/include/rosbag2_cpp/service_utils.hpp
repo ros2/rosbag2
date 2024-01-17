@@ -50,6 +50,10 @@ ROSBAG2_CPP_PUBLIC
 bool
 introspection_include_metadata_and_contents(size_t message_size);
 
+ROSBAG2_CPP_PUBLIC
+std::string
+client_id_to_string(std::array<uint8_t, 16> & client_id);
+
 struct client_id_hash
 {
   static_assert(

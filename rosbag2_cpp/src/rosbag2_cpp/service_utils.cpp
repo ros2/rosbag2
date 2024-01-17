@@ -163,4 +163,15 @@ bool introspection_include_metadata_and_contents(size_t message_size)
   }
   return true;
 }
+
+std::string client_id_to_string(std::array<uint8_t, 16> & client_id)
+{
+  // output format:
+  // xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx
+  std::string client_id_string = std::to_string(client_id[0]);
+  for (int i = 1; i < 16; i++) {
+    client_id_string += "-" + std::to_string(client_id[i]);
+  }
+  return client_id_string;
+}
 }  // namespace rosbag2_cpp

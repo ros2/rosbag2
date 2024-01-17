@@ -92,6 +92,10 @@ bool PlayerServiceClient::is_include_request_message(
               request_info[client_id] = request_info_from::SERVICE;
               return true;
             } else {
+              RCUTILS_LOG_WARN_ONCE_NAMED(
+                ROSBAG2_TRANSPORT_PACKAGE_NAME,
+                "The configuration of introspection for '%s' is metadata !",
+                service_name_.c_str());
               return false;
             }
           }
@@ -127,6 +131,11 @@ bool PlayerServiceClient::is_include_request_message(
             request_info[client_id] = request_info_from::CLIENT;
             return true;
           } else {
+            RCUTILS_LOG_WARN_NAMED(
+              ROSBAG2_TRANSPORT_PACKAGE_NAME,
+              "The configuration of introspection for '%s' client [ID: %s]` is metadata !",
+              rosbag2_cpp::client_id_to_string(client_id).c_str(),
+              service_name_.c_str());
             return false;
           }
         }
