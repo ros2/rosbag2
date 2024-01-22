@@ -79,6 +79,9 @@ public:
   /// Return the current paused state.
   bool is_paused();
 
+  /// Stop discovery
+  void stop_discovery();
+
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   /// Public members for access by wrapper
@@ -86,7 +89,6 @@ public:
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
-  std::atomic<bool> stop_discovery_ = false;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
 private:
@@ -135,6 +137,8 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
 
+  std::recursive_mutex state_transaction_mutex_;
+  std::atomic<bool> stop_discovery_ = false;
   std::atomic<bool> paused_ = false;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
@@ -160,8 +164,8 @@ RecorderImpl::RecorderImpl(
 : writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
-  stop_discovery_(record_options_.is_discovery_disabled),
   node(owner),
+  stop_discovery_(record_options_.is_discovery_disabled),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
@@ -211,41 +215,37 @@ RecorderImpl::RecorderImpl(
 RecorderImpl::~RecorderImpl()
 {
   keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
-  if (in_recording_) {
-    stop();
-  }
+  stop();
 }
 
 void RecorderImpl::stop()
 {
-  stop_discovery_ = true;
-  if (discovery_future_.valid()) {
-    auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
-    if (status != std::future_status::ready) {
-      RCLCPP_ERROR_STREAM(
-        node->get_logger(),
-        "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
-          ") return status: " << (status == std::future_status::timeout ? "timeout" : "deferred"));
-    }
-  }
-  paused_ = true;
-  subscriptions_.clear();
-  writer_->close();  // Call writer->close() to finalize current bag file and write metadata
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  stop_discovery();
 
-  {
-    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_should_exit_ = true;
+  if (in_recording_ == false) {
+    RCLCPP_DEBUG(node->get_logger(), "Recording has already stopped.");
+  } else {
+    pause();
+    subscriptions_.clear();
+    writer_->close();  // Call writer->close() to finalize current bag file and write metadata
+
+    {
+      std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+      event_publisher_thread_should_exit_ = true;
+    }
+    event_publisher_thread_wake_cv_.notify_all();
+    if (event_publisher_thread_.joinable()) {
+      event_publisher_thread_.join();
+    }
+    in_recording_ = false;
+    RCLCPP_INFO(node->get_logger(), "Recording stopped");
   }
-  event_publisher_thread_wake_cv_.notify_all();
-  if (event_publisher_thread_.joinable()) {
-    event_publisher_thread_.join();
-  }
-  in_recording_ = false;
-  RCLCPP_INFO(node->get_logger(), "Recording stopped");
 }
 
 void RecorderImpl::record()
 {
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -395,18 +395,29 @@ const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 
 void RecorderImpl::pause()
 {
-  paused_.store(true);
-  RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  if (paused_ == true) {
+    RCLCPP_DEBUG(node->get_logger(), "Recording has already paused.");
+  } else {
+    paused_.store(true);
+    RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
+  }
 }
 
 void RecorderImpl::resume()
 {
-  paused_.store(false);
-  RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  if (paused_ == false) {
+    RCLCPP_DEBUG(node->get_logger(), "Recording has already resumed.");
+  } else {
+    paused_.store(false);
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+  }
 }
 
 void RecorderImpl::toggle_paused()
 {
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
   if (paused_.load()) {
     this->resume();
   } else {
@@ -417,6 +428,26 @@ void RecorderImpl::toggle_paused()
 bool RecorderImpl::is_paused()
 {
   return paused_.load();
+}
+
+void RecorderImpl::stop_discovery()
+{
+  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  if (stop_discovery_ == true) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder Topic Discovery has already stopped.");
+  } else {
+    stop_discovery_ = true;
+    if (discovery_future_.valid()) {
+      auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
+      if (status != std::future_status::ready) {
+        RCLCPP_ERROR_STREAM(
+          node->get_logger(),
+          "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
+          ") return status: " <<
+          (status == std::future_status::timeout ? "timeout" : "deferred"));
+      }
+    }
+  }
 }
 
 void RecorderImpl::topics_discovery()
@@ -801,7 +832,7 @@ Recorder::get_record_options()
 void
 Recorder::stop_discovery()
 {
-  pimpl_->stop_discovery_ = true;
+  pimpl_->stop_discovery();
 }
 
 }  // namespace rosbag2_transport
