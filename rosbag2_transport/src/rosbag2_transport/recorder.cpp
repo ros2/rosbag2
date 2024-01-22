@@ -443,8 +443,8 @@ void RecorderImpl::stop_discovery()
         RCLCPP_ERROR_STREAM(
           node->get_logger(),
           "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
-          ") return status: " <<
-          (status == std::future_status::timeout ? "timeout" : "deferred"));
+            ") return status: " <<
+            (status == std::future_status::timeout ? "timeout" : "deferred"));
       }
     }
   }
