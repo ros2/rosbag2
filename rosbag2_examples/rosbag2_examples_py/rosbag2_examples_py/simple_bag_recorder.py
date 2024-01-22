@@ -41,7 +41,6 @@ class SimpleBagRecorder(Node):
             'chatter',
             self.topic_callback,
             10)
-        self.subscription
 
     def topic_callback(self, msg):
         self.writer.write(
