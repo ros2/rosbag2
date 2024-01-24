@@ -126,7 +126,7 @@ private:
   int get_last_rowid();
   int read_db_schema_version();
   uint64_t get_page_size() const;
-  uint64_t read_total_page_count_locked() const RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
+  uint64_t read_total_page_count_locked() const;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
