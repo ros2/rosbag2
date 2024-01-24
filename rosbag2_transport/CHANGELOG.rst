@@ -5,37 +5,9 @@ Changelog for package rosbag2_transport
 0.15.9 (2024-01-24)
 -------------------
 * [humble] Give proper log message for `--start-paused` (backport `#1537 <https://github.com/ros2/rosbag2/issues/1537>`_) (`#1541 <https://github.com/ros2/rosbag2/issues/1541>`_)
-  * Add proper message for --start-paused (`#1537 <https://github.com/ros2/rosbag2/issues/1537>`_)
-  (cherry picked from commit 317286c98472205593d5b0a791d06fea42613ba3)
-  # Conflicts:
-  #	rosbag2_transport/src/rosbag2_transport/recorder.cpp
-  * Address merge conflicts
-  ---------
-  Co-authored-by: Christoph Fröhlich <christophfroehlich@users.noreply.github.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [humble] `Recording stopped` prints only once. (backport `#1530 <https://github.com/ros2/rosbag2/issues/1530>`_) (`#1535 <https://github.com/ros2/rosbag2/issues/1535>`_)
-  * `Recording stopped` prints only once. (`#1530 <https://github.com/ros2/rosbag2/issues/1530>`_)
-  (cherry picked from commit 73b077284d83aa54cf4e7cb054b8a6b0fbfab762)
-  # Conflicts:
-  #	rosbag2_transport/src/rosbag2_transport/recorder.cpp
-  * Address merge conflicts
-  ---------
-  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [humble] Bugfix for incorrect playback rate changes when pressing buttons (backport `#1513 <https://github.com/ros2/rosbag2/issues/1513>`_) (`#1515 <https://github.com/ros2/rosbag2/issues/1515>`_)
-  * Bugfix for incorrect playback rate changes when pressing buttons (`#1513 <https://github.com/ros2/rosbag2/issues/1513>`_)
-  - Playback rate expected to be changed by 10% with each
-  increase/decrease step.
-  - Use +0.1 and -0.1 in decrease/increase rate formula instead of
-  multiply by factor of the 1.1 and 0.9 respectively.
-  (cherry picked from commit 95f78b63f8cebc8c4a902b4783e4e7a1d0271d02)
-  # Conflicts:
-  #	rosbag2_transport/src/rosbag2_transport/player.cpp
-  * Address merge conflicts after auto-backporting
-  ---------
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: mergify[bot]
-
+* Contributors: Michael Orlov <michael.orlov@apex.ai>, Christoph Froehlich <christoph.froehlich@ait.ac.at>, Tomoya Fujita <Tomoya.Fujita@sony.com>
 0.15.8 (2023-09-19)
 -------------------
 * Don't warn for unknown types if topics are not selected (`#1466 <https://github.com/ros2/rosbag2/issues/1466>`_) (`#1469 <https://github.com/ros2/rosbag2/issues/1469>`_)
