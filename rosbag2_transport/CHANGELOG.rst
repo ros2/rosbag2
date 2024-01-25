@@ -2,6 +2,12 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.9 (2024-01-24)
+-------------------
+* [humble] Give proper log message for `--start-paused` (backport `#1537 <https://github.com/ros2/rosbag2/issues/1537>`_) (`#1541 <https://github.com/ros2/rosbag2/issues/1541>`_)
+* [humble] `Recording stopped` prints only once. (backport `#1530 <https://github.com/ros2/rosbag2/issues/1530>`_) (`#1535 <https://github.com/ros2/rosbag2/issues/1535>`_)
+* [humble] Bugfix for incorrect playback rate changes when pressing buttons (backport `#1513 <https://github.com/ros2/rosbag2/issues/1513>`_) (`#1515 <https://github.com/ros2/rosbag2/issues/1515>`_)
+* Contributors: Michael Orlov <michael.orlov@apex.ai>, Christoph Froehlich <christoph.froehlich@ait.ac.at>, Tomoya Fujita <Tomoya.Fujita@sony.com>
 0.15.8 (2023-09-19)
 -------------------
 * Don't warn for unknown types if topics are not selected (`#1466 <https://github.com/ros2/rosbag2/issues/1466>`_) (`#1469 <https://github.com/ros2/rosbag2/issues/1469>`_)

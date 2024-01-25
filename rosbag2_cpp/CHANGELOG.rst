@@ -2,6 +2,11 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.9 (2024-01-24)
+-------------------
+* call cv.wait_until only if necessary. (`#1521 <https://github.com/ros2/rosbag2/issues/1521>`_) (`#1523 <https://github.com/ros2/rosbag2/issues/1523>`_)
+* Contributors: mergify[bot]
+
 0.15.8 (2023-09-19)
 -------------------
 
