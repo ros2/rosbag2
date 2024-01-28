@@ -56,10 +56,11 @@ ROSBAG2_COMPRESSION_PUBLIC std::string compression_mode_to_string(CompressionMod
  */
 struct CompressionOptions
 {
-  std::string compression_format;
-  CompressionMode compression_mode;
-  uint64_t compression_queue_size;
-  uint64_t compression_threads;
+  std::string compression_format{};
+  CompressionMode compression_mode{CompressionMode::NONE};
+  uint64_t compression_queue_size{0};
+  /// \brief // The number of compression threads
+  uint64_t compression_threads{0};
 };
 
 }  // namespace rosbag2_compression
