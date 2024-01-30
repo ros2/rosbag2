@@ -116,7 +116,7 @@ public:
 private:
   void initialize();
   void add_topic_to_metadata(
-    int64_t topic_id, std::string topic_name, std::string topic_type, std::string ser_format,
+    int64_t inner_topic_id, std::string topic_name, std::string topic_type, std::string ser_format,
     int64_t msg_count, const std::string & offered_qos_profiles_str,
     const std::string & type_hash);
   void read_metadata();
@@ -131,6 +131,8 @@ private:
   int read_db_schema_version();
   uint64_t get_page_size() const;
   uint64_t read_total_page_count_locked() const RCPPUTILS_TSA_REQUIRES(db_read_write_mutex_);
+  uint16_t get_extern_topic_id(int64_t inner_topic_id) const;
+  uint16_t get_or_generate_extern_topic_id(int64_t inner_topic_id);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
@@ -145,6 +147,8 @@ private:
   std::unordered_map<std::string, int64_t> topics_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
   std::unordered_map<std::string, int64_t> msg_definitions_ RCPPUTILS_TSA_GUARDED_BY(
     db_read_write_mutex_);
+  std::unordered_map<int64_t, uint16_t> inner_to_extern_topic_id_map_;
+  uint16_t last_extern_topic_id_ = 0;  // 0 corresponds to the invalid topic_id
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};
