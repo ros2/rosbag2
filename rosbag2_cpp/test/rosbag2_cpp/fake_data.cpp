@@ -34,7 +34,7 @@ void write_sample_split_bag(
 
   writer.create_topic(
   {
-    0,
+    0u,
     topic_name,
     "test_msgs/msg/ByteMultiArray",
     "cdr",

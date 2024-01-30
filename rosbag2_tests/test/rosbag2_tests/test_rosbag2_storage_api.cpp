@@ -100,7 +100,7 @@ public:
         "std_msgs/msg/String", "ros2msg", "string data", type_description_hash};
 
       rosbag2_storage::TopicMetadata topic_metadata = {
-        0,
+        0u,
         topics[topic_idx],
         "std_msgs/msg/String",
         "cdr",

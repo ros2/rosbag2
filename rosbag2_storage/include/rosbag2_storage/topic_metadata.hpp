@@ -24,7 +24,7 @@ namespace rosbag2_storage
 
 struct TopicMetadata
 {
-  int64_t id = 0;  // Topic id returned by storage
+  uint16_t id = 0;  // Topic id returned by storage
   std::string name;
   std::string type;
   std::string serialization_format;

@@ -209,7 +209,7 @@ PYBIND11_MODULE(_storage, m) {
 
   pybind11::class_<rosbag2_storage::TopicMetadata>(m, "TopicMetadata")
   .def(
-    pybind11::init<int64_t, std::string, std::string, std::string, std::vector<rclcpp::QoS>,
+    pybind11::init<uint16_t, std::string, std::string, std::string, std::vector<rclcpp::QoS>,
     std::string>(),
     pybind11::arg("id"),
     pybind11::arg("name"),

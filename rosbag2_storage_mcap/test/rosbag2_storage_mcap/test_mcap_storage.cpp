@@ -116,8 +116,8 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 
   {
     auto writer = factory.open_read_write(options);
-    writer->create_topic({0, "topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, {});
-    writer->create_topic({0, "topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}, {});
+    writer->create_topic({0u, "topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, {});
+    writer->create_topic({0u, "topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}, {});
     (void)write_messages_to_mcap(messages, writer);
     auto metadata = writer->get_metadata();
     metadata.ros_distro = "rolling";
@@ -137,11 +137,11 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
               UnorderedElementsAreArray({
                 rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{
-                    2, "topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"},
+                    2u, "topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"},
                   1u},
                 rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{
-                    1, "topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"},
+                    1u, "topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"},
                   2u},
               }));
   EXPECT_THAT(metadata.message_count, Eq(3u));
@@ -226,7 +226,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 
     EXPECT_THAT(topics_and_types,
                 ElementsAreArray({rosbag2_storage::TopicMetadata{
-                  1, topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"}}));
+                  1u, topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"}}));
 
     const auto metadata = reader->get_metadata();
 
@@ -235,7 +235,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     EXPECT_THAT(metadata.topics_with_message_count,
                 ElementsAreArray({rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{
-                    1, topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"},
+                    1u, topic_name, "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"},
                   1u}}));
     EXPECT_THAT(metadata.message_count, Eq(1u));
 

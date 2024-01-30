@@ -53,7 +53,7 @@ public:
 TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options) {
   {
     auto topic_with_type =
-      rosbag2_storage::TopicMetadata{0, "topic", "test_msgs/BasicTypes", kRmwFormat, {}, ""};
+      rosbag2_storage::TopicMetadata{0u, "topic", "test_msgs/BasicTypes", kRmwFormat, {}, ""};
 
     auto topic_information = rosbag2_storage::TopicInformation{topic_with_type, 1};
 
