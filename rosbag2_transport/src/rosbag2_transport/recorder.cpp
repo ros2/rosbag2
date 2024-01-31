@@ -137,7 +137,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
 
-  std::recursive_mutex state_transaction_mutex_;
+  std::recursive_mutex state_transition_mutex_;
   std::atomic<bool> stop_discovery_ = false;
   std::atomic<bool> paused_ = false;
   std::atomic<bool> in_recording_ = false;
@@ -220,32 +220,32 @@ RecorderImpl::~RecorderImpl()
 
 void RecorderImpl::stop()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
-  stop_discovery();
-
-  if (in_recording_ == false) {
-    RCLCPP_DEBUG(node->get_logger(), "Recording has already stopped.");
-  } else {
-    pause();
-    subscriptions_.clear();
-    writer_->close();  // Call writer->close() to finalize current bag file and write metadata
-
-    {
-      std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-      event_publisher_thread_should_exit_ = true;
-    }
-    event_publisher_thread_wake_cv_.notify_all();
-    if (event_publisher_thread_.joinable()) {
-      event_publisher_thread_.join();
-    }
-    in_recording_ = false;
-    RCLCPP_INFO(node->get_logger(), "Recording stopped");
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
+  if (!in_recording_) {
+    RCLCPP_DEBUG(node->get_logger(), "Recording has already been stopped or not running.");
+    return;
   }
+
+  stop_discovery();
+  pause();
+  subscriptions_.clear();
+  writer_->close();  // Call writer->close() to finalize current bag file and write metadata
+
+  {
+    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+    event_publisher_thread_should_exit_ = true;
+  }
+  event_publisher_thread_wake_cv_.notify_all();
+  if (event_publisher_thread_.joinable()) {
+    event_publisher_thread_.join();
+  }
+  in_recording_ = false;
+  RCLCPP_INFO(node->get_logger(), "Recording stopped");
 }
 
 void RecorderImpl::record()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -395,9 +395,9 @@ const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 
 void RecorderImpl::pause()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
-  if (paused_ == true) {
-    RCLCPP_DEBUG(node->get_logger(), "Recording has already paused.");
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
+  if (paused_) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder is alreadyin pause state.");
   } else {
     paused_.store(true);
     RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
@@ -406,9 +406,9 @@ void RecorderImpl::pause()
 
 void RecorderImpl::resume()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
-  if (paused_ == false) {
-    RCLCPP_DEBUG(node->get_logger(), "Recording has already resumed.");
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
+  if (!paused_) {
+    RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
   } else {
     paused_.store(false);
     RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
@@ -417,7 +417,7 @@ void RecorderImpl::resume()
 
 void RecorderImpl::toggle_paused()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
   if (paused_.load()) {
     this->resume();
   } else {
@@ -432,9 +432,11 @@ bool RecorderImpl::is_paused()
 
 void RecorderImpl::stop_discovery()
 {
-  std::lock_guard<std::recursive_mutex> lock(state_transaction_mutex_);
-  if (stop_discovery_ == true) {
-    RCLCPP_DEBUG(node->get_logger(), "Recorder Topic Discovery has already stopped.");
+  std::lock_guard<std::recursive_mutex> lock(state_transition_mutex_);
+  if (stop_discovery_) {
+    RCLCPP_DEBUG(
+      node->get_logger(),
+      "Recorder topic discovery has already been stopped or not running.");
   } else {
     stop_discovery_ = true;
     if (discovery_future_.valid()) {
