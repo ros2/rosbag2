@@ -59,7 +59,7 @@ public:
       rosbag2_storage::StorageFactory factory;
       rosbag2_storage::StorageOptions options;
       auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
-      options.uri = uri.string();
+      options.uri = uri.generic_string();
       options.storage_id = "mcap";
       rw_storage = factory.open_read_write(options);
     }
@@ -88,7 +88,7 @@ bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 {
   const std::string storage_id = "mcap";
-  auto uri = (std::filesystem::path(temporary_dir_path_) / "rosbag").string();
+  auto uri = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
   auto expected_bag = std::filesystem::path(temporary_dir_path_) / "rosbag.mcap";
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
                                                          "string data", ""};
@@ -125,13 +125,13 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
     writer->update_metadata(metadata);
   }
 
-  options.uri = expected_bag.string();
+  options.uri = expected_bag.generic_string();
   options.storage_id = storage_id;
   auto reader = factory.open_read_only(options);
   const auto metadata = reader->get_metadata();
 
   EXPECT_THAT(metadata.storage_identifier, Eq("mcap"));
-  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.string()}));
+  EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.generic_string()}));
 
   EXPECT_THAT(
     metadata.topics_with_message_count,
@@ -188,11 +188,11 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
-    options.uri = uri.string();
+    options.uri = uri.generic_string();
     options.storage_id = storage_id;
     auto writer = factory.open_read_write(options);
 #else
-    auto writer = factory.open_read_write(uri.string(), storage_id);
+    auto writer = factory.open_read_write(uri.generic_string(), storage_id);
 #endif
     writer->create_topic(topic_metadata, definition);
 
@@ -215,11 +215,11 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   {
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
-    options.uri = expected_bag.string();
+    options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
     auto reader = factory.open_read_only(options);
 #else
-    auto reader = factory.open_read_only(expected_bag.string(), storage_id);
+    auto reader = factory.open_read_only(expected_bag.generic_string(), storage_id);
 #endif
     auto topics_and_types = reader->get_all_topics_and_types();
 
@@ -230,7 +230,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     const auto metadata = reader->get_metadata();
 
     EXPECT_THAT(metadata.storage_identifier, Eq("mcap"));
-    EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.string()}));
+    EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.generic_string()}));
     EXPECT_THAT(metadata.topics_with_message_count,
                 ElementsAreArray({rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{
@@ -269,7 +269,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
   {
     rosbag2_storage::StorageOptions options;
-    options.uri = uri.string();
+    options.uri = uri.generic_string();
     options.storage_id = storage_id;
     options.storage_config_uri = config_path + "/mcap_writer_options_zstd.yaml";
     rosbag2_storage::TopicMetadata topic_metadata;
@@ -302,7 +302,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
   }
   {
     rosbag2_storage::StorageOptions options;
-    options.uri = expected_bag.string();
+    options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
 
     rosbag2_storage::StorageFactory factory;

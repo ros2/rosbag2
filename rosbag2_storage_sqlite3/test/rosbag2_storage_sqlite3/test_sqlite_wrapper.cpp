@@ -33,7 +33,7 @@ public:
   SqliteWrapperTestFixture()
   : StorageTestFixture(),
     db_(
-      (std::filesystem::path(temporary_dir_path_) / "test.db3").string(),
+      (std::filesystem::path(temporary_dir_path_) / "test.db3").generic_string(),
       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE)
   {}
 

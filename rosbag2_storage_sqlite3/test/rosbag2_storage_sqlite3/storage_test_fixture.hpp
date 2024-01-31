@@ -98,7 +98,7 @@ public:
     if (nullptr == writable_storage) {
       writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
 
-      auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").string();
+      auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
 
       writable_storage->open({db_file, plugin_id_});
     }
@@ -127,7 +127,7 @@ public:
       std::tuple<std::string, int64_t, std::string, std::string, std::string>
     > & messages)
   {
-    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").string();
+    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
     std::string relative_path = db_file + ".db3";
 
     // READ_WRITE requires the DB to not exist.
@@ -202,7 +202,7 @@ public:
 
   void create_new_db3_file_with_schema_version_2()
   {
-    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").string();
+    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
     std::string relative_path = db_file + ".db3";
 
     // READ_WRITE requires the DB to not exist.
@@ -250,7 +250,7 @@ public:
     std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
       std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").string();
+    auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
 
     readable_storage->open(
       {db_file, plugin_id_},
@@ -269,8 +269,8 @@ public:
     const std::string & plugin_id)
   {
     auto temp_dir = std::filesystem::path(temporary_dir_path_);
-    const auto storage_uri = (temp_dir / "rosbag").string();
-    const auto yaml_config = (temp_dir / "sqlite_config.yaml").string();
+    const auto storage_uri = (temp_dir / "rosbag").generic_string();
+    const auto yaml_config = (temp_dir / "sqlite_config.yaml").generic_string();
 
     { // populate temporary config file
       std::ofstream out(yaml_config);
