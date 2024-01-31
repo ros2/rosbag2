@@ -135,7 +135,8 @@ void Writer::write(
 {
   auto serialized_bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_bag_message->topic_name = topic_name;
-  serialized_bag_message->time_stamp = time.nanoseconds();
+  serialized_bag_message->receive_time_stamp = time.nanoseconds();
+  serialized_bag_message->publish_time_stamp = time.nanoseconds();
 
   serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
     new rcutils_uint8_array_t,
@@ -183,9 +184,20 @@ void Writer::write(
   const std::string & type_name,
   const rclcpp::Time & time)
 {
+  write(message, topic_name, type_name, time, time);
+}
+
+void Writer::write(
+  std::shared_ptr<const rclcpp::SerializedMessage> message,
+  const std::string & topic_name,
+  const std::string & type_name,
+  const rclcpp::Time & recv_time,
+  const rclcpp::Time & send_time)
+{
   auto serialized_bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   serialized_bag_message->topic_name = topic_name;
-  serialized_bag_message->time_stamp = time.nanoseconds();
+  serialized_bag_message->receive_time_stamp = recv_time.nanoseconds();
+  serialized_bag_message->publish_time_stamp = send_time.nanoseconds();
   // point to actual data and keep reference to original message to avoid premature releasing
   serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
     new rcutils_uint8_array_t(message->get_rcl_serialized_message()),

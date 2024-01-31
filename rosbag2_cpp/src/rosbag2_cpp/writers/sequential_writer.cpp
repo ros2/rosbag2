@@ -352,7 +352,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  if (!message_within_accepted_time_range(message->time_stamp)) {
+  if (!message_within_accepted_time_range(message->receive_time_stamp)) {
     return;
   }
 
@@ -368,7 +368,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   }
 
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds(message->time_stamp));
+    std::chrono::nanoseconds(message->receive_time_stamp));
 
   if (is_first_message_) {
     // Update bagfile starting time

@@ -27,7 +27,15 @@ namespace rosbag2_storage
 struct SerializedBagMessage
 {
   std::shared_ptr<rcutils_uint8_array_t> serialized_data;
-  rcutils_time_point_value_t time_stamp;
+  /**
+   * @brief Nanosecond timestamp when this message was received.
+   */
+  rcutils_time_point_value_t receive_time_stamp;
+  /**
+   * @brief Nanosecond timestamp when this message was initially published. If
+   * not available, this will be set to time_stamp.
+   */
+  rcutils_time_point_value_t publish_time_stamp;
   std::string topic_name;
 };
 

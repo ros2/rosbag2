@@ -202,7 +202,7 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   auto replay_time = std::chrono::steady_clock::now() - start;
 
   auto expected_replay_time =
-    std::chrono::nanoseconds(messages.back()->time_stamp - messages[1]->time_stamp);
+    std::chrono::nanoseconds(messages.back()->receive_time_stamp - messages[1]->receive_time_stamp);
   // Check for lower bound with some tolerance
   ASSERT_THAT(replay_time, Gt(expected_replay_time - std::chrono::milliseconds(50)));
   // Check for upper bound with some tolerance

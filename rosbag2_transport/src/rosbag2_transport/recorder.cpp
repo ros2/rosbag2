@@ -586,7 +586,8 @@ RecorderImpl::create_subscription(
       if (!paused_.load()) {
         writer_->write(
           message, topic_name, topic_type,
-          rclcpp::Time(mi.get_rmw_message_info().received_timestamp));
+          rclcpp::Time(mi.get_rmw_message_info().received_timestamp),
+          rclcpp::Time(mi.get_rmw_message_info().source_timestamp));
       }
     });
 }

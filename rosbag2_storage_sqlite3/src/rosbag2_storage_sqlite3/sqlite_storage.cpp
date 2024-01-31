@@ -302,7 +302,9 @@ void SqliteStorage::write_locked(
   }
 
   try {
-    write_statement_->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+    write_statement_->bind(
+      message->receive_time_stamp, topic_entry->second,
+      message->serialized_data);
   } catch (const SqliteException & exc) {
     if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
       // Get the sqlite string/blob limit.
@@ -380,12 +382,12 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
 
   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   bag_message->serialized_data = std::get<0>(*current_message_row_);
-  bag_message->time_stamp = std::get<1>(*current_message_row_);
+  bag_message->receive_time_stamp = std::get<1>(*current_message_row_);
   bag_message->topic_name = std::get<2>(*current_message_row_);
 
   // set start time to current time
   // and set seek_row_id to the new row id up
-  seek_time_ = bag_message->time_stamp;
+  seek_time_ = bag_message->receive_time_stamp;
   seek_row_id_ = std::get<3>(*current_message_row_) + (read_order_.reverse ? -1 : 1);
 
   ++current_message_row_;
