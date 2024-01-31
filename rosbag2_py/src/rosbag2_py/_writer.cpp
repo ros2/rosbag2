@@ -54,7 +54,7 @@ public:
     bag_message->topic_name = topic_name;
     bag_message->serialized_data =
       rosbag2_storage::make_serialized_message(message.c_str(), message.length());
-    bag_message->time_stamp = time_stamp;
+    bag_message->receive_time_stamp = time_stamp;
 
     rosbag2_cpp::Writer::write(bag_message);
   }

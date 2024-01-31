@@ -135,5 +135,5 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     }
   }
   // check that the timestamp is same as the clock message
-  EXPECT_THAT(string_messages[0]->time_stamp, time_value);
+  EXPECT_THAT(string_messages[0]->receive_time_stamp, time_value);
 }
