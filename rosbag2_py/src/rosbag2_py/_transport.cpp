@@ -140,25 +140,17 @@ public:
     rclcpp::shutdown();
   }
 
+  static void cancel()
+  {
+    exit_ = true;
+    wait_for_exit_cv_.notify_all();
+  }
+
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
-    auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(reader), storage_options, play_options);
-
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
-    player->play();
-    player->wait_for_playback_to_finish();
-
-    exec.cancel();
-    spin_thread.join();
+    play_impl(storage_options, play_options, false);
   }
 
   void burst(
@@ -166,23 +158,90 @@ public:
     PlayOptions & play_options,
     size_t num_messages)
   {
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
-    auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(reader), storage_options, play_options);
-
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
-    player->play();
-    player->burst(num_messages);
-
-    exec.cancel();
-    spin_thread.join();
+    play_impl(storage_options, play_options, true, num_messages);
   }
+
+protected:
+  void play_impl(
+    const rosbag2_storage::StorageOptions & storage_options,
+    PlayOptions & play_options,
+    bool burst = false,
+    size_t burst_num_messages = 0)
+  {
+    auto old_sigterm_handler = std::signal(
+      SIGTERM, [](int /* signal */) {
+        rosbag2_py::Player::cancel();
+      });
+    auto old_sigint_handler = std::signal(
+      SIGINT, [](int /* signal */) {
+        rosbag2_py::Player::cancel();
+      });
+
+    try {
+      auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+      auto player = std::make_shared<rosbag2_transport::Player>(
+        std::move(reader), storage_options, play_options);
+
+      rclcpp::executors::SingleThreadedExecutor exec;
+      exec.add_node(player);
+      auto spin_thread = std::thread(
+        [&exec]() {
+          exec.spin();
+        });
+      player->play();
+
+      auto wait_for_exit_thread = std::thread(
+        [&]() {
+          std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
+          wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Player::exit_.load();});
+          player->stop();
+        });
+      {
+        // Release the GIL for long-running play, so that calling Python code
+        // can use other threads
+        py::gil_scoped_release release;
+        if (burst) {
+          player->burst(burst_num_messages);
+        }
+        player->wait_for_playback_to_finish();
+      }
+
+      rosbag2_py::Player::cancel();  // Need to trigger exit from wait_for_exit_thread
+      if (wait_for_exit_thread.joinable()) {
+        wait_for_exit_thread.join();
+      }
+
+      exec.cancel();
+      if (spin_thread.joinable()) {
+        spin_thread.join();
+      }
+      exec.remove_node(player);
+    } catch (...) {
+      // Return old signal handlers anyway
+      if (old_sigterm_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigterm_handler);
+      }
+      if (old_sigint_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigint_handler);
+      }
+      throw;
+    }
+    // Return old signal handlers
+    if (old_sigterm_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigterm_handler);
+    }
+    if (old_sigint_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigint_handler);
+    }
+  }
+
+  static std::atomic_bool exit_;
+  static std::condition_variable wait_for_exit_cv_;
+  std::mutex wait_for_exit_mutex_;
 };
+
+std::atomic_bool Player::exit_{false};
+std::condition_variable Player::wait_for_exit_cv_{};
 
 class Recorder
 {
@@ -399,7 +458,10 @@ PYBIND11_MODULE(_transport, m) {
   py::class_<rosbag2_py::Player>(m, "Player")
   .def(py::init())
   .def("play", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg("play_options"))
-  .def("burst", &rosbag2_py::Player::burst)
+  .def(
+    "burst", &rosbag2_py::Player::burst, py::arg("storage_options"), py::arg("play_options"),
+    py::arg("num_messages"))
+  .def_static("cancel", &rosbag2_py::Player::cancel)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
