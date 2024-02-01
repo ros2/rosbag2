@@ -170,7 +170,8 @@ TEST_F(StorageTestFixture, get_all_topics_and_types_returns_the_correct_vector) 
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
   // extension is omitted since storage is being created; io_flag = READ_WRITE
-  const auto read_write_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
+  const auto read_write_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
 
   writable_storage->open({read_write_filename, kPluginID});
   writable_storage->create_topic({"topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, {});
@@ -201,7 +202,8 @@ TEST_F(StorageTestFixture, get_all_message_definitions_returns_the_correct_vecto
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
   // extension is omitted since storage is being created; io_flag = READ_WRITE
-  const auto read_write_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
+  const auto read_write_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
 
   writable_storage->open({read_write_filename, kPluginID});
   writable_storage->create_topic(
@@ -235,7 +237,8 @@ TEST_F(StorageTestFixture, get_all_message_definitions_returns_the_correct_vecto
 
 TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   auto writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-  auto read_write_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
+  auto read_write_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
   writable_storage->open({read_write_filename, kPluginID});
   writable_storage->create_topic({"topic1", "type1", "rmw1", {rclcpp::QoS(1)}, "type_hash1"}, {});
   writable_storage->create_topic({"topic2", "type2", "rmw2", {rclcpp::QoS(2)}, "type_hash2"}, {});
@@ -253,7 +256,8 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
   write_messages_to_sqlite(messages, writable_storage);
 
   const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  const auto db_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
+  const auto db_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
 
   readable_storage->open(
     {db_filename, kPluginID},
@@ -292,7 +296,8 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_for_prefoxy_db_sc
   write_messages_to_sqlite_in_pre_foxy_format(messages);
 
   const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  const auto db_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
+  const auto db_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
 
   readable_storage->open(
     {db_filename, kPluginID},
@@ -378,7 +383,8 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct_if_no_messages) {
   write_messages_to_sqlite({});
 
   const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  const auto db_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
+  const auto db_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
 
   readable_storage->open(
     {db_filename, kPluginID},
@@ -401,7 +407,8 @@ TEST_F(StorageTestFixture, remove_topics_and_types_returns_the_empty_vector) {
     std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
   // extension is omitted since storage is created; io_flag = READ_WRITE
-  const auto read_write_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
+  const auto read_write_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
 
   writable_storage->open({read_write_filename, kPluginID});
   writable_storage->create_topic({"topic1", "type1", "rmw1", {}, "hash"}, {});
@@ -432,7 +439,8 @@ TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
   // check that storage::get_relative_file_path returns the relative path to the sqlite3 db
   // and that uri is handled properly when storage::open is called with different io_flags
   // READ_WRITE expects uri to not end in extension
-  const auto read_write_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
+  const auto read_write_filename =
+    (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
   const auto storage_filename = read_write_filename + ".db3";
   const auto read_write_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   read_write_storage->open(
