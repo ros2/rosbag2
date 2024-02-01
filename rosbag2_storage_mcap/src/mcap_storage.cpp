@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -42,6 +43,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -245,9 +247,13 @@ private:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_;
 
   rosbag2_storage::BagMetadata metadata_{};
-  std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_;
-  std::unordered_map<std::string, mcap::SchemaId> schema_ids_;    // datatype -> schema_id
-  std::unordered_map<std::string, mcap::ChannelId> channel_ids_;  // topic -> channel_id
+  std::shared_mutex mcap_rw_shared_mutex_;
+  std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_
+    RCPPUTILS_TSA_GUARDED_BY(mcap_rw_shared_mutex_);
+  std::unordered_map<std::string, mcap::SchemaId> schema_ids_
+    RCPPUTILS_TSA_GUARDED_BY(mcap_rw_shared_mutex_);  // datatype -> schema_id
+  std::unordered_map<std::string, mcap::ChannelId> channel_ids_
+    RCPPUTILS_TSA_GUARDED_BY(mcap_rw_shared_mutex_);  // topic -> channel_id
   rosbag2_storage::StorageFilter storage_filter_{};
   mcap::ReadMessageOptions::ReadOrder read_order_ = mcap::ReadMessageOptions::ReadOrder::FileOrder;
 
@@ -735,6 +741,7 @@ uint64_t MCAPStorage::get_minimum_split_file_size() const
 /** BaseWriteInterface **/
 void MCAPStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
+  std::shared_lock read_lock(mcap_rw_shared_mutex_);
   const auto topic_it = topics_.find(msg->topic_name);
   if (topic_it == topics_.end()) {
     throw std::runtime_error{"Unknown message topic \"" + msg->topic_name + "\""};
@@ -785,6 +792,7 @@ void MCAPStorage::write(
 void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
                                const rosbag2_storage::MessageDefinition & message_definition)
 {
+  std::unique_lock write_lock(mcap_rw_shared_mutex_);
   auto topic_info = rosbag2_storage::TopicInformation{topic, 0};
   const auto topic_it = topics_.find(topic.name);
   if (topic_it == topics_.end()) {
@@ -831,6 +839,7 @@ void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,
 
 void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 {
+  std::unique_lock write_lock(mcap_rw_shared_mutex_);
   const auto topic_it = topics_.find(topic.name);
   if (topic_it != topics_.end()) {
     const auto & datatype = topic_it->second.topic_metadata.type;
