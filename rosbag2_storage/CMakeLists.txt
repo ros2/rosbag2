@@ -22,7 +22,6 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
@@ -39,12 +38,22 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
+<<<<<<< HEAD
 ament_target_dependencies(
   ${PROJECT_NAME}
   pluginlib
   rcpputils
   rcutils
   yaml_cpp_vendor)
+=======
+target_link_libraries(${PROJECT_NAME}
+  pluginlib::pluginlib
+  rcutils::rcutils
+  rclcpp::rclcpp
+  rmw::rmw
+  yaml-cpp
+)
+>>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558))
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.

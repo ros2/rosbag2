@@ -19,8 +19,9 @@
 #include <atomic>
 #include <chrono>
 #include <cstring>
-#include <iostream>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -28,7 +29,11 @@
 #include <vector>
 
 #include "rcpputils/env.hpp"
+<<<<<<< HEAD:rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
 #include "rcpputils/filesystem_helper.hpp"
+=======
+#include "rcpputils/scope_exit.hpp"
+>>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558)):rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -191,7 +196,7 @@ void SqliteStorage::open(
     relative_path_ = storage_options.uri + FILE_EXTENSION;
 
     // READ_WRITE requires the DB to not exist.
-    if (rcpputils::fs::path(relative_path_).exists()) {
+    if (std::filesystem::exists(std::filesystem::path(relative_path_))) {
       throw std::runtime_error(
               "Failed to create bag: File '" + relative_path_ + "' already exists!");
     }
@@ -199,7 +204,7 @@ void SqliteStorage::open(
     relative_path_ = storage_options.uri;
 
     // APPEND and READ_ONLY require the DB to exist
-    if (!rcpputils::fs::path(relative_path_).exists()) {
+    if (!std::filesystem::exists(std::filesystem::path(relative_path_))) {
       throw std::runtime_error(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
     }
@@ -352,9 +357,20 @@ std::vector<rosbag2_storage::TopicMetadata> SqliteStorage::get_all_topics_and_ty
 
 uint64_t SqliteStorage::get_bagfile_size() const
 {
+<<<<<<< HEAD:rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
   const auto bag_path = rcpputils::fs::path{get_relative_file_path()};
 
   return bag_path.exists() ? bag_path.file_size() : 0u;
+=======
+  if (!database_ || !page_count_statement_) {
+    // Trying to call get_bagfile_size when SqliteStorage::open was not called or db
+    // failed to open. Fallback to the filesystem call.
+    const auto bag_path = std::filesystem::path{get_relative_file_path()};
+    return std::filesystem::exists(bag_path) ? std::filesystem::file_size(bag_path) : 0u;
+  } else {
+    return db_file_size_;
+  }
+>>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558)):rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
 }
 
 void SqliteStorage::initialize()
