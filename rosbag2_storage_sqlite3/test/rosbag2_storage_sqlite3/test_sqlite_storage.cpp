@@ -356,13 +356,9 @@ TEST_F(StorageTestFixture, get_db_schema_version_returns_correct_value) {
 
 TEST_F(StorageTestFixture, get_recorded_ros_distro_returns_correct_value) {
   auto writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
-<<<<<<< HEAD
   EXPECT_TRUE(writable_storage->get_recorded_ros_distro().empty());
 
-  auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
-=======
   auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
->>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558))
   writable_storage->open({db_file, plugin_id_});
 
   std::string current_ros_distro = rcpputils::get_env_var("ROS_DISTRO");
@@ -377,12 +373,8 @@ TEST_F(StorageTestFixture, check_backward_compatibility_with_schema_version_2) {
   EXPECT_EQ(readable_storage->get_db_schema_version(), -1);
   EXPECT_TRUE(readable_storage->get_recorded_ros_distro().empty());
 
-<<<<<<< HEAD
-  auto db_file = (rcpputils::fs::path(temporary_dir_path_) / "rosbag.db3").string();
-
-=======
   auto db_file = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
->>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558))
+
   readable_storage->open(
     {db_file, plugin_id_},
     rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
@@ -513,15 +505,9 @@ TEST_F(StorageTestFixture, storage_preset_profile_applies_over_defaults) {
   // Check that "resilient" values override default optimized ones
   const auto writable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
 
-<<<<<<< HEAD
-  auto temp_dir = rcpputils::fs::path(temporary_dir_path_);
-  const auto storage_uri = (temp_dir / "rosbag").string();
-  rosbag2_storage::StorageOptions options{storage_uri, kPluginID, 0, 0, 0, "", ""};
-=======
   auto temp_dir = std::filesystem::path(temporary_dir_path_);
   const auto storage_uri = (temp_dir / "rosbag").generic_string();
-  rosbag2_storage::StorageOptions options{storage_uri, kPluginID, 0, 0, 0, {}, ""};
->>>>>>> edda376 (Remove rcpputils::fs dependencies from rosbag2_storages (#1558))
+  rosbag2_storage::StorageOptions options{storage_uri, kPluginID, 0, 0, 0, "", ""};
 
   options.storage_preset_profile = "resilient";
   writable_storage->open(options, rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
