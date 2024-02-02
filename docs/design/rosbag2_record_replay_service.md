@@ -124,18 +124,22 @@ Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX |
 
 ### Expand the 'play' command
 
-Add 3 parameters.
-- `--services ServiceName1 [[ServiceName2 ...]`
+Added or changed parameters:
+- `--services ServiceName1 [ServiceName2 ...]`
 
     Determine which service's requests are played.
 
-- `--exclude-topics`
+- `--exclude-topics topic1 [topic2 ...]`
 
-    Rename from `--exclude`. Exclude topics containing provided regular expression.
+    List of topics not being played.
 
-- `--exclude-services`
+- `--exclude-services ServiceName1 [ServiceName2 ...]`
 
-    Exclude services containing provided regular expression.
+    List of services not being played.
+
+- `--exclude-regex REGEX`
+
+    Rename from `--exclude`. Exclude topics and services containing provided regular expression.
 
 `-e REGEX, --regex REGEX` affects both topics and services.
 
