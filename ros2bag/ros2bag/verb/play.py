@@ -58,11 +58,11 @@ class PlayVerb(VerbExtension):
             help='Space-delimited list of services to play.')
         parser.add_argument(
             '-e', '--regex', default='',
-            help='Play only topics and services containing provided regular expression.')
+            help='Play only topics and services matches with regular expression.')
         parser.add_argument(
             '-x', '--exclude', default='',
             help='regular expressions to exclude topics from replay, separated by space. If none '
-                 'specified, all topics will be replayed. This argument is deprecated and please '
+                 'specified, all topics will be replayed. This argument is deprecated. Please '
                  'use --exclude-topics.')
         parser.add_argument(
             '--exclude-topics', default='',
@@ -215,8 +215,7 @@ class PlayVerb(VerbExtension):
         if args.exclude_services:
             play_options.services_regex_to_exclude = convert_service_to_service_event_topic(
                 args.exclude_services)
-        else:
-            play_options.services_regex_to_exclude = args.exclude_services
+
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
