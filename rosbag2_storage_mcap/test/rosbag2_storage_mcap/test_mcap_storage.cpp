@@ -15,7 +15,6 @@
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rcpputils/env.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
   #include "rosbag2_storage/storage_options.hpp"
@@ -27,6 +26,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -43,8 +43,8 @@ bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
 
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 {
-  auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
+  auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
+  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -70,11 +70,11 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     rosbag2_storage::StorageFactory factory;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
-    options.uri = uri.string();
+    options.uri = uri.generic_string();
     options.storage_id = storage_id;
     auto writer = factory.open_read_write(options);
 #else
-    auto writer = factory.open_read_write(uri.string(), storage_id);
+    auto writer = factory.open_read_write(uri.generic_string(), storage_id);
 #endif
     writer->create_topic(topic_metadata, definition);
 
@@ -92,17 +92,17 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     serialized_bag_msg->time_stamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
-    EXPECT_TRUE(expected_bag.is_regular_file());
+    EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   }
   {
     rosbag2_storage::StorageFactory factory;
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
-    options.uri = expected_bag.string();
+    options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
     auto reader = factory.open_read_only(options);
 #else
-    auto reader = factory.open_read_only(expected_bag.string(), storage_id);
+    auto reader = factory.open_read_only(expected_bag.generic_string(), storage_id);
 #endif
     auto topics_and_types = reader->get_all_topics_and_types();
 
@@ -113,7 +113,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     const auto metadata = reader->get_metadata();
 
     EXPECT_THAT(metadata.storage_identifier, Eq("mcap"));
-    EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.string()}));
+    EXPECT_THAT(metadata.relative_file_paths, ElementsAreArray({expected_bag.generic_string()}));
     EXPECT_THAT(metadata.topics_with_message_count,
                 ElementsAreArray({rosbag2_storage::TopicInformation{
                   rosbag2_storage::TopicMetadata{topic_name, "std_msgs/msg/String", "cdr",
@@ -138,8 +138,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 // This test disabled on Foxy since StorageOptions doesn't have storage_config_uri field on it
 TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 {
-  auto uri = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag.mcap";
+  auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
+  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -152,7 +152,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
   {
     rosbag2_storage::StorageOptions options;
-    options.uri = uri.string();
+    options.uri = uri.generic_string();
     options.storage_id = storage_id;
     options.storage_config_uri = config_path + "/mcap_writer_options_zstd.yaml";
     rosbag2_storage::TopicMetadata topic_metadata;
@@ -181,11 +181,11 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
     writer->write(serialized_bag_msg);
-    EXPECT_TRUE(expected_bag.is_regular_file());
+    EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   }
   {
     rosbag2_storage::StorageOptions options;
-    options.uri = expected_bag.string();
+    options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
 
     rosbag2_storage::StorageFactory factory;
@@ -210,8 +210,9 @@ TEST_F(TemporaryDirectoryFixture, mcap_contains_ros_distro)
   const std::string current_ros_distro = "rolling";
   ASSERT_TRUE(rcpputils::set_env_var("ROS_DISTRO", current_ros_distro.c_str()));
 
-  const auto expected_file = rcpputils::fs::path(temporary_dir_path_) / "rosdistro_bag.mcap";
-  const auto uri = rcpputils::fs::remove_extension(expected_file);
+  const auto expected_file = std::filesystem::path(temporary_dir_path_) / "rosdistro_bag.mcap";
+  auto uri = expected_file;
+  uri = uri.replace_extension();  // remove extension
   const std::string storage_id = "mcap";
   std::string read_metadata_ros_distro = "";
 
@@ -222,7 +223,7 @@ TEST_F(TemporaryDirectoryFixture, mcap_contains_ros_distro)
   options.storage_id = storage_id;
   auto writer = factory.open_read_write(options);
   writer.reset();
-  ASSERT_TRUE(expected_file.is_regular_file());
+  ASSERT_TRUE(std::filesystem::is_regular_file(expected_file));
 
   // Open created mcap file, read all metadata records to find rosbag2.ROS_DISTRO value
   mcap::Status status{};
