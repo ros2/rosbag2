@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-<<<<<<< HEAD
 #include "rcpputils/env.hpp"
-=======
 #include "rcpputils/thread_safety_annotations.hpp"
->>>>>>> 90d1da8 (Use rw_lock to protect mcap metadata lists. (#1561))
 #include "rcutils/logging_macros.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -234,11 +231,7 @@ public:
 #endif
 
 private:
-<<<<<<< HEAD
-=======
-  void read_metadata();
   void write_lock_free(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
->>>>>>> 90d1da8 (Use rw_lock to protect mcap metadata lists. (#1561))
   void open_impl(const std::string & uri, const std::string & preset_profile,
                  rosbag2_storage::storage_interfaces::IOFlag io_flag,
                  const std::string & storage_config_uri);
