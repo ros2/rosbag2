@@ -148,7 +148,7 @@ private:
   std::unordered_map<std::string, int64_t> msg_definitions_ RCPPUTILS_TSA_GUARDED_BY(
     db_read_write_mutex_);
   std::unordered_map<int64_t, uint16_t> inner_to_extern_topic_id_map_;
-  uint16_t last_extern_topic_id_ = 0;  // 0 corresponds to the invalid topic_id
+  std::atomic<uint16_t> last_extern_topic_id_{0};  // 0 corresponds to the invalid topic_id
   std::vector<rosbag2_storage::TopicMetadata> all_topics_and_types_;
   std::string relative_path_;
   std::atomic_bool active_transaction_ {false};

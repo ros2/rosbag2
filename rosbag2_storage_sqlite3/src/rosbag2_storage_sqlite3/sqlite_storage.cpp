@@ -935,7 +935,8 @@ uint16_t SqliteStorage::get_or_generate_extern_topic_id(int64_t inner_topic_id)
           std::to_string(std::numeric_limits<uint16_t>::max()));
       throw std::range_error("External topic_id reached maximum allowed value");
     }
-    extern_topic_id = ++last_extern_topic_id_;
+    last_extern_topic_id_.fetch_add(1, std::memory_order_relaxed);
+    extern_topic_id = last_extern_topic_id_;
     inner_to_extern_topic_id_map_[inner_topic_id] = extern_topic_id;
   }
   return extern_topic_id;
