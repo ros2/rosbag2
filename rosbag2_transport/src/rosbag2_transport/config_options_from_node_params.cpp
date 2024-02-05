@@ -131,16 +131,31 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 
   play_options.topics_to_filter = node.declare_parameter<std::vector<std::string>>(
     "play.topics_to_filter", std::vector<std::string>());
-  play_options.services_to_filter = node.declare_parameter<std::vector<std::string>>(
+
+  // Convert service name to service event topic name
+  auto service_list = node.declare_parameter<std::vector<std::string>>(
     "play.services_to_filter", std::vector<std::string>());
+  for (auto & service : service_list) {
+    service = rosbag2_cpp::service_name_to_service_event_topic_name(service);
+  }
+  play_options.services_to_filter = service_list;
 
   play_options.regex_to_filter =
     node.declare_parameter<std::string>("play.regex_to_filter", "");
 
-  play_options.services_regex_to_exclude =
-    node.declare_parameter<std::string>("play.services_regex_to_exclude", "");
-  play_options.topics_regex_to_exclude =
-    node.declare_parameter<std::string>("play.topics_regex_to_exclude", "");
+  play_options.exclude_regex_to_filter =
+    node.declare_parameter<std::string>("play.exclude_regex_to_filter", "");
+
+  play_options.exclude_topics_to_filter = node.declare_parameter<std::vector<std::string>>(
+    "play.exclude_topics_to_filter", std::vector<std::string>());
+
+  // Convert service name to service event topic name
+  auto exclude_service_list = node.declare_parameter<std::vector<std::string>>(
+    "play.exclude_services_to_filter", std::vector<std::string>());
+  for (auto & service : exclude_service_list) {
+    service = rosbag2_cpp::service_name_to_service_event_topic_name(service);
+  }
+  play_options.exclude_services_to_filter = exclude_service_list;
 
   std::string qos_profile_overrides_path =
     node.declare_parameter<std::string>("play.qos_profile_overrides_path", "");

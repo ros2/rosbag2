@@ -922,10 +922,11 @@ void PlayerImpl::prepare_publishers()
 {
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
-  storage_filter.services = play_options_.services_to_filter;
+  storage_filter.services_events = play_options_.services_to_filter;
   storage_filter.regex = play_options_.regex_to_filter;
-  storage_filter.topics_regex_to_exclude = play_options_.topics_regex_to_exclude;
-  storage_filter.services_regex_to_exclude = play_options_.services_regex_to_exclude;
+  storage_filter.regex_to_exclude = play_options_.exclude_regex_to_filter;
+  storage_filter.exclude_topics = play_options_.exclude_topics_to_filter;
+  storage_filter.exclude_service_events = play_options_.exclude_services_to_filter;
   reader_->set_filter(storage_filter);
 
   // Create /clock publisher
@@ -971,7 +972,7 @@ void PlayerImpl::prepare_publishers()
     }
 
     auto & filter_topics = storage_filter.topics;
-    auto & filter_services = storage_filter.services;
+    auto & filter_services = storage_filter.services_events;
 
     if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
       // filter services to add clients if necessary

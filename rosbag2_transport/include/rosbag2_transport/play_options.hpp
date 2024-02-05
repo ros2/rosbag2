@@ -41,7 +41,7 @@ public:
   // If list is empty, the filter is ignored and all messages of topics are played.
   std::vector<std::string> topics_to_filter = {};
 
-  // Service names to whitelist when playing a bag.
+  // Service names (service event topic names) to whitelist when playing a bag.
   // Only messages matching these specified services will be played.
   // If list is empty, the filter is ignored and all messages of services are played.
   std::vector<std::string> services_to_filter = {};
@@ -51,15 +51,17 @@ public:
   // If list is empty, the filter is ignored and all messages are played.
   std::string regex_to_filter = "";
 
-  // Regular expression of topic names to exclude when playing a bag.
+  // List of topic names to exclude when playing a bag.
   // Only messages not matching these specified topics will be played.
-  // If list is empty, the filter is ignored and all messages are played.
-  std::string topics_regex_to_exclude = "";
+  std::vector<std::string> exclude_topics_to_filter = {};
 
-  // Regular expression of service names to exclude when playing a bag.
-  // Only messages not matching these specified topics will be played.
-  // If list is empty, the filter is ignored and all messages are played.
-  std::string services_regex_to_exclude = "";
+  // List of service names (service event topic names) to exclude when playing a bag.
+  // Only messages not matching these specified services will be played.
+  std::vector<std::string> exclude_services_to_filter = {};
+
+  // Regular expression of topic names and service name to exclude when playing a bag.
+  // Only messages not matching these specified topics and services will be played.
+  std::string exclude_regex_to_filter = "";
 
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides = {};
   bool loop = false;

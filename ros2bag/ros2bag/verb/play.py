@@ -21,7 +21,6 @@ from ros2bag.api import check_positive_float
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
-from ros2bag.api import print_warn
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
@@ -51,27 +50,23 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
-            '--topics', type=str, default=[], nargs='+',
+            '--topics', type=str, default=[], metavar='topic', nargs='+',
             help='Space-delimited list of topics to play.')
         parser.add_argument(
-            '--services', type=str, default=[], nargs='+',
+            '--services', type=str, default=[], metavar='service', nargs='+',
             help='Space-delimited list of services to play.')
         parser.add_argument(
             '-e', '--regex', default='',
             help='Play only topics and services matches with regular expression.')
         parser.add_argument(
-            '-x', '--exclude', default='',
-            help='regular expressions to exclude topics from replay, separated by space. If none '
-                 'specified, all topics will be replayed. This argument is deprecated. Please '
-                 'use --exclude-topics.')
+            '-x', '--exclude-regex', default='',
+            help='regular expressions to exclude topics and services from replay.')
         parser.add_argument(
-            '--exclude-topics', default='',
-            help='regular expressions to exclude topics from replay, separated by space. If none '
-                 'specified, all topics will be replayed.')
+            '--exclude-topics', type=str, default=[], metavar='topic', nargs='+',
+            help='Space-delimited list of topics not to play.')
         parser.add_argument(
-            '--exclude-services', default='',
-            help='regular expressions to exclude services from replay, separated by space. If '
-                 'none specified, all services will be replayed.')
+            '--exclude-services', type=str, default=[], metavar='service', nargs='+',
+            help='Space-delimited list of services not to play.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -176,10 +171,6 @@ class PlayVerb(VerbExtension):
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
 
-        if args.exclude and args.exclude_topics:
-            return print_error(str('-x/--exclude and --exclude-topics cannot be used at the '
-                                   'same time.'))
-
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
@@ -204,17 +195,13 @@ class PlayVerb(VerbExtension):
         play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
 
         play_options.regex_to_filter = args.regex
+        
+        play_options.exclude_regex_to_filter = args.exclude_regex
+        
+        play_options.exclude_topics_to_filter = args.exclude_topics if args.exclude_topics else []
 
-        if args.exclude:
-            print(print_warn(str('-x/--exclude argument is deprecated. Please use '
-                                 '--exclude-topics.')))
-            play_options.topics_regex_to_exclude = args.exclude
-        else:
-            play_options.topics_regex_to_exclude = args.exclude_topics
-
-        if args.exclude_services:
-            play_options.services_regex_to_exclude = convert_service_to_service_event_topic(
-                args.exclude_services)
+        play_options.exclude_service_events_to_filter = \
+            convert_service_to_service_event_topic(args.exclude_services)
 
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop

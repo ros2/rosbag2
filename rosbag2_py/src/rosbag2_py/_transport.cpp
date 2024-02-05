@@ -458,8 +458,9 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("topics_to_filter", &PlayOptions::topics_to_filter)
   .def_readwrite("services_to_filter", &PlayOptions::services_to_filter)
   .def_readwrite("regex_to_filter", &PlayOptions::regex_to_filter)
-  .def_readwrite("topics_regex_to_exclude", &PlayOptions::topics_regex_to_exclude)
-  .def_readwrite("services_regex_to_exclude", &PlayOptions::services_regex_to_exclude)
+  .def_readwrite("exclude_regex_to_filter", &PlayOptions::exclude_regex_to_filter)
+  .def_readwrite("exclude_topics_to_filter", &PlayOptions::exclude_topics_to_filter)
+  .def_readwrite("exclude_service_events_to_filter", &PlayOptions::exclude_services_to_filter)
   .def_property(
     "topic_qos_profile_overrides",
     &PlayOptions::getTopicQoSProfileOverrides,

@@ -143,11 +143,19 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   EXPECT_EQ(play_options.rate, 13.0);
   std::vector<std::string> topics_to_filter {"/foo", "/bar"};
   EXPECT_EQ(play_options.topics_to_filter, topics_to_filter);
-  std::vector<std::string> services_to_filter {"/service1", "/service2"};
+  std::vector<std::string> services_to_filter {
+    "/service1/_service_event",
+    "/service2/_service_event"};
   EXPECT_EQ(play_options.services_to_filter, services_to_filter);
   EXPECT_EQ(play_options.regex_to_filter, "[xyz]/topic_service");
-  EXPECT_EQ(play_options.topics_regex_to_exclude, "[abc]/topic");
-  EXPECT_EQ(play_options.services_regex_to_exclude, "[abc]/service");
+  std::vector<std::string> exclude_topics_to_filter {"/exclude_foo", "/exclude_bar"};
+  EXPECT_EQ(play_options.exclude_topics_to_filter, exclude_topics_to_filter);
+  std::vector<std::string> exclude_services_to_filter {
+    "/exclude_service1/_service_event",
+    "/exclude_service2/_service_event"};
+  EXPECT_EQ(play_options.exclude_services_to_filter, exclude_services_to_filter);
+  EXPECT_EQ(play_options.exclude_regex_to_filter, "[abc]/topic_service");
+
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{
     std::pair{
       "/overrided_topic_qos",

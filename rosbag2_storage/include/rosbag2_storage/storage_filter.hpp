@@ -28,25 +28,34 @@ struct StorageFilter
   // and all messages of topics are returned.
   std::vector<std::string> topics;
 
-  // Service names to whitelist when reading a bag. Only messages matching these
-  // specified services will be returned. If list is empty, the filter is ignored
-  // and all messages of services are returned.
-  std::vector<std::string> services;
+  // Service event topic names to whitelist when reading a bag. Only messages
+  // matching these specified service event topics will be returned. If list
+  // is empty, the filter is ignored and all messages of service event topics
+  // are returned.
+  std::vector<std::string> services_events;
 
-  // Regular expression of topic names and service name to whitelist when playing a bag.
-  // Only messages matching these specified topics or services will be played.
-  // If list is empty, the filter is ignored and all messages are played.
+  // Regular expression of topic names and service name to whitelist when
+  // playing a bag.Only messages matching these specified topics or services
+  // will be returned. If the string is empty, the filter is ignored and all
+  // messages are returned.
   std::string regex = "";
 
-  // Regular expression of topic names to exclude when playing a bag.
-  // Only messages not matching these specified topics will be played.
-  // If list is empty, the filter is ignored and all messages of topics are played.
-  std::string topics_regex_to_exclude = "";
+  // Topic names to blacklist when reading a bag. Only messages unmatching these
+  // topics will be returned. if list is empty, the filter is ignored and all
+  // messages of topics are returned.
+  std::vector<std::string> exclude_topics = {};
 
-  // Regular expression of topic names to exclude when playing a bag.
-  // Only messages not matching these specified services will be played.
-  // If list is empty, the filter is ignored and all messages of services are played.
-  std::string services_regex_to_exclude = "";
+  // Service event topic names to blacklist when reading a bag. Only
+  // messages unmatching these service event topics will be returned. If list
+  // is empty, the filter is ignored and all messages of service event topics
+  // are returned.
+  std::vector<std::string> exclude_service_events = {};
+
+  // Regular expression of topic names and service names to blacklist when
+  // playing a bag. Only messages unmatching these topics and services will
+  // be returned. If the string is empty, the filter is ignored and all messages
+  // of topics and services are returned.
+  std::string regex_to_exclude = "";
 };
 
 }  // namespace rosbag2_storage

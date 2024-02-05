@@ -160,6 +160,195 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
               UnorderedElementsAreArray({std::pair<std::string, std::string>("key1", "value1")}));
 }
 
+TEST_F(McapStorageTestFixture, read_next_returns_filtered_messages_complex_condition)
+{
+  std::vector<std::string> topics = {"topic1", "service_topic1/_service_event", "topic2",
+                                     "service_topic2/_service_event", "topic3"};
+
+  rosbag2_storage::TopicMetadata topic_metadata_1 = {
+    topics[0], "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"};
+  rosbag2_storage::TopicMetadata topic_metadata_2 = {
+    topics[1], "std_msgs/msg/String", "cdr", {rclcpp::QoS(2)}, "type_hash2"};
+  rosbag2_storage::TopicMetadata topic_metadata_3 = {
+    topics[2], "std_msgs/msg/String", "cdr", {rclcpp::QoS(3)}, "type_hash3"};
+  rosbag2_storage::TopicMetadata topic_metadata_4 = {
+    topics[3], "std_msgs/msg/String", "cdr", {rclcpp::QoS(4)}, "type_hash4"};
+  rosbag2_storage::TopicMetadata topic_metadata_5 = {
+    topics[4], "std_msgs/msg/String", "cdr", {rclcpp::QoS(5)}, "type_hash5"};
+
+  const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
+                                                         "string data", ""};
+
+  std::vector<std::tuple<std::string, int64_t, rosbag2_storage::TopicMetadata,
+                         rosbag2_storage::MessageDefinition>>
+    string_messages = {
+      std::make_tuple<>("topic1 message", 1, topic_metadata_1, definition),
+      std::make_tuple("service event topic 1 message", 2, topic_metadata_2, definition),
+      std::make_tuple("topic2 message", 3, topic_metadata_3, definition),
+      std::make_tuple("service event topic 2 message", 4, topic_metadata_4, definition),
+      std::make_tuple("topic3 message", 5, topic_metadata_5, definition)};
+
+  auto uri = (rcpputils::fs::path(temporary_dir_path_) / "rosbag").string();
+  auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "rosbag.mcap";
+
+  const std::string storage_id = "mcap";
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.storage_id = storage_id;
+  options.uri = uri;
+
+  // Write test data
+  {
+    auto rw_writer = factory.open_read_write(options);
+    write_messages_to_mcap(string_messages, rw_writer);
+  }
+
+  options.uri = expected_bag.string();
+
+  // Set topic list and regex for service
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.topics = {"topic2", "topic3"};
+    storage_filter.regex = "service.*";  // Add service
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("service_topic1/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("topic2"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto third_message = readable_storage->read_next();
+    EXPECT_THAT(third_message->topic_name, Eq("service_topic2/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto fourth_message = readable_storage->read_next();
+    EXPECT_THAT(fourth_message->topic_name, Eq("topic3"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // Set service list and regex for topic
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.services_events = {"service_topic2/_service_event"};
+    storage_filter.regex = "topic(1|3)";  // Add topic1 and topic3
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("topic1"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("service_topic2/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto third_message = readable_storage->read_next();
+    EXPECT_THAT(third_message->topic_name, Eq("topic3"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // Set topic list and service list
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.topics = {"topic2", "topic3"};
+    storage_filter.services_events = {"service_topic1/_service_event"};
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("service_topic1/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("topic2"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto third_message = readable_storage->read_next();
+    EXPECT_THAT(third_message->topic_name, Eq("topic3"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // No topic list and service list. Only regex
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.regex = ".*topic2.*";
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("topic2"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("service_topic2/_service_event"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // No topic list, service list and regex.
+  // Set excluded topic list, excluded service list and excluded regex
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.exclude_topics = {"topic1"};
+    storage_filter.exclude_service_events = {"service_topic2/_service_event"};
+    storage_filter.regex_to_exclude = "^topic3$";
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("service_topic1/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("topic2"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // Set regex and excluded regex.
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    storage_filter.regex = ".*topic1.*";
+    storage_filter.regex_to_exclude = ".*service.*";
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("topic1"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+
+  // Set nothing for included and excluded condition
+  {
+    auto readable_storage = factory.open_read_only(options);
+
+    rosbag2_storage::StorageFilter storage_filter;
+    readable_storage->set_filter(storage_filter);
+
+    EXPECT_TRUE(readable_storage->has_next());
+    auto first_message = readable_storage->read_next();
+    EXPECT_THAT(first_message->topic_name, Eq("topic1"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto second_message = readable_storage->read_next();
+    EXPECT_THAT(second_message->topic_name, Eq("service_topic1/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto third_message = readable_storage->read_next();
+    EXPECT_THAT(third_message->topic_name, Eq("topic2"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto fourth_message = readable_storage->read_next();
+    EXPECT_THAT(fourth_message->topic_name, Eq("service_topic2/_service_event"));
+    EXPECT_TRUE(readable_storage->has_next());
+    auto fifth_message = readable_storage->read_next();
+    EXPECT_THAT(fifth_message->topic_name, Eq("topic3"));
+    EXPECT_FALSE(readable_storage->has_next());
+  }
+}
+
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 {
   auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
@@ -320,4 +509,5 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     EXPECT_THAT(definitions, ElementsAreArray({definition}));
   }
 }
+
 #endif  // #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
