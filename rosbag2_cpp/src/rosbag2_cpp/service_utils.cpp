@@ -174,4 +174,15 @@ std::string client_id_to_string(std::array<uint8_t, 16> & client_id)
   }
   return client_id_string;
 }
+
+std::size_t client_id_hash::operator()(const std::array<uint8_t, 16> & client_id) const
+{
+  std::hash<uint8_t> hasher;
+  std::size_t seed = 0;
+  for (const auto & value : client_id) {
+    // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
+    seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+  return seed;
+}
 }  // namespace rosbag2_cpp
