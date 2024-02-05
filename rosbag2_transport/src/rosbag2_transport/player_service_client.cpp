@@ -40,18 +40,18 @@ PlayerServiceClient::PlayerServiceClient(
   ts_lib_ = rclcpp::get_typesupport_library(
     service_event_type, "rosidl_typesupport_cpp");
 
-  ts_ = rclcpp::get_message_typesupport_handle(
+  service_event_type_ts_ = rclcpp::get_message_typesupport_handle(
     service_event_type,
     "rosidl_typesupport_cpp",
     *ts_lib_);
 
-  auto message_ts_handle = get_message_typesupport_handle(
-    ts_,
+  auto service_event_ts_introspection = get_message_typesupport_handle(
+    service_event_type_ts_,
     rosidl_typesupport_introspection_cpp::typesupport_identifier);
 
   message_members_ =
     reinterpret_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-    message_ts_handle->data);
+    service_event_ts_introspection->data);
 }
 
 bool PlayerServiceClient::is_include_request_message(
@@ -166,7 +166,8 @@ void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & m
     message_members_->init_function(
       ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
 
-    ret = rmw_deserialize(&message.get_rcl_serialized_message(), ts_, ros_message.get());
+    ret = rmw_deserialize(
+      &message.get_rcl_serialized_message(), service_event_type_ts_, ros_message.get());
     if (ret == RMW_RET_OK) {
       if (client_->service_is_ready()) {
         // members_[0]: info, members_[1]: request, members_[2]: response

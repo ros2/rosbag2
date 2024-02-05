@@ -158,7 +158,7 @@ std::string service_name_to_service_event_topic_name(const std::string & service
 
 bool introspection_include_metadata_and_contents(size_t message_size)
 {
-  if (message_size < rosbag2_cpp::get_serialization_size_for_service_metadata_event()) {
+  if (message_size <= rosbag2_cpp::get_serialization_size_for_service_metadata_event()) {
     return false;
   }
   return true;

@@ -259,11 +259,11 @@ private:
   std::mutex ready_to_play_from_queue_mutex_;
   std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
-  using SharedPlayerPublisher = std::shared_ptr<PlayerPublisher>;
-  using SharedPlayerClient = std::shared_ptr<PlayerServiceClient>;
+  using PlayerPublisherSharedPtr = std::shared_ptr<PlayerPublisher>;
+  using PlayerServiceClientSharedPtr = std::shared_ptr<PlayerServiceClient>;
   std::unordered_map<
     std::string,
-    std::variant<SharedPlayerPublisher, SharedPlayerClient>> senders_;
+    std::variant<PlayerPublisherSharedPtr, PlayerServiceClientSharedPtr>> senders_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
@@ -493,8 +493,8 @@ bool PlayerImpl::play()
         }
         for (auto pub : senders_) {
           try {
-            if (std::holds_alternative<SharedPlayerPublisher>(pub.second)) {
-              if (!std::get<SharedPlayerPublisher>(pub.second)
+            if (std::holds_alternative<PlayerPublisherSharedPtr>(pub.second)) {
+              if (!std::get<PlayerPublisherSharedPtr>(pub.second)
               ->generic_publisher()->wait_for_all_acked(timeout))
               {
                 RCLCPP_ERROR(
@@ -774,9 +774,9 @@ std::unordered_map<std::string,
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> topic_to_publisher_map;
   for (const auto & [topic, sender] : senders_) {
-    if (std::holds_alternative<SharedPlayerPublisher>(sender)) {
+    if (std::holds_alternative<PlayerPublisherSharedPtr>(sender)) {
       topic_to_publisher_map[topic] =
-        std::get<SharedPlayerPublisher>(sender)->generic_publisher();
+        std::get<PlayerPublisherSharedPtr>(sender)->generic_publisher();
     }
   }
   return topic_to_publisher_map;
@@ -787,9 +787,9 @@ std::unordered_map<std::string,
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> topic_to_client_map;
   for (const auto & [service_name, sender] : senders_) {
-    if (std::holds_alternative<SharedPlayerClient>(sender)) {
+    if (std::holds_alternative<PlayerServiceClientSharedPtr>(sender)) {
       topic_to_client_map[service_name] =
-        std::get<SharedPlayerClient>(sender)->generic_client();
+        std::get<PlayerServiceClientSharedPtr>(sender)->generic_client();
     }
   }
   return topic_to_client_map;
@@ -1061,8 +1061,9 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
   auto sender_iter = senders_.find(message->topic_name);
   if (sender_iter != senders_.end()) {
     // For sending requests, ignore service event messages that do not contain request information.
-    bool is_player_client = std::holds_alternative<SharedPlayerClient>(sender_iter->second);
-    if (is_player_client && !std::get<SharedPlayerClient>(sender_iter->second)
+    bool is_player_client =
+      std::holds_alternative<PlayerServiceClientSharedPtr>(sender_iter->second);
+    if (is_player_client && !std::get<PlayerServiceClientSharedPtr>(sender_iter->second)
       ->is_include_request_message(rclcpp::SerializedMessage(*message->serialized_data)))
     {
       return message_published;
@@ -1077,10 +1078,11 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       }
     }
 
-    bool is_player_publisher = std::holds_alternative<SharedPlayerPublisher>(sender_iter->second);
+    bool is_player_publisher =
+      std::holds_alternative<PlayerPublisherSharedPtr>(sender_iter->second);
     if (is_player_publisher) {
       try {
-        std::get<SharedPlayerPublisher>(sender_iter->second)
+        std::get<PlayerPublisherSharedPtr>(sender_iter->second)
         ->publish(rclcpp::SerializedMessage(*message->serialized_data));
         message_published = true;
       } catch (const std::exception & e) {
@@ -1090,7 +1092,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       }
     } else if (is_player_client) {
       try {
-        std::get<SharedPlayerClient>(sender_iter->second)
+        std::get<PlayerServiceClientSharedPtr>(sender_iter->second)
         ->async_send_request(rclcpp::SerializedMessage(*message->serialized_data));
         message_published = true;
       } catch (const std::exception & e) {
@@ -1475,7 +1477,8 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
   return pimpl_->get_publishers();
 }
 
-std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> Player::get_clients()
+std::unordered_map<std::string,
+  std::shared_ptr<rclcpp::GenericClient>> Player::get_services_clients()
 {
   return pimpl_->get_services_clients();
 }

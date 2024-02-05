@@ -97,8 +97,10 @@ TEST_F(ServiceUtilsTest, check_introspection_include_metadata_and_contents)
   size_t service_metadata_event = rosbag2_cpp::get_serialization_size_for_service_metadata_event();
 
   EXPECT_FALSE(
-    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event) - 1);
-  EXPECT_TRUE(rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event));
+    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event - 1));
+  EXPECT_FALSE(rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event));
+  EXPECT_TRUE(
+    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event + 1));
 }
 
 TEST_F(ServiceUtilsTest, check_client_id_to_string)

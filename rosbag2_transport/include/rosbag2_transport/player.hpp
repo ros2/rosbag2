@@ -263,7 +263,7 @@ protected:
   /// \brief Getter for clients corresponding to each service name
   /// \return Hashtable representing service name to client
   ROSBAG2_TRANSPORT_PUBLIC
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_clients();
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_services_clients();
 
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher

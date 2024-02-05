@@ -72,7 +72,7 @@ private:
   std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info;
 
   std::shared_ptr<rcpputils::SharedLibrary> ts_lib_;
-  const rosidl_message_type_support_t * ts_;
+  const rosidl_message_type_support_t * service_event_type_ts_;
   const rosidl_typesupport_introspection_cpp::MessageMembers * message_members_;
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
