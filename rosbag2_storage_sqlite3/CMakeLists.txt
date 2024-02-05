@@ -16,9 +16,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
-  add_definitions(-DNOMINMAX)
+  add_definitions(
+      # Windows supplies macros for min and max by default. We should only use min and max from stl
+      -DNOMINMAX
+      # Suppress warning STL4015: The std::iterator class template
+      # (used as a base class to provide typedefs) is deprecated in C++17
+      -D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+  )
 endif()
 
 find_package(ament_cmake REQUIRED)
