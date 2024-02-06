@@ -261,9 +261,8 @@ private:
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   using PlayerPublisherSharedPtr = std::shared_ptr<PlayerPublisher>;
   using PlayerServiceClientSharedPtr = std::shared_ptr<PlayerServiceClient>;
-  std::unordered_map<
-    std::string,
-    std::variant<PlayerPublisherSharedPtr, PlayerServiceClientSharedPtr>> senders_;
+  std::unordered_map<std::string, PlayerPublisherSharedPtr> pub_senders_;
+  std::unordered_map<std::string, PlayerServiceClientSharedPtr> service_client_senders_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
@@ -491,23 +490,19 @@ bool PlayerImpl::play()
         if (timeout == std::chrono::milliseconds(0)) {
           timeout = std::chrono::milliseconds(-1);
         }
-        for (auto pub : senders_) {
+        for (auto & [topic, pub] : pub_senders_) {
           try {
-            if (std::holds_alternative<PlayerPublisherSharedPtr>(pub.second)) {
-              if (!std::get<PlayerPublisherSharedPtr>(pub.second)
-              ->generic_publisher()->wait_for_all_acked(timeout))
-              {
-                RCLCPP_ERROR(
-                  owner_->get_logger(),
-                  "Timed out while waiting for all published messages to be acknowledged for topic "
-                  "%s", pub.first.c_str());
-              }
+            if (!pub->generic_publisher()->wait_for_all_acked(timeout)) {
+              RCLCPP_ERROR(
+                owner_->get_logger(),
+                "Timed out while waiting for all published messages to be acknowledged for topic "
+                "%s", topic.c_str());
             }
           } catch (std::exception & e) {
             RCLCPP_ERROR(
               owner_->get_logger(),
               "Exception occurred while waiting for all published messages to be acknowledged for "
-              "topic %s : %s", pub.first.c_str(), e.what());
+              "topic %s : %s", topic.c_str(), e.what());
           }
         }
       }
@@ -773,11 +768,8 @@ std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> topic_to_publisher_map;
-  for (const auto & [topic, sender] : senders_) {
-    if (std::holds_alternative<PlayerPublisherSharedPtr>(sender)) {
-      topic_to_publisher_map[topic] =
-        std::get<PlayerPublisherSharedPtr>(sender)->generic_publisher();
-    }
+  for (const auto & [topic, pub] : pub_senders_) {
+    topic_to_publisher_map[topic] = pub->generic_publisher();
   }
   return topic_to_publisher_map;
 }
@@ -786,11 +778,8 @@ std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericClient>> PlayerImpl::get_services_clients()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> topic_to_client_map;
-  for (const auto & [service_name, sender] : senders_) {
-    if (std::holds_alternative<PlayerServiceClientSharedPtr>(sender)) {
-      topic_to_client_map[service_name] =
-        std::get<PlayerServiceClientSharedPtr>(sender)->generic_client();
-    }
+  for (const auto & [service_name, client] : service_client_senders_) {
+    topic_to_client_map[service_name] = client->generic_client();
   }
   return topic_to_client_map;
 }
@@ -967,14 +956,15 @@ void PlayerImpl::prepare_publishers()
   auto topics = reader_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    if (senders_.find(topic.name) != senders_.end()) {
-      continue;
-    }
-
     auto & filter_topics = storage_filter.topics;
     auto & filter_services = storage_filter.services_events;
 
     if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
+      // Check if sender was created
+      if (service_client_senders_.find(topic.name) != service_client_senders_.end()) {
+        continue;
+      }
+
       // filter services to add clients if necessary
       if (!filter_services.empty()) {
         auto iter = std::find(filter_services.begin(), filter_services.end(), topic.name);
@@ -989,13 +979,17 @@ void PlayerImpl::prepare_publishers()
         auto player_cli = std::make_shared<PlayerServiceClient>(
           std::move(cli), service_name, topic.type, owner_->get_logger(),
           player_service_client_manager_);
-        senders_.insert(std::make_pair(topic.name, player_cli));
+        service_client_senders_.insert(std::make_pair(topic.name, player_cli));
       } catch (const std::runtime_error & e) {
         RCLCPP_WARN(
           owner_->get_logger(),
           "Ignoring a service '%s', reason: %s.", service_name.c_str(), e.what());
       }
     } else {
+      // Check if sender was created
+      if (pub_senders_.find(topic.name) != pub_senders_.end()) {
+        continue;
+      }
       // filter topics to add publishers if necessary
       if (!filter_topics.empty()) {
         auto iter = std::find(filter_topics.begin(), filter_topics.end(), topic.name);
@@ -1011,7 +1005,7 @@ void PlayerImpl::prepare_publishers()
           owner_->create_generic_publisher(topic.name, topic.type, topic_qos);
         std::shared_ptr<PlayerPublisher> player_pub =
           std::make_shared<PlayerPublisher>(std::move(pub), play_options_.disable_loan_message);
-        senders_.insert(std::make_pair(topic.name, player_pub));
+        pub_senders_.insert(std::make_pair(topic.name, player_pub));
         if (play_options_.wait_acked_timeout >= 0 &&
           topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
         {
@@ -1058,61 +1052,72 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 {
   bool message_published = false;
 
-  auto sender_iter = senders_.find(message->topic_name);
-  if (sender_iter != senders_.end()) {
-    // For sending requests, ignore service event messages that do not contain request information.
-    bool is_player_client =
-      std::holds_alternative<PlayerServiceClientSharedPtr>(sender_iter->second);
-    if (is_player_client && !std::get<PlayerServiceClientSharedPtr>(sender_iter->second)
-      ->is_include_request_message(rclcpp::SerializedMessage(*message->serialized_data)))
-    {
-      return message_published;
-    }
-
-    {  // Calling on play message pre-callbacks
+  auto pre_callbacks = [&]() {
       std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
       for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
         if (pre_callback_data.callback != nullptr) {  // Sanity check
           pre_callback_data.callback(message);
         }
       }
-    }
+    };
 
-    bool is_player_publisher =
-      std::holds_alternative<PlayerPublisherSharedPtr>(sender_iter->second);
-    if (is_player_publisher) {
-      try {
-        std::get<PlayerPublisherSharedPtr>(sender_iter->second)
-        ->publish(rclcpp::SerializedMessage(*message->serialized_data));
-        message_published = true;
-      } catch (const std::exception & e) {
-        RCLCPP_ERROR_STREAM(
-          owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
-            "' topic. \nError: " << e.what());
+  auto post_callbacks = [&]() {
+      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+      for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+        if (post_callback_data.callback != nullptr) {  // Sanity check
+          post_callback_data.callback(message);
+        }
       }
-    } else if (is_player_client) {
-      try {
-        std::get<PlayerServiceClientSharedPtr>(sender_iter->second)
-        ->async_send_request(rclcpp::SerializedMessage(*message->serialized_data));
-        message_published = true;
-      } catch (const std::exception & e) {
-        RCLCPP_ERROR_STREAM(
-          owner_->get_logger(), "Failed to send request on '" <<
-            rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
-            "' service. \nError: " << e.what());
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(owner_->get_logger(), "Unknown type of sender !");
+    };
+
+  auto pub_iter = pub_senders_.find(message->topic_name);
+  if (pub_iter != pub_senders_.end()) {
+    // Calling on play message pre-callbacks
+    pre_callbacks();
+
+    try {
+      pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
+          "' topic. \nError: " << e.what());
     }
 
     // Calling on play message post-callbacks
-    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
-    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
-      if (post_callback_data.callback != nullptr) {  // Sanity check
-        post_callback_data.callback(message);
-      }
-    }
+    post_callbacks();
+    return message_published;
   }
+
+  auto client_iter = service_client_senders_.find(message->topic_name);
+  if (client_iter != service_client_senders_.end()) {
+    if (!client_iter->second->include_request_message(
+        rclcpp::SerializedMessage(*message->serialized_data)))
+    {
+      return message_published;
+    }
+
+    // Calling on play message pre-callbacks
+    pre_callbacks();
+
+    try {
+      client_iter->second->async_send_request(
+        rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(), "Failed to send request on '" <<
+          rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+          "' service. \nError: " << e.what());
+    }
+
+    // Calling on play message post-callbacks
+    post_callbacks();
+    return message_published;
+  }
+
+  RCLCPP_WARN_STREAM(
+    owner_->get_logger(), "Not find sender for topic '" << message->topic_name << "' topic.");
   return message_published;
 }
 

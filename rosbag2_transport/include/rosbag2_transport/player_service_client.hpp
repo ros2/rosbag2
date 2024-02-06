@@ -52,7 +52,7 @@ public:
   }
 
   // Check if message can be unpacked to get request message
-  bool is_include_request_message(const rclcpp::SerializedMessage & message);
+  bool include_request_message(const rclcpp::SerializedMessage & message);
 
 private:
   std::shared_ptr<rclcpp::GenericClient> client_;
@@ -65,11 +65,11 @@ private:
     CLIENT,
     NO_CONTENT  // Only have META info. Not send request.
   };
-  bool service_set_introspection_content = false;
+  bool service_set_introspection_content_ = false;
 
   using client_id = service_msgs::msg::ServiceEventInfo::_client_gid_type;
   // Info on request data from service or client
-  std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info;
+  std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info_;
 
   std::shared_ptr<rcpputils::SharedLibrary> ts_lib_;
   const rosidl_message_type_support_t * service_event_type_ts_;

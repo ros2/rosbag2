@@ -54,7 +54,7 @@ PlayerServiceClient::PlayerServiceClient(
     service_event_ts_introspection->data);
 }
 
-bool PlayerServiceClient::is_include_request_message(
+bool PlayerServiceClient::include_request_message(
   const rclcpp::SerializedMessage & message)
 {
   auto [type, client_id, sequence_number] = get_msg_event_type(message);
@@ -66,94 +66,99 @@ bool PlayerServiceClient::is_include_request_message(
     return false;
   }
 
+  bool ret = false;
+
   // For each Client, decide which request data to use based on the first message related to
   // the request that is obtained from the record data.
   // e.g.
 
-  auto iter = request_info.find(client_id);
+  auto iter = request_info_.find(client_id);
   if (type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
-    if (!service_set_introspection_content) {
+    if (!service_set_introspection_content_) {
       if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
-        service_set_introspection_content = true;
+        service_set_introspection_content_ = true;
       }
     }
 
-    if (iter != request_info.end()) {
+    if (iter != request_info_.end()) {
       switch (iter->second) {
         case request_info_from::CLIENT:
           {
             // Already decide using request data from client.
-            return false;
+            break;
           }
         case request_info_from::NO_CONTENT:
           {
-            if (service_set_introspection_content) {
+            if (service_set_introspection_content_) {
               // introspection type is changed from metadata to metadata + contents
-              request_info[client_id] = request_info_from::SERVICE;
-              return true;
+              request_info_[client_id] = request_info_from::SERVICE;
+              ret = true;
             } else {
               RCUTILS_LOG_WARN_ONCE_NAMED(
                 ROSBAG2_TRANSPORT_PACKAGE_NAME,
-                "The configuration of introspection for '%s' is metadata !",
+                "The configuration of introspection for '%s' is metadata on service side !",
                 service_name_.c_str());
-              return false;
             }
+            break;
           }
         default:  // request_info_from::SERVICE:
           {
             // Already decide using request data from service.
-            return true;
+            ret = true;
           }
       }
     } else {
-      if (service_set_introspection_content) {
-        request_info[client_id] = request_info_from::SERVICE;
-        return true;
+      if (service_set_introspection_content_) {
+        request_info_[client_id] = request_info_from::SERVICE;
+        ret = true;
       } else {
-        request_info[client_id] = request_info_from::NO_CONTENT;  // Only have metadata
-        return false;
+        request_info_[client_id] = request_info_from::NO_CONTENT;  // Only have metadata
       }
     }
+
+    return ret;
   }
 
   // type is service_msgs::msg::ServiceEventInfo::REQUEST_SENT
-  if (iter != request_info.end()) {
+  if (iter != request_info_.end()) {
     switch (iter->second) {
       case request_info_from::CLIENT:
         {
           // Already decide using request data from client.
-          return true;
+          ret = true;
+          break;
         }
       case request_info_from::NO_CONTENT:
         {
           if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
             // introspection type is changed from metadata to metadata + contents
-            request_info[client_id] = request_info_from::CLIENT;
-            return true;
+            request_info_[client_id] = request_info_from::CLIENT;
+            ret = true;
           } else {
             RCUTILS_LOG_WARN_NAMED(
               ROSBAG2_TRANSPORT_PACKAGE_NAME,
               "The configuration of introspection for '%s' client [ID: %s]` is metadata !",
               rosbag2_cpp::client_id_to_string(client_id).c_str(),
               service_name_.c_str());
-            return false;
           }
+          break;
         }
       default:  // request_info_from::SERVICE:
         {
           // Already decide using request data from service.
-          return false;
+          ret = false;
         }
     }
   } else {
     if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
-      request_info[client_id] = request_info_from::CLIENT;
+      request_info_[client_id] = request_info_from::CLIENT;
+      ret = true;
     } else {
-      request_info[client_id] = request_info_from::NO_CONTENT;
+      request_info_[client_id] = request_info_from::NO_CONTENT;
     }
   }
 
-  return true;
+  return ret;
 }
 
 void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & message)
