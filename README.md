@@ -346,7 +346,8 @@ For example, if we named the above XML launch script, `record_all.launch.xml`:
 $ ros2 launch record_all.launch.xml
 ```
 
-You can also invoke the `play` and `record` functionalities as nodes. Nodes `player` and `recorder` are available in `rosbag2_transport` package. The advantage to use this invocation strategy is that the Python layer handling the `ros2 bag` CLI is completely skipped.
+You can also invoke the `play` and `record` functionalities provided by `rosbag2_transport` package as nodes.
+The advantage to use this invocation strategy is that the Python layer handling the `ros2 bag` CLI is completely skipped.
 
 ```python
 import launch
