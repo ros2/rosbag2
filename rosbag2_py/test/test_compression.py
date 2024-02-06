@@ -82,6 +82,7 @@ def test_sequential_compression(tmp_path, storage_id):
 
     topic_name = '/chatter'
     topic_metadata = TopicMetadata(
+        id=0,
         name=topic_name,
         type='std_msgs/msg/String',
         serialization_format='cdr')

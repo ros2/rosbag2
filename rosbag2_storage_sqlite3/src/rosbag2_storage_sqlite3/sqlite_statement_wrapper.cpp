@@ -156,8 +156,7 @@ void SqliteStatementWrapper::obtain_column_value(size_t index, int & value) cons
   value = sqlite3_column_int(statement_, static_cast<int>(index));
 }
 
-void
-SqliteStatementWrapper::obtain_column_value(size_t index, rcutils_time_point_value_t & value) const
+void SqliteStatementWrapper::obtain_column_value(size_t index, int64_t & value) const
 {
   value = sqlite3_column_int64(statement_, static_cast<int>(index));
 }

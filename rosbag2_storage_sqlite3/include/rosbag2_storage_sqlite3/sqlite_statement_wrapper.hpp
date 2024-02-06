@@ -202,7 +202,7 @@ private:
   bool is_query_ok(int return_code);
 
   void obtain_column_value(size_t index, int & value) const;
-  void obtain_column_value(size_t index, rcutils_time_point_value_t & value) const;
+  void obtain_column_value(size_t index, int64_t & value) const;
   void obtain_column_value(size_t index, double & value) const;
   void obtain_column_value(size_t index, std::string & value) const;
   void obtain_column_value(size_t index, std::shared_ptr<rcutils_uint8_array_t> & value) const;

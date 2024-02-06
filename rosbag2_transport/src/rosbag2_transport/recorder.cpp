@@ -488,6 +488,7 @@ void RecorderImpl::subscribe_topics(
     auto endpoint_infos = node->get_publishers_info_by_topic(topic_with_type.first);
     subscribe_topic(
       {
+        0u,
         topic_with_type.first,
         topic_with_type.second,
         serialization_format_,

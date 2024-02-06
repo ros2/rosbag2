@@ -172,7 +172,7 @@ SqliteStatement SqliteWrapper::prepare_statement(const std::string & query)
   return std::make_shared<SqliteStatementWrapper>(db_ptr, query);
 }
 
-size_t SqliteWrapper::get_last_insert_id()
+int64_t SqliteWrapper::get_last_insert_id()
 {
   return sqlite3_last_insert_rowid(db_ptr);
 }

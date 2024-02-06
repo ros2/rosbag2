@@ -34,7 +34,7 @@ def create_topic(writer, topic_name, topic_type, serialization_format='cdr'):
     :return:
     """
     topic_name = topic_name
-    topic = rosbag2_py.TopicMetadata(name=topic_name, type=topic_type,
+    topic = rosbag2_py.TopicMetadata(id=0, name=topic_name, type=topic_type,
                                      serialization_format=serialization_format)
 
     writer.create_topic(topic)
