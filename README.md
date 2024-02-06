@@ -384,7 +384,7 @@ With the above requirements met, the user can:
 
 Whenever a publisher and a subscriber on the same topic belong to the same _composed_ process, and intra-process is enabled for both, `rclcpp` completely bypasses RMW layer and below transport layer (i.e. DDS). Instead, messages are shared via process memory and *potentially* never copied. Some exception hold, so please have a look to the [IPC guidelines](https://docs.ros.org/en/rolling/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra).
 
-Here is an example of Python launchfile composition. Notice that components do not expect YAML files to be direclty passed to them: parameters have to be "dumped" out from the YAML file (if you have one). A suggestion of possible implementation is offered as a starting point.
+Here is an example of Python launchfile composition. Notice that composable container components do not expect YAML files to be directly passed to them: parameters have to be "dumped" out from the YAML file (if you have one). A suggestion of possible implementation is offered as a starting point.
 
 ```python
 import launch
